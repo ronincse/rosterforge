@@ -1,0 +1,32 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/foundation"
+    },
+    {
+      "path": "packages/test-fixtures"
+    },
+    {
+      "path": "packages/battlescribe-data"
+    },
+    {
+      "path": "packages/repository"
+    },
+    {
+      "path": "packages/data-graph"
+    },
+    {
+      "path": "packages/roster-model"
+    },
+    {
+      "path": "packages/evaluation"
+    },
+    {
+      "path": "packages/persistence"
+    },
+    {
+      "path": "apps/web"
+    }
+  ]
+}

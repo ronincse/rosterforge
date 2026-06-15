@@ -1,0 +1,15 @@
+{
+  "name": "@rosterforge/persistence",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@rosterforge/foundation": "workspace:*",
+    "@rosterforge/repository": "workspace:*",
+    "@rosterforge/roster-model": "workspace:*"
+  }
+}

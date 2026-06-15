@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="synthetic-catalogue" name="Synthetic Faction" revision="7"
+  battleScribeVersion="2.03" gameSystemId="synthetic-system"
+  gameSystemRevision="3" library="false">
+  <sharedSelectionEntries />
+</catalogue>
