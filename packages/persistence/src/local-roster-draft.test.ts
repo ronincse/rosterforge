@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { objectId } from "@rosterforge/foundation";
+import { objectId, sourceId } from "@rosterforge/foundation";
 import {
   forceOccurrenceId,
   rosterDefinitionKey,
@@ -35,6 +35,8 @@ describe("local roster draft codec", () => {
               bytes,
               mediaType: "application/xml",
               origin: "",
+              sourceId: sourceId("download:fixture"),
+              sourceKind: "download",
             },
           ],
         },
@@ -46,6 +48,8 @@ describe("local roster draft codec", () => {
     expect(draft.import.files[0]?.bytes).not.toBe(bytes);
     expect(draft.import.files[0]?.origin).toBe("");
     expect(draft.roster.forces[0]?.name).toBe("");
+    expect(draft.import.files[0]?.sourceId).toBe("download:fixture");
+    expect(draft.import.files[0]?.sourceKind).toBe("download");
     expect(draft.roster.forces[0]?.selections.map(({ id }) => id)).toEqual([
       "selection-1",
       "selection-2",
@@ -80,6 +84,30 @@ describe("local roster draft codec", () => {
     const draft = successful(result);
     expect(draft.id).toBe("draft-1");
     expect(draft.roster.forces).toHaveLength(1);
+  });
+
+  it("rejects an invalid imported file source kind with its field path", () => {
+    const value = rawDraft();
+    const file = value.import.files[0]!;
+    const result = decodeLocalRosterDraft({
+      ...value,
+      import: {
+        ...value.import,
+        files: [{ ...file, sourceKind: "future-source" }],
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      diagnostics: [
+        expect.objectContaining({
+          code: "PERSISTENCE_DRAFT_INVALID",
+          details: expect.objectContaining({
+            path: ["import", "files", "0", "sourceKind"],
+          }),
+        }),
+      ],
+    });
   });
 
   it.each([

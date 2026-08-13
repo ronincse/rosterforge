@@ -147,7 +147,10 @@ presentation component.
 for `.gst`, `.cat`, `.gstz`, `.catz`, and `.json` files. Configurable batch
 file-count and total-byte limits are checked before parsing. Each accepted file
 then uses the ordinary secure ingestion limits and receives a source ID derived
-from the caller-supplied batch ID and original zero-based position.
+from the caller-supplied batch ID and original zero-based position. A caller
+re-ingesting retained bytes may instead provide the original branded source ID
+and known source kind; those optional values preserve provenance but do not
+bypass ingestion or byte limits.
 
 The successful report retains input order, per-file diagnostics and status,
 all successfully parsed documents, and source bytes for rejected files. A
@@ -297,8 +300,9 @@ validation dimensions, and it explicitly does not claim full legality.
 `createLocalRosterDraft` and `decodeLocalRosterDraft` define format
 `rosterforge/local-roster-draft`, version 1. A draft contains its ID, creation
 and update timestamps, selected catalogue key, original import batch ID and
-timestamp, ordered source files with provenance metadata and bytes, and the
-immutable structural `Roster`. Decoding untrusted stored values reconstructs
+timestamp, ordered source files with source IDs, source kinds, provenance
+metadata, and bytes, and the immutable structural `Roster`. Decoding untrusted
+stored values reconstructs
 branded IDs only after shape, timestamp, duplicate-occurrence, text, byte,
 node-count, and depth checks pass. Unknown object fields are ignored; unknown
 formats and versions are rejected rather than guessed.
@@ -321,7 +325,9 @@ matches the saved catalogue, force, and each selection definition by its
 source-scoped key and optional source ID. Exact newly materialized choices are
 placed back in the local session map. Parsed XML, generic nodes, original
 bytes, provenance, and diagnostics therefore come from the rebuilt ordinary
-pipeline rather than a serialized object graph.
+pipeline rather than a serialized object graph. Optional source ID and source
+kind fields preserve `download` provenance across this rebuild; older version-1
+records that omit them retain their previous local-file behavior.
 
 The current editor restores exactly one root force and rejects nested force
 structures, because the browser UI cannot expose them without hiding data.

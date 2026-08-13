@@ -90,8 +90,9 @@
 - Recursive occurrence-specific selection rename and reset-to-definition-name
   controls, with non-empty trimmed custom names and undo/redo participation
 - Versioned, bounded local-roster-draft envelopes retaining ordered source
-  bytes, import metadata, source-scoped catalogue identity, branded occurrence
-  IDs, optional names, and immutable roster structure
+  bytes, source IDs and kinds, import metadata, source-scoped catalogue
+  identity, branded occurrence IDs, optional names, and immutable roster
+  structure
 - Explicit IndexedDB save/update, reopen, and confirmed-delete controls, with
   newest-first summaries and no upload or automatic saving
 - Draft restoration through the ordinary secure import, graph, and context

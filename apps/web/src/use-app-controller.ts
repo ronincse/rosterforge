@@ -597,6 +597,8 @@ function draftImport(
         ? {}
         : { mediaType: source.mediaType }),
       ...(source.origin === undefined ? {} : { origin: source.origin }),
+      sourceId: source.sourceId,
+      sourceKind: source.kind,
     })),
   };
 }

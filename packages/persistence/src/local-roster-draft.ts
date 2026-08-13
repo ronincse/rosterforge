@@ -1,9 +1,11 @@
 import {
   failure,
   objectId,
+  sourceId,
   success,
   type Diagnostic,
   type Result,
+  type SourceKind,
 } from "@rosterforge/foundation";
 import type { LocalBattleScribeFile } from "@rosterforge/repository";
 import {
@@ -226,12 +228,39 @@ function decodeFile(
   );
   const mediaType = optionalString(record.mediaType, [...path, "mediaType"], state);
   const origin = optionalString(record.origin, [...path, "origin"], state);
+  const retainedSourceId = optionalString(
+    record.sourceId,
+    [...path, "sourceId"],
+    state,
+  );
+  const sourceKind = optionalSourceKind(
+    record.sourceKind,
+    [...path, "sourceKind"],
+    state,
+  );
   return {
     filename: requiredString(record.filename, [...path, "filename"], state),
     bytes: Uint8Array.from(bytes),
     ...(mediaType === undefined ? {} : { mediaType }),
     ...(origin === undefined ? {} : { origin }),
+    ...(retainedSourceId === undefined
+      ? {}
+      : { sourceId: sourceId(retainedSourceId) }),
+    ...(sourceKind === undefined ? {} : { sourceKind }),
   };
+}
+
+function optionalSourceKind(
+  value: unknown,
+  path: readonly string[],
+  state: DecodeState,
+): SourceKind | undefined {
+  const kind = optionalString(value, path, state);
+  if (kind === undefined) return undefined;
+  if (kind === "local-file" || kind === "download" || kind === "synthetic") {
+    return kind;
+  }
+  invalid(path, "Imported file source kind is invalid.");
 }
 
 function decodeRoster(value: unknown, state: DecodeState): Roster {

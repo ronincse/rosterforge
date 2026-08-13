@@ -50,8 +50,10 @@ leaving integrity verification in the repository package. The next slice is
 the acquisition UI. Its headless prerequisites are complete: remote operations
 expose non-authoritative per-file progress, and already-ingested closure
 documents enter catalogue composition without reparsing or replacing download
-provenance. Cache eviction, quota controls, and metadata-index persistence
-remain deferred.
+provenance. Draft snapshots now retain optional source IDs and source kinds, so
+reopening a downloaded closure does not silently rewrite it as a local-file
+source. Cache eviction, quota controls, and metadata-index persistence remain
+deferred.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

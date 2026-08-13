@@ -1280,8 +1280,8 @@ model. Version 1 has the literal format
 - draft ID plus creation and update timestamps;
 - the selected source-scoped catalogue key;
 - original import batch ID and timestamp;
-- every source filename, optional media type and origin, and copied byte array
-  in original order;
+- every source filename, optional source ID, source kind, media type and origin,
+  and copied byte array in original order;
 - one immutable structural `Roster`.
 
 It deliberately excludes parsed BattleScribe documents, generic XML nodes,
@@ -1298,8 +1298,10 @@ kinds, and unique force and selection occurrence IDs. It enforces configured
 text, definition-key, file-count, total-byte, roster-node, and roster-depth
 limits before reapplying branded ID types. Returned source bytes are copies.
 
-Optional file media type and origin, definition source ID, force or selection
-name, and selection amount are absent when the stored property is absent.
+Optional file source ID, source kind, media type and origin, definition source
+ID, force or selection name, and selection amount are absent when the stored
+property is absent. Known source kinds are `local-file`, `download`, and
+`synthetic`; other stored strings are invalid rather than silently replaced.
 Absent selection amounts decode as the model's implicit one; present amounts
 must be positive and finite. Explicit empty strings remain present. Unknown object properties are ignored so additive
 record metadata does not become part of the typed model; an unknown format or

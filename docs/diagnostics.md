@@ -232,8 +232,9 @@ PERSISTENCE_DRAFT_LIMIT_EXCEEDED
 These are `persistence` errors. Unsupported format and version diagnostics
 retain the observed value in details. Invalid records include an ordered
 property path and reason; this covers wrong value types, invalid timestamps,
-unknown roster definition kinds, zero/negative/non-finite selection amounts,
-update timestamps before creation, and duplicate force or selection occurrence IDs. Limit diagnostics additionally
+unknown roster definition or imported-source kinds, zero/negative/non-finite
+selection amounts, update timestamps before creation, and duplicate force or
+selection occurrence IDs. Limit diagnostics additionally
 include the limit name plus configured and observed values. Stored records are
 not XML sources, so the decoder does not fabricate a source location.
 

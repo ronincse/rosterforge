@@ -10,7 +10,9 @@ import {
   success,
   type Diagnostic,
   type Result,
+  type SourceId,
   type SourceFileProvenance,
+  type SourceKind,
 } from "@rosterforge/foundation";
 
 export interface LocalBattleScribeFile {
@@ -18,6 +20,8 @@ export interface LocalBattleScribeFile {
   readonly bytes: Uint8Array;
   readonly mediaType?: string;
   readonly origin?: string;
+  readonly sourceId?: SourceId;
+  readonly sourceKind?: SourceKind;
 }
 
 export interface LocalBattleScribeImportLimits {
@@ -138,9 +142,10 @@ function localSource(
   index: number,
 ): SourceFileProvenance {
   return {
-    sourceId: sourceId(`local-file:${options.batchId}:${index}`),
+    sourceId:
+      file.sourceId ?? sourceId(`local-file:${options.batchId}:${index}`),
     filename: file.filename,
-    kind: "local-file",
+    kind: file.sourceKind ?? "local-file",
     importedAt: options.importedAt,
     ...(file.mediaType === undefined ? {} : { mediaType: file.mediaType }),
     ...(file.origin === undefined ? {} : { origin: file.origin }),

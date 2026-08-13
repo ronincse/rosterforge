@@ -1,6 +1,8 @@
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 
+import { sourceId } from "@rosterforge/foundation";
+
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import {
@@ -63,6 +65,37 @@ describe("local BattleScribe batch import", () => {
     expect(imported.value.files[2]?.diagnostics).toEqual([
       expect.objectContaining({ code: "BS_IMPORT_UNSUPPORTED_EXTENSION" }),
     ]);
+  });
+
+  it("retains explicit source provenance when re-ingesting saved bytes", async () => {
+    const retainedSourceId = sourceId(
+      "download:github:BSData/fictional@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:minimal.cat",
+    );
+
+    const imported = await importLocalBattleScribeFiles(
+      [
+        {
+          filename: "minimal.cat",
+          bytes: fixtureBytes("minimal.cat"),
+          origin: "https://example.test/minimal.cat",
+          sourceId: retainedSourceId,
+          sourceKind: "download",
+        },
+      ],
+      options,
+    );
+
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) return;
+    expect(imported.value.files[0]?.source).toMatchObject({
+      sourceId: retainedSourceId,
+      kind: "download",
+      filename: "minimal.cat",
+      origin: "https://example.test/minimal.cat",
+    });
+    expect(imported.value.documents[0]?.source).toBe(
+      imported.value.files[0]?.source,
+    );
   });
 
   it("imports a compressed file while retaining archive and XML bytes", async () => {

@@ -1141,8 +1141,16 @@ describe("App local catalogue flow", () => {
       import: {
         batchId: "draft-ui-batch",
         files: [
-          { filename: "minimal.gst" },
-          { filename: "minimal.cat" },
+          {
+            filename: "minimal.gst",
+            sourceId: "local-file:draft-ui-batch:0",
+            sourceKind: "local-file",
+          },
+          {
+            filename: "minimal.cat",
+            sourceId: "local-file:draft-ui-batch:1",
+            sourceKind: "local-file",
+          },
         ],
       },
       roster: {
