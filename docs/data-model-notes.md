@@ -1187,10 +1187,26 @@ object format before ingestion. The core interface has no deletion, discovery,
 or storage semantics. Durable record versioning, eviction, quota handling, and
 atomic closure publication remain application-adapter questions.
 
-A tree is still only a path/blob index: constructing remote document summaries
-requires bounded downloads and secure parsing, or a separately specified
-manifest whose IDs are verified against downloaded documents. Cache presence
-does not make a summary authoritative and does not permit skipping ingestion.
+A tree is still only a path/blob index. The remote index builder obtains root
+metadata through bounded downloads and secure parsing, retaining one ordered
+file report and compact summary per accepted source. It intentionally releases
+parsed generic trees and source byte arrays after each summary is produced; a
+durable cache adapter is responsible for retaining verified source bytes across
+the indexing pass. A `partial` report keeps valid summaries when malformed
+siblings are rejected.
+
+Closure acquisition treats those summaries as a plan input, not as authority.
+It reopens each planned tree file from verified cache or network bytes, performs
+ordinary ingestion, and compares the accepted root metadata and ordered link
+target IDs with the summary. Mismatched files remain rejected reports. The
+closure report retains only its ordered accepted documents and bytes, so graph
+resolution can consume a focused set without recreating the full-repository
+heap footprint.
+
+Index and closure `complete` statuses describe source acquisition only. They do
+not replace validation completeness, suppress projection diagnostics, or claim
+that modifiers, constraints, conditions, costs, or legality are fully
+understood.
 
 ## Local Catalogue Library
 

@@ -175,6 +175,35 @@ name for a missing target ID. A cycle is observable but does not by itself make
 the closure incomplete because the repeated document is already present and is
 not downloaded twice.
 
+Remote metadata indexing and closure acquisition enforce operation-wide limits
+with:
+
+```text
+REPOSITORY_REMOTE_FILE_LIMIT
+REPOSITORY_REMOTE_TOTAL_SIZE_LIMIT
+```
+
+Declared tree sizes are preflighted before any request when sufficient; actual
+bounded response sizes are accumulated as a fallback. These are `security`
+errors and return no index or closure report when the operation-wide limit is
+exceeded. Individual malformed files otherwise keep their ordinary `BS_*`
+diagnostics and produce rejected rows in a partial index report.
+
+Closure orchestration can also emit:
+
+```text
+REPOSITORY_CLOSURE_SOURCE_MISMATCH
+REPOSITORY_CLOSURE_TREE_FILE_MISSING
+REPOSITORY_CLOSURE_INDEX_MISMATCH
+```
+
+A tree/index source mismatch is an error before planning. A planned path absent
+from the tree is a warning and keeps available siblings. An acquired root whose
+identity or ordered catalogue-link target IDs differ from its planning summary
+is a source-located `security` error; that document is not exposed in the
+closure's accepted collection. Such per-file failures make a nonempty closure
+`incomplete`, while failure to acquire any planned document produces `failed`.
+
 The browser application displays these existing diagnostics beside batch and
 catalogue details. A diagnostic list renders its first 50 entries and reports
 the remaining count; the complete ordered array remains available on the

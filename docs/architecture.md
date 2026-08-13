@@ -58,9 +58,11 @@ passes downloaded bytes through ordinary secure ingestion. A separate pure
 planner derives a selected catalogue's transitive dependency closure from an
 already available repository metadata index using exact IDs. An optional
 transport-neutral byte-cache contract supports integrity-checked read-through
-acquisition without putting browser storage in the package. It does not persist
-documents itself, construct that remote metadata index, orchestrate closure
-downloads, or resolve links into mutable target objects.
+acquisition without putting browser storage in the package. Sequential
+orchestration can build the remote metadata index without retaining every
+parsed document, then reacquire only a planned closure from verified cache or
+network bytes. It does not persist documents itself, browse repositories in the
+UI, or resolve links into mutable target objects.
 
 `roster-model` defines an immutable structural roster tree with nested force and
 selection occurrences. It depends only on `foundation`; source definitions are
@@ -188,12 +190,27 @@ ambiguous, cross-system, or wrong-kind targets produce an `incomplete` plan;
 cycles are diagnosed and deduplicated but do not make an otherwise fully
 available closure incomplete.
 
-This slice deliberately stops before automatically downloading enough files to
-build a complete remote metadata index. It also adds no durable cache adapter,
-GitHub authentication, gallery integration, retry policy, dependency download
-orchestrator, persistence, or UI. Callers may use the pure planner with a
-trusted or previously parsed metadata index, but must not infer target paths
-from catalogue-link display names without downloading and verifying exact IDs.
+`buildPinnedBattleScribeRepositoryIndex` preflights repository file-count and
+declared total-byte limits, then reads, verifies, and securely ingests supported
+tree files sequentially. It retains ordered per-file reports and compact
+summaries, not parsed document trees or source byte arrays. Malformed files are
+isolated as rejected reports while valid sibling summaries remain available.
+An optional durable byte cache prevents those verified source bytes from being
+downloaded again.
+
+`acquirePinnedBattleScribeDependencyClosure` combines the planner, pinned tree,
+and read-through acquisition. It retains only accepted documents in plan order
+and keeps an incomplete plan usable when a target is unavailable. Every
+acquired document is checked against the summary that selected it, including
+root kind, ID, name, game-system ID, library flag, and ordered catalogue-link
+target IDs. A stale or fabricated metadata index therefore cannot silently
+redirect a closure. The operation performs no graph resolution, catalogue
+composition, roster construction, evaluation, or validation.
+
+This slice still adds no durable cache adapter, GitHub authentication, gallery
+integration, retry policy, persistence, or UI. Callers must not infer target
+paths from catalogue-link display names without downloading and verifying exact
+IDs.
 
 ## Catalogue Library Boundary
 

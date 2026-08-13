@@ -335,8 +335,8 @@
 
 ## Deferred
 
-- Automatic remote metadata-index construction, dependency-closure download
-  orchestration, cache adapters, retries, and atomic publication of a closure
+- Durable cache adapters, retries, repository update discovery, and atomic
+  persistence/publication of a downloaded closure
 - Inferring catalogue paths from catalogue-link names without downloading and
   verifying exact target IDs; visibility still uses only documents supplied to
   graph resolution by the caller
@@ -453,15 +453,24 @@ hit or network response. Corrupt cache entries fall back to the network;
 unavailable cache storage does not block a valid download. No durable browser
 cache adapter, quota policy, or metadata-index cache is implemented yet.
 
+The headless orchestrator can now build a compact remote metadata index by
+processing the pinned tree sequentially, then acquire only the selected
+catalogue's exact-ID closure. Parsed documents and source arrays from the full
+indexing pass are not retained by the report; a caller-supplied durable byte
+cache avoids a second network transfer. Closure documents are re-ingested and
+must match the root identity and ordered catalogue-link target IDs used by the
+plan before they are exposed. Remote source picking, progress UI, cancellation
+controls, cache management UI, and repository update discovery remain deferred.
+
 At the August 13, 2026 inspection point, `BSData/wh40k-11e` had no latest
 GitHub release asset and the official BSData gallery registry did not contain
 an 11th-edition repository record. The pinned checkout itself also has no
 BattleScribe repository-index file mapping root IDs to paths. Consequently, the
 current generic boundary uses the exact Git commit tree rather than depending
-on a moving gallery or release package. Automatically building and caching the
-remote root-ID index remains deferred; path selection or a future curated
-source descriptor must still lead to downloaded documents whose IDs are
-verified.
+on a moving gallery or release package. Building the root-ID index therefore
+requires one bounded sequential pass over supported source files. A future
+curated or upstream manifest may optimize that pass only if downloaded document
+IDs are still verified.
 
 The pure closure planner has a pinned-corpus proof at commit
 `54c189f4fd01878351fab05586d3b38d9c7f6ddc`. From the complete parsed metadata
@@ -471,6 +480,15 @@ four-file Aeldari closure with no dependency diagnostics. Both begin with
 with transitive children visited depth-first. Normal acquisition and planner
 tests use fictional data and mocked responses, so no third-party files or live
 network dependency enter the standard suite.
+
+A read-only orchestration proof against the same external checkout indexed all
+46 files sequentially from 67,554,454 verified cached bytes, then reacquired the
+seven-file Imperial Knights closure entirely from cache. The focused closure
+retained 7,737,141 source bytes. Both operation statuses were `complete`; the
+only diagnostic was the existing source-located invalid empty
+`defaultCostLimit` from `Warhammer 40,000.json`. Acquisition completeness here
+means every planned source was verified and ingested, not that all projected
+BattleScribe behavior is supported or legal.
 
 The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
 339 `localConditionGroup` objects under ordinary `and` groups. Every local
