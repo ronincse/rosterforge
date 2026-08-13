@@ -31,8 +31,9 @@ modifiers in 130 groups: 23 `set`, 131 `increment`, 21 `decrement`, and 130
 123 use `type="and"`, seven omit `type`, none has a group-level repeat, and 23
 child modifiers carry repeats.
 
-The next product slice is Task 6. Its measurement requirement should be
-completed before repository acquisition or faction-selection UX is designed.
+The Task 6 browser measurement is complete. The next product slice is headless
+repository acquisition using pinned catalogue dependency closures, before any
+faction-selection UI is designed.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,
@@ -44,10 +45,14 @@ extension-only group for an empty group. The 59 ordinary condition groups with
 type `count` remain preserved strings and unresolved. This corrects the older
 claim below that the 339 local records were themselves `before` conditions.
 
-The Task 6 browser measurement was attempted but could not select the 46 local
-files through Edge because the ChatGPT browser extension's local-file access is
-disabled. Resume after enabling **Allow access to file URLs** for that extension
-in `edge://extensions`.
+On August 13, 2026, the 46 pinned files (67,554,454 bytes) imported through the
+local Chromium application in 3,324 ms end to end. An application probe measured
+2,608.4 ms through the post-render boundary and a JavaScript heap increase from
+152,078,277 bytes to 821,735,425 bytes, or 638.6 MiB. All 46 files imported, 36
+catalogues were selectable, the expected 65 issues remained observable, and the
+browser console had no warnings or errors. The measured heap cost makes pinned
+dependency-closure acquisition the default recommendation; all-repository
+loading remains an explicit compatibility and diagnostics path.
 
 The review's weak grouped assertion and negative-limit question are now closed.
 The pinned integration test adds one real Weapon Modifications occurrence and

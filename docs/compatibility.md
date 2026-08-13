@@ -418,6 +418,26 @@ string `defaultCostLimit`. An empty string is not treated as absence or zero,
 so its typed numeric property is absent and
 `BS_PROJECTION_INVALID_ATTRIBUTE` remains observable.
 
+On August 13, 2026, the same 46-file checkout was measured through the local
+Vite application in a Chromium browser on Windows. The selected files totalled
+67,554,454 bytes (64.42 MiB). From file selection to a visible catalogue
+library, the end-to-end browser operation took 3,324 ms. A temporary
+development-only probe measured 2,608.4 ms from the start of application import
+through two animation frames after the loaded state was committed. JavaScript
+heap usage rose from 152,078,277 bytes (145.0 MiB) to 821,735,425 bytes
+(783.7 MiB), an increase of 669,657,148 bytes (638.6 MiB). The probe was removed
+after measurement.
+
+The measured result retained all 46 imports, exposed 36 non-library catalogue
+choices, rendered 823 DOM elements, and produced no browser-console warnings or
+errors. Its 65 issues were the expected one invalid projected attribute, two
+duplicate-ID groups, 60 grouped missing-reference diagnostics representing 147
+source occurrences, and two entry-link cycles. Whole-repository import remains
+a supported compatibility path, but its heap cost is too high to make it the
+default acquisition design. Repository acquisition should load a selected
+catalogue's pinned dependency closure and retain the all-repository path for
+explicit diagnostics and compatibility testing.
+
 The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
 339 `localConditionGroup` objects under ordinary `and` groups. Every local
 object uses `type="atLeast"`, `field="selections"`, and `scope="parent"`, and
