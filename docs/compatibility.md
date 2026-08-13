@@ -463,8 +463,15 @@ catalogue's exact-ID closure. Parsed documents and source arrays from the full
 indexing pass are not retained by the report; a caller-supplied durable byte
 cache avoids a second network transfer. Closure documents are re-ingested and
 must match the root identity and ordered catalogue-link target IDs used by the
-plan before they are exposed. Remote source picking, progress UI, cancellation
-controls, cache management UI, and repository update discovery remain deferred.
+plan before they are exposed. Indexing and closure acquisition expose
+best-effort per-file progress snapshots suitable for cancellation-aware UI.
+Remote source picking, progress presentation, cache management UI, and
+repository update discovery remain deferred.
+
+Already-ingested closure documents can now use the same graph/context
+composition path as local batches without changing their download provenance or
+source-byte identity. This is composition only; it does not imply dependency
+resolution beyond the acquired closure or any evaluation behavior.
 
 At the August 13, 2026 inspection point, `BSData/wh40k-11e` had no latest
 GitHub release asset and the official BSData gallery registry did not contain

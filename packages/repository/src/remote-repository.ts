@@ -53,6 +53,15 @@ interface RemoteRepositoryOperationOptions {
   readonly fileLimits?: Partial<PinnedGitHubAcquisitionLimits>;
   readonly repositoryLimits?: Partial<RemoteBattleScribeRepositoryLimits>;
   readonly ingestionLimits?: Partial<IngestionLimits>;
+  readonly onProgress?: (progress: RemoteRepositoryOperationProgress) => void;
+}
+
+export interface RemoteRepositoryOperationProgress {
+  readonly phase: "indexing" | "acquiring";
+  readonly completedFiles: number;
+  readonly totalFiles: number;
+  readonly currentPath?: string;
+  readonly acceptedBytes: number;
 }
 
 export type BuildPinnedBattleScribeRepositoryIndexOptions =
@@ -117,6 +126,12 @@ export async function buildPinnedBattleScribeRepositoryIndex(
   const reports: RemoteRepositoryIndexFileReport[] = [];
   const summaries: BattleScribeRepositoryDocumentSummary[] = [];
   let totalBytes = 0;
+  notifyProgress(options.onProgress, {
+    phase: "indexing",
+    completedFiles: 0,
+    totalFiles: tree.files.length,
+    acceptedBytes: 0,
+  });
 
   for (const [index, file] of tree.files.entries()) {
     const read = await readPinnedGitHubTreeFile(tree.source, file, {
@@ -135,6 +150,13 @@ export async function buildPinnedBattleScribeRepositoryIndex(
         file,
         status: "rejected",
         diagnostics: read.diagnostics,
+      });
+      notifyProgress(options.onProgress, {
+        phase: "indexing",
+        completedFiles: index + 1,
+        totalFiles: tree.files.length,
+        currentPath: file.path,
+        acceptedBytes: totalBytes,
       });
       continue;
     }
@@ -165,6 +187,13 @@ export async function buildPinnedBattleScribeRepositoryIndex(
         diagnostics: fileDiagnostics,
         cacheStatus: read.value.cacheStatus,
       });
+      notifyProgress(options.onProgress, {
+        phase: "indexing",
+        completedFiles: index + 1,
+        totalFiles: tree.files.length,
+        currentPath: file.path,
+        acceptedBytes: totalBytes,
+      });
       continue;
     }
     const summary = summarizeBattleScribeRepositoryDocument(
@@ -179,6 +208,13 @@ export async function buildPinnedBattleScribeRepositoryIndex(
       diagnostics: fileDiagnostics,
       cacheStatus: read.value.cacheStatus,
       summary,
+    });
+    notifyProgress(options.onProgress, {
+      phase: "indexing",
+      completedFiles: index + 1,
+      totalFiles: tree.files.length,
+      currentPath: file.path,
+      acceptedBytes: totalBytes,
     });
   }
 
@@ -236,7 +272,14 @@ export async function acquirePinnedBattleScribeDependencyClosure(
   const documents: ParsedBattleScribeDocument[] = [];
   let totalBytes = 0;
 
-  for (const plannedFile of planned.value.files) {
+  notifyProgress(options.onProgress, {
+    phase: "acquiring",
+    completedFiles: 0,
+    totalFiles: planned.value.files.length,
+    acceptedBytes: 0,
+  });
+
+  for (const [plannedIndex, plannedFile] of planned.value.files.entries()) {
     const file = treeFilesByPath.get(plannedFile.document.path);
     if (file === undefined) {
       const missing = remoteDiagnostic(
@@ -256,6 +299,13 @@ export async function acquirePinnedBattleScribeDependencyClosure(
         summary: plannedFile.document,
         status: "rejected",
         diagnostics: [missing],
+      });
+      notifyProgress(options.onProgress, {
+        phase: "acquiring",
+        completedFiles: plannedIndex + 1,
+        totalFiles: planned.value.files.length,
+        currentPath: plannedFile.document.path,
+        acceptedBytes: totalBytes,
       });
       continue;
     }
@@ -288,6 +338,13 @@ export async function acquirePinnedBattleScribeDependencyClosure(
         diagnostics: acquired.diagnostics,
         file,
       });
+      notifyProgress(options.onProgress, {
+        phase: "acquiring",
+        completedFiles: plannedIndex + 1,
+        totalFiles: planned.value.files.length,
+        currentPath: plannedFile.document.path,
+        acceptedBytes: totalBytes,
+      });
       continue;
     }
 
@@ -304,6 +361,13 @@ export async function acquirePinnedBattleScribeDependencyClosure(
         diagnostics: [...acquired.diagnostics, mismatch],
         file,
         cacheStatus: acquired.value.cacheStatus,
+      });
+      notifyProgress(options.onProgress, {
+        phase: "acquiring",
+        completedFiles: plannedIndex + 1,
+        totalFiles: planned.value.files.length,
+        currentPath: plannedFile.document.path,
+        acceptedBytes: totalBytes,
       });
       continue;
     }
@@ -324,6 +388,13 @@ export async function acquirePinnedBattleScribeDependencyClosure(
       file,
       cacheStatus: acquired.value.cacheStatus,
       document: acquired.value.document,
+    });
+    notifyProgress(options.onProgress, {
+      phase: "acquiring",
+      completedFiles: plannedIndex + 1,
+      totalFiles: planned.value.files.length,
+      currentPath: plannedFile.document.path,
+      acceptedBytes: totalBytes,
     });
   }
 
@@ -488,4 +559,15 @@ function remoteDiagnostic(
   details: Readonly<Record<string, unknown>>,
 ): Diagnostic {
   return { code, message, severity, impacts, details };
+}
+
+function notifyProgress(
+  observer: ((progress: RemoteRepositoryOperationProgress) => void) | undefined,
+  progress: RemoteRepositoryOperationProgress,
+): void {
+  try {
+    observer?.(progress);
+  } catch {
+    // Progress observers are informational and cannot change acquisition.
+  }
 }

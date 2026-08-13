@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { fixtureBytes } from "@rosterforge/test-fixtures";
+import { importLocalBattleScribeFiles } from "@rosterforge/repository";
 
-import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
+import {
+  prepareImportedCatalogueLibrary,
+  prepareLocalCatalogueLibrary,
+} from "./catalogue-library.js";
 
 const importOptions = {
   batchId: "catalogue-library-test",
@@ -10,6 +14,33 @@ const importOptions = {
 };
 
 describe("prepareLocalCatalogueLibrary", () => {
+  it("composes already-ingested documents without replacing provenance", async () => {
+    const imported = await importLocalBattleScribeFiles(
+      [
+        { filename: "minimal.gst", bytes: fixtureBytes("minimal.gst") },
+        { filename: "minimal.cat", bytes: fixtureBytes("minimal.cat") },
+      ],
+      importOptions,
+    );
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) return;
+
+    const result = prepareImportedCatalogueLibrary(
+      imported.value,
+      imported.diagnostics,
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.documents[1]).toBe(imported.value.documents[1]);
+    expect(result.value.catalogues[0]?.source).toBe(
+      imported.value.documents[1]?.source,
+    );
+    expect(result.value.catalogues[0]?.document.sourceBytes).toBe(
+      imported.value.documents[1]?.sourceBytes,
+    );
+  });
+
   it("turns a matched local game system and catalogue into a stable choice", async () => {
     const gstBytes = fixtureBytes("minimal.gst");
     const catBytes = fixtureBytes("minimal.cat");

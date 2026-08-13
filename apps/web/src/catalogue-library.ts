@@ -10,6 +10,7 @@ import {
 import {
   failure,
   success,
+  type Diagnostic,
   type ObjectId,
   type Result,
   type SourceFileProvenance,
@@ -64,8 +65,21 @@ export async function prepareLocalCatalogueLibrary(
     return failure(imported.diagnostics);
   }
 
-  const diagnostics = [...imported.diagnostics];
-  const graph = resolveBattleScribeDataGraph(imported.value.documents);
+  return prepareImportedCatalogueLibrary(
+    imported.value,
+    imported.diagnostics,
+    options.materialization,
+  );
+}
+
+export function prepareImportedCatalogueLibrary(
+  imported: LocalBattleScribeImportReport,
+  importDiagnostics: readonly Diagnostic[] = [],
+  materialization?: BattleScribeCatalogueContextOptions,
+): Result<LocalCatalogueLibrary> {
+
+  const diagnostics = [...importDiagnostics];
+  const graph = resolveBattleScribeDataGraph(imported.documents);
   diagnostics.push(...graph.diagnostics);
   if (!graph.ok) {
     return failure(diagnostics);
@@ -73,7 +87,7 @@ export async function prepareLocalCatalogueLibrary(
 
   const contexts = composeBattleScribeCatalogueContexts(
     graph.value,
-    options.materialization,
+    materialization,
   );
   diagnostics.push(...contexts.diagnostics);
   if (!contexts.ok) {
@@ -86,19 +100,19 @@ export async function prepareLocalCatalogueLibrary(
   const selectableCatalogues = catalogues.filter(
     ({ document }) => document.metadata.library !== true,
   );
-  const gameSystems = imported.value.documents.filter(
+  const gameSystems = imported.documents.filter(
     (document) => document.metadata.kind === "gameSystem",
   );
 
   return success(
     {
       status: libraryStatus(
-        imported.value,
+        imported,
         selectableCatalogues,
         diagnostics.length > 0,
       ),
-      importReport: imported.value,
-      documents: imported.value.documents,
+      importReport: imported,
+      documents: imported.documents,
       gameSystems,
       catalogues,
       selectableCatalogues,

@@ -27,11 +27,13 @@ describe("remote BattleScribe repository orchestration", () => {
     const fixture = await repositoryFixture();
     const cache = new MemoryByteCache();
     const fetcher = fixtureFetch(fixture);
+    const indexProgress = vi.fn();
 
     const indexed = await buildPinnedBattleScribeRepositoryIndex(fixture.tree, {
       cache,
       fetch: fetcher,
       importedAt,
+      onProgress: indexProgress,
     });
 
     expect(indexed.ok).toBe(true);
@@ -55,12 +57,36 @@ describe("remote BattleScribe repository orchestration", () => {
     ]);
     expect(indexed.value.totalBytes).toBe(fixture.totalBytes);
     expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(indexProgress.mock.calls.map(([progress]) => progress)).toEqual([
+      {
+        phase: "indexing",
+        completedFiles: 0,
+        totalFiles: 3,
+        acceptedBytes: 0,
+      },
+      expect.objectContaining({
+        phase: "indexing",
+        completedFiles: 1,
+        totalFiles: 3,
+        currentPath: "materialization-client.cat",
+      }),
+      expect.objectContaining({
+        completedFiles: 2,
+        currentPath: "materialization.cat",
+      }),
+      expect.objectContaining({
+        completedFiles: 3,
+        currentPath: "projection.gst",
+        acceptedBytes: fixture.totalBytes,
+      }),
+    ]);
 
+    const closureProgress = vi.fn();
     const closure = await acquirePinnedBattleScribeDependencyClosure(
       fixture.tree,
       indexed.value.index,
       "materialization-client.cat",
-      { cache, fetch: fetcher, importedAt },
+      { cache, fetch: fetcher, importedAt, onProgress: closureProgress },
     );
 
     expect(closure.ok).toBe(true);
@@ -90,6 +116,29 @@ describe("remote BattleScribe repository orchestration", () => {
       closure.value.documents[1]?.root,
     );
     expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(closureProgress).toHaveBeenCalledTimes(4);
+    expect(closureProgress.mock.calls.at(-1)?.[0]).toEqual({
+      phase: "acquiring",
+      completedFiles: 3,
+      totalFiles: 3,
+      currentPath: "materialization.cat",
+      acceptedBytes: fixture.totalBytes,
+    });
+  });
+
+  it("keeps progress observers from changing acquisition results", async () => {
+    const fixture = await repositoryFixture();
+
+    const indexed = await buildPinnedBattleScribeRepositoryIndex(fixture.tree, {
+      fetch: fixtureFetch(fixture),
+      importedAt,
+      onProgress: () => {
+        throw new Error("observer failed");
+      },
+    });
+
+    expect(indexed.ok).toBe(true);
+    expect(indexed.ok && indexed.value.status).toBe("complete");
   });
 
   it("keeps an incomplete plan usable when a target is absent from the index", async () => {

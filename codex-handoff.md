@@ -47,8 +47,11 @@ The complete active roster workspace is now a separate byte-for-byte moved
 module as well, leaving `App.tsx` as a small composition root. A defensive,
 versioned IndexedDB adapter now persists verified pinned repository bytes while
 leaving integrity verification in the repository package. The next slice is
-the acquisition UI; cache eviction, quota controls, and metadata-index
-persistence remain deferred.
+the acquisition UI. Its headless prerequisites are complete: remote operations
+expose non-authoritative per-file progress, and already-ingested closure
+documents enter catalogue composition without reparsing or replacing download
+provenance. Cache eviction, quota controls, and metadata-index persistence
+remain deferred.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

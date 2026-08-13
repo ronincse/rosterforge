@@ -1201,7 +1201,9 @@ file report and compact summary per accepted source. It intentionally releases
 parsed generic trees and source byte arrays after each summary is produced; a
 durable cache adapter is responsible for retaining verified source bytes across
 the indexing pass. A `partial` report keeps valid summaries when malformed
-siblings are rejected.
+siblings are rejected. `RemoteRepositoryOperationProgress` is ephemeral
+observation state: phase, completed and total files, current path, and accepted
+bytes. It is neither persisted nor treated as acquisition authority.
 
 Closure acquisition treats those summaries as a plan input, not as authority.
 It reopens each planned tree file from verified cache or network bytes, performs
@@ -1210,6 +1212,12 @@ target IDs with the summary. Mismatched files remain rejected reports. The
 closure report retains only its ordered accepted documents and bytes, so graph
 resolution can consume a focused set without recreating the full-repository
 heap footprint.
+
+The application converts accepted closure documents into an import report by
+reference before graph/context composition. The report is an application-facing
+view over documents already accepted by ingestion; it does not clone generic
+trees or source bytes and it does not rewrite `download` provenance as a local
+file source.
 
 Index and closure `complete` statuses describe source acquisition only. They do
 not replace validation completeness, suppress projection diagnostics, or claim

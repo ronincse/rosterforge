@@ -215,7 +215,9 @@ tree files sequentially. It retains ordered per-file reports and compact
 summaries, not parsed document trees or source byte arrays. Malformed files are
 isolated as rejected reports while valid sibling summaries remain available.
 An optional durable byte cache prevents those verified source bytes from being
-downloaded again.
+downloaded again. An optional best-effort progress observer receives an initial
+snapshot and one snapshot after each attempted file; observer failures cannot
+change acquisition results.
 
 `acquirePinnedBattleScribeDependencyClosure` combines the planner, pinned tree,
 and read-through acquisition. It retains only accepted documents in plan order
@@ -251,6 +253,12 @@ graph resolution, then context composition.
 The library is a read-only service result, not UI state. It does not choose a
 catalogue, load missing game systems or linked catalogues, construct a roster,
 persist bytes, or evaluate any BattleScribe behavior.
+
+`prepareImportedCatalogueLibrary` is the shared composition half of this
+boundary. It accepts an existing immutable import report, retains document and
+provenance object identity, and performs only graph resolution and catalogue
+context composition. Remote closure acquisition can therefore enter the same
+application model without reparsing downloaded bytes as local files.
 
 ## Browser Application Boundary
 
