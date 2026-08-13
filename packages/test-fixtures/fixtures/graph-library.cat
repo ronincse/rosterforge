@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="library-first" name="Graph Library" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="true">
+  <catalogueLinks>
+    <catalogueLink id="catalogue-link-back" name="Back To Catalogue"
+      targetId="catalogue-203" type="catalogue" importRootEntries="false" />
+  </catalogueLinks>
+  <categoryEntries>
+    <categoryEntry id="category-library" name="Library Category" />
+  </categoryEntries>
+  <forceEntries>
+    <forceEntry id="force-library" name="Library Force" />
+  </forceEntries>
+  <sharedSelectionEntries>
+    <selectionEntry id="entry-alpha" name="Duplicate Alpha" type="upgrade" />
+    <selectionEntry id="library-entry" name="Library Entry" type="unit" />
+  </sharedSelectionEntries>
+</catalogue>

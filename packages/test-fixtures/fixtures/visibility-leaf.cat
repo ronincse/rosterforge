@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="visibility-leaf" name="Visibility Leaf" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203" library="true">
+  <catalogueLinks>
+    <catalogueLink id="leaf-cycle" name="Branch" targetId="visibility-branch"
+      importRootEntries="true" />
+  </catalogueLinks>
+  <selectionEntries>
+    <selectionEntry id="leaf-first" name="Leaf First" type="unit" import="true" />
+    <selectionEntry id="leaf-false" name="Leaf False" type="unit" import="false" />
+    <selectionEntry id="leaf-absent" name="Leaf Absent" type="unit" />
+    <selectionEntry id="leaf-second" name="Leaf Second" type="unit" import="true" />
+  </selectionEntries>
+  <selectionEntryGroups>
+    <selectionEntryGroup id="leaf-group" name="Leaf Group" import="true" />
+    <selectionEntryGroup id="leaf-group-false" name="Leaf Group False" import="false" />
+  </selectionEntryGroups>
+  <entryLinks>
+    <entryLink id="leaf-link" name="Leaf Link" targetId="leaf-shared"
+      type="selectionEntry" import="true" />
+    <entryLink id="leaf-link-absent" name="Leaf Link Absent" targetId="leaf-shared"
+      type="selectionEntry" />
+  </entryLinks>
+  <sharedSelectionEntries>
+    <selectionEntry id="leaf-shared" name="Leaf Shared" type="upgrade" import="true" />
+  </sharedSelectionEntries>
+</catalogue>

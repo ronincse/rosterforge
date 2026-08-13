@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="materialization-catalogue" name="Materialization Catalogue" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <sharedRules>
+    <rule id="shared-rule" name="Definition Rule" hidden="true">
+      <description>Definition rule text.</description>
+    </rule>
+    <rule id="duplicate-info-target" name="Duplicate Rule One" />
+    <rule id="duplicate-info-target" name="Duplicate Rule Two" />
+  </sharedRules>
+  <sharedProfiles>
+    <profile id="shared-profile" name="Definition Profile" hidden="true"
+      typeId="profile-type-unit" typeName="Unit">
+      <characteristics>
+        <characteristic name="Move" typeId="characteristic-move">6</characteristic>
+      </characteristics>
+    </profile>
+  </sharedProfiles>
+  <sharedSelectionEntries>
+    <selectionEntry id="shared-base" name="Definition Name" type="unit"
+      defaultAmount="2" step="0.5"
+      hidden="true" collective="true" import="true">
+      <selectionEntries>
+        <selectionEntry id="definition-child" name="Definition Child" type="model" />
+      </selectionEntries>
+      <entryLinks>
+        <entryLink id="nested-leaf-link" name="Nested Leaf"
+          targetId="shared-leaf" type="selectionEntry" />
+      </entryLinks>
+      <categoryLinks>
+        <categoryLink id="definition-category" name="Definition Category"
+          targetId="category-unit" primary="true" />
+      </categoryLinks>
+      <infoLinks>
+        <infoLink id="definition-rule-info" name="Local Rule Name"
+          targetId="shared-rule" type="rule" hidden="false" />
+      </infoLinks>
+      <costs>
+        <cost name="pts" typeId="cost-points" value="10" />
+      </costs>
+    </selectionEntry>
+    <selectionEntry id="shared-leaf" name="Shared Leaf" type="upgrade" />
+    <selectionEntry id="cycle-a" name="Cycle A" type="upgrade">
+      <entryLinks>
+        <entryLink id="cycle-a-to-b" name="Cycle B"
+          targetId="cycle-b" type="selectionEntry" />
+      </entryLinks>
+    </selectionEntry>
+    <selectionEntry id="cycle-b" name="Cycle B" type="upgrade">
+      <entryLinks>
+        <entryLink id="cycle-b-to-a" name="Cycle A"
+          targetId="cycle-a" type="selectionEntry" />
+      </entryLinks>
+    </selectionEntry>
+    <selectionEntry id="duplicate-target" name="Duplicate One" type="upgrade" />
+    <selectionEntry id="duplicate-target" name="Duplicate Two" type="upgrade" />
+  </sharedSelectionEntries>
+  <sharedSelectionEntryGroups>
+    <selectionEntryGroup id="shared-group" name="Definition Group"
+      hidden="true" collective="true" import="true"
+      defaultSelectionEntryId="group-child">
+      <selectionEntries>
+        <selectionEntry id="group-child" name="Group Child" type="upgrade" />
+      </selectionEntries>
+    </selectionEntryGroup>
+  </sharedSelectionEntryGroups>
+  <entryLinks>
+    <entryLink id="root-entry-link" name="Local Name"
+      targetId="shared-base" type="selectionEntry"
+      defaultAmount="3" step="1"
+      hidden="false" collective="false" import="false">
+      <selectionEntries>
+        <selectionEntry id="overlay-child" name="Overlay Child" type="upgrade" />
+      </selectionEntries>
+      <categoryLinks>
+        <categoryLink id="overlay-category" name="Overlay Category"
+          targetId="category-unit" primary="false" />
+      </categoryLinks>
+      <infoLinks>
+        <infoLink id="overlay-profile-info" name=""
+          targetId="shared-profile" type="profile" hidden="false" />
+        <infoLink id="missing-rule-info" name="Missing Rule"
+          targetId="missing-rule" type="rule" />
+        <infoLink id="no-target-info" name="No Target Rule" type="rule" />
+        <infoLink id="ambiguous-rule-info" name="Ambiguous Rule"
+          targetId="duplicate-info-target" type="rule" />
+        <infoLink id="mismatched-rule-info" name="Wrong Kind"
+          targetId="shared-profile" type="rule" />
+      </infoLinks>
+      <costs>
+        <cost name="pts" typeId="cost-points" value="5" />
+      </costs>
+    </entryLink>
+    <entryLink id="root-group-link" name="Local Group"
+      targetId="shared-group" type="selectionEntryGroup"
+      defaultAmount="1,1" step="0"
+      hidden="false" collective="false" import="false">
+      <selectionEntries>
+        <selectionEntry id="group-overlay-child" name="Group Overlay Child" type="upgrade" />
+      </selectionEntries>
+    </entryLink>
+    <entryLink id="root-cycle-link" name="Cycle Root"
+      targetId="cycle-a" type="selectionEntry" />
+    <entryLink id="root-missing-link" name="Missing"
+      targetId="missing-target" type="selectionEntry" />
+    <entryLink id="root-no-target-link" name="No Target"
+      type="selectionEntry" />
+    <entryLink id="root-ambiguous-link" name="Ambiguous"
+      targetId="duplicate-target" type="selectionEntry" />
+    <entryLink id="root-kind-mismatch-link" name="Wrong Kind"
+      targetId="shared-group" type="selectionEntry" />
+  </entryLinks>
+</catalogue>

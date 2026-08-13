@@ -8,6 +8,12 @@
 - `foundation` has no workspace dependencies.
 - `battlescribe-data` may depend only on `foundation` and parsing/archive
   libraries.
+- `roster-model` may depend only on `foundation`.
+- `persistence` may depend only on `foundation`, `repository`, and
+  `roster-model`; browser storage adapters belong in `apps/web`.
+- `roster-builder` is the integration boundary between `data-graph` and
+  `roster-model`; it must not perform cost, constraint, modifier, or legality
+  evaluation.
 - Evaluation code must remain deterministic and independent of React,
   persistence, and browser components.
 

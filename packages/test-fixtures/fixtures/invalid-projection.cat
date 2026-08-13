@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="invalid-projection" name="Invalid Projection Values"
+  revision="many" gameSystemId="system-203" gameSystemRevision="-1"
+  library="sometimes">
+  <sharedSelectionEntries>
+    <selectionEntry id="invalid-entry" name="Invalid Entry"
+      hidden="sometimes" collective="FALSE">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="free" />
+      </costs>
+      <constraints>
+        <constraint id="invalid-constraint" type="min" field="selections"
+          scope="self" value="none" percentValue="yes" />
+      </constraints>
+      <modifiers>
+        <modifier type="mystery" field="name" value="still observable" />
+      </modifiers>
+    </selectionEntry>
+  </sharedSelectionEntries>
+</catalogue>

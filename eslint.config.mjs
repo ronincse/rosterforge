@@ -8,6 +8,7 @@ const coreFiles = [
   "packages/repository/**/*.ts",
   "packages/data-graph/**/*.ts",
   "packages/roster-model/**/*.ts",
+  "packages/roster-builder/**/*.ts",
   "packages/evaluation/**/*.ts",
   "packages/persistence/**/*.ts",
   "packages/test-fixtures/**/*.ts",

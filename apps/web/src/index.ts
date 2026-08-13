@@ -1,2 +1,1 @@
-export const webPlaceholder =
-  "React and PWA scaffolding are intentionally deferred.";
+export * from "./catalogue-library.js";

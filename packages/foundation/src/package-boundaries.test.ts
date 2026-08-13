@@ -14,6 +14,7 @@ const corePackageNames = [
   "repository",
   "data-graph",
   "roster-model",
+  "roster-builder",
   "evaluation",
   "persistence",
   "test-fixtures",
@@ -58,7 +59,49 @@ describe("core package boundaries", () => {
       }
     }
   });
+
+  it("keeps roster state independent from catalogue graphs", () => {
+    const repository = packageManifest("repository");
+    const rosterModel = packageManifest("roster-model");
+    const rosterBuilder = packageManifest("roster-builder");
+    const evaluation = packageManifest("evaluation");
+    const persistence = packageManifest("persistence");
+
+    expect(Object.keys(repository.dependencies ?? {}).sort()).toEqual([
+      "@rosterforge/battlescribe-data",
+      "@rosterforge/foundation",
+    ]);
+    expect(Object.keys(rosterModel.dependencies ?? {})).toEqual([
+      "@rosterforge/foundation",
+    ]);
+    expect(Object.keys(rosterBuilder.dependencies ?? {}).sort()).toEqual([
+      "@rosterforge/data-graph",
+      "@rosterforge/foundation",
+      "@rosterforge/roster-model",
+    ]);
+    expect(Object.keys(evaluation.dependencies ?? {}).sort()).toEqual([
+      "@rosterforge/data-graph",
+      "@rosterforge/foundation",
+      "@rosterforge/roster-model",
+    ]);
+    expect(Object.keys(persistence.dependencies ?? {}).sort()).toEqual([
+      "@rosterforge/foundation",
+      "@rosterforge/repository",
+      "@rosterforge/roster-model",
+    ]);
+  });
 });
+
+function packageManifest(
+  packageName: string,
+): Record<string, Record<string, string> | undefined> {
+  return JSON.parse(
+    readFileSync(
+      join(packageRoot, "packages", packageName, "package.json"),
+      "utf8",
+    ),
+  ) as Record<string, Record<string, string> | undefined>;
+}
 
 function recursiveTypeScriptFiles(directory: string): readonly string[] {
   const files: string[] = [];

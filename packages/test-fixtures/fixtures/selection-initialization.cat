@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="selection-initialization" name="Selection Initialization" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="initialization-category-units" name="Units" />
+    <categoryEntry id="initialization-category-configuration"
+      name="Configuration" />
+  </categoryEntries>
+  <forceEntries>
+    <forceEntry id="initialization-force" name="Initialization Force" />
+  </forceEntries>
+  <entryLinks>
+    <entryLink id="duplicate-initialization-root"
+      name="Duplicate Initialization Unit" targetId="initialization-unit"
+      type="selectionEntry" />
+  </entryLinks>
+  <selectionEntries>
+    <selectionEntry id="initialization-unit" name="Initialization Unit"
+      type="unit">
+      <categoryLinks>
+        <categoryLink id="initialization-unit-category" name="Units"
+          targetId="initialization-category-units" primary="true" />
+      </categoryLinks>
+      <selectionEntries>
+        <selectionEntry id="required-model" name="Required Model" type="model">
+          <selectionEntries>
+            <selectionEntry id="required-weapon" name="Required Weapon"
+              type="upgrade">
+              <constraints>
+                <constraint id="required-weapon-min" type="min"
+                  field="selections" scope="parent" value="1" />
+                <constraint id="required-weapon-max" type="max"
+                  field="selections" scope="parent" value="1" />
+              </constraints>
+            </selectionEntry>
+          </selectionEntries>
+          <constraints>
+            <constraint id="required-model-min" type="min"
+              field="selections" scope="parent" value="2" />
+            <constraint id="required-model-max" type="max"
+              field="selections" scope="parent" value="2" />
+          </constraints>
+        </selectionEntry>
+        <selectionEntry id="modified-child" name="Modified Child"
+          type="upgrade">
+          <constraints>
+            <constraint id="modified-child-min" type="min"
+              field="selections" scope="parent" value="1" />
+          </constraints>
+          <modifiers>
+            <modifier type="set" field="modified-child-min" value="0" />
+          </modifiers>
+        </selectionEntry>
+      </selectionEntries>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="default-group" name="Default Group"
+          defaultSelectionEntryId="default-option">
+          <selectionEntries>
+            <selectionEntry id="default-option" name="Default Option"
+              type="upgrade">
+              <constraints>
+                <constraint id="default-option-max" type="max"
+                  field="selections" scope="parent" value="1" />
+              </constraints>
+            </selectionEntry>
+            <selectionEntry id="alternate-option" name="Alternate Option"
+              type="upgrade" />
+          </selectionEntries>
+          <constraints>
+            <constraint id="default-group-min" type="min"
+              field="selections" scope="parent" value="1" />
+            <constraint id="default-group-max" type="max"
+              field="selections" scope="parent" value="1" />
+          </constraints>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="manual-group" name="Manual Group"
+          defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="manual-option-one" name="Manual Option One"
+              type="upgrade" />
+            <selectionEntry id="manual-option-two" name="Manual Option Two"
+              type="upgrade" />
+          </selectionEntries>
+          <constraints>
+            <constraint id="manual-group-min" type="min"
+              field="selections" scope="parent" value="1" />
+            <constraint id="manual-group-max" type="max"
+              field="selections" scope="parent" value="1" />
+          </constraints>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+      <constraints>
+        <constraint id="initialization-unit-roster-min" type="min"
+          field="selections" scope="roster" value="1" shared="true"
+          includeChildSelections="true" includeChildForces="true" />
+        <constraint id="initialization-unit-roster-max" type="max"
+          field="selections" scope="roster" value="1" shared="true"
+          includeChildSelections="true" includeChildForces="true" />
+      </constraints>
+    </selectionEntry>
+    <selectionEntry id="disabled-automatic-root"
+      name="Disabled Automatic Root" type="upgrade">
+      <categoryLinks>
+        <categoryLink id="disabled-automatic-root-category"
+          name="Configuration"
+          targetId="initialization-category-configuration" primary="true" />
+      </categoryLinks>
+      <constraints>
+        <constraint id="disabled-automatic-root-min" type="min"
+          field="selections" scope="force" value="1" shared="true" />
+        <constraint id="disabled-automatic-root-max" type="max"
+          field="selections" scope="force" value="1" shared="true" />
+      </constraints>
+      <modifiers>
+        <modifier type="set" field="disabled-automatic-root-min" value="0" />
+      </modifiers>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

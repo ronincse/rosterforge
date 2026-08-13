@@ -6,7 +6,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && pnpm --filter @rosterforge/web build",
+    "dev": "pnpm --filter @rosterforge/web dev",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false"

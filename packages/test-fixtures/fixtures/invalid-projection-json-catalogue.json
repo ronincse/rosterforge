@@ -1,0 +1,19 @@
+{
+  "catalogue": {
+    "costTypes": [
+      {
+        "name": "Broken Cost",
+        "id": "json-broken-cost",
+        "defaultCostLimit": "not-a-number",
+        "hidden": "not-a-boolean"
+      }
+    ],
+    "xmlns": "http://www.battlescribe.net/schema/catalogueSchema",
+    "library": "not-a-boolean",
+    "id": "json-invalid-catalogue",
+    "name": "Invalid Fictional JSON Catalogue",
+    "revision": "not-an-integer",
+    "battleScribeVersion": 2.03,
+    "type": "catalogue"
+  }
+}

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="conditional-visibility" name="Conditional Visibility" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <selectionEntries>
+    <selectionEntry id="visibility-parent" name="Visibility Parent"
+      type="upgrade">
+      <selectionEntryGroups>
+        <selectionEntryGroup id="regular-options" name="Regular Options"
+          defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="regular-option" name="Regular Option"
+              type="upgrade" />
+            <selectionEntry id="hidden-regular-option"
+              name="Hidden Regular Option" type="upgrade" hidden="true" />
+          </selectionEntries>
+          <constraints>
+            <constraint id="regular-options-min" type="min"
+              field="selections" scope="parent" value="1" shared="true" />
+            <constraint id="regular-options-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="instanceOf" field="selections"
+                  scope="force" childId="force-patrol-child" value="1"
+                  shared="true" includeChildForces="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="child-force-options"
+          name="Child Force Options" defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="child-force-option"
+              name="Child Force Option" type="upgrade" />
+          </selectionEntries>
+          <constraints>
+            <constraint id="child-force-options-min" type="min"
+              field="selections" scope="parent" value="1" shared="true" />
+            <constraint id="child-force-options-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="notInstanceOf" field="selections"
+                  scope="force" childId="force-patrol-child" value="1"
+                  shared="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+          <selectionEntryGroups>
+            <selectionEntryGroup id="nested-child-force-options"
+              name="Nested Child Force Options"
+              defaultSelectionEntryId="none">
+              <selectionEntries>
+                <selectionEntry id="nested-child-force-option"
+                  name="Nested Child Force Option" type="upgrade" />
+              </selectionEntries>
+              <constraints>
+                <constraint id="nested-child-force-options-min" type="min"
+                  field="selections" scope="parent" value="1"
+                  shared="true" futureBehavior="preserved" />
+              </constraints>
+            </selectionEntryGroup>
+          </selectionEntryGroups>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="grouped-hidden-options"
+          name="Grouped Hidden Options" defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="grouped-hidden-option"
+              name="Grouped Hidden Option" type="upgrade" />
+          </selectionEntries>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="hidden" value="true" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="grouped-visible-options"
+          name="Grouped Visible Options" defaultSelectionEntryId="none"
+          hidden="true">
+          <selectionEntries>
+            <selectionEntry id="grouped-visible-option"
+              name="Grouped Visible Option" type="upgrade" />
+          </selectionEntries>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="hidden" value="false" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="grouped-order-options"
+          name="Grouped Order Options" defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="grouped-order-option"
+              name="Grouped Order Option" type="upgrade" />
+          </selectionEntries>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true" />
+          </modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="hidden" value="false" />
+              </modifiers>
+              <modifierGroups>
+                <modifierGroup type="and">
+                  <modifiers>
+                    <modifier type="set" field="hidden" value="true" />
+                  </modifiers>
+                </modifierGroup>
+              </modifierGroups>
+            </modifierGroup>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="hidden" value="false" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+    </selectionEntry>
+    <selectionEntry id="grouped-repeat-visibility"
+      name="Grouped Repeat Visibility" type="upgrade">
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="set" field="hidden" value="true" />
+          </modifiers>
+          <repeats>
+            <repeat id="grouped-repeat" field="selections" scope="self"
+              childId="any" value="1" repeats="1" percentValue="false"
+              shared="false" roundUp="false" />
+          </repeats>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

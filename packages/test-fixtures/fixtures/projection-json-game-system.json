@@ -1,0 +1,59 @@
+{
+  "gameSystem": {
+    "costTypes": [
+      {
+        "name": "Supply",
+        "id": "json-supply",
+        "defaultCostLimit": 0,
+        "hidden": false
+      }
+    ],
+    "profileTypes": [
+      {
+        "name": "Scout",
+        "id": "json-scout-profile",
+        "characteristicTypes": [
+          {
+            "name": "Move",
+            "id": "json-move",
+            "defaultValue": ""
+          },
+          {
+            "name": "Resolve",
+            "id": "json-resolve"
+          }
+        ]
+      }
+    ],
+    "categoryEntries": [
+      {
+        "name": "Explorer",
+        "id": "json-explorer-category",
+        "hidden": false
+      }
+    ],
+    "forceEntries": [
+      {
+        "name": "Expedition",
+        "id": "json-expedition-force",
+        "hidden": false,
+        "categoryLinks": [
+          {
+            "name": "Explorer",
+            "id": "json-force-category-link",
+            "targetId": "json-explorer-category",
+            "primary": false
+          }
+        ]
+      }
+    ],
+    "xmlns": "http://www.battlescribe.net/schema/gameSystemSchema",
+    "id": "json-system",
+    "name": "Fictional JSON System",
+    "revision": 4,
+    "battleScribeVersion": 2.03,
+    "type": "gameSystem",
+    "readme": "Synthetic JSON game system.",
+    "futureRootFlag": "preserved"
+  }
+}

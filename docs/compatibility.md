@@ -4,29 +4,721 @@
 
 - Uncompressed BattleScribe 2.03-style `.gst` and `.cat` XML ingestion
 - ZIP-based `.gstz` and `.catz` ingestion with one matching XML entry
-- Root metadata projection for game systems and catalogues
+- BattleScribe 2.03 JSON game-system and catalogue ingestion from `.json`
+  files, including native Boolean and number values plus `$text` content
+- Root metadata projection for game systems and catalogues, including optional
+  author fields, observed root type, and readme text
+- Typed, read-only BattleScribe 2.03 projections for:
+  - catalogue links and game-system references;
+  - cost types, publications, and publication links;
+  - category entries and recursively nested force entries;
+  - selection entries, selection-entry groups, shared entries, and entry links;
+  - category links, info links, shared and inline info groups, rules, profiles,
+    and characteristics;
+  - profile types and their ordered characteristic-type definitions;
+  - costs, constraints, modifiers, modifier groups, conditions, nested
+    condition groups, observed JSON local condition groups, and repeats
 - Ordered preservation of unknown XML elements and attributes
+- Ordered preservation of unknown JSON properties, duplicate properties,
+  arrays, primitive types, and source ranges
 - Original imported-source and extracted-document byte retention
-- DTD/entity declaration rejection and configurable size limits
+- Bounded local-file batch import for `.gst`, `.cat`, `.gstz`, `.catz`, and
+  `.json`, with deterministic per-file provenance, ordered partial-success
+  reports, and retained rejected bytes
+- Headless application composition from one local batch to ordered catalogue
+  choices, preserving the exact parsed documents, catalogue contexts, source
+  IDs, BattleScribe IDs, diagnostics, and original bytes
+- Responsive React/Vite browser shell for selecting multiple local
+  BattleScribe files, retaining partial-import results, choosing an imported
+  catalogue, and inspecting source and composed-context counts
+- Accessible loading, batch-failure, empty, unavailable, ready, and
+  ready-with-issues states, with ordered file status and diagnostic summaries
+- In-memory roster setup from one selected catalogue and one ordered top-level
+  force definition, using guarded roster-builder references and caller-created
+  branded occurrence IDs
+- Structural roster overview with force and recursive selection-occurrence
+  counts, explicit non-validation messaging, and a return-to-setup action
+- Ordered visible-root selection choices added directly to the starting force
+  through roster-builder guards, with repeated clicks creating distinct
+  immutable occurrences
+- Optional positive finite amounts on selection occurrences, with absent
+  amounts meaning one; immutable add/set/clear/duplicate commands, version-1
+  draft persistence, undo/redo, and a browser amount editor
+- Lexical projection and link-over-definition materialization of selection
+  `defaultAmount` and `step`, without silently treating comma-delimited source
+  extensions as one numeric value
+- Visible roots organized into accessible primary-category disclosures while
+  preserving within-category root order and an explicit uncategorized bucket
+  for absent, secondary-only, missing, or ambiguous category targets
+- Case-insensitive local root-name filtering with ordered matching categories,
+  live match counts, and an explicit no-match state
+- Live force/roster root selected and required counts, shared-definition
+  counting across alternate visible links, and disabled add controls at
+  supported maxima
+- Recursive direct child choices from materialized selection entries and
+  resolved entry links, with selection-entry groups rendered as transparent,
+  ordered chooser containers over their concrete entries
+- Live group selected/required counts and atomic replacement for supported
+  max-one groups, with every concrete nested addition routed through
+  roster-builder guards
+- Live direct-entry selected/required counts and disabled browser add controls
+  at supported maxima, including restoration guidance after a required
+  initialized occurrence is removed
+- Read-only conservative initialization plans for unconditional non-negative
+  integer parent-selection minima, repeated entry occurrences, transparent
+  selection-entry-group containers, and exact direct group defaults
+- Empty-single-force initialization plans for visible entry roots with simple
+  force- or roster-scoped minima and supported unconditional numeric bound
+  modifiers
+- Atomic session creation with required roots added in visible source order
+  when the browser supplies descendant occurrence IDs
+- Atomic browser-session expansion of supported required descendants using
+  caller-generated branded IDs, including nested required entries and explicit
+  defaults, with a 4,096-descendant per-selection planning limit
+- Hidden root labeling and conservative exclusion of unresolved materialized
+  roots from add controls
+- Occurrence-specific selection-subtree removal preserving repeated siblings,
+  prior immutable roster snapshots, and exact materialized choices for
+  surviving occurrences
+- Expandable occurrence details for direct and resolved linked profiles,
+  rules, and recursively nested info groups, with ordered characteristics,
+  direct/linked origin, definition source filenames, and unresolved info-link
+  reasons
+- In-memory undo and redo for successful structural edits, retaining exact
+  immutable session snapshots, clearing redo after a branched edit, and capping
+  retained past snapshots at 100
+- Recursive occurrence-specific selection rename and reset-to-definition-name
+  controls, with non-empty trimmed custom names and undo/redo participation
+- Versioned, bounded local-roster-draft envelopes retaining ordered source
+  bytes, import metadata, source-scoped catalogue identity, branded occurrence
+  IDs, optional names, and immutable roster structure
+- Explicit IndexedDB save/update, reopen, and confirmed-delete controls, with
+  newest-first summaries and no upload or automatic saving
+- Draft restoration through the ordinary secure import, graph, and context
+  pipeline, followed by exact force and materialized-selection matching from
+  stable definition keys
+- Defensive stored-record decoding with format/version checks, byte and roster
+  limits, duplicate occurrence rejection, and structured persistence
+  diagnostics
+- Read-only roster cost totals from the selection-condition evaluation scope,
+  with amount-scaled totals, per-unit values, ordered cost types, explicit
+  complete/incomplete labeling, excluded and unresolved counts, and retained
+  evaluation diagnostics
+- Read-only roster-wide selection-condition and force-condition constraint
+  collections, with independent bound statuses, explicit completeness, ordered
+  details, and no aggregate legality or edit guards
+- Read-only aggregate structural status for supported visible-root,
+  direct-entry, and transparent-group selection bounds in the browser's
+  single-force roster shape, with independent validity and completeness
+- Parent-contextual descendant resolution, known-versus-possible selected
+  counts, and conservative unresolved states that avoid false violations from
+  missing or ambiguous roster references
+- Browser structural-status badges and ordered bound details that recompute
+  after edits and history changes without becoming command guards or a
+  full-legality claim
+- Issue-first structural presentation with owner names, stable links to the
+  relevant selected occurrence or root editor, collapsed satisfied bounds,
+  and separately retained diagnostics
+- Relevance-scoped structural completeness: unsupported dynamic bounds on a
+  proven inactive root remain in one catalogue-level diagnostic but do not
+  make the roster report incomplete until the root is selected
+- Conditional child visibility for direct and recursively grouped Boolean
+  `set` modifiers, with retained applicability trees, owner-direct then
+  group-source ordering, and direct-before-nested group execution
+- Pinned WH40K 11e coverage for all 309 observed grouped hidden modifiers: 295
+  set `true`, 14 set `false`, all scope-free and repeat-free in top-level
+  `and` groups
+- Headless composition of structural, selection-condition constraint, and
+  force-condition constraint reports produced from the same immutable roster
+  snapshot, with ordered findings and independent validity and completeness
+- Composition input guards for report identity and inspection scope; the
+  composer preserves its three source reports by reference and does not
+  re-evaluate them or guard roster commands
+- Compact browser supported-validation ribbon with separate validity and
+  completeness badges, combined status counts, per-domain issue links, and
+  retained structural and constraint detail cards
+- Issue-first constraint presentation with stable links to exact selection
+  occurrences or the owning force, collapsed satisfied bounds, and separately
+  retained diagnostics; unsupported constraint shapes remain incomplete and
+  diagnostic without inflating actionable issue counts
+- Collapsible recursive selection-child collections, with large initialized
+  subtrees closed by default and validation-owned ancestor paths opened
+  automatically
+- Persistent Roster, Add units, and Checks workspace navigation with live
+  counts, a two-pane desktop builder, and ordered full-width mobile fallback
+- Focused active-roster layout that uses the full library shell and restores
+  the unchanged catalogue batch summary when roster setup is cleared
+- Library-marked catalogues retained for composition and diagnostics but
+  excluded from ordered roster-catalogue choices
+- Selected-roster empty state and catalogue category browser kept as separate
+  accessible regions without changing root visibility or add behavior
+- DTD/entity declaration rejection and configurable byte, archive, XML-depth,
+  XML-node, JSON-depth, and JSON-node limits
+- Structured diagnostics for invalid Boolean and numeric projected attributes
+- Read-only graph indexing for already-parsed game systems and catalogues
+- Reference records for game-system references, catalogue links, entry links,
+  category links, info links, publication links, cost-type references,
+  selection-entry-group defaults, ID-valued constraint scopes, condition
+  child IDs, repeat child IDs, profile types, and characteristic types
+- Generic ID indexing that distinguishes a preserved, unprojected target from
+  an ID absent from every supplied document
+- BattleScribe selector classification for observed lexical scopes and child
+  selectors, including `model`, `unit`, `root-entry`, `any`, `upgrade`,
+  `roster`, and the group-default sentinel `none`
+- Resolution diagnostics for missing references, duplicate IDs, and
+  catalogue-link cycles, with repeated equal missing targets grouped per
+  source document
+- Structural materialization of direct and entry-linked selection entries and
+  selection-entry groups across the caller-supplied graph
+- Link-local scalar overrides with absent-value fallback, plus ordered
+  definition-first collection layering
+- Observable unresolved entry links and diagnostics for missing target IDs,
+  missing targets, incompatible kinds, ambiguous targets, and cycles
+- Provenance-preserving rule, profile, and recursive info-group views for info
+  links, including unresolved missing, incompatible, ambiguous, and cyclic
+  targets
+- Observable unsupported info-link types and info links into unprojected
+  generic targets without false missing-target diagnostics
+- Configurable entry-link depth, per-catalogue expansion, and aggregate
+  expansion budgets with diagnosed partial materialization when a budget is
+  reached
+- Per-catalogue visibility views for local, game-system, and linked-catalogue
+  root selection entries, selection-entry groups, and entry links
+- Explicit `importRootEntries="true"` and external-root `import="true"` gating,
+  with deterministic transitive traversal and source-document deduplication
+- Observable disabled, missing, ambiguous, and already-visible catalogue-root
+  import attempts, with source-located diagnostics for blocked targets
+- Composed visible-root materialization retaining visibility origin,
+  occurrence, definition, source document, and definition document separately
+- Shared immutable materialized roots for repeated catalogue paths, with
+  independent per-catalogue budgets under one aggregate call cap
+- Per-catalogue force-definition composition for matching game-system and
+  catalogue-local definitions, preserving each source collection and combined
+  game-system-first order
+- Recursive force-definition views with provenance and explicit resolved,
+  missing, ambiguous, and missing-target-ID category-link states
+- Per-catalogue category-definition composition retaining separate ordered
+  game-system and catalogue-local definitions without linked-catalogue imports
+- Structural profile/characteristic containment reports with explicit type
+  target states and diagnostics for definite cross-profile-type mismatches
+- Unified catalogue contexts retaining the exact visible-root materialization,
+  force, category, and graph-wide profile-containment views
+- Per-catalogue entry-link expansion budgets, a 250,000-expansion aggregate
+  cap, and deterministic combined stage diagnostics for every catalogue in a
+  composed context
+- Immutable roster, nested force-occurrence, and nested selection-occurrence
+  types with caller-supplied branded IDs
+- Ordered append commands for root forces, child forces, force selections, and
+  child selections, with persistent structural sharing
+- Immutable roster renaming, optional force/selection name setting and clearing,
+  and complete force/selection subtree removal
+- Same-parent force and selection reordering by strict zero-based sibling index,
+  with persistent structural sharing
+- Atomic force and selection subtree duplication immediately after the source,
+  using caller-supplied ID mappers and independent occurrence trees
+- Cycle-safe force relocation between the roster root and force parents, plus
+  selection relocation between force and selection parents
+- Non-destructive force and selection definition replacement preserving IDs,
+  names, and descendant trees, with semantic identity no-ops
+- Observable opaque definition keys and optional BattleScribe source IDs,
+  allowing repeated definitions with distinct occurrence IDs
+- Context-backed catalogue, force, and materialized-selection references using
+  deterministic provenance-and-path keys
+- Guarded roster commands rejecting catalogue mismatches, force definitions
+  absent from the context, and selections absent from the materialized tree
+- Context-backed definition replacement using the same catalogue and
+  availability guards as construction
+- Unresolved and resource-limited entry links remain unavailable to roster
+  construction, while roster-model occurrence diagnostics pass through intact
+- Read-only roster compatibility reports retaining occurrence and context
+  objects while exposing definition and direct-parent statuses separately
+- Diagnostic-only force and selection hierarchy inspection, with conservative
+  unresolved states for catalogue mismatch and partial materialization
+- Deterministic base cost aggregation for roster selection occurrences,
+  retaining projected costs, resolved cost types, and source provenance
+- Ordered per-selection cost reports and totals, including explicit zero and
+  independent counting of repeated occurrences
+- Evaluation completeness and structured exclusion of missing, ambiguous, or
+  duplicate same-occurrence costs instead of guessed totals
+- Ordered direct-unconditional numeric cost modifiers for `set`, `increment`,
+  `decrement`, and `floor`, with exact modifier provenance and base/current
+  values retained on each included cost
+- Provisional modifier reports that preserve unsupported steps and make
+  completeness incomplete instead of silently applying or discarding them
+- Read-only selection-count condition reports for self, parent, root-entry,
+  nearest unit/model/upgrade, nearest model-or-unit, force, and roster scopes,
+  including child-selection and child-force traversal flags
+- Force-owned selection-count conditions in force scope, retaining the exact
+  force owner and honoring explicit child-selection and child-force traversal
+- Shared force-definition count conditions in roster scope, with explicit
+  child-force traversal and force-definition candidate reports
+- Selection-owned `instanceOf` and `notInstanceOf` conditions for the exact
+  owner, immediate selection parent, containing force, ancestors, root entry,
+  nearest typed selection, and primary catalogue, including category IDs,
+  selection IDs, type tokens, and `any`
+- Six numeric count comparisons with exact or bounded counts, entry-link versus
+  shared-definition identity, and conservative unresolved candidates
+- Read-only non-negative `min`/`max` selection-constraint reports for self,
+  parent, force, and roster scopes, with bounded counts and no validity state
+- Ordered per-selection constraint collections retaining every projected child
+  report without computing aggregate status or legality
+- Roster-wide depth-first selection-constraint inspection with deterministic
+  collection and diagnostic order and completeness only
+- Optional base, unconditional-modifier, or selection-condition scope applied
+  consistently across per-selection and roster-wide constraint collections
+- Constraint reports retain local direct/grouped modifiers targeting the
+  constraint ID and separate static `baseStatus` from unresolved effective
+  status
+- A separate unconditional constraint scope applies ordered direct `set`,
+  `increment`, `decrement`, and `floor` limit modifiers through the shared
+  numeric kernel while retaining base/effective limits and statuses
+- A separate conditional constraint scope evaluates supported selection-count
+  conditions and nested condition groups for direct and grouped numeric limit
+  modifiers, retaining ordered applicability and numeric-step reports
+- Conditional constraint reports expose relevant modifier-group applicability
+  trees and execute supported descendants in deterministic
+  direct-before-nested order
+- Read-only force-owned `min`/`max` constraints for explicit shared force
+  identity in roster scope, including ordered nested-force candidates and
+  bounded unresolved counts
+- Read-only force-owned cost-type constraints in parent or force scope, with
+  exact selection-condition cost totals, explicit child traversal, retained
+  cost reports, and conservative unresolved subtotals
+- Ordered per-force and roster-wide force-constraint collections with
+  completeness only and no aggregate status or validity
+- Unconditional direct and condition-aware direct/grouped numeric
+  force-constraint modifiers, retaining base/effective limits, applicability,
+  and exact step reports
+- Direct and grouped conditional numeric cost modifiers whose ordinary
+  condition lists use supported selection- or force-count forms, with inherited
+  AND applicability semantics
+- Recursive `and`/`or` condition-group reports preserving nested tree shape,
+  with supported groups participating in modifier applicability
+- Recursive read-only applicability reports for observed `and` modifier
+  groups, preserving parent inheritance, conditions, exact child objects, and
+  each child modifier's local versus effective applicability
+- Conditional cost items expose relevant modifier-group applicability trees
+  and execute supported children in deterministic direct-before-nested order
+- Explicit applicable, not-applicable, and unresolved modifier steps; false
+  conditions do not make an otherwise complete cost report incomplete
+- Exact selection-count repeat reports for supported direct modifiers,
+  including divisor/multiplier arithmetic, `roundUp`, zero repetitions, and
+  amount-aware force or roster queries
+- Amount-aware selection conditions, selection and force constraints,
+  structural status, choice maxima, and recursive browser counts
 
 ## Parsed But Not Evaluated
 
-- All child XML content, including entries, links, rules, profiles, costs,
-  constraints, modifiers, conditions, and repeats
+- Unsupported condition forms applied to modifiers; grouped cost arithmetic
+  outside selection-condition reports, modifiers with their own scope, and
+  unsupported, multiple, or extension-driven repeats
+- Observed JSON local condition-group combination behavior and ordinary
+  condition groups whose preserved type is `count`
+- Conditional, modified, percentage, malformed, extension-driven, or
+  non-parent selection bounds for automatic descendant initialization
+- Structural bounds outside visible roots and direct parent/group selection
+  counts, including conditional eligibility and nested-force roster status
+- Cost-type metadata modifiers, dynamic selection defaults, default cost
+  limits, unsupported constraint and condition forms, unsupported repeat
+  shapes, and broader validation behavior
+- Group-level repeats, multiply repeated, extension-driven, or otherwise
+  unsupported force-constraint modifiers and force-owned constraint shapes
+  outside shared roster-scope `field="forces"` counts or exact parent/force
+  cost-type totals
+- Projected costs remain unevaluated when their type or numeric value is
+  unavailable, ambiguous, or duplicated on one materialized occurrence
 - Unknown elements, attributes, and namespaces
+- Info-group modifiers, modifier groups, and publication links remain
+  projected and observable but do not gain evaluation behavior through
+  info-group materialization.
+- Known structures and fields not included in the current typed surface
 
 ## Deferred
 
-- Catalogue dependency resolution and shared-object resolution
-- Roster construction and `.ros`/`.rosz`
-- Costs, constraints, modifiers, conditions, and validation evaluation
-- IndexedDB, GitHub import, and user interface
+- Catalogue dependency importing and remote repository importing
+- Loading catalogue files named by catalogue links; visibility uses only the
+  documents already supplied by the caller
+- Behavioral merge rules for duplicate costs, constraints, modifiers, rules,
+  profiles, and other layered collections
+- Force-definition inheritance or merging across catalogue links
+- Category-definition inheritance or merging across catalogue links
+- Automatic application of source `defaultAmount`, dynamic modifiers targeting
+  it, comma-delimited default semantics, and hard enforcement of source `step`;
+  supported initialization minima remain distinct occurrences
+- Conditional or grouped automatic-root requirements, implicit choices for
+  groups whose default is absent or `none`, and post-edit maximum enforcement
+- `.ros`/`.rosz` ingestion, projection, import, and export
+- Grouped-modifier costs, broader cost-limit behavior, aggregate general-
+  constraint enforcement, broader condition semantics, and full legality
+  validation
+- Exact XML or JSON reserialization
+- GitHub import, remote repository browsing, and dependency-loading UI
+- Sibling reordering, nested-force editing, force renaming, editable cost
+  overrides, durable history, publication rendering, aggregate legality,
+  validation, and roster export UI
 
 ## Uncertain
 
 - Full tolerance parity with BattleScribe for malformed XML
+- Full tolerance parity with every producer of BattleScribe-shaped JSON
 - Non-ZIP compressed files mislabeled as `.gstz` or `.catz`
 - Archives containing metadata or more than one candidate XML document
+- BattleScribe structures not represented by the current projection types,
+  including roster documents
+- BattleScribe duplicate-ID tolerance rules beyond preserving every occurrence
+  and reporting diagnostics
+- Exact BattleScribe behavior when a link and definition contain costs of the
+  same type; base evaluation preserves both, excludes that occurrence/type from
+  totals, and marks completeness incomplete
+- Exact BattleScribe parity for transitively imported roots and for catalogues
+  reachable through more than one enabled path; RosterForge currently traverses
+  enabled links depth-first, exposes the first path, and deduplicates the source
+  document
+- Whether categories should eventually participate in selectable-root or
+  roster-facing APIs; category definitions now have a separate composition API
+  but remain non-selectable structural definitions
+- Whether linked-catalogue force entries should contribute definitions to a
+  consuming catalogue; the current force view deliberately includes only the
+  matching game system and the catalogue itself
+- Whether profile and characteristic `typeName` display text should receive a
+  separate consistency report; containment currently uses IDs only
+- Migration policy for future local-roster-draft versions; version 1 currently
+  preserves generated occurrence IDs and opaque definition keys as strings
+- Whether automatic initialization should prefer repeated occurrences or one
+  explicit amount when either representation could satisfy the same minimum
+- Exact BattleScribe eligibility beyond direct projected hierarchy, including
+  category, hidden, constraint, and modifier behavior
+- Exact BattleScribe parity for child-modifier execution order and failure
+  semantics inside a modifier group. RosterForge uses direct owner modifiers,
+  then top-level groups in source order, with each group's direct children
+  before nested groups
 
 Uncertain or unsupported behavior must be diagnosed rather than silently
 accepted in later layers.
+
+## Schema And Real-Data Tolerance
+
+The projection follows the BattleScribe 2.03 game-system and catalogue schema
+shape while remaining tolerant of real BSData extensions. In particular,
+modifier kinds are strings. Values observed outside the schema's closed set,
+including `replace` and `floor`, are preserved rather than rejected.
+
+The JSON files observed in `BSData/wh40k-11e` are a JSON serialization of that
+same BattleScribe 2.03 shape, not a separate roster domain. Arrays represent
+repeated collections, native properties represent XML attributes or simple
+text children, and `$text` represents text on attributed elements such as
+characteristics. Root objects retain the historical catalogue or game-system
+namespace and declare `battleScribeVersion` `2.03`.
+
+At commit `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, all 46 JSON files import:
+one game system and 45 catalogues. All 45 catalogue contexts compose. One
+explicit typed-value discrepancy is retained and diagnosed:
+`Warhammer 40,000.json` gives the hidden `Enhancements` cost type an empty
+string `defaultCostLimit`. An empty string is not treated as absence or zero,
+so its typed numeric property is absent and
+`BS_PROJECTION_INVALID_ATTRIBUTE` remains observable.
+
+The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
+339 `localConditionGroup` objects under ordinary `and` groups. Every local
+object uses `type="atLeast"`, `field="selections"`, and `scope="parent"`, and
+contains one nested `before` condition plus one nested `instanceOf` condition.
+It also has 59 ordinary condition groups with the unknown type `count`.
+RosterForge projects local objects and their nested conditions separately,
+retains `count` as a string, and keeps both behaviors unresolved rather than
+misclassifying local-bearing groups as empty or inventing extension semantics.
+
+The same corpus contains 97 selection entries or entry links with
+`defaultAmount` or `step` metadata. Eighty-nine defaults are native JSON
+numbers, while seven are comma-delimited strings: six `"1,1"` values and one
+`"1,1,1"`. One Points Limit entry supplies `step` as the string `"250"`.
+These values cannot share one lossless numeric projection, so both fields stay
+lexical and the generic JSON node remains authoritative. The editor displays
+the source default and uses a positive numeric step only as an input hint; it
+does not infer comma semantics or apply dynamic defaults.
+
+Across those files, 2,826 repeats all query `field="selections"`. Observed
+divisors are positive, multipliers are non-negative integers, 2,824 use floor
+behavior and two set `roundUp: true`. Real repeat and condition objects also
+carry schema-adjacent metadata such as `id`, `childName`, and condition
+`comment`; these strings are projected and treated as inert. Percentage,
+generic-extension, multiple-repeat, and modifier-group repeat execution remains
+unsupported even when the source shape is preserved.
+
+Selecting all 46 documents together now composes without truncating
+materialization. Repository-wide typed reference candidates support observed
+shared cost types and reverse references from shared definitions, while
+effective entry/info links are limited to the source document's
+catalogue/game-system closure. Equal IDs in unrelated catalogues therefore do
+not make a roster definition ambiguous. The corpus still has two duplicate-ID
+groups that can coexist in a resolution closure and two real entry-link cycles.
+
+Observed selector strings are preserved but no longer diagnosed as missing
+IDs. Constraint scopes include `model`, `unit`, and `root-entry`; condition and
+repeat child selectors include `any`, `model`, `roster`, and `upgrade`; 141
+selection-entry groups use `defaultSelectionEntryId: "none"`. Conditions in
+`primary-catalogue` scope also use catalogue document IDs, which resolve as
+document targets rather than selection objects.
+
+The same pinned JSON corpus contains 109 constraint objects with a native
+Boolean `automatic` property that is not part of the supported BattleScribe
+2.03 typed constraint surface. The generic JSON/XML node retains each value.
+Initialization ignores max-only occurrences when no automatic minimum is
+needed; if such an extension affects a bound required for automatic expansion,
+the planner leaves that expansion incomplete instead of inventing semantics.
+
+The Army Roster force definition has one constraint with a native `message`
+property, also outside the 2.03 typed constraint surface. Its exact text remains
+on the generic node. Force-constraint inspection treats it as non-behavioral
+display metadata; it does not parse the `{value}` placeholder or alter the
+numeric limit.
+
+The corpus contains 59 shared info-group definitions and 129 links of observed
+type `infoGroup`. These now project and materialize as recursive,
+provenance-preserving groups. Their nested profiles and rule links are visible
+in roster occurrence details. Enabling this typed path introduces no additional
+diagnostics at the pinned commit. The JSON adapter requires an explicit
+`sharedInfoGroups` array-to-`infoGroup` item mapping; ordinary English
+singularization would incorrectly produce `sharedInfoGroup`.
+
+At the pinned commit, the remaining missing-reference reports all identify IDs
+absent from every supplied file: 66 occurrences of 57 distinct
+selection-entry-group defaults, plus 81 cost occurrences grouped under three
+undefined cost-type IDs (`8349-b76c-37ea-696b`,
+`46a1-6b58-ecdd-8087`, and `c5fb-5b9b-89f6-86c`). Grouped diagnostics retain
+the first source location, total occurrence count, and up to 25 occurrence
+paths. These are real-data discrepancies rather than JSON compatibility
+failures.
+
+A seven-file Imperial Knights dependency closure at the same commit composes
+without exhausting the materialization budget: the game system, Imperial
+Knights catalogue and library, Agents of the Imperium, Adeptus Mechanicus,
+Titans library, and Unaligned Forces. The integration test creates an Imperial
+Knights roster session, adds a linked-library `Knight Paladin`, traverses its
+Wargear group to the expected weapon choices, and evaluates its base total as
+375 points. The all-repository test also proves every non-library catalogue has
+at least one force definition and one resolved root choice. A focused closure
+remains faster to import, but all-repository selection is also supported by the
+compatibility test.
+
+A four-file Aeldari closure proves the supported initialization and transparent
+choice behavior against real data. Creating an empty Army Roster adds Detachment,
+`Battle Focus - Agile Manoeuvres`, Battle Size, and Force Disposition from
+their effective minimums in visible source order. Show/Hide Options has an
+unconditional modifier that reduces its minimum to zero, so it remains
+optional. Conditional Crusade-only roots are omitted without action
+diagnostics.
+
+Battle Size then exposes its required max-one group as the ordered concrete
+choices Incursion, Strike Force, and Onslaught. Selecting Strike Force creates
+that entry directly under Battle Size, not an intermediate group occurrence.
+The sibling Boarding Actions group is hidden for an Army Roster by its observed
+`notInstanceOf` force condition, so it is neither offered nor reported as a
+second required Battle Size. Static hidden entries can still remain labeled
+when an unsupported modifier makes their effective state unresolved; an entry
+whose effective hidden state is definitively true is not offered.
+
+`Guardian Defenders` then uses parent minima of 10 Guardian Defender models and
+one Heavy Weapon Platform. Each model's required weapons also use parent
+minima. The linked Heavy Weapons group has a minimum of one and names its
+Shuriken Cannon entry link as `defaultSelectionEntryId`. Adding the unit creates
+33 descendants, or 34 occurrences for the unit subtree and 39 total including
+the four initialized roots and selected Strike Force, without selecting
+optional Crusade branches. The complete integration path also chooses Warhost
+and Purge the Foe, producing 41 occurrences.
+
+That configured roster totals 90 points, spends three Detachment Points on
+Warhost, and spends zero Enhancements. The supported-validation composition has
+no known violations. Its points maximum is now exactly 2,000: the standard
+Strike Force set operation is followed by the optional Points Limit repeat,
+whose absent selection produces a supported zero-repetition no-op. Grouped
+selection constraints on the configured roster now contribute numeric steps
+without group-unsupported diagnostics. Overall completeness remains incomplete
+where other projected behavior is unsupported; this result is still supported
+validation rather than full BattleScribe legality.
+
+The optional real-data integration test reads an external clone without
+committing third-party data:
+
+```powershell
+$env:ROSTERFORGE_BSDATA_JSON_DIR = "E:\GitHub\wh40k-11e"
+pnpm exec vitest run apps/web/src/bsdata-json.integration.test.ts
+```
+
+The pinned 10th-edition game system also contains `set-primary` and `add`
+modifier kinds and generic modifier attributes such as `affects`, `arg`,
+`join`, and `position`; repeats use an observed `roundUp` attribute. These
+remain available through the generic XML node. Numeric evaluation supports
+`floor` as a minimum because the pinned data orders it after decrements to cap
+the lower bound. `replace`, `set-primary`, `add`, string `append`, and all
+behavior-bearing generic attributes remain preserved and unapplied.
+
+The same pinned corpus contains selection-count conditions using all six
+supported numeric comparisons plus `instanceOf` and `notInstanceOf`. Observed
+scopes include `parent`, `force`, `roster`, `self`, `ancestor`, `root-entry`,
+`primary-catalogue`, `upgrade`, `model`, `unit`, and `model-or-unit`; condition
+fields also include `forces`, cost-type IDs, and characteristic-type IDs.
+
+The ordinary projected condition surface contains 1,084 identity comparisons
+in `parent` scope and 72 in `self` scope. These now inspect the immediate
+selection parent or exact owner, respectively, without treating numeric
+parent-scope siblings or child-traversal flags as identity candidates.
+Unavailable or ambiguous definitions remain unresolved rather than becoming a
+known mismatch.
+
+Real JSON also contains 339 `localConditionGroups` extensions beneath ordinary
+condition groups. Each observed local group includes a non-2.03 `before`
+condition and a self-scoped identity condition. The generic ordered JSON/XML
+tree preserves this extension, but it is not projected into the ordinary
+condition-group collection; the enclosing projected group therefore remains
+empty, diagnostic, and unresolved. These 339 preserved identity conditions are
+separate from the 72 ordinary projected self-scope conditions. A further 59
+ordinary condition groups use unknown `type="count"`; they remain projected as
+unknown strings and unresolved.
+
+Across all 46 pinned 11th-edition JSON documents, 3,587 conditions use
+`ancestor`, `root-entry`, or `upgrade`. The supported shape covers 3,442 of
+them: identity-only ancestor checks, root-entry selection counts and identity,
+and nearest-upgrade selection counts and identity. Category target IDs account
+for most ancestor identity checks; selection IDs, entry-link IDs, `any`, and
+selection type tokens are also retained as effective identities. The remaining
+145 use cost-type fields. The 143 root-entry forms now use the conservative
+static-cost path; the two numeric ancestor forms stay incomplete. Shared
+force-definition counts in roster scope and containing-force identity remain
+supported. All 769 observed `primary-catalogue` conditions are identity
+comparisons and now compare the exact selected catalogue document ID; one uses
+the otherwise ignored `forces` field and the rest use `selections`. Other
+identity and field/scope combinations remain incomplete. Generic `childName`
+and condition `id` attributes are preserved and treated as non-behavioral
+metadata.
+
+The Army Roster force definition also owns numeric selection-count conditions
+with `field="selections"` and `scope="force"` or `scope="roster"`. They query Battle Size and
+override selections while setting force-owned constraint limits. The evaluator
+now counts those selections from the exact force or top-level roster collection
+and follows the explicit child traversal flags. The three target constraints use reachable
+Detachment Points, points, and Enhancements cost-type IDs in parent or force
+scope. Their selection totals are now inspected exactly; the standard direct
+points-limit repeat is supported. Supported constraint and cost groups use
+inherited applicability and deterministic ordered arithmetic in their
+condition-aware reports. Other modifier surfaces remain incomplete.
+
+The corpus also contains 490 conditions scoped to `unit`, `model`, or
+`model-or-unit`. The nearest typed owner-or-ancestor interpretation supports
+482 of them, including three that query the static Crusade Experience cost
+field. Eight have no comparison type and retain their existing missing-type
+diagnostics.
+
+In total, 148 observed conditions query the Crusade Experience or Battle
+Honours cost types. The 146 root-entry or typed-scope forms can sum filtered
+projected base costs when every matched roster occurrence is uniquely resolved
+and has no modifier targeting that cost. The two numeric ancestor forms remain
+unsupported. Modifier-controlled, malformed, or duplicate matched costs remain
+unresolved at runtime; this deliberately avoids recursive effective-cost
+evaluation.
+
+All 1,044 observed ID-valued condition scopes query numeric selection counts.
+Their targets resolve to 1,028 selection entries, ten selection-entry groups,
+and six entry links, so the nearest effective owner-or-ancestor interpretation
+supports their scope shape. Category-entry scope IDs are supported by the same
+identity model and covered synthetically. Missing targets and IDs that resolve
+to force entries or other object kinds remain incomplete instead of producing
+an exact zero count.
+
+The pinned game system contains 301 constraints. Common compatible shapes use
+`type="min"` or `type="max"`, `field="selections"`, and parent, force, or roster
+scope; it also contains self and root-entry scopes, `field="forces"`,
+characteristic-ID fields, negative `-1` limits, and an observed generic
+`negative` attribute. There are 26 negative limits: 21 `max` and five `min`;
+17 target selections and nine target the points cost type; five use parent,
+15 force, and six roster scope. The standalone inspector supports only
+non-negative selection counts in self, parent, force, and roster scope.
+RosterForge intentionally does not reinterpret `-1` as zero, infinity, or a
+disabled bound because that sentinel meaning is not established by the source
+shape. The values remain projected and produce incomplete source-located
+diagnostics. This is a closed compatibility decision, not an open modeling
+question.
+
+Two constraints in the pinned game system are owned by the nested `Crusade
+Army` force entry and use `field="forces"`, `scope="roster"`, and
+`shared="true"`: a minimum of zero and a maximum of one. Both explicitly
+include child forces. This establishes the current force-constraint inspection
+identity shape. The pinned 11th-edition Army Roster adds the three cost-type
+forms above. A synthetic exact parent-scope total and an incomplete modifier
+sequence cover both outcomes without committing third-party game data.
+
+Fifty-nine modifiers in that pinned game system target projected constraint
+IDs: 57 use `set` and two use `increment`. The current inspector detects
+targeting modifiers present on the resolved owner choice, retains them, and
+marks effective status unresolved in base scope. Eleven direct `set` targets
+have no conditions, condition groups, repeats, scope, or behavior extension and
+are structurally eligible for the unconditional scope. Supported conditions on
+direct targets can instead participate in the conditional scope. It does not
+search ancestor and force-definition modifier surfaces.
+
+Across all 46 files at pinned 11th-edition commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 1,491 `and` modifier groups
+contain descendants targeting projected constraint IDs. Their 4,038 target
+operations comprise 2,865 `increment`, 1,167 `set`, four `decrement`, and two
+unsupported `multiply` values. The corpus includes 14 group-level conditions,
+three group-level condition groups, one nested group, one group-level repeat,
+1,187 child-modifier condition lists, 234 child condition groups, and 2,687
+child repeats. Most groups also carry an inert `comment` string. RosterForge
+preserves all of these; supported numeric children execute in the documented
+order, while the two unknown operations and group-level repeat remain
+incomplete and source-located.
+
+The same corpus contains 305 cost-targeting modifiers in 130 modifier groups:
+23 `set`, 131 `increment`, 21 `decrement`, and 130 unsupported `divide`
+operations. All are top-level group children. Of the containing groups, 123 use
+`type="and"` and seven omit `type`; none has a group-level repeat. Twenty-three
+child modifiers carry selection-count repeats. The condition-aware cost report
+executes supported children and exact supported child repeats. Missing group
+types, `divide`, unresolved applicability, and unsupported repeat shapes remain
+preserved, source-located, and incomplete.
+
+At pinned commit `52914f259d4e509379fc653e3b13d2e38edb102e`, the
+10th-edition game system contains 40 modifier groups. Every group uses
+`type="and"`, contains a direct modifier collection, has no nested modifier
+group, and has no group-level condition, condition-group, or repeat collection.
+Some child modifiers do carry their own conditions. Together with the richer
+11th-edition shapes above, this supports the recursive `and` applicability and
+bounded constraint-execution surface. It does not establish exact BattleScribe
+ordering parity or semantics for other group types. Unknown group types remain
+preserved and unresolved rather than rejected.
+
+Representative checks used:
+
+- BattleScribe 2.03 schema URLs under
+  `https://www.battlescribe.net/schema/`;
+- `BSData/wh40k-10e`, `Warhammer 40,000.gst`, observed blob
+  `576537b414cad9c95febc0fe531d616eb5cb2f15`;
+- `BSData/wh40k-9e`, `Warhammer 40,000.gst`, observed blob
+  `b810f0fc73c47566d0bff5b46e6823c205e226a7`.
+- `BSData/wh40k-10e`, commit
+  `52914f259d4e509379fc653e3b13d2e38edb102e`, where faction catalogues use
+  `importRootEntries="true"` for linked roots and root entries use
+  `import="true"`;
+- the same pinned data's `Imperium - Adeptus Titanicus.cat` and
+  `Library - Titans.cat`, which demonstrate that shared targets remain useful
+  through a catalogue link without root importing.
+- the pinned 10th-edition game system's ordered profile-type and
+  characteristic-type definitions, including an optional `defaultValue` of
+  `Melee`;
+- the same pinned game system's four top-level force definitions, including a
+  force entry with a nested `forceEntries` collection; and
+- the pinned `Imperium - Imperial Knights.cat`, which contains no local force
+  entries and therefore exercises the game-system-definition model used by the
+  force composition API;
+- the pinned game system's 114 category definitions and the same sampled
+  catalogue's lack of local category definitions; and
+- 222 profiles across those two pinned files, with no characteristic type found
+  outside its profile's declared profile type.
+
+The historical `battlescribe.net/schema` URLs are retained as schema
+identifiers in documents, but did not reliably serve the 2.03 XSD during this
+session. The implementation therefore continues to rely on the previously
+documented 2.03 shape, project fixtures, and pinned real-data observations
+rather than downloading a moving schema URL during tests.
+
+Third-party data is not committed. Normal tests use project-owned fictional
+fixtures.

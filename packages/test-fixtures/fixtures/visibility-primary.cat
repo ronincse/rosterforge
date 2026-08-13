@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="visibility-primary" name="Visibility Primary" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203" library="false">
+  <catalogueLinks>
+    <catalogueLink id="primary-branch" name="Branch" targetId="visibility-branch"
+      importRootEntries="true" />
+    <catalogueLink id="primary-leaf-again" name="Leaf Again" targetId="visibility-leaf"
+      importRootEntries="true" />
+    <catalogueLink id="primary-disabled" name="Disabled Leaf" targetId="visibility-leaf"
+      importRootEntries="false" />
+    <catalogueLink id="primary-absent" name="Absent Leaf" targetId="visibility-leaf" />
+  </catalogueLinks>
+  <selectionEntries>
+    <selectionEntry id="primary-false" name="Primary False" type="unit" import="false" />
+    <selectionEntry id="primary-absent-root" name="Primary Absent" type="unit" />
+  </selectionEntries>
+  <selectionEntryGroups>
+    <selectionEntryGroup id="primary-group" name="Primary Group" import="false" />
+  </selectionEntryGroups>
+  <entryLinks>
+    <entryLink id="primary-link" name="Primary Link" targetId="primary-shared"
+      type="selectionEntry" import="false" />
+  </entryLinks>
+  <sharedSelectionEntries>
+    <selectionEntry id="primary-shared" name="Primary Shared" type="upgrade" import="true" />
+  </sharedSelectionEntries>
+</catalogue>

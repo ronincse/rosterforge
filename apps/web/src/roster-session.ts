@@ -1,0 +1,1276 @@
+import type {
+  BattleScribeCategoryDefinition,
+  BattleScribeForceDefinition,
+  MaterializedSelectionEntryGroup,
+  MaterializedVisibleRoot,
+} from "@rosterforge/data-graph";
+import {
+  composeSupportedRosterValidation,
+  evaluateRosterCostsWithSelectionConditions,
+  evaluateRosterSelectionVisibilityPath,
+  inspectEmptySingleForceRootChoices,
+  inspectEmptySingleForceRosterStructuralStatus,
+  inspectRosterSelectionChildChoices,
+  inspectRosterForceConstraintsInRoster,
+  inspectRosterSelectionConstraintsInRoster,
+  planEmptySingleForceRootInitialization,
+  planRosterSelectionInitialization,
+  rootSelectionBoundIdentity,
+  selectionEntryGroupVisibilityPath,
+  type EmptySingleForceRootBoundIdentity,
+  type EmptySingleForceRootChoiceInspection,
+  type EmptySingleForceRosterStructuralStatus,
+  type RosterForceConstraintsInRosterReport,
+  type RosterSelectionInitializationPlan,
+  type RosterSelectionChoiceGroupInspection,
+  type RosterSelectionDirectChoiceInspection,
+  type RosterSelectionConditionCostReport,
+  type RosterSelectionConstraintsInRosterReport,
+  type SupportedRosterValidationReport,
+} from "@rosterforge/evaluation";
+import {
+  failure,
+  success,
+  type Diagnostic,
+  type Result,
+  type ValidationCompleteness,
+} from "@rosterforge/foundation";
+import {
+  addRosterSelectionToSelectionFromCatalogueContext,
+  addRosterSelectionToForceFromCatalogueContext,
+  addRosterForceFromCatalogueContext,
+  createRosterFromCatalogueContext,
+  rosterCatalogueReference,
+  type BattleScribeRosterSelectionChoice,
+} from "@rosterforge/roster-builder";
+import {
+  removeRosterSelection,
+  rosterDefinitionKeyForSource,
+  rosterSelectionAmount,
+  rosterSelectionsAmount,
+  setRosterSelectionAmount,
+  setRosterSelectionName,
+  type ForceOccurrenceId,
+  type Roster,
+  type RosterForce,
+  type RosterSelectionDefinitionReference,
+  type RosterId,
+  type RosterSelection,
+  type SelectionOccurrenceId,
+} from "@rosterforge/roster-model";
+
+import type { LocalCatalogueChoice } from "./catalogue-library.js";
+
+export interface CreateLocalRosterSessionInput {
+  readonly rosterId: RosterId;
+  readonly forceId: ForceOccurrenceId;
+  readonly name: string;
+  readonly createSelectionId?: () => SelectionOccurrenceId;
+}
+
+export interface LocalRosterSession {
+  readonly catalogue: LocalCatalogueChoice;
+  readonly forceDefinition: BattleScribeForceDefinition;
+  readonly roster: Roster;
+  readonly selectionChoices: ReadonlyMap<
+    SelectionOccurrenceId,
+    BattleScribeRosterSelectionChoice
+  >;
+}
+
+export interface LocalRosterConstraintInspection {
+  readonly completeness: ValidationCompleteness;
+  readonly selections: RosterSelectionConstraintsInRosterReport;
+  readonly forces: RosterForceConstraintsInRosterReport;
+}
+
+export interface LocalRosterSupportedValidationInspection {
+  readonly status: SupportedRosterValidationReport;
+  readonly structural: EmptySingleForceRosterStructuralStatus;
+  readonly constraints: LocalRosterConstraintInspection;
+  readonly structuralDiagnostics: readonly Diagnostic[];
+  readonly constraintDiagnostics: readonly Diagnostic[];
+}
+
+export type LocalRosterRootChoice = MaterializedVisibleRoot & {
+  readonly materialized: BattleScribeRosterSelectionChoice;
+};
+
+export interface LocalRosterRootChoiceGroup {
+  readonly key: string;
+  readonly name: string;
+  readonly category?: BattleScribeCategoryDefinition;
+  readonly choices: readonly LocalRosterRootChoice[];
+}
+
+export interface LocalRosterRootChoiceState {
+  readonly choice: LocalRosterRootChoice;
+  readonly selected: readonly RosterSelection[];
+  readonly minimum?: number;
+  readonly maximum?: number;
+  readonly remaining?: number;
+  readonly completeness: ValidationCompleteness;
+}
+
+export interface LocalRosterRootChoiceGroupState {
+  readonly key: string;
+  readonly name: string;
+  readonly category?: BattleScribeCategoryDefinition;
+  readonly choices: readonly LocalRosterRootChoiceState[];
+}
+
+export interface LocalRosterRootChoiceInspection {
+  readonly groups: readonly LocalRosterRootChoiceGroupState[];
+  readonly completeness: ValidationCompleteness;
+}
+
+export interface AddLocalRosterRootSelectionInput {
+  readonly selectionId: SelectionOccurrenceId;
+  readonly createSelectionId?: () => SelectionOccurrenceId;
+  readonly amount?: number;
+}
+
+export interface LocalRosterChildChoiceGroup {
+  readonly group: MaterializedSelectionEntryGroup;
+  readonly choices: readonly BattleScribeRosterSelectionChoice[];
+  readonly minimum?: number;
+  readonly maximum?: number;
+  readonly selected: readonly RosterSelection[];
+  readonly remaining?: number;
+  readonly completeness: ValidationCompleteness;
+}
+
+export interface LocalRosterDirectChildChoice {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly minimum?: number;
+  readonly maximum?: number;
+  readonly selected: readonly RosterSelection[];
+  readonly remaining?: number;
+  readonly completeness: ValidationCompleteness;
+}
+
+export interface LocalRosterChildChoiceInspection {
+  readonly direct: readonly LocalRosterDirectChildChoice[];
+  readonly groups: readonly LocalRosterChildChoiceGroup[];
+  readonly completeness: ValidationCompleteness;
+}
+
+export function createLocalRosterSession(
+  catalogue: LocalCatalogueChoice,
+  forceDefinition: BattleScribeForceDefinition,
+  input: CreateLocalRosterSessionInput,
+): Result<LocalRosterSession> {
+  const roster = createRosterFromCatalogueContext(catalogue.context, {
+    id: input.rosterId,
+    name: input.name,
+  });
+  const withForce = addRosterForceFromCatalogueContext(
+    roster,
+    catalogue.context,
+    forceDefinition,
+    { id: input.forceId },
+  );
+  if (!withForce.ok) {
+    return withForce;
+  }
+  let session: LocalRosterSession = {
+    catalogue,
+    forceDefinition,
+    roster: withForce.value,
+    selectionChoices: new Map(),
+  };
+  const diagnostics: Diagnostic[] = [...withForce.diagnostics];
+  if (input.createSelectionId === undefined) {
+    return success(session, diagnostics);
+  }
+  const planned = planEmptySingleForceRootInitialization(
+    catalogue.context.roots.roots,
+  );
+  diagnostics.push(...planned.diagnostics);
+  if (!planned.ok) {
+    return failure(diagnostics);
+  }
+  for (const addition of planned.value.additions) {
+    for (let index = 0; index < addition.quantity; index += 1) {
+      const added = addLocalRosterRootSelection(
+        session,
+        addition.root,
+        {
+          selectionId: input.createSelectionId(),
+          createSelectionId: input.createSelectionId,
+        },
+      );
+      diagnostics.push(...added.diagnostics);
+      if (!added.ok) {
+        return failure(diagnostics);
+      }
+      session = added.value;
+    }
+  }
+  return success(session, diagnostics);
+}
+
+export function restoreLocalRosterSession(
+  catalogue: LocalCatalogueChoice,
+  roster: Roster,
+): Result<LocalRosterSession> {
+  const expectedCatalogue = rosterCatalogueReference(catalogue.context);
+  if (
+    roster.catalogue.key !== expectedCatalogue.key ||
+    (roster.catalogue.sourceId !== undefined &&
+      roster.catalogue.sourceId !== expectedCatalogue.sourceId)
+  ) {
+    return failure([
+      restoreDiagnostic(
+        catalogue,
+        "WEB_ROSTER_DRAFT_CATALOGUE_MISMATCH",
+        "The saved roster belongs to a different catalogue context.",
+        {
+          rosterCatalogueKey: roster.catalogue.key,
+          contextCatalogueKey: expectedCatalogue.key,
+        },
+      ),
+    ]);
+  }
+
+  const rootForce = roster.forces[0];
+  if (
+    roster.forces.length !== 1 ||
+    rootForce === undefined ||
+    rootForce.forces.length > 0
+  ) {
+    return failure([
+      restoreDiagnostic(
+        catalogue,
+        "WEB_ROSTER_DRAFT_FORCE_STRUCTURE_UNSUPPORTED",
+        "The saved roster force structure is not supported by the local editor.",
+        {
+          rootForceCount: roster.forces.length,
+          nestedForceCount:
+            rootForce === undefined ? 0 : countNestedForces(rootForce),
+        },
+      ),
+    ]);
+  }
+
+  const forceDefinitions = flattenForceDefinitions(
+    catalogue.context.forces.definitions,
+  ).filter(
+    (definition) =>
+      rosterDefinitionKeyForSource(
+        definition.source.source.sourceId,
+        definition.source.path,
+      ) === rootForce.definition.key &&
+      (rootForce.definition.sourceId === undefined ||
+        rootForce.definition.sourceId === definition.source.id),
+  );
+  if (forceDefinitions.length !== 1) {
+    return failure([
+      restoreDiagnostic(
+        catalogue,
+        "WEB_ROSTER_DRAFT_FORCE_UNAVAILABLE",
+        "The saved roster force definition is not uniquely available in the rebuilt catalogue context.",
+        {
+          forceId: rootForce.id,
+          definitionKey: rootForce.definition.key,
+          matches: forceDefinitions.length,
+        },
+      ),
+    ]);
+  }
+
+  const choiceIndex = indexSelectionChoices(catalogue);
+  const selectionChoices = new Map<
+    SelectionOccurrenceId,
+    BattleScribeRosterSelectionChoice
+  >();
+  const diagnostics = restoreSelectionChoices(
+    rootForce.selections,
+    choiceIndex,
+    selectionChoices,
+    catalogue,
+  );
+  if (diagnostics.length > 0) return failure(diagnostics);
+
+  return success({
+    catalogue,
+    forceDefinition: forceDefinitions[0]!,
+    roster,
+    selectionChoices,
+  });
+}
+
+export function localRosterRootChoices(
+  catalogue: LocalCatalogueChoice,
+): readonly LocalRosterRootChoice[] {
+  return catalogue.context.roots.roots.filter(isResolvedRootChoice);
+}
+
+export function localRosterRootChoiceGroups(
+  catalogue: LocalCatalogueChoice,
+): readonly LocalRosterRootChoiceGroup[] {
+  const categoriesById = new Map<
+    string,
+    BattleScribeCategoryDefinition[]
+  >();
+  for (const category of catalogue.context.categories.definitions) {
+    const id = category.source.id;
+    if (id === undefined) continue;
+    const existing = categoriesById.get(id);
+    if (existing === undefined) {
+      categoriesById.set(id, [category]);
+    } else {
+      existing.push(category);
+    }
+  }
+
+  const groups: Array<{
+    key: string;
+    name: string;
+    category?: BattleScribeCategoryDefinition;
+    choices: LocalRosterRootChoice[];
+  }> = [];
+  const groupsByKey = new Map<string, (typeof groups)[number]>();
+  for (const choice of localRosterRootChoices(catalogue)) {
+    const primary = choice.materialized.categoryLinks.find(
+      ({ primary }) => primary === true,
+    );
+    const matches =
+      primary?.targetId === undefined
+        ? []
+        : categoriesById.get(primary.targetId) ?? [];
+    const category = matches.length === 1 ? matches[0] : undefined;
+    const key =
+      category === undefined
+        ? "uncategorized"
+        : JSON.stringify([
+            category.source.source.sourceId,
+            ...category.source.path,
+          ]);
+    let group = groupsByKey.get(key);
+    if (group === undefined) {
+      group =
+        category === undefined
+          ? {
+              key,
+              name: "Uncategorized",
+              choices: [],
+            }
+          : {
+              key,
+              name:
+                category.source.name ??
+                category.source.id ??
+                "Unnamed category",
+              category,
+              choices: [],
+            };
+      groups.push(group);
+      groupsByKey.set(key, group);
+    }
+    group.choices.push(choice);
+  }
+  return groups;
+}
+
+export function inspectLocalRosterRootChoices(
+  session: LocalRosterSession,
+): Result<LocalRosterRootChoiceInspection> {
+  const inspected = inspectEmptySingleForceRootChoices(
+    session.catalogue.context.roots.roots,
+  );
+  if (!inspected.ok) return inspected;
+  const byRoot = new Map(
+    inspected.value.choices.map((choice) => [choice.root, choice]),
+  );
+  const rootSelections = session.roster.forces[0]?.selections ?? [];
+  const groups = localRosterRootChoiceGroups(session.catalogue).map(
+    (group): LocalRosterRootChoiceGroupState => ({
+      ...group,
+      choices: group.choices.map((choice) => {
+        const bound = byRoot.get(choice);
+        return localRosterRootChoiceState(
+          session,
+          choice,
+          rootSelections,
+          bound,
+        );
+      }),
+    }),
+  );
+  return success(
+    {
+      groups,
+      completeness: inspected.value.completeness,
+    },
+    inspected.diagnostics,
+  );
+}
+
+export function evaluateLocalRosterCosts(
+  session: LocalRosterSession,
+): Result<RosterSelectionConditionCostReport> {
+  return evaluateRosterCostsWithSelectionConditions(
+    session.roster,
+    session.catalogue.context,
+  );
+}
+
+export function inspectLocalRosterConstraints(
+  session: LocalRosterSession,
+): Result<LocalRosterConstraintInspection> {
+  const selections = inspectRosterSelectionConstraintsInRoster(
+    session.roster,
+    session.catalogue.context,
+    { inspectionScope: "selectionConditions" },
+  );
+  const forces = inspectRosterForceConstraintsInRoster(
+    session.roster,
+    session.catalogue.context,
+    { inspectionScope: "conditions" },
+  );
+  const diagnostics = [...selections.diagnostics, ...forces.diagnostics];
+  if (!selections.ok || !forces.ok) {
+    return failure(diagnostics);
+  }
+  return success(
+    {
+      completeness:
+        selections.value.completeness === "complete" &&
+        forces.value.completeness === "complete"
+          ? "complete"
+          : "incomplete",
+      selections: selections.value,
+      forces: forces.value,
+    },
+    diagnostics,
+  );
+}
+
+export function inspectLocalRosterStructuralStatus(
+  session: LocalRosterSession,
+): Result<EmptySingleForceRosterStructuralStatus> {
+  return inspectEmptySingleForceRosterStructuralStatus(
+    session.roster,
+    session.catalogue.context,
+    {
+      materializationPartial:
+        session.catalogue.materializationTruncated,
+    },
+  );
+}
+
+export function inspectLocalRosterSupportedValidation(
+  session: LocalRosterSession,
+): Result<LocalRosterSupportedValidationInspection> {
+  const structural = inspectLocalRosterStructuralStatus(session);
+  const constraints = inspectLocalRosterConstraints(session);
+  const diagnostics = [
+    ...structural.diagnostics,
+    ...constraints.diagnostics,
+  ];
+  if (!structural.ok || !constraints.ok) {
+    return failure(diagnostics);
+  }
+  const status = composeSupportedRosterValidation(
+    structural.value,
+    constraints.value.selections,
+    constraints.value.forces,
+  );
+  diagnostics.push(...status.diagnostics);
+  if (!status.ok) return failure(diagnostics);
+  return success(
+    {
+      status: status.value,
+      structural: structural.value,
+      constraints: constraints.value,
+      structuralDiagnostics: structural.diagnostics,
+      constraintDiagnostics: constraints.diagnostics,
+    },
+    diagnostics,
+  );
+}
+
+export function localRosterSelectionCount(session: LocalRosterSession): number {
+  return session.roster.forces.reduce(
+    (total, force) => total + countForceSelections(force),
+    0,
+  );
+}
+
+export function addLocalRosterRootSelection(
+  session: LocalRosterSession,
+  choice: LocalRosterRootChoice,
+  input: AddLocalRosterRootSelectionInput,
+): Result<LocalRosterSession> {
+  const force = session.roster.forces[0];
+  if (force === undefined) {
+    return failure([
+      {
+        code: "WEB_ROSTER_SESSION_FORCE_MISSING",
+        message: "The local roster session has no starting force.",
+        severity: "error",
+        impacts: ["internal"],
+        location: {
+          source: session.catalogue.document.projection.source,
+          path: session.catalogue.document.projection.path,
+        },
+      },
+    ]);
+  }
+  const updated = addRosterSelectionToForceFromCatalogueContext(
+    session.roster,
+    session.catalogue.context,
+    force.id,
+    choice.materialized,
+    {
+      id: input.selectionId,
+      ...(input.amount === undefined ? {} : { amount: input.amount }),
+    },
+  );
+  if (!updated.ok) {
+    return updated;
+  }
+  return initializeAddedSelection(
+    session,
+    updated.value,
+    input.selectionId,
+    choice.materialized,
+    input.createSelectionId,
+    updated.diagnostics,
+  );
+}
+
+export function localRosterChildChoices(
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+): readonly BattleScribeRosterSelectionChoice[] {
+  const parent = localRosterSelectionChoice(session, parentId);
+  if (parent === undefined) return [];
+  return [
+    ...parent.selectionEntries,
+    ...parent.selectionEntryGroups,
+    ...parent.entryLinks.filter(isResolvedSelectionChoice),
+  ];
+}
+
+export function inspectLocalRosterChildChoices(
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+): Result<LocalRosterChildChoiceInspection> {
+  const parentChoice = localRosterSelectionChoice(session, parentId);
+  const parent = findRosterSelection(session.roster.forces, parentId);
+  if (parentChoice === undefined || parent === undefined) {
+    return failure([
+      {
+        code: "WEB_ROSTER_CHILD_CHOICE_PARENT_UNAVAILABLE",
+        message:
+          "The roster selection and its catalogue definition are not both available.",
+        severity: "error",
+        impacts: ["internal"],
+        location: {
+          source: session.catalogue.document.projection.source,
+          path: session.catalogue.document.projection.path,
+        },
+        details: {
+          parentId,
+          occurrenceAvailable: parent !== undefined,
+          definitionAvailable: parentChoice !== undefined,
+        },
+      },
+    ]);
+  }
+  const visibilityDiagnostics: Diagnostic[] = [];
+  let visibilityIncomplete = false;
+  const inspected = inspectRosterSelectionChildChoices(parentChoice, {
+    include: (_choice, path) => {
+      const visibility = evaluateRosterSelectionVisibilityPath(
+        session.roster,
+        session.catalogue.context,
+        parent,
+        path.slice(1),
+      );
+      visibilityDiagnostics.push(...visibility.diagnostics);
+      if (!visibility.ok) {
+        visibilityIncomplete = true;
+        return true;
+      }
+      visibilityIncomplete ||=
+        visibility.value.completeness === "incomplete";
+      return visibility.value.status !== "hidden";
+    },
+  });
+  if (!inspected.ok) {
+    return inspected;
+  }
+  const diagnostics = [
+    ...visibilityDiagnostics,
+    ...inspected.diagnostics,
+  ];
+  const groups = inspected.value.groups.map((group) => {
+    const groupPath = selectionEntryGroupVisibilityPath(
+      parentChoice,
+      group.group,
+    );
+    const visibleChoices = group.choices.filter((choice) => {
+      const visibility = evaluateRosterSelectionVisibilityPath(
+        session.roster,
+        session.catalogue.context,
+        parent,
+        [...groupPath, choice],
+      );
+      diagnostics.push(...visibility.diagnostics);
+      if (!visibility.ok) {
+        visibilityIncomplete = true;
+        return true;
+      }
+      visibilityIncomplete ||=
+        visibility.value.completeness === "incomplete";
+      return visibility.value.status !== "hidden";
+    });
+    return localRosterChildChoiceGroup(
+      session,
+      parent,
+      group,
+      visibleChoices,
+    );
+  });
+  return success(
+    {
+      direct: inspected.value.direct.map((choice) =>
+        localRosterDirectChildChoice(session, parent, choice),
+      ),
+      groups,
+      completeness:
+        inspected.value.completeness === "complete" &&
+        !visibilityIncomplete
+          ? "complete"
+          : "incomplete",
+    },
+    diagnostics,
+  );
+}
+
+export function localRosterSelectionChoice(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): BattleScribeRosterSelectionChoice | undefined {
+  return session.selectionChoices.get(selectionId);
+}
+
+export function addLocalRosterChildSelection(
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+  choice: BattleScribeRosterSelectionChoice,
+  input: AddLocalRosterRootSelectionInput,
+): Result<LocalRosterSession> {
+  const updated = addRosterSelectionToSelectionFromCatalogueContext(
+    session.roster,
+    session.catalogue.context,
+    parentId,
+    choice,
+    {
+      id: input.selectionId,
+      ...(input.amount === undefined ? {} : { amount: input.amount }),
+    },
+  );
+  if (!updated.ok) {
+    return updated;
+  }
+  return initializeAddedSelection(
+    session,
+    updated.value,
+    input.selectionId,
+    choice,
+    input.createSelectionId,
+    updated.diagnostics,
+  );
+}
+
+export function chooseLocalRosterChildGroupEntry(
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+  group: MaterializedSelectionEntryGroup,
+  choice: BattleScribeRosterSelectionChoice,
+  input: AddLocalRosterRootSelectionInput,
+): Result<LocalRosterSession> {
+  const inspected = inspectLocalRosterChildChoices(session, parentId);
+  if (!inspected.ok) return inspected;
+  const liveGroup = inspected.value.groups.find(
+    (candidate) => candidate.group === group,
+  );
+  if (liveGroup === undefined || !liveGroup.choices.includes(choice)) {
+    return failure([
+      ...inspected.diagnostics,
+      {
+        code: "WEB_ROSTER_GROUP_CHOICE_UNAVAILABLE",
+        message:
+          "The requested entry is not available in the selected entry group.",
+        severity: "error",
+        impacts: ["internal"],
+        location: {
+          source: group.occurrence.source,
+          path: group.occurrence.path,
+        },
+        details: {
+          parentId,
+          groupId: group.id,
+          choiceId: choice.id,
+        },
+      },
+    ]);
+  }
+  if (liveGroup.maximum === 0) {
+    return failure([
+      ...inspected.diagnostics,
+      {
+        code: "WEB_ROSTER_GROUP_CHOICE_MAXIMUM_ZERO",
+        message:
+          "The selected entry group currently permits no selections.",
+        severity: "error",
+        impacts: ["compatibility"],
+        location: {
+          source: group.occurrence.source,
+          path: group.occurrence.path,
+        },
+        details: {
+          parentId,
+          groupId: group.id,
+          choiceId: choice.id,
+        },
+      },
+    ]);
+  }
+
+  const diagnostics = [...inspected.diagnostics];
+  let working = session;
+  if (liveGroup.maximum === 1) {
+    const alreadySelected =
+      rosterSelectionsAmount(liveGroup.selected) === 1 &&
+      localRosterSelectionChoice(
+        session,
+        liveGroup.selected[0]!.id,
+      ) === choice;
+    if (alreadySelected) {
+      return success(session, diagnostics);
+    }
+    for (const selected of liveGroup.selected) {
+      const removed = removeLocalRosterSelection(working, selected.id);
+      diagnostics.push(...removed.diagnostics);
+      if (!removed.ok) {
+        return failure(diagnostics);
+      }
+      working = removed.value;
+    }
+  }
+
+  const added = addLocalRosterChildSelection(
+    working,
+    parentId,
+    choice,
+    input,
+  );
+  diagnostics.push(...added.diagnostics);
+  return added.ok
+    ? success(added.value, diagnostics)
+    : failure(diagnostics);
+}
+
+export function removeLocalRosterSelection(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<LocalRosterSession> {
+  const removedIds = selectionSubtreeIds(session.roster.forces, selectionId);
+  const updated = removeRosterSelection(session.roster, selectionId);
+  if (!updated.ok) {
+    return updated;
+  }
+  const selectionChoices = new Map(session.selectionChoices);
+  for (const removedId of removedIds) {
+    selectionChoices.delete(removedId);
+  }
+  return success(
+    {
+      ...session,
+      roster: updated.value,
+      selectionChoices,
+    },
+    updated.diagnostics,
+  );
+}
+
+export function setLocalRosterSelectionName(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+  name: string | undefined,
+): Result<LocalRosterSession> {
+  const updated = setRosterSelectionName(session.roster, selectionId, name);
+  if (!updated.ok) return updated;
+  return success(
+    {
+      ...session,
+      roster: updated.value,
+    },
+    updated.diagnostics,
+  );
+}
+
+export function setLocalRosterSelectionAmount(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+  amount: number | undefined,
+): Result<LocalRosterSession> {
+  const updated = setRosterSelectionAmount(
+    session.roster,
+    selectionId,
+    amount,
+  );
+  if (!updated.ok) return updated;
+  return success(
+    {
+      ...session,
+      roster: updated.value,
+    },
+    updated.diagnostics,
+  );
+}
+
+function isResolvedRootChoice(
+  root: MaterializedVisibleRoot,
+): root is LocalRosterRootChoice {
+  return root.materialized.kind !== "unresolvedEntryLink";
+}
+
+function initializeAddedSelection(
+  session: LocalRosterSession,
+  roster: Roster,
+  selectionId: SelectionOccurrenceId,
+  choice: BattleScribeRosterSelectionChoice,
+  createSelectionId: (() => SelectionOccurrenceId) | undefined,
+  diagnostics: readonly Diagnostic[],
+): Result<LocalRosterSession> {
+  const selectionChoices = new Map(session.selectionChoices).set(
+    selectionId,
+    choice,
+  );
+  if (createSelectionId === undefined) {
+    return success(
+      { ...session, roster, selectionChoices },
+      diagnostics,
+    );
+  }
+
+  const planned = planRosterSelectionInitialization(choice);
+  const allDiagnostics = [...diagnostics, ...planned.diagnostics];
+  if (!planned.ok) {
+    return failure(allDiagnostics);
+  }
+  const state: MutableSelectionInitialization = {
+    roster,
+    selectionChoices,
+    diagnostics: allDiagnostics,
+  };
+  const initialized = applySelectionInitialization(
+    state,
+    session,
+    selectionId,
+    planned.value,
+    createSelectionId,
+  );
+  if (!initialized) {
+    return failure(state.diagnostics);
+  }
+  return success(
+    {
+      ...session,
+      roster: state.roster,
+      selectionChoices: state.selectionChoices,
+    },
+    state.diagnostics,
+  );
+}
+
+interface MutableSelectionInitialization {
+  roster: Roster;
+  readonly selectionChoices: Map<
+    SelectionOccurrenceId,
+    BattleScribeRosterSelectionChoice
+  >;
+  readonly diagnostics: Diagnostic[];
+}
+
+function applySelectionInitialization(
+  state: MutableSelectionInitialization,
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+  plan: RosterSelectionInitializationPlan,
+  createSelectionId: () => SelectionOccurrenceId,
+): boolean {
+  for (const addition of plan.additions) {
+    for (let index = 0; index < addition.quantity; index += 1) {
+      const selectionId = createSelectionId();
+      const added = addRosterSelectionToSelectionFromCatalogueContext(
+        state.roster,
+        session.catalogue.context,
+        parentId,
+        addition.choice,
+        { id: selectionId },
+      );
+      state.diagnostics.push(...added.diagnostics);
+      if (!added.ok) {
+        return false;
+      }
+      state.roster = added.value;
+      state.selectionChoices.set(selectionId, addition.choice);
+      if (!applySelectionInitialization(
+        state,
+        session,
+        selectionId,
+        addition.initialization,
+        createSelectionId,
+      )) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function isResolvedSelectionChoice(
+  choice: BattleScribeRosterSelectionChoice | {
+    readonly kind: "unresolvedEntryLink";
+  },
+): choice is BattleScribeRosterSelectionChoice {
+  return choice.kind !== "unresolvedEntryLink";
+}
+
+function localRosterChildChoiceGroup(
+  session: LocalRosterSession,
+  parent: RosterSelection,
+  inspection: RosterSelectionChoiceGroupInspection,
+  visibleChoices: readonly BattleScribeRosterSelectionChoice[] =
+    inspection.choices,
+): LocalRosterChildChoiceGroup {
+  const selected = parent.selections.filter((selection) => {
+    const choice = localRosterSelectionChoice(session, selection.id);
+    return choice !== undefined && inspection.choices.includes(choice);
+  });
+  return {
+    group: inspection.group,
+    choices: visibleChoices,
+    ...(inspection.minimum === undefined
+      ? {}
+      : {
+          minimum: inspection.minimum,
+          remaining: Math.max(
+            0,
+            inspection.minimum - rosterSelectionsAmount(selected),
+          ),
+        }),
+    ...(inspection.maximum === undefined
+      ? {}
+      : { maximum: inspection.maximum }),
+    selected,
+    completeness: inspection.completeness,
+  };
+}
+
+function localRosterRootChoiceState(
+  session: LocalRosterSession,
+  choice: LocalRosterRootChoice,
+  rootSelections: readonly RosterSelection[],
+  inspection: EmptySingleForceRootChoiceInspection | undefined,
+): LocalRosterRootChoiceState {
+  const identity = inspection?.identity;
+  const selected = rootSelections.filter((selection) => {
+    const selectedChoice = localRosterSelectionChoice(
+      session,
+      selection.id,
+    );
+    if (selectedChoice === undefined) return false;
+    return identity === undefined
+      ? selectedChoice === choice.materialized
+      : rootBoundIdentitiesEqual(
+          identity,
+          rootSelectionBoundIdentity(selectedChoice),
+        );
+  });
+  return {
+    choice,
+    selected,
+    ...(inspection?.minimum === undefined
+      ? {}
+      : {
+          minimum: inspection.minimum,
+          remaining: Math.max(
+            0,
+            inspection.minimum - rosterSelectionsAmount(selected),
+          ),
+        }),
+    ...(inspection?.maximum === undefined
+      ? {}
+      : { maximum: inspection.maximum }),
+    completeness: inspection?.completeness ?? "incomplete",
+  };
+}
+
+function rootBoundIdentitiesEqual(
+  left: EmptySingleForceRootBoundIdentity,
+  right: EmptySingleForceRootBoundIdentity | undefined,
+): boolean {
+  return (
+    right !== undefined &&
+    left.kind === right.kind &&
+    left.id === right.id
+  );
+}
+
+function localRosterDirectChildChoice(
+  session: LocalRosterSession,
+  parent: RosterSelection,
+  inspection: RosterSelectionDirectChoiceInspection,
+): LocalRosterDirectChildChoice {
+  const selected = parent.selections.filter(
+    (selection) =>
+      localRosterSelectionChoice(session, selection.id) ===
+      inspection.choice,
+  );
+  return {
+    choice: inspection.choice,
+    ...(inspection.minimum === undefined
+      ? {}
+      : {
+          minimum: inspection.minimum,
+          remaining: Math.max(
+            0,
+            inspection.minimum - rosterSelectionsAmount(selected),
+          ),
+        }),
+    ...(inspection.maximum === undefined
+      ? {}
+      : { maximum: inspection.maximum }),
+    selected,
+    completeness: inspection.completeness,
+  };
+}
+
+function flattenForceDefinitions(
+  definitions: readonly BattleScribeForceDefinition[],
+): readonly BattleScribeForceDefinition[] {
+  return definitions.flatMap((definition) => [
+    definition,
+    ...flattenForceDefinitions(definition.forceEntries),
+  ]);
+}
+
+function indexSelectionChoices(
+  catalogue: LocalCatalogueChoice,
+): ReadonlyMap<
+  string,
+  readonly BattleScribeRosterSelectionChoice[]
+> {
+  const index = new Map<string, BattleScribeRosterSelectionChoice[]>();
+  for (const root of catalogue.context.roots.roots) {
+    if (root.materialized.kind === "unresolvedEntryLink") continue;
+    indexSelectionChoice(root.materialized, index);
+  }
+  return index;
+}
+
+function indexSelectionChoice(
+  choice: BattleScribeRosterSelectionChoice,
+  index: Map<string, BattleScribeRosterSelectionChoice[]>,
+): void {
+  const key = rosterDefinitionKeyForSource(
+    choice.occurrence.source.sourceId,
+    choice.occurrence.path,
+  );
+  const existing = index.get(key);
+  if (existing === undefined) {
+    index.set(key, [choice]);
+  } else if (
+    !existing.some(
+      (candidate) =>
+        candidate.kind === choice.kind &&
+        candidate.occurrence === choice.occurrence,
+    )
+  ) {
+    existing.push(choice);
+  }
+  for (const child of [
+    ...choice.selectionEntries,
+    ...choice.selectionEntryGroups,
+    ...choice.entryLinks.filter(isResolvedSelectionChoice),
+  ]) {
+    indexSelectionChoice(child, index);
+  }
+}
+
+function restoreSelectionChoices(
+  selections: readonly RosterSelection[],
+  index: ReadonlyMap<
+    string,
+    readonly BattleScribeRosterSelectionChoice[]
+  >,
+  restored: Map<
+    SelectionOccurrenceId,
+    BattleScribeRosterSelectionChoice
+  >,
+  catalogue: LocalCatalogueChoice,
+): readonly ReturnType<typeof restoreDiagnostic>[] {
+  const diagnostics: ReturnType<typeof restoreDiagnostic>[] = [];
+  for (const selection of selections) {
+    const matches = (index.get(selection.definition.key) ?? []).filter(
+      (choice) => selectionDefinitionMatches(selection.definition, choice),
+    );
+    if (matches.length !== 1) {
+      diagnostics.push(
+        restoreDiagnostic(
+          catalogue,
+          matches.length === 0
+            ? "WEB_ROSTER_DRAFT_SELECTION_UNAVAILABLE"
+            : "WEB_ROSTER_DRAFT_SELECTION_AMBIGUOUS",
+          matches.length === 0
+            ? "A saved roster selection is not available in the rebuilt catalogue context."
+            : "A saved roster selection matches more than one rebuilt catalogue choice.",
+          {
+            selectionId: selection.id,
+            definitionKey: selection.definition.key,
+            matches: matches.length,
+          },
+        ),
+      );
+    } else {
+      restored.set(selection.id, matches[0]!);
+    }
+    diagnostics.push(
+      ...restoreSelectionChoices(
+        selection.selections,
+        index,
+        restored,
+        catalogue,
+      ),
+    );
+  }
+  return diagnostics;
+}
+
+function selectionDefinitionMatches(
+  reference: RosterSelectionDefinitionReference,
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  return (
+    reference.kind === choice.kind &&
+    (reference.sourceId === undefined || reference.sourceId === choice.id)
+  );
+}
+
+function countNestedForces(force: RosterForce): number {
+  return force.forces.reduce(
+    (total, child) => total + 1 + countNestedForces(child),
+    0,
+  );
+}
+
+function restoreDiagnostic(
+  catalogue: LocalCatalogueChoice,
+  code: string,
+  message: string,
+  details: Readonly<Record<string, unknown>>,
+) {
+  return {
+    code,
+    message,
+    severity: "error" as const,
+    impacts: ["persistence" as const],
+    location: {
+      source: catalogue.document.projection.source,
+      path: catalogue.document.projection.path,
+    },
+    details,
+  };
+}
+
+function selectionSubtreeIds(
+  forces: Roster["forces"],
+  targetId: SelectionOccurrenceId,
+): ReadonlySet<SelectionOccurrenceId> {
+  for (const force of forces) {
+    const found = findSelectionSubtree(force.selections, targetId);
+    if (found !== undefined) return found;
+    const nested = selectionSubtreeIds(force.forces, targetId);
+    if (nested.size > 0) return nested;
+  }
+  return new Set();
+}
+
+function findRosterSelection(
+  forces: Roster["forces"],
+  targetId: SelectionOccurrenceId,
+): RosterSelection | undefined {
+  for (const force of forces) {
+    const direct = findRosterSelectionInList(force.selections, targetId);
+    if (direct !== undefined) return direct;
+    const nested = findRosterSelection(force.forces, targetId);
+    if (nested !== undefined) return nested;
+  }
+  return undefined;
+}
+
+function findRosterSelectionInList(
+  selections: readonly RosterSelection[],
+  targetId: SelectionOccurrenceId,
+): RosterSelection | undefined {
+  for (const selection of selections) {
+    if (selection.id === targetId) return selection;
+    const child = findRosterSelectionInList(selection.selections, targetId);
+    if (child !== undefined) return child;
+  }
+  return undefined;
+}
+
+function findSelectionSubtree(
+  selections: readonly RosterSelection[],
+  targetId: SelectionOccurrenceId,
+): ReadonlySet<SelectionOccurrenceId> | undefined {
+  for (const selection of selections) {
+    if (selection.id === targetId) {
+      return collectSelectionIds(selection);
+    }
+    const nested = findSelectionSubtree(selection.selections, targetId);
+    if (nested !== undefined) return nested;
+  }
+  return undefined;
+}
+
+function collectSelectionIds(
+  selection: RosterSelection,
+): ReadonlySet<SelectionOccurrenceId> {
+  const ids = new Set<SelectionOccurrenceId>([selection.id]);
+  for (const child of selection.selections) {
+    for (const id of collectSelectionIds(child)) {
+      ids.add(id);
+    }
+  }
+  return ids;
+}
+
+function countForceSelections(force: Roster["forces"][number]): number {
+  return (
+    countSelections(force.selections) +
+    force.forces.reduce(
+      (total, childForce) => total + countForceSelections(childForce),
+      0,
+    )
+  );
+}
+
+function countSelections(selections: readonly RosterSelection[]): number {
+  return selections.reduce(
+    (total, selection) =>
+      total +
+      rosterSelectionAmount(selection) +
+      countSelections(selection.selections),
+    0,
+  );
+}

@@ -1,0 +1,260 @@
+{
+  "catalogue": {
+    "catalogueLinks": [
+      {
+        "type": "catalogue",
+        "name": "First Library",
+        "id": "json-first-link",
+        "targetId": "json-first-library",
+        "importRootEntries": false
+      },
+      {
+        "type": "future-link-kind",
+        "name": "Second Library",
+        "id": "json-second-link",
+        "targetId": "json-second-library",
+        "importRootEntries": true
+      }
+    ],
+    "selectionEntries": [
+      {
+        "name": "Pathfinders",
+        "id": "json-pathfinders",
+        "type": "unit",
+        "hidden": false,
+        "collective": false,
+        "import": true,
+        "selectionEntryGroups": [
+          {
+            "name": "Specialists",
+            "id": "json-specialists",
+            "hidden": false,
+            "entryLinks": [
+              {
+                "name": "Surveyor",
+                "id": "json-surveyor-link",
+                "targetId": "json-surveyor",
+                "type": "selectionEntry",
+                "hidden": false,
+                "import": true
+              }
+            ]
+          }
+        ],
+        "categoryLinks": [
+          {
+            "name": "Explorer",
+            "id": "json-explorer-link",
+            "targetId": "json-explorer-category",
+            "primary": true,
+            "futureCategoryFlag": "visible"
+          }
+        ],
+        "infoLinks": [
+          {
+            "name": "Pathfinder Abilities",
+            "id": "json-pathfinder-abilities-link",
+            "targetId": "json-pathfinder-abilities",
+            "type": "infoGroup",
+            "hidden": false
+          }
+        ],
+        "costs": [
+          {
+            "name": "Supply",
+            "typeId": "json-supply",
+            "value": 0
+          }
+        ],
+        "constraints": [
+          {
+            "type": "min",
+            "value": 0,
+            "field": "selections",
+            "scope": "parent",
+            "shared": false,
+            "id": "json-minimum",
+            "includeChildSelections": false,
+            "includeChildForces": false
+          }
+        ],
+        "modifiers": [
+          {
+            "type": "future-modifier-kind",
+            "value": 0,
+            "field": "json-supply",
+            "conditions": [
+              {
+                "type": "equalTo",
+                "value": 0,
+                "field": "selections",
+                "scope": "self",
+                "childId": "json-pathfinders",
+                "shared": false
+              }
+            ],
+            "conditionGroups": [
+              {
+                "type": "and",
+                "localConditionGroups": [
+                  {
+                    "type": "atLeast",
+                    "value": 1,
+                    "scope": "parent",
+                    "field": "selections",
+                    "includeChildSelections": true,
+                    "includeChildForces": true,
+                    "repeats": 1,
+                    "conditions": [
+                      {
+                        "type": "before",
+                        "value": 1,
+                        "field": "selections",
+                        "scope": "self",
+                        "childId": "any",
+                        "shared": true
+                      },
+                      {
+                        "type": "instanceOf",
+                        "value": 1,
+                        "field": "selections",
+                        "scope": "self",
+                        "childId": "json-pathfinders",
+                        "shared": true,
+                        "childName": "Pathfinders"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Rangers",
+        "id": "json-rangers",
+        "type": "unit",
+        "hidden": false,
+        "import": true
+      }
+    ],
+    "sharedSelectionEntries": [
+      {
+        "name": "Surveyor",
+        "id": "json-surveyor",
+        "type": "model",
+        "hidden": false,
+        "import": true,
+        "profiles": [
+          {
+            "characteristics": [
+              {
+                "$text": "7",
+                "name": "Move",
+                "typeId": "json-move"
+              },
+              {
+                "$text": "",
+                "name": "Resolve",
+                "typeId": "json-resolve"
+              }
+            ],
+            "name": "Surveyor",
+            "typeId": "json-scout-profile",
+            "typeName": "Scout",
+            "hidden": false,
+            "id": "json-surveyor-profile"
+          }
+        ],
+        "rules": [
+          {
+            "description": "Can chart an unexplored route.",
+            "name": "Trail Reader",
+            "id": "json-trail-reader",
+            "hidden": false
+          }
+        ]
+      }
+    ],
+    "sharedInfoGroups": [
+      {
+        "name": "Pathfinder Abilities",
+        "id": "json-pathfinder-abilities",
+        "hidden": false,
+        "profiles": [
+          {
+            "characteristics": [
+              {
+                "$text": "May redeploy after both players deploy.",
+                "name": "Description",
+                "typeId": "json-resolve"
+              }
+            ],
+            "name": "Forward Survey",
+            "typeId": "json-scout-profile",
+            "typeName": "Scout",
+            "hidden": false,
+            "id": "json-forward-survey"
+          }
+        ],
+        "infoLinks": [
+          {
+            "name": "Trail Reader",
+            "id": "json-group-rule-link",
+            "targetId": "json-group-rule",
+            "type": "rule"
+          }
+        ],
+        "infoGroups": [
+          {
+            "name": "Survey Methods",
+            "id": "json-survey-methods",
+            "rules": [
+              {
+                "description": "Mark a safe route for the next patrol.",
+                "name": "Route Marker",
+                "id": "json-route-marker"
+              }
+            ]
+          }
+        ],
+        "modifiers": [
+          {
+            "type": "set",
+            "value": false,
+            "field": "hidden"
+          }
+        ]
+      }
+    ],
+    "sharedRules": [
+      {
+        "description": "Can chart an unexplored route.",
+        "name": "Trail Reader",
+        "id": "json-group-rule",
+        "hidden": false
+      }
+    ],
+    "futureCollection": [
+      {
+        "name": "Unknown One",
+        "futureValue": 0
+      },
+      {
+        "name": "Unknown Two",
+        "futureValue": false
+      }
+    ],
+    "xmlns": "http://www.battlescribe.net/schema/catalogueSchema",
+    "library": false,
+    "id": "json-catalogue",
+    "name": "Fictional JSON Catalogue",
+    "gameSystemId": "json-system",
+    "gameSystemRevision": 4,
+    "revision": 2,
+    "battleScribeVersion": 2.03,
+    "type": "catalogue",
+    "futureRootFlag": "retained"
+  }
+}

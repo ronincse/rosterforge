@@ -1,0 +1,25 @@
+{
+  "name": "@rosterforge/roster-builder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@rosterforge/data-graph": "workspace:*",
+    "@rosterforge/foundation": "workspace:*",
+    "@rosterforge/roster-model": "workspace:*"
+  },
+  "devDependencies": {
+    "@rosterforge/battlescribe-data": "workspace:*",
+    "@rosterforge/test-fixtures": "workspace:*"
+  }
+}

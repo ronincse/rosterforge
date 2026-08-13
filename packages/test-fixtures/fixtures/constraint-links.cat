@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="constraint-links" name="Constraint Links" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="7" library="false">
+  <sharedSelectionEntries>
+    <selectionEntry id="shared-constrained" name="Shared Constrained Unit" type="unit">
+      <constraints>
+        <constraint id="constraint-shared-parent" type="max" field="selections"
+          scope="parent" value="1" shared="true" />
+        <constraint id="constraint-link-parent" type="max" field="selections"
+          scope="parent" value="1" shared="false" />
+        <constraint id="constraint-modified-parent" type="max" field="selections"
+          scope="parent" value="1" shared="true" />
+        <constraint id="constraint-group-modified-parent" type="max" field="selections"
+          scope="parent" value="1" shared="true" />
+        <constraint id="constraint-conditional-parent" type="max" field="selections"
+          scope="parent" value="1" shared="true" />
+        <constraint id="constraint-negative-effective" type="min" field="selections"
+          scope="self" value="0" shared="true" />
+      </constraints>
+      <modifiers>
+        <modifier type="set" field="constraint-modified-parent" value="2" />
+        <modifier type="set" field="constraint-conditional-parent" value="2">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="shared-constrained" value="2" shared="true" />
+          </conditions>
+        </modifier>
+        <modifier type="decrement" field="constraint-negative-effective" value="1" />
+      </modifiers>
+      <modifierGroups>
+        <modifierGroup type="and" comment="Grouped selection limit">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="shared-constrained" value="2" shared="true" />
+          </conditions>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="increment" field="constraint-group-modified-parent"
+                  value="1" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+  </sharedSelectionEntries>
+  <entryLinks>
+    <entryLink id="constraint-link-one" name="Constraint Link One"
+      targetId="shared-constrained" type="selectionEntry" />
+    <entryLink id="constraint-link-two" name="Constraint Link Two"
+      targetId="shared-constrained" type="selectionEntry" />
+  </entryLinks>
+</catalogue>

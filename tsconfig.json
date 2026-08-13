@@ -20,6 +20,9 @@
       "path": "packages/roster-model"
     },
     {
+      "path": "packages/roster-builder"
+    },
+    {
       "path": "packages/evaluation"
     },
     {

@@ -1,2 +1,1 @@
-export const persistencePlaceholder =
-  "IndexedDB persistence is not implemented.";
+export * from "./local-roster-draft.js";

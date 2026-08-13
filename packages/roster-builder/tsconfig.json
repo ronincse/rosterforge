@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [
+    {
+      "path": "../foundation"
+    },
+    {
+      "path": "../data-graph"
+    },
+    {
+      "path": "../roster-model"
+    },
+    {
+      "path": "../battlescribe-data"
+    },
+    {
+      "path": "../test-fixtures"
+    }
+  ],
+  "include": ["src"]
+}

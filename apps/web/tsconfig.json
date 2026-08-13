@@ -1,8 +1,21 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../../packages/foundation" },
+    { "path": "../../packages/battlescribe-data" },
+    { "path": "../../packages/repository" },
+    { "path": "../../packages/persistence" },
+    { "path": "../../packages/data-graph" },
+    { "path": "../../packages/roster-model" },
+    { "path": "../../packages/roster-builder" },
+    { "path": "../../packages/evaluation" },
+    { "path": "../../packages/test-fixtures" }
+  ]
 }

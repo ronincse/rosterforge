@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="cost-evaluation" name="Cost Evaluation Catalogue" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="category-character" name="Character" hidden="false" />
+    <categoryEntry id="category-relic" name="Relic" hidden="false" />
+  </categoryEntries>
+  <selectionEntries>
+    <selectionEntry id="cost-base" name="Base Unit" type="unit">
+      <categoryLinks>
+        <categoryLink id="cost-base-character" name="Character"
+          targetId="category-character" primary="true" />
+      </categoryLinks>
+      <selectionEntries>
+        <selectionEntry id="cost-child" name="Child Upgrade" type="upgrade">
+          <selectionEntries>
+            <selectionEntry id="cost-detail" name="Upgrade Detail" type="model" />
+          </selectionEntries>
+          <categoryLinks>
+            <categoryLink id="cost-child-relic" name="Relic"
+              targetId="category-relic" primary="false" />
+          </categoryLinks>
+          <costs>
+            <cost name="pts" typeId="cost-points" value="5" />
+          </costs>
+        </selectionEntry>
+      </selectionEntries>
+      <costs>
+        <cost name="pts" typeId="cost-points" value="10" />
+        <cost name="supply" typeId="cost-supply" value="0" />
+      </costs>
+    </selectionEntry>
+    <selectionEntry id="cost-issues" name="Incomplete Costs" type="unit">
+      <costs>
+        <cost name="untyped" value="3" />
+        <cost name="missing value" typeId="cost-points" />
+        <cost name="unknown" typeId="cost-unknown" value="4" />
+      </costs>
+    </selectionEntry>
+    <selectionEntry id="cost-duplicate" name="Duplicate Costs" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="10" />
+        <cost name="pts" typeId="cost-points" value="5" />
+      </costs>
+    </selectionEntry>
+    <selectionEntry id="cost-modified" name="Modified Cost" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="7" />
+      </costs>
+      <modifiers>
+        <modifier type="increment" field="cost-points" value="1" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-sequence" name="Ordered Cost Modifiers" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="10" />
+        <cost name="supply" typeId="cost-supply" value="1" />
+      </costs>
+      <modifiers>
+        <modifier type="increment" field="cost-points" value="5" />
+        <modifier type="set" field="cost-supply" value="0" />
+        <modifier type="decrement" field="cost-points" value="2" />
+        <modifier type="floor" field="cost-points" value="20" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-problems" name="Unsupported Cost Modifiers" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="4" />
+      </costs>
+      <modifiers>
+        <modifier type="increment" field="cost-points" value="not-a-number" />
+        <modifier type="scale" field="cost-points" value="2" />
+        <modifier type="set" field="cost-points" value="12">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="cost-base" value="1" />
+          </conditions>
+        </modifier>
+        <modifier type="increment" field="cost-points" value="1"
+          scope="parent" affects="self.entries" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-grouped" name="Grouped Cost Modifier" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="4" />
+      </costs>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="increment" field="cost-points" value="2" />
+          </modifiers>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="cost-group-inspection" name="Inspectable Modifier Group" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="7" />
+      </costs>
+      <modifiers>
+        <modifier type="decrement" field="cost-points" value="1" />
+      </modifiers>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="cost-base" value="1" />
+          </conditions>
+          <modifiers>
+            <modifier type="increment" field="cost-points" value="2">
+              <conditions>
+                <condition type="atMost" field="selections" scope="parent"
+                  childId="cost-base" value="1" />
+              </conditions>
+            </modifier>
+          </modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <conditionGroups>
+                <conditionGroup type="or">
+                  <conditions>
+                    <condition type="equalTo" field="selections" scope="parent"
+                      childId="cost-base" value="1" />
+                    <condition type="greaterThan" field="selections" scope="parent"
+                      childId="cost-base" value="2" />
+                  </conditions>
+                </conditionGroup>
+              </conditionGroups>
+              <modifiers>
+                <modifier type="set" field="cost-points" value="11" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="cost-group-unsupported" name="Unsupported Grouped Arithmetic" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="8" />
+      </costs>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="divide" field="cost-points" value="2" />
+            <modifier type="multiply" field="cost-points" value="3" />
+          </modifiers>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="cost-group-repeat" name="Repeated Cost Modifier Group" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="8" />
+      </costs>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="increment" field="cost-points" value="2" />
+          </modifiers>
+          <repeats>
+            <repeat id="cost-group-repeat-source" field="selections" scope="self"
+              childId="cost-repeat-target" value="1" repeats="1"
+              percentValue="false" shared="false" roundUp="false"
+              includeChildSelections="true" includeChildForces="false" />
+          </repeats>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="cost-group-modifier-repeat" name="Grouped Repeating Cost Modifier" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="10" />
+      </costs>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="increment" field="cost-points" value="2">
+              <repeats>
+                <repeat id="cost-modifier-repeat-source" field="selections" scope="self"
+                  childId="cost-repeat-target" value="1" repeats="1"
+                  percentValue="false" shared="false" roundUp="false"
+                  includeChildSelections="true" includeChildForces="false" />
+              </repeats>
+            </modifier>
+          </modifiers>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="cost-repeat-target" name="Cost Repeat Target" type="model" />
+    <selectionEntry id="cost-no-base" name="Modifier Without Base" type="unit">
+      <modifiers>
+        <modifier type="set" field="cost-points" value="5" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-noncost-modifier" name="Non-cost Modifier" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="6" />
+      </costs>
+      <modifiers>
+        <modifier type="set" field="hidden" value="true" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-conditional" name="Conditional Cost" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="4" />
+      </costs>
+      <modifiers>
+        <modifier type="set" field="cost-points" value="12">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="cost-base" value="1" shared="false"
+              includeChildSelections="false" includeChildForces="false" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-condition-group" name="Grouped Condition Cost" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="4" />
+      </costs>
+      <modifiers>
+        <modifier type="set" field="cost-points" value="20">
+          <conditionGroups>
+            <conditionGroup type="and">
+              <conditions>
+                <condition type="atLeast" field="selections" scope="parent"
+                  childId="cost-base" value="1" shared="false" />
+              </conditions>
+            </conditionGroup>
+          </conditionGroups>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="cost-force-condition" name="Force Conditional Cost" type="unit">
+      <costs>
+        <cost name="pts" typeId="cost-points" value="4" />
+      </costs>
+      <modifiers>
+        <modifier type="set" field="cost-points" value="9">
+          <conditions>
+            <condition type="atLeast" field="forces" scope="roster"
+              childId="force-patrol" value="1" shared="true"
+              includeChildForces="true" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

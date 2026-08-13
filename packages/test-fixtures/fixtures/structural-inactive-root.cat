@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="structural-inactive-root" name="Structural Inactive Root" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <forceEntries>
+    <forceEntry id="structural-inactive-force"
+      name="Structural Inactive Force" />
+  </forceEntries>
+  <selectionEntries>
+    <selectionEntry id="conditional-optional-root"
+      name="Conditional Optional Root" type="upgrade">
+      <constraints>
+        <constraint id="conditional-optional-root-max" type="max"
+          field="selections" scope="force" value="1" shared="true" />
+      </constraints>
+      <modifiers>
+        <modifier type="set" field="conditional-optional-root-max"
+          value="0">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="force"
+              childId="conditional-optional-root" value="1"
+              shared="true" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

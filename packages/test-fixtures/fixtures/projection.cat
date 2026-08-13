@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="catalogue-203" name="Projection Catalogue" revision="4"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false" futureAttribute="retained">
+  <catalogueLinks>
+    <catalogueLink id="catalogue-link-first" name="First Library"
+      targetId="library-first" type="selectionEntry" importRootEntries="false" />
+    <catalogueLink id="catalogue-link-second" name="Second Library"
+      targetId="library-second" type="future-link-kind" importRootEntries="true" />
+  </catalogueLinks>
+  <categoryEntries>
+    <categoryEntry id="category-local" name="Local Category" hidden="false" />
+    <categoryEntry id="category-duplicate" name="Duplicate One" />
+    <categoryEntry id="category-duplicate" name="Duplicate Two" />
+  </categoryEntries>
+  <forceEntries>
+    <forceEntry id="force-local" name="Local Force" hidden="false">
+      <categoryLinks>
+        <categoryLink id="force-local-category" name="Local"
+          targetId="category-local" primary="true" />
+        <categoryLink id="force-ambiguous-category" name="Ambiguous"
+          targetId="category-duplicate" />
+        <categoryLink id="force-missing-category" name="Missing"
+          targetId="category-missing" />
+        <categoryLink id="force-no-category-target" name="No Target" />
+      </categoryLinks>
+    </forceEntry>
+  </forceEntries>
+  <sharedProfiles>
+    <profile id="catalogue-profile" name="Catalogue Profile"
+      typeId="profile-type-unit" typeName="Unit">
+      <characteristics>
+        <characteristic name="Move" typeId="characteristic-move">8</characteristic>
+      </characteristics>
+    </profile>
+    <profile id="missing-type-profile" name="Missing Type"
+      typeId="profile-type-missing" typeName="Future Type">
+      <characteristics>
+        <characteristic name="Future" typeId="characteristic-type-missing">?</characteristic>
+      </characteristics>
+    </profile>
+    <profile id="containment-mismatch-profile" name="Containment Mismatch"
+      typeId="profile-type-unit" typeName="Unit">
+      <characteristics>
+        <characteristic name="Description"
+          typeId="characteristic-description">Outside declared type</characteristic>
+        <characteristic name="Untyped">Still observable</characteristic>
+      </characteristics>
+    </profile>
+  </sharedProfiles>
+  <sharedSelectionEntries>
+    <selectionEntry id="shared-entry" name="Shared Entry" type="upgrade">
+      <entryLinks>
+        <entryLink id="entry-link-shared" name="Linked Entry"
+          targetId="entry-alpha" type="selectionEntry"
+          defaultAmount="0" step="250"
+          hidden="false" collective="false" import="false">
+          <costs>
+            <cost name="pts" typeId="cost-points" value="5" />
+          </costs>
+        </entryLink>
+      </entryLinks>
+      <rules>
+        <rule id="inline-rule" name="Inline Rule">
+          <description></description>
+        </rule>
+      </rules>
+    </selectionEntry>
+  </sharedSelectionEntries>
+  <sharedSelectionEntryGroups>
+    <selectionEntryGroup id="shared-group" name="Shared Group">
+      <selectionEntries>
+        <selectionEntry id="shared-group-entry" name="Grouped Shared Entry" type="model" />
+      </selectionEntries>
+    </selectionEntryGroup>
+  </sharedSelectionEntryGroups>
+</catalogue>

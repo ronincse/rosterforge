@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="materialization-client" name="Materialization Client" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <catalogueLinks>
+    <catalogueLink id="materialization-library-link" name="Materialization Library"
+      targetId="materialization-catalogue" type="catalogue"
+      importRootEntries="false" />
+  </catalogueLinks>
+  <entryLinks>
+    <entryLink id="cross-document-link" name="Cross-Document Name"
+      targetId="shared-base" type="selectionEntry" hidden="false">
+      <infoLinks>
+        <infoLink id="cross-document-profile-info" name="Client Profile"
+          targetId="shared-profile" type="profile" hidden="false" />
+      </infoLinks>
+    </entryLink>
+  </entryLinks>
+</catalogue>

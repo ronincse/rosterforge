@@ -133,6 +133,48 @@ describe("BattleScribe XML ingestion", () => {
     expect(result.diagnostics[0]?.code).toBe("BS_XML_SIZE_LIMIT");
   });
 
+  it("enforces a configurable XML element-depth limit", () => {
+    const input = xmlBytes(
+      '<catalogue id="depth-test" name="Depth Test"><a><b><c /></b></a></catalogue>',
+    );
+    const result = parseBattleScribeXml(input, {
+      source: provenance("depth-test.cat"),
+      limits: { maxXmlDepth: 3 },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics[0]).toMatchObject({
+      code: "BS_XML_STRUCTURE_LIMIT",
+      impacts: ["parsing", "security"],
+      details: {
+        limit: "maxXmlDepth",
+        configuredLimit: 3,
+        observed: 4,
+      },
+    });
+  });
+
+  it("enforces a configurable ordered XML node-count limit", () => {
+    const input = xmlBytes(
+      '<catalogue id="node-test" name="Node Test"><a><b /></a></catalogue>',
+    );
+    const result = parseBattleScribeXml(input, {
+      source: provenance("node-test.cat"),
+      limits: { maxXmlNodes: 2 },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics[0]).toMatchObject({
+      code: "BS_XML_STRUCTURE_LIMIT",
+      impacts: ["parsing", "security"],
+      details: {
+        limit: "maxXmlNodes",
+        configuredLimit: 2,
+        observed: 3,
+      },
+    });
+  });
+
   it("ingests a single-file compressed catalogue", async () => {
     const zip = new JSZip();
     zip.file("minimal.cat", fixtureBytes("minimal.cat"));
@@ -178,6 +220,10 @@ function provenance(filename: string): SourceFileProvenance {
     kind: "synthetic",
     importedAt: "2026-06-15T00:00:00.000Z",
   };
+}
+
+function xmlBytes(value: string): Uint8Array {
+  return new TextEncoder().encode(value);
 }
 
 function findElement(

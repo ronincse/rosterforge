@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="visibility-branch" name="Visibility Branch" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203" library="true">
+  <catalogueLinks>
+    <catalogueLink id="branch-leaf" name="Leaf" targetId="visibility-leaf"
+      importRootEntries="true" />
+    <catalogueLink id="branch-missing" name="Missing" targetId="visibility-missing"
+      importRootEntries="true" />
+  </catalogueLinks>
+  <selectionEntries>
+    <selectionEntry id="branch-visible" name="Branch Visible" type="unit" import="true" />
+    <selectionEntry id="branch-false" name="Branch False" type="unit" import="false" />
+  </selectionEntries>
+</catalogue>
