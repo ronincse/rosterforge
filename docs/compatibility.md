@@ -447,6 +447,12 @@ byte limit, assign download provenance, and pass those bytes through ordinary
 BattleScribe ingestion. It does not track branches or `latest` assets and does
 not treat the remote source as trusted merely because it is pinned.
 
+When a caller supplies the optional byte-cache interface, tree-file acquisition
+verifies both the declared size and Git blob object ID before accepting a cache
+hit or network response. Corrupt cache entries fall back to the network;
+unavailable cache storage does not block a valid download. No durable browser
+cache adapter, quota policy, or metadata-index cache is implemented yet.
+
 At the August 13, 2026 inspection point, `BSData/wh40k-11e` had no latest
 GitHub release asset and the official BSData gallery registry did not contain
 an 11th-edition repository record. The pinned checkout itself also has no

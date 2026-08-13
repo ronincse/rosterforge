@@ -93,7 +93,8 @@ This repository currently contains the first development slice:
 Pinned GitHub tree listing, bounded individual-file downloads, download
 provenance, and pure exact-ID dependency-closure planning are available through
 the headless repository package. Automatic remote metadata indexing, closure
-download orchestration, caching, and repository/dependency UI remain deferred,
+download orchestration, durable cache adapters, and repository/dependency UI
+remain deferred,
 along with broader condition application, dynamic source-default amounts,
 grouped cost/profile/visibility modifiers, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,

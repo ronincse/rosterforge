@@ -56,9 +56,11 @@ boundary accepts only full commit SHA pins, lists supported BattleScribe files
 from a bounded commit tree, streams individual raw files under byte limits, and
 passes downloaded bytes through ordinary secure ingestion. A separate pure
 planner derives a selected catalogue's transitive dependency closure from an
-already available repository metadata index using exact IDs. It does not
-persist documents, construct that remote metadata index, cache downloads,
-orchestrate closure downloads, or resolve links into mutable target objects.
+already available repository metadata index using exact IDs. An optional
+transport-neutral byte-cache contract supports integrity-checked read-through
+acquisition without putting browser storage in the package. It does not persist
+documents itself, construct that remote metadata index, orchestrate closure
+downloads, or resolve links into mutable target objects.
 
 `roster-model` defines an immutable structural roster tree with nested force and
 selection occurrences. It depends only on `foundation`; source definitions are
@@ -164,6 +166,18 @@ the existing secure ingestion path, so generic source nodes, projections,
 unknown data, diagnostics, and original downloaded bytes retain their ordinary
 semantics.
 
+`readPinnedGitHubTreeFile` binds a path download to the corresponding pinned
+tree entry. It verifies the declared tree size when available and calculates
+the legacy Git blob SHA-1 over `blob <length>\0<bytes>` before any bytes are
+accepted or cached. Cache keys include provider, owner, repository, commit,
+path, and blob object ID. Cache hits are copied, bounded, and reverified before
+use; invalid entries fall back to the network and are replaced. Cache read and
+write failures are warnings when verified network acquisition succeeds.
+`acquireCachedPinnedGitHubBattleScribeFile` then sends either verified source
+through the same download-provenance and ingestion path. The package defines
+only `PinnedRepositoryByteCache`; durable IndexedDB implementation and eviction
+remain application concerns.
+
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary
 retains exact root IDs, game-system IDs, catalogue-link target IDs and order,
@@ -175,8 +189,8 @@ cycles are diagnosed and deduplicated but do not make an otherwise fully
 available closure incomplete.
 
 This slice deliberately stops before automatically downloading enough files to
-build a complete remote metadata index. It also adds no cache adapter, GitHub
-authentication, gallery integration, retry policy, dependency download
+build a complete remote metadata index. It also adds no durable cache adapter,
+GitHub authentication, gallery integration, retry policy, dependency download
 orchestrator, persistence, or UI. Callers may use the pure planner with a
 trusted or previously parsed metadata index, but must not infer target paths
 from catalogue-link display names without downloading and verifying exact IDs.

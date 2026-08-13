@@ -35,8 +35,10 @@ The Task 6 browser measurement and first headless acquisition slice are
 complete. The repository package now validates exact GitHub commit pins, lists
 bounded commit trees, streams and securely ingests individual pinned files, and
 plans exact-ID catalogue dependency closures from an available metadata index.
-The next slice is remote metadata-index construction plus cache contracts and
-closure download orchestration, before any faction-selection UI is designed.
+Pinned tree files also have a transport-neutral read-through cache contract with
+size and Git blob integrity verification. The next slice is remote
+metadata-index construction, closure download orchestration, and then a durable
+browser cache adapter before any faction-selection UI is designed.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

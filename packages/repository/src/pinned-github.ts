@@ -87,6 +87,11 @@ export interface AcquirePinnedGitHubBattleScribeFileOptions
   readonly ingestionLimits?: Partial<IngestionLimits>;
 }
 
+export interface IngestDownloadedPinnedGitHubFileOptions {
+  readonly importedAt: string;
+  readonly ingestionLimits?: Partial<IngestionLimits>;
+}
+
 const commitShaPattern = /^[0-9a-f]{40}$/u;
 const ownerPattern = /^(?!-)[A-Za-z0-9-]{1,39}(?<!-)$/u;
 const repositoryPattern = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,100}$/u;
@@ -239,13 +244,7 @@ export async function acquirePinnedGitHubBattleScribeFile(
   if (!downloaded.ok) {
     return downloaded;
   }
-  const provenance = downloadProvenance(downloaded.value, options.importedAt);
-  const ingested = await ingestBattleScribeFile(downloaded.value.bytes, {
-    source: provenance,
-    ...(options.ingestionLimits === undefined
-      ? {}
-      : { limits: options.ingestionLimits }),
-  });
+  const ingested = await ingestDownloadedPinnedGitHubFile(downloaded.value, options);
   if (!ingested.ok) {
     return failure([...downloaded.diagnostics, ...ingested.diagnostics]);
   }
@@ -253,6 +252,20 @@ export async function acquirePinnedGitHubBattleScribeFile(
     ...downloaded.diagnostics,
     ...ingested.diagnostics,
   ]);
+}
+
+export async function ingestDownloadedPinnedGitHubFile(
+  downloaded: DownloadedPinnedRepositoryFile,
+  options: IngestDownloadedPinnedGitHubFileOptions,
+): Promise<Result<ParsedBattleScribeDocument>> {
+  const provenance = downloadProvenance(downloaded, options.importedAt);
+  const ingested = await ingestBattleScribeFile(downloaded.bytes, {
+    source: provenance,
+    ...(options.ingestionLimits === undefined
+      ? {}
+      : { limits: options.ingestionLimits }),
+  });
+  return ingested;
 }
 
 export function githubRawFileUrl(

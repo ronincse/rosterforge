@@ -1179,12 +1179,18 @@ ambiguous, wrong-kind, and cross-game-system targets remain diagnostics and set
 the plan status to `incomplete`; an incomplete plan is still inspectable and is
 not misrepresented as a resolved data graph.
 
-The current acquisition types do not define a durable cache record. Cache keys,
-eviction, schema versioning, integrity metadata, and atomic closure publication
-remain open for the next repository slice. Likewise, a tree is only a path/blob
-index: constructing remote document summaries still requires bounded downloads
-and secure parsing, or a separately specified manifest whose IDs are verified
-against downloaded documents.
+`PinnedRepositoryByteCacheKey` includes the immutable source identity, path, and
+pinned Git blob ID. A cache entry contains only copied source bytes and an
+optional media type. Every read is treated as untrusted: bytes are copied,
+checked against limits and the tree's declared size, and hashed using Git's blob
+object format before ingestion. The core interface has no deletion, discovery,
+or storage semantics. Durable record versioning, eviction, quota handling, and
+atomic closure publication remain application-adapter questions.
+
+A tree is still only a path/blob index: constructing remote document summaries
+requires bounded downloads and secure parsing, or a separately specified
+manifest whose IDs are verified against downloaded documents. Cache presence
+does not make a summary authoritative and does not permit skipping ingestion.
 
 ## Local Catalogue Library
 

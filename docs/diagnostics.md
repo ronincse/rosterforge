@@ -115,6 +115,9 @@ REPOSITORY_GITHUB_FILE_UNSUPPORTED
 REPOSITORY_GITHUB_FILE_SIZE_LIMIT
 REPOSITORY_GITHUB_BODY_UNAVAILABLE
 REPOSITORY_GITHUB_BODY_READ_FAILED
+REPOSITORY_GITHUB_BLOB_SIZE_MISMATCH
+REPOSITORY_GITHUB_BLOB_INTEGRITY_UNAVAILABLE
+REPOSITORY_GITHUB_BLOB_INTEGRITY_MISMATCH
 ```
 
 HTTP and network failures reuse `REPOSITORY_GITHUB_REQUEST_FAILED`; redirects
@@ -124,6 +127,22 @@ the observed and configured byte counts. No partial bytes or parsed document
 are returned after a download failure. Once a bounded download succeeds,
 ordinary `BS_*` ingestion diagnostics use deterministic `download` provenance
 containing the pinned raw URL and repository path.
+
+Integrity-bound read-through caching can emit warning diagnostics while still
+returning a verified network result:
+
+```text
+REPOSITORY_CACHE_ENTRY_INVALID
+REPOSITORY_CACHE_READ_FAILED
+REPOSITORY_CACHE_WRITE_FAILED
+```
+
+An invalid cache entry records the underlying size/integrity reason codes, is
+not ingested, and is replaced after a verified download. Cache I/O failures
+have `internal` impact; corrupt cached bytes have `security` impact. A network
+blob size or object-ID mismatch remains an error and returns no file. Git blob
+verification also fails closed when Web Crypto cannot calculate the SHA-1 used
+by the pinned Git tree.
 
 Dependency-closure planning can fail before producing a plan with:
 
