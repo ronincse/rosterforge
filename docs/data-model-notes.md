@@ -1184,8 +1184,16 @@ pinned Git blob ID. A cache entry contains only copied source bytes and an
 optional media type. Every read is treated as untrusted: bytes are copied,
 checked against limits and the tree's declared size, and hashed using Git's blob
 object format before ingestion. The core interface has no deletion, discovery,
-or storage semantics. Durable record versioning, eviction, quota handling, and
-atomic closure publication remain application-adapter questions.
+or storage semantics.
+
+The browser adapter stores a versioned record in the dedicated
+`rosterforge-pinned-repository-cache` IndexedDB database. It copies bytes on
+write and read, repeats the complete immutable key inside the record, and
+rejects mismatched, malformed, or oversized records. IndexedDB records are not
+trusted as proof of integrity: the repository layer still checks the tree size
+and Git blob object ID after every cache read. IndexedDB absence means no cache,
+not a failed import. Eviction, quota handling, metadata-index persistence, and
+atomic closure publication remain open application concerns.
 
 A tree is still only a path/blob index. The remote index builder obtains root
 metadata through bounded downloads and secure parsing, retaining one ordered

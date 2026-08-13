@@ -193,8 +193,11 @@ use; invalid entries fall back to the network and are replaced. Cache read and
 write failures are warnings when verified network acquisition succeeds.
 `acquireCachedPinnedGitHubBattleScribeFile` then sends either verified source
 through the same download-provenance and ingestion path. The package defines
-only `PinnedRepositoryByteCache`; durable IndexedDB implementation and eviction
-remain application concerns.
+only `PinnedRepositoryByteCache`. `apps/web` supplies the native IndexedDB
+adapter in a separate versioned database. Its records copy the immutable cache
+key, bytes, and optional media type; reads decode and bound each record before
+the repository package performs the authoritative Git blob verification.
+Eviction and quota policy remain application concerns.
 
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary
@@ -223,10 +226,10 @@ target IDs. A stale or fabricated metadata index therefore cannot silently
 redirect a closure. The operation performs no graph resolution, catalogue
 composition, roster construction, evaluation, or validation.
 
-This slice still adds no durable cache adapter, GitHub authentication, gallery
-integration, retry policy, persistence, or UI. Callers must not infer target
-paths from catalogue-link display names without downloading and verifying exact
-IDs.
+This slice still adds no GitHub authentication, gallery integration, retry
+policy, metadata-index persistence, cache management UI, or acquisition UI.
+Callers must not infer target paths from catalogue-link display names without
+downloading and verifying exact IDs.
 
 ## Catalogue Library Boundary
 

@@ -44,8 +44,11 @@ history, and roster commands while `App` retains presentation composition.
 Saved drafts, catalogue library/import reporting, catalogue details/roster
 setup, workspace states, and shared display primitives are now separate modules.
 The complete active roster workspace is now a separate byte-for-byte moved
-module as well, leaving `App.tsx` as a small composition root. The next slice is
-a durable browser cache adapter and acquisition UI.
+module as well, leaving `App.tsx` as a small composition root. A defensive,
+versioned IndexedDB adapter now persists verified pinned repository bytes while
+leaving integrity verification in the repository package. The next slice is
+the acquisition UI; cache eviction, quota controls, and metadata-index
+persistence remain deferred.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

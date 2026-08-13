@@ -450,8 +450,12 @@ not treat the remote source as trusted merely because it is pinned.
 When a caller supplies the optional byte-cache interface, tree-file acquisition
 verifies both the declared size and Git blob object ID before accepting a cache
 hit or network response. Corrupt cache entries fall back to the network;
-unavailable cache storage does not block a valid download. No durable browser
-cache adapter, quota policy, or metadata-index cache is implemented yet.
+unavailable cache storage does not block a valid download. The web application
+now has a defensive IndexedDB adapter for these copied source bytes. Cache
+records are isolated by provider, repository, commit, path, and blob ID, and a
+malformed or oversized record is surfaced through the existing cache-read
+warning before network fallback. No eviction policy, quota-management UI, or
+metadata-index cache is implemented yet.
 
 The headless orchestrator can now build a compact remote metadata index by
 processing the pinned tree sequentially, then acquire only the selected
