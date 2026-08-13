@@ -2,7 +2,6 @@ import {
   useEffect,
   useId,
   useState,
-  type FormEvent,
 } from "react";
 
 import type {
@@ -34,6 +33,11 @@ import type {
   LocalCatalogueChoice,
   LocalCatalogueLibrary,
 } from "./catalogue-library.js";
+import { CatalogueDetails } from "./catalogue-details-panel.js";
+import { CatalogueLibraryPanel } from "./catalogue-library-panel.js";
+import { Detail } from "./detail-row.js";
+import { DiagnosticList } from "./diagnostic-list.js";
+import { forceDefinitionLabel } from "./force-definition.js";
 import {
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
@@ -48,12 +52,21 @@ import {
   type LocalRosterConstraintInspection,
   type LocalRosterSession,
 } from "./roster-session.js";
+import { SavedDraftShelf } from "./saved-draft-shelf.js";
+import { SummaryMetric } from "./summary-metric.js";
+import {
+  formatCount,
+  formatNumber,
+} from "./ui-format.js";
 import {
   useRosterForgeAppController,
-  type DraftActionState,
-  type DraftShelfState,
   type RosterForgeAppControllerOptions,
 } from "./use-app-controller.js";
+import {
+  FailureState,
+  IdleState,
+  LoadingState,
+} from "./workspace-states.js";
 
 export type AppProps = RosterForgeAppControllerOptions;
 
@@ -195,179 +208,6 @@ export function App(props: AppProps) {
   );
 }
 
-function SavedDraftShelf({
-  state,
-  action,
-  activeDraftId,
-  onLoad,
-  onDelete,
-}: {
-  readonly state: DraftShelfState;
-  readonly action: DraftActionState;
-  readonly activeDraftId: string | undefined;
-  readonly onLoad: (id: string) => void;
-  readonly onDelete: (id: string) => void;
-}) {
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string>();
-  const busy = action.kind !== "idle";
-  return (
-    <section className="saved-drafts" aria-labelledby="saved-drafts-heading">
-      <div className="saved-drafts-heading">
-        <div>
-          <p className="eyebrow">Browser storage</p>
-          <h2 id="saved-drafts-heading">Saved roster drafts</h2>
-        </div>
-        <span>{formatCount(state.drafts.length, "draft")}</span>
-      </div>
-      <p className="saved-drafts-note">
-        Saved drafts stay in this browser and include the source files needed
-        to rebuild their catalogue context.
-      </p>
-
-      {state.kind === "loading" ? (
-        <p className="saved-drafts-empty" role="status">
-          Checking this browser for saved drafts.
-        </p>
-      ) : state.kind === "failed" ? (
-        <div className="saved-drafts-empty">
-          <strong>Saved drafts are unavailable</strong>
-          <span>The current roster can still be used in memory.</span>
-        </div>
-      ) : state.drafts.length === 0 ? (
-        <p className="saved-drafts-empty">No roster drafts saved yet.</p>
-      ) : (
-        <div className="saved-draft-list">
-          {state.drafts.map((draft) => {
-            const confirming = confirmDeleteId === draft.id;
-            const isTarget = action.targetId === draft.id;
-            return (
-              <article
-                className="saved-draft-card"
-                data-active={activeDraftId === draft.id}
-                key={draft.id}
-              >
-                <div>
-                  <strong>{draft.rosterName}</strong>
-                  <span>
-                    {formatCount(draft.selectionCount, "selection")} |{" "}
-                    {formatBytes(draft.totalFileBytes)}
-                  </span>
-                  <small>Updated {formatTimestamp(draft.updatedAt)}</small>
-                </div>
-                {confirming ? (
-                  <div
-                    className="saved-draft-confirm"
-                    role="group"
-                    aria-label={`Confirm deletion of ${draft.rosterName}`}
-                  >
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => {
-                        setConfirmDeleteId(undefined);
-                        onDelete(draft.id);
-                      }}
-                    >
-                      Confirm delete
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => setConfirmDeleteId(undefined)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="saved-draft-actions">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => onLoad(draft.id)}
-                    >
-                      {isTarget && action.kind === "loading"
-                        ? "Opening..."
-                        : "Open"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      aria-label={`Delete ${draft.rosterName}`}
-                      onClick={() => setConfirmDeleteId(draft.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      {(action.message !== undefined || action.kind !== "idle") && (
-        <p className="draft-action-status" role="status">
-          {action.message ??
-            (action.kind === "saving"
-              ? "Saving roster draft..."
-              : action.kind === "loading"
-                ? "Opening saved roster draft..."
-                : "Deleting saved roster draft...")}
-        </p>
-      )}
-      <DiagnosticList
-        diagnostics={[...state.diagnostics, ...action.diagnostics]}
-      />
-    </section>
-  );
-}
-
-function IdleState() {
-  return (
-    <div className="empty-state">
-      <div className="empty-glyph" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      <h2>Your catalogue library starts here</h2>
-      <p>
-        Select a game system and one or more catalogues in the same batch. Valid
-        files remain available even when another selected file has a problem.
-      </p>
-    </div>
-  );
-}
-
-function LoadingState({ fileCount }: { readonly fileCount: number }) {
-  return (
-    <div className="loading-state" role="status">
-      <span className="loader" aria-hidden="true" />
-      <div>
-        <h2>Reading {formatCount(fileCount, "file")}</h2>
-        <p>Parsing XML and composing catalogue views locally.</p>
-      </div>
-    </div>
-  );
-}
-
-function FailureState({
-  message,
-  diagnostics,
-}: {
-  readonly message: string;
-  readonly diagnostics: readonly Diagnostic[];
-}) {
-  return (
-    <div className="failure-state" role="alert">
-      <p className="eyebrow">Import stopped</p>
-      <h2>{message}</h2>
-      <p>Choose another set of files to try again.</p>
-      <DiagnosticList diagnostics={diagnostics} />
-    </div>
-  );
-}
-
 function LibraryWorkspace({
   library,
   diagnostics,
@@ -425,10 +265,6 @@ function LibraryWorkspace({
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
 }) {
-  const importedCount = library.importReport.files.filter(
-    ({ status }) => status === "imported",
-  ).length;
-  const rejectedCount = library.importReport.files.length - importedCount;
   const rosterActive =
     rosterSession !== undefined &&
     rosterSession.catalogue.key === selectedCatalogue?.key;
@@ -437,72 +273,12 @@ function LibraryWorkspace({
   return (
     <div className="library-layout" data-roster-active={rosterActive}>
       {!rosterActive && (
-        <section className="library-summary" aria-labelledby="library-heading">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Current local batch</p>
-            <h2 id="library-heading">Catalogue library</h2>
-          </div>
-          <StatusBadge status={library.status} />
-        </div>
-
-        <div className="summary-grid">
-          <SummaryMetric label="Imported" value={String(importedCount)} />
-          <SummaryMetric
-            label="Roster catalogues"
-            value={String(library.selectableCatalogues.length)}
-          />
-          <SummaryMetric label="Issues" value={String(diagnostics.length)} />
-        </div>
-
-        {library.selectableCatalogues.length > 0 ? (
-          <div className="catalogue-list" aria-label="Available catalogues">
-            {library.selectableCatalogues.map((catalogue) => (
-              <button
-                className="catalogue-choice"
-                data-selected={catalogue.key === selectedCatalogue?.key}
-                key={catalogue.key}
-                type="button"
-                aria-pressed={catalogue.key === selectedCatalogue?.key}
-                onClick={() => onSelect(catalogue.key)}
-              >
-                <span className="catalogue-monogram" aria-hidden="true">
-                  {initials(catalogue.name)}
-                </span>
-                <span className="catalogue-choice-copy">
-                  <strong>{catalogue.name}</strong>
-                  <span>
-                    Revision {catalogue.revision ?? "not specified"}
-                  </span>
-                </span>
-                <span className="choice-arrow" aria-hidden="true">
-                  &gt;
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="no-catalogues">
-            <h3>No catalogue choices yet</h3>
-            <p>
-              {library.gameSystems.length > 0
-                ? "The game system imported, but this batch did not contain a catalogue."
-                : "No BattleScribe catalogue could be read from this batch."}
-            </p>
-          </div>
-        )}
-
-        <ImportReport library={library} rejectedCount={rejectedCount} />
-        {diagnostics.length > 0 && (
-          <details className="batch-diagnostics">
-            <summary>
-              Batch diagnostics
-              <span>{formatCount(diagnostics.length, "issue")}</span>
-            </summary>
-            <DiagnosticList diagnostics={diagnostics} />
-          </details>
-        )}
-        </section>
+        <CatalogueLibraryPanel
+          library={library}
+          diagnostics={diagnostics}
+          selectedCatalogue={selectedCatalogue}
+          onSelect={onSelect}
+        />
       )}
 
       <InspectorElement
@@ -544,243 +320,6 @@ function LibraryWorkspace({
         )}
       </InspectorElement>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { readonly status: LocalCatalogueLibrary["status"] }) {
-  const labels = {
-    empty: "Nothing imported",
-    unavailable: "Needs a catalogue",
-    ready: "Ready",
-    partial: "Ready with issues",
-  } as const;
-  return (
-    <span className="status-badge" data-status={status}>
-      {labels[status]}
-    </span>
-  );
-}
-
-function SummaryMetric({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}) {
-  return (
-    <div className="summary-metric">
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function ImportReport({
-  library,
-  rejectedCount,
-}: {
-  readonly library: LocalCatalogueLibrary;
-  readonly rejectedCount: number;
-}) {
-  return (
-    <details className="import-report" open={rejectedCount > 0}>
-      <summary>
-        File report
-        <span>{rejectedCount} rejected</span>
-      </summary>
-      <ul>
-        {library.importReport.files.map((file) => (
-          <li key={`${file.index}:${file.source.filename}`}>
-            <span className="file-status" data-status={file.status} aria-hidden="true" />
-            <span>
-              <strong>{file.source.filename}</strong>
-              <small>
-                {file.status === "imported"
-                  ? file.document?.metadata.kind === "catalogue"
-                    ? "Catalogue"
-                    : "Game system"
-                  : file.diagnostics[0]?.message ?? "Rejected"}
-              </small>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-function CatalogueDetails({
-  catalogue,
-  library,
-  diagnostics,
-  rosterDiagnostics,
-  onCreateRoster,
-}: {
-  readonly catalogue: LocalCatalogueChoice;
-  readonly library: LocalCatalogueLibrary;
-  readonly diagnostics: readonly Diagnostic[];
-  readonly rosterDiagnostics: readonly Diagnostic[];
-  readonly onCreateRoster: (
-    catalogue: LocalCatalogueChoice,
-    forceDefinition: BattleScribeForceDefinition,
-    name: string,
-  ) => void;
-}) {
-  const gameSystem = library.gameSystems.find(
-    ({ metadata }) => metadata.id === catalogue.gameSystemId,
-  );
-  const sourceDiagnostics = diagnostics.filter(
-    ({ location }) =>
-      location?.source.sourceId === catalogue.source.sourceId ||
-      (catalogue.gameSystemId !== undefined &&
-        location?.source.sourceId === gameSystem?.source.sourceId),
-  );
-
-  return (
-    <div>
-      <p className="eyebrow">Selected catalogue</p>
-      <h2>{catalogue.name}</h2>
-      <p className="catalogue-subtitle">
-        {gameSystem?.metadata.name ?? "Game system unavailable"}
-      </p>
-
-      <dl className="detail-list">
-        <Detail label="Source file" value={catalogue.source.filename} />
-        <Detail
-          label="Revision"
-          value={String(catalogue.revision ?? "Not specified")}
-        />
-        <Detail
-          label="Visible roots"
-          value={String(catalogue.context.roots.roots.length)}
-        />
-        <Detail
-          label="Force definitions"
-          value={String(catalogue.context.forces.definitions.length)}
-        />
-        <Detail
-          label="Categories"
-          value={String(catalogue.context.categories.definitions.length)}
-        />
-        <Detail
-          label="Source size"
-          value={formatBytes(catalogue.document.sourceBytes.byteLength)}
-        />
-      </dl>
-
-      <div className="readiness-note">
-        <strong>Catalogue context composed</strong>
-        <span>
-          Definitions and source provenance are ready for roster setup.
-        </span>
-      </div>
-
-      <RosterSetup
-        key={catalogue.key}
-        catalogue={catalogue}
-        diagnostics={rosterDiagnostics}
-        onCreate={onCreateRoster}
-      />
-
-      {sourceDiagnostics.length > 0 && (
-        <details className="diagnostic-panel">
-          <summary>
-            Catalogue diagnostics
-            <span>{formatCount(sourceDiagnostics.length, "issue")}</span>
-          </summary>
-          <DiagnosticList diagnostics={sourceDiagnostics} />
-        </details>
-      )}
-    </div>
-  );
-}
-
-function RosterSetup({
-  catalogue,
-  diagnostics,
-  onCreate,
-}: {
-  readonly catalogue: LocalCatalogueChoice;
-  readonly diagnostics: readonly Diagnostic[];
-  readonly onCreate: (
-    catalogue: LocalCatalogueChoice,
-    forceDefinition: BattleScribeForceDefinition,
-    name: string,
-  ) => void;
-}) {
-  const nameId = useId();
-  const forceId = useId();
-  const definitions = catalogue.context.forces.definitions;
-  const [name, setName] = useState(`${catalogue.name} roster`);
-  const [selectedForceKey, setSelectedForceKey] = useState(
-    definitions[0] === undefined ? "" : forceDefinitionKey(definitions[0]),
-  );
-  const selectedForce = definitions.find(
-    (definition) => forceDefinitionKey(definition) === selectedForceKey,
-  );
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmedName = name.trim();
-    if (trimmedName === "" || selectedForce === undefined) return;
-    onCreate(catalogue, selectedForce, trimmedName);
-  }
-
-  if (definitions.length === 0) {
-    return (
-      <div className="roster-setup unavailable-setup">
-        <p className="eyebrow">Roster setup</p>
-        <h3>No force definitions available</h3>
-        <p>
-          Import this catalogue with its matching game system to create a
-          roster force.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <form className="roster-setup" onSubmit={submit}>
-      <div>
-        <p className="eyebrow">Roster setup</p>
-        <h3>Create an in-memory roster</h3>
-      </div>
-      <label htmlFor={nameId}>Roster name</label>
-      <input
-        id={nameId}
-        value={name}
-        required
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
-      <label htmlFor={forceId}>Starting force</label>
-      <select
-        id={forceId}
-        value={selectedForceKey}
-        onChange={(event) => setSelectedForceKey(event.currentTarget.value)}
-      >
-        {definitions.map((definition) => (
-          <option
-            key={forceDefinitionKey(definition)}
-            value={forceDefinitionKey(definition)}
-          >
-            {forceDefinitionLabel(definition)}
-          </option>
-        ))}
-      </select>
-      <button
-        className="create-roster-action"
-        type="submit"
-        disabled={name.trim() === "" || selectedForce === undefined}
-      >
-        Create roster
-      </button>
-      <p className="setup-boundary">
-        Creation is structural. Read-only costs appear in the workspace;
-        legality is not evaluated.
-      </p>
-      <DiagnosticList diagnostics={diagnostics} />
-    </form>
   );
 }
 
@@ -2683,94 +2222,6 @@ function unresolvedInfoLinkKey(
     ...infoLink.link.path,
     index,
   ]);
-}
-
-function Detail({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
-  );
-}
-
-function DiagnosticList({
-  diagnostics,
-}: {
-  readonly diagnostics: readonly Diagnostic[];
-}) {
-  if (diagnostics.length === 0) return null;
-  const visible = diagnostics.slice(0, 50);
-  return (
-    <ul className="diagnostic-list">
-      {visible.map((diagnostic, index) => (
-        <li key={`${diagnostic.code}:${index}`}>
-          <span data-severity={diagnostic.severity}>{diagnostic.severity}</span>
-          <div>
-            <strong>{diagnostic.code}</strong>
-            <p>{diagnostic.message}</p>
-          </div>
-        </li>
-      ))}
-      {diagnostics.length > visible.length && (
-        <li className="diagnostic-overflow">
-          {formatCount(diagnostics.length - visible.length, "additional issue")}
-        </li>
-      )}
-    </ul>
-  );
-}
-
-function formatCount(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatTimestamp(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(timestamp));
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 20,
-  }).format(value);
-}
-
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/u).filter(Boolean);
-  return words
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-function forceDefinitionKey(
-  definition: BattleScribeForceDefinition,
-): string {
-  return JSON.stringify([
-    definition.source.source.sourceId,
-    ...definition.source.path,
-  ]);
-}
-
-function forceDefinitionLabel(
-  definition: BattleScribeForceDefinition,
-): string {
-  return definition.source.name ?? definition.source.id ?? "Unnamed force";
 }
 
 function rootChoiceKey(choice: LocalRosterRootChoice): string {

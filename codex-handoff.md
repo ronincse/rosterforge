@@ -40,9 +40,11 @@ size and Git blob integrity verification. Sequential remote metadata indexing
 and focused closure acquisition are also complete, including summary-versus-
 download verification. The first `App.tsx` split is complete: a focused
 `useRosterForgeAppController` now owns imports, drafts, catalogue selection,
-history, and roster commands while `App` retains presentation composition. The
-next architecture slice is presentation-panel extraction, followed by a durable
-browser cache adapter and acquisition UI.
+history, and roster commands while `App` retains presentation composition.
+Saved drafts, catalogue library/import reporting, catalogue details/roster
+setup, workspace states, and shared display primitives are now separate modules.
+The next architecture slice is the active roster-workspace extraction, followed
+by a durable browser cache adapter and acquisition UI.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,
