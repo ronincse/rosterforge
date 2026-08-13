@@ -132,12 +132,14 @@ commands, and action diagnostics. `App` consumes that controller and remains
 the presentation-composition root. Saved-draft controls, catalogue-library and
 import reporting, catalogue details and roster setup, transient workspace
 states, diagnostic lists, detail rows, summary metrics, and locale formatting
-live in focused presentation modules. The active roster workspace remains in
-`App.tsx` pending its own bounded split. Existing dependency injection for
-catalogue preparation, draft storage, clocks, and generated IDs is accepted by
-the hook through `AppProps`, preserving deterministic UI tests. Repository
-acquisition controls will join this controller boundary instead of adding
-another workflow directly to the presentation component.
+live in focused presentation modules. `roster-workspace.tsx` owns the active
+roster builder, supported checks, cost and constraint summaries, selection
+editing, and rule/profile inspection without changing their behavior. Existing
+dependency injection for catalogue preparation, draft storage, clocks, and
+generated IDs is accepted by the hook through `AppProps`, preserving
+deterministic UI tests. Repository acquisition controls will join this
+controller boundary instead of adding another workflow directly to the
+presentation component.
 
 ## Local Import Boundary
 

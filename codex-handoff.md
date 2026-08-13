@@ -43,8 +43,9 @@ download verification. The first `App.tsx` split is complete: a focused
 history, and roster commands while `App` retains presentation composition.
 Saved drafts, catalogue library/import reporting, catalogue details/roster
 setup, workspace states, and shared display primitives are now separate modules.
-The next architecture slice is the active roster-workspace extraction, followed
-by a durable browser cache adapter and acquisition UI.
+The complete active roster workspace is now a separate byte-for-byte moved
+module as well, leaving `App.tsx` as a small composition root. The next slice is
+a durable browser cache adapter and acquisition UI.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,
