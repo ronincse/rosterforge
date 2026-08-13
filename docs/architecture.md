@@ -125,6 +125,16 @@ through a native IndexedDB adapter.
 Remote repository browsing and dependency-loading UI, full roster legality
 validation, and export remain deferred.
 
+`useRosterForgeAppController` owns application orchestration independently of
+the rendered panel tree: ordered import requests, draft-list refreshes and
+restoration, selected catalogue identity, bounded roster history, roster
+commands, and action diagnostics. `App` consumes that controller and remains
+the presentation-composition root. Existing dependency injection for catalogue
+preparation, draft storage, clocks, and generated IDs is accepted by the hook
+through `AppProps`, preserving deterministic UI tests. Repository acquisition
+controls will join this controller boundary instead of adding another workflow
+directly to the presentation component.
+
 ## Local Import Boundary
 
 `importLocalBattleScribeFiles` accepts caller-supplied filenames and byte arrays

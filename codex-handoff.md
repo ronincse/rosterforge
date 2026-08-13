@@ -38,8 +38,11 @@ plans exact-ID catalogue dependency closures from an available metadata index.
 Pinned tree files also have a transport-neutral read-through cache contract with
 size and Git blob integrity verification. Sequential remote metadata indexing
 and focused closure acquisition are also complete, including summary-versus-
-download verification. The next architecture slice is the planned `App.tsx`
-component split, followed by a durable browser cache adapter and acquisition UI.
+download verification. The first `App.tsx` split is complete: a focused
+`useRosterForgeAppController` now owns imports, drafts, catalogue selection,
+history, and roster commands while `App` retains presentation composition. The
+next architecture slice is presentation-panel extraction, followed by a durable
+browser cache adapter and acquisition UI.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,
