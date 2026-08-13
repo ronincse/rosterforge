@@ -18,6 +18,11 @@ import type {
 } from "./roster-session.js";
 import { RosterOverview } from "./roster-workspace.js";
 import { SavedDraftShelf } from "./saved-draft-shelf.js";
+import { RemoteCatalogueSourcePanel } from "./remote-catalogue-source-panel.js";
+import {
+  useRemoteCatalogueSourceController,
+  type RemoteCatalogueSourceControllerOptions,
+} from "./use-remote-catalogue-source.js";
 import {
   useRosterForgeAppController,
   type RosterForgeAppControllerOptions,
@@ -28,7 +33,8 @@ import {
   LoadingState,
 } from "./workspace-states.js";
 
-export type AppProps = RosterForgeAppControllerOptions;
+export type AppProps = RosterForgeAppControllerOptions &
+  RemoteCatalogueSourceControllerOptions;
 
 const acceptedExtensions = ".gst,.cat,.gstz,.catz,.json";
 
@@ -43,6 +49,7 @@ export function App(props: AppProps) {
     rosterHistory,
     rosterSession,
     rosterDiagnostics,
+    openCatalogueLibrary,
     importFiles,
     selectCatalogue,
     createRoster,
@@ -59,9 +66,20 @@ export function App(props: AppProps) {
     deleteRosterDraft,
   } = useRosterForgeAppController(props);
 
+  const remoteSource = useRemoteCatalogueSourceController(
+    (acquisition, diagnostics) =>
+      openCatalogueLibrary(
+        acquisition.library,
+        diagnostics,
+        acquisition.selectedCatalogueKey,
+      ),
+    props,
+  );
+
   function handleFileInput(input: HTMLInputElement) {
     const files = Array.from(input.files ?? []);
     input.value = "";
+    remoteSource.resetSource();
     void importFiles(files);
   }
 
@@ -77,17 +95,18 @@ export function App(props: AppProps) {
         </a>
         <span className="local-badge">
           <span className="local-dot" aria-hidden="true" />
-          Local only
+          Local processing
         </span>
       </header>
 
       <main>
         <section className="hero" aria-labelledby="page-title">
           <p className="eyebrow">BattleScribe 2.03 catalogue reader</p>
-          <h1 id="page-title">Bring your catalogue. Keep your data local.</h1>
+          <h1 id="page-title">Build your roster. Keep your data local.</h1>
           <p className="hero-copy">
-            Open game-system and catalogue files together. RosterForge reads
-            them in this browser session and shows exactly what is ready to use.
+            Browse a pinned community repository or open game-system and
+            catalogue files together. RosterForge verifies and reads them in
+            this browser.
           </p>
 
           <div className="import-actions">
@@ -109,10 +128,19 @@ export function App(props: AppProps) {
           </div>
 
           <p className="privacy-note">
-            Files are parsed locally. Nothing is uploaded. Drafts are saved
-            only when you choose Save draft.
+            Catalogue data is parsed locally. Nothing is uploaded. Drafts are
+            saved only when you choose Save draft.
           </p>
         </section>
+
+        <RemoteCatalogueSourcePanel
+          state={remoteSource.state}
+          sources={remoteSource.sources}
+          onBrowse={(source) => void remoteSource.browseSource(source)}
+          onSelectPath={remoteSource.selectCataloguePath}
+          onOpen={() => void remoteSource.openSelectedCatalogue()}
+          onCancel={remoteSource.cancelOperation}
+        />
 
         <SavedDraftShelf
           state={draftShelf}

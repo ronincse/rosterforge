@@ -13,7 +13,7 @@ import {
   within,
 } from "@testing-library/react";
 
-import { failure } from "@rosterforge/foundation";
+import { failure, success } from "@rosterforge/foundation";
 import type { LocalRosterDraft } from "@rosterforge/persistence";
 
 import { App } from "./App.js";
@@ -22,6 +22,14 @@ import {
   type LocalRosterDraftRecordBackend,
 } from "./browser-drafts.js";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
+import {
+  acquireRemoteCatalogue,
+  indexRemoteCatalogueSource,
+  type RemoteCatalogueAcquisition,
+  type RemoteCatalogueSourceDefinition,
+  type RemoteCatalogueSourceIndex,
+} from "./remote-catalogue-source.js";
+
 import type { BrowserFileSource } from "./browser-files.js";
 
 afterEach(cleanup);
@@ -203,8 +211,154 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
   <sharedSelectionEntries />
 </catalogue>`);
 const invalidCatalogueBytes = xmlBytes("<catalogue>");
+const remoteSourceDefinition: RemoteCatalogueSourceDefinition = {
+  id: "fictional-remote",
+  title: "Fictional Repository",
+  gameSystem: "Synthetic Game",
+  description: "A pinned fictional source.",
+  repository: {
+    owner: "BSData",
+    repository: "fictional-system",
+    revision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  },
+};
 
 describe("App local catalogue flow", () => {
+  it("browses a pinned source and opens the selected catalogue library", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "minimal.gst", bytes: gameSystemBytes },
+        { filename: "minimal.cat", bytes: catalogueBytes },
+      ],
+      fixedOptions,
+    );
+    if (!prepared.ok) {
+      throw new Error("Expected the remote UI fixture library to compose.");
+    }
+    const choice = prepared.value.selectableCatalogues[0]!;
+    const sourceIndex = {
+      definition: remoteSourceDefinition,
+      catalogues: [
+        {
+          path: "minimal.cat",
+          kind: "catalogue",
+          id: choice.id,
+          name: choice.name,
+          gameSystemId: choice.gameSystemId,
+          library: false,
+          catalogueLinks: [],
+        },
+      ],
+      report: {
+        files: [{}, {}],
+      },
+    } as unknown as RemoteCatalogueSourceIndex;
+    const indexRemote = vi.fn<typeof indexRemoteCatalogueSource>(
+      async (_source, options) => {
+        options.onProgress?.({
+          phase: "indexing",
+          completedFiles: 2,
+          totalFiles: 2,
+          currentPath: "minimal.gst",
+          acceptedBytes:
+            gameSystemBytes.byteLength + catalogueBytes.byteLength,
+        });
+        return success(sourceIndex);
+      },
+    );
+    const acquisition: RemoteCatalogueAcquisition = {
+      sourceIndex,
+      closure: {} as RemoteCatalogueAcquisition["closure"],
+      library: prepared.value,
+      selectedCatalogueKey: choice.key,
+    };
+    const acquireRemote = vi.fn<typeof acquireRemoteCatalogue>(
+      async (_index, path, options) => {
+        options.onProgress?.({
+          phase: "acquiring",
+          completedFiles: 2,
+          totalFiles: 2,
+          currentPath: path,
+          acceptedBytes:
+            gameSystemBytes.byteLength + catalogueBytes.byteLength,
+        });
+        return success(acquisition);
+      },
+    );
+
+    render(
+      <App
+        remoteSources={[remoteSourceDefinition]}
+        repositoryByteCache={null}
+        indexRemoteSource={indexRemote}
+        acquireRemoteSource={acquireRemote}
+        createBatchId={() => "remote-ui-batch"}
+        now={() => "2026-08-13T18:30:00.000Z"}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse catalogues" }),
+    );
+    const picker = await screen.findByLabelText("Faction catalogue");
+    expect((picker as HTMLSelectElement).value).toBe("minimal.cat");
+    expect(screen.getByText("Synthetic Faction")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Load selected catalogue" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Synthetic Faction" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The selected catalogue and its dependencies are ready.",
+      ),
+    ).toBeTruthy();
+    expect(indexRemote).toHaveBeenCalledOnce();
+    expect(acquireRemote.mock.calls[0]?.[1]).toBe("minimal.cat");
+    expect(screen.getByLabelText("Replace local files")).toBeTruthy();
+  });
+
+  it("cancels remote indexing without replacing the workspace", async () => {
+    let requestSignal: AbortSignal | undefined;
+    const indexRemote = vi.fn<typeof indexRemoteCatalogueSource>(
+      (_source, options) => {
+        requestSignal = options.signal;
+        return new Promise<
+          Awaited<ReturnType<typeof indexRemoteCatalogueSource>>
+        >(() => undefined);
+      },
+    );
+
+    render(
+      <App
+        remoteSources={[remoteSourceDefinition]}
+        repositoryByteCache={null}
+        indexRemoteSource={indexRemote}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse catalogues" }),
+    );
+    expect(
+      await screen.findByText("Indexing Fictional Repository"),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(
+      await screen.findByRole("button", { name: "Browse catalogues" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        name: "Your catalogue library starts here",
+      }),
+    ).toBeTruthy();
+  });
+
   it("loads BattleScribe JSON through the browser file-selection flow", async () => {
     const jsonGameSystemBytes = jsonBytes({
       gameSystem: {

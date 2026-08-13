@@ -336,8 +336,8 @@
 
 ## Deferred
 
-- Durable cache adapters, retries, repository update discovery, and atomic
-  persistence/publication of a downloaded closure
+- Cache eviction and quota controls, retries, metadata-index persistence,
+  repository update discovery, and atomic publication of a downloaded closure
 - Inferring catalogue paths from catalogue-link names without downloading and
   verifying exact target IDs; visibility still uses only documents supplied to
   graph resolution by the caller
@@ -355,7 +355,8 @@
   constraint enforcement, broader condition semantics, and full legality
   validation
 - Exact XML or JSON reserialization
-- GitHub import, remote repository browsing, and dependency-loading UI
+- Additional remote source configuration, GitHub authentication, branch/update
+  tracking, gallery discovery, and cache management UI
 - Sibling reordering, nested-force editing, force renaming, editable cost
   overrides, durable history, publication rendering, aggregate legality,
   validation, and roster export UI
@@ -466,8 +467,13 @@ cache avoids a second network transfer. Closure documents are re-ingested and
 must match the root identity and ordered catalogue-link target IDs used by the
 plan before they are exposed. Indexing and closure acquisition expose
 best-effort per-file progress snapshots suitable for cancellation-aware UI.
-Remote source picking, progress presentation, cache management UI, and
-repository update discovery remain deferred.
+The browser now presents an immutable WH40K 11e source, progress and
+cancellation for indexing and closure acquisition, non-library faction
+selection, repository diagnostics, and focused closure composition. A
+successful closure replaces the active library only after composition
+succeeds. Local file import remains available. Cache management, compact
+metadata-index persistence, additional source configuration, and repository
+update discovery remain deferred.
 
 Already-ingested closure documents can now use the same graph/context
 composition path as local batches without changing their download provenance or

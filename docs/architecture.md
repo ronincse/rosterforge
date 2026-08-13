@@ -121,9 +121,12 @@ browser shell built with Vite. The browser shell reads caller-selected local
 files, invokes the composer, presents ordered catalogue choices and file-level
 diagnostics, inspects the selected catalogue context, edits one structural
 roster with explicit occurrence amounts, and explicitly saves local drafts
-through a native IndexedDB adapter.
-Remote repository browsing and dependency-loading UI, full roster legality
-validation, and export remain deferred.
+through a native IndexedDB adapter. It can also browse an explicitly configured
+GitHub source pinned to an immutable commit, index its supported documents with
+progress and cancellation, acquire the selected catalogue's exact-ID dependency
+closure, and compose that closure through the same application model. Verified
+repository bytes use a separate defensive IndexedDB cache. Full roster legality
+validation and export remain deferred.
 
 `useRosterForgeAppController` owns application orchestration independently of
 the rendered panel tree: ordered import requests, draft-list refreshes and
@@ -137,9 +140,12 @@ roster builder, supported checks, cost and constraint summaries, selection
 editing, and rule/profile inspection without changing their behavior. Existing
 dependency injection for catalogue preparation, draft storage, clocks, and
 generated IDs is accepted by the hook through `AppProps`, preserving
-deterministic UI tests. Repository acquisition controls will join this
-controller boundary instead of adding another workflow directly to the
-presentation component.
+deterministic UI tests. `useRemoteCatalogueSourceController` separately owns
+remote browse, progress, cancellation, and acquisition state. It calls the
+generic `openCatalogueLibrary` controller command only after acquisition and
+composition succeed, so an in-flight or failed network operation does not
+discard the active library or roster. The presentation panel receives state and
+commands from that hook without owning repository behavior.
 
 ## Local Import Boundary
 
@@ -231,8 +237,8 @@ target IDs. A stale or fabricated metadata index therefore cannot silently
 redirect a closure. The operation performs no graph resolution, catalogue
 composition, roster construction, evaluation, or validation.
 
-This slice still adds no GitHub authentication, gallery integration, retry
-policy, metadata-index persistence, cache management UI, or acquisition UI.
+This boundary still adds no GitHub authentication, gallery integration, retry
+policy, metadata-index persistence, or cache management UI.
 Callers must not infer target paths from catalogue-link display names without
 downloading and verifying exact IDs.
 
@@ -271,6 +277,18 @@ types, labels their origin as `browser`, and passes the resulting bytes to the
 same repository API used by non-UI callers. Selecting files again replaces the
 current in-memory batch rather than merging repositories or resolving links.
 
+The remote source panel currently exposes one curated
+`BSData/wh40k-11e` snapshot pinned to commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`. Browsing first validates the
+pinned tree and sequentially indexes every supported source file. It offers
+only non-library catalogue roots, then acquires the selected game system,
+catalogue, and transitive catalogue links by exact ID. The panel reports
+per-file progress, can abort either operation, keeps repository diagnostics
+inspectable, and leaves local-file import available. This is a configured
+immutable source, not branch tracking or repository update discovery. The byte
+cache prevents repeat network transfer, but the compact metadata index is
+rebuilt on each browse.
+
 The React shell has explicit idle, loading, loaded, and failed states. On a
 successful composition it selects the first ordered catalogue by its
 source-scoped key and lets the user choose another imported catalogue. The
@@ -281,19 +299,24 @@ visible.
 
 Concurrent file selections and draft restoration are ordered by an in-memory
 request sequence, so a late result cannot replace a newer request. Draft-list
-refreshes use a separate sequence for the same reason. The UI renders at most
-50 diagnostic rows in one list for responsiveness, but complete diagnostic
-collections remain on their service results.
+refreshes use a separate sequence for the same reason. Remote operations use
+their own sequence and `AbortController`; progress callbacks from superseded
+operations cannot update current state. The UI renders at most 50 diagnostic
+rows in one list for responsiveness, but complete diagnostic collections remain
+on their service results.
 
-Nothing is uploaded or placed in URLs. Selected bytes remain in memory unless
-the user explicitly saves a roster draft; that draft stores the complete local
-batch in IndexedDB so its context can be rebuilt. Browser file reading failures
-are presented as transient UI errors; once repository ingestion starts, its
-structured diagnostics pass through unchanged. The browser layer does not
-fetch dependencies or enforce constraints. Its cost, constraint, and narrowly
-scoped structural-status displays delegate unchanged roster and context values
-to the read-only `evaluation` package; only the structural report exposes
-validation dimensions, and it explicitly does not claim full legality.
+Nothing is uploaded or placed in application URLs. Remote browsing sends
+read-only requests to GitHub for the exact configured commit. Selected closure
+bytes remain in memory unless the user explicitly saves a roster draft; that
+draft stores the complete focused batch in IndexedDB so its context can be
+rebuilt with source provenance intact. Browser file reading failures are
+presented as transient UI errors; once repository ingestion starts, its
+structured diagnostics pass through unchanged. Remote acquisition resolves
+only the exact catalogue closure and does not enforce constraints. Cost,
+constraint, and narrowly scoped structural-status displays delegate unchanged
+roster and context values to the read-only `evaluation` package; only the
+structural report exposes validation dimensions, and it explicitly does not
+claim full legality.
 
 ## Local Draft Persistence Boundary
 

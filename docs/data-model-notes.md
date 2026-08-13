@@ -1219,6 +1219,17 @@ view over documents already accepted by ingestion; it does not clone generic
 trees or source bytes and it does not rewrite `download` provenance as a local
 file source.
 
+`RemoteCatalogueSourceDefinition` is application configuration for an
+immutable source label, description, and validated GitHub pin. It is not a
+mutable subscription. `RemoteCatalogueSourceIndex` pairs that configuration
+with one compact index report and its ordered non-library catalogue summaries.
+The browser controller's listing, indexing, ready, acquiring, and failed states
+are transient UI state. Cancellation aborts the current fetch signal and
+invalidates later progress callbacks by sequence. A successful
+`RemoteCatalogueAcquisition` retains the source index, verified closure,
+composed library, and exact selected source-scoped catalogue key. It is
+published to the main controller only after composition succeeds.
+
 Index and closure `complete` statuses describe source acquisition only. They do
 not replace validation completeness, suppress projection diagnostics, or claim
 that modifiers, constraints, conditions, costs, or legality are fully

@@ -152,6 +152,23 @@ network response can still complete the operation. If IndexedDB is absent, the
 application omits the optional cache and acquisition proceeds with cache status
 `unavailable` rather than emitting a persistence error.
 
+The browser remote-source service can additionally emit:
+
+```text
+WEB_REMOTE_CATALOGUE_INDEX_EMPTY
+WEB_REMOTE_CATALOGUE_UNAVAILABLE
+WEB_REMOTE_SOURCE_UNEXPECTED_FAILURE
+```
+
+An empty index means secure indexing accepted no non-library catalogue roots.
+An unavailable catalogue means the exact selected root was not exposed after
+closure composition; its diagnostic retains the selected path and source ID and
+uses root provenance when available. The unexpected-failure code is a UI
+boundary guard for thrown adapter failures and includes a non-sensitive cause.
+Ordinary repository and ingestion failures keep their existing
+`REPOSITORY_*` or `BS_*` codes. Cancellation is user intent, not a diagnostic;
+the request is aborted and the source picker returns to a retryable state.
+
 Dependency-closure planning can fail before producing a plan with:
 
 ```text

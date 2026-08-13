@@ -213,6 +213,24 @@ export function useRosterForgeAppController({
     }
   }
 
+  function openCatalogueLibrary(
+    library: LocalCatalogueLibrary,
+    diagnostics: readonly Diagnostic[],
+    catalogueKey: string,
+  ) {
+    ++importSequence.current;
+    setActiveDraft(undefined);
+    setDraftAction({ kind: "idle", diagnostics: [] });
+    setRosterHistory(undefined);
+    setRosterDiagnostics([]);
+    setSelectedKey(catalogueKey);
+    setLoadState({
+      kind: "loaded",
+      library,
+      diagnostics,
+    });
+  }
+
   function selectCatalogue(key: string) {
     setSelectedKey(key);
     setActiveDraft(undefined);
@@ -563,6 +581,7 @@ export function useRosterForgeAppController({
     rosterSession,
     rosterDiagnostics,
     importFiles,
+    openCatalogueLibrary,
     selectCatalogue,
     createRoster,
     clearRoster,
