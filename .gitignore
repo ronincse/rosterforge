@@ -4,3 +4,4 @@ coverage/
 .cache/
 .pnpm-store/
 *.tsbuildinfo
+.claude/settings.local.json
