@@ -31,9 +31,12 @@ modifiers in 130 groups: 23 `set`, 131 `increment`, 21 `decrement`, and 130
 123 use `type="and"`, seven omit `type`, none has a group-level repeat, and 23
 child modifiers carry repeats.
 
-The Task 6 browser measurement is complete. The next product slice is headless
-repository acquisition using pinned catalogue dependency closures, before any
-faction-selection UI is designed.
+The Task 6 browser measurement and first headless acquisition slice are
+complete. The repository package now validates exact GitHub commit pins, lists
+bounded commit trees, streams and securely ingests individual pinned files, and
+plans exact-ID catalogue dependency closures from an available metadata index.
+The next slice is remote metadata-index construction plus cache contracts and
+closure download orchestration, before any faction-selection UI is designed.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

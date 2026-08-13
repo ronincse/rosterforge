@@ -86,6 +86,76 @@ successful ordered batch report, and application catalogue-library composition
 passes all import, graph, and context diagnostics through without translating
 their codes.
 
+Pinned GitHub source validation and tree listing can emit:
+
+```text
+REPOSITORY_GITHUB_OWNER_INVALID
+REPOSITORY_GITHUB_NAME_INVALID
+REPOSITORY_GITHUB_REVISION_NOT_PINNED
+REPOSITORY_GITHUB_REQUEST_FAILED
+REPOSITORY_GITHUB_REDIRECT_REJECTED
+REPOSITORY_GITHUB_INDEX_SIZE_LIMIT
+REPOSITORY_GITHUB_INDEX_INVALID
+REPOSITORY_GITHUB_INDEX_TRUNCATED
+REPOSITORY_GITHUB_TREE_ENTRY_LIMIT
+REPOSITORY_GITHUB_PATH_UNSAFE
+REPOSITORY_GITHUB_PATH_DUPLICATE
+```
+
+These are errors. Invalid source components, moving revisions, unsafe paths,
+redirects, and configured limits include `security` impact where applicable.
+The tree response is treated as untrusted even though its URL contains an exact
+commit SHA. A truncated tree is rejected rather than presented as a complete
+repository, and only validated supported blob paths are returned.
+
+Downloading one pinned file can additionally emit:
+
+```text
+REPOSITORY_GITHUB_FILE_UNSUPPORTED
+REPOSITORY_GITHUB_FILE_SIZE_LIMIT
+REPOSITORY_GITHUB_BODY_UNAVAILABLE
+REPOSITORY_GITHUB_BODY_READ_FAILED
+```
+
+HTTP and network failures reuse `REPOSITORY_GITHUB_REQUEST_FAILED`; redirects
+reuse `REPOSITORY_GITHUB_REDIRECT_REJECTED`. The size diagnostic may come from
+the response's declared content length or the accumulated stream and records
+the observed and configured byte counts. No partial bytes or parsed document
+are returned after a download failure. Once a bounded download succeeds,
+ordinary `BS_*` ingestion diagnostics use deterministic `download` provenance
+containing the pinned raw URL and repository path.
+
+Dependency-closure planning can fail before producing a plan with:
+
+```text
+REPOSITORY_DEPENDENCY_ROOT_MISSING
+REPOSITORY_DEPENDENCY_ROOT_AMBIGUOUS
+REPOSITORY_DEPENDENCY_ROOT_NOT_CATALOGUE
+```
+
+All other closure problems preserve the selected root and return an
+`incomplete` plan with one or more warning diagnostics:
+
+```text
+REPOSITORY_DEPENDENCY_GAME_SYSTEM_ID_MISSING
+REPOSITORY_DEPENDENCY_GAME_SYSTEM_MISSING
+REPOSITORY_DEPENDENCY_GAME_SYSTEM_AMBIGUOUS
+REPOSITORY_DEPENDENCY_GAME_SYSTEM_KIND_MISMATCH
+REPOSITORY_DEPENDENCY_TARGET_ID_MISSING
+REPOSITORY_DEPENDENCY_TARGET_MISSING
+REPOSITORY_DEPENDENCY_TARGET_AMBIGUOUS
+REPOSITORY_DEPENDENCY_TARGET_KIND_MISMATCH
+REPOSITORY_DEPENDENCY_GAME_SYSTEM_MISMATCH
+REPOSITORY_DEPENDENCY_CYCLE
+```
+
+Catalogue-link problems use the projected link's source provenance and generic
+path when the metadata index was summarized from parsed documents. The planner
+never chooses one of several exact-ID matches and never substitutes a display
+name for a missing target ID. A cycle is observable but does not by itself make
+the closure incomplete because the repeated document is already present and is
+not downloaded twice.
+
 The browser application displays these existing diagnostics beside batch and
 catalogue details. A diagnostic list renders its first 50 entries and reports
 the remaining count; the complete ordered array remains available on the

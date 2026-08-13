@@ -1146,6 +1146,46 @@ deterministic depth-first traversal and retains the first import path. Category
 and force entries are not included in selectable-root visibility. Each uses its
 separate definition-composition view described above.
 
+## Pinned Repository Acquisition
+
+`PinnedGitHubRepository` is an immutable source descriptor containing a GitHub
+owner, repository name, and branded full commit SHA. It does not contain mutable
+branch state, credentials, downloaded bytes, or a trust decision. A listed tree
+retains the same descriptor by reference and exposes only validated supported
+blob paths, Git object IDs, and optional declared byte sizes.
+
+`DownloadedPinnedRepositoryFile` is a short-lived acquisition value containing
+the exact pinned source, validated repository path, bounded byte array, optional
+media type, and exact raw URL. Secure acquisition converts it to ordinary
+`SourceFileProvenance` with `kind: "download"`; the accepted parsed document then
+owns the retained original byte array and all generic and typed views just as a
+local import does. The repository layer does not add targets to projected links
+or clone generic trees.
+
+`BattleScribeRepositoryDocumentSummary` is a compact planning projection, not a
+replacement document model. It preserves the root kind, source ID, name,
+game-system ID, optional library flag, path, and catalogue links in declaration
+order. A summary created from a parsed document also keeps root provenance and
+source-located catalogue-link descriptors. The parsed document remains the
+authority for generic nodes, unknown values, projections, diagnostics, and
+source bytes.
+
+`BattleScribeDependencyClosurePlan` is repository-scoped and identifies its
+pinned source and exact selected catalogue summary. Its ordered files contain
+the game system, selected catalogue, then first-seen transitive catalogue
+dependencies in depth-first link order. Exact IDs, not names, select targets.
+Cycles stop at the active repeated path and do not duplicate a file. Missing,
+ambiguous, wrong-kind, and cross-game-system targets remain diagnostics and set
+the plan status to `incomplete`; an incomplete plan is still inspectable and is
+not misrepresented as a resolved data graph.
+
+The current acquisition types do not define a durable cache record. Cache keys,
+eviction, schema versioning, integrity metadata, and atomic closure publication
+remain open for the next repository slice. Likewise, a tree is only a path/blob
+index: constructing remote document summaries still requires bounded downloads
+and secure parsing, or a separately specified manifest whose IDs are verified
+against downloaded documents.
+
 ## Local Catalogue Library
 
 The repository batch report is an import-session value, not a persistent

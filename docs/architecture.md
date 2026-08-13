@@ -8,7 +8,7 @@ foundation
   |
 battlescribe-data
 
-foundation <- repository
+foundation + battlescribe-data <- repository
 foundation <- data-graph
 foundation <- roster-model
 foundation + repository + roster-model <- persistence
@@ -49,12 +49,16 @@ profile type. It does not fetch catalogue dependencies, mutate projections,
 calculate costs, evaluate constraints/modifiers/conditions, construct rosters,
 or validate roster legality.
 
-`repository` owns bounded, local-file batch ingestion. It assigns deterministic
-per-batch provenance, preserves caller order, and returns an ordered report for
-every accepted or rejected file. Expected failures are isolated to one file so
-valid game systems and catalogues remain available in a partial batch. It does
-not persist documents, search repositories, fetch catalogue links, or resolve
-dependencies.
+`repository` owns bounded source acquisition and local-file batch ingestion. It
+assigns deterministic provenance, preserves caller order, and returns an
+ordered report for every accepted or rejected local file. Its headless GitHub
+boundary accepts only full commit SHA pins, lists supported BattleScribe files
+from a bounded commit tree, streams individual raw files under byte limits, and
+passes downloaded bytes through ordinary secure ingestion. A separate pure
+planner derives a selected catalogue's transitive dependency closure from an
+already available repository metadata index using exact IDs. It does not
+persist documents, construct that remote metadata index, cache downloads,
+orchestrate closure downloads, or resolve links into mutable target objects.
 
 `roster-model` defines an immutable structural roster tree with nested force and
 selection occurrences. It depends only on `foundation`; source definitions are
@@ -114,8 +118,8 @@ files, invokes the composer, presents ordered catalogue choices and file-level
 diagnostics, inspects the selected catalogue context, edits one structural
 roster with explicit occurrence amounts, and explicitly saves local drafts
 through a native IndexedDB adapter.
-Repository downloading, dependency loading, full roster legality validation,
-and export remain deferred.
+Remote repository browsing and dependency-loading UI, full roster legality
+validation, and export remain deferred.
 
 ## Local Import Boundary
 
@@ -134,6 +138,48 @@ partial report because no file is parsed.
 This API does not infer catalogue dependencies or open files named by catalogue
 links. It has no filesystem, network, persistence, or browser dependency; the
 application supplies the bytes.
+
+## Pinned Repository Acquisition Boundary
+
+`pinGitHubRepository` accepts an owner, repository name, and full lowercase
+40-character commit SHA. Branches, tags, abbreviated SHAs, unsafe owner/name
+components, and moving `latest` references are rejected. A successful
+`PinnedGitHubRepository` is therefore an immutable source identity rather than
+a claim that the remote content is trusted.
+
+`listPinnedGitHubRepositoryFiles` reads GitHub's recursive tree for that exact
+commit. The response body, entry count, and path length are bounded; truncated
+trees, malformed UTF-8/JSON, duplicate supported paths, traversal components,
+backslashes, control characters, and redirects are rejected. Only `.gst`,
+`.cat`, `.gstz`, `.catz`, and `.json` blob paths enter the returned sorted tree.
+Blob object IDs and declared sizes remain available to later orchestration.
+
+`downloadPinnedGitHubFile` requests one validated path from the exact raw commit
+URL. It checks a declared content length when present and otherwise accumulates
+the response stream only up to the configured byte limit. It rejects redirects,
+unsupported extensions, unavailable bodies, failed reads, and HTTP/network
+failures with structured diagnostics. `acquirePinnedGitHubBattleScribeFile`
+adds deterministic `download` provenance and delegates the retained bytes to
+the existing secure ingestion path, so generic source nodes, projections,
+unknown data, diagnostics, and original downloaded bytes retain their ordinary
+semantics.
+
+`summarizeBattleScribeRepositoryDocument` creates the small metadata record
+needed for closure planning from an accepted parsed document. The summary
+retains exact root IDs, game-system IDs, catalogue-link target IDs and order,
+plus source locations for link diagnostics. `planBattleScribeDependencyClosure`
+requires an explicit selected catalogue path, places its exact game system
+first, and traverses catalogue links depth-first in declaration order. Missing,
+ambiguous, cross-system, or wrong-kind targets produce an `incomplete` plan;
+cycles are diagnosed and deduplicated but do not make an otherwise fully
+available closure incomplete.
+
+This slice deliberately stops before automatically downloading enough files to
+build a complete remote metadata index. It also adds no cache adapter, GitHub
+authentication, gallery integration, retry policy, dependency download
+orchestrator, persistence, or UI. Callers may use the pure planner with a
+trusted or previously parsed metadata index, but must not infer target paths
+from catalogue-link display names without downloading and verifying exact IDs.
 
 ## Catalogue Library Boundary
 

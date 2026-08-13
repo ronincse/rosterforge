@@ -4,7 +4,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
-import type { LocalBattleScribeFile } from "@rosterforge/repository";
+import {
+  pinGitHubRepository,
+  planBattleScribeDependencyClosure,
+  summarizeBattleScribeRepositoryDocument,
+  type LocalBattleScribeFile,
+} from "@rosterforge/repository";
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
 import {
   forceOccurrenceId,
@@ -70,6 +75,60 @@ describe.skipIf(realDataDirectory === undefined)(
           name: "Warhammer 40,000 11th Edition",
         });
         expect(result.value.catalogues).toHaveLength(45);
+        const pinnedSource = pinGitHubRepository({
+          owner: "BSData",
+          repository: "wh40k-11e",
+          revision: "54c189f4fd01878351fab05586d3b38d9c7f6ddc",
+        });
+        expect(pinnedSource.ok).toBe(true);
+        if (!pinnedSource.ok) {
+          return;
+        }
+        const repositoryIndex = {
+          source: pinnedSource.value,
+          documents: result.value.documents.map((document) =>
+            summarizeBattleScribeRepositoryDocument(
+              document.source.filename,
+              document,
+            ),
+          ),
+        };
+        const imperialKnightsClosure = planBattleScribeDependencyClosure(
+          repositoryIndex,
+          "Imperium - Imperial Knights.json",
+        );
+        const aeldariClosure = planBattleScribeDependencyClosure(
+          repositoryIndex,
+          "Aeldari - Craftworlds.json",
+        );
+        expect(imperialKnightsClosure.ok).toBe(true);
+        expect(aeldariClosure.ok).toBe(true);
+        if (!imperialKnightsClosure.ok || !aeldariClosure.ok) {
+          return;
+        }
+        expect(imperialKnightsClosure.value.status).toBe("complete");
+        expect(imperialKnightsClosure.diagnostics).toEqual([]);
+        expect(
+          imperialKnightsClosure.value.files.map(({ document }) => document.path),
+        ).toEqual([
+          "Warhammer 40,000.json",
+          "Imperium - Imperial Knights.json",
+          "Imperium - Imperial Knights - Library.json",
+          "Imperium - Agents of the Imperium.json",
+          "Unaligned Forces.json",
+          "Library - Titans.json",
+          "Imperium - Adeptus Mechanicus.json",
+        ]);
+        expect(aeldariClosure.value.status).toBe("complete");
+        expect(aeldariClosure.diagnostics).toEqual([]);
+        expect(
+          aeldariClosure.value.files.map(({ document }) => document.path),
+        ).toEqual([
+          "Warhammer 40,000.json",
+          "Aeldari - Craftworlds.json",
+          "Aeldari - Aeldari Library.json",
+          "Unaligned Forces.json",
+        ]);
         expect(
           result.value.catalogues.find(
             ({ name }) => name === "Imperium - Imperial Knights",

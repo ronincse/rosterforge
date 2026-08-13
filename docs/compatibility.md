@@ -335,9 +335,11 @@
 
 ## Deferred
 
-- Catalogue dependency importing and remote repository importing
-- Loading catalogue files named by catalogue links; visibility uses only the
-  documents already supplied by the caller
+- Automatic remote metadata-index construction, dependency-closure download
+  orchestration, cache adapters, retries, and atomic publication of a closure
+- Inferring catalogue paths from catalogue-link names without downloading and
+  verifying exact target IDs; visibility still uses only documents supplied to
+  graph resolution by the caller
 - Behavioral merge rules for duplicate costs, constraints, modifiers, rules,
   profiles, and other layered collections
 - Force-definition inheritance or merging across catalogue links
@@ -437,6 +439,32 @@ a supported compatibility path, but its heap cost is too high to make it the
 default acquisition design. Repository acquisition should load a selected
 catalogue's pinned dependency closure and retain the all-repository path for
 explicit diagnostics and compatibility testing.
+
+The first headless acquisition boundary now supports GitHub repositories pinned
+to exact full commit SHAs. It can list a bounded recursive commit tree, retain
+supported file paths plus blob IDs and sizes, stream one exact raw file under a
+byte limit, assign download provenance, and pass those bytes through ordinary
+BattleScribe ingestion. It does not track branches or `latest` assets and does
+not treat the remote source as trusted merely because it is pinned.
+
+At the August 13, 2026 inspection point, `BSData/wh40k-11e` had no latest
+GitHub release asset and the official BSData gallery registry did not contain
+an 11th-edition repository record. The pinned checkout itself also has no
+BattleScribe repository-index file mapping root IDs to paths. Consequently, the
+current generic boundary uses the exact Git commit tree rather than depending
+on a moving gallery or release package. Automatically building and caching the
+remote root-ID index remains deferred; path selection or a future curated
+source descriptor must still lead to downloaded documents whose IDs are
+verified.
+
+The pure closure planner has a pinned-corpus proof at commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`. From the complete parsed metadata
+index it derives a complete seven-file Imperial Knights closure and a complete
+four-file Aeldari closure with no dependency diagnostics. Both begin with
+`Warhammer 40,000.json`; dependencies follow catalogue-link declaration order
+with transitive children visited depth-first. Normal acquisition and planner
+tests use fictional data and mocked responses, so no third-party files or live
+network dependency enter the standard suite.
 
 The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
 339 `localConditionGroup` objects under ordinary `and` groups. Every local

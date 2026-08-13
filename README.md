@@ -90,11 +90,14 @@ This repository currently contains the first development slice:
   reopening through secure import and exact definition-key restoration;
 - original synthetic fixtures and focused parser/security/resolution tests.
 
-Remote repository and dependency importing, broader condition application,
-dynamic source-default amounts, grouped cost/profile/visibility modifiers,
-modifier-group repeats, constraint enforcement, full legality validation,
-automatic saving, durable undo history, roster reordering, and roster
-import/export UI are deliberately not implemented yet.
+Pinned GitHub tree listing, bounded individual-file downloads, download
+provenance, and pure exact-ID dependency-closure planning are available through
+the headless repository package. Automatic remote metadata indexing, closure
+download orchestration, caching, and repository/dependency UI remain deferred,
+along with broader condition application, dynamic source-default amounts,
+grouped cost/profile/visibility modifiers, modifier-group repeats, constraint
+enforcement, full legality validation, automatic saving, durable undo history,
+roster reordering, and roster import/export UI.
 
 ## Requirements
 
