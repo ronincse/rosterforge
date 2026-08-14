@@ -15,25 +15,31 @@ import {
 import {
   acquireRemoteCatalogue,
   indexRemoteCatalogueSource,
+  type RemoteCatalogueMetadataCache,
+  type RemoteCatalogueMetadataCacheEntry,
+  type RemoteCatalogueMetadataCacheKey,
   type RemoteCatalogueSourceDefinition,
 } from "./remote-catalogue-source.js";
 
 describe("remote catalogue source", () => {
-  it("indexes and composes a pinned catalogue closure with download provenance", async () => {
+  it("indexes, caches, and composes a pinned catalogue closure with download provenance", async () => {
     const fixture = await sourceFixture();
     const fetcher = fixtureFetch(fixture);
     const cache = new MemoryByteCache();
+    const metadataCache = new MemoryMetadataCache();
     const progress = vi.fn();
 
     const indexed = await indexRemoteCatalogueSource(sourceDefinition, {
       cache,
       fetch: fetcher,
       importedAt,
+      metadataCache,
       onProgress: progress,
     });
 
     expect(indexed.ok).toBe(true);
     if (!indexed.ok) return;
+    expect(indexed.value.metadataCacheStatus).toBe("miss");
     expect(indexed.value.catalogues.map(({ path, id, name }) => ({
       path,
       id,
@@ -103,6 +109,31 @@ describe("remote catalogue source", () => {
       totalFiles: 2,
       acceptedBytes: fixture.totalBytes,
     });
+
+    const cachedProgress = vi.fn();
+    const reindexed = await indexRemoteCatalogueSource(sourceDefinition, {
+      cache,
+      fetch: fetcher,
+      importedAt: "2026-08-13T20:00:00.000Z",
+      metadataCache,
+      onProgress: cachedProgress,
+    });
+
+    expect(reindexed.ok).toBe(true);
+    if (!reindexed.ok) return;
+    expect(reindexed.value.metadataCacheStatus).toBe("hit");
+    expect(reindexed.value.report.tree).not.toBe(indexed.value.report.tree);
+    expect(reindexed.value.report.index.documents).toEqual(
+      indexed.value.report.index.documents,
+    );
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(cachedProgress).toHaveBeenCalledTimes(2);
+    expect(cachedProgress.mock.calls.at(-1)?.[0]).toMatchObject({
+      phase: "indexing",
+      completedFiles: 2,
+      totalFiles: 2,
+      acceptedBytes: fixture.totalBytes,
+    });
   });
 
   it("rejects a moving or abbreviated revision before network access", async () => {
@@ -124,6 +155,73 @@ describe("remote catalogue source", () => {
     );
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it("rejects incompatible cached metadata and rebuilds from verified bytes", async () => {
+    const fixture = await sourceFixture();
+    const fetcher = fixtureFetch(fixture);
+    const cache = new MemoryByteCache();
+    const initial = await indexRemoteCatalogueSource(sourceDefinition, {
+      cache,
+      fetch: fetcher,
+      importedAt,
+    });
+    if (!initial.ok) {
+      throw new Error("Expected the initial repository index to succeed.");
+    }
+
+    const invalidEntry: RemoteCatalogueMetadataCacheEntry = {
+      status: initial.value.report.status,
+      files: initial.value.report.files.map((file, index) =>
+        index === 0
+          ? { ...file, file: { ...file.file, path: "moved.cat" } }
+          : file,
+      ),
+      documents: initial.value.report.index.documents,
+      totalBytes: initial.value.report.totalBytes,
+    };
+    const write = vi.fn<RemoteCatalogueMetadataCache["write"]>();
+    const result = await indexRemoteCatalogueSource(sourceDefinition, {
+      cache,
+      fetch: fetcher,
+      importedAt,
+      metadataCache: {
+        read: async () => invalidEntry,
+        write,
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.metadataCacheStatus).toBe("invalid");
+    expect(result.diagnostics.map(({ code }) => code)).toContain(
+      "WEB_REMOTE_INDEX_CACHE_ENTRY_INVALID",
+    );
+    expect(write).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(4);
+  });
+
+  it("continues with diagnostics when metadata storage is unavailable", async () => {
+    const fixture = await sourceFixture();
+    const metadataCache: RemoteCatalogueMetadataCache = {
+      read: async () => Promise.reject(new Error("read failed")),
+      write: async () => Promise.reject(new Error("write failed")),
+    };
+    const result = await indexRemoteCatalogueSource(sourceDefinition, {
+      fetch: fixtureFetch(fixture),
+      importedAt,
+      metadataCache,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.metadataCacheStatus).toBe("unavailable");
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(
+      expect.arrayContaining([
+        "WEB_REMOTE_INDEX_CACHE_READ_FAILED",
+        "WEB_REMOTE_INDEX_CACHE_WRITE_FAILED",
+      ]),
+    );
+  });
+
 });
 
 const revision = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -158,6 +256,26 @@ class MemoryByteCache implements PinnedRepositoryByteCache {
   async write(
     key: PinnedRepositoryByteCacheKey,
     entry: PinnedRepositoryByteCacheEntry,
+  ): Promise<void> {
+    this.#entries.set(JSON.stringify(key), entry);
+  }
+}
+
+class MemoryMetadataCache implements RemoteCatalogueMetadataCache {
+  readonly #entries = new Map<
+    string,
+    RemoteCatalogueMetadataCacheEntry
+  >();
+
+  async read(
+    key: RemoteCatalogueMetadataCacheKey,
+  ): Promise<RemoteCatalogueMetadataCacheEntry | undefined> {
+    return this.#entries.get(JSON.stringify(key));
+  }
+
+  async write(
+    key: RemoteCatalogueMetadataCacheKey,
+    entry: RemoteCatalogueMetadataCacheEntry,
   ): Promise<void> {
     this.#entries.set(JSON.stringify(key), entry);
   }

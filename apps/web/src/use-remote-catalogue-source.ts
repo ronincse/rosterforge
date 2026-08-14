@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import type { Diagnostic } from "@rosterforge/foundation";
 import type { PinnedRepositoryByteCache } from "@rosterforge/repository";
 
+import { createIndexedDbRemoteCatalogueMetadataCache } from "./browser-remote-metadata-cache.js";
 import { createIndexedDbRepositoryByteCache } from "./browser-repository-cache.js";
 import {
   acquireRemoteCatalogue,
   defaultRemoteCatalogueSources,
   indexRemoteCatalogueSource,
   type RemoteCatalogueAcquisition,
+  type RemoteCatalogueMetadataCache,
   type RemoteCatalogueSourceDefinition,
   type RemoteCatalogueSourceIndex,
   type RemoteCatalogueSourceProgress,
@@ -20,6 +22,7 @@ type AcquireRemoteCatalogue = typeof acquireRemoteCatalogue;
 export interface RemoteCatalogueSourceControllerOptions {
   readonly remoteSources?: readonly RemoteCatalogueSourceDefinition[];
   readonly repositoryByteCache?: PinnedRepositoryByteCache | null;
+  readonly repositoryMetadataCache?: RemoteCatalogueMetadataCache | null;
   readonly indexRemoteSource?: IndexRemoteCatalogueSource;
   readonly acquireRemoteSource?: AcquireRemoteCatalogue;
   readonly createBatchId?: () => string;
@@ -56,6 +59,8 @@ export type RemoteCatalogueSourceState =
     };
 
 const defaultRepositoryByteCache = createIndexedDbRepositoryByteCache();
+const defaultRepositoryMetadataCache =
+  createIndexedDbRemoteCatalogueMetadataCache();
 
 export function useRemoteCatalogueSourceController(
   onAcquired: (
@@ -65,6 +70,7 @@ export function useRemoteCatalogueSourceController(
   {
     remoteSources = defaultRemoteCatalogueSources,
     repositoryByteCache = defaultRepositoryByteCache,
+    repositoryMetadataCache = defaultRepositoryMetadataCache,
     indexRemoteSource = indexRemoteCatalogueSource,
     acquireRemoteSource = acquireRemoteCatalogue,
     createBatchId = defaultBatchId,
@@ -120,6 +126,10 @@ export function useRemoteCatalogueSourceController(
         repositoryByteCache === undefined
           ? {}
           : { cache: repositoryByteCache }),
+        ...(repositoryMetadataCache === null ||
+        repositoryMetadataCache === undefined
+          ? {}
+          : { metadataCache: repositoryMetadataCache }),
         onProgress: (progress) => observeProgress(sequence, progress),
       });
       if (sequence !== operationSequence.current) return;

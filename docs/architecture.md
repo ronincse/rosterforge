@@ -206,7 +206,16 @@ only `PinnedRepositoryByteCache`. `apps/web` supplies the native IndexedDB
 adapter in a separate versioned database. Its records copy the immutable cache
 key, bytes, and optional media type; reads decode and bound each record before
 the repository package performs the authoritative Git blob verification.
-Eviction and quota policy remain application concerns.
+
+The application also stores a compact metadata-index report in a separate
+versioned IndexedDB database keyed by provider, repository, exact commit, and
+pinned tree object ID. Records contain bounded JSON rather than parsed document
+trees or source bytes. Every read defensively decodes provenance, diagnostics,
+file reports, and summaries, then the remote-source service checks the report
+against the newly listed trusted tree before use. Missing, malformed, oversized,
+or tree-incompatible records fall back to sequential indexing. Storage failures
+remain warnings when verified acquisition succeeds. Eviction and quota policy
+remain application concerns.
 
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary
@@ -238,7 +247,7 @@ redirect a closure. The operation performs no graph resolution, catalogue
 composition, roster construction, evaluation, or validation.
 
 This boundary still adds no GitHub authentication, gallery integration, retry
-policy, metadata-index persistence, or cache management UI.
+policy, or cache management UI.
 Callers must not infer target paths from catalogue-link display names without
 downloading and verifying exact IDs.
 
@@ -279,15 +288,17 @@ current in-memory batch rather than merging repositories or resolving links.
 
 The remote source panel currently exposes one curated
 `BSData/wh40k-11e` snapshot pinned to commit
-`54c189f4fd01878351fab05586d3b38d9c7f6ddc`. Browsing first validates the
-pinned tree and sequentially indexes every supported source file. It offers
-only non-library catalogue roots, then acquires the selected game system,
-catalogue, and transitive catalogue links by exact ID. The panel reports
-per-file progress, can abort either operation, keeps repository diagnostics
-inspectable, and leaves local-file import available. This is a configured
-immutable source, not branch tracking or repository update discovery. The byte
-cache prevents repeat network transfer, but the compact metadata index is
-rebuilt on each browse.
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`. Browsing always validates the
+pinned tree. A metadata-cache miss sequentially indexes every supported source
+file; a matching commit-and-tree record restores the bounded report without
+reparsing all source bytes. The panel offers only non-library catalogue roots,
+then acquires the selected game system, catalogue, and transitive catalogue
+links by exact ID. It reports per-file progress, can abort either operation,
+keeps repository diagnostics inspectable, and leaves local-file import
+available. This is a configured immutable source, not branch tracking or
+repository update discovery. A metadata hit changes browse performance only:
+selected closure bytes are still copied from the verified byte cache or network,
+Git-blob checked, securely re-ingested, and compared with the planning summary.
 
 The React shell has explicit idle, loading, loaded, and failed states. On a
 successful composition it selects the first ordered catalogue by its

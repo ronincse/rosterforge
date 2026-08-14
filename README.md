@@ -90,8 +90,8 @@ This repository currently contains the first development slice:
   reopening through secure import and exact definition-key restoration;
 - immutable pinned GitHub repository browsing with visible per-file progress,
   cancellation, non-library faction selection, verified dependency-closure
-  acquisition, defensive IndexedDB byte caching, and preserved download
-  provenance;
+  acquisition, defensive IndexedDB byte and metadata caching, and preserved
+  download provenance;
 - original synthetic fixtures and focused parser/security/resolution tests.
 
 Pinned GitHub tree listing, bounded individual-file downloads, download
@@ -99,7 +99,7 @@ provenance, Git blob verification, sequential metadata indexing, and focused
 exact-ID dependency-closure acquisition are available through the headless
 repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
-metadata-index persistence, cache management, and retries remain deferred,
+cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
 grouped cost/profile/visibility modifiers, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,

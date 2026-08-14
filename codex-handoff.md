@@ -44,17 +44,19 @@ history, and roster commands while `App` retains presentation composition.
 Saved drafts, catalogue library/import reporting, catalogue details/roster
 setup, workspace states, and shared display primitives are now separate modules.
 The complete active roster workspace is now a separate byte-for-byte moved
-module as well, leaving `App.tsx` as a small composition root. A defensive,
-versioned IndexedDB adapter now persists verified pinned repository bytes while
-leaving integrity verification in the repository package. The acquisition UI
-is complete for one configured immutable WH40K 11e snapshot: users can index
-with progress and cancellation, choose a non-library faction catalogue, acquire
-its exact-ID dependency closure, and enter the existing roster flow. Remote
-documents compose without reparsing or replacing download provenance. Draft
-snapshots retain optional source IDs and source kinds, so reopening a downloaded
-closure does not silently rewrite it as a local-file source. Cache eviction,
-quota controls, additional source configuration, repository update discovery,
-and metadata-index persistence remain deferred.
+module as well, leaving `App.tsx` as a small composition root. Defensive,
+versioned IndexedDB adapters now persist verified pinned repository bytes and a
+bounded metadata report keyed by immutable commit plus tree object ID. The
+acquisition UI is complete for one configured immutable WH40K 11e snapshot:
+users can index with progress and cancellation, choose a non-library faction
+catalogue, acquire its exact-ID dependency closure, and enter the existing
+roster flow. Repeat browsing validates the pinned tree, restores matching
+metadata without reparsing every source file, and still verifies and re-ingests
+the selected closure before publication. Remote documents compose without
+reparsing or replacing download provenance. Draft snapshots retain optional
+source IDs and source kinds, so reopening a downloaded closure does not silently
+rewrite it as a local-file source. Cache eviction, quota controls, additional
+source configuration, and repository update discovery remain deferred.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

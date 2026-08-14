@@ -11,11 +11,14 @@ import {
   pinGitHubRepository,
   type BattleScribeRepositoryDocumentSummary,
   type GitHubRepositoryPinInput,
+  type GitObjectSha,
   type LocalBattleScribeFileImportReport,
   type LocalBattleScribeImportReport,
   type PinnedBattleScribeDependencyClosureReport,
   type PinnedBattleScribeRepositoryIndexReport,
+  type PinnedGitHubRepositoryTree,
   type PinnedRepositoryByteCache,
+  type RemoteRepositoryIndexFileReport,
   type RemoteRepositoryOperationProgress,
   type RepositoryFetch,
 } from "@rosterforge/repository";
@@ -59,11 +62,43 @@ export type RemoteCatalogueSourceProgress =
     }
   | RemoteRepositoryOperationProgress;
 
+export type RemoteCatalogueMetadataCacheStatus =
+  | "hit"
+  | "miss"
+  | "invalid"
+  | "unavailable";
+
+export interface RemoteCatalogueMetadataCacheKey {
+  readonly provider: "github";
+  readonly owner: string;
+  readonly repository: string;
+  readonly revision: string;
+  readonly treeObjectId: GitObjectSha;
+}
+
+export interface RemoteCatalogueMetadataCacheEntry {
+  readonly status: PinnedBattleScribeRepositoryIndexReport["status"];
+  readonly files: readonly RemoteRepositoryIndexFileReport[];
+  readonly documents: readonly BattleScribeRepositoryDocumentSummary[];
+  readonly totalBytes: number;
+}
+
+export interface RemoteCatalogueMetadataCache {
+  read(
+    key: RemoteCatalogueMetadataCacheKey,
+  ): Promise<RemoteCatalogueMetadataCacheEntry | undefined>;
+  write(
+    key: RemoteCatalogueMetadataCacheKey,
+    entry: RemoteCatalogueMetadataCacheEntry,
+  ): Promise<void>;
+}
+
 export interface IndexRemoteCatalogueSourceOptions {
   readonly importedAt: string;
   readonly fetch?: RepositoryFetch;
   readonly signal?: AbortSignal;
   readonly cache?: PinnedRepositoryByteCache;
+  readonly metadataCache?: RemoteCatalogueMetadataCache;
   readonly onProgress?: (progress: RemoteCatalogueSourceProgress) => void;
 }
 
@@ -71,6 +106,7 @@ export interface RemoteCatalogueSourceIndex {
   readonly definition: RemoteCatalogueSourceDefinition;
   readonly report: PinnedBattleScribeRepositoryIndexReport;
   readonly catalogues: readonly BattleScribeRepositoryDocumentSummary[];
+  readonly metadataCacheStatus: RemoteCatalogueMetadataCacheStatus;
 }
 
 export interface AcquireRemoteCatalogueOptions
@@ -103,6 +139,51 @@ export async function indexRemoteCatalogueSource(
   });
   if (!tree.ok) return tree;
 
+  const diagnostics = [...tree.diagnostics];
+  let metadataCacheStatus: RemoteCatalogueMetadataCacheStatus =
+    options.metadataCache === undefined ? "unavailable" : "miss";
+  if (options.metadataCache !== undefined) {
+    try {
+      const cached = await options.metadataCache.read(
+        metadataCacheKey(tree.value),
+      );
+      if (cached !== undefined) {
+        const restored = restoreMetadataCacheEntry(tree.value, cached);
+        if (restored !== undefined) {
+          notifyProgress(options.onProgress, {
+            phase: "indexing",
+            completedFiles: restored.files.length,
+            totalFiles: restored.files.length,
+            acceptedBytes: restored.totalBytes,
+          });
+          return sourceIndexResult(definition, restored, "hit", [
+            ...diagnostics,
+            ...restored.files.flatMap(({ diagnostics }) => diagnostics),
+          ]);
+        }
+        metadataCacheStatus = "invalid";
+        diagnostics.push(
+          metadataCacheDiagnostic(
+            "WEB_REMOTE_INDEX_CACHE_ENTRY_INVALID",
+            "The cached repository metadata does not match the pinned Git tree.",
+            ["import", "security"],
+            { sourceId: definition.id },
+          ),
+        );
+      }
+    } catch (error: unknown) {
+      metadataCacheStatus = "unavailable";
+      diagnostics.push(
+        metadataCacheDiagnostic(
+          "WEB_REMOTE_INDEX_CACHE_READ_FAILED",
+          "The repository metadata cache could not be read.",
+          ["import", "persistence", "internal"],
+          { cause: errorMessage(error), sourceId: definition.id },
+        ),
+      );
+    }
+  }
+
   const indexed = await buildPinnedBattleScribeRepositoryIndex(tree.value, {
     importedAt: options.importedAt,
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
@@ -113,32 +194,32 @@ export async function indexRemoteCatalogueSource(
       : { onProgress: options.onProgress }),
   });
   if (!indexed.ok) {
-    return failure([...tree.diagnostics, ...indexed.diagnostics]);
+    return failure([...diagnostics, ...indexed.diagnostics]);
+  }
+  diagnostics.push(...indexed.diagnostics);
+
+  if (options.metadataCache !== undefined) {
+    try {
+      await options.metadataCache.write(
+        metadataCacheKey(tree.value),
+        metadataCacheEntry(indexed.value),
+      );
+    } catch (error: unknown) {
+      diagnostics.push(
+        metadataCacheDiagnostic(
+          "WEB_REMOTE_INDEX_CACHE_WRITE_FAILED",
+          "The repository metadata index could not be cached.",
+          ["import", "persistence", "internal"],
+          { cause: errorMessage(error), sourceId: definition.id },
+        ),
+      );
+    }
   }
 
-  const diagnostics = [...tree.diagnostics, ...indexed.diagnostics];
-  const catalogues = indexed.value.index.documents.filter(
-    (document) =>
-      document.kind === "catalogue" && document.library !== true,
-  );
-  if (catalogues.length === 0) {
-    return failure([
-      ...diagnostics,
-      remoteSourceDiagnostic(
-        "WEB_REMOTE_CATALOGUE_INDEX_EMPTY",
-        "The pinned source contains no roster catalogues.",
-        ["import", "compatibility"],
-        { sourceId: definition.id },
-      ),
-    ]);
-  }
-
-  return success(
-    {
-      definition,
-      report: indexed.value,
-      catalogues,
-    },
+  return sourceIndexResult(
+    definition,
+    indexed.value,
+    metadataCacheStatus,
     diagnostics,
   );
 }
@@ -206,6 +287,217 @@ export async function acquireRemoteCatalogue(
     },
     prepared.diagnostics,
   );
+}
+
+function sourceIndexResult(
+  definition: RemoteCatalogueSourceDefinition,
+  report: PinnedBattleScribeRepositoryIndexReport,
+  metadataCacheStatus: RemoteCatalogueMetadataCacheStatus,
+  diagnostics: readonly Diagnostic[],
+): Result<RemoteCatalogueSourceIndex> {
+  const catalogues = report.index.documents.filter(
+    (document) =>
+      document.kind === "catalogue" && document.library !== true,
+  );
+  if (catalogues.length === 0) {
+    return failure([
+      ...diagnostics,
+      remoteSourceDiagnostic(
+        "WEB_REMOTE_CATALOGUE_INDEX_EMPTY",
+        "The pinned source contains no roster catalogues.",
+        ["import", "compatibility"],
+        { sourceId: definition.id },
+      ),
+    ]);
+  }
+
+  return success(
+    {
+      definition,
+      report,
+      catalogues,
+      metadataCacheStatus,
+    },
+    diagnostics,
+  );
+}
+
+function metadataCacheKey(
+  tree: PinnedGitHubRepositoryTree,
+): RemoteCatalogueMetadataCacheKey {
+  return {
+    provider: tree.source.provider,
+    owner: tree.source.owner,
+    repository: tree.source.repository,
+    revision: tree.source.revision,
+    treeObjectId: tree.objectId,
+  };
+}
+
+function metadataCacheEntry(
+  report: PinnedBattleScribeRepositoryIndexReport,
+): RemoteCatalogueMetadataCacheEntry {
+  return {
+    status: report.status,
+    files: report.files,
+    documents: report.index.documents,
+    totalBytes: report.totalBytes,
+  };
+}
+
+function restoreMetadataCacheEntry(
+  tree: PinnedGitHubRepositoryTree,
+  entry: RemoteCatalogueMetadataCacheEntry,
+): PinnedBattleScribeRepositoryIndexReport | undefined {
+  if (
+    !indexStatusValue(entry.status) ||
+    !Array.isArray(entry.files) ||
+    !Array.isArray(entry.documents) ||
+    !Number.isSafeInteger(entry.totalBytes) ||
+    entry.totalBytes < 0 ||
+    entry.files.length !== tree.files.length
+  ) {
+    return undefined;
+  }
+
+  const files: RemoteRepositoryIndexFileReport[] = [];
+  for (const [index, treeFile] of tree.files.entries()) {
+    const cached = entry.files[index];
+    if (
+      cached === undefined ||
+      cached.index !== index ||
+      !sameTreeFile(cached.file, treeFile) ||
+      !Array.isArray(cached.diagnostics) ||
+      (cached.status !== "indexed" && cached.status !== "rejected") ||
+      (cached.cacheStatus !== undefined &&
+        ![
+          "hit",
+          "miss",
+          "invalid",
+          "unavailable",
+        ].includes(cached.cacheStatus)) ||
+      (cached.status === "indexed"
+        ? cached.summary === undefined ||
+          cached.summary.path !== treeFile.path
+        : cached.summary !== undefined)
+    ) {
+      return undefined;
+    }
+    files.push({ ...cached, file: treeFile });
+  }
+
+  const summaries = files.flatMap(({ summary }) =>
+    summary === undefined ? [] : [summary],
+  );
+  if (
+    entry.documents.length !== summaries.length ||
+    !entry.documents.every((document, index) =>
+      sameDocumentSummary(document, summaries[index]),
+    ) ||
+    entry.status !== derivedIndexStatus(files)
+  ) {
+    return undefined;
+  }
+
+  const declaredBytes = tree.files.reduce(
+    (total, file) => total + (file.byteSize ?? 0),
+    0,
+  );
+  const allSizesDeclared = tree.files.every(
+    ({ byteSize }) => byteSize !== undefined,
+  );
+  if (
+    allSizesDeclared &&
+    (entry.totalBytes > declaredBytes ||
+      (entry.status === "complete" && entry.totalBytes !== declaredBytes))
+  ) {
+    return undefined;
+  }
+
+  return {
+    source: tree.source,
+    tree,
+    status: entry.status,
+    files,
+    index: {
+      source: tree.source,
+      documents: entry.documents,
+    },
+    totalBytes: entry.totalBytes,
+  };
+}
+
+function sameTreeFile(
+  left: RemoteRepositoryIndexFileReport["file"],
+  right: RemoteRepositoryIndexFileReport["file"],
+): boolean {
+  return (
+    left.path === right.path &&
+    left.objectId === right.objectId &&
+    left.byteSize === right.byteSize
+  );
+}
+
+function sameDocumentSummary(
+  left: BattleScribeRepositoryDocumentSummary,
+  right: BattleScribeRepositoryDocumentSummary | undefined,
+): boolean {
+  return (
+    right !== undefined &&
+    left.path === right.path &&
+    left.kind === right.kind &&
+    left.id === right.id &&
+    left.name === right.name &&
+    left.gameSystemId === right.gameSystemId &&
+    left.library === right.library &&
+    Array.isArray(left.catalogueLinks) &&
+    Array.isArray(right.catalogueLinks) &&
+    left.catalogueLinks.length === right.catalogueLinks.length &&
+    left.catalogueLinks.every(
+      (link, index) =>
+        link.targetId === right.catalogueLinks[index]?.targetId &&
+        link.name === right.catalogueLinks[index]?.name,
+    )
+  );
+}
+
+function derivedIndexStatus(
+  files: readonly RemoteRepositoryIndexFileReport[],
+): PinnedBattleScribeRepositoryIndexReport["status"] {
+  if (files.length === 0) return "empty";
+  const indexed = files.filter(({ status }) => status === "indexed").length;
+  if (indexed === files.length) return "complete";
+  return indexed === 0 ? "failed" : "partial";
+}
+
+function indexStatusValue(
+  value: unknown,
+): value is PinnedBattleScribeRepositoryIndexReport["status"] {
+  return (
+    value === "empty" ||
+    value === "complete" ||
+    value === "partial" ||
+    value === "failed"
+  );
+}
+
+function metadataCacheDiagnostic(
+  code: string,
+  message: string,
+  impacts: Diagnostic["impacts"],
+  details: Readonly<Record<string, unknown>>,
+): Diagnostic {
+  return {
+    code,
+    message,
+    severity: "warning",
+    impacts,
+    details,
+  };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function closureImportReport(

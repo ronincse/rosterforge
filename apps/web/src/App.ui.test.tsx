@@ -252,6 +252,7 @@ describe("App local catalogue flow", () => {
       report: {
         files: [{}, {}],
       },
+      metadataCacheStatus: "hit",
     } as unknown as RemoteCatalogueSourceIndex;
     const indexRemote = vi.fn<typeof indexRemoteCatalogueSource>(
       async (_source, options) => {
@@ -303,6 +304,9 @@ describe("App local catalogue flow", () => {
     const picker = await screen.findByLabelText("Faction catalogue");
     expect((picker as HTMLSelectElement).value).toBe("minimal.cat");
     expect(screen.getByText("Synthetic Faction")).toBeTruthy();
+    expect(
+      screen.getByText(/Metadata restored from this browser/),
+    ).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Load selected catalogue" }),

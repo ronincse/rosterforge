@@ -84,6 +84,9 @@ export function RemoteCatalogueSourcePanel({
           <p>
             {formatCount(state.index.catalogues.length, "roster catalogue")} in{" "}
             {formatCount(state.index.report.files.length, "source file")}.
+            {state.index.metadataCacheStatus === "hit" && (
+              <> Metadata restored from this browser.</>
+            )}
           </p>
 
           {state.kind === "ready" ? (

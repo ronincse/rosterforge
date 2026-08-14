@@ -336,8 +336,8 @@
 
 ## Deferred
 
-- Cache eviction and quota controls, retries, metadata-index persistence,
-  repository update discovery, and atomic publication of a downloaded closure
+- Cache eviction and quota controls, retries, repository update discovery,
+  and atomic publication of a downloaded closure
 - Inferring catalogue paths from catalogue-link names without downloading and
   verifying exact target IDs; visibility still uses only documents supplied to
   graph resolution by the caller
@@ -453,11 +453,13 @@ When a caller supplies the optional byte-cache interface, tree-file acquisition
 verifies both the declared size and Git blob object ID before accepting a cache
 hit or network response. Corrupt cache entries fall back to the network;
 unavailable cache storage does not block a valid download. The web application
-now has a defensive IndexedDB adapter for these copied source bytes. Cache
-records are isolated by provider, repository, commit, path, and blob ID, and a
-malformed or oversized record is surfaced through the existing cache-read
-warning before network fallback. No eviction policy, quota-management UI, or
-metadata-index cache is implemented yet.
+has defensive IndexedDB adapters for copied source bytes and bounded metadata.
+Byte records are isolated by provider, repository, commit, path, and blob ID.
+Metadata records are isolated by provider, repository, commit, and pinned tree
+object ID; their versioned JSON payloads are bounded and structurally decoded
+before service-level report/tree consistency checks. Malformed, oversized,
+unavailable, or tree-incompatible metadata falls back to fresh sequential
+indexing. No eviction policy or quota-management UI is implemented yet.
 
 The headless orchestrator can now build a compact remote metadata index by
 processing the pinned tree sequentially, then acquire only the selected
@@ -469,11 +471,13 @@ plan before they are exposed. Indexing and closure acquisition expose
 best-effort per-file progress snapshots suitable for cancellation-aware UI.
 The browser now presents an immutable WH40K 11e source, progress and
 cancellation for indexing and closure acquisition, non-library faction
-selection, repository diagnostics, and focused closure composition. A
-successful closure replaces the active library only after composition
-succeeds. Local file import remains available. Cache management, compact
-metadata-index persistence, additional source configuration, and repository
-update discovery remain deferred.
+selection, repository diagnostics, focused closure composition, and durable
+compact metadata indexing. A metadata hit avoids full-repository reparsing but
+does not bypass tree listing, verified closure acquisition, secure ingestion, or
+summary matching. A successful closure replaces the active library only after
+composition succeeds. Local file import remains available. Cache management,
+additional source configuration, and repository update discovery remain
+deferred.
 
 Already-ingested closure documents can now use the same graph/context
 composition path as local batches without changing their download provenance or
@@ -502,11 +506,13 @@ network dependency enter the standard suite.
 A read-only orchestration proof against the same external checkout indexed all
 46 files sequentially from 67,554,454 verified cached bytes, then reacquired the
 seven-file Imperial Knights closure entirely from cache. The focused closure
-retained 7,737,141 source bytes. Both operation statuses were `complete`; the
-only diagnostic was the existing source-located invalid empty
-`defaultCostLimit` from `Warhammer 40,000.json`. Acquisition completeness here
-means every planned source was verified and ingested, not that all projected
-BattleScribe behavior is supported or legal.
+retained 7,737,141 source bytes. Serializing the bounded metadata-cache entry
+produced 182,354 bytes for 46 document summaries, 109 catalogue links, and one
+diagnostic, comfortably below the 32 MiB browser limit. Both operation statuses
+were `complete`; the only diagnostic was the existing source-located invalid
+empty `defaultCostLimit` from `Warhammer 40,000.json`. Acquisition completeness
+here means every planned source was verified and ingested, not that all
+projected BattleScribe behavior is supported or legal.
 
 The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
 339 `localConditionGroup` objects under ordinary `and` groups. Every local

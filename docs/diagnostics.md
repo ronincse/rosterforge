@@ -157,14 +157,20 @@ The browser remote-source service can additionally emit:
 ```text
 WEB_REMOTE_CATALOGUE_INDEX_EMPTY
 WEB_REMOTE_CATALOGUE_UNAVAILABLE
+WEB_REMOTE_INDEX_CACHE_ENTRY_INVALID
+WEB_REMOTE_INDEX_CACHE_READ_FAILED
+WEB_REMOTE_INDEX_CACHE_WRITE_FAILED
 WEB_REMOTE_SOURCE_UNEXPECTED_FAILURE
 ```
 
 An empty index means secure indexing accepted no non-library catalogue roots.
 An unavailable catalogue means the exact selected root was not exposed after
 closure composition; its diagnostic retains the selected path and source ID and
-uses root provenance when available. The unexpected-failure code is a UI
-boundary guard for thrown adapter failures and includes a non-sensitive cause.
+uses root provenance when available. An invalid metadata entry is a warning with
+`security` impact and triggers fresh sequential indexing. Metadata read and
+write failures are warnings with `persistence` and `internal` impacts; verified
+indexing can still succeed. The unexpected-failure code is a UI boundary guard
+for thrown adapter failures and includes a non-sensitive cause.
 Ordinary repository and ingestion failures keep their existing
 `REPOSITORY_*` or `BS_*` codes. Cancellation is user intent, not a diagnostic;
 the request is aborted and the source picker returns to a retryable state.

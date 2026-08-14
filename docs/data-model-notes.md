@@ -1186,14 +1186,14 @@ checked against limits and the tree's declared size, and hashed using Git's blob
 object format before ingestion. The core interface has no deletion, discovery,
 or storage semantics.
 
-The browser adapter stores a versioned record in the dedicated
+The browser byte adapter stores a versioned record in the dedicated
 `rosterforge-pinned-repository-cache` IndexedDB database. It copies bytes on
 write and read, repeats the complete immutable key inside the record, and
 rejects mismatched, malformed, or oversized records. IndexedDB records are not
 trusted as proof of integrity: the repository layer still checks the tree size
 and Git blob object ID after every cache read. IndexedDB absence means no cache,
-not a failed import. Eviction, quota handling, metadata-index persistence, and
-atomic closure publication remain open application concerns.
+not a failed import. Eviction, quota handling, and atomic closure publication
+remain open application concerns.
 
 A tree is still only a path/blob index. The remote index builder obtains root
 metadata through bounded downloads and secure parsing, retaining one ordered
@@ -1222,13 +1222,25 @@ file source.
 `RemoteCatalogueSourceDefinition` is application configuration for an
 immutable source label, description, and validated GitHub pin. It is not a
 mutable subscription. `RemoteCatalogueSourceIndex` pairs that configuration
-with one compact index report and its ordered non-library catalogue summaries.
+with one compact index report, its ordered non-library catalogue summaries, and
+a metadata-cache status of `hit`, `miss`, `invalid`, or `unavailable`.
 The browser controller's listing, indexing, ready, acquiring, and failed states
 are transient UI state. Cancellation aborts the current fetch signal and
 invalidates later progress callbacks by sequence. A successful
 `RemoteCatalogueAcquisition` retains the source index, verified closure,
 composed library, and exact selected source-scoped catalogue key. It is
 published to the main controller only after composition succeeds.
+
+`RemoteCatalogueMetadataCacheKey` contains provider, owner, repository, exact
+commit, and pinned tree object ID. Its entry retains status, ordered file
+reports, compact document summaries, diagnostics, and accepted byte count, but
+no parsed generic trees or source byte arrays. The browser serializes this entry
+as bounded versioned JSON in
+`rosterforge-pinned-repository-metadata-cache`. Reads reconstruct branded IDs,
+provenance, source locations, diagnostics, and optional values deliberately.
+The service replaces cached file descriptors with the current trusted tree and
+checks order, blob identity, summary consistency, status, and declared byte
+bounds. A cache hit is advisory planning metadata, never acquisition authority.
 
 Index and closure `complete` statuses describe source acquisition only. They do
 not replace validation completeness, suppress projection diagnostics, or claim
