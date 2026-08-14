@@ -19,6 +19,74 @@ real-data suite passes all three tests.
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
 
+## Active Assignment For Claude Code - 2026-08-14
+
+Begin from the current tip of the local `codex/recovery-baseline` branch. The
+last implementation checkpoint is `b4ca8c6` (`feat: project profile
+modifiers`); this handoff may be a documentation-only descendant of that
+commit. Do not reset or rewrite the branch if the worktree differs; inspect and
+preserve any newer changes. Do not push this branch or open a pull request
+without the user's explicit request.
+
+Before editing, read `AGENTS.md`, `README.md`, `docs/architecture.md`,
+`docs/compatibility.md`, `docs/data-model-notes.md`, `docs/diagnostics.md`, and
+this handoff. Confirm the local optional corpus, when available, is
+`E:\GitHub\wh40k-11e` at
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`; do not silently use a different
+revision for exact assertions.
+
+The next bounded task is the first **headless characteristic-display modifier
+evaluation** checkpoint. Profile-owned direct modifiers and modifier groups are
+now projected, ordered, and provenance-preserving, but the roster UI still
+renders raw `characteristic.value` strings. Work in `packages/evaluation`
+first; do not begin with React rendering.
+
+1. Extend the pinned-corpus inventory for the exact 484 profile-owned
+   characteristic-targeting modifiers. Record direct versus grouped ownership,
+   operations, scopes, conditions/groups/repeats, missing values, and generic
+   `affects`, `join`, `arg`, and `position` shapes. Pin representative source
+   IDs and before/after values for every behavior selected for support.
+2. Design a read-only report for one materialized roster occurrence and profile
+   that retains the base characteristic, exact applied or unapplied modifier
+   projections, applicability/group reports, effective lexical value when
+   known, diagnostics, and independent completeness. Reuse the existing
+   applicability, group-execution, repeat, and numeric kernels where their
+   contracts actually fit.
+3. Implement only the broadest corpus-proven subset whose target and operation
+   semantics are unambiguous. A modifier `field` must match an exact
+   characteristic `typeId`; do not infer targets from names. Unknown operations,
+   scopes, selectors, extension attributes, nonnumeric forms, or unresolved
+   applicability must remain observable and make only the reachable result
+   incomplete. Do not guess BattleScribe `affects`, `replace`, append/join, or
+   position semantics.
+4. If the inventory shows that no meaningful execution subset is safe without
+   first understanding `affects`, stop at a tested inspection/reporting
+   checkpoint that preserves and diagnoses those modifiers. Document the exact
+   blocker instead of inventing behavior.
+
+Keep this checkpoint generic to BattleScribe data. Do not hard-code WH40K IDs
+or names, and do not continue into category/name modifiers, roster interchange,
+repository acquisition, persistence, or UI redesign. UI integration should be
+a later checkpoint after the headless report has exact synthetic and pinned
+real-data assertions.
+
+Before stopping, run focused tests plus:
+
+```powershell
+$env:ROSTERFORGE_BSDATA_JSON_DIR = "E:\GitHub\wh40k-11e"
+pnpm exec vitest run apps/web/src/bsdata-json.integration.test.ts
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+git diff --check
+```
+
+Update the current-status section and this assignment with the resulting commit,
+exact test counts, supported characteristic operations, corpus coverage, and
+remaining semantic questions. Commit the bounded checkpoint locally and stop
+there for review and handback.
+
 Grouped `hidden` modifiers now participate in read-only visibility. Grouped
 cost modifiers now participate in `selectionConditions` cost reports through
 the same recursive execution collector. Base and unconditional cost scopes keep
