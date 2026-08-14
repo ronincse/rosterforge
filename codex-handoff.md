@@ -11,8 +11,9 @@ and all four checks passing before a task is complete.
 
 ## Current Status — 2026-08-10
 
-Tasks 1 through 5 below are complete. The current normal suite passes 293 tests
-with three skipped, and the pinned real-data suite passes all three tests.
+Tasks 1 through 6 below and the first bounded Task 7 presentation-export
+checkpoint are complete. The current normal suite passes 351 tests with three
+skipped, and the pinned real-data suite passes all three tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -57,6 +58,17 @@ reparsing or replacing download provenance. Draft snapshots retain optional
 source IDs and source kinds, so reopening a downloaded closure does not silently
 rewrite it as a local-file source. Cache eviction, quota controls, additional
 source configuration, and repository update discovery remain deferred.
+
+The first Task 7 export checkpoint is complete. The active roster workspace now
+builds a standalone print/save-PDF document from the immutable roster and its
+existing cost and supported-validation reports. It preserves nested source
+order, occurrence and definition IDs, effective quantities, included selection
+costs, roster totals, and explicit validity/completeness labels. All imported
+and user-authored strings are escaped before writing the new window. Popup
+failure remains a retryable UI alert. This is deliberately a presentation
+export; faithful `.ros`/`.rosz` interchange remains deferred until the roster
+model carries the additional expanded profiles, rules, categories, and link
+identity required by the BattleScribe roster schema.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,

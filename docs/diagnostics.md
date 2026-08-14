@@ -713,6 +713,13 @@ details. When any unsupported or unresolved behavior makes completeness
 incomplete, the UI labels the supported totals as incomplete rather than
 promoting a provisional value to a validation or legality result.
 
+The printable roster view copies cost and supported-validation availability,
+completeness, status counts, and diagnostic counts without translating or
+suppressing the underlying diagnostics. If the browser blocks or fails the
+caller-opened print window, the roster workspace shows a transient retryable
+alert. No structured diagnostic is invented because no imported source,
+projection, roster command, evaluation report, or persisted record changed.
+
 Selection-count and force-count condition inspection can emit:
 
 ```text

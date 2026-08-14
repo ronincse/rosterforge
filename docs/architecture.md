@@ -125,8 +125,11 @@ through a native IndexedDB adapter. It can also browse an explicitly configured
 GitHub source pinned to an immutable commit, index its supported documents with
 progress and cancellation, acquire the selected catalogue's exact-ID dependency
 closure, and compose that closure through the same application model. Verified
-repository bytes use a separate defensive IndexedDB cache. Full roster legality
-validation and export remain deferred.
+repository bytes use a separate defensive IndexedDB cache. The browser can build
+an immutable presentation model from the active roster plus its already-computed
+cost and supported-validation reports, write an escaped standalone document to
+a caller-opened same-origin window, and invoke native print/save-PDF. Full roster
+legality validation and BattleScribe .ros/.rosz interchange remain deferred.
 
 `useRosterForgeAppController` owns application orchestration independently of
 the rendered panel tree: ordered import requests, draft-list refreshes and
@@ -137,7 +140,11 @@ import reporting, catalogue details and roster setup, transient workspace
 states, diagnostic lists, detail rows, summary metrics, and locale formatting
 live in focused presentation modules. `roster-workspace.tsx` owns the active
 roster builder, supported checks, cost and constraint summaries, selection
-editing, and rule/profile inspection without changing their behavior. Existing
+editing, and rule/profile inspection without changing their behavior.
+`roster-print.ts` is a web-only presentation adapter: it copies roster identity
+and order plus report summaries into a serializable view, escapes all imported
+and user-authored strings, and does not mutate the roster or rerun evaluation.
+Existing
 dependency injection for catalogue preparation, draft storage, clocks, and
 generated IDs is accepted by the hook through `AppProps`, preserving
 deterministic UI tests. `useRemoteCatalogueSourceController` separately owns

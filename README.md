@@ -86,6 +86,9 @@ This repository currently contains the first development slice:
 - occurrence-specific selection rename and reset-to-definition-name controls;
 - occurrence-specific amount editing with source default/step visibility,
   amount-aware costs and checks, and undo/redo participation;
+- standalone browser print/save-PDF presentation export preserving nested roster
+  order, occurrence and definition IDs, quantities, supported costs, and
+  supported-check validity/completeness without claiming .ros compatibility;
 - explicit browser-local roster drafts in IndexedDB, retaining source bytes and
   reopening through secure import and exact definition-key restoration;
 - immutable pinned GitHub repository browsing with visible per-file progress,
@@ -103,7 +106,7 @@ cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
 grouped cost/profile/visibility modifiers, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,
-roster reordering, and roster import/export UI.
+roster reordering, and BattleScribe .ros/.rosz import and interchange export.
 
 ## Requirements
 

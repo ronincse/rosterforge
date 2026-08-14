@@ -1250,9 +1250,11 @@ describe("App local catalogue flow", () => {
 
   it("saves, reopens, and confirms deletion of a browser-local draft", async () => {
     const { store, records } = memoryDraftStore();
+    const printRoster = vi.fn(() => false);
     render(
       <App
         draftStore={store}
+        printRoster={printRoster}
         createBatchId={() => "draft-ui-batch"}
         createDraftId={() => "draft-ui"}
         createEntityId={(kind) => `${kind}-draft-ui`}
@@ -1285,6 +1287,28 @@ describe("App local catalogue flow", () => {
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
     );
     expect(await screen.findByText("selection-draft-ui")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Print / Save PDF" }));
+    expect(printRoster).toHaveBeenCalledOnce();
+    expect(printRoster).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Saved Patrol",
+        catalogueName: "Synthetic Faction",
+        forces: [
+          expect.objectContaining({
+            selections: [
+              expect.objectContaining({
+                occurrenceId: "selection-draft-ui",
+                name: "Infantry Squad",
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "The browser blocked the printable roster window.",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
     await within(shelf).findByText("Saved Saved Patrol in this browser.");

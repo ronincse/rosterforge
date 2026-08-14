@@ -41,6 +41,10 @@ import {
   type LocalRosterRootChoiceState,
   type LocalRosterSession,
 } from "./roster-session.js";
+import {
+  createRosterPrintViewModel,
+  type RosterPrintViewModel,
+} from "./roster-print.js";
 import { SummaryMetric } from "./summary-metric.js";
 import { formatCount, formatNumber } from "./ui-format.js";
 
@@ -58,6 +62,7 @@ export function RosterOverview({
   onUndo,
   onRedo,
   onSaveDraft,
+  onPrintRoster,
   isSavingDraft,
   hasSavedDraft,
 }: {
@@ -84,12 +89,14 @@ export function RosterOverview({
   readonly onUndo: () => void;
   readonly onRedo: () => void;
   readonly onSaveDraft: () => void;
+  readonly onPrintRoster: (roster: RosterPrintViewModel) => boolean;
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
 }) {
   const force = session.roster.forces[0];
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
+  const [printBlocked, setPrintBlocked] = useState(false);
   const rootChoiceInspection = inspectLocalRosterRootChoices(session);
   const rootChoiceGroups = rootChoiceInspection.ok
     ? rootChoiceInspection.value.groups
@@ -144,7 +151,7 @@ export function RosterOverview({
         />
       </div>
 
-      <div className="history-actions" aria-label="Roster edit history">
+      <div className="history-actions" aria-label="Roster actions">
         <button type="button" disabled={!canUndo} onClick={onUndo}>
           Undo
         </button>
@@ -163,7 +170,30 @@ export function RosterOverview({
               ? "Update saved draft"
               : "Save draft"}
         </button>
+        <button
+          className="print-roster-action"
+          type="button"
+          onClick={() =>
+            setPrintBlocked(
+              !onPrintRoster(
+                createRosterPrintViewModel(
+                  session,
+                  costResult,
+                  supportedValidation,
+                ),
+              ),
+            )
+          }
+        >
+          Print / Save PDF
+        </button>
       </div>
+      {printBlocked && (
+        <p className="print-roster-error" role="alert">
+          The browser blocked the printable roster window. Allow popups for
+          this local page and try again.
+        </p>
+      )}
 
       <RosterSupportedValidationRibbon result={supportedValidation} />
       <RosterCostSummary result={costResult} />

@@ -343,7 +343,16 @@ relationships after the edit.
 No calculated cost, constraint, modifier, condition, repeat, validity, or
 completeness state is stored in the roster model. Source `defaultAmount` and
 `step` text are not copied into it automatically. There are no BattleScribe
-roster import or export commands yet.
+roster import or `.ros`/`.rosz` interchange export commands yet.
+
+The web presentation layer can derive a transient printable view from a
+`LocalRosterSession` and the cost and supported-validation reports already
+computed for that render. The view copies roster, catalogue, force, selection,
+and definition identities; preserves force/selection order and effective
+amounts; and attaches only included evaluated costs. Unavailable reports remain
+explicitly unavailable, while incomplete reports remain labeled incomplete.
+The view is not stored back into `roster-model`, is not a BattleScribe roster
+document, and does not add evaluation or legality behavior.
 
 ## Roster Builder
 

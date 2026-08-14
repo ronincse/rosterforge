@@ -229,6 +229,13 @@
   absent from the context, and selections absent from the materialized tree
 - Context-backed definition replacement using the same catalogue and
   availability guards as construction
+- Standalone browser print/save-PDF presentation export preserving roster,
+  catalogue, force, and selection identities; ordered nested selections;
+  explicit quantities; included per-selection costs; roster totals; and
+  supported-check validity, completeness, and status counts
+- Every printed imported or user-authored value is HTML-escaped, and the output
+  carries an explicit presentation-only scope note rather than claiming
+  BattleScribe roster-file compatibility or full legality
 - Unresolved and resource-limited entry links remain unavailable to roster
   construction, while roster-model occurrence diagnostics pass through intact
 - Read-only roster compatibility reports retaining occurrence and context
@@ -350,7 +357,8 @@
   supported initialization minima remain distinct occurrences
 - Conditional or grouped automatic-root requirements, implicit choices for
   groups whose default is absent or `none`, and post-edit maximum enforcement
-- `.ros`/`.rosz` ingestion, projection, import, and export
+- `.ros`/`.rosz` ingestion, projection, import, and interchange export;
+  browser print/save-PDF is presentation output only
 - Grouped-modifier costs, broader cost-limit behavior, aggregate general-
   constraint enforcement, broader condition semantics, and full legality
   validation
@@ -359,7 +367,7 @@
   tracking, gallery discovery, and cache management UI
 - Sibling reordering, nested-force editing, force renaming, editable cost
   overrides, durable history, publication rendering, aggregate legality,
-  validation, and roster export UI
+  validation, and `.ros`/`.rosz` interchange UI
 
 ## Uncertain
 

@@ -24,6 +24,10 @@ import {
   type RemoteCatalogueSourceControllerOptions,
 } from "./use-remote-catalogue-source.js";
 import {
+  openRosterPrintView,
+  type RosterPrintViewModel,
+} from "./roster-print.js";
+import {
   useRosterForgeAppController,
   type RosterForgeAppControllerOptions,
 } from "./use-app-controller.js";
@@ -34,7 +38,9 @@ import {
 } from "./workspace-states.js";
 
 export type AppProps = RosterForgeAppControllerOptions &
-  RemoteCatalogueSourceControllerOptions;
+  RemoteCatalogueSourceControllerOptions & {
+    readonly printRoster?: (roster: RosterPrintViewModel) => boolean;
+  };
 
 const acceptedExtensions = ".gst,.cat,.gstz,.catz,.json";
 
@@ -181,6 +187,7 @@ export function App(props: AppProps) {
               onUndo={undoRosterEdit}
               onRedo={redoRosterEdit}
               onSaveDraft={() => void saveRosterDraft()}
+              onPrintRoster={props.printRoster ?? openRosterPrintView}
               isSavingDraft={draftAction.kind === "saving"}
               hasSavedDraft={activeDraft !== undefined}
             />
@@ -214,6 +221,7 @@ function LibraryWorkspace({
   onUndo,
   onRedo,
   onSaveDraft,
+  onPrintRoster,
   isSavingDraft,
   hasSavedDraft,
 }: {
@@ -249,6 +257,7 @@ function LibraryWorkspace({
   readonly onUndo: () => void;
   readonly onRedo: () => void;
   readonly onSaveDraft: () => void;
+  readonly onPrintRoster: (roster: RosterPrintViewModel) => boolean;
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
 }) {
@@ -287,6 +296,7 @@ function LibraryWorkspace({
             onUndo={onUndo}
             onRedo={onRedo}
             onSaveDraft={onSaveDraft}
+            onPrintRoster={onPrintRoster}
             isSavingDraft={isSavingDraft}
             hasSavedDraft={hasSavedDraft}
           />

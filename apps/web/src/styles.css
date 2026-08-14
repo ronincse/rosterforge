@@ -854,7 +854,6 @@ h1 {
 }
 
 .history-actions .save-draft-action {
-  grid-column: 1 / -1;
   min-height: 38px;
   color: #fffdf6;
   background: var(--forest);
@@ -869,6 +868,19 @@ h1 {
   color: #79847e;
   background: #d4dad6;
   border-color: #c3cbc6;
+}
+
+.history-actions .print-roster-action {
+  min-height: 38px;
+  background: #f7f5ec;
+}
+
+.print-roster-error {
+  margin: -10px 0 20px;
+  padding: 10px 12px;
+  color: #7a341f;
+  background: #fff0e8;
+  border-left: 3px solid #a24c2b;
 }
 
 .roster-workspace-nav {
