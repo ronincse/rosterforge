@@ -16,6 +16,18 @@
       <characteristics>
         <characteristic name="Move" typeId="characteristic-move">6</characteristic>
       </characteristics>
+      <modifiers>
+        <modifier type="append" field="characteristic-move" value="+1"
+          join=" / " affects="self.profiles.Unit" />
+      </modifiers>
+      <modifierGroups>
+        <modifierGroup type="and" comment="Linked profile group">
+          <modifiers>
+            <modifier type="replace" field="characteristic-move"
+              arg="6" join="" />
+          </modifiers>
+        </modifierGroup>
+      </modifierGroups>
     </profile>
   </sharedProfiles>
   <sharedSelectionEntries>

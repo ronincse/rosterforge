@@ -33,7 +33,8 @@ archives, extracted XML bytes with separate provenance. It rejects XML
 declarations before parsing, enforces byte, archive, XML, and JSON structural
 limits, keeps an ordered generic source representation, and creates read-only
 BattleScribe 2.03 projections for known structures, including profile-type and
-characteristic-type definitions and recursive force entries. It does not
+characteristic-type definitions, profile-owned modifiers, and recursive force
+entries. It does not
 resolve IDs or interpret rules.
 
 `data-graph` consumes already-parsed BattleScribe documents. It builds
@@ -677,6 +678,12 @@ because real JSON uses both native numbers and comma-delimited extensions.
 Conditions retain observed `id`, `childName`, and `comment`; repeats retain
 observed `id`, `childName`, and `roundUp`. These metadata fields do not acquire
 evaluation semantics merely through projection.
+
+Profiles expose their ordered direct `modifiers` and `modifierGroups` beside
+their characteristics. A materialized profile info link exposes the definition's
+same arrays by reference. Behavioral extensions such as `affects`, `join`,
+`arg`, and `position` remain on each modifier's generic node; projection does
+not route a modifier to a characteristic or execute its operation.
 
 The JSON adapter also recognizes the observed, non-2.03
 `localConditionGroups` collection. Its `localConditionGroup` items retain
@@ -1350,9 +1357,10 @@ replace, combine, or evaluate in a particular way.
 Missing target IDs, missing targets, kind mismatches, duplicate candidates, and
 entry-link cycles produce unresolved link nodes plus diagnostics. No arbitrary
 target is selected. Info links expose shallow rule or profile views with the
-same source/definition distinction; profile characteristics, rule descriptions,
-and publication links remain backed by their definition projections. Unknown
-info-link types and links into preserved but unprojected generic structures
+same source/definition distinction; profile characteristics, modifiers,
+modifier groups, rule descriptions, and publication links remain backed by
+their definition projections. Unknown info-link types and links into preserved
+but unprojected generic structures
 remain explicit `unresolvedInfoLink` values with `unsupportedType` or
 `unprojectedTarget` reasons. They do not produce false missing-target
 diagnostics.

@@ -3,7 +3,14 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
+import type {
+  BattleScribeProjection,
+  InfoGroupProjection,
+  ModifierGroupProjection,
+  OrderedXmlElement,
+  ProfileProjection,
+  SelectionContainerProjection,
+} from "@rosterforge/battlescribe-data";
 import {
   pinGitHubRepository,
   planBattleScribeDependencyClosure,
@@ -174,6 +181,11 @@ describe.skipIf(realDataDirectory === undefined)(
           force: 15,
           roster: 6,
         });
+        expect(
+          profileOwnedCharacteristicModifierCount(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toBe(484);
         expect(
           groupedHiddenModifierSummary(
             result.value.documents.map(({ root }) => root),
@@ -1030,6 +1042,89 @@ function realJsonFiles(directory: string): readonly LocalBattleScribeFile[] {
       origin: directory,
       mediaType: "application/json",
     }));
+}
+
+function profileOwnedCharacteristicModifierCount(
+  projections: readonly BattleScribeProjection[],
+): number {
+  const characteristicTypeIds = new Set<string>(
+    projections.flatMap(({ profileTypes }) =>
+      profileTypes.flatMap(({ characteristicTypes }) =>
+        characteristicTypes.flatMap(({ id }) => id ?? []),
+      ),
+    ),
+  );
+  let count = 0;
+
+  const visitModifierGroup = (group: ModifierGroupProjection): void => {
+    count += group.modifiers.filter(
+      ({ field }) => field !== undefined && characteristicTypeIds.has(field),
+    ).length;
+    for (const child of group.modifierGroups) {
+      visitModifierGroup(child);
+    }
+  };
+  const visitProfile = (profile: ProfileProjection): void => {
+    count += profile.modifiers.filter(
+      ({ field }) => field !== undefined && characteristicTypeIds.has(field),
+    ).length;
+    for (const group of profile.modifierGroups) {
+      visitModifierGroup(group);
+    }
+  };
+  const visitInfoGroup = (group: InfoGroupProjection): void => {
+    for (const profile of group.profiles) {
+      visitProfile(profile);
+    }
+    for (const child of group.infoGroups) {
+      visitInfoGroup(child);
+    }
+  };
+  const visitSelectionContainer = (
+    container: SelectionContainerProjection,
+  ): void => {
+    for (const profile of container.profiles) {
+      visitProfile(profile);
+    }
+    for (const group of container.infoGroups) {
+      visitInfoGroup(group);
+    }
+    for (const entry of container.selectionEntries) {
+      visitSelectionContainer(entry);
+    }
+    for (const group of container.selectionEntryGroups) {
+      visitSelectionContainer(group);
+    }
+    for (const link of container.entryLinks) {
+      visitSelectionContainer(link);
+    }
+  };
+
+  for (const projection of projections) {
+    for (const profile of projection.profiles) {
+      visitProfile(profile);
+    }
+    for (const group of projection.infoGroups) {
+      visitInfoGroup(group);
+    }
+    for (const entry of projection.selectionEntries) {
+      visitSelectionContainer(entry);
+    }
+    for (const group of projection.selectionEntryGroups) {
+      visitSelectionContainer(group);
+    }
+    for (const entry of projection.sharedSelectionEntries) {
+      visitSelectionContainer(entry);
+    }
+    for (const group of projection.sharedSelectionEntryGroups) {
+      visitSelectionContainer(group);
+    }
+    for (const link of projection.entryLinks) {
+      visitSelectionContainer(link);
+    }
+  }
+
+  return count;
 }
 
 function identityConditionScopeCounts(

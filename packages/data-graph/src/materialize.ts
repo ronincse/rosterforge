@@ -150,6 +150,8 @@ export interface MaterializedProfileInfoLink extends MaterializedInfoLinkBase {
   readonly typeId?: ObjectId;
   readonly typeName?: string;
   readonly characteristics: ProfileProjection["characteristics"];
+  readonly modifiers: ProfileProjection["modifiers"];
+  readonly modifierGroups: ProfileProjection["modifierGroups"];
   readonly publicationLinks: ProfileProjection["publicationLinks"];
 }
 
@@ -843,6 +845,8 @@ function materializedProfileInfoLink(
     ...optionalProperty("typeId", definition.typeId),
     ...optionalProperty("typeName", definition.typeName),
     characteristics: definition.characteristics,
+    modifiers: definition.modifiers,
+    modifierGroups: definition.modifierGroups,
     publicationLinks: definition.publicationLinks,
   };
 }

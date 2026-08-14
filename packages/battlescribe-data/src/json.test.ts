@@ -189,6 +189,34 @@ describe("BattleScribe JSON ingestion", () => {
       "7",
       "",
     ]);
+    expect(profile?.modifiers.map(({ type }) => type)).toEqual([
+      "append",
+      "future-display-kind",
+    ]);
+    expect(profile?.modifiers[0]).toMatchObject({
+      field: "json-resolve",
+      value: "Steady",
+    });
+    expect(profile?.modifiers[0]?.node.attributes["join"]).toBe(", ");
+    expect(profile?.modifiers[0]?.node.attributes["affects"]).toBe(
+      "self.profiles.Scout",
+    );
+    expect(profile?.modifiers[1]?.value).toBe("0");
+    expect(profile?.modifiers[1]?.node.attributes["futureBehavior"]).toBe(
+      "retained",
+    );
+    expect(profile?.modifierGroups[0]).toMatchObject({
+      type: "and",
+      comment: "JSON profile characteristic group",
+      modifiers: [{ type: "replace", field: "json-resolve" }],
+      conditions: [{ type: "atLeast", scope: "self", value: "1" }],
+    });
+    expect(
+      profile?.modifierGroups[0]?.modifiers[0]?.node.attributes["arg"],
+    ).toBe("old");
+    expect(
+      profile?.modifierGroups[0]?.modifiers[0]?.node.attributes["join"],
+    ).toBe("");
     expect(surveyor?.rules[0]?.description).toBe(
       "Can chart an unexplored route.",
     );

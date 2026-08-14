@@ -61,6 +61,13 @@ Unknown enum-like strings are preserved and do not produce diagnostics merely
 for being unknown. This accommodates real BSData values beyond closed
 BattleScribe 2.03 XSD enumerations.
 
+Unknown or behavior-bearing modifier attributes also do not emit projection
+diagnostics. For example, profile-owned `affects`, `join`, `arg`,
+`position`, and future attributes remain on the generic modifier node.
+Evaluation code must emit its own source-located unsupported diagnostic when
+such an attribute is applicable to an attempted operation; projection alone
+does not claim or reject execution semantics.
+
 Local repository import can reject a complete batch before parsing with:
 
 ```text

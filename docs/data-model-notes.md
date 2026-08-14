@@ -66,8 +66,14 @@ their document order and every level retains its own generic XML node and
 indexed path.
 
 Info groups recursively project nested groups, info links, rules, profiles,
-modifiers, modifier groups, and publication links. Projection retains these
-structures without applying their behavior.
+modifiers, modifier groups, and publication links. Profiles likewise project
+ordered direct modifiers and modifier groups beside their characteristics.
+Projection retains these structures without applying their behavior.
+
+A materialized profile info link exposes the definition profile's
+`characteristics`, `modifiers`, `modifierGroups`, and `publicationLinks`
+arrays by reference. The wrapper does not clone modifier subtrees, merge link-
+local behavior, route characteristic targets, or execute modifiers.
 
 Collections preserve XML or JSON array order. Optional singleton content, such
 as a rule description, is omitted when absent and retains an explicit empty
@@ -86,6 +92,9 @@ string when present but empty.
 - `defaultAmount` and `step` deliberately remain strings because the pinned
   JSON corpus contains comma-delimited defaults such as `"1,1"` as well as
   numeric-looking values. Absence and explicit empty text remain distinct.
+- Modifier `value` remains lexical, including native JSON numbers adapted to
+  their source spelling. Generic behavior properties such as `affects`,
+  `join`, `arg`, and `position` remain in `node.attributes`.
 - Invalid typed values leave the optional typed property absent and emit
   `BS_PROJECTION_INVALID_ATTRIBUTE` with provenance and a source path. JSON
   diagnostics additionally include exact line, column, and offset ranges.

@@ -273,6 +273,8 @@ export interface ProfileProjection extends IdentifiedBattleScribeNode {
   readonly typeId?: ObjectId;
   readonly typeName?: string;
   readonly characteristics: readonly CharacteristicProjection[];
+  readonly modifiers: readonly ModifierProjection[];
+  readonly modifierGroups: readonly ModifierGroupProjection[];
   readonly publicationLinks: readonly PublicationLinkProjection[];
 }
 

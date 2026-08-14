@@ -15,6 +15,7 @@
   - selection entries, selection-entry groups, shared entries, and entry links;
   - category links, info links, shared and inline info groups, rules, profiles,
     and characteristics;
+  - profile-owned ordered modifiers and modifier groups;
   - profile types and their ordered characteristic-type definitions;
   - costs, constraints, modifiers, modifier groups, conditions, nested
     condition groups, observed JSON local condition groups, and repeats
@@ -320,6 +321,9 @@
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
+- Characteristic-targeting modifier routing and execution, including profile-
+  owned modifiers and generic `affects`, `join`, `arg`, and `position`
+  behavior. The modifier structures remain ordered and observable.
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or
@@ -394,6 +398,9 @@
   matching game system and the catalogue itself
 - Whether profile and characteristic `typeName` display text should receive a
   separate consistency report; containment currently uses IDs only
+- Exact characteristic modifier target selection when `field` is a
+  characteristic-type ID but generic `affects` selects profile families,
+  recursive entries, or other owner-relative paths
 - Migration policy for future local-roster-draft versions; version 1 currently
   preserves generated occurrence IDs and opaque definition keys as strings
 - Whether automatic initialization should prefer repeated occurrences or one
@@ -651,10 +658,20 @@ pnpm exec vitest run apps/web/src/bsdata-json.integration.test.ts
 The pinned 10th-edition game system also contains `set-primary` and `add`
 modifier kinds and generic modifier attributes such as `affects`, `arg`,
 `join`, and `position`; repeats use an observed `roundUp` attribute. These
-remain available through the generic XML node. Numeric evaluation supports
-`floor` as a minimum because the pinned data orders it after decrements to cap
-the lower bound. `replace`, `set-primary`, `add`, string `append`, and all
-behavior-bearing generic attributes remain preserved and unapplied.
+remain available through the generic XML node, including on modifiers owned by
+profiles. Numeric evaluation supports `floor` as a minimum because the pinned
+data orders it after decrements to cap the lower bound. `replace`,
+`set-primary`, `add`, string `append`, characteristic-targeting operations,
+and all behavior-bearing generic attributes remain preserved and unapplied.
+
+At the same pinned commit, 1,741 modifiers target characteristic-type IDs. Of
+those, 484 are directly profile-owned and were the projection gap closed here;
+1,151 are inside modifier groups and 700 carry nonnumeric values. The observed
+operations are 490 `append`, 415 `set`, 451 `increment`, 163 `decrement`,
+189 `replace`, 25 `floor`, and 8 `ceil`. Across this target set, `affects`
+appears 1,265 times, `join` 759 times, `arg` 286 times, and `position` 161
+times. These real-data extensions require a separate display-evaluation design;
+their presence does not make profile projection fail.
 
 The same pinned corpus contains selection-count conditions using all six
 supported numeric comparisons plus `instanceOf` and `notInstanceOf`. Observed

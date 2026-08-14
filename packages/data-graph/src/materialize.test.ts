@@ -115,6 +115,17 @@ describe("BattleScribe shared selection materialization", () => {
       expect(profile.hidden).toBe(false);
       expect(profile.typeId).toBe("profile-type-unit");
       expect(profile.characteristics[0]?.value).toBe("6");
+      expect(profile.modifiers).toBe(profile.definition.modifiers);
+      expect(profile.modifiers[0]).toMatchObject({
+        type: "append",
+        field: "characteristic-move",
+        value: "+1",
+      });
+      expect(profile.modifierGroups).toBe(profile.definition.modifierGroups);
+      expect(profile.modifierGroups[0]).toMatchObject({
+        type: "and",
+        modifiers: [{ type: "replace", field: "characteristic-move" }],
+      });
     }
   });
 

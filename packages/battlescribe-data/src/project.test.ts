@@ -87,6 +87,44 @@ describe("BattleScribe 2.03 typed projections", () => {
       name: "Move",
       value: "7",
     });
+
+    const sharedProfile = projection.profiles[0];
+    expect(sharedProfile?.modifiers.map((modifier) => modifier.type)).toEqual([
+      "append",
+      "future-display-kind",
+    ]);
+    expect(sharedProfile?.modifiers[0]).toMatchObject({
+      field: "characteristic-move",
+      value: "+1",
+      conditions: [
+        {
+          type: "atLeast",
+          field: "selections",
+          scope: "parent",
+          childId: "entry-alpha",
+          value: "1",
+        },
+      ],
+    });
+    expect(sharedProfile?.modifiers[0]?.node.attributes["join"]).toBe(" / ");
+    expect(sharedProfile?.modifiers[0]?.node.attributes["affects"]).toBe(
+      "self.profiles.Unit",
+    );
+    expect(sharedProfile?.modifiers[1]?.node.attributes["futureBehavior"]).toBe(
+      "retained",
+    );
+    expect(sharedProfile?.modifierGroups[0]).toMatchObject({
+      type: "and",
+      comment: "Profile characteristic group",
+      modifiers: [{ type: "replace", field: "characteristic-save" }],
+      conditions: [{ type: "atLeast", scope: "self", value: "1" }],
+    });
+    expect(
+      sharedProfile?.modifierGroups[0]?.modifiers[0]?.node.attributes["arg"],
+    ).toBe("4+");
+    expect(
+      sharedProfile?.modifierGroups[0]?.modifiers[0]?.node.attributes["join"],
+    ).toBe("");
     expect(entry?.constraints.map((constraint) => constraint.scope)).toEqual([
       "parent",
       "roster",

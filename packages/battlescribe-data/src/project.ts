@@ -230,6 +230,8 @@ function projectProfile(
     ...optionalId(located.node, "typeId"),
     ...optionalString(located.node, "typeName"),
     characteristics: mapContainer(located, "characteristics", "characteristic", context, projectCharacteristic),
+    modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
+    modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
     publicationLinks: mapContainer(located, "publicationLinks", "publicationLink", context, projectPublicationLink),
   };
 }

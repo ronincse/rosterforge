@@ -9,11 +9,12 @@ as a replacement for the project's engineering rules. `AGENTS.md` still governs:
 one bounded task per session, focused tests, diagnostics, documentation updates,
 and all four checks passing before a task is complete.
 
-## Current Status — 2026-08-10
+## Current Status — 2026-08-13
 
-Tasks 1 through 6 below and the first bounded Task 7 presentation-export
-checkpoint are complete. The current normal suite passes 351 tests with three
-skipped, and the pinned real-data suite passes all three tests.
+Tasks 1 through 6 below, the first bounded Task 7 presentation-export
+checkpoint, and the first Task 8 projection checkpoint are complete. The
+current normal suite passes 351 tests with three skipped, and the pinned
+real-data suite passes all three tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -271,8 +272,10 @@ committing further work to the all-repository path.
 
 ### Task 7 — Roster export
 
-There is currently no export path of any kind. `.ros`/`.rosz` interoperability
-and a print/share view are what make the output usable at a table.
+A browser print/save-PDF presentation path is complete. It retains roster,
+catalogue, force, selection, definition, cost, validation, and diagnostic
+identities in a serializable view model. It is explicitly not `.ros`/`.rosz`
+interchange; that format remains deferred.
 
 ### Task 8 — Display-fidelity modifiers
 
@@ -280,6 +283,13 @@ and a print/share view are what make the output usable at a table.
 one that matters most here — it is how weapon and model stat changes reach the
 profile display. `category` (892) affects dynamic keywords. `name` (7,673) is
 86% Crusade and should be sequenced last despite its raw count.
+
+The first bounded checkpoint closes a structural gap: all profiles now project
+their ordered direct modifiers and modifier groups, and materialized profile
+info links expose those exact arrays by reference. The pinned corpus contains
+484 profile-owned characteristic modifiers. Generic `affects`, `join`,
+`arg`, and `position` properties remain preserved on source nodes; target
+routing and display execution are still the next implementation problem.
 
 ---
 

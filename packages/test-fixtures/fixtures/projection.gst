@@ -103,6 +103,29 @@
         <bs:characteristic name="Move" typeId="characteristic-move">6</bs:characteristic>
         <bs:characteristic name="Save" typeId="characteristic-save">4+</bs:characteristic>
       </bs:characteristics>
+      <bs:modifiers>
+        <bs:modifier type="append" field="characteristic-move" value="+1"
+          join=" / " affects="self.profiles.Unit">
+          <bs:conditions>
+            <bs:condition type="atLeast" field="selections" scope="parent"
+              childId="entry-alpha" value="1" />
+          </bs:conditions>
+        </bs:modifier>
+        <bs:modifier type="future-display-kind" field="characteristic-save"
+          value="Shielded" futureBehavior="retained" />
+      </bs:modifiers>
+      <bs:modifierGroups>
+        <bs:modifierGroup type="and" comment="Profile characteristic group">
+          <bs:modifiers>
+            <bs:modifier type="replace" field="characteristic-save"
+              arg="4+" join="" />
+          </bs:modifiers>
+          <bs:conditions>
+            <bs:condition type="atLeast" field="selections" scope="self"
+              value="1" />
+          </bs:conditions>
+        </bs:modifierGroup>
+      </bs:modifierGroups>
     </bs:profile>
   </bs:sharedProfiles>
   <bs:selectionEntries>

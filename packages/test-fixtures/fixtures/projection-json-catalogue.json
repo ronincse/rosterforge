@@ -160,6 +160,43 @@
                 "typeId": "json-resolve"
               }
             ],
+            "modifiers": [
+              {
+                "type": "append",
+                "field": "json-resolve",
+                "value": "Steady",
+                "join": ", ",
+                "affects": "self.profiles.Scout"
+              },
+              {
+                "type": "future-display-kind",
+                "field": "json-move",
+                "value": 0,
+                "futureBehavior": "retained"
+              }
+            ],
+            "modifierGroups": [
+              {
+                "type": "and",
+                "comment": "JSON profile characteristic group",
+                "modifiers": [
+                  {
+                    "type": "replace",
+                    "field": "json-resolve",
+                    "arg": "old",
+                    "join": ""
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "atLeast",
+                    "field": "selections",
+                    "scope": "self",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
             "name": "Surveyor",
             "typeId": "json-scout-profile",
             "typeName": "Scout",
