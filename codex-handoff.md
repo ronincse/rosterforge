@@ -9,83 +9,151 @@ as a replacement for the project's engineering rules. `AGENTS.md` still governs:
 one bounded task per session, focused tests, diagnostics, documentation updates,
 and all four checks passing before a task is complete.
 
-## Current Status — 2026-08-13
+## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first Task 8 projection checkpoint are complete. The
-current normal suite passes 351 tests with three skipped, and the pinned
-real-data suite passes all three tests.
+checkpoint, and the first two Task 8 checkpoints — profile modifier projection
+and headless characteristic-display evaluation — are complete. The current
+normal suite passes 363 tests with four skipped, and the pinned real-data suite
+passes all four tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
 
-## Active Assignment For Claude Code - 2026-08-14
+## Completed Assignment — Characteristic Display, 2026-08-14
 
-Begin from the current tip of the local `codex/recovery-baseline` branch. The
-last implementation checkpoint is `b4ca8c6` (`feat: project profile
-modifiers`); this handoff may be a documentation-only descendant of that
-commit. Do not reset or rewrite the branch if the worktree differs; inspect and
-preserve any newer changes. Do not push this branch or open a pull request
-without the user's explicit request.
+Baseline `40b60ca`; resulting implementation commit `04444cb`
+(`feat: headless characteristic display evaluation`). The branch was not
+pushed and no pull request was opened. The worktree was clean at the baseline
+and no existing work was reset, cleaned, or rewritten. The optional corpus was
+confirmed at `E:\GitHub\wh40k-11e`, commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, clean, 46 JSON files.
 
-Before editing, read `AGENTS.md`, `README.md`, `docs/architecture.md`,
-`docs/compatibility.md`, `docs/data-model-notes.md`, `docs/diagnostics.md`, and
-this handoff. Confirm the local optional corpus, when available, is
-`E:\GitHub\wh40k-11e` at
-`54c189f4fd01878351fab05586d3b38d9c7f6ddc`; do not silently use a different
-revision for exact assertions.
+### Results
 
-The next bounded task is the first **headless characteristic-display modifier
-evaluation** checkpoint. Profile-owned direct modifiers and modifier groups are
-now projected, ordered, and provenance-preserving, but the roster UI still
-renders raw `characteristic.value` strings. Work in `packages/evaluation`
-first; do not begin with React rendering.
+`packages/evaluation/src/characteristics.ts` adds
+`evaluateRosterProfileCharacteristics(roster, context, owner, profile)`. It
+accepts a direct profile projection or the arrays a materialized profile info
+link already exposes by reference, and clones nothing. Boundaries are documented
+in `docs/architecture.md` (`Characteristic Display Boundary`),
+`docs/compatibility.md`, and `docs/diagnostics.md`.
 
-1. Extend the pinned-corpus inventory for the exact 484 profile-owned
-   characteristic-targeting modifiers. Record direct versus grouped ownership,
-   operations, scopes, conditions/groups/repeats, missing values, and generic
-   `affects`, `join`, `arg`, and `position` shapes. Pin representative source
-   IDs and before/after values for every behavior selected for support.
-2. Design a read-only report for one materialized roster occurrence and profile
-   that retains the base characteristic, exact applied or unapplied modifier
-   projections, applicability/group reports, effective lexical value when
-   known, diagnostics, and independent completeness. Reuse the existing
-   applicability, group-execution, repeat, and numeric kernels where their
-   contracts actually fit.
-3. Implement only the broadest corpus-proven subset whose target and operation
-   semantics are unambiguous. A modifier `field` must match an exact
-   characteristic `typeId`; do not infer targets from names. Unknown operations,
-   scopes, selectors, extension attributes, nonnumeric forms, or unresolved
-   applicability must remain observable and make only the reachable result
-   incomplete. Do not guess BattleScribe `affects`, `replace`, append/join, or
-   position semantics.
-4. If the inventory shows that no meaningful execution subset is safe without
-   first understanding `affects`, stop at a tested inspection/reporting
-   checkpoint that preserves and diagnoses those modifiers. Document the exact
-   blocker instead of inventing behavior.
+**Supported operation: `set` only.** `set` replaces the projected lexical value
+and never reads the value it replaces, so it needs no numeric grammar for
+observed forms such as `3+`, `36"`, and `D6`. Every other observed operation
+would require an unestablished rule — lexical arithmetic for
+`increment`/`decrement`/`floor`/`ceil`, `join` separator and `position`
+placement for `append`, and an `arg` search term for `replace` — so all of them
+stay preserved, source-located, and unapplied. The numeric modifier kernel does
+**not** fit and is deliberately not reused; the applicability, modifier-group
+applicability, and group-execution collectors do fit and are reused unchanged.
 
-Keep this checkpoint generic to BattleScribe data. Do not hard-code WH40K IDs
-or names, and do not continue into category/name modifiers, roster interchange,
-repository acquisition, persistence, or UI redesign. UI integration should be
-a later checkpoint after the headless report has exact synthetic and pinned
-real-data assertions.
+Targeting requires `field` to equal an exact characteristic `typeId` on the same
+profile. A repeated characteristic type is an ambiguous target, not a
+broadcast. Execution keeps the documented order: profile-direct modifiers, then
+top-level groups in source order, direct children before nested groups
+depth-first. A false condition is an ordinary `notApplicable` step and does not
+make a report incomplete. The effective value stays known when no unapplied step
+follows the last applied step, so a report can expose a known value while
+remaining `incomplete`.
 
-Before stopping, run focused tests plus:
+Profile-owned modifiers that do not route to exactly one characteristic on their
+own profile — `hidden`, `name`, the observed `annotation` extension, and
+characteristic types belonging to another profile — are retained in
+`unroutedModifiers`, diagnosed, and make the report incomplete. Scoped
+modifiers, repeats, missing operations or values, unresolved applicability, and
+any generic attribute other than the inert `comment` keep their step unapplied.
 
-```powershell
-$env:ROSTERFORGE_BSDATA_JSON_DIR = "E:\GitHub\wh40k-11e"
-pnpm exec vitest run apps/web/src/bsdata-json.integration.test.ts
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-git diff --check
-```
+### Pinned corpus inventory (484 profile-owned characteristic modifiers)
 
-Update the current-status section and this assignment with the resulting commit,
-exact test counts, supported characteristic operations, corpus coverage, and
-remaining semantic questions. Commit the bounded checkpoint locally and stop
-there for review and handback.
+| Dimension | Measurement |
+|---|---|
+| Ownership | 369 direct, 115 inside the profile's own modifier groups |
+| Operations | 213 `append`, 205 `set`, 54 `increment`, 6 `decrement`, 4 `floor`, 2 `replace` |
+| Scope | 16 `scope="model"`, 468 scope-free |
+| Conditions | 384 with direct conditions, 53 with condition groups, **0 with repeats** |
+| Values | 3 omit `value` |
+| Extensions | `join` 244, `affects` 16, `arg` 2, `position` 0; 238 carry none |
+| Targeting | 478 on their own profile, 6 absent, **0 ambiguous** |
+| Executable subset | **173** (`set`, scope-free, extension-free, valued, exactly one target): 117 direct, 56 grouped |
+| Unconditional | only 2, both Adeptus Custodes `W 3 → 4` |
+
+All 484 have a condition surface whose shape the existing evaluator already
+supports, so applicability is not the limiting factor — operation semantics are.
+Separately, the 694 profile-owned modifiers in total include 154 `hidden`, 51
+`annotation`, and 5 `name`. The 1,257 characteristic modifiers owned outside
+profiles remain out of scope; 1,249 carry `affects`, a `scope`, or both, and the
+other 8 sit on info links rather than on the profile they display.
+
+### Checks run
+
+- `pnpm lint` — clean.
+- `pnpm typecheck` — clean.
+- `pnpm test` — **363 passed, 4 skipped (367 total)**, 43 files passed and 1
+  skipped. Previous baseline was 351 passed with 3 skipped; the 12 new tests are
+  `packages/evaluation/src/characteristics.test.ts`, and the extra skip is the
+  fourth pinned-corpus test.
+- `pnpm build` — passed, retaining only Vite's existing large-chunk warning.
+- `git diff --check` — clean.
+- Pinned real-data suite with `ROSTERFORGE_BSDATA_JSON_DIR` set —
+  **4 passed** in 59.24 s.
+
+New pinned assertions: the all-repository test replaces the single 484 count
+with the complete summary table above, and a new six-file Adeptus Custodes
+closure test (game system, Adeptus Custodes, Imperial Knights Library, Agents of
+the Imperium, Titans library, Unaligned Forces) adds a `Custodian Guard` unit,
+its `4-5 Custodian Guard` group, and the `Sentinel Blade & Praesidium Shield`
+model, then proves `Custodian Guard (Shield)` reports `M 6"`, `T 6`, `Sv 2+`,
+**`W 4` from a base `3`**, `LD 6+`, `OC 2`, `InSv 4+` with `completeness:
+"complete"` and no diagnostics.
+
+The synthetic fixture `characteristic-display.cat` is project-owned and covers
+applied/not-applicable/unapplied steps, group ordering with nested depth-first
+children, unsupported operations, `affects`, `scope`, missing values, repeats,
+unrouted and ambiguous targets, inert `comment`, unresolved applicability, and
+both directions of the known-value rule. No third-party data was committed.
+
+### Remaining questions for this surface
+
+1. **`affects` retargeting is still the blocker for the other 1,257
+   characteristic modifiers.** Observed values are owner-relative paths such as
+   `self.entries.recursive.profiles.Melee Weapons`, `profiles.Unit`, and forms
+   embedding an exact entry ID. Resolving them needs a decision about profile
+   *families* selected by `typeName` versus `typeId`, and about recursive entry
+   traversal. Nothing here should be guessed from the path grammar alone.
+2. **`append` needs both `join` and `position`.** Observed `join` values include
+   `",\u00a0"`, `""`, `"\n\n"`, `", "`, `","`, and `"\n"`; `position` is `-1`
+   153 times, `""` five times, and `1` three times. Whether `position` counts
+   from the end, indexes a separator-delimited token list, or something else is
+   not established by the source shape.
+3. **`replace` needs `arg` semantics.** Observed `arg` values are mostly `"+0"`
+   (270) plus keyword strings; whether `arg` is the search term, a format
+   argument, or both is unresolved.
+4. **Lexical arithmetic for `increment`/`decrement`/`floor`/`ceil`.** Base values
+   include `3+`, `36"`, `-2`, and `D6`. A pinned `decrement` of 1 against a base
+   `3+` could mean `2+` or `4+`; the sign convention for inverted characteristics
+   is a game rule, not a data shape.
+5. **Repeats on characteristic modifiers are unsupported by choice, not by
+   difficulty.** The corpus contains none, so supporting them would be
+   unproven speculation. `evaluateRosterModifierRepeats` would fit if a future
+   corpus needs it: a zero count is a no-op and any positive count applies `set`
+   once. This is a cheap follow-up whenever real data justifies it.
+6. **Profile-owned `hidden` (154) and `annotation` (51) are undocumented display
+   behavior.** `annotation` is not in the 2.03 schema and appears nowhere else in
+   the compatibility inventory. Profile visibility is a separate checkpoint;
+   until it exists, every affected profile report stays incomplete.
+7. **One `set` in `Necrons.json` gives `Keywords` a native JSON Boolean.** It
+   projects to the lexical string `true` and is replaced literally. That is
+   faithful to the source but is almost certainly an upstream authoring error.
+
+### Next recommended boundary
+
+Surface the headless report in the roster workspace: render evaluated
+characteristic values with explicit base-versus-effective display and an
+incomplete marker, reusing the existing occurrence detail panel. That is a
+presentation-only checkpoint with no new evaluation semantics. Do **not** bundle
+it with `affects` resolution, `category`/`name` modifiers, or profile
+visibility; each of those is its own decision.
 
 Grouped `hidden` modifiers now participate in read-only visibility. Grouped
 cost modifiers now participate in `selectionConditions` cost reports through
@@ -352,12 +420,18 @@ one that matters most here — it is how weapon and model stat changes reach the
 profile display. `category` (892) affects dynamic keywords. `name` (7,673) is
 86% Crusade and should be sequenced last despite its raw count.
 
-The first bounded checkpoint closes a structural gap: all profiles now project
+The first bounded checkpoint closed a structural gap: all profiles now project
 their ordered direct modifiers and modifier groups, and materialized profile
-info links expose those exact arrays by reference. The pinned corpus contains
-484 profile-owned characteristic modifiers. Generic `affects`, `join`,
-`arg`, and `position` properties remain preserved on source nodes; target
-routing and display execution are still the next implementation problem.
+info links expose those exact arrays by reference.
+
+The second bounded checkpoint (`04444cb`) added headless characteristic-display
+evaluation for profile-owned modifiers. Target routing is exact-`typeId` only,
+and `set` is the only executed operation. 173 of the 484 profile-owned
+characteristic modifiers are in the executable subset; the rest stay preserved,
+diagnosed, and incomplete. Generic `affects`, `join`, `arg`, and `position`
+remain preserved and unapplied, and `affects` is the documented blocker for the
+1,257 characteristic modifiers owned outside profiles. See the completed
+assignment above for the full inventory and the open semantic questions.
 
 ---
 
