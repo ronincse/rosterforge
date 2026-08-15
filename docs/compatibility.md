@@ -326,6 +326,11 @@
   execution
 - Effective characteristic values that stay known when no unapplied step follows
   the last applied step, even while the report remains incomplete
+- Browser occurrence details that show the effective characteristic value, the
+  source value labelled as the base when it changed, an explicit unresolved
+  label when a sequence cannot be completed, and a per-profile incomplete note;
+  direct profiles, linked profile info links, and recursive info-group profiles
+  all use the same evaluated report
 
 ## Parsed But Not Evaluated
 

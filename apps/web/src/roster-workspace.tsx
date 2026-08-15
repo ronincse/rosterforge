@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import type {
   MaterializedInfoGroup,
@@ -9,6 +9,7 @@ import type {
 import {
   isActionableSupportedConstraintReport,
   type RosterForceConstraintReport,
+  type RosterProfileCharacteristicReport,
   type RosterSelectionConditionCostReport,
   type RosterSelectionConstraintReport,
   type RosterSelectionConstraintStatus,
@@ -31,12 +32,14 @@ import {
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
   inspectLocalRosterRootChoices,
+  inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
   localRosterSelectionChoice,
   localRosterSelectionCount,
   type LocalRosterChildChoiceGroup,
   type LocalRosterConstraintInspection,
   type LocalRosterDirectChildChoice,
+  type LocalRosterProfile,
   type LocalRosterRootChoice,
   type LocalRosterRootChoiceState,
   type LocalRosterSession,
@@ -1323,6 +1326,7 @@ function RosterSelectionItem({
       )}
       {choice !== undefined && (
         <RosterSelectionDetails
+          session={session}
           choice={choice}
           selection={selection}
           onRename={onRename}
@@ -1453,11 +1457,13 @@ type SelectionProfileDetail =
   | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink };
 
 function RosterSelectionDetails({
+  session,
   choice,
   selection,
   onRename,
   onSetAmount,
 }: {
+  readonly session: LocalRosterSession;
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly selection: RosterSelection;
   readonly onRename: (
@@ -1469,6 +1475,13 @@ function RosterSelectionDetails({
     amount: number | undefined,
   ) => void;
 }) {
+  const characteristics = useMemo(
+    () => inspectLocalRosterSelectionCharacteristics(session, selection.id),
+    [session, selection.id],
+  );
+  const reports = characteristics.ok
+    ? characteristics.value.byProfile
+    : undefined;
   const rules: readonly SelectionRuleDetail[] = [
     ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
     ...choice.materializedInfoLinks
@@ -1537,6 +1550,7 @@ function RosterSelectionDetails({
               <SelectionProfile
                 key={selectionProfileKey(profile, index)}
                 profile={profile}
+                report={reports?.get(profile.value)}
               />
             ))}
           </div>
@@ -1562,6 +1576,7 @@ function RosterSelectionDetails({
               <SelectionInfoGroup
                 key={selectionInfoGroupKey(infoGroup, index)}
                 infoGroup={infoGroup}
+                reports={reports}
               />
             ))}
           </div>
@@ -1710,8 +1725,10 @@ function positiveFiniteNumber(value: string | undefined): number | undefined {
 
 function SelectionProfile({
   profile,
+  report,
 }: {
   readonly profile: SelectionProfileDetail;
+  readonly report: RosterProfileCharacteristicReport | undefined;
 }) {
   const name =
     profile.origin === "Direct"
@@ -1723,7 +1740,12 @@ function SelectionProfile({
       ? profile.value.source.filename
       : profile.value.definition.source.filename;
   return (
-    <article className="selection-profile">
+    <article
+      className="selection-profile"
+      {...(report === undefined
+        ? {}
+        : { "data-completeness": report.completeness })}
+    >
       <header>
         <div>
           <strong>{name ?? "Unnamed profile"}</strong>
@@ -1733,27 +1755,68 @@ function SelectionProfile({
           {profile.origin} | {source}
         </small>
       </header>
+      {report?.completeness === "incomplete" && (
+        <p className="profile-completeness">
+          Some display behavior on this profile is unsupported, so these values
+          are not a complete result.
+        </p>
+      )}
       {characteristics.length === 0 ? (
         <p>No characteristics.</p>
       ) : (
         <dl>
           {characteristics.map((characteristic, index) => (
-            <div key={selectionCharacteristicKey(characteristic, index)}>
-              <dt>
-                {characteristic.name ??
-                  characteristic.typeId ??
-                  "Unnamed characteristic"}
-              </dt>
-              <dd>
-                {characteristic.value === ""
-                  ? "Empty value"
-                  : characteristic.value}
-              </dd>
-            </div>
+            <SelectionCharacteristic
+              key={selectionCharacteristicKey(characteristic, index)}
+              characteristic={characteristic}
+              report={report?.characteristics.find(
+                (candidate) => candidate.characteristic === characteristic,
+              )}
+            />
           ))}
         </dl>
       )}
     </article>
+  );
+}
+
+function SelectionCharacteristic({
+  characteristic,
+  report,
+}: {
+  readonly characteristic: DirectProfile["characteristics"][number];
+  readonly report:
+    | RosterProfileCharacteristicReport["characteristics"][number]
+    | undefined;
+}) {
+  const modified = report !== undefined && report.steps.length > 0;
+  const unresolved = modified && report.value === undefined;
+  // An unresolved sequence still shows the source value, labelled as the base,
+  // so nothing provisional is presented as an effective result.
+  const displayed = report?.value ?? characteristic.value;
+  const changed = modified && !unresolved && displayed !== report.baseValue;
+  return (
+    <div
+      {...(report === undefined
+        ? {}
+        : { "data-completeness": report.completeness })}
+    >
+      <dt>
+        {characteristic.name ??
+          characteristic.typeId ??
+          "Unnamed characteristic"}
+      </dt>
+      <dd>
+        <span>{displayed === "" ? "Empty value" : displayed}</span>
+        {changed && (
+          <small>
+            Base{" "}
+            {report.baseValue === "" ? "empty value" : report.baseValue}
+          </small>
+        )}
+        {unresolved && <small>Effective value unresolved</small>}
+      </dd>
+    </div>
   );
 }
 
@@ -1788,8 +1851,12 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
 
 function SelectionInfoGroup({
   infoGroup,
+  reports,
 }: {
   readonly infoGroup: MaterializedInfoGroup;
+  readonly reports:
+    | ReadonlyMap<LocalRosterProfile, RosterProfileCharacteristicReport>
+    | undefined;
 }) {
   const profiles: readonly SelectionProfileDetail[] = [
     ...infoGroup.profiles.map((value) => ({
@@ -1834,6 +1901,7 @@ function SelectionInfoGroup({
               <SelectionProfile
                 key={selectionProfileKey(profile, index)}
                 profile={profile}
+                report={reports?.get(profile.value)}
               />
             ))}
           </div>
@@ -1859,6 +1927,7 @@ function SelectionInfoGroup({
               <SelectionInfoGroup
                 key={selectionInfoGroupKey(nestedGroup, index)}
                 infoGroup={nestedGroup}
+                reports={reports}
               />
             ))}
           </div>

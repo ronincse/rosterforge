@@ -125,6 +125,9 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
               typeId="characteristic-move"
             >6</characteristic>
           </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value="8" />
+          </modifiers>
         </profile>
       </profiles>
       <rules>
@@ -196,6 +199,13 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
               typeId="characteristic-move"
             >Scout 6</characteristic>
           </characteristics>
+          <modifiers>
+            <modifier
+              type="increment"
+              field="characteristic-move"
+              value="1"
+            />
+          </modifiers>
         </profile>
       </profiles>
       <infoLinks>
@@ -776,7 +786,11 @@ describe("App local catalogue flow", () => {
     fireEvent.click(selectionDetails);
     expect(within(selectedRoster).getByText("Infantry profile")).toBeTruthy();
     expect(within(selectedRoster).getAllByText("Move")).toHaveLength(2);
-    expect(within(selectedRoster).getByText("6")).toBeTruthy();
+    // A supported profile set replaces the displayed value and keeps the
+    // source value visible as the base.
+    expect(within(selectedRoster).getByText("8")).toBeTruthy();
+    expect(within(selectedRoster).getByText("Base 6")).toBeTruthy();
+    expect(within(selectedRoster).queryByText("6")).toBeNull();
     expect(within(selectedRoster).getByText("Hold Ground")).toBeTruthy();
     expect(
       within(selectedRoster).getByText("Remain on the objective."),
@@ -786,7 +800,17 @@ describe("App local catalogue flow", () => {
     expect(within(selectedRoster).getByText("Info groups")).toBeTruthy();
     expect(within(selectedRoster).getByText("Fieldcraft")).toBeTruthy();
     expect(within(selectedRoster).getByText("Forward Observer")).toBeTruthy();
+    // An unsupported increment leaves the info-group profile's effective value
+    // unresolved, so the source value stays visible and is labelled.
     expect(within(selectedRoster).getByText("Scout 6")).toBeTruthy();
+    expect(
+      within(selectedRoster).getByText("Effective value unresolved"),
+    ).toBeTruthy();
+    expect(
+      within(selectedRoster).getByText(
+        "Some display behavior on this profile is unsupported, so these values are not a complete result.",
+      ),
+    ).toBeTruthy();
     expect(
       within(selectedRoster).getByText("Coordinated Scouting"),
     ).toBeTruthy();

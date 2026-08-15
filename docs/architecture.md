@@ -493,11 +493,29 @@ read-only occurrence details. The browser presents direct profiles before
 resolved profile info links and direct rules before resolved rule info links.
 It separately presents direct and linked info groups, preserving group names,
 recursive nested groups, and their direct or linked profiles and rules.
-Characteristics retain projected order and text. Each detail identifies direct
+Characteristics retain projected order. Each detail identifies direct
 or linked origin and the definition source filename. Unresolved info links
 remain listed at their containing selection or group with their materialization
 reason and existing diagnostics; the browser performs no additional reference
 resolution or subtree cloning.
+
+`inspectLocalRosterSelectionCharacteristics` evaluates the displayed
+characteristics of every profile shown for one exact occurrence — its direct
+profiles, its resolved profile info links, and the profiles of its recursive
+info groups, in that render order. Reports are keyed by the exact profile
+object, so the panel looks one up without re-deriving identity. The adapter
+adds no evaluation semantics; it only supplies the occurrence and catalogue
+context, and an unknown occurrence is an ordinary application diagnostic.
+
+The workspace renders the effective value when it is known. A characteristic
+whose value changed also shows its source value labelled as the base, so the
+displayed number is never confused with the printed one. When a modifier
+sequence leaves the value unresolved, the source value stays visible and is
+explicitly labelled unresolved rather than being replaced by a provisional
+result. A profile with incomplete display behavior carries a plain-language
+note and a `data-completeness` attribute on both the profile and the affected
+characteristic. Profiles with no evaluated report fall back to the projected
+text unchanged.
 
 Recursive occurrence rendering places selected children in a disclosure.
 Collections of more than two children start collapsed, preventing automatic

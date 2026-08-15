@@ -18,6 +18,7 @@ import {
   inspectLocalRosterChildChoices,
   inspectLocalRosterConstraints,
   inspectLocalRosterRootChoices,
+  inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterStructuralStatus,
   inspectLocalRosterSupportedValidation,
   localRosterChildChoices,
@@ -785,3 +786,129 @@ describe("createLocalRosterSession", () => {
     expect(inspected.diagnostics).toEqual([]);
   });
 });
+
+describe("inspectLocalRosterSelectionCharacteristics", () => {
+  it("reports every profile of one occurrence in render order", async () => {
+    const session = await characteristicSession();
+
+    const inspected = inspectLocalRosterSelectionCharacteristics(
+      session,
+      selectionOccurrenceId("characteristic-owner-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    expect(
+      inspected.value.profiles.map(({ profile }) => profile.id),
+    ).toEqual([
+      "profile-direct-set",
+      "profile-conditional",
+      "profile-grouped-order",
+      "profile-grouped-conditional",
+      "profile-unsupported-operations",
+      "profile-extension-attributes",
+      "profile-scoped",
+      "profile-missing-value",
+      "profile-unrouted",
+      "profile-ambiguous-target",
+      "profile-inert-comment",
+      "profile-known-after-unapplied",
+      "profile-unknown-after-applied",
+      "profile-unresolved-applicability",
+      "profile-repeated",
+    ]);
+    expect(inspected.value.profiles[0]?.report).toMatchObject({
+      completeness: "complete",
+      characteristics: [
+        { baseValue: '6"', value: '8"' },
+        { baseValue: "4+", value: "4+" },
+      ],
+    });
+    // Unsupported display behavior on any profile makes the occurrence-wide
+    // inspection incomplete without discarding the supported reports.
+    expect(inspected.value.completeness).toBe("incomplete");
+  });
+
+  it("keys each report by the exact profile object", async () => {
+    const session = await characteristicSession();
+    const choice = localRosterSelectionChoice(
+      session,
+      selectionOccurrenceId("characteristic-owner-occurrence"),
+    );
+    if (choice === undefined) throw new Error("Expected owner choice.");
+
+    const inspected = inspectLocalRosterSelectionCharacteristics(
+      session,
+      selectionOccurrenceId("characteristic-owner-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    for (const profile of choice.profiles) {
+      expect(inspected.value.byProfile.get(profile)?.profile).toBe(profile);
+    }
+    expect(inspected.value.byProfile.size).toBe(
+      inspected.value.profiles.length,
+    );
+  });
+
+  it("rejects an occurrence that is not in the roster", async () => {
+    const session = await characteristicSession();
+
+    const inspected = inspectLocalRosterSelectionCharacteristics(
+      session,
+      selectionOccurrenceId("missing-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(false);
+    expect(inspected.diagnostics.map(({ code }) => code)).toEqual([
+      "APP_ROSTER_CHARACTERISTIC_SELECTION_UNAVAILABLE",
+    ]);
+  });
+});
+
+async function characteristicSession() {
+  const prepared = await prepareLocalCatalogueLibrary(
+    [
+      { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+      {
+        filename: "characteristic-display.cat",
+        bytes: fixtureBytes("characteristic-display.cat"),
+      },
+    ],
+    {
+      import: {
+        batchId: "roster-characteristic-display",
+        importedAt: "2026-08-14T00:00:00.000Z",
+      },
+    },
+  );
+  if (!prepared.ok) {
+    throw new Error("Expected characteristic-display library.");
+  }
+  const catalogue = prepared.value.catalogues.find(
+    ({ id }) => id === "characteristic-display",
+  );
+  const force = catalogue?.context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  const root = catalogue === undefined
+    ? undefined
+    : localRosterRootChoices(catalogue).find(
+        ({ materialized }) => materialized.id === "characteristic-owner",
+      );
+  if (catalogue === undefined || force === undefined || root === undefined) {
+    throw new Error("Expected characteristic-display roster choices.");
+  }
+  const created = createLocalRosterSession(catalogue, force, {
+    rosterId: rosterId("characteristic-roster"),
+    forceId: forceOccurrenceId("characteristic-force"),
+    name: "Characteristic roster",
+  });
+  if (!created.ok) throw new Error("Expected roster creation.");
+  const withOwner = addLocalRosterRootSelection(created.value, root, {
+    selectionId: selectionOccurrenceId("characteristic-owner-occurrence"),
+  });
+  if (!withOwner.ok) throw new Error("Expected owner selection.");
+  return withOwner.value;
+}

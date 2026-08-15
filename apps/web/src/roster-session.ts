@@ -1,12 +1,15 @@
 import type {
   BattleScribeCategoryDefinition,
   BattleScribeForceDefinition,
+  MaterializedInfoGroup,
+  MaterializedProfileInfoLink,
   MaterializedSelectionEntryGroup,
   MaterializedVisibleRoot,
 } from "@rosterforge/data-graph";
 import {
   composeSupportedRosterValidation,
   evaluateRosterCostsWithSelectionConditions,
+  evaluateRosterProfileCharacteristics,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
@@ -21,6 +24,7 @@ import {
   type EmptySingleForceRootChoiceInspection,
   type EmptySingleForceRosterStructuralStatus,
   type RosterForceConstraintsInRosterReport,
+  type RosterProfileCharacteristicReport,
   type RosterSelectionInitializationPlan,
   type RosterSelectionChoiceGroupInspection,
   type RosterSelectionDirectChoiceInspection,
@@ -82,6 +86,24 @@ export interface LocalRosterConstraintInspection {
   readonly completeness: ValidationCompleteness;
   readonly selections: RosterSelectionConstraintsInRosterReport;
   readonly forces: RosterForceConstraintsInRosterReport;
+}
+
+export type LocalRosterProfile =
+  | BattleScribeRosterSelectionChoice["profiles"][number]
+  | MaterializedProfileInfoLink;
+
+export interface LocalRosterProfileCharacteristics {
+  readonly profile: LocalRosterProfile;
+  readonly report: RosterProfileCharacteristicReport;
+}
+
+export interface LocalRosterCharacteristicInspection {
+  readonly completeness: ValidationCompleteness;
+  readonly profiles: readonly LocalRosterProfileCharacteristics[];
+  readonly byProfile: ReadonlyMap<
+    LocalRosterProfile,
+    RosterProfileCharacteristicReport
+  >;
 }
 
 export interface LocalRosterSupportedValidationInspection {
@@ -442,6 +464,97 @@ export function inspectLocalRosterConstraints(
           : "incomplete",
       selections: selections.value,
       forces: forces.value,
+    },
+    diagnostics,
+  );
+}
+
+/**
+ * Evaluates the displayed characteristics of every profile shown for one exact
+ * roster selection occurrence: its direct profiles, its resolved profile info
+ * links, and the profiles of its recursive info groups, in that render order.
+ *
+ * The reports are keyed by the exact profile object so the presentation layer
+ * can look one up without re-deriving identity. This adapter adds no evaluation
+ * semantics; it only supplies the occurrence and catalogue context.
+ */
+export function inspectLocalRosterSelectionCharacteristics(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<LocalRosterCharacteristicInspection> {
+  const occurrence = findRosterSelection(session.roster.forces, selectionId);
+  const choice = session.selectionChoices.get(selectionId);
+  if (occurrence === undefined || choice === undefined) {
+    return failure([
+      {
+        code: "APP_ROSTER_CHARACTERISTIC_SELECTION_UNAVAILABLE",
+        message:
+          "A characteristic inspection requires a known roster selection occurrence and its materialized choice.",
+        severity: "error",
+        impacts: ["validation"],
+        details: { selectionId },
+      },
+    ]);
+  }
+
+  const diagnostics: Diagnostic[] = [];
+  const profiles: LocalRosterProfileCharacteristics[] = [];
+  const byProfile = new Map<
+    LocalRosterProfile,
+    RosterProfileCharacteristicReport
+  >();
+  let incomplete = false;
+
+  const evaluate = (profile: LocalRosterProfile): void => {
+    const evaluated = evaluateRosterProfileCharacteristics(
+      session.roster,
+      session.catalogue.context,
+      occurrence,
+      profile,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      incomplete = true;
+      return;
+    }
+    profiles.push({ profile, report: evaluated.value });
+    byProfile.set(profile, evaluated.value);
+    incomplete ||= evaluated.value.completeness === "incomplete";
+  };
+
+  const visitInfoGroup = (group: MaterializedInfoGroup): void => {
+    for (const profile of group.profiles) {
+      evaluate(profile);
+    }
+    for (const link of group.materializedInfoLinks) {
+      if (link.kind === "profileInfoLink") evaluate(link);
+    }
+    for (const nested of group.materializedInfoGroups) {
+      visitInfoGroup(nested);
+    }
+    for (const link of group.materializedInfoLinks) {
+      if (link.kind === "infoGroup") visitInfoGroup(link);
+    }
+  };
+
+  for (const profile of choice.profiles) {
+    evaluate(profile);
+  }
+  for (const link of choice.materializedInfoLinks) {
+    if (link.kind === "profileInfoLink") evaluate(link);
+  }
+  for (const group of choice.materializedInfoGroups) {
+    visitInfoGroup(group);
+  }
+  for (const link of choice.materializedInfoLinks) {
+    if (link.kind === "infoGroup") visitInfoGroup(link);
+  }
+
+  return success(
+    {
+      completeness: incomplete ? "incomplete" : "complete",
+      profiles,
+      byProfile,
     },
     diagnostics,
   );

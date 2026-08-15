@@ -2015,6 +2015,22 @@ h1 {
   font-weight: 800;
 }
 
+.selection-profile dd small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.5rem;
+  font-weight: 500;
+}
+
+.selection-profile dl > div[data-completeness="incomplete"] dd small {
+  color: #7d641f;
+}
+
+.selection-profile > p.profile-completeness {
+  color: #7d641f;
+}
+
 .selection-profile > p,
 .selection-rule > p {
   margin: 8px 0 0;
