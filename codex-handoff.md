@@ -12,10 +12,10 @@ and all four checks passing before a task is complete.
 ## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first three Task 8 checkpoints — profile modifier
-projection, headless characteristic-display evaluation, and its workspace
-presentation — are complete. The current
-normal suite passes 366 tests with four skipped, and the pinned real-data suite
+checkpoint, and the first four Task 8 checkpoints — profile modifier
+projection, headless characteristic-display evaluation, its workspace
+presentation, and profile visibility — are complete. The current
+normal suite passes 373 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
@@ -61,7 +61,9 @@ remaining `incomplete`.
 Profile-owned modifiers that do not route to exactly one characteristic on their
 own profile — `hidden`, `name`, the observed `annotation` extension, and
 characteristic types belonging to another profile — are retained in
-`unroutedModifiers`, diagnosed, and make the report incomplete. Scoped
+`unroutedModifiers`, diagnosed, and make the report incomplete. (`hidden` was
+moved out of `unroutedModifiers` by the profile-visibility checkpoint below;
+the rest still apply.) Scoped
 modifiers, repeats, missing operations or values, unresolved applicability, and
 any generic attribute other than the inert `comment` keep their step unapplied.
 
@@ -194,18 +196,85 @@ through the info-group path in one render.
 
 ### Next recommended boundary
 
-The open decisions from the previous checkpoint are unchanged and each remains
-its own bounded task. In rough value order:
+Completed in the following checkpoint.
 
-1. **Profile visibility.** 154 profile-owned `hidden` modifiers currently force
-   every affected characteristic report incomplete. This is the cheapest way to
-   reduce noise, and `evaluateRosterSelectionVisibility` already establishes the
-   Boolean `set` pattern to follow.
-2. **`affects` retargeting**, which unlocks the other 1,257 characteristic
-   modifiers but needs a real decision about profile families and recursive
-   entry traversal before any code.
-3. **`category` modifiers** (892, 99.8% decidable), which drive dynamic
+## Completed Assignment — Profile Visibility, 2026-08-14
+
+Baseline `c051378`; resulting commit `449c17f` (`feat: evaluate profile
+visibility`). Not pushed, no pull request.
+
+### Results
+
+`evaluateRosterProfileVisibility` uses the profile's projected `hidden` flag as
+the base and mirrors the selection-visibility contract exactly: `type="set"
+field="hidden"`, a Boolean value, no scope, no repeat, and no generic behavior
+attribute. Direct owner modifiers run first, then relevant top-level groups in
+source order with direct children before nested groups depth-first, reusing the
+existing execution collector.
+
+A `hidden` modifier no longer makes a characteristic report incomplete. That
+field is a known BattleScribe field this package already executes for
+selections, so a modifier naming it definitively cannot change a characteristic
+value. Those modifiers moved from `unroutedModifiers` into a separate
+`visibilityModifiers` collection: still observable, but visibility owns their
+completeness. This follows the existing cost rule that modifiers targeting
+non-cost fields do not affect numeric cost completeness. `name` and
+`annotation` are unchanged — still unrouted, still incomplete.
+
+The workspace labels a hidden or visibility-unresolved profile and keeps it
+rendered. Removing hidden profiles from the panel would be a separate
+presentation decision; labelling preserves everything the source declares.
+
+### Pinned corpus inventory (154 profile-owned `hidden` modifiers)
+
+| Dimension | Measurement |
+|---|---|
+| Ownership | 154 direct, **0 grouped** |
+| Operations | 154 `set`, 0 other |
+| Values | 154 native Boolean `true`, **0 `false`** |
+| Scope / repeats / extensions | 0 / 0 / 0 |
+| Conditions | 125 direct conditions, 29 condition groups, **0 unconditional** |
+| Supported shape | **154 of 154** |
+| Static `hidden="true"` profiles | 1 of 13,451 |
+
+All 154 belong to distinct profiles, and none of those profiles also owns a
+`name` or `annotation` modifier — so this checkpoint unblocks every one of
+them.
+
+### A projection gap found while pinning these counts
+
+The typed projection sees 13,450 profiles and 153 `hidden` modifiers, not
+13,451 and 154. The missing one is real data, not a miscount: the `Recon
+Augury` category entry (`40ce-cefb-031e-75a4`) in
+`Imperium - Adeptus Mechanicus.json` owns an `Enhanced Augurs` Abilities
+profile whose single conditional `set hidden` modifier is the 154th.
+BattleScribe 2.03's category-entry surface has no `profiles` collection, so
+RosterForge preserves it on the generic ordered source node without projecting
+it, and it takes part in no evaluation. Whether `CategoryEntryProjection`
+should gain a typed `profiles` collection is a separate projection decision,
+deliberately not bundled here. It is documented in `docs/compatibility.md` and
+pinned by the corpus guard's comment.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck` — clean.
+- `pnpm test` — **373 passed, 4 skipped (377 total)**. Seven new tests: six
+  profile-visibility cases in `packages/evaluation` and one adapter case.
+- `pnpm build` — passed, only Vite's existing large-chunk warning.
+- `git diff --check` — clean.
+- Pinned real-data suite — **4 passed** in 43.19 s, including the new
+  `profileOwnedVisibilityModifierSummary` guard.
+
+### Next recommended boundary
+
+1. **`affects` retargeting.** Still the largest unlock (1,257 characteristic
+   modifiers) and still needs a real decision about profile families selected by
+   `typeName` versus `typeId`, and about recursive entry traversal, before any
+   code is written.
+2. **`category` modifiers** (892, 99.8% decidable), which drive dynamic
    keywords.
+3. **Category-entry profiles**, a small projection-only checkpoint that would
+   close the 13,450/13,451 gap above.
 
 Do not bundle these. `name` modifiers remain last despite their raw count,
 since 86% are Crusade rank labels.
@@ -491,6 +560,10 @@ assignment above for the full inventory and the open semantic questions.
 The third bounded checkpoint (`a42b791`) surfaced that report in the roster
 workspace with base-versus-effective display, an explicit unresolved label, and
 a per-profile incomplete note. It added no evaluation semantics.
+
+The fourth bounded checkpoint (`449c17f`) added profile visibility. All 154
+profile-owned `hidden` modifiers fit the supported Boolean `set` shape, and they
+no longer make a characteristic report incomplete.
 
 ---
 
