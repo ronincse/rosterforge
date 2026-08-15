@@ -12,9 +12,10 @@ and all four checks passing before a task is complete.
 ## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first two Task 8 checkpoints — profile modifier projection
-and headless characteristic-display evaluation — are complete. The current
-normal suite passes 363 tests with four skipped, and the pinned real-data suite
+checkpoint, and the first three Task 8 checkpoints — profile modifier
+projection, headless characteristic-display evaluation, and its workspace
+presentation — are complete. The current
+normal suite passes 366 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
@@ -148,12 +149,66 @@ both directions of the known-value rule. No third-party data was committed.
 
 ### Next recommended boundary
 
-Surface the headless report in the roster workspace: render evaluated
-characteristic values with explicit base-versus-effective display and an
-incomplete marker, reusing the existing occurrence detail panel. That is a
-presentation-only checkpoint with no new evaluation semantics. Do **not** bundle
-it with `affects` resolution, `category`/`name` modifiers, or profile
-visibility; each of those is its own decision.
+Completed in the following checkpoint.
+
+## Completed Assignment — Characteristic Presentation, 2026-08-14
+
+Baseline `02254d0`; resulting commit `a42b791`
+(`feat: show evaluated characteristics in the roster workspace`). Not pushed, no
+pull request. This was the presentation-only follow-up recommended above; it
+adds no evaluation semantics.
+
+### Results
+
+`inspectLocalRosterSelectionCharacteristics` in `apps/web/src/roster-session.ts`
+evaluates every profile shown for one exact occurrence — direct profiles,
+resolved profile info links, and the profiles of recursive info groups — in that
+render order, and keys each report by the exact profile object. An occurrence
+absent from the roster returns
+`APP_ROSTER_CHARACTERISTIC_SELECTION_UNAVAILABLE`.
+
+The workspace renders the effective value when known. A changed characteristic
+also shows its source value labelled `Base <value>`, so a displayed number is
+never confused with the printed one. An unresolved sequence keeps the source
+value visible under an explicit `Effective value unresolved` label rather than
+substituting a provisional result — the same rule the cost summary already
+follows. An incomplete profile carries a plain-language note plus
+`data-completeness` on the profile and on the affected characteristic. A profile
+with no evaluated report falls back to the projected text unchanged.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck` — clean.
+- `pnpm test` — **366 passed, 4 skipped (370 total)**, 43 files passed and 1
+  skipped. The three new tests cover render order, by-profile identity, and the
+  unknown-occurrence failure.
+- `pnpm build` — passed, only Vite's existing large-chunk warning.
+- `git diff --check` — clean.
+- Pinned real-data suite — **4 passed** in 46.86 s, unchanged by this
+  checkpoint.
+
+The `App.ui.test.tsx` fixture now gives the infantry profile a supported `set`
+and the `Fieldcraft` info-group profile an unsupported `increment`. That proves
+base-versus-effective display, the unresolved label, and the incomplete note
+through the info-group path in one render.
+
+### Next recommended boundary
+
+The open decisions from the previous checkpoint are unchanged and each remains
+its own bounded task. In rough value order:
+
+1. **Profile visibility.** 154 profile-owned `hidden` modifiers currently force
+   every affected characteristic report incomplete. This is the cheapest way to
+   reduce noise, and `evaluateRosterSelectionVisibility` already establishes the
+   Boolean `set` pattern to follow.
+2. **`affects` retargeting**, which unlocks the other 1,257 characteristic
+   modifiers but needs a real decision about profile families and recursive
+   entry traversal before any code.
+3. **`category` modifiers** (892, 99.8% decidable), which drive dynamic
+   keywords.
+
+Do not bundle these. `name` modifiers remain last despite their raw count,
+since 86% are Crusade rank labels.
 
 Grouped `hidden` modifiers now participate in read-only visibility. Grouped
 cost modifiers now participate in `selectionConditions` cost reports through
@@ -432,6 +487,10 @@ diagnosed, and incomplete. Generic `affects`, `join`, `arg`, and `position`
 remain preserved and unapplied, and `affects` is the documented blocker for the
 1,257 characteristic modifiers owned outside profiles. See the completed
 assignment above for the full inventory and the open semantic questions.
+
+The third bounded checkpoint (`a42b791`) surfaced that report in the roster
+workspace with base-versus-effective display, an explicit unresolved label, and
+a per-profile incomplete note. It added no evaluation semantics.
 
 ---
 
