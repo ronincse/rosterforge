@@ -10,6 +10,7 @@ import {
   composeSupportedRosterValidation,
   evaluateRosterCostsWithSelectionConditions,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterProfileVisibility,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
@@ -25,6 +26,7 @@ import {
   type EmptySingleForceRosterStructuralStatus,
   type RosterForceConstraintsInRosterReport,
   type RosterProfileCharacteristicReport,
+  type RosterProfileVisibilityReport,
   type RosterSelectionInitializationPlan,
   type RosterSelectionChoiceGroupInspection,
   type RosterSelectionDirectChoiceInspection,
@@ -95,6 +97,8 @@ export type LocalRosterProfile =
 export interface LocalRosterProfileCharacteristics {
   readonly profile: LocalRosterProfile;
   readonly report: RosterProfileCharacteristicReport;
+  readonly visibility: RosterProfileVisibilityReport;
+  readonly completeness: ValidationCompleteness;
 }
 
 export interface LocalRosterCharacteristicInspection {
@@ -102,7 +106,7 @@ export interface LocalRosterCharacteristicInspection {
   readonly profiles: readonly LocalRosterProfileCharacteristics[];
   readonly byProfile: ReadonlyMap<
     LocalRosterProfile,
-    RosterProfileCharacteristicReport
+    LocalRosterProfileCharacteristics
   >;
 }
 
@@ -501,25 +505,42 @@ export function inspectLocalRosterSelectionCharacteristics(
   const profiles: LocalRosterProfileCharacteristics[] = [];
   const byProfile = new Map<
     LocalRosterProfile,
-    RosterProfileCharacteristicReport
+    LocalRosterProfileCharacteristics
   >();
   let incomplete = false;
 
   const evaluate = (profile: LocalRosterProfile): void => {
-    const evaluated = evaluateRosterProfileCharacteristics(
+    const report = evaluateRosterProfileCharacteristics(
       session.roster,
       session.catalogue.context,
       occurrence,
       profile,
     );
-    diagnostics.push(...evaluated.diagnostics);
-    if (!evaluated.ok) {
+    const visibility = evaluateRosterProfileVisibility(
+      session.roster,
+      session.catalogue.context,
+      occurrence,
+      profile,
+    );
+    diagnostics.push(...report.diagnostics, ...visibility.diagnostics);
+    if (!report.ok || !visibility.ok) {
       incomplete = true;
       return;
     }
-    profiles.push({ profile, report: evaluated.value });
-    byProfile.set(profile, evaluated.value);
-    incomplete ||= evaluated.value.completeness === "incomplete";
+    const completeness: ValidationCompleteness =
+      report.value.completeness === "complete" &&
+      visibility.value.completeness === "complete"
+        ? "complete"
+        : "incomplete";
+    const entry: LocalRosterProfileCharacteristics = {
+      profile,
+      report: report.value,
+      visibility: visibility.value,
+      completeness,
+    };
+    profiles.push(entry);
+    byProfile.set(profile, entry);
+    incomplete ||= completeness === "incomplete";
   };
 
   const visitInfoGroup = (group: MaterializedInfoGroup): void => {

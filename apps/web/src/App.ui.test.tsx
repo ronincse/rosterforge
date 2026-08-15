@@ -205,6 +205,7 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
               field="characteristic-move"
               value="1"
             />
+            <modifier type="set" field="hidden" value="true" />
           </modifiers>
         </profile>
       </profiles>
@@ -805,6 +806,10 @@ describe("App local catalogue flow", () => {
     expect(within(selectedRoster).getByText("Scout 6")).toBeTruthy();
     expect(
       within(selectedRoster).getByText("Effective value unresolved"),
+    ).toBeTruthy();
+    // A hidden profile is labelled rather than removed.
+    expect(
+      within(selectedRoster).getByText("Hidden by this catalogue."),
     ).toBeTruthy();
     expect(
       within(selectedRoster).getByText(

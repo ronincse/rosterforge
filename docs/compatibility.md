@@ -331,6 +331,11 @@
   label when a sequence cannot be completed, and a per-profile incomplete note;
   direct profiles, linked profile info links, and recursive info-group profiles
   all use the same evaluated report
+- Read-only profile visibility for direct and recursively grouped Boolean `set`
+  `hidden` modifiers, using the projected profile flag as the base and the same
+  owner-direct then group-source execution order as selection visibility
+- Hidden and visibility-unresolved profiles labelled in occurrence details
+  rather than removed, so nothing the source declares disappears
 
 ## Parsed But Not Evaluated
 
@@ -344,9 +349,12 @@
 - Generic `affects`, `join`, `arg`, and `position` behavior on characteristic
   modifiers, and characteristic modifiers owned by selection entries, entry
   links, info links, or info groups rather than by the profile itself
-- Profile-owned `hidden`, `name`, and observed `annotation` modifiers; they are
-  retained as unrouted display behavior and make a characteristic report
-  incomplete rather than being silently ignored
+- Profile-owned `name` and observed `annotation` modifiers; they are retained as
+  unrouted display behavior and make a characteristic report incomplete rather
+  than being silently ignored
+- Category-entry-owned profiles, which BattleScribe 2.03 does not declare; the
+  one observed instance is preserved on the generic source node without a typed
+  projection, so it takes part in no evaluation
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or
@@ -724,9 +732,30 @@ rather than being reinterpreted.
 The pinned corpus also contains 694 profile-owned modifiers in total. Besides
 the 478 that route to a characteristic on their own profile, 154 target
 `hidden`, 51 target an undocumented `annotation` field, five target `name`, and
-six name a characteristic type belonging to another profile. None of these are
-executed; each is retained as an unrouted display modifier and makes its
+six name a characteristic type belonging to another profile.
+
+The 154 `hidden` modifiers now execute through profile-visibility evaluation.
+Every one is a direct `set` with a native JSON Boolean `true`, no scope, no
+repeat, and no generic attribute, so all 154 fit the supported shape; 125 carry
+direct conditions and 29 carry condition groups, and none is unconditional. No
+profile-owned `hidden` modifier is grouped and none sets `false`. Exactly one of
+the 13,451 projected-and-generic profiles declares a static `hidden="true"`.
+Because a `hidden` modifier cannot change a characteristic value, it no longer
+makes a characteristic report incomplete; visibility owns its own completeness.
+The remaining `annotation`, `name`, and cross-profile characteristic modifiers
+are still retained as unrouted display behavior and still make their
 characteristic report incomplete.
+
+One profile in the corpus is owned by a **category entry** rather than a
+selection, info group, or info link: `Recon Augury`
+(`40ce-cefb-031e-75a4`) in `Imperium - Adeptus Mechanicus.json` owns the
+`Enhanced Augurs` Abilities profile, whose single conditional `set hidden`
+modifier is the 154th. BattleScribe 2.03's category-entry surface has no
+`profiles` collection, so RosterForge does not project it and it is observable
+only through the generic ordered source node. Every count taken from the typed
+projection is therefore 13,450 profiles and 153 profile-owned `hidden`
+modifiers. Whether category entries should gain a typed profile collection is a
+separate projection decision, not a visibility one.
 
 The integration proof imports the six-file Adeptus Custodes closure — the game
 system, Adeptus Custodes, Imperial Knights Library, Agents of the Imperium,

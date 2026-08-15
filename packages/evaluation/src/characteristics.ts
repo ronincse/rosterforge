@@ -78,10 +78,19 @@ export interface RosterCharacteristicProfileSource<
   readonly name?: string;
   readonly typeId?: ObjectId;
   readonly typeName?: string;
+  readonly hidden?: boolean;
   readonly characteristics: readonly Characteristic[];
   readonly modifiers: readonly Modifier[];
   readonly modifierGroups: readonly RosterModifierGroupSource<Modifier>[];
 }
+
+/**
+ * The field a profile-owned modifier uses to control its own visibility. It is
+ * a known BattleScribe field with the same Boolean `set` semantics already
+ * executed for selection visibility, so a modifier targeting it definitively
+ * does not name a characteristic type.
+ */
+const visibilityField = "hidden";
 
 export interface AppliedRosterCharacteristicStep<
   Modifier extends RosterCharacteristicModifierSource =
@@ -163,6 +172,12 @@ export interface RosterProfileCharacteristicReport<
   readonly unroutedModifiers: readonly UnroutedRosterCharacteristicModifier<
     Profile["modifiers"][number]
   >[];
+  /**
+   * Profile-owned modifiers targeting `hidden`. They cannot change a
+   * characteristic value, so they do not affect this report's completeness;
+   * `evaluateRosterProfileVisibility` owns their execution and completeness.
+   */
+  readonly visibilityModifiers: readonly Profile["modifiers"][number][];
   readonly modifierApplicability: readonly RosterModifierApplicabilityReport<
     Profile["modifiers"][number]
   >[];
@@ -170,6 +185,30 @@ export interface RosterProfileCharacteristicReport<
     Profile["modifierGroups"][number]
   >[];
   readonly completeness: ValidationCompleteness;
+}
+
+export type RosterProfileVisibilityStatus =
+  | "visible"
+  | "hidden"
+  | "unresolved";
+
+export interface RosterProfileVisibilityReport<
+  Profile extends RosterCharacteristicProfileSource =
+    RosterCharacteristicProfileSource,
+> {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
+  readonly profile: Profile;
+  readonly status: RosterProfileVisibilityStatus;
+  readonly hidden?: boolean;
+  readonly completeness: ValidationCompleteness;
+  readonly modifierApplicability: readonly RosterModifierApplicabilityReport<
+    Profile["modifiers"][number]
+  >[];
+  readonly modifierGroupApplicability: readonly RosterModifierGroupApplicabilityReport<
+    Profile["modifierGroups"][number]
+  >[];
 }
 
 /**
@@ -202,9 +241,14 @@ export function evaluateRosterProfileCharacteristics<
   const routable = routableCharacteristicTypeIds(profile.characteristics);
   const unroutedModifiers: UnroutedRosterCharacteristicModifier<Modifier>[] =
     [];
+  const visibilityModifiers: Modifier[] = [];
   for (const { modifier, grouped } of profileOwnedModifiers<Modifier>(
     profile,
   )) {
+    if (modifier.field === visibilityField) {
+      visibilityModifiers.push(modifier);
+      continue;
+    }
     const reason = routingReason(modifier, routable);
     if (reason === undefined) {
       continue;
@@ -342,12 +386,179 @@ export function evaluateRosterProfileCharacteristics<
       profile,
       characteristics,
       unroutedModifiers,
+      visibilityModifiers,
       modifierApplicability,
       modifierGroupApplicability,
       completeness,
     },
     diagnostics,
   );
+}
+
+/**
+ * Reports whether one projected profile is displayed for one exact roster
+ * selection occurrence.
+ *
+ * This mirrors `evaluateRosterSelectionVisibility`: the supported shape is a
+ * `type="set" field="hidden"` modifier with a Boolean value, no scope, no
+ * repeat, and no generic behavior attribute. Direct owner modifiers run first,
+ * then relevant top-level groups in source order with each group's direct
+ * modifiers before nested groups depth-first.
+ *
+ * A hidden profile is reported, never removed. Presentation decides what to do
+ * with the status.
+ */
+export function evaluateRosterProfileVisibility<
+  Profile extends RosterCharacteristicProfileSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  profile: Profile,
+): Result<RosterProfileVisibilityReport<Profile>> {
+  type Modifier = Profile["modifiers"][number];
+
+  const diagnostics: Diagnostic[] = [];
+  const modifierApplicability: RosterModifierApplicabilityReport<Modifier>[] =
+    [];
+  const modifierGroupApplicability: RosterModifierGroupApplicabilityReport<
+    Profile["modifierGroups"][number]
+  >[] = [];
+  let hidden = profile.hidden ?? false;
+  let known = true;
+
+  const applyStep = (modifier: Modifier, applicable: boolean | undefined) => {
+    const value = booleanModifierValue(modifier);
+    if (
+      modifier.type !== "set" ||
+      value === undefined ||
+      modifier.scope !== undefined ||
+      modifier.repeats.length > 0 ||
+      unsupportedAttributes(modifier).length > 0
+    ) {
+      known = false;
+      diagnostics.push(
+        characteristicDiagnostic(
+          modifier,
+          "EVALUATION_PROFILE_VISIBILITY_MODIFIER_UNSUPPORTED",
+          "A profile hidden-state modifier has unsupported behavior, so effective visibility is unresolved.",
+          undefined,
+          {
+            type: modifier.type,
+            value: modifier.value,
+            scope: modifier.scope,
+            repeats: modifier.repeats.length,
+            attributes: modifier.node.attributes,
+          },
+        ),
+      );
+      return;
+    }
+    if (applicable === undefined) {
+      known = false;
+    } else if (applicable) {
+      hidden = value;
+      known = true;
+    }
+  };
+
+  for (const modifier of profile.modifiers.filter(
+    ({ field }) => field === visibilityField,
+  )) {
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      known = false;
+      continue;
+    }
+    modifierApplicability.push(evaluated.value);
+    const status = evaluated.value.evaluated
+      ? evaluated.value.status
+      : "unresolved";
+    applyStep(
+      modifier,
+      status === "unresolved"
+        ? undefined
+        : status === "applicable",
+    );
+  }
+
+  const relevantGroups = profile.modifierGroups.filter((group) =>
+    groupTargetsField(group, visibilityField),
+  );
+  for (const group of relevantGroups) {
+    const evaluated = evaluateRosterModifierGroupApplicability(
+      roster,
+      context,
+      owner,
+      group,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      known = false;
+      continue;
+    }
+    modifierGroupApplicability.push(evaluated.value);
+  }
+  const grouped = collectRosterModifierGroupExecution<Modifier>(
+    modifierGroupApplicability,
+    visibilityField,
+  );
+  const expectedGrouped = relevantGroups.reduce(
+    (count, group) => count + groupedTargetCount<Modifier>(group, visibilityField),
+    0,
+  );
+  if (
+    modifierGroupApplicability.length !== relevantGroups.length ||
+    grouped.entries.length !== expectedGrouped
+  ) {
+    known = false;
+  }
+  for (const entry of grouped.entries) {
+    applyStep(
+      entry.modifier,
+      !entry.evaluated || entry.status === "unresolved"
+        ? undefined
+        : entry.status === "applicable",
+    );
+  }
+
+  return success(
+    {
+      roster,
+      context,
+      owner,
+      profile,
+      status: known ? (hidden ? "hidden" : "visible") : "unresolved",
+      ...(known ? { hidden } : {}),
+      completeness:
+        diagnostics.length === 0 &&
+        modifierApplicability.every(
+          ({ completeness }) => completeness === "complete",
+        ) &&
+        modifierGroupApplicability.every(
+          ({ completeness }) => completeness === "complete",
+        )
+          ? "complete"
+          : "incomplete",
+      modifierApplicability,
+      modifierGroupApplicability,
+    },
+    diagnostics,
+  );
+}
+
+function booleanModifierValue(
+  modifier: RosterCharacteristicModifierSource,
+): boolean | undefined {
+  if (modifier.value === "true") return true;
+  if (modifier.value === "false") return false;
+  return undefined;
 }
 
 function evaluateStep<
@@ -514,9 +725,18 @@ function groupTargetsRoutableCharacteristic<
   );
 }
 
+function groupTargetsField<
+  Modifier extends RosterCharacteristicModifierSource,
+>(group: RosterModifierGroupSource<Modifier>, field: string): boolean {
+  return (
+    group.modifiers.some((modifier) => modifier.field === field) ||
+    group.modifierGroups.some((child) => groupTargetsField(child, field))
+  );
+}
+
 function groupedTargetCount<
   Modifier extends RosterCharacteristicModifierSource,
->(group: RosterModifierGroupSource<Modifier>, typeId: ObjectId): number {
+>(group: RosterModifierGroupSource<Modifier>, typeId: string): number {
   return (
     group.modifiers.filter(({ field }) => field === typeId).length +
     group.modifierGroups.reduce(

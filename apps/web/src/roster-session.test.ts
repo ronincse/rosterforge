@@ -815,6 +815,11 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
       "profile-known-after-unapplied",
       "profile-unknown-after-applied",
       "profile-unresolved-applicability",
+      "profile-hidden-static",
+      "profile-hidden-conditional",
+      "profile-hidden-inactive",
+      "profile-hidden-grouped",
+      "profile-hidden-unsupported",
       "profile-repeated",
     ]);
     expect(inspected.value.profiles[0]?.report).toMatchObject({
@@ -850,6 +855,38 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
     expect(inspected.value.byProfile.size).toBe(
       inspected.value.profiles.length,
     );
+  });
+
+  it("reports visibility beside characteristics and shares completeness", async () => {
+    const session = await characteristicSession();
+
+    const inspected = inspectLocalRosterSelectionCharacteristics(
+      session,
+      selectionOccurrenceId("characteristic-owner-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    const byId = new Map(
+      inspected.value.profiles.map((entry) => [String(entry.profile.id), entry]),
+    );
+    expect(byId.get("profile-hidden-conditional")).toMatchObject({
+      visibility: { status: "hidden", hidden: true },
+      completeness: "complete",
+    });
+    expect(byId.get("profile-hidden-inactive")?.visibility.status).toBe(
+      "visible",
+    );
+    expect(byId.get("profile-hidden-grouped")?.visibility.status).toBe(
+      "visible",
+    );
+    // Unresolved visibility makes the entry incomplete even though its
+    // characteristic values are fully known.
+    expect(byId.get("profile-hidden-unsupported")).toMatchObject({
+      visibility: { status: "unresolved" },
+      report: { completeness: "complete" },
+      completeness: "incomplete",
+    });
   });
 
   it("rejects an occurrence that is not in the roster", async () => {

@@ -217,6 +217,31 @@ describe.skipIf(realDataDirectory === undefined)(
           supportedSetGrouped: 56,
         });
         expect(
+          profileOwnedVisibilityModifierSummary(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual({
+          // The corpus has 13,451 profiles and 154 profile-owned hidden
+          // modifiers. One profile is owned by the `Recon Augury` category
+          // entry, which the 2.03 typed category surface does not project, so
+          // it is observable only through the generic source node.
+          profiles: 13_450,
+          staticHidden: 1,
+          total: 153,
+          direct: 153,
+          grouped: 0,
+          set: 153,
+          otherOperations: 0,
+          booleanTrue: 153,
+          booleanFalse: 0,
+          scoped: 0,
+          withConditions: 124,
+          withConditionGroups: 29,
+          withRepeats: 0,
+          extensionAttributes: 0,
+          supportedShape: 153,
+        });
+        expect(
           groupedHiddenModifierSummary(
             result.value.documents.map(({ root }) => root),
           ),
@@ -1359,7 +1384,7 @@ function profileOwnedCharacteristicModifierSummary(
       visitModifierGroup(child, targetCounts);
     }
   };
-  const visitProfile = (profile: ProfileProjection): void => {
+  for (const profile of projectedProfiles(projections)) {
     const targetCounts = new Map<string, number>();
     for (const { typeId } of profile.characteristics) {
       if (typeId !== undefined) {
@@ -1372,11 +1397,18 @@ function profileOwnedCharacteristicModifierSummary(
     for (const group of profile.modifierGroups) {
       visitModifierGroup(group, targetCounts);
     }
-  };
+  }
+
+  return counts;
+}
+
+function projectedProfiles(
+  projections: readonly BattleScribeProjection[],
+): readonly ProfileProjection[] {
+  const profiles: ProfileProjection[] = [];
+
   const visitInfoGroup = (group: InfoGroupProjection): void => {
-    for (const profile of group.profiles) {
-      visitProfile(profile);
-    }
+    profiles.push(...group.profiles);
     for (const child of group.infoGroups) {
       visitInfoGroup(child);
     }
@@ -1384,9 +1416,7 @@ function profileOwnedCharacteristicModifierSummary(
   const visitSelectionContainer = (
     container: SelectionContainerProjection,
   ): void => {
-    for (const profile of container.profiles) {
-      visitProfile(profile);
-    }
+    profiles.push(...container.profiles);
     for (const group of container.infoGroups) {
       visitInfoGroup(group);
     }
@@ -1402,9 +1432,7 @@ function profileOwnedCharacteristicModifierSummary(
   };
 
   for (const projection of projections) {
-    for (const profile of projection.profiles) {
-      visitProfile(profile);
-    }
+    profiles.push(...projection.profiles);
     for (const group of projection.infoGroups) {
       visitInfoGroup(group);
     }
@@ -1424,7 +1452,85 @@ function profileOwnedCharacteristicModifierSummary(
       visitSelectionContainer(link);
     }
   }
+  return profiles;
+}
 
+function profileOwnedVisibilityModifierSummary(
+  projections: readonly BattleScribeProjection[],
+): Readonly<Record<string, number>> {
+  const counts: Record<string, number> = {
+    profiles: 0,
+    staticHidden: 0,
+    total: 0,
+    direct: 0,
+    grouped: 0,
+    set: 0,
+    otherOperations: 0,
+    booleanTrue: 0,
+    booleanFalse: 0,
+    scoped: 0,
+    withConditions: 0,
+    withConditionGroups: 0,
+    withRepeats: 0,
+    extensionAttributes: 0,
+    supportedShape: 0,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+
+  const visitModifier = (
+    modifier: ModifierProjection,
+    grouped: boolean,
+  ): void => {
+    if (modifier.field !== "hidden") return;
+    add("total");
+    add(grouped ? "grouped" : "direct");
+    add(modifier.type === "set" ? "set" : "otherOperations");
+    if (modifier.value === "true") add("booleanTrue");
+    if (modifier.value === "false") add("booleanFalse");
+    if (modifier.scope !== undefined) add("scoped");
+    if (modifier.conditions.length > 0) add("withConditions");
+    if (modifier.conditionGroups.length > 0) add("withConditionGroups");
+    if (modifier.repeats.length > 0) add("withRepeats");
+    const extras = Object.keys(modifier.node.attributes).filter(
+      (attribute) =>
+        attribute !== "type" &&
+        attribute !== "field" &&
+        attribute !== "value" &&
+        attribute !== "scope" &&
+        attribute !== "comment",
+    );
+    if (extras.length > 0) add("extensionAttributes");
+    if (
+      modifier.type === "set" &&
+      (modifier.value === "true" || modifier.value === "false") &&
+      modifier.scope === undefined &&
+      modifier.repeats.length === 0 &&
+      extras.length === 0
+    ) {
+      add("supportedShape");
+    }
+  };
+  const visitGroup = (group: ModifierGroupProjection): void => {
+    for (const modifier of group.modifiers) {
+      visitModifier(modifier, true);
+    }
+    for (const child of group.modifierGroups) {
+      visitGroup(child);
+    }
+  };
+
+  for (const profile of projectedProfiles(projections)) {
+    add("profiles");
+    if (profile.hidden === true) add("staticHidden");
+    for (const modifier of profile.modifiers) {
+      visitModifier(modifier, false);
+    }
+    for (const group of profile.modifierGroups) {
+      visitGroup(group);
+    }
+  }
   return counts;
 }
 

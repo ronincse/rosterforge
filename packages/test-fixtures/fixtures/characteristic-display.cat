@@ -208,6 +208,67 @@
             </modifier>
           </modifiers>
         </profile>
+        <profile id="profile-hidden-static" name="Hidden Static"
+          typeId="profile-type-unit" typeName="Unit" hidden="true">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+        </profile>
+        <profile id="profile-hidden-conditional" name="Hidden Conditional"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="atLeast" field="selections" scope="self"
+                  childId="any" value="1" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </profile>
+        <profile id="profile-hidden-inactive" name="Hidden Inactive"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="atLeast" field="selections" scope="self"
+                  childId="any" value="5" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </profile>
+        <profile id="profile-hidden-grouped" name="Hidden Grouped"
+          typeId="profile-type-unit" typeName="Unit" hidden="true">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="hidden" value="false" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </profile>
+        <profile id="profile-hidden-unsupported" name="Hidden Unsupported"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="increment" field="hidden" value="1" />
+          </modifiers>
+        </profile>
         <profile id="profile-repeated" name="Repeated"
           typeId="profile-type-unit" typeName="Unit">
           <characteristics>

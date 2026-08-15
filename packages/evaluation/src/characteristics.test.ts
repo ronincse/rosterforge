@@ -23,7 +23,10 @@ import {
 } from "@rosterforge/roster-model";
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
-import { evaluateRosterProfileCharacteristics } from "./characteristics.js";
+import {
+  evaluateRosterProfileCharacteristics,
+  evaluateRosterProfileVisibility,
+} from "./characteristics.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
 describe("roster profile characteristic display", () => {
@@ -237,15 +240,20 @@ describe("roster profile characteristic display", () => {
       completeness: "incomplete",
       unroutedModifiers: [
         { grouped: false, reason: "characteristicAbsent" },
-        { grouped: false, reason: "characteristicAbsent" },
       ],
       characteristics: [{ baseValue: '6"', value: '6"', steps: [] }],
     });
     expect(evaluated.diagnostics.map(({ code }) => code)).toEqual([
       "EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING",
-      "EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING",
     ]);
-    expect(report.unroutedModifiers[1]?.modifier.field).toBe("hidden");
+    expect(report.unroutedModifiers[0]?.modifier.field).toBe(
+      "characteristic-description",
+    );
+    // A hidden modifier cannot change a characteristic value, so it is split
+    // out for the visibility evaluator rather than counted as unrouted.
+    expect(report.visibilityModifiers.map(({ field }) => field)).toEqual([
+      "hidden",
+    ]);
   });
 
   it("refuses to guess when one profile repeats a characteristic type", () => {
@@ -340,6 +348,147 @@ describe("roster profile characteristic display", () => {
       ],
     });
     expect(report.characteristics[0]).not.toHaveProperty("value");
+  });
+});
+
+describe("roster profile visibility", () => {
+  it("reports a profile with no hidden behavior as visible", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileVisibility(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-direct-set"),
+      ),
+    );
+
+    expect(report).toMatchObject({
+      status: "visible",
+      hidden: false,
+      completeness: "complete",
+      modifierApplicability: [],
+      modifierGroupApplicability: [],
+    });
+  });
+
+  it("uses the projected hidden flag when no modifier applies", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileVisibility(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-hidden-static"),
+      ),
+    );
+
+    expect(report).toMatchObject({
+      status: "hidden",
+      hidden: true,
+      completeness: "complete",
+    });
+  });
+
+  it("applies a satisfied hidden modifier and skips an unsatisfied one", () => {
+    const setup = characteristicSetup();
+
+    const hidden = successful(
+      evaluateRosterProfileVisibility(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-hidden-conditional"),
+      ),
+    );
+    const visible = successful(
+      evaluateRosterProfileVisibility(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-hidden-inactive"),
+      ),
+    );
+
+    expect(hidden).toMatchObject({
+      status: "hidden",
+      hidden: true,
+      completeness: "complete",
+      modifierApplicability: [{ status: "applicable" }],
+    });
+    expect(visible).toMatchObject({
+      status: "visible",
+      hidden: false,
+      completeness: "complete",
+      modifierApplicability: [{ status: "notApplicable" }],
+    });
+  });
+
+  it("lets a grouped modifier reveal a statically hidden profile", () => {
+    const setup = characteristicSetup();
+    const source = profile(setup.ownerChoice, "profile-hidden-grouped");
+
+    const report = successful(
+      evaluateRosterProfileVisibility(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        source,
+      ),
+    );
+
+    expect(report).toMatchObject({
+      status: "visible",
+      hidden: false,
+      completeness: "complete",
+      modifierGroupApplicability: [{ status: "applicable" }],
+    });
+    expect(report.modifierGroupApplicability[0]?.group).toBe(
+      source.modifierGroups[0],
+    );
+  });
+
+  it("leaves an unsupported hidden operation unresolved and incomplete", () => {
+    const setup = characteristicSetup();
+
+    const evaluated = evaluateRosterProfileVisibility(
+      setup.roster,
+      setup.context,
+      setup.owner,
+      profile(setup.ownerChoice, "profile-hidden-unsupported"),
+    );
+    const report = successful(evaluated);
+
+    expect(evaluated.diagnostics.map(({ code }) => code)).toEqual([
+      "EVALUATION_PROFILE_VISIBILITY_MODIFIER_UNSUPPORTED",
+    ]);
+    expect(report).toMatchObject({
+      status: "unresolved",
+      completeness: "incomplete",
+    });
+    expect(report).not.toHaveProperty("hidden");
+  });
+
+  it("keeps characteristic values complete while visibility is unresolved", () => {
+    const setup = characteristicSetup();
+
+    const characteristics = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-hidden-unsupported"),
+      ),
+    );
+
+    expect(characteristics).toMatchObject({
+      completeness: "complete",
+      unroutedModifiers: [],
+      characteristics: [{ baseValue: '6"', value: '6"' }],
+    });
+    expect(characteristics.visibilityModifiers).toHaveLength(1);
   });
 });
 

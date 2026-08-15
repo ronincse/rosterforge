@@ -40,6 +40,7 @@ import {
   type LocalRosterConstraintInspection,
   type LocalRosterDirectChildChoice,
   type LocalRosterProfile,
+  type LocalRosterProfileCharacteristics,
   type LocalRosterRootChoice,
   type LocalRosterRootChoiceState,
   type LocalRosterSession,
@@ -1728,7 +1729,7 @@ function SelectionProfile({
   report,
 }: {
   readonly profile: SelectionProfileDetail;
-  readonly report: RosterProfileCharacteristicReport | undefined;
+  readonly report: LocalRosterProfileCharacteristics | undefined;
 }) {
   const name =
     profile.origin === "Direct"
@@ -1755,6 +1756,14 @@ function SelectionProfile({
           {profile.origin} | {source}
         </small>
       </header>
+      {/* A hidden profile is labelled, never removed, so nothing the source
+          declares disappears from the occurrence. */}
+      {report?.visibility.status === "hidden" && (
+        <p className="profile-visibility">Hidden by this catalogue.</p>
+      )}
+      {report?.visibility.status === "unresolved" && (
+        <p className="profile-visibility">Visibility unresolved.</p>
+      )}
       {report?.completeness === "incomplete" && (
         <p className="profile-completeness">
           Some display behavior on this profile is unsupported, so these values
@@ -1769,7 +1778,7 @@ function SelectionProfile({
             <SelectionCharacteristic
               key={selectionCharacteristicKey(characteristic, index)}
               characteristic={characteristic}
-              report={report?.characteristics.find(
+              report={report?.report.characteristics.find(
                 (candidate) => candidate.characteristic === characteristic,
               )}
             />
@@ -1855,7 +1864,7 @@ function SelectionInfoGroup({
 }: {
   readonly infoGroup: MaterializedInfoGroup;
   readonly reports:
-    | ReadonlyMap<LocalRosterProfile, RosterProfileCharacteristicReport>
+    | ReadonlyMap<LocalRosterProfile, LocalRosterProfileCharacteristics>
     | undefined;
 }) {
   const profiles: readonly SelectionProfileDetail[] = [

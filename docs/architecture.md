@@ -500,12 +500,13 @@ reason and existing diagnostics; the browser performs no additional reference
 resolution or subtree cloning.
 
 `inspectLocalRosterSelectionCharacteristics` evaluates the displayed
-characteristics of every profile shown for one exact occurrence — its direct
-profiles, its resolved profile info links, and the profiles of its recursive
-info groups, in that render order. Reports are keyed by the exact profile
-object, so the panel looks one up without re-deriving identity. The adapter
-adds no evaluation semantics; it only supplies the occurrence and catalogue
-context, and an unknown occurrence is an ordinary application diagnostic.
+characteristics and visibility of every profile shown for one exact occurrence —
+its direct profiles, its resolved profile info links, and the profiles of its
+recursive info groups, in that render order. Each entry retains both reports
+plus their shared completeness, keyed by the exact profile object so the panel
+looks one up without re-deriving identity. The adapter adds no evaluation
+semantics; it only supplies the occurrence and catalogue context, and an unknown
+occurrence is an ordinary application diagnostic.
 
 The workspace renders the effective value when it is known. A characteristic
 whose value changed also shows its source value labelled as the base, so the
@@ -514,8 +515,9 @@ sequence leaves the value unresolved, the source value stays visible and is
 explicitly labelled unresolved rather than being replaced by a provisional
 result. A profile with incomplete display behavior carries a plain-language
 note and a `data-completeness` attribute on both the profile and the affected
-characteristic. Profiles with no evaluated report fall back to the projected
-text unchanged.
+characteristic. A hidden or visibility-unresolved profile is labelled and stays
+rendered, so nothing the source declares disappears from the occurrence.
+Profiles with no evaluated report fall back to the projected text unchanged.
 
 Recursive occurrence rendering places selected children in a disclosure.
 Collections of more than two children start collapsed, preventing automatic
@@ -1216,12 +1218,33 @@ unapplied step after it leaves the value unknown. A report can therefore expose
 a known effective value while remaining `incomplete`.
 
 Any profile-owned modifier that does not route to exactly one characteristic on
-its own profile — including `hidden`, `name`, and observed `annotation` fields,
-and characteristic types belonging to another profile — is retained as an
+its own profile — including `name`, the observed `annotation` field, and
+characteristic types belonging to another profile — is retained as an
 `unroutedModifiers` entry with a reason, diagnosed at its source location, and
-makes the report incomplete. This evaluator does not decide profile visibility,
-profile naming, `affects` retargeting, or info-group modifier behavior, so it
-cannot prove that such a modifier leaves the display unchanged.
+makes the report incomplete. This evaluator does not decide profile naming,
+`affects` retargeting, or info-group modifier behavior, so it cannot prove that
+such a modifier leaves the display unchanged.
+
+Modifiers targeting `hidden` are the one exception. That is a known BattleScribe
+field whose Boolean `set` semantics this package already executes for selection
+visibility, so a modifier naming it definitively does not name a characteristic
+type and cannot change a characteristic value. They are collected into
+`visibilityModifiers`, remain observable, and do not affect characteristic
+completeness; `evaluateRosterProfileVisibility` owns their execution. This
+follows the existing cost rule that modifiers targeting non-cost fields do not
+affect numeric cost completeness.
+
+`evaluateRosterProfileVisibility` reports whether one projected profile is
+displayed for one exact roster selection occurrence. The base is the profile's
+own projected `hidden` flag. The supported shape mirrors selection visibility:
+`type="set" field="hidden"`, a Boolean value, no scope, no repeat, and no
+generic behavior attribute. Direct owner modifiers run first, then relevant
+top-level groups in source order with each group's direct modifiers before
+nested groups depth-first, reusing the same execution collector. Unknown
+operations, non-Boolean values, scopes, repeats, extension attributes, and
+unresolved applicability leave the status `unresolved` and the report
+incomplete. A hidden profile is reported, never removed; presentation decides
+what to do with the status.
 
 Scoped modifiers, repeats, missing operations or values, unresolved
 applicability, and any generic attribute other than the inert `comment` keep

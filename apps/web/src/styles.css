@@ -2027,8 +2027,13 @@ h1 {
   color: #7d641f;
 }
 
-.selection-profile > p.profile-completeness {
+.selection-profile > p.profile-completeness,
+.selection-profile > p.profile-visibility {
   color: #7d641f;
+}
+
+.selection-profile > p.profile-visibility {
+  font-weight: 700;
 }
 
 .selection-profile > p,

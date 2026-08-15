@@ -894,10 +894,23 @@ operation, so every other observed kind — including `increment`, `decrement`,
 `floor`, `ceil`, `append`, and `replace` — produces the unsupported-type code
 and leaves its step unapplied.
 
+Profile-visibility evaluation separately emits:
+
+```text
+EVALUATION_PROFILE_VISIBILITY_MODIFIER_UNSUPPORTED
+```
+
+It points at a direct or grouped profile hidden-state modifier whose operation,
+Boolean value, scope, repeats, or generic attributes cannot be executed, and
+leaves the profile's effective visibility unresolved. Relevant modifier groups
+use the ordinary modifier-group and condition codes. A `hidden` modifier never
+appears in the characteristic codes below, because it cannot change a
+characteristic value.
+
 The two target codes describe routing rather than execution.
 `TARGET_MISSING` covers a profile-owned modifier with no `field`, a `field` that
 names no characteristic on its own profile, and non-characteristic display
-fields such as `hidden`, `name`, and the observed `annotation` extension.
+fields such as `name` and the observed `annotation` extension.
 `TARGET_AMBIGUOUS` covers a profile that repeats one characteristic type; no
 match is chosen. Both keep the modifier observable in `unroutedModifiers` and
 make the profile report incomplete.
