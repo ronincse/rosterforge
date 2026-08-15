@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="characteristic-display" name="Characteristic Display" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <selectionEntries>
+    <selectionEntry id="characteristic-owner" name="Characteristic Owner"
+      type="unit">
+      <profiles>
+        <profile id="profile-direct-set" name="Direct Set"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"' />
+          </modifiers>
+        </profile>
+        <profile id="profile-conditional" name="Conditional"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='7"'>
+              <conditions>
+                <condition type="atLeast" field="selections" scope="self"
+                  childId="any" value="1" />
+              </conditions>
+            </modifier>
+            <modifier type="set" field="characteristic-move" value='9"'>
+              <conditions>
+                <condition type="atLeast" field="selections" scope="self"
+                  childId="any" value="5" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </profile>
+        <profile id="profile-grouped-order" name="Grouped Order"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value="A" />
+          </modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="characteristic-move" value="B" />
+              </modifiers>
+              <modifierGroups>
+                <modifierGroup type="and">
+                  <modifiers>
+                    <modifier type="set" field="characteristic-move"
+                      value="C" />
+                  </modifiers>
+                </modifierGroup>
+              </modifierGroups>
+            </modifierGroup>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="characteristic-move" value="D" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </profile>
+        <profile id="profile-grouped-conditional" name="Grouped Conditional"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="characteristic-move"
+                  value='9"' />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" field="selections" scope="self"
+                  childId="any" value="5" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
+        </profile>
+        <profile id="profile-unsupported-operations" name="Unsupported Operations"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="increment" field="characteristic-save" value="1" />
+            <modifier type="append" field="characteristic-move" value=" fly"
+              join=", " />
+          </modifiers>
+        </profile>
+        <profile id="profile-extension-attributes" name="Extension Attributes"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"'
+              affects="self.entries.recursive.profiles.Unit" />
+          </modifiers>
+        </profile>
+        <profile id="profile-scoped" name="Scoped"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"'
+              scope="parent" />
+          </modifiers>
+        </profile>
+        <profile id="profile-missing-value" name="Missing Value"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" />
+          </modifiers>
+        </profile>
+        <profile id="profile-unrouted" name="Unrouted"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-description"
+              value="Rewritten" />
+            <modifier type="set" field="hidden" value="true" />
+          </modifiers>
+        </profile>
+        <profile id="profile-ambiguous-target" name="Ambiguous Target"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+            <characteristic name="Move (alternate)"
+              typeId="characteristic-move">7"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='9"' />
+          </modifiers>
+        </profile>
+        <profile id="profile-inert-comment" name="Inert Comment"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"'
+              comment="Author note retained as inert metadata." />
+          </modifiers>
+        </profile>
+        <profile id="profile-known-after-unapplied" name="Known After Unapplied"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="increment" field="characteristic-move" value="1" />
+            <modifier type="set" field="characteristic-move" value='9"' />
+          </modifiers>
+        </profile>
+        <profile id="profile-unknown-after-applied" name="Unknown After Applied"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='9"' />
+            <modifier type="increment" field="characteristic-move" value="1" />
+          </modifiers>
+        </profile>
+        <profile id="profile-unresolved-applicability"
+          name="Unresolved Applicability" typeId="profile-type-unit"
+          typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"'>
+              <conditions>
+                <condition type="atLeast" field="selections" scope="ancestor"
+                  childId="any" value="1" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </profile>
+        <profile id="profile-repeated" name="Repeated"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='8"'>
+              <repeats>
+                <repeat field="selections" scope="self" childId="any"
+                  value="1" repeats="1" />
+              </repeats>
+            </modifier>
+          </modifiers>
+        </profile>
+      </profiles>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

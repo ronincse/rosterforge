@@ -315,15 +315,33 @@
   amount-aware force or roster queries
 - Amount-aware selection conditions, selection and force constraints,
   structural status, choice maxima, and recursive browser counts
+- Read-only characteristic-display reports for one projected profile and one
+  exact roster selection occurrence, with base values, ordered applied,
+  not-applicable, and unapplied steps, retained applicability trees, and
+  independent completeness
+- Exact `typeId` characteristic targeting with explicit absent and ambiguous
+  target states; display names never select a target
+- Lexical `set` execution for direct and recursively grouped profile modifiers,
+  using owner-direct then group-source ordering and direct-before-nested group
+  execution
+- Effective characteristic values that stay known when no unapplied step follows
+  the last applied step, even while the report remains incomplete
 
 ## Parsed But Not Evaluated
 
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
-- Characteristic-targeting modifier routing and execution, including profile-
-  owned modifiers and generic `affects`, `join`, `arg`, and `position`
-  behavior. The modifier structures remain ordered and observable.
+- Characteristic operations other than `set`: `increment`, `decrement`,
+  `floor`, `ceil`, `append`, and `replace` each need an unestablished lexical
+  arithmetic, separator, or search rule for observed values such as `3+`, `36"`,
+  and `D6`. They remain ordered, observable, and unapplied.
+- Generic `affects`, `join`, `arg`, and `position` behavior on characteristic
+  modifiers, and characteristic modifiers owned by selection entries, entry
+  links, info links, or info groups rather than by the profile itself
+- Profile-owned `hidden`, `name`, and observed `annotation` modifiers; they are
+  retained as unrouted display behavior and make a characteristic report
+  incomplete rather than being silently ignored
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or
@@ -665,13 +683,53 @@ data orders it after decrements to cap the lower bound. `replace`,
 and all behavior-bearing generic attributes remain preserved and unapplied.
 
 At the same pinned commit, 1,741 modifiers target characteristic-type IDs. Of
-those, 484 are directly profile-owned and were the projection gap closed here;
-1,151 are inside modifier groups and 700 carry nonnumeric values. The observed
-operations are 490 `append`, 415 `set`, 451 `increment`, 163 `decrement`,
-189 `replace`, 25 `floor`, and 8 `ceil`. Across this target set, `affects`
-appears 1,265 times, `join` 759 times, `arg` 286 times, and `position` 161
-times. These real-data extensions require a separate display-evaluation design;
-their presence does not make profile projection fail.
+those, 484 are profile-owned; 1,151 are inside modifier groups and 700 carry
+nonnumeric values. The observed operations are 490 `append`, 415 `set`, 451
+`increment`, 163 `decrement`, 189 `replace`, 25 `floor`, and 8 `ceil`. Across
+this target set, `affects` appears 1,265 times, `join` 759 times, `arg` 286
+times, and `position` 161 times. The 1,257 modifiers owned by selection
+entries, entry links, info links, and selection-entry groups are outside the
+current display boundary. 1,249 of them carry `affects`, a `scope`, or both, so
+retargeting must be understood before they can execute. The remaining eight are
+owned by info links, where the modifier sits on the link rather than on the
+profile it displays; that owner relationship is a separate decision.
+
+The 484 profile-owned characteristic modifiers are the inventory behind the
+current display evaluator. 369 are direct and 115 are inside the profile's own
+modifier groups. Their operations are 213 `append`, 205 `set`, 54 `increment`,
+six `decrement`, four `floor`, and two `replace`. 384 carry direct conditions,
+53 carry condition groups, and none carries a repeat. Sixteen use `scope="model"`
+and three omit `value`. As generic extensions, `join` appears 244 times,
+`affects` 16 times, `arg` twice, and `position` never; 238 modifiers carry none
+of the four. 478 name a characteristic type present on their own profile, six do
+not, and no profile in the corpus repeats a characteristic type, so no observed
+target is ambiguous.
+
+That leaves an executable subset of 173 modifiers — 117 direct and 56 grouped —
+that are `set`, scope-free, extension-free, valued, and matched to exactly one
+characteristic on their own profile. Only two of them are unconditional: the
+Adeptus Custodes `Custodian Guard (Shield)` and `Custodian Guard (Vexilla)`
+profiles each raise `W` from `3` to `4`. Every one of the 484 has a condition
+surface whose shape the existing evaluator already supports, so applicability is
+not the limiting factor; operation semantics are. One `set` in `Necrons.json`
+gives the `Keywords` characteristic of `Staff of light` a native JSON Boolean;
+that value projects to the lexical string `true` and is replaced literally
+rather than being reinterpreted.
+
+The pinned corpus also contains 694 profile-owned modifiers in total. Besides
+the 478 that route to a characteristic on their own profile, 154 target
+`hidden`, 51 target an undocumented `annotation` field, five target `name`, and
+six name a characteristic type belonging to another profile. None of these are
+executed; each is retained as an unrouted display modifier and makes its
+characteristic report incomplete.
+
+The integration proof imports the six-file Adeptus Custodes closure — the game
+system, Adeptus Custodes, Imperial Knights Library, Agents of the Imperium,
+Titans library, and Unaligned Forces — adds a `Custodian Guard` unit, its
+`4-5 Custodian Guard` group, and the `Sentinel Blade & Praesidium Shield` model,
+then evaluates that model's `Custodian Guard (Shield)` profile. The report is
+`complete`, emits no diagnostics, and yields `M 6"`, `T 6`, `Sv 2+`, `W 4`,
+`LD 6+`, `OC 2`, `InSv 4+` from a base `W` of `3`.
 
 The same pinned corpus contains selection-count conditions using all six
 supported numeric comparisons plus `instanceOf` and `notInstanceOf`. Observed

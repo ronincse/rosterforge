@@ -7,10 +7,12 @@ import type {
   BattleScribeProjection,
   InfoGroupProjection,
   ModifierGroupProjection,
+  ModifierProjection,
   OrderedXmlElement,
   ProfileProjection,
   SelectionContainerProjection,
 } from "@rosterforge/battlescribe-data";
+import { evaluateRosterProfileCharacteristics } from "@rosterforge/evaluation";
 import {
   pinGitHubRepository,
   planBattleScribeDependencyClosure,
@@ -40,6 +42,7 @@ import {
   localRosterChildChoices,
   localRosterRootChoiceGroups,
   localRosterRootChoices,
+  localRosterSelectionChoice,
   localRosterSelectionCount,
   restoreLocalRosterSession,
   type LocalRosterSession,
@@ -182,10 +185,37 @@ describe.skipIf(realDataDirectory === undefined)(
           roster: 6,
         });
         expect(
-          profileOwnedCharacteristicModifierCount(
+          profileOwnedCharacteristicModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
-        ).toBe(484);
+        ).toEqual({
+          total: 484,
+          direct: 369,
+          grouped: 115,
+          set: 205,
+          append: 213,
+          increment: 54,
+          decrement: 6,
+          floor: 4,
+          replace: 2,
+          otherOperations: 0,
+          scoped: 16,
+          withConditions: 384,
+          withConditionGroups: 53,
+          withRepeats: 0,
+          missingValue: 3,
+          affects: 16,
+          join: 244,
+          arg: 2,
+          position: 0,
+          behaviorFree: 238,
+          targetOnProfile: 478,
+          targetAbsent: 6,
+          targetAmbiguous: 0,
+          supportedSetSubset: 173,
+          supportedSetDirect: 117,
+          supportedSetGrouped: 56,
+        });
         expect(
           groupedHiddenModifierSummary(
             result.value.documents.map(({ root }) => root),
@@ -442,6 +472,185 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ costType }) => costType.name === "pts",
           ),
         ).toMatchObject({ value: 375 });
+      },
+      120_000,
+    );
+
+    it(
+      "raises a pinned Custodian Guard wound characteristic through one profile set",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Imperium - Adeptus Custodes.json",
+          "Imperium - Imperial Knights - Library.json",
+          "Imperium - Agents of the Imperium.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-adeptus-custodes",
+              importedAt: "2026-08-14T00:00:00.000Z",
+            },
+          },
+        );
+
+        expect(result.ok).toBe(true);
+        if (!result.ok) {
+          return;
+        }
+        expect(result.value.documents).toHaveLength(requiredFilenames.size);
+        expect(result.value.contexts.roots.truncated).toBe(false);
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Imperium - Adeptus Custodes",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        expect(catalogue).toBeDefined();
+        expect(forceDefinition).toBeDefined();
+        if (catalogue === undefined || forceDefinition === undefined) {
+          return;
+        }
+
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-adeptus-custodes-roster"),
+          forceId: forceOccurrenceId("real-adeptus-custodes-force"),
+          name: "Characteristic Integration Roster",
+        });
+        expect(session.ok).toBe(true);
+        if (!session.ok) {
+          return;
+        }
+        const unitRoot = localRosterRootChoices(session.value.catalogue).find(
+          ({ materialized }) => materialized.name === "Custodian Guard",
+        );
+        expect(unitRoot).toBeDefined();
+        if (unitRoot === undefined) {
+          return;
+        }
+        const unitId = selectionOccurrenceId("real-custodian-guard-unit");
+        const withUnit = addLocalRosterRootSelection(session.value, unitRoot, {
+          selectionId: unitId,
+        });
+        expect(withUnit.ok).toBe(true);
+        if (!withUnit.ok) {
+          return;
+        }
+        const modelGroup = localRosterChildChoices(withUnit.value, unitId).find(
+          ({ name }) => name === "4-5 Custodian Guard",
+        );
+        expect(modelGroup).toBeDefined();
+        if (modelGroup === undefined) {
+          return;
+        }
+        const groupId = selectionOccurrenceId("real-custodian-guard-group");
+        const withGroup = addLocalRosterChildSelection(
+          withUnit.value,
+          unitId,
+          modelGroup,
+          { selectionId: groupId },
+        );
+        expect(withGroup.ok).toBe(true);
+        if (!withGroup.ok) {
+          return;
+        }
+        const shieldModel = localRosterChildChoices(
+          withGroup.value,
+          groupId,
+        ).find(
+          ({ name }) =>
+            name === "Custodian Guard (Sentinel Blade & Praesidium Shield)",
+        );
+        expect(shieldModel).toBeDefined();
+        if (shieldModel === undefined) {
+          return;
+        }
+        const modelId = selectionOccurrenceId("real-custodian-guard-model");
+        const withModel = addLocalRosterChildSelection(
+          withGroup.value,
+          groupId,
+          shieldModel,
+          { selectionId: modelId },
+        );
+        expect(withModel.ok).toBe(true);
+        if (!withModel.ok) {
+          return;
+        }
+
+        const occurrence = rosterSelections(
+          withModel.value.roster.forces.flatMap(
+            ({ selections }) => selections,
+          ),
+        ).find(({ id }) => id === modelId);
+        const choice = localRosterSelectionChoice(withModel.value, modelId);
+        expect(occurrence).toBeDefined();
+        expect(choice).toBeDefined();
+        if (occurrence === undefined || choice === undefined) {
+          return;
+        }
+        const profile = choice.profiles.find(
+          ({ name }) => name === "Custodian Guard (Shield)",
+        );
+        expect(profile).toBeDefined();
+        if (profile === undefined) {
+          return;
+        }
+        expect(profile.modifiers).toHaveLength(1);
+        expect(profile.modifierGroups).toEqual([]);
+
+        const evaluated = evaluateRosterProfileCharacteristics(
+          withModel.value.roster,
+          withModel.value.catalogue.context,
+          occurrence,
+          profile,
+        );
+        expect(evaluated.ok).toBe(true);
+        expect(evaluated.diagnostics).toEqual([]);
+        if (!evaluated.ok) {
+          return;
+        }
+        const wounds = evaluated.value.characteristics.find(
+          ({ characteristic }) => characteristic.name === "W",
+        );
+        expect(wounds).toMatchObject({
+          baseValue: "3",
+          value: "4",
+          completeness: "complete",
+          steps: [
+            {
+              status: "applied",
+              kind: "set",
+              grouped: false,
+              input: "3",
+              output: "4",
+            },
+          ],
+        });
+        expect(evaluated.value).toMatchObject({
+          completeness: "complete",
+          unroutedModifiers: [],
+          modifierGroupApplicability: [],
+        });
+        expect(
+          evaluated.value.characteristics.map(
+            ({ characteristic, value }) => [characteristic.name, value],
+          ),
+        ).toEqual([
+          ["M", '6"'],
+          ["T", "6"],
+          ["Sv", "2+"],
+          ["W", "4"],
+          ["LD", "6+"],
+          ["OC", "2"],
+          ["InSv", "4+"],
+        ]);
       },
       120_000,
     );
@@ -1044,9 +1253,9 @@ function realJsonFiles(directory: string): readonly LocalBattleScribeFile[] {
     }));
 }
 
-function profileOwnedCharacteristicModifierCount(
+function profileOwnedCharacteristicModifierSummary(
   projections: readonly BattleScribeProjection[],
-): number {
+): Readonly<Record<string, number>> {
   const characteristicTypeIds = new Set<string>(
     projections.flatMap(({ profileTypes }) =>
       profileTypes.flatMap(({ characteristicTypes }) =>
@@ -1054,22 +1263,114 @@ function profileOwnedCharacteristicModifierCount(
       ),
     ),
   );
-  let count = 0;
+  const behaviorAttributes = ["affects", "join", "arg", "position"] as const;
+  const counts: Record<string, number> = {
+    total: 0,
+    direct: 0,
+    grouped: 0,
+    set: 0,
+    append: 0,
+    increment: 0,
+    decrement: 0,
+    floor: 0,
+    replace: 0,
+    otherOperations: 0,
+    scoped: 0,
+    withConditions: 0,
+    withConditionGroups: 0,
+    withRepeats: 0,
+    missingValue: 0,
+    affects: 0,
+    join: 0,
+    arg: 0,
+    position: 0,
+    behaviorFree: 0,
+    targetOnProfile: 0,
+    targetAbsent: 0,
+    targetAmbiguous: 0,
+    supportedSetSubset: 0,
+    supportedSetDirect: 0,
+    supportedSetGrouped: 0,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
 
-  const visitModifierGroup = (group: ModifierGroupProjection): void => {
-    count += group.modifiers.filter(
-      ({ field }) => field !== undefined && characteristicTypeIds.has(field),
-    ).length;
+  const visitModifier = (
+    modifier: ModifierProjection,
+    targetCounts: ReadonlyMap<string, number>,
+    grouped: boolean,
+  ): void => {
+    const field = modifier.field;
+    if (field === undefined || !characteristicTypeIds.has(field)) {
+      return;
+    }
+    add("total");
+    add(grouped ? "grouped" : "direct");
+    add(
+      modifier.type === "set" ||
+        modifier.type === "append" ||
+        modifier.type === "increment" ||
+        modifier.type === "decrement" ||
+        modifier.type === "floor" ||
+        modifier.type === "replace"
+        ? modifier.type
+        : "otherOperations",
+    );
+    if (modifier.scope !== undefined) add("scoped");
+    if (modifier.conditions.length > 0) add("withConditions");
+    if (modifier.conditionGroups.length > 0) add("withConditionGroups");
+    if (modifier.repeats.length > 0) add("withRepeats");
+    if (modifier.value === undefined) add("missingValue");
+    const behavior = behaviorAttributes.filter(
+      (attribute) => modifier.node.attributes[attribute] !== undefined,
+    );
+    for (const attribute of behavior) add(attribute);
+    if (behavior.length === 0) add("behaviorFree");
+
+    const matches = targetCounts.get(field) ?? 0;
+    add(
+      matches === 1
+        ? "targetOnProfile"
+        : matches === 0
+          ? "targetAbsent"
+          : "targetAmbiguous",
+    );
+    if (
+      modifier.type === "set" &&
+      modifier.scope === undefined &&
+      behavior.length === 0 &&
+      matches === 1 &&
+      modifier.value !== undefined
+    ) {
+      add("supportedSetSubset");
+      add(grouped ? "supportedSetGrouped" : "supportedSetDirect");
+    }
+  };
+
+  const visitModifierGroup = (
+    group: ModifierGroupProjection,
+    targetCounts: ReadonlyMap<string, number>,
+  ): void => {
+    for (const modifier of group.modifiers) {
+      visitModifier(modifier, targetCounts, true);
+    }
     for (const child of group.modifierGroups) {
-      visitModifierGroup(child);
+      visitModifierGroup(child, targetCounts);
     }
   };
   const visitProfile = (profile: ProfileProjection): void => {
-    count += profile.modifiers.filter(
-      ({ field }) => field !== undefined && characteristicTypeIds.has(field),
-    ).length;
+    const targetCounts = new Map<string, number>();
+    for (const { typeId } of profile.characteristics) {
+      if (typeId !== undefined) {
+        targetCounts.set(typeId, (targetCounts.get(typeId) ?? 0) + 1);
+      }
+    }
+    for (const modifier of profile.modifiers) {
+      visitModifier(modifier, targetCounts, false);
+    }
     for (const group of profile.modifierGroups) {
-      visitModifierGroup(group);
+      visitModifierGroup(group, targetCounts);
     }
   };
   const visitInfoGroup = (group: InfoGroupProjection): void => {
@@ -1124,7 +1425,7 @@ function profileOwnedCharacteristicModifierCount(
     }
   }
 
-  return count;
+  return counts;
 }
 
 function identityConditionScopeCounts(

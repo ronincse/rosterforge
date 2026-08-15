@@ -82,6 +82,10 @@ This repository currently contains the first development slice:
   catalogue-browser panes;
 - occurrence-level direct and linked rule/profile details with characteristics,
   source filenames, and observable unresolved info links;
+- headless read-only characteristic-display reports for one profile and one
+  roster occurrence, executing exact-`typeId` lexical `set` modifiers in
+  owner-direct then grouped source order while preserving unsupported
+  operations, extensions, and unrouted profile modifiers as incomplete;
 - bounded in-memory undo and redo over exact immutable roster-session snapshots;
 - occurrence-specific selection rename and reset-to-definition-name controls;
 - occurrence-specific amount editing with source default/step visibility,
@@ -104,7 +108,9 @@ repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
 cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
-grouped cost/profile/visibility modifiers, modifier-group repeats, constraint
+non-`set` characteristic operations, `affects`/`join`/`arg`/`position`
+retargeting, characteristic modifiers owned outside their profile, browser
+display of evaluated characteristics, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,
 roster reordering, and BattleScribe .ros/.rosz import and interchange export.
 

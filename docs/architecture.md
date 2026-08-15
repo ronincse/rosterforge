@@ -92,7 +92,9 @@ repeat reports, inspects amount-aware count bounds, and produces conservative
 selection initialization plans. Grouped execution uses direct owner modifiers
 first, then top-level groups in source order with direct children before nested
 groups. A narrow repeat evaluator supports non-percentage selection-count
-repeats with exact divisors, multipliers, and floor/round-up behavior. The
+repeats with exact divisors, multipliers, and floor/round-up behavior. A
+separate lexical evaluator reports the effective displayed characteristics of
+one projected profile for one exact roster selection occurrence. The
 package also derives an aggregate status for supported root, direct-entry, and
 transparent-group selection bounds and can compose it with the existing
 selection-condition and force-condition constraint reports. The planner reads
@@ -1155,6 +1157,59 @@ modifier-group repeats, generic behavioral extensions, and any query the
 condition evaluator cannot resolve remain incomplete. The evaluator does not
 expand repeated operations into arrays, mutate source data, apply dynamic
 `defaultAmount` modifiers, or imply complete legality.
+
+## Characteristic Display Boundary
+
+`evaluateRosterProfileCharacteristics` reports the effective displayed
+characteristics of one projected profile for one exact roster selection
+occurrence. It accepts either a direct profile projection or the definition
+arrays a materialized profile info link already exposes by reference, and it
+never clones a characteristic, modifier, or group.
+
+A modifier reaches a characteristic only when its `field` equals that
+characteristic's exact `typeId` on the same profile. Targets are never inferred
+from `name` or `typeName`. A profile that repeats one characteristic type makes
+that target ambiguous rather than applying the modifier to every match.
+
+`set` is the only supported operation. It replaces the projected lexical value
+and never reads the value it replaces, so it needs no numeric grammar for
+observed forms such as `3+`, `36"`, or `D6`. `increment`, `decrement`, `floor`,
+`ceil`, `append`, and `replace` would each require an unestablished lexical
+arithmetic, separator, or search rule, so they remain preserved, source-located,
+and unapplied. This evaluator therefore does not reuse the numeric modifier
+kernel; it reuses the shared applicability, modifier-group applicability, and
+group-execution collectors, which do fit unchanged.
+
+Execution order matches the rest of the package: the profile's own ordered
+modifiers first, then its top-level modifier groups in source order, with each
+group's direct modifiers before nested groups depth-first. Group and child
+applicability are inherited through the existing collector, so a group-level
+condition can leave every descendant inert without discarding its tree.
+
+Each characteristic report retains the exact projected characteristic, its base
+value, an ordered step list, and independent completeness. A step is `applied`,
+`notApplicable`, or `unapplied` with structured issues. A false condition is an
+ordinary `notApplicable` step and does not make the report incomplete.
+
+The effective `value` is present only when nothing after the last applied step
+could still change it. Because every supported operation discards its input, an
+unapplied step *before* the last applied step cannot affect the result, while an
+unapplied step after it leaves the value unknown. A report can therefore expose
+a known effective value while remaining `incomplete`.
+
+Any profile-owned modifier that does not route to exactly one characteristic on
+its own profile — including `hidden`, `name`, and observed `annotation` fields,
+and characteristic types belonging to another profile — is retained as an
+`unroutedModifiers` entry with a reason, diagnosed at its source location, and
+makes the report incomplete. This evaluator does not decide profile visibility,
+profile naming, `affects` retargeting, or info-group modifier behavior, so it
+cannot prove that such a modifier leaves the display unchanged.
+
+Scoped modifiers, repeats, missing operations or values, unresolved
+applicability, and any generic attribute other than the inert `comment` keep
+their step unapplied and the report incomplete. The evaluator sets no validity
+state, aggregates nothing across profiles, and does not claim BattleScribe
+display parity.
 
 ## Constraint Inspection Boundary
 

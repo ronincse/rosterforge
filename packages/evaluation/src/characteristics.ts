@@ -1,0 +1,676 @@
+import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
+
+import {
+  success,
+  type Diagnostic,
+  type ObjectId,
+  type Result,
+  type SourceFileProvenance,
+  type ValidationCompleteness,
+} from "@rosterforge/foundation";
+
+import type { Roster, RosterSelection } from "@rosterforge/roster-model";
+
+import {
+  evaluateRosterModifierApplicability,
+  type RosterModifierApplicabilityReport,
+  type RosterModifierApplicabilitySource,
+} from "./modifier-applicability.js";
+import {
+  collectRosterModifierGroupExecution,
+  evaluateRosterModifierGroupApplicability,
+  type RosterModifierGroupApplicabilityReport,
+  type RosterModifierGroupSource,
+} from "./modifier-groups.js";
+import type { NumericModifierApplicability } from "./modifiers.js";
+
+/**
+ * The only characteristic operation whose target and result are established by
+ * the source shape alone. `set` replaces the projected lexical value and never
+ * inspects the value it replaces, so it needs no numeric grammar for observed
+ * forms such as `3+`, `36"`, or `D6`.
+ */
+export type RosterCharacteristicModifierKind = "set";
+
+export type RosterCharacteristicModifierIssue =
+  | "applicabilityUnresolved"
+  | "repeated"
+  | "scoped"
+  | "unsupportedAttributes"
+  | "missingType"
+  | "unsupportedType"
+  | "missingValue";
+
+export type RosterCharacteristicRoutingReason =
+  | "missingField"
+  | "characteristicAbsent"
+  | "characteristicAmbiguous";
+
+export interface RosterCharacteristicSource {
+  readonly name?: string;
+  readonly typeId?: ObjectId;
+  readonly value: string;
+  readonly source: SourceFileProvenance;
+  readonly path: readonly string[];
+}
+
+export interface RosterCharacteristicModifierSource
+  extends RosterModifierApplicabilitySource {
+  readonly type?: string;
+  readonly field?: string;
+  readonly scope?: string;
+  readonly value?: string;
+  readonly repeats: readonly unknown[];
+  readonly source: SourceFileProvenance;
+  readonly path: readonly string[];
+  readonly node: {
+    readonly attributes: Readonly<Record<string, string>>;
+  };
+}
+
+export interface RosterCharacteristicProfileSource<
+  Characteristic extends RosterCharacteristicSource =
+    RosterCharacteristicSource,
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly id?: ObjectId;
+  readonly name?: string;
+  readonly typeId?: ObjectId;
+  readonly typeName?: string;
+  readonly characteristics: readonly Characteristic[];
+  readonly modifiers: readonly Modifier[];
+  readonly modifierGroups: readonly RosterModifierGroupSource<Modifier>[];
+}
+
+export interface AppliedRosterCharacteristicStep<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly status: "applied";
+  readonly modifier: Modifier;
+  readonly grouped: boolean;
+  readonly kind: RosterCharacteristicModifierKind;
+  readonly input: string;
+  readonly output: string;
+}
+
+export interface NotApplicableRosterCharacteristicStep<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly status: "notApplicable";
+  readonly modifier: Modifier;
+  readonly grouped: boolean;
+  readonly input: string;
+}
+
+export interface UnappliedRosterCharacteristicStep<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly status: "unapplied";
+  readonly modifier: Modifier;
+  readonly grouped: boolean;
+  readonly input: string;
+  readonly issues: readonly RosterCharacteristicModifierIssue[];
+  readonly kind?: RosterCharacteristicModifierKind;
+}
+
+export type RosterCharacteristicStep<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> =
+  | AppliedRosterCharacteristicStep<Modifier>
+  | NotApplicableRosterCharacteristicStep<Modifier>
+  | UnappliedRosterCharacteristicStep<Modifier>;
+
+export interface UnroutedRosterCharacteristicModifier<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly modifier: Modifier;
+  readonly grouped: boolean;
+  readonly reason: RosterCharacteristicRoutingReason;
+}
+
+export interface RosterCharacteristicReport<
+  Characteristic extends RosterCharacteristicSource =
+    RosterCharacteristicSource,
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
+  readonly characteristic: Characteristic;
+  readonly typeId?: ObjectId;
+  readonly baseValue: string;
+  readonly value?: string;
+  readonly completeness: ValidationCompleteness;
+  readonly steps: readonly RosterCharacteristicStep<Modifier>[];
+}
+
+export interface RosterProfileCharacteristicReport<
+  Profile extends RosterCharacteristicProfileSource =
+    RosterCharacteristicProfileSource,
+> {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
+  readonly profile: Profile;
+  readonly characteristics: readonly RosterCharacteristicReport<
+    Profile["characteristics"][number],
+    Profile["modifiers"][number]
+  >[];
+  readonly unroutedModifiers: readonly UnroutedRosterCharacteristicModifier<
+    Profile["modifiers"][number]
+  >[];
+  readonly modifierApplicability: readonly RosterModifierApplicabilityReport<
+    Profile["modifiers"][number]
+  >[];
+  readonly modifierGroupApplicability: readonly RosterModifierGroupApplicabilityReport<
+    Profile["modifierGroups"][number]
+  >[];
+  readonly completeness: ValidationCompleteness;
+}
+
+/**
+ * Reports the effective displayed characteristics of one projected profile for
+ * one exact roster selection occurrence.
+ *
+ * The profile's own ordered modifiers run first, then its top-level modifier
+ * groups in source order with each group's direct modifiers before nested
+ * groups depth-first. That is the same execution order already documented for
+ * grouped cost, constraint, and visibility execution.
+ *
+ * A modifier reaches a characteristic only when its `field` equals that
+ * characteristic's exact `typeId` on this profile. Targets are never inferred
+ * from display names, and `affects`, `join`, `arg`, `position`, `scope`, or any
+ * other generic attribute keeps the modifier observable and unapplied.
+ */
+export function evaluateRosterProfileCharacteristics<
+  Profile extends RosterCharacteristicProfileSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  profile: Profile,
+): Result<RosterProfileCharacteristicReport<Profile>> {
+  type Modifier = Profile["modifiers"][number];
+  type Characteristic = Profile["characteristics"][number];
+
+  const diagnostics: Diagnostic[] = [];
+
+  const routable = routableCharacteristicTypeIds(profile.characteristics);
+  const unroutedModifiers: UnroutedRosterCharacteristicModifier<Modifier>[] =
+    [];
+  for (const { modifier, grouped } of profileOwnedModifiers<Modifier>(
+    profile,
+  )) {
+    const reason = routingReason(modifier, routable);
+    if (reason === undefined) {
+      continue;
+    }
+    unroutedModifiers.push({ modifier, grouped, reason });
+    diagnostics.push(routingDiagnostic(modifier, reason));
+  }
+
+  const modifierApplicability: RosterModifierApplicabilityReport<Modifier>[] =
+    [];
+  const directTargets = profile.modifiers.filter((modifier) =>
+    targetsRoutableCharacteristic(modifier, routable),
+  );
+  for (const modifier of directTargets) {
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (evaluated.ok) {
+      modifierApplicability.push(evaluated.value);
+    }
+  }
+  let lostDirect = modifierApplicability.length !== directTargets.length;
+
+  const modifierGroupApplicability: RosterModifierGroupApplicabilityReport<
+    Profile["modifierGroups"][number]
+  >[] = [];
+  const relevantGroups = profile.modifierGroups.filter((group) =>
+    groupTargetsRoutableCharacteristic(group, routable),
+  );
+  for (const group of relevantGroups) {
+    const evaluated = evaluateRosterModifierGroupApplicability(
+      roster,
+      context,
+      owner,
+      group,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (evaluated.ok) {
+      modifierGroupApplicability.push(evaluated.value);
+    }
+  }
+  let lostGrouped = modifierGroupApplicability.length !== relevantGroups.length;
+
+  const characteristics: RosterCharacteristicReport<
+    Characteristic,
+    Modifier
+  >[] = [];
+  for (const characteristic of profile.characteristics) {
+    const typeId = characteristic.typeId;
+    // A duplicated type on one profile is reported as an ambiguous target
+    // instead of being applied to every matching characteristic.
+    const routedTypeId =
+      typeId !== undefined && routable.get(typeId) === 1 ? typeId : undefined;
+
+    const steps: RosterCharacteristicStep<Modifier>[] = [];
+    if (routedTypeId !== undefined) {
+      for (const report of modifierApplicability) {
+        if (report.modifier.field !== routedTypeId) {
+          continue;
+        }
+        const step = evaluateStep<Modifier>(
+          currentValue(steps, characteristic.value),
+          report.modifier,
+          false,
+          report.evaluated ? report.status : "unresolved",
+        );
+        steps.push(step.step);
+        diagnostics.push(...step.diagnostics);
+      }
+
+      const grouped = collectRosterModifierGroupExecution<Modifier>(
+        modifierGroupApplicability,
+        routedTypeId,
+      );
+      const expectedGrouped = relevantGroups.reduce(
+        (count, group) =>
+          count + groupedTargetCount<Modifier>(group, routedTypeId),
+        0,
+      );
+      if (grouped.entries.length !== expectedGrouped) {
+        lostGrouped = true;
+      }
+      for (const entry of grouped.entries) {
+        const step = evaluateStep<Modifier>(
+          currentValue(steps, characteristic.value),
+          entry.modifier,
+          true,
+          entry.evaluated ? entry.status : "unresolved",
+        );
+        steps.push(step.step);
+        diagnostics.push(...step.diagnostics);
+      }
+    }
+
+    const value = effectiveValue(steps, characteristic.value);
+    characteristics.push({
+      characteristic,
+      ...(typeId === undefined ? {} : { typeId }),
+      baseValue: characteristic.value,
+      ...(value === undefined ? {} : { value }),
+      completeness: steps.some(({ status }) => status === "unapplied")
+        ? "incomplete"
+        : "complete",
+      steps,
+    });
+  }
+
+  lostDirect ||= modifierApplicability.some(
+    ({ completeness }) => completeness === "incomplete",
+  );
+  lostGrouped ||= modifierGroupApplicability.some(
+    ({ completeness }) => completeness === "incomplete",
+  );
+
+  const completeness: ValidationCompleteness =
+    !lostDirect &&
+    !lostGrouped &&
+    unroutedModifiers.length === 0 &&
+    characteristics.every(
+      ({ completeness: child }) => child === "complete",
+    ) &&
+    diagnostics.length === 0
+      ? "complete"
+      : "incomplete";
+
+  return success(
+    {
+      roster,
+      context,
+      owner,
+      profile,
+      characteristics,
+      unroutedModifiers,
+      modifierApplicability,
+      modifierGroupApplicability,
+      completeness,
+    },
+    diagnostics,
+  );
+}
+
+function evaluateStep<
+  Modifier extends RosterCharacteristicModifierSource,
+>(
+  input: string,
+  modifier: Modifier,
+  grouped: boolean,
+  applicability: NumericModifierApplicability,
+): {
+  readonly step: RosterCharacteristicStep<Modifier>;
+  readonly diagnostics: readonly Diagnostic[];
+} {
+  if (applicability === "notApplicable") {
+    return {
+      step: { status: "notApplicable", modifier, grouped, input },
+      diagnostics: [],
+    };
+  }
+
+  const issues: RosterCharacteristicModifierIssue[] = [];
+  if (applicability === "unresolved") {
+    issues.push("applicabilityUnresolved");
+  }
+  if (modifier.repeats.length > 0) {
+    issues.push("repeated");
+  }
+  if (modifier.scope !== undefined) {
+    issues.push("scoped");
+  }
+  if (unsupportedAttributes(modifier).length > 0) {
+    issues.push("unsupportedAttributes");
+  }
+
+  const kind = characteristicKind(modifier.type);
+  if (modifier.type === undefined) {
+    issues.push("missingType");
+  } else if (kind === undefined) {
+    issues.push("unsupportedType");
+  }
+  if (modifier.value === undefined) {
+    issues.push("missingValue");
+  }
+
+  if (issues.length === 0 && kind !== undefined && modifier.value !== undefined) {
+    return {
+      step: {
+        status: "applied",
+        modifier,
+        grouped,
+        kind,
+        input,
+        output: modifier.value,
+      },
+      diagnostics: [],
+    };
+  }
+
+  return {
+    step: {
+      status: "unapplied",
+      modifier,
+      grouped,
+      input,
+      issues,
+      ...(kind === undefined ? {} : { kind }),
+    },
+    diagnostics: issues.map((issue) => modifierDiagnostic(modifier, issue)),
+  };
+}
+
+function currentValue<Modifier extends RosterCharacteristicModifierSource>(
+  steps: readonly RosterCharacteristicStep<Modifier>[],
+  baseValue: string,
+): string {
+  for (let index = steps.length - 1; index >= 0; index -= 1) {
+    const step = steps[index];
+    if (step !== undefined && step.status === "applied") {
+      return step.output;
+    }
+  }
+  return baseValue;
+}
+
+/**
+ * The effective value is known when nothing after the last applied step could
+ * still change it. Every supported operation replaces its input rather than
+ * reading it, so an unapplied step before the last applied step cannot affect
+ * the result. An unapplied step after it leaves the value unknown.
+ */
+function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
+  steps: readonly RosterCharacteristicStep<Modifier>[],
+  baseValue: string,
+): string | undefined {
+  let lastApplied = -1;
+  for (let index = 0; index < steps.length; index += 1) {
+    if (steps[index]?.status === "applied") {
+      lastApplied = index;
+    }
+  }
+  for (let index = lastApplied + 1; index < steps.length; index += 1) {
+    if (steps[index]?.status === "unapplied") {
+      return undefined;
+    }
+  }
+  return currentValue(steps, baseValue);
+}
+
+function characteristicKind(
+  value: string | undefined,
+): RosterCharacteristicModifierKind | undefined {
+  return value === "set" ? value : undefined;
+}
+
+function routableCharacteristicTypeIds(
+  characteristics: readonly RosterCharacteristicSource[],
+): ReadonlyMap<ObjectId, number> {
+  const counts = new Map<ObjectId, number>();
+  for (const { typeId } of characteristics) {
+    if (typeId !== undefined) {
+      counts.set(typeId, (counts.get(typeId) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function targetsRoutableCharacteristic(
+  modifier: RosterCharacteristicModifierSource,
+  routable: ReadonlyMap<ObjectId, number>,
+): boolean {
+  return (
+    modifier.field !== undefined &&
+    routable.get(modifier.field as ObjectId) === 1
+  );
+}
+
+function routingReason(
+  modifier: RosterCharacteristicModifierSource,
+  routable: ReadonlyMap<ObjectId, number>,
+): RosterCharacteristicRoutingReason | undefined {
+  if (modifier.field === undefined) {
+    return "missingField";
+  }
+  const matches = routable.get(modifier.field as ObjectId) ?? 0;
+  if (matches === 1) {
+    return undefined;
+  }
+  return matches === 0 ? "characteristicAbsent" : "characteristicAmbiguous";
+}
+
+function groupTargetsRoutableCharacteristic<
+  Modifier extends RosterCharacteristicModifierSource,
+>(
+  group: RosterModifierGroupSource<Modifier>,
+  routable: ReadonlyMap<ObjectId, number>,
+): boolean {
+  return (
+    group.modifiers.some((modifier) =>
+      targetsRoutableCharacteristic(modifier, routable),
+    ) ||
+    group.modifierGroups.some((child) =>
+      groupTargetsRoutableCharacteristic(child, routable),
+    )
+  );
+}
+
+function groupedTargetCount<
+  Modifier extends RosterCharacteristicModifierSource,
+>(group: RosterModifierGroupSource<Modifier>, typeId: ObjectId): number {
+  return (
+    group.modifiers.filter(({ field }) => field === typeId).length +
+    group.modifierGroups.reduce(
+      (count, child) => count + groupedTargetCount<Modifier>(child, typeId),
+      0,
+    )
+  );
+}
+
+function profileOwnedModifiers<
+  Modifier extends RosterCharacteristicModifierSource,
+>(
+  profile: RosterCharacteristicProfileSource<
+    RosterCharacteristicSource,
+    Modifier
+  >,
+): readonly { readonly modifier: Modifier; readonly grouped: boolean }[] {
+  const owned: { readonly modifier: Modifier; readonly grouped: boolean }[] =
+    profile.modifiers.map((modifier) => ({ modifier, grouped: false }));
+
+  const visit = (group: RosterModifierGroupSource<Modifier>): void => {
+    for (const modifier of group.modifiers) {
+      owned.push({ modifier, grouped: true });
+    }
+    for (const child of group.modifierGroups) {
+      visit(child);
+    }
+  };
+  for (const group of profile.modifierGroups) {
+    visit(group);
+  }
+  return owned;
+}
+
+/**
+ * `comment` is already treated as inert metadata on modifier groups and
+ * conditions, so it does not make a characteristic modifier unsupported here.
+ */
+function unsupportedAttributes(
+  modifier: RosterCharacteristicModifierSource,
+): readonly string[] {
+  const supported = new Set(["type", "field", "value", "scope", "comment"]);
+  return Object.keys(modifier.node.attributes).filter(
+    (attribute) => !supported.has(attribute),
+  );
+}
+
+function modifierDiagnostic(
+  modifier: RosterCharacteristicModifierSource,
+  issue: RosterCharacteristicModifierIssue,
+): Diagnostic {
+  const descriptions: Record<
+    RosterCharacteristicModifierIssue,
+    readonly [string, string, string | undefined]
+  > = {
+    applicabilityUnresolved: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_APPLICABILITY_UNRESOLVED",
+      "A characteristic modifier's applicability could not be resolved.",
+      undefined,
+    ],
+    repeated: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_REPEAT_UNSUPPORTED",
+      "A characteristic modifier has repeat behavior that is not evaluated.",
+      undefined,
+    ],
+    scoped: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_SCOPE_UNSUPPORTED",
+      "A characteristic modifier has scoped behavior that is not evaluated.",
+      "scope",
+    ],
+    unsupportedAttributes: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_ATTRIBUTES_UNSUPPORTED",
+      "A characteristic modifier has generic attributes with unsupported behavior.",
+      unsupportedAttributes(modifier)[0],
+    ],
+    missingType: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_MISSING",
+      "A characteristic modifier has no operation type.",
+      "type",
+    ],
+    unsupportedType: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_UNSUPPORTED",
+      `Characteristic modifier operation ${modifier.type} is not supported.`,
+      "type",
+    ],
+    missingValue: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING",
+      "A characteristic modifier has no replacement value.",
+      "value",
+    ],
+  };
+  const [code, message, attribute] = descriptions[issue];
+  return characteristicDiagnostic(modifier, code, message, attribute, {
+    issue,
+    type: modifier.type,
+    field: modifier.field,
+    value: modifier.value,
+    scope: modifier.scope,
+    attributes: modifier.node.attributes,
+  });
+}
+
+function routingDiagnostic(
+  modifier: RosterCharacteristicModifierSource,
+  reason: RosterCharacteristicRoutingReason,
+): Diagnostic {
+  const descriptions: Record<
+    RosterCharacteristicRoutingReason,
+    readonly [string, string, string | undefined]
+  > = {
+    missingField: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING",
+      "A profile-owned modifier has no target field, so its display behavior is unknown.",
+      "field",
+    ],
+    characteristicAbsent: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING",
+      "A profile-owned modifier does not target a characteristic type on its own profile.",
+      "field",
+    ],
+    characteristicAmbiguous: [
+      "EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_AMBIGUOUS",
+      "A profile has more than one characteristic of the modifier's target type.",
+      "field",
+    ],
+  };
+  const [code, message, attribute] = descriptions[reason];
+  return characteristicDiagnostic(modifier, code, message, attribute, {
+    reason,
+    type: modifier.type,
+    field: modifier.field,
+    attributes: modifier.node.attributes,
+  });
+}
+
+function characteristicDiagnostic(
+  modifier: RosterCharacteristicModifierSource,
+  code: string,
+  message: string,
+  attribute: string | undefined,
+  details: Readonly<Record<string, unknown>>,
+): Diagnostic {
+  return {
+    code,
+    message,
+    severity: "warning",
+    impacts: ["validation", "compatibility"],
+    location: {
+      source: modifier.source,
+      path:
+        attribute === undefined
+          ? modifier.path
+          : [...modifier.path, `@${attribute}`],
+    },
+    details,
+  };
+}

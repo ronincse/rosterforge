@@ -872,6 +872,43 @@ Unsupported or unresolved hidden behavior never creates a false structural
 violation. It remains available through diagnostics and makes the structural
 report incomplete.
 
+Characteristic-display evaluation can emit:
+
+```text
+EVALUATION_CHARACTERISTIC_MODIFIER_APPLICABILITY_UNRESOLVED
+EVALUATION_CHARACTERISTIC_MODIFIER_REPEAT_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_MODIFIER_SCOPE_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_MODIFIER_ATTRIBUTES_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_MISSING
+EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING
+EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING
+EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_AMBIGUOUS
+```
+
+Attribute-shaped problems point to the exact modifier attribute; the generic
+code points to the first unsupported attribute and keeps the complete attribute
+map in details. `comment` is recognized as inert metadata and does not trigger
+it, matching modifier groups and conditions. `set` is the only executed
+operation, so every other observed kind — including `increment`, `decrement`,
+`floor`, `ceil`, `append`, and `replace` — produces the unsupported-type code
+and leaves its step unapplied.
+
+The two target codes describe routing rather than execution.
+`TARGET_MISSING` covers a profile-owned modifier with no `field`, a `field` that
+names no characteristic on its own profile, and non-characteristic display
+fields such as `hidden`, `name`, and the observed `annotation` extension.
+`TARGET_AMBIGUOUS` covers a profile that repeats one characteristic type; no
+match is chosen. Both keep the modifier observable in `unroutedModifiers` and
+make the profile report incomplete.
+
+A not-applicable step emits nothing and does not make a report incomplete. Every
+other unapplied step makes both its characteristic and the profile report
+incomplete, while the effective value can still be known when no unapplied step
+follows the last applied step. Condition, modifier-group, and repeat diagnostics
+retain their ordinary codes and locations. This evaluator sets no validity state
+and never mutates a roster.
+
 Unresolved candidates widen the report's count interval. A report may still
 have `status: "satisfied" | "unsatisfied"` when every count inside that interval
 has the same outcome; this does not change its incomplete completeness. The

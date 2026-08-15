@@ -1,3 +1,4 @@
+export * from "./characteristics.js";
 export * from "./costs.js";
 export * from "./conditions.js";
 export * from "./constraints.js";
