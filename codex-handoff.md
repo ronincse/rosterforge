@@ -12,12 +12,15 @@ and all four checks passing before a task is complete.
 ## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first five Task 8 checkpoints — profile modifier
+checkpoint, and the first six Task 8 checkpoints — profile modifier
 projection, headless characteristic-display evaluation, its workspace
-presentation, profile visibility, and `affects` selector parsing — are
-complete. The current
+presentation, profile visibility, `affects` selector parsing, and category-entry
+information projection — are complete. The current
 normal suite passes 382 tests with four skipped, and the pinned real-data suite
 passes all four tests.
+
+**Work is paused pending one decision.** See "Blocking question — dynamic
+category membership" at the end of this document.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -348,16 +351,92 @@ and would leave any unresolved or ambiguous type incomplete.
 
 ### Next recommended boundary
 
-1. **`affects` execution**, once the three decisions above are made. It is the
-   largest remaining unlock and the grammar work is done.
-2. **`category` modifiers** (892, 99.8% decidable), which drive dynamic
-   keywords. Note the 89 entry-terminated `affects` paths belong to this
-   surface, so the two are related.
-3. **Category-entry profiles**, a small projection-only checkpoint closing the
-   13,450/13,451 gap.
+`affects` execution remains blocked on the three decisions above. Category-entry
+projection was completed in the checkpoint below; category modifiers are blocked
+on a separate decision recorded at the end of this document.
 
-Do not bundle these. `name` modifiers remain last despite their raw count,
-since 86% are Crusade rank labels.
+## Completed Assignment — Category-Entry Information, 2026-08-14
+
+Baseline `0056a7a`; resulting commit `42cda92` (`feat: project category-entry
+profiles, rules, and info links`). Not pushed, no pull request.
+
+Real BSData puts information collections on category entries even though
+BattleScribe 2.03 does not declare them there. Three entries in the pinned
+corpus do: `Recon Augury` owns a profile, `Faction: Legions of Excess` owns a
+rule, and `Shadow Legion` owns a `rule` info link. All three collections are now
+projected, the rules and profiles are indexed as ordinary graph objects, and
+their info-link targets and profile type references resolve like any other
+container's.
+
+Typed-projection counts now match the source at **13,451 profiles and 154
+profile-owned `hidden` modifiers**, closing the 13,450/153 gap the visibility
+checkpoint recorded. The corpus guard was updated accordingly.
+
+This is projection only. It does not make a category entry selectable or give it
+evaluation behavior, and nothing materializes a category entry into a roster
+occurrence, so these profiles and rules are observable through the graph rather
+than rendered in occurrence details.
+
+Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check`
+clean; `pnpm test` **382 passed, 4 skipped**; pinned real-data suite **4
+passed**.
+
+## Blocking question — dynamic category membership
+
+The `category` modifier surface was inventoried but **not implemented**, because
+executing it changes the meaning of an already-shipped evaluation surface. This
+needs a decision before any code.
+
+### What the corpus contains
+
+| Dimension | Measurement |
+|---|---|
+| `field="category"` modifiers | **892** |
+| Operations | 532 `add`, 328 `set-primary`, 27 `remove`, 5 `unset-primary` |
+| Values | 892 of 892 resolve to a category entry |
+| Owners | 747 selection entries, 145 entry links |
+| Ownership | 566 direct, 326 grouped |
+| Scope | 611 scope-free; 281 scoped (`root-entry` 99, `parent` 78, `model` 68, `upgrade` 31, `force` 4, `roster` 1) |
+| Extensions | `affects` 89, `arg` 83, `join` 79, `comment` 2 |
+| Conditions | 463 with conditions, 4 with condition groups, 0 repeats |
+| Scope-free, extension-free, resolving | **611** — 274 `add`, 325 `set-primary`, 9 `remove`, 3 `unset-primary`; 429 direct, 182 grouped; only **54 unconditional** |
+
+The operations themselves are not the problem. `add`/`remove`/`set-primary`/
+`unset-primary` over a membership set derived from the materialized
+`categoryLinks` is a well-defined model, and every value resolves.
+
+### Why it is blocked
+
+**Categories already feed condition identity.** `selectionChoiceIdentityIds`
+includes every `categoryLink.targetId`, so category membership is already an
+input to the condition evaluator. The corpus has **5,047 conditions that
+reference a category entry** — 1,991 `instanceOf`, 2,146 `notInstanceOf`, and
+910 numeric counts. Those conditions currently evaluate against *static*
+category links, and costs, constraints, visibility, and structural status all
+depend on them.
+
+Making category modifiers executable therefore forks:
+
+1. **Effective categories feed back into conditions.** Faithful, but it changes
+   the result of 5,047 existing conditions and every report built on them. It
+   also introduces a real cycle: **7 of the 892 category modifiers have
+   conditions that themselves query a category**, so evaluation order has to be
+   defined rather than discovered at runtime.
+2. **Conditions keep using static links; effective categories stay a separate
+   display-only concept.** No existing behavior changes and there is no cycle,
+   but the two notions of "category" then disagree, and the second one is not
+   used by anything that matters.
+
+Neither is derivable from the data. Option 1 is the larger and riskier change
+and would want its own baseline measurement of which pinned assertions move;
+option 2 is cheap but arguably not worth doing.
+
+A third possibility is to defer the surface entirely and spend the next
+checkpoint on `affects` execution instead, once its own three decisions are
+made.
+
+`name` modifiers remain last despite their raw count, since 86% are Crusade rank
+labels.
 
 Grouped `hidden` modifiers now participate in read-only visibility. Grouped
 cost modifiers now participate in `selectionConditions` cost reports through
