@@ -168,6 +168,9 @@ function projectCategoryEntry(
     constraints: mapContainer(located, "constraints", "constraint", context, projectConstraint),
     modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
     modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
+    infoLinks: mapContainer(located, "infoLinks", "infoLink", context, projectInfoLink),
+    rules: mapContainer(located, "rules", "rule", context, projectRule),
+    profiles: mapContainer(located, "profiles", "profile", context, projectProfile),
   };
 }
 

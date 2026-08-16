@@ -241,6 +241,9 @@ export interface CategoryEntryProjection extends IdentifiedBattleScribeNode {
   readonly constraints: readonly ConstraintProjection[];
   readonly modifiers: readonly ModifierProjection[];
   readonly modifierGroups: readonly ModifierGroupProjection[];
+  readonly infoLinks: readonly InfoLinkProjection[];
+  readonly rules: readonly RuleProjection[];
+  readonly profiles: readonly ProfileProjection[];
 }
 
 export interface CategoryLinkProjection extends LinkBattleScribeNode {

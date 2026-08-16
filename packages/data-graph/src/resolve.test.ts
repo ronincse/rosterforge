@@ -100,6 +100,27 @@ describe("BattleScribe data graph resolution", () => {
     expect(referenceTargets(graph.value, "repeatChild")).toContain(
       "entry-option",
     );
+    // Category-entry rules and profiles are ordinary graph objects, and their
+    // info links and type references resolve like any other container's.
+    expect(
+      graph.value.objects.some(
+        (object) => object.kind === "rule" && object.id === "category-rule",
+      ),
+    ).toBe(true);
+    expect(
+      graph.value.objects.some(
+        (object) =>
+          object.kind === "profile" && object.id === "category-profile",
+      ),
+    ).toBe(true);
+    expect(
+      graph.value.references.some(
+        (reference) =>
+          reference.kind === "infoLink" &&
+          reference.source.node.attributes.id === "category-info-link" &&
+          reference.targets.some((target) => target.id === "rule-steady"),
+      ),
+    ).toBe(true);
     expect(
       graph.diagnostics.some(
         (diagnostic) => diagnostic.code === "BS_GRAPH_MISSING_REFERENCE",

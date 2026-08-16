@@ -119,7 +119,7 @@ cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
 non-`set` characteristic operations, `affects` retargeting execution,
 `join`/`arg`/`position` behavior, characteristic modifiers owned outside their
-profile, category-entry-owned profiles, modifier-group repeats, constraint
+profile, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,
 roster reordering, and BattleScribe .ros/.rosz import and interchange export.
 

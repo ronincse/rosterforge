@@ -52,6 +52,22 @@ describe("BattleScribe 2.03 typed projections", () => {
     expect(projection.categoryEntries[0]?.publicationLinks[0]?.targetId).toBe(
       "publication-core",
     );
+    // Real data puts profiles, rules, and info links on category entries even
+    // though BattleScribe 2.03 does not declare them there.
+    expect(projection.categoryEntries[0]?.profiles[0]).toMatchObject({
+      id: "category-profile",
+      typeId: "profile-type-unit",
+      characteristics: [{ name: "Move", value: '5"' }],
+    });
+    expect(projection.categoryEntries[0]?.rules[0]).toMatchObject({
+      id: "category-rule",
+      description: "Owned by a category entry.",
+    });
+    expect(projection.categoryEntries[0]?.infoLinks[0]).toMatchObject({
+      id: "category-info-link",
+      type: "rule",
+      targetId: "rule-steady",
+    });
     expect(projection.forceEntries[0]?.constraints[0]).toMatchObject({
       scope: "force",
       value: 0,

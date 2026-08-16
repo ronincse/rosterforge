@@ -32,6 +32,23 @@
       <bs:publicationLinks>
         <bs:publicationLink id="publication-link-category" name="Core" targetId="publication-core" />
       </bs:publicationLinks>
+      <bs:profiles>
+        <bs:profile id="category-profile" name="Category Profile"
+          typeId="profile-type-unit" typeName="Unit">
+          <bs:characteristics>
+            <bs:characteristic name="Move" typeId="characteristic-move">5"</bs:characteristic>
+          </bs:characteristics>
+        </bs:profile>
+      </bs:profiles>
+      <bs:rules>
+        <bs:rule id="category-rule" name="Category Rule">
+          <bs:description>Owned by a category entry.</bs:description>
+        </bs:rule>
+      </bs:rules>
+      <bs:infoLinks>
+        <bs:infoLink id="category-info-link" name="Category Info"
+          targetId="rule-steady" type="rule" />
+      </bs:infoLinks>
     </bs:categoryEntry>
   </bs:categoryEntries>
   <bs:forceEntries>

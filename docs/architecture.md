@@ -37,6 +37,12 @@ characteristic-type definitions, profile-owned modifiers, and recursive force
 entries. It does not
 resolve IDs or interpret rules.
 
+Category entries additionally project the observed `profiles`, `rules`, and
+`infoLinks` collections. BattleScribe 2.03 does not declare them there, but real
+data uses all three, so they are projected rather than left to the generic node.
+This is projection only: it does not make a category entry selectable or give it
+evaluation behavior.
+
 `data-graph` consumes already-parsed BattleScribe documents. It builds
 read-only ID indexes and reference records for known projected objects, then
 reports duplicate IDs, missing references, and catalogue-link cycles as

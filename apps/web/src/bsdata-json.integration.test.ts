@@ -250,25 +250,21 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          // The corpus has 13,451 profiles and 154 profile-owned hidden
-          // modifiers. One profile is owned by the `Recon Augury` category
-          // entry, which the 2.03 typed category surface does not project, so
-          // it is observable only through the generic source node.
-          profiles: 13_450,
+          profiles: 13_451,
           staticHidden: 1,
-          total: 153,
-          direct: 153,
+          total: 154,
+          direct: 154,
           grouped: 0,
-          set: 153,
+          set: 154,
           otherOperations: 0,
-          booleanTrue: 153,
+          booleanTrue: 154,
           booleanFalse: 0,
           scoped: 0,
-          withConditions: 124,
+          withConditions: 125,
           withConditionGroups: 29,
           withRepeats: 0,
           extensionAttributes: 0,
-          supportedShape: 153,
+          supportedShape: 154,
         });
         expect(
           groupedHiddenModifierSummary(
@@ -1347,6 +1343,12 @@ function projectedModifiers(
     for (const profile of projection.profiles) {
       addOwner(profile);
     }
+    for (const entry of projection.categoryEntries) {
+      addOwner(entry);
+      for (const profile of entry.profiles) {
+        addOwner(profile);
+      }
+    }
     for (const group of projection.infoGroups) {
       visitInfoGroup(group);
     }
@@ -1669,6 +1671,9 @@ function projectedProfiles(
 
   for (const projection of projections) {
     profiles.push(...projection.profiles);
+    for (const entry of projection.categoryEntries) {
+      profiles.push(...entry.profiles);
+    }
     for (const group of projection.infoGroups) {
       visitInfoGroup(group);
     }

@@ -240,7 +240,15 @@ function objectsForCategoryEntry(
   categoryEntry: CategoryEntryProjection,
   document: ParsedBattleScribeDocument,
 ): readonly BattleScribeGraphObject[] {
-  return identifiedObject("categoryEntry", categoryEntry, document);
+  return [
+    ...identifiedObject("categoryEntry", categoryEntry, document),
+    ...categoryEntry.rules.flatMap((rule) =>
+      identifiedObject("rule", rule, document),
+    ),
+    ...categoryEntry.profiles.flatMap((profile) =>
+      identifiedObject("profile", profile, document),
+    ),
+  ];
 }
 
 function objectsForForceEntry(
@@ -446,6 +454,20 @@ function referencesForCategoryEntry(
     ...referencesForModifierCarrier(entry, document, objectsById, diagnostics),
     ...entry.constraints.flatMap((constraint) =>
       referencesForConstraint(constraint, document, objectsById, diagnostics),
+    ),
+    ...entry.infoLinks.flatMap((infoLink) =>
+      targetReference(
+        "infoLink",
+        infoLink,
+        document,
+        infoLink.targetId,
+        expectedInfoLinkKinds(infoLink),
+        objectsById,
+        diagnostics,
+      ),
+    ),
+    ...entry.profiles.flatMap((profile) =>
+      referencesForProfile(profile, document, objectsById, diagnostics),
     ),
   ];
 }

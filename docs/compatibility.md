@@ -11,7 +11,8 @@
 - Typed, read-only BattleScribe 2.03 projections for:
   - catalogue links and game-system references;
   - cost types, publications, and publication links;
-  - category entries and recursively nested force entries;
+  - category entries, including their observed profiles, rules, and info
+    links, and recursively nested force entries;
   - selection entries, selection-entry groups, shared entries, and entry links;
   - category links, info links, shared and inline info groups, rules, profiles,
     and characteristics;
@@ -360,9 +361,6 @@
 - Profile-owned `name` and observed `annotation` modifiers; they are retained as
   unrouted display behavior and make a characteristic report incomplete rather
   than being silently ignored
-- Category-entry-owned profiles, which BattleScribe 2.03 does not declare; the
-  one observed instance is preserved on the generic source node without a typed
-  projection, so it takes part in no evaluation
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or
@@ -778,16 +776,22 @@ the way condition identity already does, and whether matching a profile-type
 name is acceptable when the project otherwise refuses to infer targets from
 display names. Until those are decided, `affects` modifiers stay unapplied.
 
-One profile in the corpus is owned by a **category entry** rather than a
-selection, info group, or info link: `Recon Augury`
+Three category entries in the corpus carry information collections that
+BattleScribe 2.03 does not declare on a category entry. `Recon Augury`
 (`40ce-cefb-031e-75a4`) in `Imperium - Adeptus Mechanicus.json` owns the
 `Enhanced Augurs` Abilities profile, whose single conditional `set hidden`
-modifier is the 154th. BattleScribe 2.03's category-entry surface has no
-`profiles` collection, so RosterForge does not project it and it is observable
-only through the generic ordered source node. Every count taken from the typed
-projection is therefore 13,450 profiles and 153 profile-owned `hidden`
-modifiers. Whether category entries should gain a typed profile collection is a
-separate projection decision, not a visibility one.
+modifier is the 154th. `Faction: Legions of Excess` in
+`Chaos - Emperor's Children.json` owns a rule, and `Shadow Legion` in
+`Chaos - Chaos Daemons Library.json` owns a `rule` info link. All three
+collections are now projected, indexed as ordinary graph objects, and their
+references resolve like any other container's, so typed-projection counts match
+the source: 13,451 profiles and 154 profile-owned `hidden` modifiers.
+
+Projecting them does not make category entries selectable or give them
+evaluation behavior. Category definitions remain structural, and nothing
+materializes a category entry into a roster occurrence, so these profiles and
+rules are observable through the graph rather than rendered in occurrence
+details.
 
 The integration proof imports the six-file Adeptus Custodes closure — the game
 system, Adeptus Custodes, Imperial Knights Library, Agents of the Imperium,
