@@ -12,10 +12,11 @@ and all four checks passing before a task is complete.
 ## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first four Task 8 checkpoints — profile modifier
+checkpoint, and the first five Task 8 checkpoints — profile modifier
 projection, headless characteristic-display evaluation, its workspace
-presentation, and profile visibility — are complete. The current
-normal suite passes 373 tests with four skipped, and the pinned real-data suite
+presentation, profile visibility, and `affects` selector parsing — are
+complete. The current
+normal suite passes 382 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
@@ -267,14 +268,93 @@ pinned by the corpus guard's comment.
 
 ### Next recommended boundary
 
-1. **`affects` retargeting.** Still the largest unlock (1,257 characteristic
-   modifiers) and still needs a real decision about profile families selected by
-   `typeName` versus `typeId`, and about recursive entry traversal, before any
-   code is written.
+Partly addressed by the following checkpoint, which closed the grammar question
+without committing to execution semantics.
+
+## Completed Assignment — Affects Selector Parsing, 2026-08-14
+
+Baseline `7d3d1b0`; resulting commit `59757d9` (`feat: parse the affects
+selector grammar`). Not pushed, no pull request.
+
+This checkpoint deliberately took the inspection-and-reporting exit the original
+Task 8 assignment allows: the grammar is now closed and pinned, but nothing
+executes, because three semantic decisions remain genuinely unsettled by the
+source shape.
+
+### Results
+
+`packages/evaluation/src/affects.ts` adds
+`parseBattleScribeAffectsSelector(value)`. It is pure syntax — no roster, no
+catalogue, no target selection, no execution — and returns the traversal, an
+optional filter ID, an optional profile-type name, and explicit issues. No
+evaluator consumes it, so `affects` modifiers remain preserved and unapplied
+exactly as before.
+
+The supported shape is
+`[self.][entries.][recursive.][<filterId>.]profiles.<profileTypeName>`. The
+corpus establishes the traversal contrast itself: both
+`self.entries.profiles.X` and `self.entries.recursive.profiles.X` occur, so
+`entries` alone is the direct child collection and `recursive` extends it to
+descendants. That inference comes from the data's own contrast, not from
+outside knowledge.
+
+### Pinned corpus grammar
+
+| Dimension | Measurement |
+|---|---|
+| Occurrences / distinct values | 1,859 / **79** |
+| Segment vocabulary | closed: `self`, `entries`, `forces`, `recursive`, `profiles`, a profile-type name, or one object ID |
+| Parses | **1,730 supported**, 129 unsupported |
+| Unsupported | 24 force traversals, 106 entry-terminated paths (one value has both) |
+| Traversal | 344 owner-only, 168 direct-child, 1,347 recursive |
+| Filter IDs | 428 total — 427 category entries, 1 selection entry, **0 unresolved** |
+| Profile-type names | only **3 distinct**, all declared; 30 declared types have 30 distinct names |
+| Characteristic targets | 1,265 carry `affects`; **1,246** parse into the supported shape |
+
+### The three decisions execution still needs
+
+None is answerable from the source shape, so none was guessed.
+
+1. **Traversal semantics against roster occurrences.** `entries` and
+   `recursive` are clear in the abstract, but a roster tree nests occurrences
+   through entry links and transparent selection-entry groups. Whether
+   `entries` means direct child *occurrences*, direct child *definitions*, or
+   something that skips group containers changes which profiles are hit.
+2. **Category filtering.** 427 selectors embed a category-entry ID. The
+   condition evaluator already treats category-link target IDs as effective
+   selection identities, so reusing that rule is the obvious candidate — but
+   whether `affects` filters the traversal set or narrows the profile set is
+   not established.
+3. **Profile-type matching by name.** BattleScribe offers no ID form here; the
+   only selector is `profiles.<profileTypeName>`. The project otherwise refuses
+   to infer targets from display names, so matching by name is a real policy
+   exception even though it is what the format requires. It is safe in this
+   corpus (3 names, all declared, no collisions), but that is a property of the
+   data, not a guarantee.
+
+A reasonable execution checkpoint would resolve the name against declared
+profile types via `typeId` rather than the denormalized `typeName` string,
+and would leave any unresolved or ambiguous type incomplete.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck` — clean.
+- `pnpm test` — **382 passed, 4 skipped (386 total)**. Nine new parser tests.
+- `pnpm build` — passed, only Vite's existing large-chunk warning.
+- `git diff --check` — clean.
+- Pinned real-data suite — **4 passed** in 45.81 s. The new
+  `affectsSelectorSummary` guard runs the real parser over every projected
+  modifier and reproduced all of the numbers above on its first run.
+
+### Next recommended boundary
+
+1. **`affects` execution**, once the three decisions above are made. It is the
+   largest remaining unlock and the grammar work is done.
 2. **`category` modifiers** (892, 99.8% decidable), which drive dynamic
-   keywords.
-3. **Category-entry profiles**, a small projection-only checkpoint that would
-   close the 13,450/13,451 gap above.
+   keywords. Note the 89 entry-terminated `affects` paths belong to this
+   surface, so the two are related.
+3. **Category-entry profiles**, a small projection-only checkpoint closing the
+   13,450/13,451 gap.
 
 Do not bundle these. `name` modifiers remain last despite their raw count,
 since 86% are Crusade rank labels.
@@ -564,6 +644,10 @@ a per-profile incomplete note. It added no evaluation semantics.
 The fourth bounded checkpoint (`449c17f`) added profile visibility. All 154
 profile-owned `hidden` modifiers fit the supported Boolean `set` shape, and they
 no longer make a characteristic report incomplete.
+
+The fifth bounded checkpoint (`59757d9`) closed the `affects` grammar question
+with a pure parser and a pinned corpus guard. It deliberately stops short of
+execution; the three remaining semantic decisions are recorded below.
 
 ---
 
