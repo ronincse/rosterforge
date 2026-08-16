@@ -12,7 +12,10 @@ import type {
   ProfileProjection,
   SelectionContainerProjection,
 } from "@rosterforge/battlescribe-data";
-import { evaluateRosterProfileCharacteristics } from "@rosterforge/evaluation";
+import {
+  evaluateRosterProfileCharacteristics,
+  parseBattleScribeAffectsSelector,
+} from "@rosterforge/evaluation";
 import {
   pinGitHubRepository,
   planBattleScribeDependencyClosure,
@@ -215,6 +218,32 @@ describe.skipIf(realDataDirectory === undefined)(
           supportedSetSubset: 173,
           supportedSetDirect: 117,
           supportedSetGrouped: 56,
+        });
+        expect(
+          affectsSelectorSummary(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual({
+          total: 1_859,
+          distinctValues: 79,
+          supported: 1_730,
+          unsupported: 129,
+          traversalOwn: 344,
+          traversalChildren: 168,
+          traversalDescendants: 1_347,
+          forceTraversal: 24,
+          noProfileSelector: 106,
+          missingProfileTypeName: 0,
+          unexpectedSegment: 0,
+          empty: 0,
+          withFilterId: 428,
+          filterCategoryEntry: 427,
+          filterSelectionEntry: 1,
+          filterUnresolved: 0,
+          distinctProfileTypeNames: 3,
+          undeclaredProfileTypeNames: 0,
+          characteristicTargets: 1_265,
+          characteristicTargetsSupported: 1_246,
         });
         expect(
           profileOwnedVisibilityModifierSummary(
@@ -1265,6 +1294,213 @@ describe.skipIf(realDataDirectory === undefined)(
     );
   },
 );
+
+function projectedModifiers(
+  projections: readonly BattleScribeProjection[],
+): readonly ModifierProjection[] {
+  const modifiers: ModifierProjection[] = [];
+
+  const addGroup = (group: ModifierGroupProjection): void => {
+    modifiers.push(...group.modifiers);
+    for (const child of group.modifierGroups) {
+      addGroup(child);
+    }
+  };
+  const addOwner = (owner: {
+    readonly modifiers: readonly ModifierProjection[];
+    readonly modifierGroups: readonly ModifierGroupProjection[];
+  }): void => {
+    modifiers.push(...owner.modifiers);
+    for (const group of owner.modifierGroups) {
+      addGroup(group);
+    }
+  };
+  const visitInfoGroup = (group: InfoGroupProjection): void => {
+    addOwner(group);
+    for (const profile of group.profiles) {
+      addOwner(profile);
+    }
+    for (const child of group.infoGroups) {
+      visitInfoGroup(child);
+    }
+  };
+  const visitContainer = (container: SelectionContainerProjection): void => {
+    addOwner(container);
+    for (const profile of container.profiles) {
+      addOwner(profile);
+    }
+    for (const group of container.infoGroups) {
+      visitInfoGroup(group);
+    }
+    for (const entry of container.selectionEntries) {
+      visitContainer(entry);
+    }
+    for (const group of container.selectionEntryGroups) {
+      visitContainer(group);
+    }
+    for (const link of container.entryLinks) {
+      visitContainer(link);
+    }
+  };
+
+  for (const projection of projections) {
+    for (const profile of projection.profiles) {
+      addOwner(profile);
+    }
+    for (const group of projection.infoGroups) {
+      visitInfoGroup(group);
+    }
+    for (const entry of projection.selectionEntries) {
+      visitContainer(entry);
+    }
+    for (const group of projection.selectionEntryGroups) {
+      visitContainer(group);
+    }
+    for (const entry of projection.sharedSelectionEntries) {
+      visitContainer(entry);
+    }
+    for (const group of projection.sharedSelectionEntryGroups) {
+      visitContainer(group);
+    }
+    for (const link of projection.entryLinks) {
+      visitContainer(link);
+    }
+  }
+  return modifiers;
+}
+
+function projectedSelectionEntryIds(
+  projections: readonly BattleScribeProjection[],
+): ReadonlySet<string> {
+  const ids = new Set<string>();
+  const visit = (container: SelectionContainerProjection): void => {
+    for (const entry of container.selectionEntries) {
+      if (entry.id !== undefined) ids.add(entry.id);
+      visit(entry);
+    }
+    for (const group of container.selectionEntryGroups) {
+      visit(group);
+    }
+    for (const link of container.entryLinks) {
+      visit(link);
+    }
+  };
+  for (const projection of projections) {
+    for (const entry of [
+      ...projection.selectionEntries,
+      ...projection.sharedSelectionEntries,
+    ]) {
+      if (entry.id !== undefined) ids.add(entry.id);
+      visit(entry);
+    }
+    for (const group of [
+      ...projection.selectionEntryGroups,
+      ...projection.sharedSelectionEntryGroups,
+    ]) {
+      visit(group);
+    }
+    for (const link of projection.entryLinks) {
+      visit(link);
+    }
+  }
+  return ids;
+}
+
+function affectsSelectorSummary(
+  projections: readonly BattleScribeProjection[],
+): Readonly<Record<string, number>> {
+  const characteristicTypeIds = new Set<string>(
+    projections.flatMap(({ profileTypes }) =>
+      profileTypes.flatMap(({ characteristicTypes }) =>
+        characteristicTypes.flatMap(({ id }) => id ?? []),
+      ),
+    ),
+  );
+  const declaredProfileTypeNames = new Set<string>(
+    projections.flatMap(({ profileTypes }) =>
+      profileTypes.flatMap(({ name }) => name ?? []),
+    ),
+  );
+  const categoryEntryIds = new Set<string>(
+    projections.flatMap(({ categoryEntries }) =>
+      categoryEntries.flatMap(({ id }) => id ?? []),
+    ),
+  );
+  const selectionEntryIds = projectedSelectionEntryIds(projections);
+
+  const counts: Record<string, number> = {
+    total: 0,
+    distinctValues: 0,
+    supported: 0,
+    unsupported: 0,
+    traversalOwn: 0,
+    traversalChildren: 0,
+    traversalDescendants: 0,
+    forceTraversal: 0,
+    noProfileSelector: 0,
+    missingProfileTypeName: 0,
+    unexpectedSegment: 0,
+    empty: 0,
+    withFilterId: 0,
+    filterCategoryEntry: 0,
+    filterSelectionEntry: 0,
+    filterUnresolved: 0,
+    distinctProfileTypeNames: 0,
+    undeclaredProfileTypeNames: 0,
+    characteristicTargets: 0,
+    characteristicTargetsSupported: 0,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+  const values = new Set<string>();
+  const profileTypeNames = new Set<string>();
+  const undeclared = new Set<string>();
+
+  for (const modifier of projectedModifiers(projections)) {
+    const value = modifier.node.attributes.affects;
+    if (value === undefined) continue;
+    add("total");
+    values.add(value);
+    const parsed = parseBattleScribeAffectsSelector(value);
+    add(parsed.supported ? "supported" : "unsupported");
+    add(
+      parsed.traversal === "own"
+        ? "traversalOwn"
+        : parsed.traversal === "children"
+          ? "traversalChildren"
+          : "traversalDescendants",
+    );
+    for (const issue of parsed.issues) add(issue);
+    if (parsed.filterId !== undefined) {
+      add("withFilterId");
+      add(
+        categoryEntryIds.has(parsed.filterId)
+          ? "filterCategoryEntry"
+          : selectionEntryIds.has(parsed.filterId)
+            ? "filterSelectionEntry"
+            : "filterUnresolved",
+      );
+    }
+    if (parsed.profileTypeName !== undefined) {
+      profileTypeNames.add(parsed.profileTypeName);
+      if (!declaredProfileTypeNames.has(parsed.profileTypeName)) {
+        undeclared.add(parsed.profileTypeName);
+      }
+    }
+    if (
+      modifier.field !== undefined &&
+      characteristicTypeIds.has(modifier.field)
+    ) {
+      add("characteristicTargets");
+      if (parsed.supported) add("characteristicTargetsSupported");
+    }
+  }
+  counts.distinctValues = values.size;
+  counts.distinctProfileTypeNames = profileTypeNames.size;
+  counts.undeclaredProfileTypeNames = undeclared.size;
+  return counts;
+}
 
 function realJsonFiles(directory: string): readonly LocalBattleScribeFile[] {
   return readdirSync(directory)

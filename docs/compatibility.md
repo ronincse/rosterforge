@@ -336,6 +336,10 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- Pure decomposition of the observed `affects` selector grammar into traversal,
+  optional filter ID, and profile-type name, with explicit unsupported issues
+  for force traversal and entry-terminated paths; parsing performs no
+  resolution and no execution
 
 ## Parsed But Not Evaluated
 
@@ -346,9 +350,13 @@
   `floor`, `ceil`, `append`, and `replace` each need an unestablished lexical
   arithmetic, separator, or search rule for observed values such as `3+`, `36"`,
   and `D6`. They remain ordered, observable, and unapplied.
-- Generic `affects`, `join`, `arg`, and `position` behavior on characteristic
-  modifiers, and characteristic modifiers owned by selection entries, entry
-  links, info links, or info groups rather than by the profile itself
+- `affects` retargeting behavior. The selector grammar is now parsed and
+  pinned, but no evaluator consumes it: modifiers carrying `affects` remain
+  preserved and unapplied, and the traversal, category filtering, and
+  profile-type resolution semantics are still undecided.
+- Generic `join`, `arg`, and `position` behavior on characteristic modifiers,
+  and characteristic modifiers owned by selection entries, entry links, info
+  links, or info groups rather than by the profile itself
 - Profile-owned `name` and observed `annotation` modifiers; they are retained as
   unrouted display behavior and make a characteristic report incomplete rather
   than being silently ignored
@@ -745,6 +753,30 @@ makes a characteristic report incomplete; visibility owns its own completeness.
 The remaining `annotation`, `name`, and cross-profile characteristic modifiers
 are still retained as unrouted display behavior and still make their
 characteristic report incomplete.
+
+The `affects` selector grammar is closed at the pinned commit. Its 1,859
+occurrences use only 79 distinct values, and every segment falls into a small
+closed vocabulary: `self`, `entries`, `forces`, `recursive`, `profiles`, a
+profile-type name, or one object ID. Nothing is unresolved and nothing is
+unclassified.
+
+Parsing those 1,859 values yields 1,730 supported selectors and 129 unsupported
+ones. Traversal splits 344 owner-only, 168 direct-child, and 1,347 recursive.
+The 129 unsupported are 24 force traversals and 106 paths that stop at an entry
+rather than a profile, with one value carrying both issues. 428 selectors embed
+one filter ID: 427 resolve to a category entry and one to a selection entry, and
+none is unresolved. Only three distinct profile-type names appear across the
+whole corpus, and all three are declared profile types; the 30 declared types
+have 30 distinct names, so no name is ambiguous.
+
+Of the 1,265 characteristic-targeting modifiers that carry `affects`, 1,246
+parse into the supported shape. That is a statement about syntax only. Execution
+still needs three decisions that the source shape does not settle: whether
+`entries` traversal crosses entry links and groups the way roster occurrences
+nest, whether an embedded category ID filters occurrences by category membership
+the way condition identity already does, and whether matching a profile-type
+name is acceptable when the project otherwise refuses to infer targets from
+display names. Until those are decided, `affects` modifiers stay unapplied.
 
 One profile in the corpus is owned by a **category entry** rather than a
 selection, info group, or info link: `Recon Augury`

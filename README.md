@@ -88,6 +88,9 @@ This repository currently contains the first development slice:
   operations, extensions, and unrouted profile modifiers as incomplete;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
+- pure parsing of the observed `affects` selector grammar into traversal,
+  optional filter ID, and profile-type name, with explicit unsupported issues
+  and no resolution or execution;
 - evaluated characteristic values in occurrence details, showing the effective
   value, the source value as a labelled base when it changed, an explicit
   unresolved label, a hidden/unresolved visibility label, and a per-profile
@@ -114,9 +117,9 @@ repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
 cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
-non-`set` characteristic operations, `affects`/`join`/`arg`/`position`
-retargeting, characteristic modifiers owned outside their profile,
-category-entry-owned profiles, modifier-group repeats, constraint
+non-`set` characteristic operations, `affects` retargeting execution,
+`join`/`arg`/`position` behavior, characteristic modifiers owned outside their
+profile, category-entry-owned profiles, modifier-group repeats, constraint
 enforcement, full legality validation, automatic saving, durable undo history,
 roster reordering, and BattleScribe .ros/.rosz import and interchange export.
 

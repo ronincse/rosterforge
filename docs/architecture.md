@@ -1178,6 +1178,33 @@ condition evaluator cannot resolve remain incomplete. The evaluator does not
 expand repeated operations into arrays, mutate source data, apply dynamic
 `defaultAmount` modifiers, or imply complete legality.
 
+## Affects Selector Boundary
+
+`parseBattleScribeAffectsSelector` decomposes an observed `affects` value into
+its parts. It is pure syntax: it resolves nothing against a roster or catalogue,
+chooses no target, and executes no modifier. A caller holding the modifier
+supplies the source location when turning an issue into a diagnostic.
+
+The supported shape is
+`[self.][entries.][recursive.][<filterId>.]profiles.<profileTypeName>`. The
+corpus establishes the traversal contrast itself: both
+`self.entries.profiles.X` and `self.entries.recursive.profiles.X` occur, so
+`entries` alone is the direct child collection and `recursive` extends it to all
+descendants. An absent `entries` segment leaves the selector on the owner's own
+profiles.
+
+A single object ID may narrow the traversal. The parser records it without
+deciding its kind, because resolving a category entry from a selection entry
+needs a catalogue graph. BattleScribe selects the target profile family by
+profile-type *name*; no ID form is observed, so a consumer must resolve that
+name against declared profile types rather than compare a profile's own display
+name.
+
+Force traversal and paths that stop at an entry rather than a profile are
+recorded as unsupported issues instead of being guessed. Parsing a selector is
+explicitly not permission to execute one: no evaluator currently consumes this
+result, and retargeted modifiers remain preserved and unapplied.
+
 ## Characteristic Display Boundary
 
 `evaluateRosterProfileCharacteristics` reports the effective displayed
