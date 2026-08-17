@@ -266,9 +266,9 @@ describe.skipIf(realDataDirectory === undefined)(
           withConditionGroups: 4,
           withRepeats: 0,
           valueResolvesToCategory: 892,
-          executable: 283,
-          executableAdd: 274,
-          executableRemove: 9,
+          executable: 428,
+          executableAdd: 401,
+          executableRemove: 27,
         });
         expect(
           categoryConditionImpactSummary(
@@ -278,11 +278,13 @@ describe.skipIf(realDataDirectory === undefined)(
         ).toEqual({
           categoryReferencingConditions: 5_047,
           unaffected: 3_340,
-          wouldBecomeKnown: 127,
-          staysUnresolved: 1_580,
+          // Supporting parent and root-entry anchors moved these from
+          // 127 / 1,580 / 30 / 70 before scope resolution.
+          wouldBecomeKnown: 1_048,
+          staysUnresolved: 659,
           controlledCategories: 100,
-          executableOnlyCategories: 30,
-          blockedCategories: 70,
+          executableOnlyCategories: 80,
+          blockedCategories: 20,
         });
         expect(
           profileOwnedVisibilityModifierSummary(
@@ -1529,7 +1531,9 @@ function categoryConditionImpactSummary(
     if (target === undefined) continue;
     const executable =
       (modifier.type === "add" || modifier.type === "remove") &&
-      modifier.scope === undefined &&
+      (modifier.scope === undefined ||
+        modifier.scope === "parent" ||
+        modifier.scope === "root-entry") &&
       modifier.repeats.length === 0 &&
       behaviorAttributes.every(
         (attribute) => modifier.node.attributes[attribute] === undefined,
@@ -1652,7 +1656,9 @@ function categoryModifierSummary(
     }
     if (
       (modifier.type === "add" || modifier.type === "remove") &&
-      modifier.scope === undefined &&
+      (modifier.scope === undefined ||
+        modifier.scope === "parent" ||
+        modifier.scope === "root-entry") &&
       behavior.length === 0 &&
       modifier.repeats.length === 0 &&
       modifier.value !== undefined &&

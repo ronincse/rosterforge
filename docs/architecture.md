@@ -1206,7 +1206,29 @@ descendants, and it does not feed its result back into condition identity;
 conditions continue to compare static links. It is a read-only report over one
 occurrence.
 
-Only scope-free, extension-free `add` and `remove` execute, in the order already
+A modifier can also reach this occurrence from another one. `parent` anchors to
+the declaring occurrence's immediate selection parent and `root-entry` to its
+top-level selection, so both invert cleanly: the modifiers reaching an
+occurrence are those declared by its direct children and, when it is itself
+top-level, by all of its descendants. An occurrence can anchor through both at
+once. Each inbound modifier's applicability is evaluated against the occurrence
+that *declares* it, not the one it reaches, and every step records its `origin`
+and `declaredBy`.
+
+Every other observed scope stays unsupported. `model`, `unit`, `model-or-unit`,
+and `upgrade` anchor to a nearest typed ancestor and `force`/`roster` to
+collections rather than one occurrence; neither is inverted. In the pinned
+corpus every executable-shaped scoped category modifier uses `parent` or
+`root-entry`, so this covers the whole surface. A contributing occurrence that
+cannot be resolved to exactly one materialized choice makes membership unknown,
+because an unreadable contributor could carry an operation.
+
+Inbound steps run after the occurrence's own, in roster document order. Ordering
+is observable only when the same category is both added and removed along one
+path, which the pinned corpus never does for a single occurrence; the rule is
+fixed anyway so results stay deterministic.
+
+Only extension-free `add` and `remove` execute, in the order already
 documented elsewhere: direct owner modifiers first, then top-level groups in
 source order with each group's direct modifiers before nested groups
 depth-first. `add` of an existing member and `remove` of a non-member are

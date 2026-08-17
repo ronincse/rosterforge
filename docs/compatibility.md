@@ -342,9 +342,13 @@
   confident answer derived from static links alone, keeping the count interval
   and completeness honest
 - Read-only effective category membership for one roster selection occurrence,
-  executing scope-free `add` and `remove` over the occurrence's materialized
-  category links in owner-direct then grouped source order, with inert no-op
-  steps distinguishable from unsupported ones
+  executing `add` and `remove` over the occurrence's materialized category links
+  in owner-direct then grouped source order, with inert no-op steps
+  distinguishable from unsupported ones
+- Inbound `parent` and `root-entry` modifier scope, inverted so a modifier
+  declared by a child or descendant reaches the occurrence it anchors to, with
+  applicability evaluated against the declaring occurrence and every step
+  recording its origin
 - Independent membership and primary reporting: a `set-primary` or
   `unset-primary` operation withholds only the primary determination, while
   every other unsupported shape withholds effective membership too
@@ -772,8 +776,9 @@ and `roster` once. Generic attributes appear as `affects` 89, `arg` 83, and
 `join` 79. 463 carry conditions, four carry condition groups, and none carries a
 repeat.
 
-The executable subset is **283** — 274 `add` and nine `remove` that are
-scope-free, extension-free, repeat-free, and resolve. `add` is unambiguous: 273
+The executable subset is **428** — 401 `add` and 27 `remove` that are
+extension-free, repeat-free, resolve, and are either scope-free or use the
+supported `parent`/`root-entry` anchors. Before scope resolution it was 283. `add` is unambiguous: 273
 of the 274 create a new membership and one is redundant with an existing link.
 `set-primary` is not: 322 of 325 executable-shaped instances name a category the
 owner does not link and have no sibling `add`, and none targets an existing
@@ -791,17 +796,20 @@ owned by a *different* occurrence can still reach this one, and that case is not
 detectable from the candidate alone; it remains an explicit gap. At the pinned
 commit this change moved none of the existing real-data assertions.
 
-Feeding effective membership into condition identity was measured against the
-pinned corpus before being attempted, and the measurement argues against it. Of
-the 5,047 category-referencing conditions, 3,340 name a category no modifier
-touches and are unaffected. Only **127** would become knowable. The remaining
-1,580 would stay unresolved because at least one modifier on their category is
-scoped, is a primary operation, or carries a generic behavior attribute. Of the
-100 modifier-controlled categories, only 30 are controlled exclusively by
-executable `add`/`remove`; the other 70 are blocked. Every high-traffic category
-is in the blocked set — `Character` with 367 condition references, `Infantry`
-217, `Vehicle` 108, `Psyker` 107. The bottleneck is therefore scope resolution
-and `set-primary` semantics, not the wiring between categories and conditions.
+Feeding effective membership into condition identity was measured before being
+attempted, and scope resolution changed the answer substantially. Of the 5,047
+category-referencing conditions, 3,340 name a category no modifier touches.
+Before `parent`/`root-entry` anchors were supported, only 127 would have become
+knowable and 1,580 would have stayed unresolved, with 70 of the 100
+modifier-controlled categories blocked. With those anchors resolved the split is
+**1,048 knowable and 659 unresolved**, and only **20** categories remain
+blocked.
+
+What still blocks those 20 is `set-primary` semantics and the generic behavior
+attributes, chiefly `affects`. Note that scope resolution unlocked no
+characteristic modifiers at all: of the 1,812 scoped modifiers in the corpus,
+1,617 also carry `affects`, so that surface needs both mechanisms and a rule for
+how they compose.
 
 Category membership is **not** yet an input to condition evaluation. The corpus
 has 5,047 conditions that reference a category entry — 1,991 `instanceOf`, 2,146

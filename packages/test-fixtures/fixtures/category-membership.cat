@@ -112,6 +112,22 @@
         </modifier>
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="scope-anchor" name="Scope Anchor" type="unit">
+      <categoryLinks>
+        <categoryLink id="anchor-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <selectionEntries>
+        <selectionEntry id="scope-child" name="Scope Child" type="model">
+          <modifiers>
+            <modifier type="add" field="category" value="cat-battleline"
+              scope="parent" />
+            <modifier type="remove" field="category" value="cat-infantry"
+              scope="root-entry" />
+          </modifiers>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="scoped-category" name="Scoped Category" type="unit">
       <categoryLinks>
         <categoryLink id="scoped-infantry" name="Infantry"

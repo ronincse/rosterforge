@@ -9,6 +9,7 @@ import {
 import { sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
 import {
   addRosterForce,
+  addRosterSelectionToSelection,
   addRosterSelectionToForce,
   createRoster,
   forceOccurrenceId,
@@ -180,6 +181,63 @@ describe("roster selection category membership", () => {
   });
 });
 
+describe("inbound scoped category modifiers", () => {
+  it("applies a child's parent-scoped and root-entry-scoped operations", () => {
+    const setup = anchorSetup();
+
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        setup.roster,
+        setup.context,
+        setup.anchor,
+        setup.anchorChoice,
+      ),
+    );
+
+    // The child declares both: add Battleline to its parent, and remove
+    // Infantry from its root entry. The anchor is both.
+    expect(report).toMatchObject({
+      baseCategories: ["cat-infantry"],
+      categories: ["cat-battleline"],
+      completeness: "complete",
+    });
+    expect(
+      report.steps.map((step) =>
+        step.status === "applied"
+          ? [step.origin, step.operation, step.targetId]
+          : step.status,
+      ),
+    ).toEqual([
+      ["parent-scope", "add", "cat-battleline"],
+      ["root-entry-scope", "remove", "cat-infantry"],
+    ]);
+    for (const step of report.steps) {
+      expect(step.declaredBy).toBe(setup.child);
+    }
+  });
+
+  it("does not let a scoped modifier reach the occurrence that declares it", () => {
+    const setup = anchorSetup();
+
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        setup.roster,
+        setup.context,
+        setup.child,
+        setup.childChoice,
+      ),
+    );
+
+    // Both modifiers anchor elsewhere, so from the child's own point of view
+    // they are unresolved scoped behavior rather than membership changes.
+    expect(report.steps.every((step) => step.status === "unapplied")).toBe(
+      true,
+    );
+    expect(report).not.toHaveProperty("categories");
+    expect(report.completeness).toBe("incomplete");
+  });
+});
+
 describe("category-modifier-controlled condition identity", () => {
   it("reports a category count as unresolved when a modifier could change it", () => {
     const setup = conditionSetup();
@@ -345,6 +403,82 @@ function conditionSetup(): {
     throw new Error("Missing category condition owner.");
   }
   return { context, roster, owner, probe };
+}
+
+function anchorSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly anchor: RosterSelection;
+  readonly child: RosterSelection;
+  readonly anchorChoice: EvaluationSelectionChoice;
+  readonly childChoice: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const anchorChoice = choiceById(context, "scope-anchor");
+  const childChoice = choiceById(context, "scope-child");
+  let roster = createRoster({
+    id: rosterId("category-scope-roster"),
+    name: "Category scope roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) {
+    throw new Error("Missing category fixture force.");
+  }
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId("category-scope-force"),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  roster = successful(
+    addRosterSelectionToForce(
+      roster,
+      forceOccurrenceId("category-scope-force"),
+      {
+        id: selectionOccurrenceId("anchor-occurrence"),
+        definition: {
+          kind: anchorChoice.kind,
+          key: projectionKey(anchorChoice.occurrence),
+          ...(anchorChoice.id === undefined
+            ? {}
+            : { sourceId: anchorChoice.id }),
+        },
+      },
+    ),
+  );
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("anchor-occurrence"),
+      {
+        id: selectionOccurrenceId("child-occurrence"),
+        definition: {
+          kind: childChoice.kind,
+          key: projectionKey(childChoice.occurrence),
+          ...(childChoice.id === undefined
+            ? {}
+            : { sourceId: childChoice.id }),
+        },
+      },
+    ),
+  );
+  const anchor = roster.forces[0]?.selections[0];
+  const child = anchor?.selections[0];
+  if (anchor === undefined || child === undefined) {
+    throw new Error("Missing category scope occurrences.");
+  }
+  return { context, roster, anchor, child, anchorChoice, childChoice };
 }
 
 function catalogueContext(): BattleScribeCatalogueContext {
