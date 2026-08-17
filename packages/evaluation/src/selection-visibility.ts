@@ -22,6 +22,7 @@ import {
   type RosterModifierGroupApplicabilityReport,
 } from "./modifier-groups.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
+import { effectiveRosterCategories } from "./effective-categories.js";
 
 type SelectionModifier = EvaluationSelectionChoice["modifiers"][number];
 type SelectionModifierGroup =
@@ -105,6 +106,7 @@ export function evaluateRosterSelectionVisibility(
       context,
       owner,
       modifier,
+      { effectiveCategories: effectiveRosterCategories(roster, context) },
     );
     diagnostics.push(...applicability.diagnostics);
     if (!applicability.ok) {
@@ -129,6 +131,7 @@ export function evaluateRosterSelectionVisibility(
       context,
       owner,
       group,
+      { effectiveCategories: effectiveRosterCategories(roster, context) },
     );
     diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {

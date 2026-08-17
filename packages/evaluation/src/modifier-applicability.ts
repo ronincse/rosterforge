@@ -19,6 +19,7 @@ import {
   type RosterConditionOwner,
 } from "./conditions.js";
 import type { NumericModifierApplicability } from "./modifiers.js";
+import type { EffectiveCategoryIndex } from "./selection-context.js";
 
 export interface RosterModifierApplicabilitySource {
   readonly field?: string;
@@ -28,6 +29,12 @@ export interface RosterModifierApplicabilitySource {
 
 export interface RosterModifierApplicabilityOptions {
   readonly inheritedStatus?: NumericModifierApplicability;
+  /**
+   * Effective category membership, forwarded to every condition evaluated for
+   * this modifier. Omitting it keeps category-controlled comparisons
+   * unresolved.
+   */
+  readonly effectiveCategories?: EffectiveCategoryIndex;
 }
 
 export interface RosterModifierApplicabilityReport<
@@ -56,6 +63,11 @@ export function evaluateRosterModifierApplicability<
   options: RosterModifierApplicabilityOptions = {},
 ): Result<RosterModifierApplicabilityReport<Modifier>> {
   const diagnostics: Diagnostic[] = [];
+  const conditionOptions = {
+    ...(options.effectiveCategories === undefined
+      ? {}
+      : { effectiveCategories: options.effectiveCategories }),
+  };
   const conditions: RosterSelectionConditionReport[] = [];
   for (const condition of modifier.conditions) {
     const evaluated = evaluateRosterCondition(
@@ -63,6 +75,7 @@ export function evaluateRosterModifierApplicability<
       context,
       owner,
       condition,
+      conditionOptions,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -77,6 +90,7 @@ export function evaluateRosterModifierApplicability<
       context,
       owner,
       conditionGroup,
+      conditionOptions,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {

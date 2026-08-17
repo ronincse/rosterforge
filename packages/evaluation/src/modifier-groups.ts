@@ -26,6 +26,7 @@ import {
   type RosterModifierApplicabilitySource,
 } from "./modifier-applicability.js";
 import type { NumericModifierApplicability } from "./modifiers.js";
+import type { EffectiveCategoryIndex } from "./selection-context.js";
 
 export type RosterModifierGroupType = "and";
 
@@ -91,6 +92,11 @@ export interface RosterModifierGroupExecution<
   readonly entries: readonly RosterModifierGroupExecutionEntry<Modifier>[];
 }
 
+export interface RosterModifierGroupApplicabilityOptions {
+  /** Effective category membership, forwarded to every nested evaluation. */
+  readonly effectiveCategories?: EffectiveCategoryIndex;
+}
+
 export function evaluateRosterModifierGroupApplicability<
   Group extends RosterModifierGroupSource,
 >(
@@ -98,6 +104,7 @@ export function evaluateRosterModifierGroupApplicability<
   context: BattleScribeCatalogueContext,
   owner: RosterConditionOwner,
   group: Group,
+  options: RosterModifierGroupApplicabilityOptions = {},
 ): Result<RosterModifierGroupApplicabilityReport<Group>> {
   return evaluateModifierGroup(
     roster,
@@ -105,6 +112,7 @@ export function evaluateRosterModifierGroupApplicability<
     owner,
     group,
     "applicable",
+    options,
   );
 }
 
@@ -163,8 +171,14 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
   owner: RosterConditionOwner,
   group: Group,
   inheritedStatus: NumericModifierApplicability,
+  options: RosterModifierGroupApplicabilityOptions,
 ): Result<RosterModifierGroupApplicabilityReport<Group>> {
   const diagnostics: Diagnostic[] = [];
+  const forwarded = {
+    ...(options.effectiveCategories === undefined
+      ? {}
+      : { effectiveCategories: options.effectiveCategories }),
+  };
   const type = modifierGroupType(group.type);
   if (group.type === undefined) {
     diagnostics.push(
@@ -238,6 +252,7 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
       context,
       owner,
       condition,
+      forwarded,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -252,6 +267,7 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
       context,
       owner,
       conditionGroup,
+      forwarded,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -281,7 +297,7 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
       context,
       owner,
       modifier,
-      { inheritedStatus: status },
+      { inheritedStatus: status, ...forwarded },
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -299,6 +315,7 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
       owner,
       child,
       status,
+      options,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {

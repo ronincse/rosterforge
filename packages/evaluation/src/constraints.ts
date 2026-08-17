@@ -47,6 +47,7 @@ import {
   evaluateRosterModifierRepeats,
   type RosterRepeatReport,
 } from "./repeats.js";
+import { effectiveRosterCategories } from "./effective-categories.js";
 
 export type RosterSelectionConstraintType = "min" | "max";
 export type RosterSelectionConstraintStatus =
@@ -458,6 +459,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
         context,
         owner,
         modifier,
+        { effectiveCategories: effectiveRosterCategories(roster, context) },
       );
       diagnostics.push(...evaluated.diagnostics);
       if (evaluated.ok) {
@@ -470,6 +472,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
         context,
         owner,
         group,
+        { effectiveCategories: effectiveRosterCategories(roster, context) },
       );
       diagnostics.push(...evaluated.diagnostics);
       if (evaluated.ok) {

@@ -337,6 +337,9 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- Cost, selection-constraint, force-constraint, and visibility reports all
+  consuming the effective-category index, so composed supported validation
+  answers category conditions exactly rather than reporting them unresolved
 - Effective category membership feeding condition identity through an explicit
   per-roster index, resolved in one documented pass: category-modifier
   applicability is decided against static links, then every ordinary evaluation

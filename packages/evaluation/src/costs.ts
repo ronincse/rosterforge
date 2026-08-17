@@ -43,6 +43,7 @@ import {
   type EvaluationChoiceIndex,
   type EvaluationSelectionChoice,
 } from "./selection-context.js";
+import { effectiveRosterCategories } from "./effective-categories.js";
 
 export type RosterCostChoice = EvaluationSelectionChoice;
 
@@ -560,6 +561,12 @@ function evaluateModifierApplicability(
       state.context,
       item.occurrence,
       modifier,
+      {
+        effectiveCategories: effectiveRosterCategories(
+          state.roster,
+          state.context,
+        ),
+      },
     );
     state.diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {
@@ -585,6 +592,12 @@ function evaluateModifierGroupApplicability(
       state.context,
       item.occurrence,
       group,
+      {
+        effectiveCategories: effectiveRosterCategories(
+          state.roster,
+          state.context,
+        ),
+      },
     );
     state.diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {

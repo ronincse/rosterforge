@@ -13,6 +13,41 @@ import {
   type EffectiveCategoryIndex,
 } from "./selection-context.js";
 
+const memo = new WeakMap<
+  Roster,
+  WeakMap<BattleScribeCatalogueContext, EffectiveCategoryIndex>
+>();
+
+/**
+ * Memoized `indexEffectiveRosterCategories`, keyed by roster and context
+ * identity.
+ *
+ * Every roster command returns a new immutable roster and contexts are stable
+ * for a composed library, so identity is a sound cache key. Report evaluators
+ * call this rather than rebuilding the index once per selection, which would be
+ * quadratic in roster size.
+ *
+ * `evaluateRosterSelectionCategories` deliberately does not call it: that is
+ * pass one, and it must run with no index in scope.
+ */
+export function effectiveRosterCategories(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+): EffectiveCategoryIndex {
+  let byContext = memo.get(roster);
+  if (byContext === undefined) {
+    byContext = new WeakMap();
+    memo.set(roster, byContext);
+  }
+  const cached = byContext.get(context);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const built = indexEffectiveRosterCategories(roster, context);
+  byContext.set(context, built);
+  return built;
+}
+
 /**
  * Builds the effective category membership of every selection occurrence in a
  * roster, so condition identity can compare what a unit's categories actually

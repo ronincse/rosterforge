@@ -1124,6 +1124,13 @@ resolves to unknown membership and stays that way — seven of 892 category
 modifiers in the pinned corpus. BattleScribe may iterate instead; nothing in the
 data establishes that, so the chained case is refused rather than guessed.
 
+Cost, selection-constraint, force-constraint, and visibility evaluation all
+build the index through the memoized `effectiveRosterCategories` and forward it
+to every modifier applicability and modifier-group evaluation, so the composed
+supported-validation report inherits it. The memo is keyed by roster and context
+identity, which is sound because every roster command returns a new immutable
+roster; rebuilding per selection would be quadratic in roster size.
+
 Known membership is **authoritative** for a category comparison, replacing the
 static links rather than adding to them, so a removed category stops matching
 even though its link is still projected. Identity targets that are not
