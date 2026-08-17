@@ -18,7 +18,8 @@ visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
 normal suite passes 395 tests with five skipped, and the pinned real-data suite
-passes all five tests.
+passes all five tests. Effective keywords are now visible in the roster
+workspace.
 
 The staged category plan is now complete through stage three: effective category
 membership feeds condition identity. See "Completed Assignment — The Category
@@ -1135,14 +1136,34 @@ against that roster: **unresolved without the index, satisfied with it.**
 Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` clean;
 `pnpm test` **395 passed, 5 skipped**; pinned real-data suite **5 passed**.
 
-### Next recommended boundary
+## Completed Assignment — Workspace Keywords, 2026-08-17
 
-1. **`affects` execution** — three semantic decisions from the parsing
+Baseline `8835518`; resulting commit `2bbdbb7` (`feat: show effective keywords
+in the roster workspace`). Not pushed, no pull request. Presentation only.
+
+`inspectLocalRosterSelectionCategories` resolves membership into display-ready
+keywords, naming each category from the composed catalogue definitions and
+keeping the raw ID when no definition names one. The occurrence panel lists
+effective keywords in order, marks modifier-granted ones, shows removed
+keywords struck through rather than hidden, and states plainly when membership
+is unresolved — the same preserve-and-label rule the hidden-profile and
+base-versus-effective displays use.
+
+Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` clean;
+`pnpm test` **395 passed, 5 skipped**; pinned real-data suite **5 passed**.
+
+### Next recommended boundary — both need a decision first
+
+1. **`affects` execution.** Three semantic decisions from the parsing
    checkpoint, plus how `affects` composes with `scope` (1,617 modifiers carry
    both). The plausible reading is that `scope` picks the anchor occurrence and
-   the `affects` path navigates from there, but that is an inference.
-2. **`set-primary` semantics** — one of two things still blocking the remaining
-   20 categories. Needs a source outside the data.
-3. **Surface effective categories in the workspace** — unit cards could show
-   effective keywords, which is now backed by a proven evaluator. Presentation
-   only, no new semantics.
+   the `affects` path navigates from there, making `self` mean the scoped
+   occurrence rather than the declaring one. That is an inference, not
+   something the data settles.
+2. **`set-primary` semantics.** One of two things still blocking the remaining
+   20 categories. Needs a source outside the data to settle whether it implies
+   membership and whether it clears other primaries.
+
+Smaller work that needs no decision, if a session wants it: extend the
+category-condition honesty downgrade to inbound scoped modifiers declared by
+*other* occurrences, which is still an explicit documented gap.
