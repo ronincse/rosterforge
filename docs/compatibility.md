@@ -337,6 +337,10 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- A pinned real-data proof of the flip: an Adeptus Custodes Venerable
+  Contemptor Dreadnought acquires the Character category from its Character
+  upgrade's `root-entry`-scoped modifier, and a real catalogue `instanceOf`
+  condition testing that category moves from unresolved to satisfied
 - Cost, selection-constraint, force-constraint, and visibility reports all
   consuming the effective-category index, so composed supported validation
   answers category conditions exactly rather than reporting them unresolved

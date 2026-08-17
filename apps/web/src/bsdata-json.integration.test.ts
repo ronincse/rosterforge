@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 
 import type {
   BattleScribeProjection,
+  ConditionGroupProjection,
+  ConditionProjection,
   InfoGroupProjection,
   ModifierGroupProjection,
   ModifierProjection,
@@ -13,7 +15,10 @@ import type {
   SelectionContainerProjection,
 } from "@rosterforge/battlescribe-data";
 import {
+  evaluateRosterCondition,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterSelectionCategories,
+  indexEffectiveRosterCategories,
   parseBattleScribeAffectsSelector,
 } from "@rosterforge/evaluation";
 import {
@@ -742,6 +747,176 @@ describe.skipIf(realDataDirectory === undefined)(
           ["OC", "2"],
           ["InSv", "4+"],
         ]);
+      },
+      120_000,
+    );
+
+    it(
+      "grants a pinned category to its root entry and resolves a real condition",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Imperium - Adeptus Custodes.json",
+          "Imperium - Imperial Knights - Library.json",
+          "Imperium - Agents of the Imperium.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-category-flip",
+              importedAt: "2026-08-17T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Imperium - Adeptus Custodes",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Adeptus Custodes catalogue.");
+        }
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-category-flip-roster"),
+          forceId: forceOccurrenceId("real-category-flip-force"),
+          name: "Category Flip Roster",
+        });
+        if (!session.ok) throw new Error("Expected roster session.");
+
+        // The Character upgrade adds the Character category with
+        // scope="root-entry", so it reaches the top-level Dreadnought.
+        const dreadnoughtRoot = localRosterRootChoices(
+          session.value.catalogue,
+        ).find(
+          ({ materialized }) =>
+            materialized.name === "Venerable Contemptor Dreadnought",
+        );
+        if (dreadnoughtRoot === undefined) {
+          throw new Error("Expected the Venerable Contemptor Dreadnought.");
+        }
+        const unitId = selectionOccurrenceId("real-flip-dreadnought");
+        const withUnit = addLocalRosterRootSelection(
+          session.value,
+          dreadnoughtRoot,
+          { selectionId: unitId },
+        );
+        if (!withUnit.ok) throw new Error("Expected the unit to be added.");
+
+        const upgradeGroup = localRosterChildChoices(withUnit.value, unitId).find(
+          ({ name }) => name === "Character Upgrade",
+        );
+        if (upgradeGroup === undefined) {
+          throw new Error("Expected the Character Upgrade group.");
+        }
+        const groupId = selectionOccurrenceId("real-flip-group");
+        const withGroup = addLocalRosterChildSelection(
+          withUnit.value,
+          unitId,
+          upgradeGroup,
+          { selectionId: groupId },
+        );
+        if (!withGroup.ok) throw new Error("Expected the group to be added.");
+
+        const characterUpgrade = localRosterChildChoices(
+          withGroup.value,
+          groupId,
+        ).find(({ name }) => name === "Character");
+        if (characterUpgrade === undefined) {
+          throw new Error("Expected the Character upgrade choice.");
+        }
+        const upgradeId = selectionOccurrenceId("real-flip-upgrade");
+        const withUpgrade = addLocalRosterChildSelection(
+          withGroup.value,
+          groupId,
+          characterUpgrade,
+          { selectionId: upgradeId },
+        );
+        if (!withUpgrade.ok) throw new Error("Expected the upgrade to be added.");
+
+        const roster = withUpgrade.value.roster;
+        const context = withUpgrade.value.catalogue.context;
+        const unit = rosterSelections(
+          roster.forces.flatMap(({ selections }) => selections),
+        ).find(({ id }) => id === unitId);
+        const unitChoice = localRosterSelectionChoice(withUpgrade.value, unitId);
+        if (unit === undefined || unitChoice === undefined) {
+          throw new Error("Expected the unit occurrence and choice.");
+        }
+
+        const CHARACTER = "9cfd-1c32-585f-7d5c";
+        const categories = evaluateRosterSelectionCategories(
+          roster,
+          context,
+          unit,
+          unitChoice,
+        );
+        expect(categories.ok).toBe(true);
+        if (!categories.ok) return;
+        // The Dreadnought does not declare Character statically; it acquires it
+        // from a descendant's root-entry-scoped modifier.
+        expect(categories.value.baseCategories).not.toContain(CHARACTER);
+        expect(categories.value.categories).toContain(CHARACTER);
+        expect(
+          categories.value.steps.filter(
+            (step) => step.status === "applied" && step.operation === "add",
+          ),
+        ).toMatchObject([
+          { origin: "root-entry-scope", targetId: CHARACTER, changed: true },
+        ]);
+        // The paired set-primary stays unapplied without costing membership.
+        expect(
+          categories.value.steps.some(
+            (step) => step.status === "unapplied" && step.primaryOnly,
+          ),
+        ).toBe(true);
+
+        // A real condition from this catalogue, testing the same category on
+        // root-entry scope, is unknowable from static links and exact from
+        // effective membership.
+        const condition = findProjectedCondition(
+          result.value.documents.map(({ projection }) => projection),
+          (candidate) =>
+            candidate.type === "instanceOf" &&
+            candidate.field === "selections" &&
+            candidate.scope === "root-entry" &&
+            candidate.childId === CHARACTER &&
+            candidate.shared === true,
+        );
+        expect(condition).toBeDefined();
+        if (condition === undefined) return;
+
+        const withoutIndex = evaluateRosterCondition(
+          roster,
+          context,
+          unit,
+          condition,
+        );
+        const withIndex = evaluateRosterCondition(
+          roster,
+          context,
+          unit,
+          condition,
+          {
+            effectiveCategories: indexEffectiveRosterCategories(
+              roster,
+              context,
+            ),
+          },
+        );
+        expect(withoutIndex.ok && withIndex.ok).toBe(true);
+        if (!withoutIndex.ok || !withIndex.ok) return;
+        expect(withoutIndex.value.status).toBe("unresolved");
+        expect(withIndex.value.status).toBe("satisfied");
       },
       120_000,
     );
@@ -1765,6 +1940,30 @@ function affectsSelectorSummary(
   counts.distinctProfileTypeNames = profileTypeNames.size;
   counts.undeclaredProfileTypeNames = undeclared.size;
   return counts;
+}
+
+function findProjectedCondition(
+  projections: readonly BattleScribeProjection[],
+  matches: (condition: ConditionProjection) => boolean,
+): ConditionProjection | undefined {
+  const fromGroup = (
+    group: ConditionGroupProjection,
+  ): ConditionProjection | undefined =>
+    group.conditions.find(matches) ??
+    group.conditionGroups.reduce<ConditionProjection | undefined>(
+      (found, child) => found ?? fromGroup(child),
+      undefined,
+    );
+
+  for (const { modifier } of projectedModifiersWithOwnership(projections)) {
+    const direct = modifier.conditions.find(matches);
+    if (direct !== undefined) return direct;
+    for (const group of modifier.conditionGroups) {
+      const nested = fromGroup(group);
+      if (nested !== undefined) return nested;
+    }
+  }
+  return undefined;
 }
 
 function realJsonFiles(directory: string): readonly LocalBattleScribeFile[] {
