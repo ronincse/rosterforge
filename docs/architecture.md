@@ -1274,20 +1274,30 @@ depth-first. `add` of an existing member and `remove` of a non-member are
 applied no-op steps that record `changed: false`, so an inert authoring case is
 distinguishable from an unsupported one.
 
-`set-primary` and `unset-primary` are deliberately not executed. In the pinned
-corpus 322 of the 325 executable-shaped `set-primary` modifiers name a category
-the owner does not already link, so the operation can only do anything if it
-also creates the membership, and 234 owners would end up with more than one
-primary unless it also clears the others. Neither rule is established by the
-source shape.
+`set-primary` adds its category when absent and then becomes the sole primary.
+The BattleScribe 2.03.00 release notes state the first half outright — "When
+setting a Category to primary, the Category will be added if it doesn't already
+exist" — which also explains why 322 of the 325 executable-shaped `set-primary`
+modifiers name a category their owner does not link.
 
-Because a primary-flag operation provably cannot change membership, it degrades
-only the primary determination: `categories` stays present and known while
-`primaryCategories` is withheld. Every other unsupported shape — a scope, a
-generic behavior attribute, a repeat, a missing operation or value, or
-unresolved applicability — withholds both. Membership and primary knowledge are
-therefore reported independently, and the report's completeness is independent
-of both.
+Displacement is an inference rather than a quote, but a well-supported one. The
+BSData wiki calls the primary "the category in which that entry will be visible
+in Roster Editor", singular; the release note describes the operation as making
+it easier to *move* entries between categories; and BattleScribe issue #18 shows
+an entry displaying under exactly one category and moving when its primary
+changes. The corpus agrees: only five of 319 `set-primary` owners also carry an
+`unset-primary`, and 234 owners would end up with more than one primary if the
+operation did not displace. Those five explicit unsets are therefore redundant
+rather than load-bearing. Primary status affects presentation rather than
+legality, so the cost of the inference being wrong is bounded.
+
+`unset-primary` clears the flag and leaves membership untouched; nothing
+suggests it removes the category.
+
+Every unsupported shape — a scope that cannot be inverted, a generic behavior
+attribute, a repeat, a missing operation or value, or unresolved applicability —
+withholds both effective membership and the primary determination, because
+`set-primary` can change membership too.
 
 ## Affects Selector Boundary
 

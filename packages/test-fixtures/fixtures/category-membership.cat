@@ -96,6 +96,26 @@
           value="cat-battleline" />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="primary-implies-membership"
+      name="Primary Implies Membership" type="unit">
+      <categoryLinks>
+        <categoryLink id="implies-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="set-primary" field="category" value="cat-character" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="primary-cleared" name="Primary Cleared" type="unit">
+      <categoryLinks>
+        <categoryLink id="cleared-infantry" name="Infantry"
+          targetId="cat-infantry" primary="true" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="unset-primary" field="category"
+          value="cat-infantry" />
+      </modifiers>
+    </selectionEntry>
     <selectionEntry id="condition-probe" name="Condition Probe" type="unit">
       <modifiers>
         <modifier type="set" field="hidden" value="true">

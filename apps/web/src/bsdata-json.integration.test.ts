@@ -271,9 +271,7 @@ describe.skipIf(realDataDirectory === undefined)(
           withConditionGroups: 4,
           withRepeats: 0,
           valueResolvesToCategory: 892,
-          executable: 428,
-          executableAdd: 401,
-          executableRemove: 27,
+          executable: 761,
         });
         expect(
           categoryConditionImpactSummary(
@@ -283,13 +281,13 @@ describe.skipIf(realDataDirectory === undefined)(
         ).toEqual({
           categoryReferencingConditions: 5_047,
           unaffected: 3_340,
-          // Supporting parent and root-entry anchors moved these from
-          // 127 / 1,580 / 30 / 70 before scope resolution.
-          wouldBecomeKnown: 1_048,
-          staysUnresolved: 659,
+          // 127 / 1,580 / 30 / 70 before scope resolution; 1,048 / 659 / 80 /
+          // 20 after it and before set-primary execution.
+          wouldBecomeKnown: 1_605,
+          staysUnresolved: 102,
           controlledCategories: 100,
-          executableOnlyCategories: 80,
-          blockedCategories: 20,
+          executableOnlyCategories: 92,
+          blockedCategories: 8,
         });
         expect(
           profileOwnedVisibilityModifierSummary(
@@ -854,6 +852,7 @@ describe.skipIf(realDataDirectory === undefined)(
         }
 
         const CHARACTER = "9cfd-1c32-585f-7d5c";
+        const VEHICLE = "dbd4-63-af05-998";
         const categories = evaluateRosterSelectionCategories(
           roster,
           context,
@@ -867,18 +866,26 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(categories.value.baseCategories).not.toContain(CHARACTER);
         expect(categories.value.categories).toContain(CHARACTER);
         expect(
-          categories.value.steps.filter(
-            (step) => step.status === "applied" && step.operation === "add",
-          ),
-        ).toMatchObject([
-          { origin: "root-entry-scope", targetId: CHARACTER, changed: true },
+          categories.value.steps
+            .filter((step) => step.status === "applied")
+            .map((step) =>
+              step.status === "applied"
+                ? [step.origin, step.operation, step.targetId]
+                : step.status,
+            ),
+        ).toEqual([
+          ["root-entry-scope", "add", CHARACTER],
+          // The catalogue explicitly vacates the Vehicle primary before
+          // claiming the Character one. Displacement makes that redundant
+          // rather than necessary, and the corpus agrees: only five of 319
+          // set-primary owners pair an unset, while 234 would end up with more
+          // than one primary if set-primary did not displace.
+          ["root-entry-scope", "unset-primary", VEHICLE],
+          ["root-entry-scope", "set-primary", CHARACTER],
         ]);
-        // The paired set-primary stays unapplied without costing membership.
-        expect(
-          categories.value.steps.some(
-            (step) => step.status === "unapplied" && step.primaryOnly,
-          ),
-        ).toBe(true);
+        // Character becomes the sole primary, which is the slot BattleScribe
+        // displays the unit under.
+        expect(categories.value.primaryCategories).toEqual([CHARACTER]);
 
         // A real condition from this catalogue, testing the same category on
         // root-entry scope, is unknowable from static links and exact from
@@ -1705,7 +1712,10 @@ function categoryConditionImpactSummary(
     const target = modifier.value;
     if (target === undefined) continue;
     const executable =
-      (modifier.type === "add" || modifier.type === "remove") &&
+      (modifier.type === "add" ||
+        modifier.type === "remove" ||
+        modifier.type === "set-primary" ||
+        modifier.type === "unset-primary") &&
       (modifier.scope === undefined ||
         modifier.scope === "parent" ||
         modifier.scope === "root-entry") &&
@@ -1792,8 +1802,6 @@ function categoryModifierSummary(
     withRepeats: 0,
     valueResolvesToCategory: 0,
     executable: 0,
-    executableAdd: 0,
-    executableRemove: 0,
   };
   const add = (key: string): void => {
     counts[key] = (counts[key] ?? 0) + 1;
@@ -1830,7 +1838,10 @@ function categoryModifierSummary(
       add("valueResolvesToCategory");
     }
     if (
-      (modifier.type === "add" || modifier.type === "remove") &&
+      (modifier.type === "add" ||
+        modifier.type === "remove" ||
+        modifier.type === "set-primary" ||
+        modifier.type === "unset-primary") &&
       (modifier.scope === undefined ||
         modifier.scope === "parent" ||
         modifier.scope === "root-entry") &&
@@ -1840,7 +1851,6 @@ function categoryModifierSummary(
       categoryEntryIds.has(modifier.value)
     ) {
       add("executable");
-      add(modifier.type === "add" ? "executableAdd" : "executableRemove");
     }
   }
   return counts;

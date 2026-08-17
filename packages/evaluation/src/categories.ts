@@ -38,15 +38,30 @@ import type { NumericModifierApplicability } from "./modifiers.js";
 const categoryField = "category";
 
 /**
- * Operations whose effect on a membership set is established by the operation
- * name alone. `set-primary` and `unset-primary` are deliberately absent: in the
- * pinned corpus 322 of 325 executable `set-primary` modifiers name a category
- * the owner does not already link, so they can only do anything if the
- * operation also creates the membership, and 234 owners would end up with more
- * than one primary unless it also clears the others. Neither rule is
- * established by the source shape, so both operations stay unapplied.
+ * The observed category operations.
+ *
+ * `set-primary` adds the category when it is absent. That is stated outright in
+ * the BattleScribe 2.03.00 release notes — "When setting a Category to primary,
+ * the Category will be added if it doesn't already exist" — and it explains the
+ * pinned corpus, where 322 of 325 executable `set-primary` modifiers name a
+ * category their owner does not link.
+ *
+ * `set-primary` also displaces any previous primary. That is not quoted
+ * outright but follows from three converging sources: the BSData wiki calls the
+ * primary "the category in which that entry will be visible in Roster Editor",
+ * singular; the same release note says the operation makes it easier to *move*
+ * entries between categories; and BattleScribe issue #18 shows an entry
+ * displaying under exactly one category and moving when its primary changes.
+ * Primary status affects presentation rather than legality, so the single-slot
+ * reading is recorded as an inference rather than a certainty.
+ *
+ * `unset-primary` clears the flag only. Nothing suggests it removes membership.
  */
-export type RosterCategoryOperation = "add" | "remove";
+export type RosterCategoryOperation =
+  | "add"
+  | "remove"
+  | "set-primary"
+  | "unset-primary";
 
 export type RosterCategoryModifierIssue =
   | "applicabilityUnresolved"
@@ -125,12 +140,6 @@ export interface UnappliedRosterCategoryStep<
   readonly origin: RosterCategoryStepOrigin;
   readonly declaredBy: RosterSelection;
   readonly issues: readonly RosterCategoryModifierIssue[];
-  /**
-   * True when the only unsupported thing is a primary-flag operation. Those
-   * cannot change membership, so the membership set stays known while the
-   * primary determination does not.
-   */
-  readonly primaryOnly: boolean;
 }
 
 export type RosterCategoryStep<
@@ -207,6 +216,7 @@ export function evaluateRosterSelectionCategories<
   );
 
   const membership = [...baseCategories];
+  let primary = [...basePrimaryCategories];
   let membershipKnown = true;
   let primaryKnown = true;
   const steps: RosterCategoryStep[] = [];
@@ -260,11 +270,25 @@ export function evaluateRosterSelectionCategories<
 
     if (issues.length === 0 && operation !== undefined && targetId !== undefined) {
       const index = membership.indexOf(targetId);
-      const changed = operation === "add" ? index === -1 : index !== -1;
-      if (operation === "add" && changed) {
-        membership.push(targetId);
-      } else if (operation === "remove" && changed) {
-        membership.splice(index, 1);
+      const wasPrimary = primary.includes(targetId);
+      let changed = false;
+      if (operation === "add") {
+        changed = index === -1;
+        if (changed) membership.push(targetId);
+      } else if (operation === "remove") {
+        changed = index !== -1;
+        if (changed) {
+          membership.splice(index, 1);
+          primary = primary.filter((id) => id !== targetId);
+        }
+      } else if (operation === "set-primary") {
+        // Adds the category when absent, then becomes the sole primary.
+        if (index === -1) membership.push(targetId);
+        changed = index === -1 || !wasPrimary || primary.length > 1;
+        primary = [targetId];
+      } else {
+        changed = wasPrimary;
+        if (changed) primary = primary.filter((id) => id !== targetId);
       }
       steps.push({
         status: "applied",
@@ -279,18 +303,10 @@ export function evaluateRosterSelectionCategories<
       return;
     }
 
-    // A primary-flag operation is the one unsupported shape that provably
-    // cannot change membership, so it degrades only the primary determination.
-    const primaryOnly =
-      issues.length === 1 &&
-      issues[0] === "unsupportedType" &&
-      isPrimaryOperation(modifier.type);
-    if (primaryOnly) {
-      primaryKnown = false;
-    } else {
-      membershipKnown = false;
-      primaryKnown = false;
-    }
+    // Every supported operation can change membership -- set-primary adds when
+    // the category is absent -- so an unapplied one costs both determinations.
+    membershipKnown = false;
+    primaryKnown = false;
     steps.push({
       status: "unapplied",
       modifier,
@@ -298,7 +314,6 @@ export function evaluateRosterSelectionCategories<
       origin,
       declaredBy,
       issues,
-      primaryOnly,
     });
     diagnostics.push(
       ...issues.map((issue) => categoryDiagnostic(modifier, issue)),
@@ -435,9 +450,7 @@ export function evaluateRosterSelectionCategories<
       basePrimaryCategories,
       ...(primaryKnown && membershipKnown
         ? {
-            primaryCategories: basePrimaryCategories.filter((id) =>
-              membership.includes(id),
-            ),
+            primaryCategories: primary.filter((id) => membership.includes(id)),
           }
         : {}),
       steps,
@@ -566,11 +579,12 @@ function collectInboundScopedCategoryModifiers(
 function categoryOperation(
   value: string | undefined,
 ): RosterCategoryOperation | undefined {
-  return value === "add" || value === "remove" ? value : undefined;
-}
-
-function isPrimaryOperation(value: string | undefined): boolean {
-  return value === "set-primary" || value === "unset-primary";
+  return value === "add" ||
+    value === "remove" ||
+    value === "set-primary" ||
+    value === "unset-primary"
+    ? value
+    : undefined;
 }
 
 function uniqueIds(ids: readonly ObjectId[]): readonly ObjectId[] {

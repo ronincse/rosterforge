@@ -793,16 +793,19 @@ and `roster` once. Generic attributes appear as `affects` 89, `arg` 83, and
 `join` 79. 463 carry conditions, four carry condition groups, and none carries a
 repeat.
 
-The executable subset is **428** — 401 `add` and 27 `remove` that are
-extension-free, repeat-free, resolve, and are either scope-free or use the
-supported `parent`/`root-entry` anchors. Before scope resolution it was 283. `add` is unambiguous: 273
+The executable subset is **761** — every `add`, `remove`, `set-primary`, and
+`unset-primary` that is extension-free, repeat-free, resolving, and either
+scope-free or using the supported `parent`/`root-entry` anchors. It was 283
+before scope resolution and 428 before `set-primary` execution. `add` is unambiguous: 273
 of the 274 create a new membership and one is redundant with an existing link.
-`set-primary` is not: 322 of 325 executable-shaped instances name a category the
-owner does not link and have no sibling `add`, and none targets an existing
-link, so the operation would have to create membership to do anything at all.
-234 owners would also end up with more than one primary unless it clears the
-others. RosterForge therefore preserves and diagnoses both primary operations
-rather than inventing either rule.
+`set-primary` now executes too. The BattleScribe 2.03.00 release notes settle
+the membership half outright — "When setting a Category to primary, the Category
+will be added if it doesn't already exist" — matching the 322 of 325
+executable-shaped instances that name a category their owner does not link.
+Displacement of a previous primary is an inference from the single-slot display
+model, corroborated by the corpus: only five of 319 `set-primary` owners pair an
+`unset-primary`, and 234 owners would hold more than one primary without
+displacement.
 
 Conditions now refuse to answer confidently when a candidate's own category
 modifier names the queried category, so a category-controlled comparison reports
@@ -818,15 +821,14 @@ attempted, and scope resolution changed the answer substantially. Of the 5,047
 category-referencing conditions, 3,340 name a category no modifier touches.
 Before `parent`/`root-entry` anchors were supported, only 127 would have become
 knowable and 1,580 would have stayed unresolved, with 70 of the 100
-modifier-controlled categories blocked. With those anchors resolved the split is
-**1,048 knowable and 659 unresolved**, and only **20** categories remain
-blocked.
+modifier-controlled categories blocked. Scope resolution moved that to 1,048 and
+659 with 20 blocked, and executing `set-primary` moved it again to **1,605
+knowable and 102 unresolved**, with only **8** categories still blocked.
 
-What still blocks those 20 is `set-primary` semantics and the generic behavior
-attributes, chiefly `affects`. Note that scope resolution unlocked no
-characteristic modifiers at all: of the 1,812 scoped modifiers in the corpus,
-1,617 also carry `affects`, so that surface needs both mechanisms and a rule for
-how they compose.
+Those last eight are blocked by generic behavior attributes, chiefly `affects`.
+Note that scope resolution unlocked no characteristic modifiers at all: of the
+1,812 scoped modifiers in the corpus, 1,617 also carry `affects`, so that
+surface needs both mechanisms and a rule for how they compose.
 
 Category membership is **not** yet an input to condition evaluation. The corpus
 has 5,047 conditions that reference a category entry — 1,991 `instanceOf`, 2,146

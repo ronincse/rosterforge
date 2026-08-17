@@ -135,7 +135,7 @@ describe("roster selection category membership", () => {
     });
   });
 
-  it("keeps membership known while a primary operation stays unresolved", () => {
+  it("moves the primary flag to the category a set-primary names", () => {
     const setup = categorySetup("primary-operation");
 
     const evaluated = evaluateRosterSelectionCategories(
@@ -146,20 +146,60 @@ describe("roster selection category membership", () => {
     );
     const report = successful(evaluated);
 
-    expect(evaluated.diagnostics.map(({ code }) => code)).toEqual([
-      "EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED",
-    ]);
+    expect(evaluated.diagnostics).toEqual([]);
     expect(report).toMatchObject({
       categories: ["cat-infantry", "cat-battleline"],
       basePrimaryCategories: ["cat-infantry"],
-      completeness: "incomplete",
+      // set-primary displaces the previous primary rather than adding a second.
+      primaryCategories: ["cat-battleline"],
+      completeness: "complete",
       steps: [
         { status: "applied", operation: "add" },
-        { status: "unapplied", primaryOnly: true, issues: ["unsupportedType"] },
+        { status: "applied", operation: "set-primary" },
       ],
     });
-    // Membership survives; only the primary determination is withheld.
-    expect(report).not.toHaveProperty("primaryCategories");
+  });
+
+  it("adds a category that only a set-primary names", () => {
+    const setup = categorySetup("primary-implies-membership");
+
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        setup.choice,
+      ),
+    );
+
+    // BattleScribe 2.03: "When setting a Category to primary, the Category will
+    // be added if it doesn't already exist."
+    expect(report).toMatchObject({
+      baseCategories: ["cat-infantry"],
+      categories: ["cat-infantry", "cat-character"],
+      primaryCategories: ["cat-character"],
+      completeness: "complete",
+    });
+  });
+
+  it("clears a primary flag without removing membership", () => {
+    const setup = categorySetup("primary-cleared");
+
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        setup.choice,
+      ),
+    );
+
+    expect(report).toMatchObject({
+      categories: ["cat-infantry"],
+      basePrimaryCategories: ["cat-infantry"],
+      primaryCategories: [],
+      completeness: "complete",
+    });
   });
 
   it("leaves membership unknown for scoped and retargeted modifiers", () => {
@@ -174,7 +214,7 @@ describe("roster selection category membership", () => {
       expect(report).toMatchObject({
         baseCategories: ["cat-infantry"],
         completeness: "incomplete",
-        steps: [{ status: "unapplied", primaryOnly: false, issues }],
+        steps: [{ status: "unapplied", issues }],
       });
       expect(report).not.toHaveProperty("categories");
       expect(report).not.toHaveProperty("primaryCategories");
