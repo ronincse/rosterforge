@@ -17,7 +17,7 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 397 tests with five skipped, and the pinned real-data suite
+normal suite passes 400 tests with five skipped, and the pinned real-data suite
 passes all five tests. Effective keywords are visible in the roster workspace,
 and the category surface is complete apart from `affects`.
 
@@ -1314,12 +1314,64 @@ carries a non-recursive `affects` and observe which nested profiles change.
 
 ### Next recommended boundary
 
-**`affects` execution**, now needing fewer decisions than before: profile-type
-matching and precedence over `scope` are settled, leaving traversal depth and
-the embedded-ID filter. A reasonable checkpoint would support the unambiguous
-subset — `affects` paths ending in `profiles.<type>` with no embedded ID —
-routing them to the named profile types on the occurrence's own descendants, and
-leaving embedded-ID and force-traversal forms unsupported.
+Taken in the checkpoint below.
 
-Smaller decision-free work: extend the category-condition honesty downgrade to
-inbound scoped modifiers declared by other occurrences, still a documented gap.
+## Completed Assignment — Owner-Relative `affects`, 2026-08-17
+
+Baseline `109396c`; resulting commit `9683ca8` (`feat: execute owner-relative
+affects routing for characteristics`). Not pushed, no pull request.
+
+A modifier declared by a profile's **owning selection** now reaches that profile
+through an `affects` selector. Only the owner-relative form executes: no
+`entries` traversal, no embedded filter ID, ending in
+`profiles.<profileTypeName>`. That subset needs neither of the two still-open
+decisions, so it could be built without inventing anything.
+
+Selectors that traverse beyond the owner are left alone entirely rather than
+recorded as unapplied steps on every profile they might reach — a wrong-looking
+incomplete marker on an unrelated profile would be worse than silence about a
+modifier that was never routed here.
+
+### Design points
+
+- **Profile-type matching** follows New Recruit's editor: case-insensitive
+  against the *declared* type resolved from `typeId` through the graph, never
+  against the denormalized `typeName`. `all` matches any type; an unmatched name
+  routes nothing.
+- **Precedence, not composition.** `affects` overrides `scope`, so a routed
+  modifier's scope is not counted against it and neither is the `affects`
+  attribute itself.
+- **Order.** Routed steps record `origin: "affects"` and run *after* the
+  profile's own, keeping a profile-owned modifier authoritative over an
+  inherited one.
+- **Unresolvable type.** A profile whose type does not resolve uniquely makes
+  the report incomplete when its owner carries any `affects` modifier, since one
+  might have targeted it.
+
+### Pinned corpus
+
+237 of the 1,246 parsed characteristic selectors take the owner-relative form.
+All resolve to a declared profile type, using only `Unit` (187), `Ranged
+Weapons` (29), and `Melee Weapons` (21). **156** are `set` operations the
+lexical kernel executes; the rest are `increment` (47), `append` (19), `replace`
+(13), and `decrement` (2), which remain unapplied for the same
+lexical-arithmetic reasons as before.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **400 passed, 5 skipped (405 total)**.
+- Pinned real-data suite — **5 passed**, unchanged.
+
+### Next recommended boundary
+
+1. **Settle the two remaining `affects` questions**, ideally by experiment in
+   New Recruit: build a unit whose upgrade carries a non-recursive `affects` and
+   observe which nested profiles change, then repeat with an embedded category
+   ID. That unlocks the ~1,000 traversal selectors, which is where the weapon
+   stat changes live.
+2. **A pinned real-data proof of owner-relative routing**, in the style of the
+   Custodes category pin. Nothing currently exercises it against the corpus, so
+   the 156 figure rests on a static count.
+3. Smaller decision-free work: extend the category-condition honesty downgrade
+   to inbound scoped modifiers declared by other occurrences.
