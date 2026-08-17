@@ -12,15 +12,17 @@ and all four checks passing before a task is complete.
 ## Current Status — 2026-08-14
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
-checkpoint, and the first six Task 8 checkpoints — profile modifier
-projection, headless characteristic-display evaluation, its workspace
-presentation, profile visibility, `affects` selector parsing, and category-entry
-information projection — are complete. The current
-normal suite passes 382 tests with four skipped, and the pinned real-data suite
+checkpoint, and eight Task 8 checkpoints — profile modifier projection,
+headless characteristic-display evaluation, its workspace presentation, profile
+visibility, `affects` selector parsing, category-entry information projection,
+effective category membership, and the category-condition honesty fix — are
+complete. The current
+normal suite passes 390 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 
-**Work is paused pending one decision.** See "Blocking question — dynamic
-category membership" at the end of this document.
+The staged category plan reached its measurement stage, and **the measurement
+argues against completing it**. See "Measured: the category-condition flip is
+not worth doing yet" near the end of this document.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -381,11 +383,102 @@ Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check`
 clean; `pnpm test` **382 passed, 4 skipped**; pinned real-data suite **4
 passed**.
 
-## Blocking question — dynamic category membership
+## Completed Assignment — Staged Categories, 2026-08-14
 
-The `category` modifier surface was inventoried but **not implemented**, because
-executing it changes the meaning of an already-shipped evaluation surface. This
-needs a decision before any code.
+Baseline `bbfae74`. Resulting commits: `ee089b4` (`feat: evaluate effective
+category membership`) and `bb19f6a` (`fix: refuse a confident answer for
+category-controlled conditions`). Not pushed, no pull request.
+
+The user chose the staged option: execute membership as a display-only report,
+fix the honesty gap, measure the condition flip, and bring the flip back as its
+own go/no-go. Stages one and two are done and stage three was measured.
+
+### Stage one — effective membership (`ee089b4`)
+
+`evaluateRosterSelectionCategories` reports one occurrence's effective
+categories from its materialized category links. Only scope-free,
+extension-free `add` and `remove` execute, in the documented order. An `add` of
+an existing member records `changed: false`, so inert authoring is
+distinguishable from unsupported behavior.
+
+`set-primary` and `unset-primary` do not execute: 322 of the 325
+executable-shaped `set-primary` modifiers name a category the owner does not
+link and have no sibling `add`, so the operation would have to create membership
+to do anything, and 234 owners would gain a second primary unless it also
+clears the others. Because a primary operation provably cannot change
+membership, it withholds only the primary determination — `categories` stays
+known while `primaryCategories` does not.
+
+Executable subset: **283** of 892 (274 `add`, nine `remove`).
+
+### Stage two — the honesty fix (`bb19f6a`)
+
+Category link targets already feed condition identity, so a category-testing
+condition could return a confident answer that a modifier would invalidate.
+That was the one place in the package where an unsupported modifier produced a
+possibly wrong result rather than an unresolved one.
+
+A candidate whose choice carries a `field="category"` modifier naming the
+queried category — or one with no value — now reports unresolved. The downgrade
+is narrow: a modifier naming a different category is ignored, and an
+unaffected candidate still yields an exact count. **This moved none of the
+pinned real-data assertions.**
+
+Remaining gap, now documented rather than silent: a scoped category modifier
+owned by a *different* occurrence can still reach this one and is not
+detectable from the candidate's own choice.
+
+## Measured: the category-condition flip is not worth doing yet
+
+Stage three would feed effective membership into condition identity. Measuring
+it first was the right call, because the payoff is far smaller than the risk.
+
+| Bucket | Conditions |
+|---|---|
+| Unaffected — no modifier touches that category | **3,340** |
+| Would stay unresolved — some modifier on that category is unexecutable | **1,580** |
+| **Would become knowable** | **127** |
+| Total category-referencing conditions | 5,047 |
+
+Of the 100 modifier-controlled categories, only 30 are controlled exclusively by
+executable `add`/`remove`. The other 70 are blocked by a scope, a primary
+operation, or a generic behavior attribute — and every high-traffic category is
+in the blocked set: `Character` (367 condition references), `Infantry` (217),
+`Vehicle` (108), `Psyker` (107).
+
+So the flip would rescue 2.5% of the surface while changing the semantics of an
+already-shipped evaluation path and introducing a seven-case cycle. **The
+bottleneck is not the categories-to-conditions wiring; it is scope resolution
+and `set-primary` semantics.** Both are the same retargeting problem `affects`
+has.
+
+These numbers are pinned by `categoryConditionImpactSummary` in the real-data
+suite, so they stay honest as the data or the executable subset changes. The
+guard walks the generic source tree for conditions rather than a typed subset,
+because a typed walk missed 164 conditions owned by force entries and cost
+types.
+
+### Recommended next boundary
+
+1. **Modifier scope resolution.** It unblocks 281 scoped category modifiers,
+   1,265 `affects`-bearing characteristic modifiers, and the 70 blocked
+   categories at once. It is the single highest-leverage decision left, and it
+   is the shared prerequisite behind three stalled surfaces.
+2. **Revisit the category flip afterwards**, when the blocked-category count
+   has actually moved. Re-run the pinned guard to see the new payoff before
+   deciding.
+3. `set-primary` semantics, if a source outside the data itself can settle
+   whether it implies membership and whether it clears other primaries.
+
+`name` modifiers remain last despite their raw count, since 86% are Crusade rank
+labels.
+
+## Original blocking question — dynamic category membership
+
+Retained for context; superseded by the measurement above.
+
+The `category` modifier surface was inventoried before implementation because
+executing it changes the meaning of an already-shipped evaluation surface.
 
 ### What the corpus contains
 

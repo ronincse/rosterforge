@@ -271,6 +271,20 @@ describe.skipIf(realDataDirectory === undefined)(
           executableRemove: 9,
         });
         expect(
+          categoryConditionImpactSummary(
+            result.value.documents.map(({ projection }) => projection),
+            result.value.documents.map(({ root }) => root),
+          ),
+        ).toEqual({
+          categoryReferencingConditions: 5_047,
+          unaffected: 3_340,
+          wouldBecomeKnown: 127,
+          staysUnresolved: 1_580,
+          controlledCategories: 100,
+          executableOnlyCategories: 30,
+          blockedCategories: 70,
+        });
+        expect(
           profileOwnedVisibilityModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -1494,6 +1508,82 @@ function projectedSelectionEntryIds(
     }
   }
   return ids;
+}
+
+function categoryConditionImpactSummary(
+  projections: readonly BattleScribeProjection[],
+  roots: readonly OrderedXmlElement[],
+): Readonly<Record<string, number>> {
+  const categoryEntryIds = new Set<string>(
+    projections.flatMap(({ categoryEntries }) =>
+      categoryEntries.flatMap(({ id }) => id ?? []),
+    ),
+  );
+  const behaviorAttributes = ["affects", "join", "arg", "position"] as const;
+  const executableTargets = new Set<string>();
+  const blockedTargets = new Set<string>();
+
+  for (const { modifier } of projectedModifiersWithOwnership(projections)) {
+    if (modifier.field !== "category") continue;
+    const target = modifier.value;
+    if (target === undefined) continue;
+    const executable =
+      (modifier.type === "add" || modifier.type === "remove") &&
+      modifier.scope === undefined &&
+      modifier.repeats.length === 0 &&
+      behaviorAttributes.every(
+        (attribute) => modifier.node.attributes[attribute] === undefined,
+      ) &&
+      categoryEntryIds.has(target);
+    (executable ? executableTargets : blockedTargets).add(target);
+  }
+  const controlled = new Set([...executableTargets, ...blockedTargets]);
+  const executableOnly = new Set(
+    [...executableTargets].filter((target) => !blockedTargets.has(target)),
+  );
+
+  const counts: Record<string, number> = {
+    categoryReferencingConditions: 0,
+    unaffected: 0,
+    wouldBecomeKnown: 0,
+    staysUnresolved: 0,
+    controlledCategories: controlled.size,
+    executableOnlyCategories: executableOnly.size,
+    blockedCategories: blockedTargets.size,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+
+  // Conditions hang off modifiers, modifier groups, and nested condition
+  // groups on many owner kinds, so the generic source tree is walked rather
+  // than a typed subset that could silently miss one.
+  const visit = (element: OrderedXmlElement): void => {
+    if (element.name === "condition") {
+      const target = [
+        element.attributes.childId,
+        element.attributes.scope,
+      ].find(
+        (candidate) =>
+          candidate !== undefined && categoryEntryIds.has(candidate),
+      );
+      if (target !== undefined) {
+        add("categoryReferencingConditions");
+        add(
+          !controlled.has(target)
+            ? "unaffected"
+            : executableOnly.has(target)
+              ? "wouldBecomeKnown"
+              : "staysUnresolved",
+        );
+      }
+    }
+    for (const child of element.children) {
+      if (child.kind === "element") visit(child);
+    }
+  };
+  for (const root of roots) visit(root);
+  return counts;
 }
 
 function categoryModifierSummary(

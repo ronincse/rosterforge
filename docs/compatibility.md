@@ -791,6 +791,18 @@ owned by a *different* occurrence can still reach this one, and that case is not
 detectable from the candidate alone; it remains an explicit gap. At the pinned
 commit this change moved none of the existing real-data assertions.
 
+Feeding effective membership into condition identity was measured against the
+pinned corpus before being attempted, and the measurement argues against it. Of
+the 5,047 category-referencing conditions, 3,340 name a category no modifier
+touches and are unaffected. Only **127** would become knowable. The remaining
+1,580 would stay unresolved because at least one modifier on their category is
+scoped, is a primary operation, or carries a generic behavior attribute. Of the
+100 modifier-controlled categories, only 30 are controlled exclusively by
+executable `add`/`remove`; the other 70 are blocked. Every high-traffic category
+is in the blocked set — `Character` with 367 condition references, `Infantry`
+217, `Vehicle` 108, `Psyker` 107. The bottleneck is therefore scope resolution
+and `set-primary` semantics, not the wiring between categories and conditions.
+
 Category membership is **not** yet an input to condition evaluation. The corpus
 has 5,047 conditions that reference a category entry — 1,991 `instanceOf`, 2,146
 `notInstanceOf`, and 910 numeric counts — and they continue to compare the
