@@ -17,12 +17,12 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 392 tests with four skipped, and the pinned real-data suite
+normal suite passes 395 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 
-The staged category plan was measured and paused, then modifier scope resolution
-changed its economics substantially. The flip now needs a fresh go/no-go; see
-"Completed Assignment — Modifier Scope Resolution" near the end.
+The staged category plan is now complete through stage three: effective category
+membership feeds condition identity. See "Completed Assignment — The Category
+Condition Flip" at the end.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -1049,3 +1049,78 @@ for k, v in reasons.most_common(8): print(f"  {k:34}{v}")
 
 Expected output: 24,168 modifiers, 95.9% decidable, 8,402 Crusade; top
 undecidable reason `ident/scope=parent` at 1,084.
+
+## Completed Assignment — The Category Condition Flip, 2026-08-14
+
+Baseline `88e495e`. Resulting commits: `64e8f3b` (`feat: feed effective category
+membership into condition identity`) and `27a2801` (`feat: consume effective
+categories in cost, constraint, and visibility reports`). Not pushed, no pull
+request.
+
+Stage three of the staged category plan, approved after scope resolution moved
+its payoff from 2.5% to 21% of the category-condition surface.
+
+### The single-pass rule
+
+Membership and identity are mutually recursive in principle: a category modifier
+may carry conditions, and a condition may test a category. This resolves in one
+documented pass, not a fixpoint.
+
+Pass one — `indexEffectiveRosterCategories` — evaluates every category
+modifier's applicability with **no index in scope**, so a condition inside a
+category modifier compares static links. Pass two is every ordinary evaluation,
+which consults the finished index. `evaluateRosterSelectionCategories`
+deliberately never consumes the index; that is what keeps pass one from
+recursing.
+
+The consequence is deliberate and permanent: an occurrence whose category
+modifiers depend on category identity keeps unknown membership — seven of 892
+modifiers in the pinned corpus. BattleScribe may iterate to a fixpoint instead.
+Nothing in the data establishes that, so the chained case is refused.
+
+### Design notes worth knowing
+
+- **Layering.** The index *type* lives in the leaf `selection-context` module so
+  the condition layer can accept an index without importing the evaluator that
+  produces it. Package layering stays acyclic:
+  `selection-context ← conditions ← modifier-applicability ← modifier-groups ←
+  categories ← effective-categories`.
+- **Authority.** Known membership *replaces* the static links for a category
+  target rather than adding to them, so a removed category stops matching even
+  though its link is still projected. Non-category identity targets are
+  untouched.
+- **Memoization.** `effectiveRosterCategories` caches by roster and context
+  identity. Sound because every roster command returns a new immutable roster;
+  necessary because rebuilding per selection is quadratic.
+
+### Consumers wired
+
+Cost evaluation, selection constraints, force constraints, and selection
+visibility each build the index and forward it through modifier applicability
+and modifier-group applicability. Composed supported validation inherits it.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **395 passed, 4 skipped (399 total)**. Three new synthetic
+  proofs: a modifier-granted category resolving from unresolved to satisfied, a
+  removed category ceasing to match, and a cyclic occurrence staying unknown.
+- Pinned real-data suite — **4 passed, all assertions unchanged.**
+
+That last point deserves emphasis: **the flip moved no pinned assertion.** The
+rosters those tests build do not exercise category-controlled conditions, which
+matches the honesty patch having moved nothing either. The measured 1,048-condition
+improvement is real but is not observable through the currently pinned rosters.
+A roster that exercises a detachment-granted keyword would be the way to pin it,
+and building one is the obvious next real-data test.
+
+### Next recommended boundary
+
+1. **Pin the flip against real data.** Build a corpus roster that exercises a
+   modifier-granted category and assert a check that is exact only because of
+   the flip. Without it the 1,048 figure rests on a static measurement rather
+   than an observed behavioural delta.
+2. **`affects` execution** — three semantic decisions, plus how `affects`
+   composes with `scope` (1,617 modifiers carry both).
+3. **`set-primary` semantics** — one of the two things still blocking the
+   remaining 20 categories.
