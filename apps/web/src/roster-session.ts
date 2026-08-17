@@ -11,6 +11,7 @@ import {
   evaluateRosterCostsWithSelectionConditions,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
+  evaluateRosterSelectionCategories,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
@@ -27,6 +28,7 @@ import {
   type RosterForceConstraintsInRosterReport,
   type RosterProfileCharacteristicReport,
   type RosterProfileVisibilityReport,
+  type RosterSelectionCategoryReport,
   type RosterSelectionInitializationPlan,
   type RosterSelectionChoiceGroupInspection,
   type RosterSelectionDirectChoiceInspection,
@@ -38,6 +40,7 @@ import {
   failure,
   success,
   type Diagnostic,
+  type ObjectId,
   type Result,
   type ValidationCompleteness,
 } from "@rosterforge/foundation";
@@ -98,6 +101,23 @@ export interface LocalRosterProfileCharacteristics {
   readonly profile: LocalRosterProfile;
   readonly report: RosterProfileCharacteristicReport;
   readonly visibility: RosterProfileVisibilityReport;
+  readonly completeness: ValidationCompleteness;
+}
+
+export interface LocalRosterCategoryEntry {
+  readonly id: ObjectId;
+  readonly name: string;
+  /** True when the category is present only because a modifier added it. */
+  readonly added: boolean;
+  readonly primary: boolean;
+}
+
+export interface LocalRosterCategoryInspection {
+  readonly report: RosterSelectionCategoryReport;
+  /** Effective keywords in order, present only when membership is known. */
+  readonly categories?: readonly LocalRosterCategoryEntry[];
+  /** Categories the links declared but a modifier removed. */
+  readonly removed: readonly LocalRosterCategoryEntry[];
   readonly completeness: ValidationCompleteness;
 }
 
@@ -578,6 +598,79 @@ export function inspectLocalRosterSelectionCharacteristics(
       byProfile,
     },
     diagnostics,
+  );
+}
+
+/**
+ * Resolves one occurrence's effective category membership into display-ready
+ * keywords, naming each category from the composed catalogue definitions.
+ *
+ * Categories that no definition names keep their raw ID, so an unresolved
+ * target stays visible rather than disappearing.
+ */
+export function inspectLocalRosterSelectionCategories(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<LocalRosterCategoryInspection> {
+  const occurrence = findRosterSelection(session.roster.forces, selectionId);
+  const choice = session.selectionChoices.get(selectionId);
+  if (occurrence === undefined || choice === undefined) {
+    return failure([
+      {
+        code: "APP_ROSTER_CATEGORY_SELECTION_UNAVAILABLE",
+        message:
+          "A category inspection requires a known roster selection occurrence and its materialized choice.",
+        severity: "error",
+        impacts: ["validation"],
+        details: { selectionId },
+      },
+    ]);
+  }
+  const evaluated = evaluateRosterSelectionCategories(
+    session.roster,
+    session.catalogue.context,
+    occurrence,
+    choice,
+  );
+  if (!evaluated.ok) {
+    return failure(evaluated.diagnostics);
+  }
+
+  const names = new Map<string, string>();
+  for (const definition of session.catalogue.context.categories.definitions) {
+    const { id, name } = definition.source;
+    if (id !== undefined && name !== undefined) {
+      names.set(id, name);
+    }
+  }
+  const report = evaluated.value;
+  const describe = (id: ObjectId, added: boolean): LocalRosterCategoryEntry => ({
+    id,
+    name: names.get(id) ?? id,
+    added,
+    primary: report.primaryCategories?.includes(id) === true,
+  });
+
+  const effective = report.categories;
+  return success(
+    {
+      report,
+      ...(effective === undefined
+        ? {}
+        : {
+            categories: effective.map((id) =>
+              describe(id, !report.baseCategories.includes(id)),
+            ),
+          }),
+      removed:
+        effective === undefined
+          ? []
+          : report.baseCategories
+              .filter((id) => !effective.includes(id))
+              .map((id) => describe(id, false)),
+      completeness: report.completeness,
+    },
+    evaluated.diagnostics,
   );
 }
 

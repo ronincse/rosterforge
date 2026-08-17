@@ -88,6 +88,8 @@ This repository currently contains the first development slice:
   operations, extensions, and unrouted profile modifiers as incomplete;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
+- occurrence keywords in the roster workspace, showing effective categories
+  with added markers, struck-through removals, and an explicit unresolved state;
 - read-only effective category membership per roster occurrence, executing
   scope-free `add`/`remove` while preserving `set-primary`/`unset-primary` as
   an unresolved primary determination;

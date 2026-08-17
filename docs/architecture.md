@@ -505,6 +505,14 @@ remain listed at their containing selection or group with their materialization
 reason and existing diagnostics; the browser performs no additional reference
 resolution or subtree cloning.
 
+`inspectLocalRosterSelectionCategories` resolves one occurrence's effective
+membership into display-ready keywords, naming each category from the composed
+catalogue definitions. A category no definition names keeps its raw ID rather
+than disappearing. The workspace renders effective keywords for the occurrence,
+marks the ones a modifier added, shows a removed keyword struck through instead
+of hiding it, and states plainly when membership is unresolved. It adds no
+evaluation semantics.
+
 `inspectLocalRosterSelectionCharacteristics` evaluates the displayed
 characteristics and visibility of every profile shown for one exact occurrence —
 its direct profiles, its resolved profile info links, and the profiles of its

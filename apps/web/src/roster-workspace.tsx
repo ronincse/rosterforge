@@ -32,11 +32,13 @@ import {
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
   inspectLocalRosterRootChoices,
+  inspectLocalRosterSelectionCategories,
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
   localRosterSelectionChoice,
   localRosterSelectionCount,
   type LocalRosterChildChoiceGroup,
+  type LocalRosterCategoryInspection,
   type LocalRosterConstraintInspection,
   type LocalRosterDirectChildChoice,
   type LocalRosterProfile,
@@ -1480,6 +1482,10 @@ function RosterSelectionDetails({
     () => inspectLocalRosterSelectionCharacteristics(session, selection.id),
     [session, selection.id],
   );
+  const categories = useMemo(
+    () => inspectLocalRosterSelectionCategories(session, selection.id),
+    [session, selection.id],
+  );
   const reports = characteristics.ok
     ? characteristics.value.byProfile
     : undefined;
@@ -1542,6 +1548,10 @@ function RosterSelectionDetails({
         step={choice.step}
         onSetAmount={onSetAmount}
       />
+
+      {categories.ok && (
+        <SelectionKeywords inspection={categories.value} />
+      )}
 
       {profiles.length > 0 && (
         <section className="selection-info-section">
@@ -1722,6 +1732,64 @@ function positiveFiniteNumber(value: string | undefined): number | undefined {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function SelectionKeywords({
+  inspection,
+}: {
+  readonly inspection: LocalRosterCategoryInspection;
+}) {
+  const { categories, removed, completeness } = inspection;
+  if (categories === undefined && removed.length === 0) {
+    return (
+      <section className="selection-info-section selection-keywords">
+        <h4>Keywords</h4>
+        <p className="keywords-unresolved">
+          Effective keywords are unresolved for this selection.
+        </p>
+      </section>
+    );
+  }
+  return (
+    <section
+      className="selection-info-section selection-keywords"
+      data-completeness={completeness}
+    >
+      <h4>Keywords</h4>
+      {categories === undefined ? (
+        <p className="keywords-unresolved">
+          Effective keywords are unresolved for this selection.
+        </p>
+      ) : categories.length === 0 ? (
+        <p>No keywords.</p>
+      ) : (
+        <ul className="keyword-list">
+          {categories.map((category) => (
+            <li
+              key={category.id}
+              data-added={category.added ? "true" : undefined}
+              data-primary={category.primary ? "true" : undefined}
+            >
+              {category.name}
+              {category.added && <small>added</small>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* A removed keyword is shown struck through rather than hidden, so the
+          source declaration stays visible. */}
+      {removed.length > 0 && (
+        <ul className="keyword-list removed-keywords">
+          {removed.map((category) => (
+            <li key={category.id}>
+              <s>{category.name}</s>
+              <small>removed</small>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function SelectionProfile({

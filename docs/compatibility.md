@@ -337,6 +337,9 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- Occurrence keywords in the browser: effective categories in order, an added
+  marker for modifier-granted ones, removed categories struck through rather
+  than hidden, and an explicit unresolved state
 - A pinned real-data proof of the flip: an Adeptus Custodes Venerable
   Contemptor Dreadnought acquires the Character category from its Character
   upgrade's `root-entry`-scoped modifier, and a real catalogue `instanceOf`

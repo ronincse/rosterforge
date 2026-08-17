@@ -55,6 +55,10 @@ const gameSystemBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
       </characteristicTypes>
     </profileType>
   </profileTypes>
+  <categoryEntries>
+    <categoryEntry id="cat-infantry" name="Infantry" hidden="false" />
+    <categoryEntry id="cat-battleline" name="Battleline" hidden="false" />
+  </categoryEntries>
   <forceEntries>
     <forceEntry id="force-patrol" name="Patrol Detachment">
       <constraints>
@@ -86,6 +90,13 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
   gameSystemRevision="3" library="false">
   <selectionEntries>
     <selectionEntry id="entry-infantry" name="Infantry Squad" type="unit">
+      <categoryLinks>
+        <categoryLink id="squad-infantry" name="Infantry"
+          targetId="cat-infantry" primary="false" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline" />
+      </modifiers>
       <costs>
         <cost name="Points" typeId="cost-points" value="80" />
       </costs>
@@ -785,6 +796,10 @@ describe("App local catalogue flow", () => {
       ),
     ).toBeTruthy();
     fireEvent.click(selectionDetails);
+    // Effective keywords include one the catalogue only grants by modifier.
+    expect(within(selectedRoster).getByText("Keywords")).toBeTruthy();
+    expect(within(selectedRoster).getByText("Battleline")).toBeTruthy();
+    expect(within(selectedRoster).getByText("added")).toBeTruthy();
     expect(within(selectedRoster).getByText("Infantry profile")).toBeTruthy();
     expect(within(selectedRoster).getAllByText("Move")).toHaveLength(2);
     // A supported profile set replaces the displayed value and keeps the
