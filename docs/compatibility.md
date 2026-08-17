@@ -854,13 +854,26 @@ whole corpus, and all three are declared profile types; the 30 declared types
 have 30 distinct names, so no name is ambiguous.
 
 Of the 1,265 characteristic-targeting modifiers that carry `affects`, 1,246
-parse into the supported shape. That is a statement about syntax only. Execution
-still needs three decisions that the source shape does not settle: whether
-`entries` traversal crosses entry links and groups the way roster occurrences
-nest, whether an embedded category ID filters occurrences by category membership
-the way condition identity already does, and whether matching a profile-type
-name is acceptable when the project otherwise refuses to infer targets from
-display names. Until those are decided, `affects` modifiers stay unapplied.
+parse into the supported shape. That is a statement about syntax only; nothing
+executes them yet.
+
+`affects` is a **New Recruit extension rather than a BattleScribe 2.03
+feature** — it appears in no BattleScribe release note or schema. That explains
+why 1,617 modifiers carry both `affects` and a `scope`: BattleScribe ignores the
+former and honours the latter, so authors write both.
+
+New Recruit's open-source data editor settles part of the grammar. The segment
+after `profiles` matches a declared profile-type **name, case-insensitively**,
+with `all` or an absent segment meaning any type and an unmatched name treated
+as invalid authoring. The `position` attribute is a 1-based index of which match
+within a value to affect, where negative counts from the end and `0` means all;
+it applies to string operations such as `replace`, not to append placement.
+`affects` also **overrides** `scope` rather than composing with it: when
+`affects` is present and is not the literal `self`, it determines the target.
+
+What remains unsettled is whether `entries` means direct child occurrences or
+all descendants, and what an embedded category or entry ID does in the path.
+Until those are decided, `affects` modifiers stay preserved and unapplied.
 
 Three category entries in the corpus carry information collections that
 BattleScribe 2.03 does not declare on a category entry. `Recon Augury`

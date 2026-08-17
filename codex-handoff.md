@@ -1237,14 +1237,89 @@ could not change membership, which is no longer true.
 
 ### Next recommended boundary
 
-**`affects` execution** is now the only substantial surface left, and the sole
-remaining blocker on the last eight categories. It needs four decisions: the
-three from the parsing checkpoint, plus how `affects` composes with `scope`
-(1,617 modifiers carry both). Worth noting after this checkpoint: the `affects`
-questions may also have findable answers rather than requiring inference — the
-same BattleScribe release notes and issue tracker settled `set-primary` when a
-corpus-only reading could not.
+`affects` execution; see the research checkpoint below, which answered several
+of its open questions and corrected one earlier claim.
 
-Smaller decision-free work, if a session wants it: extend the category-condition
-honesty downgrade to inbound scoped modifiers declared by other occurrences,
-still an explicit documented gap.
+## Research Checkpoint — `affects` Semantics, 2026-08-17
+
+No code change. Documentation only, following the same
+search-before-inferring approach that settled `set-primary`.
+
+### The key structural finding
+
+**`affects` is a New Recruit extension, not a BattleScribe 2.03 feature.** It
+appears in no BattleScribe release note or schema. Its semantics are defined by
+New Recruit, whose data editor is open source
+(<https://github.com/giloushaker/nr-editor>). The runtime logic lives in a
+private submodule (`giloushaker/nr-shared`, 404), but the editor's own modifier
+panel encodes enough to settle several questions.
+
+That also explains why 1,617 modifiers carry **both** `affects` and `scope`:
+BattleScribe ignores `affects` and honours `scope`, so authors write both to get
+sensible behaviour in each tool.
+
+### Settled
+
+**Profile-type matching.** The segment after `profiles` is matched against
+declared **profile type names, case-insensitively**. `all` — or an absent
+segment — means any profile type. A name matching no declared profile type is
+treated as *invalid authoring*, not as an empty match. This confirms the earlier
+inference and adds two refinements we did not have: case-insensitivity and the
+`all` sentinel.
+
+**`position`.** The editor tooltip reads: *"1-Based index of the match to
+affect. supports negative indexes. 0 = All"*. So `-1` selects the last match,
+`1` the first, `0` every match. It is offered only for `replace`, `increment`,
+`decrement`, `multiply`, `divide`, `modulo`, `floor`, and `ceil` on `string` or
+`string-or-number` fields — so it indexes matches *within a value*, not
+placement within an appended list. The pinned corpus has `position` `-1` 153
+times, `""` five times, and `1` three times.
+
+**`modulo` exists** as an operation, alongside the kinds already inventoried.
+
+### Corrected
+
+A previous entry proposed that `scope` picks the anchor occurrence and the
+`affects` path navigates from there. **That is wrong.** The editor treats them
+as alternatives: when `affects` is present and is not the literal `self`, it
+determines the target and `scope` is not consulted; otherwise `scope` is. The
+value `self` means "no retargeting", falling back to `scope`.
+
+This matters for design: `affects` **overrides** `scope` rather than composing
+with it, so the two mechanisms do not need a combination rule — they need a
+precedence rule.
+
+### Still open
+
+1. Whether `entries` means direct child occurrences or all descendants. The
+   corpus contrast between `self.entries.profiles.X` and
+   `self.entries.recursive.profiles.X` implies the former, but nothing external
+   confirms it.
+2. What an embedded category or entry ID does in the path — filter the traversal
+   set, or narrow the selected profiles.
+3. Whether the editor's precedence rule is also the runtime rule. It governs the
+   editor's field typing, which is strong evidence but not proof.
+
+Those three could be settled by reading New Recruit's runtime behaviour
+directly, or by a targeted experiment: build a unit in New Recruit whose upgrade
+carries a non-recursive `affects` and observe which nested profiles change.
+
+### Sources
+
+- New Recruit data editor, modifier panel —
+  <https://github.com/giloushaker/nr-editor/blob/master/components/catalogue/right_panel/fields/Modifier.vue>
+- New Recruit editor repository — <https://github.com/giloushaker/nr-editor>
+- BattleScribe 2.03.00 release notes (no `affects`) —
+  <https://github.com/BattleScribe/Pre-Release/issues/17>
+
+### Next recommended boundary
+
+**`affects` execution**, now needing fewer decisions than before: profile-type
+matching and precedence over `scope` are settled, leaving traversal depth and
+the embedded-ID filter. A reasonable checkpoint would support the unambiguous
+subset — `affects` paths ending in `profiles.<type>` with no embedded ID —
+routing them to the named profile types on the occurrence's own descendants, and
+leaving embedded-ID and force-traversal forms unsupported.
+
+Smaller decision-free work: extend the category-condition honesty downgrade to
+inbound scoped modifiers declared by other occurrences, still a documented gap.
