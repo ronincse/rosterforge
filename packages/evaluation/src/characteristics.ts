@@ -11,6 +11,14 @@ import {
 
 import type { Roster, RosterSelection } from "@rosterforge/roster-model";
 
+import { parseBattleScribeAffectsSelector } from "./affects.js";
+import {
+  indexEvaluationChoices,
+  resolveEvaluationSelection,
+  rosterMatchesCatalogueContext,
+  type EvaluationSelectionChoice,
+} from "./selection-context.js";
+
 import {
   evaluateRosterModifierApplicability,
   type RosterModifierApplicabilityReport,
@@ -92,6 +100,13 @@ export interface RosterCharacteristicProfileSource<
  */
 const visibilityField = "hidden";
 
+/**
+ * Where a step's modifier was declared. `own` means the profile declared it;
+ * `affects` means the profile's owning selection declared it and routed it here
+ * with an `affects` selector.
+ */
+export type RosterCharacteristicStepOrigin = "own" | "affects";
+
 export interface AppliedRosterCharacteristicStep<
   Modifier extends RosterCharacteristicModifierSource =
     RosterCharacteristicModifierSource,
@@ -99,6 +114,7 @@ export interface AppliedRosterCharacteristicStep<
   readonly status: "applied";
   readonly modifier: Modifier;
   readonly grouped: boolean;
+  readonly origin: RosterCharacteristicStepOrigin;
   readonly kind: RosterCharacteristicModifierKind;
   readonly input: string;
   readonly output: string;
@@ -111,6 +127,7 @@ export interface NotApplicableRosterCharacteristicStep<
   readonly status: "notApplicable";
   readonly modifier: Modifier;
   readonly grouped: boolean;
+  readonly origin: RosterCharacteristicStepOrigin;
   readonly input: string;
 }
 
@@ -121,6 +138,7 @@ export interface UnappliedRosterCharacteristicStep<
   readonly status: "unapplied";
   readonly modifier: Modifier;
   readonly grouped: boolean;
+  readonly origin: RosterCharacteristicStepOrigin;
   readonly input: string;
   readonly issues: readonly RosterCharacteristicModifierIssue[];
   readonly kind?: RosterCharacteristicModifierKind;
@@ -300,6 +318,10 @@ export function evaluateRosterProfileCharacteristics<
     Characteristic,
     Modifier
   >[] = [];
+  const routedSteps = new Map<
+    RosterCharacteristicReport<Characteristic, Modifier>,
+    RosterCharacteristicStep<Modifier>[]
+  >();
   for (const characteristic of profile.characteristics) {
     const typeId = characteristic.typeId;
     // A duplicated type on one profile is reported as an ambiguous target
@@ -360,6 +382,62 @@ export function evaluateRosterProfileCharacteristics<
     });
   }
 
+  // Modifiers declared by the owning selection can route here with an
+  // `affects` selector. Only the owner-relative form is executed; see
+  // `collectAffectsRoutedModifiers`.
+  const routed = collectAffectsRoutedModifiers(roster, context, owner, profile);
+  if (routed.partial) {
+    lostDirect = true;
+  }
+  for (const entry of routed.modifiers) {
+    const typeId = entry.modifier.field as ObjectId | undefined;
+    if (typeId === undefined || routable.get(typeId) !== 1) {
+      continue;
+    }
+    const report = characteristics.find(
+      ({ characteristic }) => characteristic.typeId === typeId,
+    );
+    if (report === undefined) {
+      continue;
+    }
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      entry.modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lostDirect = true;
+      continue;
+    }
+    const step = evaluateStep<Modifier>(
+      currentValue(report.steps, report.baseValue),
+      entry.modifier as Modifier,
+      entry.grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "affects",
+    );
+    diagnostics.push(...step.diagnostics);
+    routedSteps.set(report, [...(routedSteps.get(report) ?? []), step.step]);
+  }
+  const finalised = characteristics.map((report) => {
+    const extra = routedSteps.get(report);
+    if (extra === undefined) {
+      return report;
+    }
+    const steps = [...report.steps, ...extra];
+    const value = effectiveValue(steps, report.baseValue);
+    return {
+      ...report,
+      ...(value === undefined ? {} : { value }),
+      completeness: steps.some(({ status }) => status === "unapplied")
+        ? ("incomplete" as const)
+        : ("complete" as const),
+      steps,
+    };
+  });
+
   lostDirect ||= modifierApplicability.some(
     ({ completeness }) => completeness === "incomplete",
   );
@@ -371,9 +449,7 @@ export function evaluateRosterProfileCharacteristics<
     !lostDirect &&
     !lostGrouped &&
     unroutedModifiers.length === 0 &&
-    characteristics.every(
-      ({ completeness: child }) => child === "complete",
-    ) &&
+    finalised.every(({ completeness: child }) => child === "complete") &&
     diagnostics.length === 0
       ? "complete"
       : "incomplete";
@@ -384,7 +460,7 @@ export function evaluateRosterProfileCharacteristics<
       context,
       owner,
       profile,
-      characteristics,
+      characteristics: finalised,
       unroutedModifiers,
       visibilityModifiers,
       modifierApplicability,
@@ -568,13 +644,14 @@ function evaluateStep<
   modifier: Modifier,
   grouped: boolean,
   applicability: NumericModifierApplicability,
+  origin: RosterCharacteristicStepOrigin = "own",
 ): {
   readonly step: RosterCharacteristicStep<Modifier>;
   readonly diagnostics: readonly Diagnostic[];
 } {
   if (applicability === "notApplicable") {
     return {
-      step: { status: "notApplicable", modifier, grouped, input },
+      step: { status: "notApplicable", modifier, grouped, origin, input },
       diagnostics: [],
     };
   }
@@ -586,10 +663,12 @@ function evaluateStep<
   if (modifier.repeats.length > 0) {
     issues.push("repeated");
   }
-  if (modifier.scope !== undefined) {
+  // `affects` overrides `scope` in New Recruit, which is what authors target
+  // when they write both, so a routed modifier's scope is not an issue.
+  if (modifier.scope !== undefined && origin === "own") {
     issues.push("scoped");
   }
-  if (unsupportedAttributes(modifier).length > 0) {
+  if (unsupportedAttributes(modifier, origin).length > 0) {
     issues.push("unsupportedAttributes");
   }
 
@@ -609,6 +688,7 @@ function evaluateStep<
         status: "applied",
         modifier,
         grouped,
+        origin,
         kind,
         input,
         output: modifier.value,
@@ -622,12 +702,132 @@ function evaluateStep<
       status: "unapplied",
       modifier,
       grouped,
+      origin,
       input,
       issues,
       ...(kind === undefined ? {} : { kind }),
     },
-    diagnostics: issues.map((issue) => modifierDiagnostic(modifier, issue)),
+    diagnostics: issues.map((issue) =>
+      modifierDiagnostic(modifier, issue, origin),
+    ),
   };
+}
+
+/**
+ * Collects modifiers declared by the profile's owning selection that route to
+ * this profile through an `affects` selector.
+ *
+ * Only the owner-relative form executes: a selector with no `entries`
+ * traversal and no embedded filter ID, ending in `profiles.<profileTypeName>`.
+ * That subset needs no decision about traversal depth or what an embedded ID
+ * filters, both of which remain unsettled. Force traversal and
+ * entry-terminated selectors stay unsupported.
+ *
+ * The profile type is matched the way New Recruit's data editor matches it: the
+ * selector segment is compared case-insensitively against the *declared*
+ * profile type resolved from the profile's `typeId`, never against the
+ * denormalized `typeName` string. `all` matches any type. A selector naming no
+ * declared type routes nothing.
+ */
+function collectAffectsRoutedModifiers(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  profile: RosterCharacteristicProfileSource,
+): {
+  readonly modifiers: readonly {
+    readonly modifier: RosterCharacteristicModifierSource;
+    readonly grouped: boolean;
+  }[];
+  readonly partial: boolean;
+} {
+  if (!rosterMatchesCatalogueContext(roster, context)) {
+    return { modifiers: [], partial: false };
+  }
+  const resolution = resolveEvaluationSelection(
+    owner,
+    indexEvaluationChoices(context),
+    true,
+  );
+  const choice = resolution.choices[0];
+  if (resolution.status !== "resolved" || choice === undefined) {
+    return { modifiers: [], partial: false };
+  }
+  const typeName = declaredProfileTypeName(context, profile);
+  if (typeName === undefined) {
+    // Without a resolved profile type nothing can be matched by name, and a
+    // selector might have targeted this profile, so the report stays partial.
+    return { modifiers: [], partial: hasAffectsModifier(choice) };
+  }
+
+  const collected: {
+    readonly modifier: RosterCharacteristicModifierSource;
+    readonly grouped: boolean;
+  }[] = [];
+  const routes = (modifier: RosterCharacteristicModifierSource): boolean => {
+    const value = modifier.node.attributes.affects;
+    if (value === undefined) return false;
+    const selector = parseBattleScribeAffectsSelector(value);
+    if (
+      !selector.supported ||
+      selector.traversal !== "own" ||
+      selector.filterId !== undefined ||
+      selector.profileTypeName === undefined
+    ) {
+      return false;
+    }
+    const wanted = selector.profileTypeName.toLowerCase();
+    return wanted === "all" || wanted === typeName.toLowerCase();
+  };
+  const visit = (group: {
+    readonly modifiers: readonly RosterCharacteristicModifierSource[];
+    readonly modifierGroups: readonly unknown[];
+  }): void => {
+    for (const modifier of group.modifiers) {
+      if (routes(modifier)) collected.push({ modifier, grouped: true });
+    }
+    for (const child of group.modifierGroups) {
+      visit(child as Parameters<typeof visit>[0]);
+    }
+  };
+  for (const modifier of choice.modifiers) {
+    if (routes(modifier)) collected.push({ modifier, grouped: false });
+  }
+  for (const group of choice.modifierGroups) {
+    visit(group);
+  }
+  return { modifiers: collected, partial: false };
+}
+
+function hasAffectsModifier(choice: EvaluationSelectionChoice): boolean {
+  const inGroup = (group: {
+    readonly modifiers: readonly { readonly node: { readonly attributes: Readonly<Record<string, string>> } }[];
+    readonly modifierGroups: readonly unknown[];
+  }): boolean =>
+    group.modifiers.some(
+      (modifier) => modifier.node.attributes.affects !== undefined,
+    ) ||
+    (group.modifierGroups as readonly Parameters<typeof inGroup>[0][]).some(
+      inGroup,
+    );
+  return (
+    choice.modifiers.some(
+      (modifier) => modifier.node.attributes.affects !== undefined,
+    ) || choice.modifierGroups.some(inGroup)
+  );
+}
+
+function declaredProfileTypeName(
+  context: BattleScribeCatalogueContext,
+  profile: RosterCharacteristicProfileSource,
+): string | undefined {
+  if (profile.typeId === undefined) return undefined;
+  const candidates = (
+    context.graph.objectsById.get(profile.typeId) ?? []
+  ).filter((object) => object.kind === "profileType");
+  if (candidates.length !== 1) return undefined;
+  const name = (candidates[0]?.source as { readonly name?: string }).name;
+  return typeof name === "string" && name !== "" ? name : undefined;
 }
 
 function currentValue<Modifier extends RosterCharacteristicModifierSource>(
@@ -777,8 +977,14 @@ function profileOwnedModifiers<
  */
 function unsupportedAttributes(
   modifier: RosterCharacteristicModifierSource,
+  origin: RosterCharacteristicStepOrigin = "own",
 ): readonly string[] {
   const supported = new Set(["type", "field", "value", "scope", "comment"]);
+  // A routed modifier reached this profile *because* of its selector, and its
+  // scope is overridden, so neither counts against it.
+  if (origin === "affects") {
+    supported.add("affects");
+  }
   return Object.keys(modifier.node.attributes).filter(
     (attribute) => !supported.has(attribute),
   );
@@ -787,6 +993,7 @@ function unsupportedAttributes(
 function modifierDiagnostic(
   modifier: RosterCharacteristicModifierSource,
   issue: RosterCharacteristicModifierIssue,
+  origin: RosterCharacteristicStepOrigin = "own",
 ): Diagnostic {
   const descriptions: Record<
     RosterCharacteristicModifierIssue,
@@ -810,7 +1017,7 @@ function modifierDiagnostic(
     unsupportedAttributes: [
       "EVALUATION_CHARACTERISTIC_MODIFIER_ATTRIBUTES_UNSUPPORTED",
       "A characteristic modifier has generic attributes with unsupported behavior.",
-      unsupportedAttributes(modifier)[0],
+      unsupportedAttributes(modifier, origin)[0],
     ],
     missingType: [
       "EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_MISSING",

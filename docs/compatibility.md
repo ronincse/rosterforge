@@ -871,9 +871,17 @@ it applies to string operations such as `replace`, not to append placement.
 `affects` also **overrides** `scope` rather than composing with it: when
 `affects` is present and is not the literal `self`, it determines the target.
 
+The owner-relative subset now executes: a selector with no `entries` traversal
+and no embedded filter ID, ending in `profiles.<profileTypeName>`, routes its
+owning selection's modifier to that selection's own profiles of the named type.
+237 of the 1,246 parsed characteristic selectors take that form — all of them
+resolving to a declared profile type, using only `Unit` (187), `Ranged Weapons`
+(29), and `Melee Weapons` (21) — and 156 of those are `set` operations the
+lexical kernel can execute.
+
 What remains unsettled is whether `entries` means direct child occurrences or
 all descendants, and what an embedded category or entry ID does in the path.
-Until those are decided, `affects` modifiers stay preserved and unapplied.
+Selectors using either form stay preserved and unapplied.
 
 Three category entries in the corpus carry information collections that
 BattleScribe 2.03 does not declare on a category entry. `Recon Augury`

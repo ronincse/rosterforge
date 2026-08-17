@@ -1373,6 +1373,27 @@ makes the report incomplete. This evaluator does not decide profile naming,
 `affects` retargeting, or info-group modifier behavior, so it cannot prove that
 such a modifier leaves the display unchanged.
 
+A modifier declared by the profile's **owning selection** can also route here
+through an `affects` selector. Only the owner-relative form executes: a selector
+with no `entries` traversal and no embedded filter ID, ending in
+`profiles.<profileTypeName>`. That subset needs no decision about traversal
+depth or what an embedded ID filters, both of which remain unsettled.
+
+The profile type is matched the way New Recruit's data editor matches it: the
+selector segment is compared case-insensitively against the *declared* profile
+type resolved from the profile's `typeId` through the graph, never against the
+denormalized `typeName` string. `all` matches any type, and a selector naming no
+declared type routes nothing. A profile whose type does not resolve uniquely
+makes the report incomplete when the owner carries any `affects` modifier at
+all, because one of them might have targeted it.
+
+`affects` **overrides** `scope` rather than composing with it, so a routed
+modifier's scope is not counted against it and neither is the `affects`
+attribute itself. Routed steps record `origin: "affects"` and run after the
+profile's own, which keeps a profile-owned modifier authoritative over an
+inherited one. Selectors that traverse beyond the owner are left alone entirely
+rather than recorded as unapplied steps on every profile they might reach.
+
 Modifiers targeting `hidden` are the one exception. That is a known BattleScribe
 field whose Boolean `set` semantics this package already executes for selection
 visibility, so a modifier naming it definitively does not name a characteristic

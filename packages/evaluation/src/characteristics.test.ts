@@ -351,6 +351,79 @@ describe("roster profile characteristic display", () => {
   });
 });
 
+describe("affects-routed characteristic modifiers", () => {
+  it("routes an owning selection's modifier to its own matching profiles", () => {
+    const setup = characteristicSetup("affects-owner");
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-routed-unit"),
+      ),
+    );
+
+    // Move is set by an affects selector that also carries a scope; affects
+    // overrides scope, so the modifier applies rather than being withheld.
+    expect(report).toMatchObject({
+      completeness: "complete",
+      characteristics: [
+        {
+          baseValue: '6"',
+          value: '9"',
+          steps: [{ status: "applied", origin: "affects", output: '9"' }],
+        },
+        // Matched case-insensitively against the declared profile type.
+        { baseValue: "4+", value: "2+" },
+      ],
+    });
+  });
+
+  it("routes only to the profile type the selector names", () => {
+    const setup = characteristicSetup("affects-owner");
+
+    const ability = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-routed-ability"),
+      ),
+    );
+
+    // The Unit-targeted modifiers must not reach an Ability profile, and the
+    // Ability-targeted one must.
+    expect(ability).toMatchObject({
+      completeness: "complete",
+      characteristics: [{ baseValue: "Base text", value: "Rewritten" }],
+    });
+    expect(ability.characteristics[0]?.steps).toHaveLength(1);
+  });
+
+  it("does not execute a selector that traverses beyond the owner", () => {
+    const setup = characteristicSetup("affects-owner");
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-routed-unit"),
+      ),
+    );
+
+    // The recursive selector is left alone entirely: it neither applies nor
+    // appears as an unapplied step on this profile.
+    expect(
+      report.characteristics[0]?.steps.every(
+        (step) => step.status === "applied",
+      ),
+    ).toBe(true);
+    expect(report.characteristics[0]?.value).toBe('9"');
+  });
+});
+
 describe("roster profile visibility", () => {
   it("reports a profile with no hidden behavior as visible", () => {
     const setup = characteristicSetup();
@@ -492,14 +565,14 @@ describe("roster profile visibility", () => {
   });
 });
 
-function characteristicSetup(): {
+function characteristicSetup(rootId = "characteristic-owner"): {
   readonly context: BattleScribeCatalogueContext;
   readonly roster: Roster;
   readonly owner: RosterSelection;
   readonly ownerChoice: EvaluationSelectionChoice;
 } {
   const context = catalogueContext();
-  const ownerChoice = choice(context, "characteristic-owner");
+  const ownerChoice = choice(context, rootId);
   let roster = createRoster({
     id: rosterId("characteristic-roster"),
     name: "Characteristic roster",

@@ -88,6 +88,9 @@ This repository currently contains the first development slice:
   operations, extensions, and unrouted profile modifiers as incomplete;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
+- owner-relative `affects` routing, so a selection's modifier reaches its own
+  profiles of a named profile type, matched case-insensitively against declared
+  types and overriding the modifier's scope;
 - occurrence keywords in the roster workspace, showing effective categories
   with added markers, struck-through removals, and an explicit unresolved state;
 - read-only effective category membership per roster occurrence, executing

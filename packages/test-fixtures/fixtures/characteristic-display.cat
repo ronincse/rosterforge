@@ -286,5 +286,40 @@
         </profile>
       </profiles>
     </selectionEntry>
+    <selectionEntry id="affects-owner" name="Affects Owner" type="unit">
+      <profiles>
+        <profile id="profile-routed-unit" name="Routed Unit"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+        </profile>
+        <profile id="profile-routed-ability" name="Routed Ability"
+          typeId="profile-type-ability" typeName="Ability">
+          <characteristics>
+            <characteristic name="Description"
+              typeId="characteristic-description">Base text</characteristic>
+          </characteristics>
+        </profile>
+      </profiles>
+      <modifiers>
+        <!-- Routes to this entry's own Unit profiles by profile-type name. The
+             scope is deliberately present: affects overrides it. -->
+        <modifier type="set" field="characteristic-move" value='9"'
+          affects="profiles.Unit" scope="parent" />
+        <!-- Case-insensitive match, as New Recruit's editor does it. -->
+        <modifier type="set" field="characteristic-save" value="2+"
+          affects="profiles.uNiT" />
+        <!-- Targets the Ability profile only, proving type selection. -->
+        <modifier type="set" field="characteristic-description"
+          value="Rewritten" affects="profiles.Ability" />
+        <!-- Traversal beyond the owner is not executed. -->
+        <modifier type="set" field="characteristic-move" value='1"'
+          affects="self.entries.recursive.profiles.Unit" />
+      </modifiers>
+    </selectionEntry>
   </selectionEntries>
 </catalogue>
