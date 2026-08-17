@@ -872,6 +872,28 @@ Unsupported or unresolved hidden behavior never creates a false structural
 violation. It remains available through diagnostics and makes the structural
 report incomplete.
 
+Category-membership evaluation can emit:
+
+```text
+EVALUATION_CATEGORY_MODIFIER_APPLICABILITY_UNRESOLVED
+EVALUATION_CATEGORY_MODIFIER_REPEAT_UNSUPPORTED
+EVALUATION_CATEGORY_MODIFIER_SCOPE_UNSUPPORTED
+EVALUATION_CATEGORY_MODIFIER_ATTRIBUTES_UNSUPPORTED
+EVALUATION_CATEGORY_MODIFIER_TYPE_MISSING
+EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED
+EVALUATION_CATEGORY_MODIFIER_VALUE_MISSING
+```
+
+Only `add` and `remove` execute, so `set-primary` and `unset-primary` produce
+the unsupported-type code. Those two are the one unsupported shape that provably
+cannot change membership, so they withhold only the report's primary
+determination; every other code withholds effective membership as well. A
+not-applicable step emits nothing and does not make the report incomplete.
+Attribute-shaped problems point to the exact modifier attribute, and `comment`
+is recognized as inert metadata. This evaluator sets no validity state, does not
+aggregate categories across occurrences, and does not change how conditions
+compare category identity.
+
 Characteristic-display evaluation can emit:
 
 ```text

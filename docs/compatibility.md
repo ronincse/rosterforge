@@ -337,6 +337,13 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- Read-only effective category membership for one roster selection occurrence,
+  executing scope-free `add` and `remove` over the occurrence's materialized
+  category links in owner-direct then grouped source order, with inert no-op
+  steps distinguishable from unsupported ones
+- Independent membership and primary reporting: a `set-primary` or
+  `unset-primary` operation withholds only the primary determination, while
+  every other unsupported shape withholds effective membership too
 - Pure decomposition of the observed `affects` selector grammar into traversal,
   optional filter ID, and profile-type name, with explicit unsupported issues
   for force traversal and entry-terminated paths; parsing performs no
@@ -751,6 +758,33 @@ makes a characteristic report incomplete; visibility owns its own completeness.
 The remaining `annotation`, `name`, and cross-profile characteristic modifiers
 are still retained as unrouted display behavior and still make their
 characteristic report incomplete.
+
+The pinned corpus contains 892 `field="category"` modifiers: 532 `add`, 328
+`set-primary`, 27 `remove`, and five `unset-primary`. All 892 values resolve to
+a category entry. They are owned by 747 selection entries and 145 entry links,
+566 directly and 326 inside modifier groups. 611 are scope-free; the 281 scoped
+forms use `root-entry` 99, `parent` 78, `model` 68, `upgrade` 31, `force` four,
+and `roster` once. Generic attributes appear as `affects` 89, `arg` 83, and
+`join` 79. 463 carry conditions, four carry condition groups, and none carries a
+repeat.
+
+The executable subset is **283** — 274 `add` and nine `remove` that are
+scope-free, extension-free, repeat-free, and resolve. `add` is unambiguous: 273
+of the 274 create a new membership and one is redundant with an existing link.
+`set-primary` is not: 322 of 325 executable-shaped instances name a category the
+owner does not link and have no sibling `add`, and none targets an existing
+link, so the operation would have to create membership to do anything at all.
+234 owners would also end up with more than one primary unless it clears the
+others. RosterForge therefore preserves and diagnoses both primary operations
+rather than inventing either rule.
+
+Category membership is **not** yet an input to condition evaluation. The corpus
+has 5,047 conditions that reference a category entry — 1,991 `instanceOf`, 2,146
+`notInstanceOf`, and 910 numeric counts — and they continue to compare the
+static materialized links. Feeding effective membership back into condition
+identity would change every report built on those conditions, and seven of the
+892 category modifiers have conditions that themselves query a category, so an
+evaluation order would have to be defined first. That remains an open decision.
 
 The `affects` selector grammar is closed at the pinned commit. Its 1,859
 occurrences use only 79 distinct values, and every segment falls into a small

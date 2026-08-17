@@ -1,4 +1,5 @@
 export * from "./affects.js";
+export * from "./categories.js";
 export * from "./characteristics.js";
 export * from "./costs.js";
 export * from "./conditions.js";

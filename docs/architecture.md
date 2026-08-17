@@ -1184,6 +1184,38 @@ condition evaluator cannot resolve remain incomplete. The evaluator does not
 expand repeated operations into arrays, mutate source data, apply dynamic
 `defaultAmount` modifiers, or imply complete legality.
 
+## Category Membership Boundary
+
+`evaluateRosterSelectionCategories` reports the effective category membership of
+one exact roster selection occurrence. The base is the occurrence's own
+materialized category links — the same source the condition evaluator already
+uses for category identity. It does not aggregate categories from ancestors or
+descendants, and it does not feed its result back into condition identity;
+conditions continue to compare static links. It is a read-only report over one
+occurrence.
+
+Only scope-free, extension-free `add` and `remove` execute, in the order already
+documented elsewhere: direct owner modifiers first, then top-level groups in
+source order with each group's direct modifiers before nested groups
+depth-first. `add` of an existing member and `remove` of a non-member are
+applied no-op steps that record `changed: false`, so an inert authoring case is
+distinguishable from an unsupported one.
+
+`set-primary` and `unset-primary` are deliberately not executed. In the pinned
+corpus 322 of the 325 executable-shaped `set-primary` modifiers name a category
+the owner does not already link, so the operation can only do anything if it
+also creates the membership, and 234 owners would end up with more than one
+primary unless it also clears the others. Neither rule is established by the
+source shape.
+
+Because a primary-flag operation provably cannot change membership, it degrades
+only the primary determination: `categories` stays present and known while
+`primaryCategories` is withheld. Every other unsupported shape — a scope, a
+generic behavior attribute, a repeat, a missing operation or value, or
+unresolved applicability — withholds both. Membership and primary knowledge are
+therefore reported independently, and the report's completeness is independent
+of both.
+
 ## Affects Selector Boundary
 
 `parseBattleScribeAffectsSelector` decomposes an observed `affects` value into

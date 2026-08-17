@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="category-membership" name="Category Membership" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="cat-infantry" name="Infantry" hidden="false" />
+    <categoryEntry id="cat-battleline" name="Battleline" hidden="false" />
+    <categoryEntry id="cat-character" name="Character" hidden="false" />
+  </categoryEntries>
+  <selectionEntries>
+    <selectionEntry id="static-categories" name="Static Categories"
+      type="unit">
+      <categoryLinks>
+        <categoryLink id="static-infantry" name="Infantry"
+          targetId="cat-infantry" primary="true" />
+        <categoryLink id="static-character" name="Character"
+          targetId="cat-character" primary="false" />
+      </categoryLinks>
+    </selectionEntry>
+    <selectionEntry id="added-category" name="Added Category" type="unit">
+      <categoryLinks>
+        <categoryLink id="added-infantry" name="Infantry"
+          targetId="cat-infantry" primary="true" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="removed-category" name="Removed Category" type="unit">
+      <categoryLinks>
+        <categoryLink id="removed-infantry" name="Infantry"
+          targetId="cat-infantry" primary="true" />
+        <categoryLink id="removed-character" name="Character"
+          targetId="cat-character" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="remove" field="category" value="cat-character" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="redundant-add" name="Redundant Add" type="unit">
+      <categoryLinks>
+        <categoryLink id="redundant-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-infantry" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="conditional-category" name="Conditional Category"
+      type="unit">
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="self"
+              childId="any" value="1" />
+          </conditions>
+        </modifier>
+        <modifier type="add" field="category" value="cat-character">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="self"
+              childId="any" value="5" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="grouped-category" name="Grouped Category" type="unit">
+      <modifiers>
+        <modifier type="add" field="category" value="cat-infantry" />
+      </modifiers>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="add" field="category" value="cat-battleline" />
+          </modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="remove" field="category"
+                  value="cat-infantry" />
+              </modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+    <selectionEntry id="primary-operation" name="Primary Operation"
+      type="unit">
+      <categoryLinks>
+        <categoryLink id="primary-infantry" name="Infantry"
+          targetId="cat-infantry" primary="true" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline" />
+        <modifier type="set-primary" field="category"
+          value="cat-battleline" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="scoped-category" name="Scoped Category" type="unit">
+      <categoryLinks>
+        <categoryLink id="scoped-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline"
+          scope="parent" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="affects-category" name="Affects Category" type="unit">
+      <categoryLinks>
+        <categoryLink id="affects-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline"
+          affects="self.entries.recursive" />
+      </modifiers>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

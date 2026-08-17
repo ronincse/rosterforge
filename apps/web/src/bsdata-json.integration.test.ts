@@ -246,6 +246,31 @@ describe.skipIf(realDataDirectory === undefined)(
           characteristicTargetsSupported: 1_246,
         });
         expect(
+          categoryModifierSummary(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual({
+          total: 892,
+          add: 532,
+          setPrimary: 328,
+          remove: 27,
+          unsetPrimary: 5,
+          otherOperations: 0,
+          direct: 566,
+          grouped: 326,
+          scoped: 281,
+          affects: 89,
+          arg: 83,
+          join: 79,
+          withConditions: 463,
+          withConditionGroups: 4,
+          withRepeats: 0,
+          valueResolvesToCategory: 892,
+          executable: 283,
+          executableAdd: 274,
+          executableRemove: 9,
+        });
+        expect(
           profileOwnedVisibilityModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -1371,6 +1396,69 @@ function projectedModifiers(
   return modifiers;
 }
 
+function projectedModifiersWithOwnership(
+  projections: readonly BattleScribeProjection[],
+): readonly {
+  readonly modifier: ModifierProjection;
+  readonly grouped: boolean;
+}[] {
+  const rows: {
+    readonly modifier: ModifierProjection;
+    readonly grouped: boolean;
+  }[] = [];
+
+  const addGroup = (group: ModifierGroupProjection): void => {
+    for (const modifier of group.modifiers) {
+      rows.push({ modifier, grouped: true });
+    }
+    for (const child of group.modifierGroups) {
+      addGroup(child);
+    }
+  };
+  const addOwner = (owner: {
+    readonly modifiers: readonly ModifierProjection[];
+    readonly modifierGroups: readonly ModifierGroupProjection[];
+  }): void => {
+    for (const modifier of owner.modifiers) {
+      rows.push({ modifier, grouped: false });
+    }
+    for (const group of owner.modifierGroups) {
+      addGroup(group);
+    }
+  };
+  const visitContainer = (container: SelectionContainerProjection): void => {
+    addOwner(container);
+    for (const entry of container.selectionEntries) {
+      visitContainer(entry);
+    }
+    for (const group of container.selectionEntryGroups) {
+      visitContainer(group);
+    }
+    for (const link of container.entryLinks) {
+      visitContainer(link);
+    }
+  };
+
+  for (const projection of projections) {
+    for (const entry of [
+      ...projection.selectionEntries,
+      ...projection.sharedSelectionEntries,
+    ]) {
+      visitContainer(entry);
+    }
+    for (const group of [
+      ...projection.selectionEntryGroups,
+      ...projection.sharedSelectionEntryGroups,
+    ]) {
+      visitContainer(group);
+    }
+    for (const link of projection.entryLinks) {
+      visitContainer(link);
+    }
+  }
+  return rows;
+}
+
 function projectedSelectionEntryIds(
   projections: readonly BattleScribeProjection[],
 ): ReadonlySet<string> {
@@ -1406,6 +1494,85 @@ function projectedSelectionEntryIds(
     }
   }
   return ids;
+}
+
+function categoryModifierSummary(
+  projections: readonly BattleScribeProjection[],
+): Readonly<Record<string, number>> {
+  const categoryEntryIds = new Set<string>(
+    projections.flatMap(({ categoryEntries }) =>
+      categoryEntries.flatMap(({ id }) => id ?? []),
+    ),
+  );
+  const behaviorAttributes = ["affects", "join", "arg", "position"] as const;
+  const counts: Record<string, number> = {
+    total: 0,
+    add: 0,
+    setPrimary: 0,
+    remove: 0,
+    unsetPrimary: 0,
+    otherOperations: 0,
+    direct: 0,
+    grouped: 0,
+    scoped: 0,
+    affects: 0,
+    arg: 0,
+    join: 0,
+    withConditions: 0,
+    withConditionGroups: 0,
+    withRepeats: 0,
+    valueResolvesToCategory: 0,
+    executable: 0,
+    executableAdd: 0,
+    executableRemove: 0,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+
+  for (const { modifier, grouped } of projectedModifiersWithOwnership(
+    projections,
+  )) {
+    if (modifier.field !== "category") continue;
+    add("total");
+    add(grouped ? "grouped" : "direct");
+    add(
+      modifier.type === "add"
+        ? "add"
+        : modifier.type === "remove"
+          ? "remove"
+          : modifier.type === "set-primary"
+            ? "setPrimary"
+            : modifier.type === "unset-primary"
+              ? "unsetPrimary"
+              : "otherOperations",
+    );
+    if (modifier.scope !== undefined) add("scoped");
+    if (modifier.conditions.length > 0) add("withConditions");
+    if (modifier.conditionGroups.length > 0) add("withConditionGroups");
+    if (modifier.repeats.length > 0) add("withRepeats");
+    const behavior = behaviorAttributes.filter(
+      (attribute) => modifier.node.attributes[attribute] !== undefined,
+    );
+    for (const attribute of behavior) {
+      if (attribute !== "position") add(attribute);
+    }
+    if (modifier.value !== undefined && categoryEntryIds.has(modifier.value)) {
+      add("valueResolvesToCategory");
+    }
+    if (
+      (modifier.type === "add" || modifier.type === "remove") &&
+      modifier.scope === undefined &&
+      behavior.length === 0 &&
+      modifier.repeats.length === 0 &&
+      modifier.value !== undefined &&
+      categoryEntryIds.has(modifier.value)
+    ) {
+      add("executable");
+      add(modifier.type === "add" ? "executableAdd" : "executableRemove");
+    }
+  }
+  return counts;
 }
 
 function affectsSelectorSummary(

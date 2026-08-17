@@ -88,6 +88,9 @@ This repository currently contains the first development slice:
   operations, extensions, and unrouted profile modifiers as incomplete;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
+- read-only effective category membership per roster occurrence, executing
+  scope-free `add`/`remove` while preserving `set-primary`/`unset-primary` as
+  an unresolved primary determination;
 - pure parsing of the observed `affects` selector grammar into traversal,
   optional filter ID, and profile-type name, with explicit unsupported issues
   and no resolution or execution;
