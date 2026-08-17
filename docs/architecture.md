@@ -1105,9 +1105,33 @@ identity-only. The numeric value and percentage flag have no effect on identity
 comparisons, matching the BattleScribe data-author contract. The earlier
 containing-force identity form remains supported separately.
 
-A candidate whose resolved choice carries a `field="category"` modifier naming
-the queried category — or one with no value, whose target cannot be determined —
-becomes `unresolved` rather than a confident match or mismatch. Static links
+`indexEffectiveRosterCategories` builds the effective category membership of
+every selection occurrence so identity comparisons can use what an occurrence's
+categories actually are rather than only what its links declare. Callers pass
+the index to `evaluateRosterCondition` and `evaluateRosterConditionGroup`
+through `RosterConditionOptions`; the index type lives in the leaf
+selection-context module so the condition layer never imports the evaluator that
+produces it.
+
+Membership and identity are mutually recursive in principle: a category modifier
+may carry conditions, and a condition may test a category. This resolves in one
+documented pass, not a fixpoint. Pass one builds the index with **no** index in
+scope, so any condition inside a category modifier compares static links and a
+category-controlled comparison stays unresolved. Pass two is every ordinary
+evaluation, which consults the finished index. The consequence is deliberate and
+permanent: an occurrence whose category modifiers depend on category identity
+resolves to unknown membership and stays that way — seven of 892 category
+modifiers in the pinned corpus. BattleScribe may iterate instead; nothing in the
+data establishes that, so the chained case is refused rather than guessed.
+
+Known membership is **authoritative** for a category comparison, replacing the
+static links rather than adding to them, so a removed category stops matching
+even though its link is still projected. Identity targets that are not
+categories continue to use the static effective IDs.
+
+Without an index, a candidate whose resolved choice carries a `field="category"`
+modifier naming the queried category — or one with no value, whose target cannot
+be determined — becomes `unresolved` rather than a confident match or mismatch. Static links
 alone cannot decide that comparison, and reporting either answer would be a
 guess. A modifier naming a different category is ignored, so the downgrade stays
 narrow. Conditions do not consult `evaluateRosterSelectionCategories`; effective

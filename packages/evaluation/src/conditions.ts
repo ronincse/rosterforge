@@ -38,6 +38,7 @@ import {
   resolveEvaluationSelection,
   rosterMatchesCatalogueContext,
   rosterSelectionLocations,
+  type EffectiveCategoryIndex,
   type EvaluationChoiceIndex,
   type EvaluationSelectionChoice,
   type EvaluationSelectionIdentityCandidate,
@@ -217,6 +218,18 @@ export type RosterConditionGroupReport<
   Group extends RosterConditionGroupSource = RosterConditionGroupSource,
 > = RosterSelectionConditionGroupReport<Group>;
 
+export interface RosterConditionOptions {
+  /**
+   * Effective category membership from `indexEffectiveRosterCategories`. When
+   * supplied, a category identity comparison uses it instead of the static
+   * links. When omitted, category-controlled comparisons stay unresolved.
+   *
+   * The index is built by evaluating category modifiers without an index in
+   * scope, so passing one here never re-enters that computation.
+   */
+  readonly effectiveCategories?: EffectiveCategoryIndex;
+}
+
 export function evaluateRosterCondition<
   Condition extends RosterSelectionConditionSource,
 >(
@@ -224,6 +237,7 @@ export function evaluateRosterCondition<
   context: BattleScribeCatalogueContext,
   owner: RosterConditionOwner,
   condition: Condition,
+  options: RosterConditionOptions = {},
 ): Result<RosterSelectionConditionReport<Condition>> {
   const diagnostics: Diagnostic[] = [];
   const forceOwner = "forces" in owner;
@@ -356,6 +370,7 @@ export function evaluateRosterCondition<
             choices,
             catalogueMatches,
             idScopeTarget as ObjectId,
+            options.effectiveCategories,
           )
       : { unresolved: false };
   if (relativeScope.unresolved) {
@@ -435,6 +450,7 @@ export function evaluateRosterCondition<
       catalogueMatches,
       condition.childId,
       condition.shared === true,
+      options.effectiveCategories,
     ),
   );
   const forces = indexEvaluationForces(context);
@@ -597,8 +613,9 @@ export function evaluateRosterSelectionCondition<
   context: BattleScribeCatalogueContext,
   owner: RosterConditionOwner,
   condition: Condition,
+  options: RosterConditionOptions = {},
 ): Result<RosterSelectionConditionReport<Condition>> {
-  return evaluateRosterCondition(roster, context, owner, condition);
+  return evaluateRosterCondition(roster, context, owner, condition, options);
 }
 
 export function evaluateRosterConditionGroup<
@@ -608,6 +625,7 @@ export function evaluateRosterConditionGroup<
   context: BattleScribeCatalogueContext,
   owner: RosterConditionOwner,
   group: Group,
+  options: RosterConditionOptions = {},
 ): Result<RosterSelectionConditionGroupReport<Group>> {
   const diagnostics: Diagnostic[] = [];
   const localConditionGroups = group.localConditionGroups ?? [];
@@ -684,6 +702,7 @@ export function evaluateRosterConditionGroup<
       context,
       owner,
       condition,
+      options,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -697,6 +716,7 @@ export function evaluateRosterConditionGroup<
       context,
       owner,
       child,
+      options,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (evaluated.ok) {
@@ -747,8 +767,9 @@ export function evaluateRosterSelectionConditionGroup<
   context: BattleScribeCatalogueContext,
   owner: RosterConditionOwner,
   group: Group,
+  options: RosterConditionOptions = {},
 ): Result<RosterSelectionConditionGroupReport<Group>> {
-  return evaluateRosterConditionGroup(roster, context, owner, group);
+  return evaluateRosterConditionGroup(roster, context, owner, group, options);
 }
 
 function diagnoseOwner(
@@ -1107,6 +1128,7 @@ function nearestIdentitySelection(
   choices: EvaluationChoiceIndex,
   catalogueMatches: boolean,
   targetId: ObjectId,
+  effectiveCategories: EffectiveCategoryIndex | undefined,
 ): TypedSelectionScopeResolution {
   for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
     const local = evaluationSelectionIdentityCandidate(
@@ -1115,6 +1137,7 @@ function nearestIdentitySelection(
       catalogueMatches,
       targetId,
       false,
+      effectiveCategories,
     );
     const shared = evaluationSelectionIdentityCandidate(
       occurrence,
@@ -1122,6 +1145,7 @@ function nearestIdentitySelection(
       catalogueMatches,
       targetId,
       true,
+      effectiveCategories,
     );
     if (local.status === "match" || shared.status === "match") {
       return { occurrence, unresolved: false };

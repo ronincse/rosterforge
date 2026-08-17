@@ -63,6 +63,19 @@ export interface EvaluationSelectionIdentityCandidate {
   readonly effectiveIds: readonly ObjectId[];
 }
 
+/**
+ * Effective category membership per selection occurrence, built by
+ * `indexEffectiveRosterCategories`. An occurrence mapped to `undefined`, or
+ * absent entirely, has unknown membership.
+ *
+ * The type lives in this leaf module so the condition layer can accept an index
+ * without importing the evaluator that produces it.
+ */
+export type EffectiveCategoryIndex = ReadonlyMap<
+  RosterSelection,
+  readonly ObjectId[] | undefined
+>;
+
 export interface RosterSelectionLocation {
   readonly occurrence: RosterSelection;
   readonly parent: RosterForce | RosterSelection;
@@ -189,7 +202,12 @@ export function evaluationSelectionIdentityCandidate(
   catalogueMatches: boolean,
   targetId: ObjectId | undefined,
   shared: boolean,
+  effectiveCategories?: EffectiveCategoryIndex,
 ): EvaluationSelectionIdentityCandidate {
+  // When effective membership is known for this occurrence it is authoritative
+  // for a category comparison: it already accounts for every supported add and
+  // remove, including ones anchored here from another occurrence.
+  const known = effectiveCategories?.get(occurrence);
   const resolution = resolveEvaluationSelection(
     occurrence,
     choices,
@@ -197,20 +215,31 @@ export function evaluationSelectionIdentityCandidate(
   );
   const identities = resolution.choices.map((choice) => {
     const effectiveIds = selectionChoiceIdentityIds(choice, shared);
+    // A category target is one this occurrence either now has or statically
+    // declared; a `remove` leaves it in the links but out of the known set.
+    const categoryTarget =
+      targetId !== undefined &&
+      (known?.includes(targetId) === true ||
+        choice.categoryLinks.some((link) => link.targetId === targetId));
     return {
       effectiveIds,
-      // A category modifier that could add or remove the queried category makes
-      // this comparison unknowable from the static links alone. Reporting a
-      // confident match either way would be a guess, so the candidate becomes
-      // unresolved instead. Effective membership is evaluated separately by
-      // `evaluateRosterSelectionCategories` and is deliberately not consulted
-      // here.
+      // Without a known membership set, a category modifier that could add or
+      // remove the queried category makes this comparison unknowable from the
+      // static links alone, so the candidate stays unresolved rather than
+      // guessing. With one, the index already accounts for it.
       categoryModifierControlled:
+        known === undefined &&
         targetId !== undefined &&
         selectionChoiceCategoryModifierControls(choice, targetId),
       matches:
         targetId !== undefined &&
-        (targetId === objectId("any") || effectiveIds.includes(targetId)),
+        (targetId === objectId("any") ||
+          // Known membership is authoritative for a category, replacing the
+          // static links rather than adding to them: a removed category must
+          // stop matching even though its link is still projected.
+          (known !== undefined && categoryTarget
+            ? known.includes(targetId)
+            : effectiveIds.includes(targetId))),
     };
   });
   const effectiveIds = uniqueIds(

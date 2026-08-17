@@ -337,10 +337,17 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
-- Conservative category identity: a condition candidate whose choice carries a
-  category modifier naming the queried category reports unresolved instead of a
-  confident answer derived from static links alone, keeping the count interval
-  and completeness honest
+- Effective category membership feeding condition identity through an explicit
+  per-roster index, resolved in one documented pass: category-modifier
+  applicability is decided against static links, then every ordinary evaluation
+  consults the finished membership. Known membership replaces the static links
+  for a category target, so a removed category stops matching
+- Permanent refusal of the chained case: an occurrence whose category modifiers
+  themselves depend on category identity keeps unknown membership rather than
+  being iterated to a fixpoint
+- Conservative category identity without an index: a condition candidate whose
+  choice carries a category modifier naming the queried category reports
+  unresolved instead of a confident answer derived from static links alone
 - Read-only effective category membership for one roster selection occurrence,
   executing `add` and `remove` over the occurrence's materialized category links
   in owner-direct then grouped source order, with inert no-op steps

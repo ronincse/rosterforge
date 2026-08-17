@@ -2,6 +2,7 @@ export * from "./affects.js";
 export * from "./categories.js";
 export * from "./characteristics.js";
 export * from "./costs.js";
+export * from "./effective-categories.js";
 export * from "./conditions.js";
 export * from "./constraints.js";
 export * from "./force-constraints.js";

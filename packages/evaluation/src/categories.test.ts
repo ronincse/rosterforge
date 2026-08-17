@@ -23,6 +23,7 @@ import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import { evaluateRosterSelectionCategories } from "./categories.js";
 import { evaluateRosterCondition } from "./conditions.js";
+import { indexEffectiveRosterCategories } from "./effective-categories.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
 describe("roster selection category membership", () => {
@@ -235,6 +236,82 @@ describe("inbound scoped category modifiers", () => {
     );
     expect(report).not.toHaveProperty("categories");
     expect(report.completeness).toBe("incomplete");
+  });
+});
+
+describe("effective categories feeding condition identity", () => {
+  it("resolves a modifier-granted category instead of reporting unresolved", () => {
+    const setup = conditionSetup();
+    const effectiveCategories = indexEffectiveRosterCategories(
+      setup.roster,
+      setup.context,
+    );
+
+    const withoutIndex = successful(
+      evaluateRosterCondition(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        probeCondition(setup.probe, 0),
+      ),
+    );
+    const withIndex = successful(
+      evaluateRosterCondition(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        probeCondition(setup.probe, 0),
+        { effectiveCategories },
+      ),
+    );
+
+    // `added-category` gains Battleline through a modifier. Without the index
+    // that count is unknowable; with it the condition is exact.
+    expect(withoutIndex.status).toBe("unresolved");
+    expect(withIndex).toMatchObject({
+      status: "satisfied",
+      completeness: "complete",
+      observed: 1,
+    });
+  });
+
+  it("stops matching a category that a modifier removed", () => {
+    const setup = removalConditionSetup();
+    const effectiveCategories = indexEffectiveRosterCategories(
+      setup.roster,
+      setup.context,
+    );
+
+    const evaluated = successful(
+      evaluateRosterCondition(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        probeCondition(setup.probe, 1),
+        { effectiveCategories },
+      ),
+    );
+
+    // `removed-category` still projects a Character link, but the modifier
+    // removes it. Known membership is authoritative, so the count is zero.
+    expect(evaluated).toMatchObject({
+      status: "unsatisfied",
+      completeness: "complete",
+      observed: 0,
+    });
+  });
+
+  it("leaves membership unknown when a category modifier queries a category", () => {
+    const setup = cyclicSetup();
+    const effectiveCategories = indexEffectiveRosterCategories(
+      setup.roster,
+      setup.context,
+    );
+
+    // The single documented pass evaluates category modifiers without an index,
+    // so a modifier whose own condition tests a category cannot resolve. It
+    // stays unknown rather than being iterated to a fixpoint.
+    expect(effectiveCategories.get(setup.owner)).toBeUndefined();
   });
 });
 
@@ -479,6 +556,93 @@ function anchorSetup(): {
     throw new Error("Missing category scope occurrences.");
   }
   return { context, roster, anchor, child, anchorChoice, childChoice };
+}
+
+function rosterWithSelections(
+  context: BattleScribeCatalogueContext,
+  label: string,
+  entries: readonly (readonly [string, string])[],
+): { readonly roster: Roster; readonly selections: readonly RosterSelection[] } {
+  let roster = createRoster({
+    id: rosterId(`${label}-roster`),
+    name: `${label} roster`,
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) {
+    throw new Error("Missing category fixture force.");
+  }
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId(`${label}-force`),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  for (const [choiceId, occurrenceId] of entries) {
+    const choice = choiceById(context, choiceId);
+    roster = successful(
+      addRosterSelectionToForce(roster, forceOccurrenceId(`${label}-force`), {
+        id: selectionOccurrenceId(occurrenceId),
+        definition: {
+          kind: choice.kind,
+          key: projectionKey(choice.occurrence),
+          ...(choice.id === undefined ? {} : { sourceId: choice.id }),
+        },
+      }),
+    );
+  }
+  return { roster, selections: roster.forces[0]?.selections ?? [] };
+}
+
+function removalConditionSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly owner: RosterSelection;
+  readonly probe: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  // Deliberately excludes `static-categories`, so the only Character link in
+  // the force is the one `removed-category` removes.
+  const { roster, selections } = rosterWithSelections(context, "removal", [
+    ["condition-probe", "removal-probe"],
+    ["removed-category", "removal-target"],
+  ]);
+  const owner = selections[0];
+  if (owner === undefined) throw new Error("Missing removal owner.");
+  return {
+    context,
+    roster,
+    owner,
+    probe: choiceById(context, "condition-probe"),
+  };
+}
+
+function cyclicSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly owner: RosterSelection;
+} {
+  const context = catalogueContext();
+  // `cyclic-category` adds Battleline only if a Character is present, and
+  // `removed-category` controls Character membership. Pass one cannot settle
+  // that, so the cyclic occurrence has unknown membership.
+  const { roster, selections } = rosterWithSelections(context, "cyclic", [
+    ["cyclic-category", "cyclic-owner"],
+    ["removed-category", "cyclic-other"],
+  ]);
+  const owner = selections[0];
+  if (owner === undefined) throw new Error("Missing cyclic owner.");
+  return { context, roster, owner };
 }
 
 function catalogueContext(): BattleScribeCatalogueContext {
