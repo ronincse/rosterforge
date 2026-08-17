@@ -17,12 +17,12 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 390 tests with four skipped, and the pinned real-data suite
+normal suite passes 392 tests with four skipped, and the pinned real-data suite
 passes all four tests.
 
-The staged category plan reached its measurement stage, and **the measurement
-argues against completing it**. See "Measured: the category-condition flip is
-not worth doing yet" near the end of this document.
+The staged category plan was measured and paused, then modifier scope resolution
+changed its economics substantially. The flip now needs a fresh go/no-go; see
+"Completed Assignment — Modifier Scope Resolution" near the end.
 `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 `git diff --check` pass; the production build retains only Vite's existing
 large-chunk warning.
@@ -460,15 +460,78 @@ types.
 
 ### Recommended next boundary
 
-1. **Modifier scope resolution.** It unblocks 281 scoped category modifiers,
-   1,265 `affects`-bearing characteristic modifiers, and the 70 blocked
-   categories at once. It is the single highest-leverage decision left, and it
-   is the shared prerequisite behind three stalled surfaces.
-2. **Revisit the category flip afterwards**, when the blocked-category count
-   has actually moved. Re-run the pinned guard to see the new payoff before
-   deciding.
-3. `set-primary` semantics, if a source outside the data itself can settle
-   whether it implies membership and whether it clears other primaries.
+Scope resolution was taken next and is complete; see below.
+
+## Completed Assignment — Modifier Scope Resolution, 2026-08-14
+
+Baseline `ccc8e92`; resulting commit `94a9e47` (`feat: resolve parent and
+root-entry modifier scope for categories`). Not pushed, no pull request.
+
+### A correction to the previous recommendation
+
+The prior entry claimed scope resolution would unblock "281 scoped category
+modifiers, 1,265 `affects`-bearing characteristic modifiers, and the 70 blocked
+categories at once." **The characteristic half of that was wrong.** Of the 1,812
+scoped modifiers in the corpus, **1,617 also carry `affects`**, so scope alone
+unlocks none of them. Measured honestly, scope-only executable-shaped modifiers
+are 150 — all of them `category`.
+
+The category half was right, and larger than expected.
+
+### What was implemented
+
+`parent` and `root-entry` are the two observed scopes whose anchor is a single,
+structurally determined occurrence, so both invert cleanly. The modifiers
+reaching an occurrence are those declared by its direct children (`parent`) and,
+when it is itself top-level, by all its descendants (`root-entry`). An
+occurrence can anchor through both at once — a direct child is also a descendant
+of its root.
+
+Each inbound modifier's applicability is evaluated against the occurrence that
+*declares* it, not the one it reaches. Every step records `origin` and
+`declaredBy`. Inbound steps run after the occurrence's own in roster document
+order; ordering is observable only when one category is both added and removed
+along a single path, which the corpus never does, but the rule is fixed anyway.
+A contributor that does not resolve to exactly one materialized choice makes
+membership unknown.
+
+`model`, `unit`, `model-or-unit`, and `upgrade` anchor to a nearest typed
+ancestor, and `force`/`roster` to collections rather than one occurrence.
+Neither is inverted, and neither appears on an executable-shaped category
+modifier in the corpus.
+
+### Measured payoff
+
+| Measure | Before | After |
+|---|---|---|
+| Executable category modifiers | 283 | **428** |
+| Blocked categories | 70 | **20** |
+| Category conditions that would become knowable | 127 | **1,048** |
+| Category conditions staying unresolved | 1,580 | **659** |
+
+All four are pinned by the real-data guard.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **392 passed, 4 skipped (396 total)**.
+- Pinned real-data suite — **4 passed**.
+
+### Next recommended boundary
+
+1. **Revisit the category-condition flip.** Its payoff went from 2.5% to 21% of
+   the category-condition surface. That was the trigger condition agreed for
+   reconsidering it, and it now needs a fresh go/no-go. The evaluation-order
+   question and the seven-case cycle are unchanged.
+2. **`affects` execution**, still blocked on its three semantic decisions, and
+   now additionally on how `affects` composes with `scope` — 1,617 modifiers
+   carry both. A plausible reading is that `scope` picks the anchor occurrence
+   and the `affects` path navigates from there, making `self` in the path mean
+   the scoped occurrence rather than the declaring one. That is an inference,
+   not something the data settles.
+3. `set-primary` semantics, if a source outside the data can settle whether it
+   implies membership and whether it clears other primaries. It is one of the
+   two things still blocking the remaining 20 categories.
 
 `name` modifiers remain last despite their raw count, since 86% are Crusade rank
 labels.
