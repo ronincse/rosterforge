@@ -96,6 +96,22 @@
           value="cat-battleline" />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="condition-probe" name="Condition Probe" type="unit">
+      <modifiers>
+        <modifier type="set" field="hidden" value="true">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="force"
+              childId="cat-battleline" value="1" />
+          </conditions>
+        </modifier>
+        <modifier type="set" field="hidden" value="true">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="force"
+              childId="cat-character" value="1" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
     <selectionEntry id="scoped-category" name="Scoped Category" type="unit">
       <categoryLinks>
         <categoryLink id="scoped-infantry" name="Infantry"

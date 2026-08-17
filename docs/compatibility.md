@@ -337,6 +337,10 @@
   owner-direct then group-source execution order as selection visibility
 - Hidden and visibility-unresolved profiles labelled in occurrence details
   rather than removed, so nothing the source declares disappears
+- Conservative category identity: a condition candidate whose choice carries a
+  category modifier naming the queried category reports unresolved instead of a
+  confident answer derived from static links alone, keeping the count interval
+  and completeness honest
 - Read-only effective category membership for one roster selection occurrence,
   executing scope-free `add` and `remove` over the occurrence's materialized
   category links in owner-direct then grouped source order, with inert no-op
@@ -777,6 +781,15 @@ link, so the operation would have to create membership to do anything at all.
 234 owners would also end up with more than one primary unless it clears the
 others. RosterForge therefore preserves and diagnoses both primary operations
 rather than inventing either rule.
+
+Conditions now refuse to answer confidently when a candidate's own category
+modifier names the queried category, so a category-controlled comparison reports
+unresolved and incomplete instead of a possibly wrong match. The downgrade is
+narrow: a modifier naming a different category is ignored, and a candidate with
+no relevant modifier still produces an exact count. A scoped category modifier
+owned by a *different* occurrence can still reach this one, and that case is not
+detectable from the candidate alone; it remains an explicit gap. At the pinned
+commit this change moved none of the existing real-data assertions.
 
 Category membership is **not** yet an input to condition evaluation. The corpus
 has 5,047 conditions that reference a category entry — 1,991 `instanceOf`, 2,146

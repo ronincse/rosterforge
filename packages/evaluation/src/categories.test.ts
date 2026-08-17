@@ -21,6 +21,7 @@ import {
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import { evaluateRosterSelectionCategories } from "./categories.js";
+import { evaluateRosterCondition } from "./conditions.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
 describe("roster selection category membership", () => {
@@ -179,6 +180,41 @@ describe("roster selection category membership", () => {
   });
 });
 
+describe("category-modifier-controlled condition identity", () => {
+  it("reports a category count as unresolved when a modifier could change it", () => {
+    const setup = conditionSetup();
+
+    const battleline = successful(
+      evaluateRosterCondition(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        probeCondition(setup.probe, 0),
+      ),
+    );
+    const character = successful(
+      evaluateRosterCondition(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        probeCondition(setup.probe, 1),
+      ),
+    );
+
+    // `added-category` gains cat-battleline through a modifier, so the count of
+    // battleline selections cannot be known from the static links alone.
+    expect(battleline.status).toBe("unresolved");
+    expect(battleline.completeness).toBe("incomplete");
+    // No modifier touches cat-character, so that comparison stays exact. The
+    // downgrade is narrow rather than blanket.
+    expect(character).toMatchObject({
+      status: "satisfied",
+      completeness: "complete",
+      observed: 1,
+    });
+  });
+});
+
 interface CategorySetup {
   readonly context: BattleScribeCatalogueContext;
   readonly roster: Roster;
@@ -235,6 +271,80 @@ function categorySetup(rootId: string): CategorySetup {
     throw new Error("Missing category fixture owner.");
   }
   return { context, roster, owner, choice };
+}
+
+function probeCondition(
+  probe: EvaluationSelectionChoice,
+  index: number,
+) {
+  const condition = probe.modifiers[index]?.conditions[0];
+  if (condition === undefined) {
+    throw new Error(`Missing probe condition ${index}.`);
+  }
+  return condition;
+}
+
+function conditionSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly owner: RosterSelection;
+  readonly probe: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const probe = choiceById(context, "condition-probe");
+  const withCategoryModifier = choiceById(context, "added-category");
+  const staticCategories = choiceById(context, "static-categories");
+  let roster = createRoster({
+    id: rosterId("category-condition-roster"),
+    name: "Category condition roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) {
+    throw new Error("Missing category fixture force.");
+  }
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId("category-condition-force"),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  const added: readonly [EvaluationSelectionChoice, string][] = [
+    [probe, "probe-occurrence"],
+    [withCategoryModifier, "modified-occurrence"],
+    [staticCategories, "static-occurrence"],
+  ];
+  for (const [choice, id] of added) {
+    roster = successful(
+      addRosterSelectionToForce(
+        roster,
+        forceOccurrenceId("category-condition-force"),
+        {
+          id: selectionOccurrenceId(id),
+          definition: {
+            kind: choice.kind,
+            key: projectionKey(choice.occurrence),
+            ...(choice.id === undefined ? {} : { sourceId: choice.id }),
+          },
+        },
+      ),
+    );
+  }
+  const owner = roster.forces[0]?.selections[0];
+  if (owner === undefined) {
+    throw new Error("Missing category condition owner.");
+  }
+  return { context, roster, owner, probe };
 }
 
 function catalogueContext(): BattleScribeCatalogueContext {

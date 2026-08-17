@@ -199,6 +199,15 @@ export function evaluationSelectionIdentityCandidate(
     const effectiveIds = selectionChoiceIdentityIds(choice, shared);
     return {
       effectiveIds,
+      // A category modifier that could add or remove the queried category makes
+      // this comparison unknowable from the static links alone. Reporting a
+      // confident match either way would be a guess, so the candidate becomes
+      // unresolved instead. Effective membership is evaluated separately by
+      // `evaluateRosterSelectionCategories` and is deliberately not consulted
+      // here.
+      categoryModifierControlled:
+        targetId !== undefined &&
+        selectionChoiceCategoryModifierControls(choice, targetId),
       matches:
         targetId !== undefined &&
         (targetId === objectId("any") || effectiveIds.includes(targetId)),
@@ -208,7 +217,10 @@ export function evaluationSelectionIdentityCandidate(
     identities.flatMap((identity) => identity.effectiveIds),
   );
   const matches = identities.map((identity) => identity.matches);
-  const status = targetId === undefined
+  const categoryModifierControlled = identities.some(
+    (identity) => identity.categoryModifierControlled,
+  );
+  const status = targetId === undefined || categoryModifierControlled
     ? "unresolved"
     : resolution.status !== "resolved" || matches.length !== 1
       ? consistentCandidateStatus(matches)
@@ -303,6 +315,42 @@ function selectionChoiceIdentityIds(
 
 function uniqueIds(ids: readonly ObjectId[]): readonly ObjectId[] {
   return [...new Set(ids)];
+}
+
+/**
+ * Whether a `field="category"` modifier on this choice could change whether the
+ * queried category is a member.
+ *
+ * A modifier naming the exact category is relevant. So is one with no value,
+ * because its target cannot be determined. A modifier naming a different
+ * category cannot affect this comparison and is ignored, which keeps the
+ * conservative downgrade narrow.
+ *
+ * A scoped category modifier owned by another occurrence can still reach this
+ * one, and that case is not detectable from this choice alone. It remains an
+ * explicit gap recorded in `docs/compatibility.md`.
+ */
+function selectionChoiceCategoryModifierControls(
+  choice: EvaluationSelectionChoice,
+  targetId: ObjectId,
+): boolean {
+  const relevant = (modifier: {
+    readonly field?: string;
+    readonly value?: string;
+  }): boolean =>
+    modifier.field === "category" &&
+    (modifier.value === undefined || modifier.value === targetId);
+
+  const inGroup = (group: {
+    readonly modifiers: readonly { readonly field?: string; readonly value?: string }[];
+    readonly modifierGroups: readonly unknown[];
+  }): boolean =>
+    group.modifiers.some(relevant) ||
+    (group.modifierGroups as readonly Parameters<typeof inGroup>[0][]).some(
+      inGroup,
+    );
+
+  return choice.modifiers.some(relevant) || choice.modifierGroups.some(inGroup);
 }
 
 function consistentCandidateStatus(

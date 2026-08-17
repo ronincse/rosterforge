@@ -1105,6 +1105,18 @@ identity-only. The numeric value and percentage flag have no effect on identity
 comparisons, matching the BattleScribe data-author contract. The earlier
 containing-force identity form remains supported separately.
 
+A candidate whose resolved choice carries a `field="category"` modifier naming
+the queried category — or one with no value, whose target cannot be determined —
+becomes `unresolved` rather than a confident match or mismatch. Static links
+alone cannot decide that comparison, and reporting either answer would be a
+guess. A modifier naming a different category is ignored, so the downgrade stays
+narrow. Conditions do not consult `evaluateRosterSelectionCategories`; effective
+membership remains a separate report.
+
+A scoped category modifier owned by another occurrence can still reach this one,
+and that is not detectable from the candidate's own choice. It remains an
+explicit gap rather than a silent one.
+
 Unresolved or ambiguous identities establish a possible count interval rather
 than being guessed. A monotonic comparison can therefore be known satisfied or
 unsatisfied even while completeness remains incomplete; equality and
