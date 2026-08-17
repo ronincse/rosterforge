@@ -17,8 +17,8 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 395 tests with four skipped, and the pinned real-data suite
-passes all four tests.
+normal suite passes 395 tests with five skipped, and the pinned real-data suite
+passes all five tests.
 
 The staged category plan is now complete through stage three: effective category
 membership feeds condition identity. See "Completed Assignment — The Category
@@ -1107,20 +1107,42 @@ and modifier-group applicability. Composed supported validation inherits it.
   removed category ceasing to match, and a cyclic occurrence staying unknown.
 - Pinned real-data suite — **4 passed, all assertions unchanged.**
 
-That last point deserves emphasis: **the flip moved no pinned assertion.** The
-rosters those tests build do not exercise category-controlled conditions, which
-matches the honesty patch having moved nothing either. The measured 1,048-condition
-improvement is real but is not observable through the currently pinned rosters.
-A roster that exercises a detachment-granted keyword would be the way to pin it,
-and building one is the obvious next real-data test.
+At the time of the flip commits no pinned assertion moved, because the existing
+rosters do not exercise a category-controlled condition. That gap is now closed
+by the checkpoint below.
+
+## Completed Assignment — Pinning The Flip, 2026-08-17
+
+Baseline `41950db`; resulting commit `e0d3c68` (`test: pin the category flip
+against real data`). Not pushed, no pull request.
+
+The flip previously rested on a static measurement. This adds the observed
+behavioural delta, in the style of the `Custodian Guard W 3 → 4` pin.
+
+An Adeptus Custodes **Venerable Contemptor Dreadnought** takes its **Character
+upgrade**, whose modifier adds the Character category with `scope="root-entry"`.
+The Dreadnought does not declare that category statically, so one test proves
+the scope inversion and the execution together:
+
+- `baseCategories` excludes Character; `categories` includes it.
+- The applied step records `origin: "root-entry-scope"` and `changed: true`.
+- The paired `set-primary` stays unapplied without costing membership.
+
+A real condition from the same catalogue — `instanceOf`, `selections`,
+`scope="root-entry"`, `childId=Character`, `shared` — is then evaluated both ways
+against that roster: **unresolved without the index, satisfied with it.**
+
+Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` clean;
+`pnpm test` **395 passed, 5 skipped**; pinned real-data suite **5 passed**.
 
 ### Next recommended boundary
 
-1. **Pin the flip against real data.** Build a corpus roster that exercises a
-   modifier-granted category and assert a check that is exact only because of
-   the flip. Without it the 1,048 figure rests on a static measurement rather
-   than an observed behavioural delta.
-2. **`affects` execution** — three semantic decisions, plus how `affects`
-   composes with `scope` (1,617 modifiers carry both).
-3. **`set-primary` semantics** — one of the two things still blocking the
-   remaining 20 categories.
+1. **`affects` execution** — three semantic decisions from the parsing
+   checkpoint, plus how `affects` composes with `scope` (1,617 modifiers carry
+   both). The plausible reading is that `scope` picks the anchor occurrence and
+   the `affects` path navigates from there, but that is an inference.
+2. **`set-primary` semantics** — one of two things still blocking the remaining
+   20 categories. Needs a source outside the data.
+3. **Surface effective categories in the workspace** — unit cards could show
+   effective keywords, which is now backed by a proven evaluator. Presentation
+   only, no new semantics.
