@@ -17,9 +17,9 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 395 tests with five skipped, and the pinned real-data suite
-passes all five tests. Effective keywords are now visible in the roster
-workspace.
+normal suite passes 397 tests with five skipped, and the pinned real-data suite
+passes all five tests. Effective keywords are visible in the roster workspace,
+and the category surface is complete apart from `affects`.
 
 The staged category plan is now complete through stage three: effective category
 membership feeds condition identity. See "Completed Assignment — The Category
@@ -1167,3 +1167,84 @@ Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` clean;
 Smaller work that needs no decision, if a session wants it: extend the
 category-condition honesty downgrade to inbound scoped modifiers declared by
 *other* occurrences, which is still an explicit documented gap.
+
+## Completed Assignment — set-primary Semantics, 2026-08-17
+
+Baseline `ba53ad6`; resulting commit `f6bb1d7` (`feat: execute set-primary and
+unset-primary category operations`). Not pushed, no pull request.
+
+This was the research checkpoint: the question was whether a source outside the
+data could settle `set-primary`. One could.
+
+### What the sources say
+
+**Membership — settled by direct quote.** The BattleScribe 2.03.00 release notes
+state: *"When setting a Category to primary, the Category will be added if it
+doesn't already exist."* That is the BattleScribe author, and it explains the
+corpus shape that blocked us: 322 of 325 executable-shaped `set-primary`
+modifiers name a category their owner does not link.
+
+**Displacement — inference, well corroborated.** Three sources converge: the
+BSData wiki calls the primary *"the category in which that entry will be visible
+in Roster Editor"*, singular; the release note describes the operation as making
+it easier to *move* entries between categories; and BattleScribe issue #18 shows
+an entry displaying under exactly one category and moving when its primary
+changes.
+
+A counter-signal appeared during implementation and was checked rather than
+waved away. The pinned Custodes Character upgrade carries an explicit
+`unset-primary Vehicle` beside its `set-primary Character` — which would be
+unnecessary if `set-primary` already displaced. The corpus settles it: only
+**five of 319** `set-primary` owners pair an `unset-primary`, and **234** owners
+would hold more than one primary without displacement, against a documented
+single-slot display model. Those five explicit unsets are redundant authoring,
+not evidence. Primary status affects presentation rather than legality, which
+bounds the cost of the inference being wrong.
+
+`unset-primary` clears the flag and leaves membership alone; nothing suggests
+otherwise.
+
+### Sources
+
+- BattleScribe 2.03.00 release notes — <https://github.com/BattleScribe/Pre-Release/issues/17>
+- BattleScribe 2.03.00 blog announcement — <http://battlescribe.blogspot.com/2019/08/battlescribe-20300-released.html>
+- BSData data-structure overview — <https://github.com/BSData/catalogue-development/wiki/Data-structure-overview>
+- Primary-category behaviour report — <https://github.com/BattleScribe/Pre-Release/issues/18>
+
+### Measured payoff
+
+| Measure | Before | After |
+|---|---|---|
+| Executable category modifiers | 428 | **761** |
+| Blocked categories | 20 | **8** |
+| Category conditions resolved by effective membership | 1,048 | **1,605** |
+| Category conditions still unresolved | 659 | **102** |
+
+For context, the unresolved figure was 1,580 before any of this work. The
+remaining eight categories are blocked by generic behavior attributes, chiefly
+`affects`.
+
+The `primaryOnly` step flag is gone. It existed because a primary operation
+could not change membership, which is no longer true.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **397 passed, 5 skipped (402 total)**.
+- Pinned real-data suite — **5 passed**. The Custodes pin now asserts the full
+  real sequence: `add Character`, `unset-primary Vehicle`, `set-primary
+  Character`, leaving Character the sole primary.
+
+### Next recommended boundary
+
+**`affects` execution** is now the only substantial surface left, and the sole
+remaining blocker on the last eight categories. It needs four decisions: the
+three from the parsing checkpoint, plus how `affects` composes with `scope`
+(1,617 modifiers carry both). Worth noting after this checkpoint: the `affects`
+questions may also have findable answers rather than requiring inference — the
+same BattleScribe release notes and issue tracker settled `set-primary` when a
+corpus-only reading could not.
+
+Smaller decision-free work, if a session wants it: extend the category-condition
+honesty downgrade to inbound scoped modifiers declared by other occurrences,
+still an explicit documented gap.
