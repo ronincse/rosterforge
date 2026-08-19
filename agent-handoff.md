@@ -1754,3 +1754,104 @@ The two product questions remain blocked on a New Recruit experiment:
   `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
 - **`arg` semantics.** Does `replace` treat `arg` as the search term? Watching a
   weapon with an unused `+0` bonus slot should show the slot collapsing.
+
+## Completed Assignment — Selections-Terminus `affects`, 2026-08-19
+
+Baseline `785f7b1`; resulting implementation commit `83dfe49`. Parsing only; no
+execution was added.
+
+### Correction to the previous handoff
+
+The previous entry recommended category `affects` routing as work that needed
+"no decision from Stone" and was "sharing settled machinery rather than
+deciding anything new". **That was wrong on both counts**, and the audit that
+opened this checkpoint is what showed it. See "The blocker" below. The parser
+gap was real and is now closed; execution is not the mechanical follow-on it was
+described as.
+
+### What the corpus actually says
+
+All 89 `field="category"` modifiers carrying `affects` are `add`. Every one of
+their selectors terminates at an **ID**, never at `profiles.<typeName>` — which
+is correct, because `category` lives on the selection and has no profile to
+name. The parser was rejecting the entire shape as malformed.
+
+Both dominant filter IDs resolve to category entries, and the mechanism is the
+companion to the `+0` append idiom settled in the previous checkpoint: a weapon
+in `Attacks Dx Weapon` gets `Attacks Dx+0 Modifier` added, which is the category
+that marks an opened bonus slot. The two findings describe one system.
+
+| Selector | Count |
+|---|---|
+| `self.entries.recursive.<categoryId>` | 73 |
+| bare `<categoryId>` | 11 |
+| `self.entries.<categoryId>` | 3 |
+| `self.entries.forces.recursive.<categoryId>` | 1 |
+| other single instances | 1 |
+
+Corpus census after the parser change: **1,835 supported, 24 unsupported** (was
+1,730 / 129). All 24 remaining are force traversals. By terminus, 1,753 target
+profiles and 106 target occurrences — 89 `category`, 15 `annotation`, two
+`decrement` on cost or characteristic fields. The 17 non-category ones are all
+blocked by their operation or field anyway, so the selections terminus is
+effectively a category-only feature today.
+
+### The blocker for execution
+
+`evaluateRosterSelectionCategories` is **pass one** of the single-pass rule and
+must run with no effective-category index in scope. Every one of these 89
+selectors filters by a category ID. Resolving that filter needs exactly the
+membership pass one is computing, so the naive routing would make every reached
+occurrence's membership unknown — a display regression across many weapons, in
+exchange for zero categories correctly added.
+
+There is a way through, and it needs a decision rather than a guess. Four of the
+five filter categories are granted **only** by static `categoryLink` and never by
+any category modifier anywhere in the composed catalogue:
+
+| Filter category | `categoryLink` grants | modifier grants |
+|---|---|---|
+| Attacks Dx Weapon | 412 | **0** |
+| Damage Dx Weapon | 283 | **0** |
+| Heretic Astartes Vehicle | 43 | **0** |
+| Psychic Weapon | 155 | **0** |
+| Vehicle | 508 | 5 |
+
+So a filter category that no modifier can target is **modifier-immune**: its
+membership is fully determined by static links, and pass one can resolve it
+without consulting the index at all. The proposed rule for the next checkpoint:
+
+> A routed category step whose filter category is modifier-immune resolves in
+> pass one against static link membership. A filter category that any modifier
+> targets stays unresolved, exactly like the seven existing cyclic cases.
+
+That is provable from the composed catalogue rather than inferred, and it is
+deterministic. It is still a new rule and should be landed as its own
+checkpoint, with the immunity set computed once per context and the four
+immune filters pinned.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **409 passed, 6 skipped (415 total)**.
+- Pinned real-data suite — **6 passed**, including the updated census.
+
+### Next recommended boundary
+
+1. **Execute category `affects` routing** using the modifier-immunity rule
+   above. Bounded and unblocked, but it is a new rule and not a mechanical
+   reuse — budget for the immunity precomputation, the pass-one interaction, and
+   a real-data pin on one of the four immune filters.
+2. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil` — still
+   blocked on the sign convention.
+3. `replace` — still blocked on `arg` semantics.
+
+The two product questions remain blocked on one New Recruit experiment:
+
+- **Sign convention.** On an inverted characteristic such as a `3+` save, does
+  `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
+- **`arg` semantics.** Does `replace` treat `arg` as the search term? Watching a
+  weapon with an unused `+0` bonus slot should show the slot collapsing.
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One corpus instance.
