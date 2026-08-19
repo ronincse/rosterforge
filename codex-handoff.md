@@ -1663,6 +1663,12 @@ traversal execution made wrong two checkpoints ago.
 - `pnpm test` — **409 passed, 6 skipped (415 total)**.
 - Pinned real-data suite — **6 passed**.
 
+### Follow-up in the same checkpoint
+
+Commit `59f688b`. Enabling `append` made the routed attribution label wrong: it
+read `Set by <name>` for every routed step. The verb now tracks the operation
+(`Added by` for `append`), covered by the browser test.
+
 ### Next recommended boundary
 
 1. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil`. This is
