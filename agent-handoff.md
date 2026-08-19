@@ -21,7 +21,9 @@ and characteristic `append` execution. The current
 normal suite passes 409 tests with six skipped, and the pinned real-data suite
 passes all six tests. Work now happens on `main`, which was fast-forwarded to
 the branch tip on 2026-08-19 and is CI-green. Effective keywords are visible in the roster workspace,
-and the category surface is complete apart from `affects`.
+and the category surface is complete apart from `affects`. The shared
+work-order file is `agent-handoff.md`; `codex-handoff.md` was renamed in
+`f839c21` so a non-Codex model does not skip it.
 
 The staged category plan is now complete through stage three: effective category
 membership feeds condition identity. See "Completed Assignment — The Category
@@ -1707,3 +1709,48 @@ worth batching:
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
+
+## Completed Assignment — Cross-Model Handoff Ritual, 2026-08-19
+
+Baseline `f45f0ec`; resulting implementation commit `f839c21`
+(`docs: make cross-model handoffs explicit and rename the work-order`).
+Process only; no product behavior changed.
+
+### What changed
+
+`AGENTS.md` now leads with Cross-Model Handoffs so it is the first thing a
+model reads. The section states that multiple models work on this repository
+on purpose — better coverage, and even use of the owner's subscriptions —
+that work can move to a different model at any point, and that every
+checkpoint is a handoff to a stranger.
+
+Start and end are both required: read the current status and next recommended
+boundary at the end of `agent-handoff.md` before starting; leave a complete
+handoff before stopping even if the user has not named who continues. The
+work-order file was renamed from `codex-handoff.md` to `agent-handoff.md` so
+it is not treated as Codex-specific.
+
+### Checks run
+
+Markdown and rename only. `git diff --check` is clean. Lint, typecheck, test,
+and build were not re-run; no product source changed.
+
+### Next recommended boundary
+
+Unchanged from the previous section:
+
+1. **Category `affects` routing** — the one item that needs no decision from
+   Stone. 89 `field="category"` modifiers carry `affects` and none are routed
+   today; `packages/evaluation/src/categories.ts` does not consume the
+   attribute at all. The routing mechanism already exists in
+   `characteristics.ts` (`collectAffectsRoutedModifiers`, `reaches`,
+   `routeFromDeclarer`, `passesThroughGroupDefinition`) and the traversal
+   semantics were verified in New Recruit, so this is sharing settled
+   machinery rather than deciding anything new.
+
+The two product questions remain blocked on a New Recruit experiment:
+
+- **Sign convention.** On an inverted characteristic such as a `3+` save, does
+  `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
+- **`arg` semantics.** Does `replace` treat `arg` as the search term? Watching a
+  weapon with an unused `+0` bonus slot should show the slot collapsing.
