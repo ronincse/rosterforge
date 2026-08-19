@@ -96,6 +96,12 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
       </categoryLinks>
       <modifiers>
         <modifier type="add" field="category" value="cat-battleline" />
+        <modifier
+          type="set"
+          field="characteristic-move"
+          value="9"
+          affects="self.entries.profiles.Unit"
+        />
       </modifiers>
       <costs>
         <cost name="Points" typeId="cost-points" value="80" />
@@ -155,6 +161,21 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           <costs>
             <cost name="Points" typeId="cost-points" value="10" />
           </costs>
+          <profiles>
+            <profile
+              id="profile-special-weapon"
+              name="Special Weapon profile"
+              typeId="profile-type-unit"
+              typeName="Unit"
+            >
+              <characteristics>
+                <characteristic
+                  name="Move"
+                  typeId="characteristic-move"
+                >4</characteristic>
+              </characteristics>
+            </profile>
+          </profiles>
         </selectionEntry>
       </selectionEntries>
       <selectionEntryGroups>
@@ -924,6 +945,18 @@ describe("App local catalogue flow", () => {
     expect(
       screen.getAllByRole("button", { name: /Add Special Weapon/u }),
     ).toHaveLength(2);
+
+    // The weapon's own datasheet says 4; the squad's `affects` selector routes a
+    // set to it. The panel has to name the declarer, or the reader cannot tell
+    // why the printed value and the displayed value disagree.
+    const weapon = screen.getByText("selection-ui-3").closest("li");
+    expect(weapon).toBeTruthy();
+    const weaponNode = within(weapon as HTMLElement);
+    fireEvent.click(weaponNode.getByText("Selection details"));
+    expect(weaponNode.getByText("Special Weapon profile")).toBeTruthy();
+    expect(weaponNode.getByText("9")).toBeTruthy();
+    expect(weaponNode.getByText("Base 4")).toBeTruthy();
+    expect(weaponNode.getByText("Set by Veterans")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", {

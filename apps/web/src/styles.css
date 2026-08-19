@@ -2071,6 +2071,10 @@ h1 {
   color: #7d641f;
 }
 
+.selection-profile dl > div[data-routed="true"] {
+  border-left: 2px solid #9aaca1;
+}
+
 .selection-profile > p.profile-completeness,
 .selection-profile > p.profile-visibility {
   color: #7d641f;

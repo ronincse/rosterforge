@@ -118,6 +118,8 @@ export interface AppliedRosterCharacteristicStep<
   readonly modifier: Modifier;
   readonly grouped: boolean;
   readonly origin: RosterCharacteristicStepOrigin;
+  /** The occurrence that declared the modifier. */
+  readonly declaredBy: RosterSelection;
   readonly kind: RosterCharacteristicModifierKind;
   readonly input: string;
   readonly output: string;
@@ -131,6 +133,7 @@ export interface NotApplicableRosterCharacteristicStep<
   readonly modifier: Modifier;
   readonly grouped: boolean;
   readonly origin: RosterCharacteristicStepOrigin;
+  readonly declaredBy: RosterSelection;
   readonly input: string;
 }
 
@@ -142,6 +145,7 @@ export interface UnappliedRosterCharacteristicStep<
   readonly modifier: Modifier;
   readonly grouped: boolean;
   readonly origin: RosterCharacteristicStepOrigin;
+  readonly declaredBy: RosterSelection;
   readonly input: string;
   readonly issues: readonly RosterCharacteristicModifierIssue[];
   readonly kind?: RosterCharacteristicModifierKind;
@@ -343,6 +347,8 @@ export function evaluateRosterProfileCharacteristics<
           report.modifier,
           false,
           report.evaluated ? report.status : "unresolved",
+          "own",
+          owner,
         );
         steps.push(step.step);
         diagnostics.push(...step.diagnostics);
@@ -366,6 +372,8 @@ export function evaluateRosterProfileCharacteristics<
           entry.modifier,
           true,
           entry.evaluated ? entry.status : "unresolved",
+          "own",
+          owner,
         );
         steps.push(step.step);
         diagnostics.push(...step.diagnostics);
@@ -420,6 +428,7 @@ export function evaluateRosterProfileCharacteristics<
       entry.grouped,
       evaluated.value.evaluated ? evaluated.value.status : "unresolved",
       "affects",
+      entry.declaredBy,
     );
     diagnostics.push(...step.diagnostics);
     routedSteps.set(report, [...(routedSteps.get(report) ?? []), step.step]);
@@ -652,14 +661,22 @@ function evaluateStep<
   modifier: Modifier,
   grouped: boolean,
   applicability: NumericModifierApplicability,
-  origin: RosterCharacteristicStepOrigin = "own",
+  origin: RosterCharacteristicStepOrigin,
+  declaredBy: RosterSelection,
 ): {
   readonly step: RosterCharacteristicStep<Modifier>;
   readonly diagnostics: readonly Diagnostic[];
 } {
   if (applicability === "notApplicable") {
     return {
-      step: { status: "notApplicable", modifier, grouped, origin, input },
+      step: {
+        status: "notApplicable",
+        modifier,
+        grouped,
+        origin,
+        declaredBy,
+        input,
+      },
       diagnostics: [],
     };
   }
@@ -697,6 +714,7 @@ function evaluateStep<
         modifier,
         grouped,
         origin,
+        declaredBy,
         kind,
         input,
         output: modifier.value,
@@ -711,6 +729,7 @@ function evaluateStep<
       modifier,
       grouped,
       origin,
+      declaredBy,
       input,
       issues,
       ...(kind === undefined ? {} : { kind }),

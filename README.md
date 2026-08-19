@@ -101,8 +101,9 @@ This repository currently contains the first development slice:
   and no resolution or execution;
 - evaluated characteristic values in occurrence details, showing the effective
   value, the source value as a labelled base when it changed, an explicit
-  unresolved label, a hidden/unresolved visibility label, and a per-profile
-  incomplete note;
+  unresolved label, a hidden/unresolved visibility label, a per-profile
+  incomplete note, and the declaring occurrence's name when another selection's
+  `affects` selector routed the change;
 - bounded in-memory undo and redo over exact immutable roster-session snapshots;
 - occurrence-specific selection rename and reset-to-definition-name controls;
 - occurrence-specific amount editing with source default/step visibility,

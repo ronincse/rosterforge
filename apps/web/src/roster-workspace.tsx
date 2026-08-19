@@ -1872,11 +1872,22 @@ function SelectionCharacteristic({
   // so nothing provisional is presented as an effective result.
   const displayed = report?.value ?? characteristic.value;
   const changed = modified && !unresolved && displayed !== report.baseValue;
+  // A step routed here by another selection's `affects` selector is worth
+  // naming: without it the reader cannot tell why a weapon's stat differs from
+  // the one printed on its own datasheet.
+  const routedBy = report?.steps.find(
+    (step) => step.origin === "affects",
+  )?.declaredBy;
+  const routedName =
+    routedBy === undefined
+      ? undefined
+      : routedBy.name ?? "another selection";
   return (
     <div
       {...(report === undefined
         ? {}
         : { "data-completeness": report.completeness })}
+      {...(routedName === undefined ? {} : { "data-routed": "true" })}
     >
       <dt>
         {characteristic.name ??
@@ -1892,6 +1903,7 @@ function SelectionCharacteristic({
           </small>
         )}
         {unresolved && <small>Effective value unresolved</small>}
+        {routedName !== undefined && <small>Set by {routedName}</small>}
       </dd>
     </div>
   );

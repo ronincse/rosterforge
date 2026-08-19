@@ -1411,8 +1411,13 @@ all, because one of them might have targeted it.
 modifier's scope is not counted against it and neither is the `affects`
 attribute itself. Routed steps record `origin: "affects"` and run after the
 profile's own, which keeps a profile-owned modifier authoritative over an
-inherited one. Selectors that traverse beyond the owner are left alone entirely
-rather than recorded as unapplied steps on every profile they might reach.
+inherited one. Every step also records `declaredBy`, the occurrence that owns
+the modifier. For an own step that is the profile's own occurrence and carries
+no information; for a routed step it is the ancestor that declared the selector,
+which is the only way a reader can find out why a displayed value differs from
+the one printed on the profile's own datasheet. Selectors that traverse beyond
+the owner are left alone entirely rather than recorded as unapplied steps on
+every profile they might reach.
 
 Modifiers targeting `hidden` are the one exception. That is a known BattleScribe
 field whose Boolean `set` semantics this package already executes for selection

@@ -497,6 +497,11 @@ describe("affects traversal", () => {
 
     const applied = grouped.characteristics[1]?.steps ?? [];
     expect(applied).toMatchObject([{ status: "applied", origin: "affects" }]);
+    // The declarer is the ancestor that owns the selector, not the occurrence
+    // whose profile is being read. A reader shown only the changed value has no
+    // way to find the source without this.
+    expect(applied[0]?.declaredBy.id).toBe(setup.owner.id);
+    expect(applied[0]?.declaredBy.id).not.toBe(setup.groupChild.id);
   });
 });
 
@@ -694,6 +699,7 @@ function characteristicSetup(rootId = "characteristic-owner"): {
 function traversalSetup(): {
   readonly context: BattleScribeCatalogueContext;
   readonly roster: Roster;
+  readonly owner: RosterSelection;
   readonly directChild: RosterSelection;
   readonly groupChild: RosterSelection;
   readonly directChoice: EvaluationSelectionChoice;
@@ -763,10 +769,22 @@ function traversalSetup(): {
   const owner = roster.forces[0]?.selections[0];
   const directChild = owner?.selections[0];
   const groupChild = owner?.selections[1];
-  if (directChild === undefined || groupChild === undefined) {
+  if (
+    owner === undefined ||
+    directChild === undefined ||
+    groupChild === undefined
+  ) {
     throw new Error("Missing traversal occurrences.");
   }
-  return { context, roster, directChild, groupChild, directChoice, groupChoice };
+  return {
+    context,
+    roster,
+    owner,
+    directChild,
+    groupChild,
+    directChoice,
+    groupChoice,
+  };
 }
 
 function staleValueSetup(): {

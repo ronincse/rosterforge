@@ -332,6 +332,9 @@
   label when a sequence cannot be completed, and a per-profile incomplete note;
   direct profiles, linked profile info links, and recursive info-group profiles
   all use the same evaluated report
+- Attribution for characteristics changed by another selection's `affects`
+  selector, naming the declaring occurrence in occurrence details so a value
+  that differs from the profile's own datasheet is traceable to its source
 - Read-only profile visibility for direct and recursively grouped Boolean `set`
   `hidden` modifiers, using the projected profile flag as the base and the same
   owner-direct then group-source execution order as selection visibility
