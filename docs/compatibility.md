@@ -871,13 +871,17 @@ it applies to string operations such as `replace`, not to append placement.
 `affects` also **overrides** `scope` rather than composing with it: when
 `affects` is present and is not the literal `self`, it determines the target.
 
-The owner-relative subset now executes: a selector with no `entries` traversal
-and no embedded filter ID, ending in `profiles.<profileTypeName>`, routes its
-owning selection's modifier to that selection's own profiles of the named type.
-237 of the 1,246 parsed characteristic selectors take that form — all of them
-resolving to a declared profile type, using only `Unit` (187), `Ranged Weapons`
-(29), and `Melee Weapons` (21) — and 156 of those are `set` operations the
-lexical kernel can execute.
+Traversal now executes for every verified form. A selector declared by an
+occurrence or any of its ancestors routes to this profile when the occurrence
+falls in its target set: `own` reaches the declarer, `children` its direct child
+entries plus group members when the selector carries `group`, and `descendants`
+every descendant. An embedded category ID filters the set using the same
+effective membership condition identity uses; unknown membership leaves the
+report incomplete rather than guessing.
+
+Only `set` executes, so the visible unlock stays bounded by the lexical kernel.
+Everything else becomes correctly-attributed incompleteness on the profile it
+would have reached, instead of silence.
 
 Both remaining questions were settled by experiment against New Recruit on
 2026-08-19, using units whose live data matches the pinned snapshot verbatim.

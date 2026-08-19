@@ -321,5 +321,52 @@
           affects="self.entries.recursive.profiles.Unit" />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="affects-traversal" name="Affects Traversal"
+      type="unit">
+      <selectionEntries>
+        <selectionEntry id="direct-child" name="Direct Child" type="model">
+          <profiles>
+            <profile id="profile-direct-child" name="Direct Child Profile"
+              typeId="profile-type-unit" typeName="Unit">
+              <characteristics>
+                <characteristic name="Move"
+                  typeId="characteristic-move">6"</characteristic>
+                <characteristic name="Save"
+                  typeId="characteristic-save">4+</characteristic>
+              </characteristics>
+            </profile>
+          </profiles>
+        </selectionEntry>
+      </selectionEntries>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="traversal-group" name="Traversal Group"
+          defaultSelectionEntryId="none">
+          <selectionEntries>
+            <selectionEntry id="group-child" name="Group Child" type="model">
+              <profiles>
+                <profile id="profile-group-child" name="Group Child Profile"
+                  typeId="profile-type-unit" typeName="Unit">
+                  <characteristics>
+                    <characteristic name="Move"
+                      typeId="characteristic-move">6"</characteristic>
+                    <characteristic name="Save"
+                      typeId="characteristic-save">4+</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+            </selectionEntry>
+          </selectionEntries>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+      <modifiers>
+        <!-- Reaches direct child entries only: verified in New Recruit that
+             `entries` does not descend into selection-entry groups. -->
+        <modifier type="set" field="characteristic-move" value='8"'
+          affects="self.entries.profiles.Unit" />
+        <!-- The explicit `group` segment additionally enters groups. -->
+        <modifier type="set" field="characteristic-save" value="2+"
+          affects="self.entries.group.profiles.Unit" />
+      </modifiers>
+    </selectionEntry>
   </selectionEntries>
 </catalogue>

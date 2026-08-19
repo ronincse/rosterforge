@@ -1373,11 +1373,31 @@ makes the report incomplete. This evaluator does not decide profile naming,
 `affects` retargeting, or info-group modifier behavior, so it cannot prove that
 such a modifier leaves the display unchanged.
 
-A modifier declared by the profile's **owning selection** can also route here
-through an `affects` selector. Only the owner-relative form executes: a selector
-with no `entries` traversal and no embedded filter ID, ending in
-`profiles.<profileTypeName>`. That subset needs no decision about traversal
-depth or what an embedded ID filters, both of which remain unsettled.
+A modifier declared by the profile's owner **or any of its ancestors** can route
+here through an `affects` selector. The evaluator walks the owner's ancestor
+chain and asks, for each selector found, whether this occurrence falls in its
+target set:
+
+- `own` reaches only the declaring occurrence.
+- `children` reaches its direct child **entries**; selection-entry group members
+  only when the selector carries an explicit `group` segment.
+- `descendants` reaches every descendant.
+
+An embedded **category** ID filters the target set to occurrences holding that
+category, answered by the same effective-membership index condition identity
+uses. If membership is unknown the report stays incomplete rather than guessing
+either way. An embedded ID naming anything else routes nothing; the corpus has
+one such instance and its meaning is unestablished.
+
+The route test counts *entry* steps and treats a selection-entry-group
+occurrence as a non-entry step, so it holds whether the roster flattens groups —
+as browser editing does — or retains group occurrences, as headless construction
+can. When no group occurrence appears in the chain, the definition side decides:
+a child whose definition sits inside one of the parent's groups counts as
+group-reached.
+
+Applicability for a routed modifier is evaluated against the occurrence that
+**declared** it, not the one it reaches.
 
 The profile type is matched the way New Recruit's data editor matches it: the
 selector segment is compared case-insensitively against the *declared* profile

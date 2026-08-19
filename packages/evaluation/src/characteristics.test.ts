@@ -13,6 +13,7 @@ import { sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
 import {
   addRosterForce,
   addRosterSelectionToForce,
+  addRosterSelectionToSelection,
   createRoster,
   forceOccurrenceId,
   rosterDefinitionKeyForSource,
@@ -424,6 +425,59 @@ describe("affects-routed characteristic modifiers", () => {
   });
 });
 
+describe("affects traversal", () => {
+  it("reaches a direct child entry but not a group member without `group`", () => {
+    const setup = traversalSetup();
+
+    const direct = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.directChild,
+        profile(setup.directChoice, "profile-direct-child"),
+      ),
+    );
+    const grouped = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.groupChild,
+        profile(setup.groupChoice, "profile-group-child"),
+      ),
+    );
+
+    // Verified in New Recruit: `self.entries` does not descend into a
+    // selection-entry group, so only the direct child's Move changes.
+    expect(direct.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '8"',
+    });
+    expect(grouped.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '6"',
+    });
+    // `self.entries.group` adds group traversal, so Save reaches both.
+    expect(direct.characteristics[1]).toMatchObject({ value: "2+" });
+    expect(grouped.characteristics[1]).toMatchObject({ value: "2+" });
+  });
+
+  it("attributes a routed step to the occurrence that declared it", () => {
+    const setup = traversalSetup();
+
+    const grouped = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.groupChild,
+        profile(setup.groupChoice, "profile-group-child"),
+      ),
+    );
+
+    const applied = grouped.characteristics[1]?.steps ?? [];
+    expect(applied).toMatchObject([{ status: "applied", origin: "affects" }]);
+  });
+});
+
 describe("roster profile visibility", () => {
   it("reports a profile with no hidden behavior as visible", () => {
     const setup = characteristicSetup();
@@ -613,6 +667,84 @@ function characteristicSetup(rootId = "characteristic-owner"): {
     throw new Error("Missing characteristic fixture owner.");
   }
   return { context, roster, owner, ownerChoice: ownerChoice };
+}
+
+function traversalSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly directChild: RosterSelection;
+  readonly groupChild: RosterSelection;
+  readonly directChoice: EvaluationSelectionChoice;
+  readonly groupChoice: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const ownerChoice = choice(context, "affects-traversal");
+  const directChoice = choice(context, "direct-child");
+  const groupChoice = choice(context, "group-child");
+  let roster = createRoster({
+    id: rosterId("affects-traversal-roster"),
+    name: "Affects traversal roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) throw new Error("Missing traversal fixture force.");
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId("traversal-force"),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  const reference = (candidate: EvaluationSelectionChoice) => ({
+    kind: candidate.kind,
+    key: projectionKey(candidate.occurrence),
+    ...(candidate.id === undefined ? {} : { sourceId: candidate.id }),
+  });
+  roster = successful(
+    addRosterSelectionToForce(roster, forceOccurrenceId("traversal-force"), {
+      id: selectionOccurrenceId("traversal-owner"),
+      definition: reference(ownerChoice),
+    }),
+  );
+  // Both children are added directly under the owner, the way browser editing
+  // flattens groups away. The group member is still a group member by
+  // definition, which is what the traversal rule tests.
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("traversal-owner"),
+      {
+        id: selectionOccurrenceId("traversal-direct"),
+        definition: reference(directChoice),
+      },
+    ),
+  );
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("traversal-owner"),
+      {
+        id: selectionOccurrenceId("traversal-group"),
+        definition: reference(groupChoice),
+      },
+    ),
+  );
+  const owner = roster.forces[0]?.selections[0];
+  const directChild = owner?.selections[0];
+  const groupChild = owner?.selections[1];
+  if (directChild === undefined || groupChild === undefined) {
+    throw new Error("Missing traversal occurrences.");
+  }
+  return { context, roster, directChild, groupChild, directChoice, groupChoice };
 }
 
 function catalogueContext(): BattleScribeCatalogueContext {
