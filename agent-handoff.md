@@ -1855,3 +1855,112 @@ The two product questions remain blocked on one New Recruit experiment:
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
+
+## Completed Assignment — Category `affects` Routing, 2026-08-19
+
+Baseline `9f8b125`; resulting implementation commit `33e5f2b`.
+
+### What executes now
+
+A category modifier carrying `affects` is targeted by its selector rather than
+by its declaring occurrence, so it leaves the own pass and is collected by a
+routed pass that runs last. Steps record `origin: "affects"` and `declaredBy`;
+neither `affects` nor `scope` counts against a routed step.
+
+The traversal machinery moved to `packages/evaluation/src/affects-routing.ts`
+(`reaches`, `routeFromDeclarer`, `passesThroughGroupDefinition`,
+`affectsModifiers`, `hasAffectsModifier`). It sits above `selection-context` and
+below both `categories` and `characteristics`, so neither imports the other. The
+extraction was behavior-neutral — 409 tests green before and after, with no
+assertion changes.
+
+### Two things the previous handoff did not anticipate
+
+**1. The filter collides with the single-pass rule.** Every corpus selector of
+this shape filters by a category ID, and `evaluateRosterSelectionCategories` is
+pass one: it runs with no effective-category index because it is what builds
+one. Resolving the filter naively would need exactly the membership being
+computed.
+
+Resolved by **modifier immunity**. `modifierTargetedCategoryIds(context)` scans
+every document's raw node tree for category modifiers and collects what they
+target, memoized per context. A category nothing targets anywhere in the
+composed catalogue has membership fixed by static `categoryLink` declarations,
+so pass one decides the filter without the index and without guessing. A filter
+category some modifier can change leaves membership unknown, exactly like the
+seven existing cyclic cases. The scan covers whole documents rather than
+roster-reachable choices, because a modifier on an entry this roster never uses
+still disproves immunity.
+
+Pinned on real data: `Attacks Dx Weapon` and `Damage Dx Weapon` are immune,
+`Vehicle` is not.
+
+**2. Owner-relative routing is vacuous for the entire corpus population.** All
+89 category `affects` modifiers are declared on `upgrade` entries that have **no
+descendant entries at all**, and all 89 also carry a `scope` (67 `model`, 12
+`upgrade`, 4 `force`, 3 `root-entry`, 1 `parent`, 1 `roster`). Under the settled
+owner-relative rule every one of them reaches nothing — not a plausible reading
+of what the authors wrote.
+
+The competing reading is that `scope` names the anchor and the selector
+navigates from there. The 2026-08-17 research explicitly **corrected** an earlier
+claim to that effect, concluding from the nr-editor's modifier panel that
+`affects` overrides `scope`. That conclusion held for characteristic modifiers,
+whose declarers are models that really do own the profiles the selector names.
+It does not obviously hold here, and the corpus is evidence against it: 89 of 89
+would be dead authoring.
+
+Rather than pick, a selector that does not reach its own occurrence while a
+scope names another anchor **withholds** the determination and emits
+`EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED`. Scope-free owner-relative
+routing executes normally. The corpus population stays exactly as honest as it
+was before — it was already incomplete via `unsupportedAttributes` — while the
+settled rule becomes available where it applies.
+
+*Methodological note:* the first audit that produced this finding was wrong. It
+walked the node holding the `modifiers` array, which for a grouped modifier is
+the `and` condition group rather than the owning entry, and reported 74 of 89
+declarers as unnamed. Re-running against the nearest enclosing selection entry
+gave the real answer. Worth remembering when auditing modifier ownership.
+
+### Tests
+
+Six synthetic tests: unfiltered routing to direct and group-nested descendants;
+`entries` without `recursive` reaching the direct child but **not** the group
+child, on a flattened roster where only the definition side distinguishes them;
+an immune filter admitting only members; a non-immune filter withholding; the
+relocated-anchor withholding; and the declaring occurrence no longer losing its
+own determination to its own descendant selector.
+
+Real-data pins: the immunity result above, and that all 89 corpus category
+`affects` modifiers carry a scope — the shape the withholding rule keys on.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **415 passed, 6 skipped (421 total)**.
+- Pinned real-data suite — **6 passed**.
+
+### Next recommended boundary
+
+1. **Settle the anchor question**, which is now the highest-value item because
+   it gates all 89 corpus category modifiers and probably informs the 1,617
+   characteristic modifiers carrying both `affects` and `scope`. It is a New
+   Recruit experiment: take a character with an Enhancement whose modifier reads
+   `add <category> affects="self.entries.recursive.<category>" scope="model"`,
+   and see whether the character's weapons gain the category. If they do, `scope`
+   relocates the anchor and the owner-relative rule needs qualifying.
+2. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil` — blocked on
+   the sign convention.
+3. `replace` — blocked on `arg` semantics.
+
+All three open questions are New Recruit experiments and can be batched:
+
+- **Anchor relocation.** Does a `scope` on an `affects` modifier move the
+  selector's starting point? (new, and the most valuable)
+- **Sign convention.** On a `3+` save, does `increment 1` mean `4+` or `2+`?
+- **`arg` semantics.** Does `replace` treat `arg` as the search term? Watching a
+  weapon with an unused `+0` bonus slot should show the slot collapsing.
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One corpus instance.
