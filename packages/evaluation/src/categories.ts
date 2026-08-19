@@ -19,6 +19,14 @@ import {
   type EvaluationSelectionChoice,
 } from "./selection-context.js";
 
+import { parseBattleScribeAffectsSelector } from "./affects.js";
+import {
+  affectsModifiers,
+  hasAffectsModifier,
+  reaches,
+  routeFromDeclarer,
+} from "./affects-routing.js";
+
 import {
   evaluateRosterModifierApplicability,
   type RosterModifierApplicabilityReport,
@@ -70,7 +78,8 @@ export type RosterCategoryModifierIssue =
   | "unsupportedAttributes"
   | "missingType"
   | "unsupportedType"
-  | "missingValue";
+  | "missingValue"
+  | "relocatedAnchor";
 
 export interface RosterCategoryLinkSource {
   readonly targetId?: ObjectId;
@@ -104,7 +113,11 @@ export interface RosterCategoryChoiceSource<
  * declared it; the scoped forms mean another occurrence declared it and the
  * scope anchors it here.
  */
-export type RosterCategoryStepOrigin = "own" | "parent-scope" | "root-entry-scope";
+export type RosterCategoryStepOrigin =
+  | "own"
+  | "parent-scope"
+  | "root-entry-scope"
+  | "affects";
 
 export interface AppliedRosterCategoryStep<
   Modifier extends RosterCategoryModifierSource = RosterCategoryModifierSource,
@@ -251,7 +264,7 @@ export function evaluateRosterSelectionCategories<
     if (modifier.scope !== undefined && origin === "own") {
       issues.push("scoped");
     }
-    if (unsupportedAttributes(modifier).length > 0) {
+    if (unsupportedAttributes(modifier, origin).length > 0) {
       issues.push("unsupportedAttributes");
     }
     const operation = categoryOperation(modifier.type);
@@ -316,14 +329,20 @@ export function evaluateRosterSelectionCategories<
       issues,
     });
     diagnostics.push(
-      ...issues.map((issue) => categoryDiagnostic(modifier, issue)),
+      ...issues.map((issue) => categoryDiagnostic(modifier, issue, origin)),
     );
   };
 
   const modifierApplicability: RosterModifierApplicabilityReport<Modifier>[] =
     [];
+  // A modifier carrying `affects` is targeted by its selector rather than by
+  // the occurrence that declares it, so it is not run as an own step. The
+  // routed pass below picks it up, including when the selector points back at
+  // this same occurrence.
   for (const modifier of choice.modifiers.filter(
-    ({ field }) => field === categoryField,
+    (candidate) =>
+      candidate.field === categoryField &&
+      candidate.node.attributes["affects"] === undefined,
   )) {
     const evaluated = evaluateRosterModifierApplicability(
       roster,
@@ -384,6 +403,7 @@ export function evaluateRosterSelectionCategories<
     primaryKnown = false;
   }
   for (const entry of grouped.entries) {
+    if (entry.modifier.node.attributes["affects"] !== undefined) continue;
     runStep(
       entry.modifier,
       true,
@@ -405,6 +425,81 @@ export function evaluateRosterSelectionCategories<
     primaryKnown = false;
   }
   for (const contribution of inbound.contributions) {
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      contribution.declaredBy,
+      contribution.modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      membershipKnown = false;
+      primaryKnown = false;
+      continue;
+    }
+    runStep(
+      contribution.modifier,
+      contribution.grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      contribution.origin,
+      contribution.declaredBy,
+    );
+  }
+
+  // An `affects` selector on this occurrence that does not reach this
+  // occurrence, while a `scope` names a different anchor, has an undetermined
+  // target set.
+  //
+  // The settled owner-relative rule -- verified in New Recruit for a model
+  // reaching its own weapons -- makes such a selector vacuous. Every one of the
+  // pinned corpus's 89 category `affects` modifiers is declared on an `upgrade`
+  // entry with no descendant entries at all, so under that rule none of them
+  // could ever do anything, which is not a plausible reading of the authors'
+  // intent. The alternative reading is that the `scope` names the anchor and
+  // the selector navigates from there; nothing establishes it. Rather than pick
+  // one, the determination is withheld and diagnosed.
+  for (const modifier of choice.modifiers.filter(
+    (candidate) =>
+      candidate.field === categoryField &&
+      candidate.node.attributes["affects"] !== undefined &&
+      candidate.scope !== undefined,
+  )) {
+    const selector = parseBattleScribeAffectsSelector(
+      modifier.node.attributes["affects"] as string,
+    );
+    if (selector.traversal === "own" && selector.target === "selections") {
+      // It does name this occurrence, so the routed pass settles it.
+      continue;
+    }
+    membershipKnown = false;
+    primaryKnown = false;
+    steps.push({
+      status: "unapplied",
+      modifier,
+      grouped: false,
+      origin: "affects",
+      declaredBy: owner,
+      issues: ["relocatedAnchor"],
+    });
+    diagnostics.push(
+      categoryDiagnostic(modifier, "relocatedAnchor", "affects"),
+    );
+  }
+
+  // Routed steps run last. A selector reaches this occurrence from outside its
+  // own declaration, so treating it as the final word matches the inbound-scope
+  // rule already in force above.
+  const routed = collectAffectsRoutedCategoryModifiers(
+    roster,
+    context,
+    owner,
+    baseCategories,
+  );
+  if (routed.partial) {
+    membershipKnown = false;
+    primaryKnown = false;
+  }
+  for (const contribution of routed.contributions) {
     const evaluated = evaluateRosterModifierApplicability(
       roster,
       context,
@@ -460,6 +555,150 @@ export function evaluateRosterSelectionCategories<
     },
     diagnostics,
   );
+}
+
+/**
+ * A raw projected document node, described structurally so this package does
+ * not take a runtime dependency on `battlescribe-data`.
+ */
+interface CategoryScanNode {
+  readonly name?: string;
+  readonly attributes?: Readonly<Record<string, string>>;
+  readonly children?: readonly unknown[];
+}
+
+const modifierTargetedCategories = new WeakMap<
+  BattleScribeCatalogueContext,
+  ReadonlySet<ObjectId>
+>();
+
+/**
+ * Every category ID that some category modifier anywhere in the composed
+ * catalogue targets.
+ *
+ * ## Why this exists
+ *
+ * `evaluateRosterSelectionCategories` is pass one of the single-pass rule and
+ * runs with no effective-category index in scope. Every corpus `affects`
+ * selector on a category modifier filters by a category ID, so resolving that
+ * filter would need exactly the membership this pass is computing.
+ *
+ * A category no modifier can target is **modifier-immune**: its membership is
+ * fully determined by static `categoryLink` declarations, so pass one can
+ * decide it without the index and without guessing. A category any modifier
+ * targets stays unresolved, exactly like the existing cyclic cases.
+ *
+ * The scan reads every document's raw node tree rather than the roster-reachable
+ * choice index, because immunity is a claim about the whole catalogue: a
+ * modifier on an entry this roster never uses still disproves it.
+ */
+export function modifierTargetedCategoryIds(
+  context: BattleScribeCatalogueContext,
+): ReadonlySet<ObjectId> {
+  const cached = modifierTargetedCategories.get(context);
+  if (cached !== undefined) return cached;
+
+  const targeted = new Set<ObjectId>();
+  const visit = (node: CategoryScanNode): void => {
+    if (
+      node.name === "modifier" &&
+      node.attributes?.["field"] === categoryField
+    ) {
+      const value = node.attributes["value"];
+      if (value !== undefined && value !== "") {
+        targeted.add(value as ObjectId);
+      }
+    }
+    for (const child of node.children ?? []) {
+      if (child !== null && typeof child === "object") {
+        visit(child as CategoryScanNode);
+      }
+    }
+  };
+  for (const document of context.graph.documents) {
+    visit(document.root as CategoryScanNode);
+  }
+
+  modifierTargetedCategories.set(context, targeted);
+  return targeted;
+}
+
+/**
+ * Category modifiers that an `affects` selector routes to this occurrence.
+ *
+ * The selector must terminate at an occurrence rather than at a profile: a
+ * `category` field lives on the selection, so a `profiles.<typeName>` path
+ * names something this modifier cannot change.
+ */
+function collectAffectsRoutedCategoryModifiers(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  staticCategories: readonly ObjectId[],
+): {
+  readonly contributions: readonly InboundCategoryContribution[];
+  readonly partial: boolean;
+} {
+  if (!rosterMatchesCatalogueContext(roster, context)) {
+    return { contributions: [], partial: false };
+  }
+  const choices = indexEvaluationChoices(context);
+  const locations = rosterSelectionLocations(roster);
+  const ownerLocation = locations.find(
+    (location) => location.occurrence === owner,
+  );
+  if (ownerLocation === undefined) {
+    return { contributions: [], partial: false };
+  }
+
+  // Outermost declaration first, so step order stays deterministic and matches
+  // the source order a reader would expect.
+  const candidates = [...[...ownerLocation.ancestors].reverse(), owner];
+  const contributions: InboundCategoryContribution[] = [];
+  let partial = false;
+
+  for (const declarer of candidates) {
+    const resolution = resolveEvaluationSelection(declarer, choices, true);
+    const choice = resolution.choices[0];
+    if (resolution.status !== "resolved" || choice === undefined) {
+      // An unreadable ancestor might declare a selector aimed here.
+      partial = true;
+      continue;
+    }
+    if (!hasAffectsModifier(choice)) continue;
+
+    const route = routeFromDeclarer(declarer, owner, locations, choices);
+    for (const entry of affectsModifiers(choice)) {
+      const modifier = entry.modifier as RosterCategoryModifierSource;
+      if (modifier.field !== categoryField) continue;
+      const value = modifier.node.attributes["affects"];
+      if (value === undefined) continue;
+      const selector = parseBattleScribeAffectsSelector(value);
+      if (!selector.supported || selector.target !== "selections") {
+        // Unsupported traversal, or a path naming profiles this modifier
+        // cannot change. Either way it might have been aimed here.
+        partial = true;
+        continue;
+      }
+      if (!reaches(selector, route)) continue;
+      if (selector.filterId !== undefined) {
+        if (modifierTargetedCategoryIds(context).has(selector.filterId)) {
+          // Some modifier can change membership in the filter category, so
+          // pass one cannot decide whether this occurrence qualifies.
+          partial = true;
+          continue;
+        }
+        if (!staticCategories.includes(selector.filterId)) continue;
+      }
+      contributions.push({
+        modifier,
+        grouped: entry.grouped,
+        origin: "affects",
+        declaredBy: declarer,
+      });
+    }
+  }
+  return { contributions, partial };
 }
 
 interface InboundCategoryContribution {
@@ -614,8 +853,14 @@ function groupedCategoryCount<
 
 function unsupportedAttributes(
   modifier: RosterCategoryModifierSource,
+  origin: RosterCategoryStepOrigin = "own",
 ): readonly string[] {
   const supported = new Set(["type", "field", "value", "scope", "comment"]);
+  // A routed modifier reached this occurrence *because* of its selector, and
+  // `affects` overrides `scope`, so neither counts against it.
+  if (origin === "affects") {
+    supported.add("affects");
+  }
   return Object.keys(modifier.node.attributes).filter(
     (attribute) => !supported.has(attribute),
   );
@@ -624,6 +869,7 @@ function unsupportedAttributes(
 function categoryDiagnostic(
   modifier: RosterCategoryModifierSource,
   issue: RosterCategoryModifierIssue,
+  origin: RosterCategoryStepOrigin = "own",
 ): Diagnostic {
   const descriptions: Record<
     RosterCategoryModifierIssue,
@@ -647,7 +893,7 @@ function categoryDiagnostic(
     unsupportedAttributes: [
       "EVALUATION_CATEGORY_MODIFIER_ATTRIBUTES_UNSUPPORTED",
       "A category modifier has generic attributes with unsupported behavior.",
-      unsupportedAttributes(modifier)[0],
+      unsupportedAttributes(modifier, origin)[0],
     ],
     missingType: [
       "EVALUATION_CATEGORY_MODIFIER_TYPE_MISSING",
@@ -658,6 +904,11 @@ function categoryDiagnostic(
       "EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED",
       `Category modifier operation ${modifier.type} is not supported.`,
       "type",
+    ],
+    relocatedAnchor: [
+      "EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED",
+      "A category modifier's affects selector reaches nothing from its own occurrence while a scope names another anchor, so its target set is undetermined.",
+      "affects",
     ],
     missingValue: [
       "EVALUATION_CATEGORY_MODIFIER_VALUE_MISSING",

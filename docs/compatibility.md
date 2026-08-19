@@ -384,6 +384,10 @@
 - Selector terminus: a path ending in `profiles.<typeName>` targets profiles, a
   path stopping before it targets the reached occurrences themselves, which is
   what a selection-level field such as `category` requires
+- Owner-relative `affects` routing for category modifiers, sharing the traversal
+  machinery with the characteristic evaluator, with an embedded filter category
+  resolved from static links when no modifier anywhere in the composed catalogue
+  can change membership in it
 
 ## Parsed But Not Evaluated
 
@@ -400,8 +404,14 @@
   unevaluated, so executing it alone would display a value the source does not
   mean.
 - `affects` selectors that traverse beyond the declaring occurrence's own
-  subtree, chiefly force traversal and entry-terminated paths; owner-relative
-  routing to own, child, and descendant profiles is executed.
+  subtree, chiefly force traversal; owner-relative routing to own, child, and
+  descendant occurrences and profiles is executed.
+- Category `affects` selectors that reach nothing from their own occurrence
+  while a `scope` names another anchor. All 89 corpus instances have this shape,
+  and whether the scope relocates the anchor is unestablished, so membership is
+  withheld and diagnosed rather than silently left unchanged.
+- Category `affects` filters naming a category that some modifier can change;
+  deciding them needs the membership pass one is computing.
 - Generic `arg` and `position` behavior on characteristic modifiers, `join` on
   any operation other than `append`, and characteristic modifiers owned by
   selection entries, entry links, info links, or info groups rather than by the

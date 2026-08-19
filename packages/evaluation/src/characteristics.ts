@@ -12,14 +12,18 @@ import {
 import type { Roster, RosterSelection } from "@rosterforge/roster-model";
 
 import { parseBattleScribeAffectsSelector } from "./affects.js";
+import {
+  affectsModifiers,
+  hasAffectsModifier,
+  reaches,
+  routeFromDeclarer,
+} from "./affects-routing.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 import {
   indexEvaluationChoices,
   resolveEvaluationSelection,
   rosterMatchesCatalogueContext,
   rosterSelectionLocations,
-  type EvaluationChoiceIndex,
-  type EvaluationSelectionChoice,
 } from "./selection-context.js";
 
 import {
@@ -880,154 +884,6 @@ function collectAffectsRoutedModifiers(
     }
   }
   return { modifiers: collected, partial };
-}
-
-interface AffectsRoute {
-  /** Entry steps between the declarer and this occurrence; 0 means the same. */
-  readonly entrySteps: number;
-  /** True when reaching it passed through a selection-entry group. */
-  readonly viaGroup: boolean;
-  readonly reachable: boolean;
-}
-
-function reaches(
-  selector: { readonly traversal: string; readonly entersGroups: boolean },
-  route: AffectsRoute,
-): boolean {
-  if (!route.reachable) return false;
-  if (selector.traversal === "own") return route.entrySteps === 0;
-  if (route.entrySteps === 0) return false;
-  if (route.viaGroup && !selector.entersGroups) {
-    // `entries` alone does not descend into groups; `recursive` does.
-    if (selector.traversal !== "descendants") return false;
-  }
-  return selector.traversal === "descendants" || route.entrySteps === 1;
-}
-
-function routeFromDeclarer(
-  declarer: RosterSelection,
-  owner: RosterSelection,
-  locations: readonly {
-    readonly occurrence: RosterSelection;
-    readonly ancestors: readonly RosterSelection[];
-  }[],
-  choices: EvaluationChoiceIndex,
-): AffectsRoute {
-  if (declarer === owner) {
-    return { entrySteps: 0, viaGroup: false, reachable: true };
-  }
-  const ownerLocation = locations.find(
-    (location) => location.occurrence === owner,
-  );
-  if (ownerLocation === undefined) {
-    return { entrySteps: 0, viaGroup: false, reachable: false };
-  }
-  const index = ownerLocation.ancestors.indexOf(declarer);
-  if (index === -1) {
-    return { entrySteps: 0, viaGroup: false, reachable: false };
-  }
-  // `ancestors` is nearest-first, so everything before the declarer plus the
-  // occurrence itself is the path walked down from it.
-  const path = [...ownerLocation.ancestors.slice(0, index), owner];
-  let entrySteps = 0;
-  let viaGroup = false;
-  for (const step of path) {
-    const resolution = resolveEvaluationSelection(step, choices, true);
-    const choice = resolution.choices[0];
-    if (choice?.kind === "selectionEntryGroup") {
-      viaGroup = true;
-      continue;
-    }
-    entrySteps += 1;
-  }
-  if (!viaGroup) {
-    // A flattened roster keeps group members as direct children, so the
-    // definition side decides whether the hop passed through a group.
-    viaGroup = passesThroughGroupDefinition(declarer, path[0], choices);
-  }
-  return { entrySteps, viaGroup, reachable: true };
-}
-
-/**
- * True when the child's definition is a member of one of the parent's
- * selection-entry groups rather than one of its direct entries.
- */
-function passesThroughGroupDefinition(
-  parent: RosterSelection,
-  child: RosterSelection | undefined,
-  choices: EvaluationChoiceIndex,
-): boolean {
-  if (child === undefined) return false;
-  const parentChoice = resolveEvaluationSelection(parent, choices, true)
-    .choices[0];
-  const childChoice = resolveEvaluationSelection(child, choices, true)
-    .choices[0];
-  if (parentChoice === undefined || childChoice === undefined) return false;
-  const direct = [
-    ...parentChoice.selectionEntries,
-    ...parentChoice.entryLinks.filter(
-      (link): link is EvaluationSelectionChoice =>
-        link.kind !== "unresolvedEntryLink",
-    ),
-  ];
-  if (direct.includes(childChoice)) return false;
-  const inGroups = (group: EvaluationSelectionChoice): boolean =>
-    group.selectionEntries.includes(
-      childChoice as (typeof group.selectionEntries)[number],
-    ) ||
-    group.entryLinks.some((link) => link === childChoice) ||
-    group.selectionEntryGroups.some(inGroups);
-  return parentChoice.selectionEntryGroups.some(inGroups);
-}
-
-function affectsModifiers(choice: EvaluationSelectionChoice): readonly {
-  readonly modifier: RosterCharacteristicModifierSource;
-  readonly grouped: boolean;
-}[] {
-  const out: {
-    readonly modifier: RosterCharacteristicModifierSource;
-    readonly grouped: boolean;
-  }[] = [];
-  const visit = (group: {
-    readonly modifiers: readonly RosterCharacteristicModifierSource[];
-    readonly modifierGroups: readonly unknown[];
-  }): void => {
-    for (const modifier of group.modifiers) {
-      if (modifier.node.attributes.affects !== undefined) {
-        out.push({ modifier, grouped: true });
-      }
-    }
-    for (const child of group.modifierGroups) {
-      visit(child as Parameters<typeof visit>[0]);
-    }
-  };
-  for (const modifier of choice.modifiers) {
-    if (modifier.node.attributes.affects !== undefined) {
-      out.push({ modifier, grouped: false });
-    }
-  }
-  for (const group of choice.modifierGroups) {
-    visit(group);
-  }
-  return out;
-}
-
-function hasAffectsModifier(choice: EvaluationSelectionChoice): boolean {
-  const inGroup = (group: {
-    readonly modifiers: readonly { readonly node: { readonly attributes: Readonly<Record<string, string>> } }[];
-    readonly modifierGroups: readonly unknown[];
-  }): boolean =>
-    group.modifiers.some(
-      (modifier) => modifier.node.attributes.affects !== undefined,
-    ) ||
-    (group.modifierGroups as readonly Parameters<typeof inGroup>[0][]).some(
-      inGroup,
-    );
-  return (
-    choice.modifiers.some(
-      (modifier) => modifier.node.attributes.affects !== undefined,
-    ) || choice.modifierGroups.some(inGroup)
-  );
 }
 
 function declaredProfileTypeName(

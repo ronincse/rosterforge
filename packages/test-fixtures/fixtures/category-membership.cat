@@ -7,6 +7,13 @@
     <categoryEntry id="cat-infantry" name="Infantry" hidden="false" />
     <categoryEntry id="cat-battleline" name="Battleline" hidden="false" />
     <categoryEntry id="cat-character" name="Character" hidden="false" />
+    <!-- No modifier anywhere targets this one, so static links fully
+         determine membership and an affects filter naming it is decidable
+         in pass one. -->
+    <categoryEntry id="cat-immune" name="Immune Filter" hidden="false" />
+    <!-- Deliberately targeted by a modifier below, so a filter naming it
+         cannot be resolved without the effective-category index. -->
+    <categoryEntry id="cat-mutable" name="Mutable Filter" hidden="false" />
   </categoryEntries>
   <selectionEntries>
     <selectionEntry id="static-categories" name="Static Categories"
@@ -180,6 +187,95 @@
       <modifiers>
         <modifier type="add" field="category" value="cat-battleline"
           affects="self.entries.recursive" />
+      </modifiers>
+      <selectionEntries>
+        <selectionEntry id="affects-direct-child" name="Affects Direct Child"
+          type="upgrade" />
+      </selectionEntries>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="affects-group" name="Affects Group">
+          <selectionEntries>
+            <selectionEntry id="affects-group-child"
+              name="Affects Group Child" type="upgrade" />
+          </selectionEntries>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+    </selectionEntry>
+    <selectionEntry id="affects-children-only" name="Affects Children Only"
+      type="unit">
+      <modifiers>
+        <!-- `entries` without `recursive` is the New Recruit contrast: it
+             reaches direct child entries but does not descend into a
+             selection-entry group. -->
+        <modifier type="add" field="category" value="cat-battleline"
+          affects="self.entries" />
+      </modifiers>
+      <selectionEntries>
+        <selectionEntry id="shallow-direct-child" name="Shallow Direct Child"
+          type="upgrade" />
+      </selectionEntries>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="shallow-group" name="Shallow Group">
+          <selectionEntries>
+            <selectionEntry id="shallow-group-child"
+              name="Shallow Group Child" type="upgrade" />
+          </selectionEntries>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+    </selectionEntry>
+    <selectionEntry id="affects-filtered" name="Affects Filtered" type="unit">
+      <categoryLinks>
+        <categoryLink id="affects-filtered-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline"
+          affects="self.entries.recursive.cat-immune" />
+      </modifiers>
+      <selectionEntries>
+        <selectionEntry id="affects-member-child" name="Affects Member Child"
+          type="upgrade">
+          <categoryLinks>
+            <categoryLink id="affects-member-link" name="Immune Filter"
+              targetId="cat-immune" primary="false" />
+          </categoryLinks>
+        </selectionEntry>
+        <selectionEntry id="affects-outsider-child"
+          name="Affects Outsider Child" type="upgrade" />
+      </selectionEntries>
+    </selectionEntry>
+    <selectionEntry id="affects-mutable" name="Affects Mutable" type="unit">
+      <categoryLinks>
+        <categoryLink id="affects-mutable-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <modifier type="add" field="category" value="cat-battleline"
+          affects="self.entries.recursive.cat-mutable" />
+      </modifiers>
+      <selectionEntries>
+        <selectionEntry id="affects-mutable-child"
+          name="Affects Mutable Child" type="upgrade" />
+      </selectionEntries>
+    </selectionEntry>
+    <selectionEntry id="affects-relocated" name="Affects Relocated"
+      type="unit">
+      <categoryLinks>
+        <categoryLink id="affects-relocated-infantry" name="Infantry"
+          targetId="cat-infantry" />
+      </categoryLinks>
+      <modifiers>
+        <!-- The shape every corpus instance takes: a descendant selector on an
+             occurrence with no descendants, plus a scope naming another
+             anchor. Undetermined rather than vacuous. -->
+        <modifier type="add" field="category" value="cat-battleline"
+          affects="self.entries.recursive.cat-immune" scope="model" />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="mutable-source" name="Mutable Source" type="unit">
+      <modifiers>
+        <!-- Existence is the point: it disproves cat-mutable's immunity. -->
+        <modifier type="add" field="category" value="cat-mutable" />
       </modifiers>
     </selectionEntry>
   </selectionEntries>

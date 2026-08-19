@@ -99,6 +99,9 @@ This repository currently contains the first development slice:
 - read-only effective category membership per roster occurrence, executing
   scope-free `add`/`remove` while preserving `set-primary`/`unset-primary` as
   an unresolved primary determination;
+- owner-relative `affects` routing for category modifiers, resolving an embedded
+  filter category from static links when no modifier can change it, and
+  withholding the case where a scope may relocate the anchor;
 - pure parsing of the observed `affects` selector grammar into traversal,
   optional filter ID, terminus, and profile-type name, distinguishing selectors
   that target profiles from those that target the reached occurrences, with no

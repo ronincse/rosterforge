@@ -1267,6 +1267,49 @@ is observable only when the same category is both added and removed along one
 path, which the pinned corpus never does for a single occurrence; the rule is
 fixed anyway so results stay deterministic.
 
+### Routed category modifiers
+
+A category modifier carrying an `affects` selector is targeted by that selector
+rather than by the occurrence declaring it, so it is excluded from the own pass
+and collected by a routed pass that runs last. The selector must terminate at an
+occurrence: a `profiles.<typeName>` path names something a `category` field
+cannot change. Routed steps record `origin: "affects"` and their `declaredBy`,
+and neither `affects` nor `scope` counts against them, matching the
+characteristic evaluator.
+
+The traversal machinery is shared with that evaluator through
+`affects-routing.ts`, which sits above `selection-context` and below both, so
+neither imports the other.
+
+**The filter and the single-pass rule.** Every corpus selector of this shape
+filters by a category ID, and this evaluator is pass one — it runs with no
+effective-category index, because it is what builds one. Resolving such a filter
+would need exactly the membership being computed.
+
+The way through is *modifier immunity*. `modifierTargetedCategoryIds` scans every
+document's raw node tree for category modifiers and collects what they target. A
+category no modifier targets anywhere in the composed catalogue has membership
+fully determined by static `categoryLink` declarations, so pass one can decide
+the filter without the index and without guessing. A filter category that any
+modifier targets leaves membership unknown, exactly like the existing cyclic
+cases. The scan reads whole documents rather than roster-reachable choices,
+because immunity is a claim about the catalogue: a modifier on an entry this
+roster never uses still disproves it.
+
+**The relocated anchor, and why the corpus population is withheld.** All 89
+corpus category `affects` modifiers are declared on `upgrade` entries that have
+no descendant entries at all, and all 89 also carry a `scope`. Under the settled
+owner-relative rule — verified in New Recruit for a model reaching its own
+weapons — every one of them is vacuous, which is not a plausible reading of what
+the authors wrote. The alternative is that the `scope` names the anchor and the
+selector navigates from there, and nothing establishes that.
+
+Rather than pick one, a selector that does not reach its own occurrence while a
+scope names another anchor withholds the determination and emits
+`EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED`. Scope-free owner-relative
+routing executes normally. This keeps the corpus population exactly as honest as
+it was before while making the settled rule available where it applies.
+
 Only extension-free `add` and `remove` execute, in the order already
 documented elsewhere: direct owner modifiers first, then top-level groups in
 source order with each group's direct modifiers before nested groups

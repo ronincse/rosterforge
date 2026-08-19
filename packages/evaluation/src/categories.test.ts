@@ -202,23 +202,39 @@ describe("roster selection category membership", () => {
     });
   });
 
-  it("leaves membership unknown for scoped and retargeted modifiers", () => {
-    for (const [id, issues] of [
-      ["scoped-category", ["scoped"]],
-      ["affects-category", ["unsupportedAttributes"]],
-    ] as const) {
-      const report = successful(
-        evaluateRosterSelectionCategories(...setupArgs(categorySetup(id))),
-      );
+  it("leaves membership unknown for a scoped modifier", () => {
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        ...setupArgs(categorySetup("scoped-category")),
+      ),
+    );
 
-      expect(report).toMatchObject({
-        baseCategories: ["cat-infantry"],
-        completeness: "incomplete",
-        steps: [{ status: "unapplied", issues }],
-      });
-      expect(report).not.toHaveProperty("categories");
-      expect(report).not.toHaveProperty("primaryCategories");
-    }
+    expect(report).toMatchObject({
+      baseCategories: ["cat-infantry"],
+      completeness: "incomplete",
+      steps: [{ status: "unapplied", issues: ["scoped"] }],
+    });
+    expect(report).not.toHaveProperty("categories");
+    expect(report).not.toHaveProperty("primaryCategories");
+  });
+
+  it("does not apply an occurrence's own affects modifier to itself", () => {
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        ...setupArgs(categorySetup("affects-category")),
+      ),
+    );
+
+    // `self.entries.recursive` names descendants. The declaring occurrence is
+    // not one of them, so its own membership is untouched and still known --
+    // previously the selector was treated as unsupported behavior and cost the
+    // determination outright.
+    expect(report).toMatchObject({
+      baseCategories: ["cat-infantry"],
+      categories: ["cat-infantry"],
+      completeness: "complete",
+      steps: [],
+    });
   });
 });
 
@@ -276,6 +292,140 @@ describe("inbound scoped category modifiers", () => {
     );
     expect(report).not.toHaveProperty("categories");
     expect(report.completeness).toBe("incomplete");
+  });
+});
+
+describe("affects-routed category modifiers", () => {
+  it("routes an unfiltered selector to direct and group-nested descendants", () => {
+    const setup = routedSetup("affects-category", [
+      "affects-direct-child",
+      "affects-group-child",
+    ]);
+
+    for (const [index, child] of setup.children.entries()) {
+      const report = successful(
+        evaluateRosterSelectionCategories(
+          setup.roster,
+          setup.context,
+          child,
+          setup.childChoices[index] as EvaluationSelectionChoice,
+        ),
+      );
+
+      expect(report).toMatchObject({
+        categories: ["cat-battleline"],
+        completeness: "complete",
+        steps: [
+          {
+            status: "applied",
+            origin: "affects",
+            operation: "add",
+            targetId: "cat-battleline",
+            changed: true,
+          },
+        ],
+      });
+      expect(report.steps[0]?.declaredBy).toBe(setup.root);
+    }
+  });
+
+  it("does not descend into a group without recursive", () => {
+    const setup = routedSetup("affects-children-only", [
+      "shallow-direct-child",
+      "shallow-group-child",
+    ]);
+    const report = (index: number) =>
+      successful(
+        evaluateRosterSelectionCategories(
+          setup.roster,
+          setup.context,
+          setup.children[index] as RosterSelection,
+          setup.childChoices[index] as EvaluationSelectionChoice,
+        ),
+      );
+
+    // The roster is flattened here, so both occurrences are direct children of
+    // the root. Only the definition side distinguishes them, which is what
+    // makes this the real test of group detection.
+    expect(report(0)).toMatchObject({
+      categories: ["cat-battleline"],
+      steps: [{ status: "applied", origin: "affects" }],
+    });
+    expect(report(1)).toMatchObject({ categories: [], steps: [] });
+  });
+
+  it("admits only filter-category members when the filter is modifier-immune", () => {
+    const setup = routedSetup("affects-filtered", [
+      "affects-member-child",
+      "affects-outsider-child",
+    ]);
+    const report = (index: number) =>
+      successful(
+        evaluateRosterSelectionCategories(
+          setup.roster,
+          setup.context,
+          setup.children[index] as RosterSelection,
+          setup.childChoices[index] as EvaluationSelectionChoice,
+        ),
+      );
+
+    // No modifier anywhere targets `cat-immune`, so static links settle the
+    // filter and pass one can decide it without the effective-category index.
+    expect(report(0)).toMatchObject({
+      categories: ["cat-immune", "cat-battleline"],
+      completeness: "complete",
+      steps: [{ status: "applied", origin: "affects", changed: true }],
+    });
+    // The outsider is not a member, so the selector never reaches it and its
+    // own membership stays both unchanged and known.
+    expect(report(1)).toMatchObject({
+      categories: [],
+      completeness: "complete",
+      steps: [],
+    });
+  });
+
+  it("withholds a selector that reaches nothing while a scope names another anchor", () => {
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        ...setupArgs(categorySetup("affects-relocated")),
+      ),
+    );
+
+    // Owner-relative routing would make this vacuous, but the modifier also
+    // carries a scope, so which occurrences it targets is undetermined. Every
+    // one of the 89 corpus instances has exactly this shape.
+    expect(report).toMatchObject({
+      baseCategories: ["cat-infantry"],
+      completeness: "incomplete",
+      steps: [
+        {
+          status: "unapplied",
+          origin: "affects",
+          issues: ["relocatedAnchor"],
+        },
+      ],
+    });
+    expect(report).not.toHaveProperty("categories");
+  });
+
+  it("withholds membership when the filter category is not modifier-immune", () => {
+    const setup = routedSetup("affects-mutable", ["affects-mutable-child"]);
+
+    const report = successful(
+      evaluateRosterSelectionCategories(
+        setup.roster,
+        setup.context,
+        setup.children[0] as RosterSelection,
+        setup.childChoices[0] as EvaluationSelectionChoice,
+      ),
+    );
+
+    // Some modifier can add `cat-mutable`, so whether this occurrence is a
+    // member depends on the membership pass one is computing. Refused rather
+    // than guessed, exactly like the existing cyclic cases.
+    expect(report.completeness).toBe("incomplete");
+    expect(report).not.toHaveProperty("categories");
   });
 });
 
@@ -596,6 +746,83 @@ function anchorSetup(): {
     throw new Error("Missing category scope occurrences.");
   }
   return { context, roster, anchor, child, anchorChoice, childChoice };
+}
+
+/**
+ * Builds one root occurrence with the named children, so a routed step can be
+ * read from a child's own report.
+ */
+function routedSetup(
+  rootId: string,
+  childIds: readonly string[],
+): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly root: RosterSelection;
+  readonly children: readonly RosterSelection[];
+  readonly childChoices: readonly EvaluationSelectionChoice[];
+} {
+  const context = catalogueContext();
+  const rootChoice = choiceById(context, rootId);
+  const childChoices = childIds.map((id) => choiceById(context, id));
+  let roster = createRoster({
+    id: rosterId(`${rootId}-roster`),
+    name: `${rootId} roster`,
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) throw new Error("Missing category fixture force.");
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId(`${rootId}-force`),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  roster = successful(
+    addRosterSelectionToForce(roster, forceOccurrenceId(`${rootId}-force`), {
+      id: selectionOccurrenceId(`${rootId}-occurrence`),
+      definition: {
+        kind: rootChoice.kind,
+        key: projectionKey(rootChoice.occurrence),
+        ...(rootChoice.id === undefined ? {} : { sourceId: rootChoice.id }),
+      },
+    }),
+  );
+  for (const [index, childChoice] of childChoices.entries()) {
+    roster = successful(
+      addRosterSelectionToSelection(
+        roster,
+        selectionOccurrenceId(`${rootId}-occurrence`),
+        {
+          id: selectionOccurrenceId(`${rootId}-child-${index}`),
+          definition: {
+            kind: childChoice.kind,
+            key: projectionKey(childChoice.occurrence),
+            ...(childChoice.id === undefined
+              ? {}
+              : { sourceId: childChoice.id }),
+          },
+        },
+      ),
+    );
+  }
+  const root = roster.forces[0]?.selections[0];
+  if (root === undefined) throw new Error("Missing routed root occurrence.");
+  const children = root.selections;
+  if (children.length !== childIds.length) {
+    throw new Error("Missing routed child occurrences.");
+  }
+  return { context, roster, root, children, childChoices };
 }
 
 function rosterWithSelections(

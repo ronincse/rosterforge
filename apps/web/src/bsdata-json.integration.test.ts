@@ -19,6 +19,7 @@ import {
   evaluateRosterProfileCharacteristics,
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
+  modifierTargetedCategoryIds,
   parseBattleScribeAffectsSelector,
 } from "@rosterforge/evaluation";
 import {
@@ -94,6 +95,22 @@ describe.skipIf(realDataDirectory === undefined)(
           name: "Warhammer 40,000 11th Edition",
         });
         expect(result.value.catalogues).toHaveLength(45);
+
+        // Category-filter immunity, pinned on real data. A filter category no
+        // modifier anywhere targets is settled by static links alone, which is
+        // what lets pass one resolve an `affects` filter without the
+        // effective-category index it is itself computing.
+        const anyContext = result.value.catalogues[0]?.context;
+        if (anyContext === undefined) {
+          throw new Error("Expected at least one composed catalogue context.");
+        }
+        const targeted = new Set<string>(modifierTargetedCategoryIds(anyContext));
+        // The two dominant filters in the corpus, both modifier-immune.
+        expect(targeted.has("e993-e086-6de1-12af")).toBe(false);
+        expect(targeted.has("4986-bf86-beb4-13ac")).toBe(false);
+        // `Vehicle` is targeted by five modifiers, so a filter naming it stays
+        // unresolved rather than being decided from static links.
+        expect(targeted.has("dbd4-63-af05-998")).toBe(true);
         const pinnedSource = pinGitHubRepository({
           owner: "BSData",
           repository: "wh40k-11e",
@@ -241,6 +258,9 @@ describe.skipIf(realDataDirectory === undefined)(
           targetProfiles: 1_753,
           targetSelections: 106,
           targetSelectionsCategoryField: 89,
+          // Every one of them carries a scope, which is what makes the
+          // owner-relative reading vacuous and the target set undetermined.
+          targetSelectionsCategoryFieldScoped: 89,
           missingProfileTypeName: 0,
           unexpectedSegment: 0,
           empty: 0,
@@ -2116,6 +2136,7 @@ function affectsSelectorSummary(
     targetProfiles: 0,
     targetSelections: 0,
     targetSelectionsCategoryField: 0,
+    targetSelectionsCategoryFieldScoped: 0,
     missingProfileTypeName: 0,
     unexpectedSegment: 0,
     empty: 0,
@@ -2153,6 +2174,9 @@ function affectsSelectorSummary(
     add(parsed.target === "profiles" ? "targetProfiles" : "targetSelections");
     if (parsed.target === "selections" && modifier.field === "category") {
       add("targetSelectionsCategoryField");
+      if (modifier.node.attributes.scope !== undefined) {
+        add("targetSelectionsCategoryFieldScoped");
+      }
     }
     if (parsed.filterId !== undefined) {
       add("withFilterId");
