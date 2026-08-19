@@ -86,6 +86,9 @@ This repository currently contains the first development slice:
   roster occurrence, executing exact-`typeId` lexical `set` modifiers in
   owner-direct then grouped source order while preserving unsupported
   operations, extensions, and unrouted profile modifiers as incomplete;
+- characteristic `append` through the separator its `join` declares, withheld
+  when the separator is absent or empty so a bonus-slot placeholder never
+  displays as a finished value;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
 - owner-relative `affects` routing, so a selection's modifier reaches its own

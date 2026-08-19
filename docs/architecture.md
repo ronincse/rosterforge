@@ -1339,14 +1339,34 @@ characteristic's exact `typeId` on the same profile. Targets are never inferred
 from `name` or `typeName`. A profile that repeats one characteristic type makes
 that target ambiguous rather than applying the modifier to every match.
 
-`set` is the only supported operation. It replaces the projected lexical value
-and never reads the value it replaces, so it needs no numeric grammar for
-observed forms such as `3+`, `36"`, or `D6`. `increment`, `decrement`, `floor`,
-`ceil`, `append`, and `replace` would each require an unestablished lexical
-arithmetic, separator, or search rule, so they remain preserved, source-located,
-and unapplied. This evaluator therefore does not reuse the numeric modifier
+`set` and `append` are the supported operations. `set` replaces the projected
+lexical value and never reads the value it replaces, so it needs no numeric
+grammar for observed forms such as `3+`, `36"`, or `D6`. `increment`,
+`decrement`, `floor`, `ceil`, and `replace` would each require an unestablished
+lexical arithmetic or search rule, so they remain preserved, source-located, and
+unapplied. This evaluator therefore does not reuse the numeric modifier
 kernel; it reuses the shared applicability, modifier-group applicability, and
 group-execution collectors, which do fit unchanged.
+
+`append` concatenates its value onto the running value through the separator
+its `join` attribute declares. That is text handling rather than arithmetic, so
+it is decidable — but only with a **non-empty** separator, and only onto a value
+that is not itself empty. Three cases stay unapplied:
+
+- **No `join` declared.** Nothing establishes a default separator.
+- **An empty `join`.** This is not a list append. Every corpus instance writes
+  `+0` onto a numeric characteristic to open a bonus slot that a later
+  positioned `increment`/`decrement` bumps and a later `replace` removes when it
+  is still zero. None of those three is executed here, so concatenating alone
+  would print `A 2+0` where the source means `A 2` — a confident wrong answer
+  rather than an honest unknown.
+- **An empty value to append onto.** Whether a separator is emitted with nothing
+  to its left is not established, and the corpus does contain empty
+  characteristics.
+
+The declared separator is used verbatim and never normalised: the corpus's most
+common one is a comma followed by a **non-breaking** space, and collapsing it to
+an ordinary space would silently alter displayed text.
 
 Execution order matches the rest of the package: the profile's own ordered
 modifiers first, then its top-level modifier groups in source order, with each

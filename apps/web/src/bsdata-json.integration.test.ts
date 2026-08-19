@@ -930,7 +930,7 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
-      "routes a pinned affects selector past groups and filters by category",
+      "routes a pinned affects selector past groups, filters by category, and appends",
       async () => {
         if (realDataDirectory === undefined) {
           throw new Error("The integration data directory is not configured.");
@@ -1035,6 +1035,11 @@ describe.skipIf(realDataDirectory === undefined)(
           "Close combat weapon",
           "affects-close-combat",
         );
+        const autocannonId = addChild(
+          meltaGroupId,
+          "Twin autocannon",
+          "affects-autocannon",
+        );
         if (!current.ok) return;
 
         const roster = current.value.roster;
@@ -1105,6 +1110,44 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ characteristic }) => characteristic.name === "A",
           ),
         ).toMatchObject({ baseValue: "5", value: "5" });
+
+        // The same model carries an unconditional grouped
+        // `self.entries.recursive.profiles.Ranged Weapons` append, so its ranged
+        // weapon gains a keyword through the declared separator. This is the
+        // first real-data case where a routed step changes a displayed value
+        // rather than only proving that routing happened.
+        const autocannon = occurrences.find((entry) => entry.id === autocannonId);
+        const autocannonChoice = localRosterSelectionChoice(
+          current.value,
+          autocannonId,
+        );
+        const rangedProfile = autocannonChoice?.profiles.find(
+          ({ typeName }) => typeName === "Ranged Weapons",
+        );
+        if (autocannon === undefined || rangedProfile === undefined) {
+          throw new Error("Expected a ranged profile on the Twin autocannon.");
+        }
+        const ranged = evaluateRosterProfileCharacteristics(
+          roster,
+          context,
+          autocannon,
+          rangedProfile,
+        );
+        if (!ranged.ok) throw new Error("Expected a ranged characteristic report.");
+        const keywords = ranged.value.characteristics.find(
+          ({ characteristic }) => characteristic.name === "Keywords",
+        );
+        expect(keywords?.steps).toMatchObject([
+          { status: "applied", kind: "append", origin: "affects" },
+        ]);
+        // The separator is a comma and a *non-breaking* space (U+00A0), not a
+        // plain one. Reconstructing the value with `", "` fails, which is why
+        // the declared `join` is used verbatim rather than normalised.
+        const nonBreakingSpace = String.fromCharCode(160);
+        expect(keywords?.value).toBe(
+          `${keywords?.baseValue ?? ""},${nonBreakingSpace}Assault`,
+        );
+        expect(keywords?.value).not.toBe(keywords?.baseValue);
       },
       120_000,
     );

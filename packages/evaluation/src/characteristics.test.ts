@@ -174,6 +174,79 @@ describe("roster profile characteristic display", () => {
     ]);
   });
 
+  it("chains appends through their declared separator", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-append"),
+      ),
+    );
+
+    // Each append reads the running value, so the second joins onto the first
+    // result rather than onto the projected base.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "Assault",
+      value: "Assault, Heavy, Lethal Hits",
+      steps: [
+        { status: "applied", kind: "append", output: "Assault, Heavy" },
+        {
+          status: "applied",
+          kind: "append",
+          input: "Assault, Heavy",
+          output: "Assault, Heavy, Lethal Hits",
+        },
+      ],
+    });
+  });
+
+  it("withholds an append that joins with an empty separator", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-append"),
+      ),
+    );
+
+    // An empty separator is the corpus's bonus-slot idiom: `4+` would become
+    // `4+0`, which is only correct once the positioned increment and the later
+    // replace run. Neither is executed, so the value stays unknown.
+    expect(report.characteristics[1]?.steps).toMatchObject([
+      { status: "unapplied", kind: "append", issues: ["emptySeparator"] },
+    ]);
+    expect(report.characteristics[1]).not.toHaveProperty("value");
+    expect(report.completeness).toBe("incomplete");
+  });
+
+  it("withholds an append with no separator and one with nothing to join onto", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-append-empty"),
+      ),
+    );
+
+    expect(report.characteristics[0]?.steps).toMatchObject([
+      { status: "unapplied", issues: ["emptyAppendInput"] },
+    ]);
+    expect(report.characteristics[1]?.steps).toMatchObject([
+      { status: "unapplied", issues: ["missingSeparator"] },
+    ]);
+    expect(report.characteristics[0]).not.toHaveProperty("value");
+    expect(report.characteristics[1]).not.toHaveProperty("value");
+  });
+
   it("does not execute a modifier carrying generic behavior attributes", () => {
     const setup = characteristicSetup();
 

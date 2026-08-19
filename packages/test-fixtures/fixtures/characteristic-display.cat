@@ -99,8 +99,39 @@
           </characteristics>
           <modifiers>
             <modifier type="increment" field="characteristic-save" value="1" />
-            <modifier type="append" field="characteristic-move" value=" fly"
+            <modifier type="replace" field="characteristic-move" value="8"
+              arg="6" />
+          </modifiers>
+        </profile>
+        <profile id="profile-append" name="Append"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">Assault</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="append" field="characteristic-move" value="Heavy"
               join=", " />
+            <modifier type="append" field="characteristic-move"
+              value="Lethal Hits" join=", " />
+            <modifier type="append" field="characteristic-save" value="0"
+              join="" />
+          </modifiers>
+        </profile>
+        <profile id="profile-append-empty" name="Append Empty"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move"></characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="append" field="characteristic-move" value="Assault"
+              join=", " />
+            <modifier type="append" field="characteristic-save" value="Lance" />
           </modifiers>
         </profile>
         <profile id="profile-extension-attributes" name="Extension Attributes"

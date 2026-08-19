@@ -36,12 +36,15 @@ import {
 import type { NumericModifierApplicability } from "./modifiers.js";
 
 /**
- * The only characteristic operation whose target and result are established by
- * the source shape alone. `set` replaces the projected lexical value and never
+ * The characteristic operations whose target and result are established by the
+ * source shape alone. `set` replaces the projected lexical value and never
  * inspects the value it replaces, so it needs no numeric grammar for observed
- * forms such as `3+`, `36"`, or `D6`.
+ * forms such as `3+`, `36"`, or `D6`. `append` concatenates onto that value
+ * through a declared `join` separator, which is text handling rather than
+ * arithmetic — but only when the separator is non-empty; see
+ * `appendSeparator`.
  */
-export type RosterCharacteristicModifierKind = "set";
+export type RosterCharacteristicModifierKind = "set" | "append";
 
 export type RosterCharacteristicModifierIssue =
   | "applicabilityUnresolved"
@@ -50,7 +53,10 @@ export type RosterCharacteristicModifierIssue =
   | "unsupportedAttributes"
   | "missingType"
   | "unsupportedType"
-  | "missingValue";
+  | "missingValue"
+  | "missingSeparator"
+  | "emptySeparator"
+  | "emptyAppendInput";
 
 export type RosterCharacteristicRoutingReason =
   | "missingField"
@@ -707,7 +713,24 @@ function evaluateStep<
     issues.push("missingValue");
   }
 
-  if (issues.length === 0 && kind !== undefined && modifier.value !== undefined) {
+  // `set` never reads what it replaces; `append` reads both the separator and
+  // the value it concatenates onto, so it has two more ways to be undecidable.
+  let output = modifier.value;
+  if (kind === "append") {
+    const separator = appendSeparator(modifier);
+    if ("issue" in separator) {
+      issues.push(separator.issue);
+    } else if (input.trim() === "") {
+      // Whether a separator is emitted with nothing on its left is not
+      // established, and the corpus has characteristics that are genuinely
+      // empty, so the one case that would need the answer stays unapplied.
+      issues.push("emptyAppendInput");
+    } else if (modifier.value !== undefined) {
+      output = `${input}${separator.separator}${modifier.value}`;
+    }
+  }
+
+  if (issues.length === 0 && kind !== undefined && output !== undefined) {
     return {
       step: {
         status: "applied",
@@ -717,7 +740,7 @@ function evaluateStep<
         declaredBy,
         kind,
         input,
-        output: modifier.value,
+        output,
       },
       diagnostics: [],
     };
@@ -1060,7 +1083,27 @@ function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
 function characteristicKind(
   value: string | undefined,
 ): RosterCharacteristicModifierKind | undefined {
-  return value === "set" ? value : undefined;
+  return value === "set" || value === "append" ? value : undefined;
+}
+
+/**
+ * The separator an `append` joins with, or the reason it cannot be executed.
+ *
+ * A declared but *empty* separator is not a list append. Every one of the 181
+ * corpus instances writes `+0` onto a numeric characteristic to open a bonus
+ * slot that a later positioned `increment`/`decrement` bumps and a later
+ * `replace` removes when it is still zero. None of those three operations is
+ * executed here, so concatenating alone would print `A 2+0` where the source
+ * means `A 2`. Withholding keeps the characteristic honestly unresolved
+ * instead.
+ */
+function appendSeparator(
+  modifier: RosterCharacteristicModifierSource,
+): { readonly separator: string } | { readonly issue: RosterCharacteristicModifierIssue } {
+  const declared = modifier.node.attributes["join"];
+  if (declared === undefined) return { issue: "missingSeparator" };
+  if (declared === "") return { issue: "emptySeparator" };
+  return { separator: declared };
 }
 
 function routableCharacteristicTypeIds(
@@ -1170,6 +1213,12 @@ function unsupportedAttributes(
   origin: RosterCharacteristicStepOrigin = "own",
 ): readonly string[] {
   const supported = new Set(["type", "field", "value", "scope", "comment"]);
+  // `join` is the separator `append` concatenates with, so it is part of that
+  // operation rather than unrouted behavior. It stays unsupported on every
+  // other operation, where it has no established meaning.
+  if (modifier.type === "append") {
+    supported.add("join");
+  }
   // A routed modifier reached this profile *because* of its selector, and its
   // scope is overridden, so neither counts against it.
   if (origin === "affects") {
@@ -1223,6 +1272,21 @@ function modifierDiagnostic(
       "EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING",
       "A characteristic modifier has no replacement value.",
       "value",
+    ],
+    missingSeparator: [
+      "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_MISSING",
+      "An append characteristic modifier declares no join separator.",
+      "join",
+    ],
+    emptySeparator: [
+      "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_EMPTY",
+      "An append characteristic modifier joins with an empty separator, which the corpus uses only to open a bonus slot for operations that are not evaluated.",
+      "join",
+    ],
+    emptyAppendInput: [
+      "EVALUATION_CHARACTERISTIC_APPEND_INPUT_EMPTY",
+      "An append characteristic modifier has no value to append onto, and whether the separator is emitted is not established.",
+      "join",
     ],
   };
   const [code, message, attribute] = descriptions[issue];

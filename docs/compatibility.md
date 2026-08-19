@@ -332,6 +332,10 @@
   label when a sequence cannot be completed, and a per-profile incomplete note;
   direct profiles, linked profile info links, and recursive info-group profiles
   all use the same evaluated report
+- Characteristic `append` with a declared non-empty `join` separator, used
+  verbatim, chaining through successive appends; appends with no separator, an
+  empty separator, or nothing to append onto stay preserved, diagnosed, and
+  unapplied rather than producing a value the source does not mean
 - Attribution for characteristics changed by another selection's `affects`
   selector, naming the declaring occurrence in occurrence details so a value
   that differs from the profile's own datasheet is traceable to its source
@@ -382,17 +386,22 @@
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
-- Characteristic operations other than `set`: `increment`, `decrement`,
-  `floor`, `ceil`, `append`, and `replace` each need an unestablished lexical
-  arithmetic, separator, or search rule for observed values such as `3+`, `36"`,
-  and `D6`. They remain ordered, observable, and unapplied.
-- `affects` retargeting behavior. The selector grammar is now parsed and
-  pinned, but no evaluator consumes it: modifiers carrying `affects` remain
-  preserved and unapplied, and the traversal, category filtering, and
-  profile-type resolution semantics are still undecided.
-- Generic `join`, `arg`, and `position` behavior on characteristic modifiers,
-  and characteristic modifiers owned by selection entries, entry links, info
-  links, or info groups rather than by the profile itself
+- Characteristic operations other than `set` and `append`: `increment`,
+  `decrement`, `floor`, `ceil`, and `replace` each need an unestablished lexical
+  arithmetic or search rule for observed values such as `3+`, `36"`, and `D6`.
+  They remain ordered, observable, and unapplied.
+- `append` whose `join` separator is absent or empty, and `append` onto an empty
+  value. An empty separator is the corpus's bonus-slot idiom, completed by a
+  positioned `increment`/`decrement` and a later `replace` that are themselves
+  unevaluated, so executing it alone would display a value the source does not
+  mean.
+- `affects` selectors that traverse beyond the declaring occurrence's own
+  subtree, chiefly force traversal and entry-terminated paths; owner-relative
+  routing to own, child, and descendant profiles is executed.
+- Generic `arg` and `position` behavior on characteristic modifiers, `join` on
+  any operation other than `append`, and characteristic modifiers owned by
+  selection entries, entry links, info links, or info groups rather than by the
+  profile itself
 - Profile-owned `name` and observed `annotation` modifiers; they are retained as
   unrouted display behavior and make a characteristic report incomplete rather
   than being silently ignored
