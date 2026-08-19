@@ -1435,7 +1435,10 @@ inherited one. Every step also records `declaredBy`, the occurrence that owns
 the modifier. For an own step that is the profile's own occurrence and carries
 no information; for a routed step it is the ancestor that declared the selector,
 which is the only way a reader can find out why a displayed value differs from
-the one printed on the profile's own datasheet. Selectors that traverse beyond
+the one printed on the profile's own datasheet. The workspace names that
+occurrence with a verb matching the step's operation — `Set by` for `set`,
+`Added by` for `append` — because an append adds to the printed value rather
+than replacing it. Selectors that traverse beyond
 the owner are left alone entirely rather than recorded as unapplied steps on
 every profile they might reach.
 

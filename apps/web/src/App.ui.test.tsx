@@ -52,6 +52,10 @@ const gameSystemBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
     <profileType id="profile-type-unit" name="Unit">
       <characteristicTypes>
         <characteristicType id="characteristic-move" name="Move" />
+        <characteristicType
+          id="characteristic-keywords"
+          name="Keywords"
+        />
       </characteristicTypes>
     </profileType>
   </profileTypes>
@@ -100,6 +104,13 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           type="set"
           field="characteristic-move"
           value="9"
+          affects="self.entries.profiles.Unit"
+        />
+        <modifier
+          type="append"
+          field="characteristic-keywords"
+          value="Assault"
+          join=", "
           affects="self.entries.profiles.Unit"
         />
       </modifiers>
@@ -173,6 +184,10 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
                   name="Move"
                   typeId="characteristic-move"
                 >4</characteristic>
+                <characteristic
+                  name="Keywords"
+                  typeId="characteristic-keywords"
+                >Heavy</characteristic>
               </characteristics>
             </profile>
           </profiles>
@@ -957,6 +972,11 @@ describe("App local catalogue flow", () => {
     expect(weaponNode.getByText("9")).toBeTruthy();
     expect(weaponNode.getByText("Base 4")).toBeTruthy();
     expect(weaponNode.getByText("Set by Veterans")).toBeTruthy();
+    // The verb tracks the operation: the same declarer appends a keyword, and
+    // calling that "set" would misdescribe the row.
+    expect(weaponNode.getByText("Heavy, Assault")).toBeTruthy();
+    expect(weaponNode.getByText("Base Heavy")).toBeTruthy();
+    expect(weaponNode.getByText("Added by Veterans")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", {

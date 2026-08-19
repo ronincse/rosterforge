@@ -1875,13 +1875,20 @@ function SelectionCharacteristic({
   // A step routed here by another selection's `affects` selector is worth
   // naming: without it the reader cannot tell why a weapon's stat differs from
   // the one printed on its own datasheet.
-  const routedBy = report?.steps.find(
-    (step) => step.origin === "affects",
-  )?.declaredBy;
+  const routedStep = report?.steps.find((step) => step.origin === "affects");
   const routedName =
-    routedBy === undefined
+    routedStep === undefined
       ? undefined
-      : routedBy.name ?? "another selection";
+      : routedStep.declaredBy.name ?? "another selection";
+  // The verb has to match the operation. An `append` adds to the printed value
+  // rather than replacing it, and calling that "set" would misdescribe what the
+  // reader is looking at.
+  const routedVerb =
+    routedStep !== undefined &&
+    routedStep.status !== "notApplicable" &&
+    routedStep.kind === "append"
+      ? "Added"
+      : "Set";
   return (
     <div
       {...(report === undefined
@@ -1903,7 +1910,11 @@ function SelectionCharacteristic({
           </small>
         )}
         {unresolved && <small>Effective value unresolved</small>}
-        {routedName !== undefined && <small>Set by {routedName}</small>}
+        {routedName !== undefined && (
+          <small>
+            {routedVerb} by {routedName}
+          </small>
+        )}
       </dd>
     </div>
   );

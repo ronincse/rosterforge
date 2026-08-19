@@ -337,8 +337,9 @@
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
 - Attribution for characteristics changed by another selection's `affects`
-  selector, naming the declaring occurrence in occurrence details so a value
-  that differs from the profile's own datasheet is traceable to its source
+  selector, naming the declaring occurrence in occurrence details with a verb
+  matching the operation, so a value that differs from the profile's own
+  datasheet is traceable to its source
 - Read-only profile visibility for direct and recursively grouped Boolean `set`
   `hidden` modifiers, using the projected profile flag as the base and the same
   owner-direct then group-source execution order as selection visibility
