@@ -16,7 +16,8 @@ checkpoint, and eight Task 8 checkpoints — profile modifier projection,
 headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
-complete. The current
+complete, as is the first workspace checkpoint after them: routed characteristic
+attribution. The current
 normal suite passes 406 tests with six skipped, and the pinned real-data suite
 passes all six tests. Work now happens on `main`, which was fast-forwarded to
 the branch tip on 2026-08-19 and is CI-green. Effective keywords are visible in the roster workspace,
@@ -1530,3 +1531,59 @@ synthetic tests did not.
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One instance corpus-wide.
+
+## Completed Assignment — Routed Attribution, 2026-08-19
+
+Commit `55e27c8`. Presentation only; no new BattleScribe semantics were decided
+or guessed.
+
+### What changed
+
+Every characteristic step — applied, not-applicable, and unapplied alike — now
+records `declaredBy`, the `RosterSelection` that owns the modifier. It is a
+required field rather than an optional one, so a routed step cannot be built
+without naming its declarer. For an own step it is the profile's own occurrence
+and carries no information; the value is in the routed case.
+
+Occurrence details render `Set by <name>` under a characteristic whose report
+contains an `affects`-origin step, and mark the row with `data-routed="true"`
+for a left rule in the stylesheet. Without it a weapon shows a Move of 9 when
+its own datasheet prints 4 and the panel offers no way to find out why.
+
+The declarer's occurrence name is used, falling back to `another selection` when
+the occurrence carries none. That is the name the reader sees in the tree, so it
+is the name that lets them navigate to the source.
+
+### Tests
+
+The synthetic evaluation test that already claimed to check attribution only
+asserted `origin`; it now asserts that `declaredBy` is the ancestor that owns
+the selector and is *not* the occurrence whose profile is being read, which is
+the whole content of the claim.
+
+The UI fixture's squad gained a `self.entries.profiles.Unit` set and its Special
+Weapon child gained a Unit profile with a conflicting printed value, so the
+browser test exercises a real routed disagreement rather than a contrived one.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **406 passed, 6 skipped (412 total)**.
+- Pinned real-data suite — **6 passed**.
+
+### Next recommended boundary
+
+Unchanged from the previous section, minus the item this one completed:
+
+1. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil`. This is
+   what still stops real stat lines changing. It needs the sign-convention
+   decision for inverted characteristics such as saves — whether `increment 1`
+   on a `3+` save means `4+` (arithmetic) or `2+` (improvement). New Recruit can
+   answer that by experiment; nothing in the corpus settles it, and guessing
+   would produce confidently wrong stat lines.
+2. `append`/`replace`, now that `position` semantics are known: 1-based index of
+   the match to affect, negative from the end, `0` meaning all. `join` supplies
+   the separator.
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One corpus instance.
