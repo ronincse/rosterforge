@@ -17,8 +17,9 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 403 tests with five skipped, and the pinned real-data suite
-passes all five tests. Effective keywords are visible in the roster workspace,
+normal suite passes 406 tests with six skipped, and the pinned real-data suite
+passes all six tests. Work now happens on `main`, which was fast-forwarded to
+the branch tip on 2026-08-19 and is CI-green. Effective keywords are visible in the roster workspace,
 and the category surface is complete apart from `affects`.
 
 The staged category plan is now complete through stage three: effective category
@@ -1469,3 +1470,63 @@ under both shapes.
 Only `set` executes, as before, so the visible unlock is bounded by the lexical
 kernel; the rest become correctly-attributed incompleteness on the right
 profile.
+
+## Completed Assignment — Traversal Execution And Pin, 2026-08-19
+
+Commits `72455bf` (traversal execution) and `841e50f` (real-data pin plus a bug
+it caught). Pushed; `main` and `codex/recovery-baseline` are level and CI is
+green on both.
+
+### Traversal executes
+
+A modifier declared by a profile owner or any ancestor now routes to that
+profile when the occurrence falls in its selector target set, using the
+semantics Stone verified in New Recruit rather than inferred ones. An embedded
+category ID filters through the effective-membership index, so a
+modifier-granted category participates. Applicability is evaluated against the
+occurrence that *declared* the modifier.
+
+The route test counts entry steps and treats a selection-entry-group occurrence
+as a non-entry step, so it holds whether the roster flattens groups (browser
+editing) or retains them (headless construction).
+
+### The pin, and the bug it found
+
+A Death Guard Helbrute's `self.entries.recursive.<category>.profiles.Melee
+Weapons` increment reaches a Power scourge and a Helbrute hammer sitting **two
+group levels** below the model, while `Close combat weapon` — the one melee
+profile outside that category — receives no routed step and keeps its known
+value. Same discrimination Stone observed.
+
+Writing that pin exposed a real defect. The routed-step merge rebuilt each
+characteristic report by spreading the original, and a conditional value spread
+cannot remove a key — so a characteristic whose value was known *before* routing
+kept that value even when a later routed step made it unknown. That is a
+confident wrong answer in exactly the place this evaluator exists to prevent
+one. Fixed by rebuilding the report field by field, with a synthetic regression
+added because the existing synthetic suite had no case of that shape.
+
+Worth noting for future checkpoints: the real-data pin caught something six
+synthetic tests did not.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **406 passed, 6 skipped (412 total)**.
+- Pinned real-data suite — **6 passed**.
+
+### Next recommended boundary
+
+1. **Surface routed characteristics in the workspace.** The evaluator now
+   reaches weapon profiles, but the occurrence panel does not yet distinguish a
+   routed step's origin. Presentation only; no new semantics.
+2. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil`, which is
+   what still stops real stat lines changing. Needs the sign-convention decision
+   for inverted characteristics such as saves — the one question New Recruit
+   could answer by experiment if it is worth another round.
+3. `append`/`replace`, now that `position` semantics are known: 1-based index of
+   the match to affect, negative from the end, `0` meaning all. `join` supplies
+   the separator. This is closer to decidable than it was.
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One instance corpus-wide.
