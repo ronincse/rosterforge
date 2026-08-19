@@ -17,7 +17,7 @@ headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
 complete. The current
-normal suite passes 400 tests with five skipped, and the pinned real-data suite
+normal suite passes 403 tests with five skipped, and the pinned real-data suite
 passes all five tests. Effective keywords are visible in the roster workspace,
 and the category surface is complete apart from `affects`.
 
@@ -1375,3 +1375,97 @@ lexical-arithmetic reasons as before.
    the 156 figure rests on a static count.
 3. Smaller decision-free work: extend the category-condition honesty downgrade
    to inbound scoped modifiers declared by other occurrences.
+
+## Completed Assignment — `affects` Traversal Settled, 2026-08-19
+
+Baseline `fec5108`; resulting commit `41ce465` (`feat: accept the group
+traversal segment in affects selectors`). Not pushed, no pull request.
+
+Stone ran the New Recruit experiments. Both open questions are now answered by
+observation rather than inference, and a grammar segment we had never seen
+turned up.
+
+### Method note
+
+Before drawing conclusions, the live BSData files were fetched and compared
+against the pinned snapshot, because two modifiers failed to fire and stale data
+would have been the boring explanation. It was not: the relevant modifiers exist
+verbatim in live data with identical base values, so the non-firing was real
+behaviour. One apparent counter-example — a Helbrute `append Assault` that did
+nothing — turned out to sit inside a modifier group with its own unmet
+`atLeast 1 selections scope=force` condition, so it says nothing about
+traversal.
+
+### Settled: `entries` does not enter groups
+
+A Necron **Skorpekh Lord** carries an unconditional
+`self.entries.profiles.Melee Weapons` increment of +2 S. Its Flensing claw
+stayed at S 6. The weapons are not direct entries — they sit inside the model's
+`Wargear` selection-entry group.
+
+A Death Guard **Helbrute** carries `self.entries.recursive.<category>.profiles.
+Melee Weapons` +2 A, and its group-resident melee weapons did gain the bonus.
+
+So **`entries` is the direct child *entry* collection and does not descend into
+selection-entry groups; `recursive` reaches all descendants.**
+
+This also invalidated an assumption in the analysis tooling, which had been
+treating groups as depth-transparent when computing profile depth.
+
+### Settled: the embedded ID filters
+
+With two `Helbrute melee weapon` category members selected, both gained +2 A
+(Power scourge 8→10, Helbrute fist 5→7) while `Close combat weapon`, the one
+melee profile outside that category, stayed at 5. Dropping to a single member
+removed the bonus entirely, matching the modifier's own `atLeast 2` condition.
+New Recruit renders modified values in blue, which made the deltas unambiguous.
+
+### New: the `group` traversal segment
+
+Live data contains a `group` segment that the pinned snapshot does not contain
+at all — nine distinct values across just Necrons and Death Guard, including
+`self.entries.group.recursive.profiles.Ranged Weapons` and
+`group.recursive.group.profiles.Unit`. It enters selection-entry groups without
+full recursion, independently confirming groups are a traversal step.
+
+The parser now consumes traversal keywords in any order and any number of times,
+since `group` occurs leading, after `entries`, and again after `recursive`. It
+exposes `entersGroups` separately. Without this the parser would have read
+`group` as a filter ID and mis-parsed those paths. No pinned-corpus count moves,
+because no pinned selector uses it.
+
+### Still open, and not worth an experiment
+
+What an embedded ID does when it names a **selection entry** rather than a
+category. The entire corpus contains one instance.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **403 passed, 5 skipped (408 total)**.
+- Pinned real-data suite — **5 passed**, unchanged.
+
+### Next recommended boundary
+
+**Traversal execution.** The semantics are now fully specified, so this needs no
+further decisions:
+
+- `own` — the modifier's own owner. *Already implemented.*
+- `children` — the owner's direct child **entries**; group members only when the
+  selector carries `group`.
+- `descendants` — every descendant occurrence.
+- An embedded **category** ID filters the target set to occurrences holding that
+  category, which the effective-category index already answers.
+- The profile type matches case-insensitively against the declared type.
+
+Implementation shape: for a given (owner occurrence, profile), walk the
+occurrence's **ancestors** and collect their `affects` modifiers, testing
+whether this occurrence falls in each selector's target set. The occurrence tree
+flattens groups in browser-built rosters but retains group occurrences in
+headless ones, so the route test should count entry steps while treating a
+selection-entry-group occurrence as a non-entry step — that way it is correct
+under both shapes.
+
+Only `set` executes, as before, so the visible unlock is bounded by the lexical
+kernel; the rest become correctly-attributed incompleteness on the right
+profile.
