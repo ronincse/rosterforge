@@ -100,8 +100,9 @@ This repository currently contains the first development slice:
   scope-free `add`/`remove` while preserving `set-primary`/`unset-primary` as
   an unresolved primary determination;
 - pure parsing of the observed `affects` selector grammar into traversal,
-  optional filter ID, and profile-type name, with explicit unsupported issues
-  and no resolution or execution;
+  optional filter ID, terminus, and profile-type name, distinguishing selectors
+  that target profiles from those that target the reached occurrences, with no
+  resolution or execution;
 - evaluated characteristic values in occurrence details, showing the effective
   value, the source value as a labelled base when it changed, an explicit
   unresolved label, a hidden/unresolved visibility label, a per-profile

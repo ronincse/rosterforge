@@ -15,9 +15,19 @@ export type AffectsSelectorTraversal = "own" | "children" | "descendants";
 export type AffectsSelectorIssue =
   | "empty"
   | "forceTraversal"
-  | "noProfileSelector"
   | "missingProfileTypeName"
   | "unexpectedSegment";
+
+/**
+ * What the selector's path terminates at.
+ *
+ * A path ending in `profiles.<typeName>` selects profiles on the occurrences
+ * the traversal reached. A path that stops at the traversal or its filter
+ * selects those occurrences themselves, which is what a modifier targeting a
+ * selection-level field such as `category` needs. Both forms occur in the
+ * pinned corpus and neither is a guess: the terminus is written in the path.
+ */
+export type AffectsSelectorTarget = "profiles" | "selections";
 
 /**
  * Traversal keywords, consumed in any order and any number of times before an
@@ -44,6 +54,8 @@ export interface AffectsSelector {
    */
   readonly supported: boolean;
   readonly traversal: AffectsSelectorTraversal;
+  /** What the path terminates at. See {@link AffectsSelectorTarget}. */
+  readonly target: AffectsSelectorTarget;
   readonly explicitSelf: boolean;
   /**
    * True when the selector carries an explicit `group` segment, which enters
@@ -90,6 +102,7 @@ export function parseBattleScribeAffectsSelector(
       segments,
       supported: false,
       traversal: "own",
+      target: "selections",
       explicitSelf: false,
       entersGroups: false,
       issues: ["empty"],
@@ -127,7 +140,9 @@ export function parseBattleScribeAffectsSelector(
   }
 
   let profileTypeName: string | undefined;
+  let target: AffectsSelectorTarget = "selections";
   if (segments[index] === "profiles") {
+    target = "profiles";
     index += 1;
     // Observed profile-type names contain spaces and punctuation but never a
     // dot, so the remaining segments are the complete name.
@@ -138,9 +153,11 @@ export function parseBattleScribeAffectsSelector(
       profileTypeName = name;
     }
     index = segments.length;
-  } else {
-    issues.push("noProfileSelector");
   }
+  // A path that stops here selects the reached occurrences rather than their
+  // profiles. That is not a malformed profile path: 106 corpus selectors take
+  // this form, all of them on modifiers targeting `category`, a field that
+  // lives on the selection rather than on any profile.
 
   if (index < segments.length) {
     issues.push("unexpectedSegment");
@@ -151,6 +168,7 @@ export function parseBattleScribeAffectsSelector(
     segments,
     supported: issues.length === 0,
     traversal,
+    target,
     explicitSelf,
     entersGroups,
     ...(filterId === undefined ? {} : { filterId }),

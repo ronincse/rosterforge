@@ -1307,7 +1307,16 @@ chooses no target, and executes no modifier. A caller holding the modifier
 supplies the source location when turning an issue into a diagnostic.
 
 The supported shape is
-`[self.][entries.][recursive.][<filterId>.]profiles.<profileTypeName>`. The
+`[self.][entries.][group.][recursive.][<filterId>.][profiles.<profileTypeName>]`,
+and the trailing `profiles` segment is optional. A path that reaches it selects
+profiles on the occurrences the traversal reached; a path that stops before it
+selects those **occurrences themselves**, reported as `target: "selections"`.
+That is not a malformed profile path. All 106 corpus selectors of that shape sit
+on modifiers targeting a selection-level field — 89 on `category`, 15 on
+`annotation`, and two on cost or characteristic fields — none of which has a
+profile to name. Consumers distinguish the two by `target` rather than by
+re-reading the raw string, and `characteristics.ts` already ignores anything
+without a `profileTypeName`. The
 corpus establishes the traversal contrast itself: both
 `self.entries.profiles.X` and `self.entries.recursive.profiles.X` occur, so
 `entries` alone is the direct child collection and `recursive` extends it to all

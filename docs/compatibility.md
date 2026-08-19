@@ -378,9 +378,12 @@
   `unset-primary` operation withholds only the primary determination, while
   every other unsupported shape withholds effective membership too
 - Pure decomposition of the observed `affects` selector grammar into traversal,
-  optional filter ID, and profile-type name, with explicit unsupported issues
-  for force traversal and entry-terminated paths; parsing performs no
-  resolution and no execution
+  optional filter ID, terminus, and profile-type name, with force traversal the
+  only remaining unsupported shape; parsing performs no resolution and no
+  execution
+- Selector terminus: a path ending in `profiles.<typeName>` targets profiles, a
+  path stopping before it targets the reached occurrences themselves, which is
+  what a selection-level field such as `category` requires
 
 ## Parsed But Not Evaluated
 
@@ -857,10 +860,13 @@ closed vocabulary: `self`, `entries`, `forces`, `recursive`, `profiles`, a
 profile-type name, or one object ID. Nothing is unresolved and nothing is
 unclassified.
 
-Parsing those 1,859 values yields 1,730 supported selectors and 129 unsupported
-ones. Traversal splits 344 owner-only, 168 direct-child, and 1,347 recursive.
-The 129 unsupported are 24 force traversals and 106 paths that stop at an entry
-rather than a profile, with one value carrying both issues. 428 selectors embed
+Parsing those 1,859 values yields 1,835 supported selectors and 24 unsupported
+ones, all 24 force traversals. Traversal splits 344 owner-only, 168 direct-child,
+and 1,347 recursive. By terminus, 1,753 target profiles and 106 target the
+reached occurrences; 89 of those 106 are `category` modifiers, 15 are
+`annotation`, and two are `decrement` on cost or characteristic fields. One
+selections-terminus value also carries a force traversal and so stays
+unsupported. 428 selectors embed
 one filter ID: 427 resolve to a category entry and one to a selection entry, and
 none is unresolved. Only three distinct profile-type names appear across the
 whole corpus, and all three are declared profile types; the 30 declared types

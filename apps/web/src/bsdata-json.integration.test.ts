@@ -232,13 +232,15 @@ describe.skipIf(realDataDirectory === undefined)(
         ).toEqual({
           total: 1_859,
           distinctValues: 79,
-          supported: 1_730,
-          unsupported: 129,
+          supported: 1_835,
+          unsupported: 24,
           traversalOwn: 344,
           traversalChildren: 168,
           traversalDescendants: 1_347,
           forceTraversal: 24,
-          noProfileSelector: 106,
+          targetProfiles: 1_753,
+          targetSelections: 106,
+          targetSelectionsCategoryField: 89,
           missingProfileTypeName: 0,
           unexpectedSegment: 0,
           empty: 0,
@@ -2111,7 +2113,9 @@ function affectsSelectorSummary(
     traversalChildren: 0,
     traversalDescendants: 0,
     forceTraversal: 0,
-    noProfileSelector: 0,
+    targetProfiles: 0,
+    targetSelections: 0,
+    targetSelectionsCategoryField: 0,
     missingProfileTypeName: 0,
     unexpectedSegment: 0,
     empty: 0,
@@ -2146,6 +2150,10 @@ function affectsSelectorSummary(
           : "traversalDescendants",
     );
     for (const issue of parsed.issues) add(issue);
+    add(parsed.target === "profiles" ? "targetProfiles" : "targetSelections");
+    if (parsed.target === "selections" && modifier.field === "category") {
+      add("targetSelectionsCategoryField");
+    }
     if (parsed.filterId !== undefined) {
       add("withFilterId");
       add(

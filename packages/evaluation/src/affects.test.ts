@@ -84,20 +84,22 @@ describe("battleScribe affects selector", () => {
     ).toMatchObject({ traversal: "children", entersGroups: true });
   });
 
-  it("keeps a bare group selector unsupported for lack of a profile target", () => {
+  it("reads a bare group selector as selecting the reached occurrences", () => {
     expect(parseBattleScribeAffectsSelector("group")).toMatchObject({
-      supported: false,
+      supported: true,
       traversal: "children",
+      target: "selections",
       entersGroups: true,
-      issues: ["noProfileSelector"],
+      issues: [],
     });
     expect(
       parseBattleScribeAffectsSelector("group.a98a-4cc0-5f02-e078"),
     ).toMatchObject({
-      supported: false,
+      supported: true,
+      target: "selections",
       entersGroups: true,
       filterId: "a98a-4cc0-5f02-e078",
-      issues: ["noProfileSelector"],
+      issues: [],
     });
   });
 
@@ -150,18 +152,28 @@ describe("battleScribe affects selector", () => {
     });
   });
 
-  it("does not support a path that stops at an entry", () => {
+  it("reads a path that stops before `profiles` as selecting occurrences", () => {
+    // Every corpus selector of this shape sits on a modifier targeting
+    // `category`, which is a selection-level field with no profile to name.
     for (const value of [
       "self.entries.recursive",
       "self.entries.recursive.4986-bf86-beb4-13ac",
       "4986-bf86-beb4-13ac",
       "self.entries",
     ]) {
-      expect(parseBattleScribeAffectsSelector(value)).toMatchObject({
-        supported: false,
-        issues: ["noProfileSelector"],
+      const parsed = parseBattleScribeAffectsSelector(value);
+      expect(parsed).toMatchObject({
+        supported: true,
+        target: "selections",
+        issues: [],
       });
+      expect(parsed).not.toHaveProperty("profileTypeName");
     }
+    // The profile form still reports its own terminus, so a consumer can tell
+    // the two apart without re-reading the raw string.
+    expect(
+      parseBattleScribeAffectsSelector("self.entries.profiles.Unit"),
+    ).toMatchObject({ target: "profiles", profileTypeName: "Unit" });
   });
 
   it("reports an empty or incomplete selector", () => {
