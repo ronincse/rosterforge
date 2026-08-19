@@ -883,6 +883,16 @@ Only `set` executes, so the visible unlock stays bounded by the lexical kernel.
 Everything else becomes correctly-attributed incompleteness on the profile it
 would have reached, instead of silence.
 
+A pinned proof exercises the whole path against real data. A Death Guard
+Helbrute's `self.entries.recursive.<category>.profiles.Melee Weapons` increment
+reaches a Power scourge and a Helbrute hammer that sit **two group levels**
+below the model, while `Close combat weapon` — the one melee profile outside
+that category — receives no routed step at all and keeps its known value. That
+is the same discrimination confirmed in New Recruit. The routed step is
+unapplied rather than applied, carrying both `unsupportedType` for `increment`
+and `unsupportedAttributes` for the modifier's `position: -1`, so the profile
+reports an unknown Attacks value rather than a wrong one.
+
 Both remaining questions were settled by experiment against New Recruit on
 2026-08-19, using units whose live data matches the pinned snapshot verbatim.
 

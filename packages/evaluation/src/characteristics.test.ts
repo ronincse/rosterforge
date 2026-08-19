@@ -461,6 +461,28 @@ describe("affects traversal", () => {
     expect(grouped.characteristics[1]).toMatchObject({ value: "2+" });
   });
 
+  it("clears a known value when a later routed step cannot be applied", () => {
+    const setup = staleValueSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.child,
+        profile(setup.childChoice, "profile-stale-child"),
+      ),
+    );
+
+    // A routed `set` makes Move known, then a routed unsupported `increment`
+    // must take it back to unknown rather than leaving the earlier value.
+    expect(report.characteristics[0]?.steps).toMatchObject([
+      { status: "applied", origin: "affects", output: '8"' },
+      { status: "unapplied", origin: "affects" },
+    ]);
+    expect(report.characteristics[0]).not.toHaveProperty("value");
+    expect(report.characteristics[0]?.completeness).toBe("incomplete");
+  });
+
   it("attributes a routed step to the occurrence that declared it", () => {
     const setup = traversalSetup();
 
@@ -745,6 +767,64 @@ function traversalSetup(): {
     throw new Error("Missing traversal occurrences.");
   }
   return { context, roster, directChild, groupChild, directChoice, groupChoice };
+}
+
+function staleValueSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly child: RosterSelection;
+  readonly childChoice: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const ownerChoice = choice(context, "affects-stale-value");
+  const childChoice = choice(context, "stale-child");
+  let roster = createRoster({
+    id: rosterId("stale-value-roster"),
+    name: "Stale value roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) throw new Error("Missing stale-value force.");
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId("stale-force"),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  const reference = (candidate: EvaluationSelectionChoice) => ({
+    kind: candidate.kind,
+    key: projectionKey(candidate.occurrence),
+    ...(candidate.id === undefined ? {} : { sourceId: candidate.id }),
+  });
+  roster = successful(
+    addRosterSelectionToForce(roster, forceOccurrenceId("stale-force"), {
+      id: selectionOccurrenceId("stale-owner"),
+      definition: reference(ownerChoice),
+    }),
+  );
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("stale-owner"),
+      {
+        id: selectionOccurrenceId("stale-child"),
+        definition: reference(childChoice),
+      },
+    ),
+  );
+  const child = roster.forces[0]?.selections[0]?.selections[0];
+  if (child === undefined) throw new Error("Missing stale-value child.");
+  return { context, roster, child, childChoice };
 }
 
 function catalogueContext(): BattleScribeCatalogueContext {

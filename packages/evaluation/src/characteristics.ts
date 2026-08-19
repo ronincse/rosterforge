@@ -431,8 +431,13 @@ export function evaluateRosterProfileCharacteristics<
     }
     const steps = [...report.steps, ...extra];
     const value = effectiveValue(steps, report.baseValue);
+    // Rebuilt field by field rather than spread: a routed step can make a
+    // previously known value unknown, and spreading would carry the stale
+    // `value` through because a conditional spread cannot remove a key.
     return {
-      ...report,
+      characteristic: report.characteristic,
+      ...(report.typeId === undefined ? {} : { typeId: report.typeId }),
+      baseValue: report.baseValue,
       ...(value === undefined ? {} : { value }),
       completeness: steps.some(({ status }) => status === "unapplied")
         ? ("incomplete" as const)

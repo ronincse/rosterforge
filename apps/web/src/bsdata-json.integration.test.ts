@@ -33,6 +33,7 @@ import {
   rosterId,
   selectionOccurrenceId,
   type RosterSelection,
+  type SelectionOccurrenceId,
 } from "@rosterforge/roster-model";
 
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
@@ -924,6 +925,186 @@ describe.skipIf(realDataDirectory === undefined)(
         if (!withoutIndex.ok || !withIndex.ok) return;
         expect(withoutIndex.value.status).toBe("unresolved");
         expect(withIndex.value.status).toBe("satisfied");
+      },
+      120_000,
+    );
+
+    it(
+      "routes a pinned affects selector past groups and filters by category",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Chaos - Death Guard.json",
+          "Chaos - Chaos Daemons Library.json",
+          "Chaos - Chaos Knights Library.json",
+          "Library - Astartes Heresy Legends.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-affects-traversal",
+              importedAt: "2026-08-19T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Death Guard catalogue.");
+        }
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-affects-roster"),
+          forceId: forceOccurrenceId("real-affects-force"),
+          name: "Affects Traversal Roster",
+        });
+        if (!session.ok) throw new Error("Expected roster session.");
+
+        const helbruteRoot = localRosterRootChoices(session.value.catalogue).find(
+          ({ materialized }) => materialized.name === "Helbrute",
+        );
+        if (helbruteRoot === undefined) {
+          throw new Error("Expected the Helbrute root choice.");
+        }
+        const unitId = selectionOccurrenceId("affects-helbrute");
+        let current = addLocalRosterRootSelection(session.value, helbruteRoot, {
+          selectionId: unitId,
+        });
+        if (!current.ok) throw new Error("Expected the Helbrute to be added.");
+
+        // Weapons sit two group levels below the model, which is exactly the
+        // shape that proves `recursive` descends through selection-entry groups.
+        const addChild = (
+          parentId: SelectionOccurrenceId,
+          childName: string,
+          childId: string,
+        ): SelectionOccurrenceId => {
+          if (!current.ok) throw new Error("Expected a session.");
+          const choice = localRosterChildChoices(current.value, parentId).find(
+            ({ name }) => name === childName,
+          );
+          if (choice === undefined) {
+            throw new Error(`Expected the ${childName} choice.`);
+          }
+          const id = selectionOccurrenceId(childId);
+          current = addLocalRosterChildSelection(
+            current.value,
+            parentId,
+            choice,
+            { selectionId: id },
+          );
+          if (!current.ok) throw new Error(`Expected ${childName} to be added.`);
+          return id;
+        };
+
+        const wargearId = addChild(unitId, "Wargear", "affects-wargear");
+        const fistGroupId = addChild(
+          wargearId,
+          "Replace helbrute fist",
+          "affects-fist-group",
+        );
+        const meltaGroupId = addChild(
+          wargearId,
+          "Replace multi-melta",
+          "affects-melta-group",
+        );
+        const scourgeId = addChild(
+          fistGroupId,
+          "Power scourge",
+          "affects-scourge",
+        );
+        const hammerId = addChild(
+          meltaGroupId,
+          "Helbrute hammer",
+          "affects-hammer",
+        );
+        const closeCombatId = addChild(
+          wargearId,
+          "Close combat weapon",
+          "affects-close-combat",
+        );
+        if (!current.ok) return;
+
+        const roster = current.value.roster;
+        const context = current.value.catalogue.context;
+        const occurrences = rosterSelections(
+          roster.forces.flatMap(({ selections }) => selections),
+        );
+        const meleeReport = (id: SelectionOccurrenceId) => {
+          const occurrence = occurrences.find((entry) => entry.id === id);
+          const choice = localRosterSelectionChoice(current.ok ? current.value : session.value, id);
+          if (occurrence === undefined || choice === undefined) {
+            throw new Error(`Expected occurrence ${id}.`);
+          }
+          const profile = choice.profiles.find(
+            ({ typeName }) => typeName === "Melee Weapons",
+          );
+          if (profile === undefined) {
+            throw new Error(`Expected a melee profile on ${id}.`);
+          }
+          const evaluated = evaluateRosterProfileCharacteristics(
+            roster,
+            context,
+            occurrence,
+            profile,
+          );
+          if (!evaluated.ok) throw new Error("Expected a characteristic report.");
+          return evaluated.value;
+        };
+
+        const scourge = meleeReport(scourgeId);
+        const hammer = meleeReport(hammerId);
+        const closeCombat = meleeReport(closeCombatId);
+
+        const routedSteps = (report: typeof scourge) =>
+          report.characteristics.flatMap(({ steps }) =>
+            steps.filter((step) => step.origin === "affects"),
+          );
+
+        // Both selected weapons carry the Helbrute melee weapon category, so the
+        // model's `self.entries.recursive.<category>.profiles.Melee Weapons`
+        // increment reaches them through two group levels.
+        expect(routedSteps(scourge).length).toBeGreaterThan(0);
+        expect(routedSteps(hammer).length).toBeGreaterThan(0);
+        // Close combat weapon is the one melee profile outside that category.
+        // Stone confirmed in New Recruit that it keeps its printed Attacks while
+        // the two category members gain the bonus.
+        expect(routedSteps(closeCombat)).toEqual([]);
+
+        // Routing is proven by an attributed unapplied step rather than a
+        // changed value: the operation is `increment`, which the lexical kernel
+        // does not execute, and the real modifier also carries `position: -1`,
+        // which selects which match within a value to affect and is likewise
+        // unsupported. Both are reported rather than silently ignored.
+        expect(routedSteps(scourge)).toMatchObject([
+          {
+            status: "unapplied",
+            issues: ["unsupportedAttributes", "unsupportedType"],
+          },
+        ]);
+        const attacks = scourge.characteristics.find(
+          ({ characteristic }) => characteristic.name === "A",
+        );
+        expect(attacks).toMatchObject({ baseValue: "8" });
+        expect(attacks).not.toHaveProperty("value");
+        // The unreached profile stays fully known.
+        expect(
+          closeCombat.characteristics.find(
+            ({ characteristic }) => characteristic.name === "A",
+          ),
+        ).toMatchObject({ baseValue: "5", value: "5" });
       },
       120_000,
     );

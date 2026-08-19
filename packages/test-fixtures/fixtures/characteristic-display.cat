@@ -368,5 +368,30 @@
           affects="self.entries.group.profiles.Unit" />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="affects-stale-value" name="Affects Stale Value"
+      type="unit">
+      <selectionEntries>
+        <selectionEntry id="stale-child" name="Stale Child" type="model">
+          <profiles>
+            <profile id="profile-stale-child" name="Stale Child Profile"
+              typeId="profile-type-unit" typeName="Unit">
+              <characteristics>
+                <characteristic name="Move"
+                  typeId="characteristic-move">6"</characteristic>
+              </characteristics>
+            </profile>
+          </profiles>
+        </selectionEntry>
+      </selectionEntries>
+      <modifiers>
+        <!-- Applies first, making the value known... -->
+        <modifier type="set" field="characteristic-move" value='8"'
+          affects="self.entries.profiles.Unit" />
+        <!-- ...then an unsupported operation routed to the same characteristic
+             must take that value back to unknown. -->
+        <modifier type="increment" field="characteristic-move" value="1"
+          affects="self.entries.profiles.Unit" />
+      </modifiers>
+    </selectionEntry>
   </selectionEntries>
 </catalogue>
