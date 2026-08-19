@@ -879,9 +879,34 @@ resolving to a declared profile type, using only `Unit` (187), `Ranged Weapons`
 (29), and `Melee Weapons` (21) — and 156 of those are `set` operations the
 lexical kernel can execute.
 
-What remains unsettled is whether `entries` means direct child occurrences or
-all descendants, and what an embedded category or entry ID does in the path.
-Selectors using either form stay preserved and unapplied.
+Both remaining questions were settled by experiment against New Recruit on
+2026-08-19, using units whose live data matches the pinned snapshot verbatim.
+
+**Traversal.** A Necron Skorpekh Lord's unconditional
+`self.entries.profiles.Melee Weapons` increment does *not* change its Flensing
+claw, because that weapon sits inside the model's `Wargear` selection-entry
+group. A Death Guard Helbrute's `self.entries.recursive.…` increment *does*
+change equivalent group members. So `entries` is the direct child **entry**
+collection and does not descend into groups, while `recursive` reaches all
+descendants.
+
+**The embedded ID filters.** With two `Helbrute melee weapon` category members
+selected, both gained +2 Attacks while the `Close combat weapon` — the one melee
+profile outside that category — was unchanged. Dropping to one member removed
+the bonus, matching the modifier's own `atLeast 2` condition.
+
+Live data also carries a **`group`** traversal segment that the pinned snapshot
+does not contain at all: forms such as
+`self.entries.group.recursive.profiles.Ranged Weapons` and
+`group.recursive.group.profiles.Unit`. It is the author's way of entering
+selection-entry groups without full recursion, which independently confirms that
+groups are a traversal step rather than transparent. The parser accepts the
+keyword in any position; no pinned-corpus count changes, because no pinned
+selector uses it.
+
+One question stays open, and is not worth an experiment: what an embedded ID
+does when it names a selection entry rather than a category. The whole corpus
+contains a single instance.
 
 Three category entries in the corpus carry information collections that
 BattleScribe 2.03 does not declare on a category entry. `Recon Augury`

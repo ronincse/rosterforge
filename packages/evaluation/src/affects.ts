@@ -3,9 +3,12 @@ import { objectId, type ObjectId } from "@rosterforge/foundation";
 /**
  * How far from the owning occurrence an `affects` selector reaches.
  *
- * The corpus establishes this contrast itself: `self.entries.profiles.X` and
- * `self.entries.recursive.profiles.X` both occur, so `entries` alone is the
- * direct child collection and `recursive` extends it to all descendants.
+ * Confirmed against New Recruit on 2026-08-19. A Necron Skorpekh Lord's
+ * unconditional `self.entries.profiles.…` increment does **not** reach weapons
+ * that sit inside its `Wargear` selection-entry group, while a Death Guard
+ * Helbrute's `self.entries.recursive.…` increment does reach equivalent
+ * group members. So `entries` is the direct child *entry* collection and does
+ * not descend into groups; `recursive` reaches all descendants.
  */
 export type AffectsSelectorTraversal = "own" | "children" | "descendants";
 
@@ -15,6 +18,20 @@ export type AffectsSelectorIssue =
   | "noProfileSelector"
   | "missingProfileTypeName"
   | "unexpectedSegment";
+
+/**
+ * Traversal keywords, consumed in any order and any number of times before an
+ * optional filter ID. Real data uses several arrangements — `group` occurs
+ * leading, after `entries`, and again after `recursive` — so position is not
+ * fixed.
+ */
+const traversalSegments = new Set([
+  "self",
+  "entries",
+  "forces",
+  "group",
+  "recursive",
+]);
 
 export interface AffectsSelector {
   readonly value: string;
@@ -28,6 +45,12 @@ export interface AffectsSelector {
   readonly supported: boolean;
   readonly traversal: AffectsSelectorTraversal;
   readonly explicitSelf: boolean;
+  /**
+   * True when the selector carries an explicit `group` segment, which enters
+   * selection-entry groups. Without one, a `children` traversal reaches only
+   * the owner's direct child entries.
+   */
+  readonly entersGroups: boolean;
   /**
    * A single object ID narrowing the traversal. The observed corpus uses
    * category entries here, and once a selection entry. Resolving its kind needs
@@ -43,8 +66,6 @@ export interface AffectsSelector {
   readonly issues: readonly AffectsSelectorIssue[];
 }
 
-const traversalKeywords = new Set(["self", "entries", "forces", "recursive"]);
-
 /**
  * Decomposes an observed BattleScribe `affects` selector into its parts.
  *
@@ -52,10 +73,10 @@ const traversalKeywords = new Set(["self", "entries", "forces", "recursive"]);
  * chooses no target, and executes no modifier. A caller holding the modifier
  * supplies the source location when turning an issue into a diagnostic.
  *
- * The supported shape is
- * `[self.][entries.][recursive.][<filterId>.]profiles.<profileTypeName>`.
- * Force traversal and paths that stop at an entry rather than a profile are
- * recorded as unsupported instead of being guessed.
+ * The supported shape is any arrangement of the traversal keywords `self`,
+ * `entries`, `group`, and `recursive`, followed by an optional filter ID and
+ * `profiles.<profileTypeName>`. Force traversal and paths that stop at an entry
+ * rather than a profile are recorded as unsupported instead of being guessed.
  */
 export function parseBattleScribeAffectsSelector(
   value: string,
@@ -70,37 +91,37 @@ export function parseBattleScribeAffectsSelector(
       supported: false,
       traversal: "own",
       explicitSelf: false,
+      entersGroups: false,
       issues: ["empty"],
     };
   }
 
   let index = 0;
-  const explicitSelf = segments[index] === "self";
-  if (explicitSelf) {
+  let explicitSelf = false;
+  let entries = false;
+  let entersGroups = false;
+  let recursive = false;
+  while (
+    index < segments.length &&
+    traversalSegments.has(segments[index] as string)
+  ) {
+    const segment = segments[index] as string;
+    if (segment === "self") explicitSelf = true;
+    else if (segment === "entries") entries = true;
+    else if (segment === "group") entersGroups = true;
+    else if (segment === "recursive") recursive = true;
+    else issues.push("forceTraversal");
     index += 1;
   }
-
-  let traversal: AffectsSelectorTraversal = "own";
-  if (segments[index] === "entries") {
-    traversal = "children";
-    index += 1;
-    if (segments[index] === "forces") {
-      issues.push("forceTraversal");
-      index += 1;
-    }
-    if (segments[index] === "recursive") {
-      traversal = "descendants";
-      index += 1;
-    }
-  }
+  const traversal: AffectsSelectorTraversal = recursive
+    ? "descendants"
+    : entries || entersGroups
+      ? "children"
+      : "own";
 
   let filterId: ObjectId | undefined;
   const candidate = segments[index];
-  if (
-    candidate !== undefined &&
-    candidate !== "profiles" &&
-    !traversalKeywords.has(candidate)
-  ) {
+  if (candidate !== undefined && candidate !== "profiles") {
     filterId = objectId(candidate);
     index += 1;
   }
@@ -131,6 +152,7 @@ export function parseBattleScribeAffectsSelector(
     supported: issues.length === 0,
     traversal,
     explicitSelf,
+    entersGroups,
     ...(filterId === undefined ? {} : { filterId }),
     ...(profileTypeName === undefined ? {} : { profileTypeName }),
     issues,

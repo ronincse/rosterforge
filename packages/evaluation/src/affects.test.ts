@@ -8,6 +8,7 @@ describe("battleScribe affects selector", () => {
       supported: true,
       traversal: "own",
       explicitSelf: false,
+      entersGroups: false,
       profileTypeName: "Unit",
       issues: [],
     });
@@ -30,6 +31,73 @@ describe("battleScribe affects selector", () => {
       supported: true,
       traversal: "descendants",
       profileTypeName: "Melee Weapons",
+    });
+  });
+
+  it("treats group as a traversal segment in every observed position", () => {
+    // All four occur in live BSData; none appear in the pinned snapshot.
+    expect(
+      parseBattleScribeAffectsSelector("group.profiles.Unit"),
+    ).toMatchObject({
+      supported: true,
+      traversal: "children",
+      entersGroups: true,
+      profileTypeName: "Unit",
+    });
+    expect(
+      parseBattleScribeAffectsSelector(
+        "self.entries.group.recursive.profiles.Melee Weapons",
+      ),
+    ).toMatchObject({
+      supported: true,
+      traversal: "descendants",
+      entersGroups: true,
+      profileTypeName: "Melee Weapons",
+    });
+    expect(
+      parseBattleScribeAffectsSelector("group.recursive.group.profiles.Unit"),
+    ).toMatchObject({
+      supported: true,
+      traversal: "descendants",
+      entersGroups: true,
+      profileTypeName: "Unit",
+    });
+    expect(
+      parseBattleScribeAffectsSelector(
+        "self.entries.group.recursive.group.profiles.Ranged Weapons",
+      ),
+    ).toMatchObject({
+      supported: true,
+      traversal: "descendants",
+      entersGroups: true,
+      profileTypeName: "Ranged Weapons",
+    });
+  });
+
+  it("distinguishes a direct-entry traversal from one entering groups", () => {
+    // Verified in New Recruit: entries alone does not reach group members.
+    expect(
+      parseBattleScribeAffectsSelector("self.entries.profiles.Unit"),
+    ).toMatchObject({ traversal: "children", entersGroups: false });
+    expect(
+      parseBattleScribeAffectsSelector("self.entries.group.profiles.Unit"),
+    ).toMatchObject({ traversal: "children", entersGroups: true });
+  });
+
+  it("keeps a bare group selector unsupported for lack of a profile target", () => {
+    expect(parseBattleScribeAffectsSelector("group")).toMatchObject({
+      supported: false,
+      traversal: "children",
+      entersGroups: true,
+      issues: ["noProfileSelector"],
+    });
+    expect(
+      parseBattleScribeAffectsSelector("group.a98a-4cc0-5f02-e078"),
+    ).toMatchObject({
+      supported: false,
+      entersGroups: true,
+      filterId: "a98a-4cc0-5f02-e078",
+      issues: ["noProfileSelector"],
     });
   });
 
