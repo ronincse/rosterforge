@@ -16,9 +16,9 @@ checkpoint, and eight Task 8 checkpoints — profile modifier projection,
 headless characteristic-display evaluation, its workspace presentation, profile
 visibility, `affects` selector parsing, category-entry information projection,
 effective category membership, and the category-condition honesty fix — are
-complete, as is the first workspace checkpoint after them: routed characteristic
-attribution. The current
-normal suite passes 406 tests with six skipped, and the pinned real-data suite
+complete, as are two checkpoints after them: routed characteristic attribution
+and characteristic `append` execution. The current
+normal suite passes 409 tests with six skipped, and the pinned real-data suite
 passes all six tests. Work now happens on `main`, which was fast-forwarded to
 the branch tip on 2026-08-19 and is CI-green. Effective keywords are visible in the roster workspace,
 and the category surface is complete apart from `affects`.
@@ -1584,6 +1584,102 @@ Unchanged from the previous section, minus the item this one completed:
 2. `append`/`replace`, now that `position` semantics are known: 1-based index of
    the match to affect, negative from the end, `0` meaning all. `join` supplies
    the separator.
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One corpus instance.
+
+## Completed Assignment — Characteristic `append`, 2026-08-19
+
+Commit `5eceaec`. This is the first extension of the executable operation set
+since `set`, so it was taken as its own decision rather than opportunistically,
+per the standing guardrail.
+
+### Why `append` and not `increment`
+
+`append` needs no numeric grammar. It concatenates its value onto the running
+value through the separator its `join` attribute declares — text handling, not
+arithmetic. That makes it decidable today, whereas `increment` still waits on
+the sign convention for inverted characteristics.
+
+### Corpus measurement
+
+490 `append` modifiers target a characteristic type at the pinned commit.
+
+| Outcome | Count | Reason |
+|---|---|---|
+| Executed | **208** | explicit non-empty `join`, no `arg`, no `position`, valued |
+| Withheld | 181 | empty `join` |
+| Withheld | 90 | carries `arg` |
+| Withheld | 7 | no `join` declared |
+| Withheld | 4 | carries `position` |
+
+The 208 executed are 197 `Keywords`, 10 `Description`, and one `M` — weapon
+abilities such as Assault, Lethal Hits, Sustained Hits 1, Precision.
+
+### The empty-separator finding
+
+The 181 empty-`join` appends are **not** list appends and executing them would
+have been a regression. Every one writes `+0` onto a numeric characteristic. The
+corpus then shows, on the same field and owner: 154 `replace`, 78
+`increment position=-1 value=1`, 37 `decrement position=-1 value=1`, and smaller
+counts at values 2 and 3. 156 of the 271 `+0` appends share a field with a
+positioned increment or decrement inside the same file.
+
+So `append "+0"` opens a bonus slot, a positioned `increment`/`decrement` bumps
+the digit after the `+`, and a `replace` (the `arg="+0"` family) removes the slot
+when it is still zero. `position` is confirmed as *1-based index of the match to
+affect within a value*, which is exactly what that idiom needs. This evaluator
+executes none of those three, so applying only the append would have printed
+`A 2+0` where the source means `A 2` — a confident wrong answer in precisely the
+place this evaluator exists to prevent one. Withheld with its own diagnostic.
+
+### The separator is used verbatim
+
+The most common corpus separator is a comma followed by a **non-breaking** space
+(U+00A0), not an ordinary one. The real-data pin was written with `", "` first
+and failed against a value that looked byte-identical in the diff. Normalising
+separators would silently alter displayed text, so the declared `join` is used
+exactly as written.
+
+### Tests
+
+Three synthetic tests (chained appends, empty separator, missing separator and
+empty input) plus a real-data pin: the pinned Death Guard Helbrute carries an
+unconditional grouped `self.entries.recursive.profiles.Ranged Weapons` append,
+and its Twin autocannon's Keywords gain `Assault` through the routed step. That
+is the first real-data case where a routed step **changes a displayed value**
+rather than only proving routing happened.
+
+One existing synthetic fixture had used `append` as a stand-in for "unsupported
+operation"; it was switched to `replace` so that test keeps its meaning.
+
+Two stale `docs/compatibility.md` bullets were corrected while there: `affects`
+was still listed as parsed-but-never-executed, which owner-relative routing and
+traversal execution made wrong two checkpoints ago.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **409 passed, 6 skipped (415 total)**.
+- Pinned real-data suite — **6 passed**.
+
+### Next recommended boundary
+
+1. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil`. This is
+   now the only thing standing between the evaluator and real stat lines
+   changing, and it is **blocked on one decision**: on an inverted characteristic
+   such as a `3+` save, does `increment 1` mean `4+` (arithmetic on the digit) or
+   `2+` (an improvement)? Nothing in the corpus settles it and guessing would
+   produce confidently wrong saves. One New Recruit experiment answers it.
+   Doing this also requires `position` (1-based index of the match within a
+   value), which is now understood, and would then unlock the `+0` bonus-slot
+   idiom above.
+2. `replace`, which still needs `arg` semantics. The `+0` finding is strong
+   evidence that `arg` is the **search term** — 89 of the 90 `arg` values are the
+   literal `"+0"` that the append idiom inserts, and removing it is exactly what
+   collapsing an unused bonus slot requires. That is inference, not confirmation;
+   the same New Recruit session that answers the sign convention could confirm it
+   by watching a weapon with an unused slot.
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
