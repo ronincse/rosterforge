@@ -1,5 +1,35 @@
 # RosterForge Engineering Rules
 
+## Cross-Model Handoffs
+
+Multiple models work on this repository. That is intentional: it gives better
+coverage of the work, and it spreads usage across the owner's subscriptions.
+A session that starts here may be continued by a different model. A session
+that ends here may never resume on the same model. Work can move to another
+model at any point, so treat every checkpoint as a handoff to a stranger.
+
+`agent-handoff.md` is the shared status and work-order document. It is not
+Codex-specific.
+
+- At the start of every session, and before starting any checkpoint, read the
+  current status and next recommended boundary at the end of
+  `agent-handoff.md`. Then read `git status`, recent `git log`, and the
+  architecture and compatibility documents.
+- At the end of every checkpoint, and before stopping a session, leave the
+  next model a complete handoff even if the user has not named who continues.
+  Keep the checkpoint bounded and independently reviewable. Commit it
+  separately, then update `agent-handoff.md` with the baseline and resulting
+  commit, exact tests and corpus measurements, remaining unsupported
+  behavior, and the next recommended boundary.
+- Treat `AGENTS.md` and the package boundaries as authoritative when a handoff
+  note is stale or ambiguous. Preserve existing user or model changes; never
+  reset, clean, or rewrite history to obtain a preferred baseline.
+- For changes justified by pinned real data, extend the optional gitignored
+  corpus integration test and verify the configured repository revision. Never
+  commit third-party game data or silently measure a moving branch.
+- Do not push branches, open pull requests, or rewrite remote history unless the
+  user explicitly requests that publication step.
+
 ## Architecture
 
 - Follow package direction in `docs/architecture.md`; circular dependencies are
@@ -44,24 +74,6 @@
 - Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 - Update architecture, compatibility, and diagnostics documentation when
   behavior or boundaries change.
-
-## Cross-Model Handoffs
-
-- `codex-handoff.md` is the shared cross-model status and work-order document.
-  Read it with `git status`, recent `git log`, and the architecture and
-  compatibility documents before starting a new checkpoint.
-- Treat `AGENTS.md` and the package boundaries as authoritative when a handoff
-  note is stale or ambiguous. Preserve existing user or model changes; never
-  reset, clean, or rewrite history to obtain a preferred baseline.
-- Keep each handoff checkpoint bounded and independently reviewable. Commit it
-  separately, then update `codex-handoff.md` with the baseline and resulting
-  commit, exact tests and corpus measurements, remaining unsupported behavior,
-  and the next recommended boundary.
-- For changes justified by pinned real data, extend the optional gitignored
-  corpus integration test and verify the configured repository revision. Never
-  commit third-party game data or silently measure a moving branch.
-- Do not push branches, open pull requests, or rewrite remote history unless the
-  user explicitly requests that publication step.
 
 ## Completion
 
