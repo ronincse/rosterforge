@@ -17,6 +17,7 @@ import {
   collectAffectsRoutedSelectionModifiers,
   hasAffectsModifier,
   reaches,
+  forceTraversalReach,
   resolveAffectsAnchor,
   routeFromAnchor,
 } from "./affects-routing.js";
@@ -1322,26 +1323,35 @@ function collectAffectsRoutedModifiers(
       }
       // `scope` names where the selector stands; `affects` names where it
       // walks. Confirmed in New Recruit, so the anchor is resolved per
-      // modifier rather than assumed to be the declarer.
-      const anchor = resolveAffectsAnchor(
-        declarer,
-        entry.modifier.scope,
-        locations,
-        choices,
-      );
-      if (anchor.kind !== "resolved") {
-        // A scope naming a collection, or one that cannot be resolved, might
-        // have anchored somewhere that reaches this profile.
-        partial = true;
-        continue;
-      }
-      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
       const wanted = selector.profileTypeName.toLowerCase();
       if (wanted !== "all" && wanted !== typeName.toLowerCase()) {
         continue;
       }
-      if (!reaches(selector, route)) {
-        continue;
+      // A `forces` selector leaves the anchor's subtree entirely, so neither
+      // the anchor nor the path to this profile decides anything.
+      if (selector.entersForces) {
+        if (forceTraversalReach(roster) !== "all") {
+          partial = true;
+          continue;
+        }
+      } else {
+        // modifier rather than assumed to be the declarer.
+        const anchor = resolveAffectsAnchor(
+          declarer,
+          entry.modifier.scope,
+          locations,
+          choices,
+        );
+        if (anchor.kind !== "resolved") {
+          // A scope naming a collection, or one that cannot be resolved, might
+          // have anchored somewhere that reaches this profile.
+          partial = true;
+          continue;
+        }
+        const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
+        if (!reaches(selector, route)) {
+          continue;
+        }
       }
       if (selector.filterId !== undefined) {
         const categories = effectiveRosterCategories(roster, context).get(

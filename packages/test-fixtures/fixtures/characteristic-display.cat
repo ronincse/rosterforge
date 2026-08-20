@@ -493,6 +493,30 @@
           join=", " />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="force-detachment" name="Force Detachment" type="unit">
+      <selectionEntries>
+        <!-- A detachment ability: it reaches the whole army, not its own
+             subtree, and its target shares no ancestor with it. -->
+        <selectionEntry id="force-rule" name="Force Rule" type="upgrade">
+          <modifiers>
+            <modifier type="set" field="characteristic-move" value='9"'
+              affects="self.entries.forces.recursive.profiles.Unit"
+              scope="roster" />
+          </modifiers>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
+    <selectionEntry id="force-target" name="Force Target" type="unit">
+      <profiles>
+        <profile id="profile-force-target" name="Force Target Profile"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+        </profile>
+      </profiles>
+    </selectionEntry>
     <selectionEntry id="affects-bearer" name="Affects Bearer" type="model">
       <profiles>
         <profile id="profile-bearer-unit" name="Bearer Unit"

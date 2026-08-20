@@ -781,6 +781,58 @@ describe("affects traversal", () => {
     expect(report.characteristics[0]?.completeness).toBe("incomplete");
   });
 
+  it("routes a force traversal to an occurrence sharing no ancestor", () => {
+    const setup = forceSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.target,
+        profile(setup.targetChoice, "profile-force-target"),
+      ),
+    );
+
+    // The declaring rule sits under a different root selection entirely, so no
+    // anchor-relative route could reach here. A `forces` segment leaves the
+    // anchor's subtree and names the roster's forces instead, which is how the
+    // corpus writes all 24 of its detachment abilities.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '9"',
+      steps: [{ status: "applied", origin: "affects" }],
+    });
+    expect(report.completeness).toBe("complete");
+  });
+
+  it("withholds a force traversal when the roster holds more than one force", () => {
+    const setup = forceSetup(true);
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.target,
+        profile(setup.targetChoice, "profile-force-target"),
+      ),
+    );
+
+    // With one force, "every force" and "the declarer's force" name the same
+    // set. With two they can differ, and nothing establishes which New Recruit
+    // uses, so the modifier is refused rather than guessed and the report is
+    // incomplete.
+    expect(report.completeness).toBe("incomplete");
+    // The unresolved modifier contributes no step, so the characteristic keeps
+    // its printed value while the report says not to trust it. That is how
+    // every other unresolvable-routing path already behaves; see the roadmap
+    // item on withheld routing versus withheld steps.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '6"',
+      steps: [],
+    });
+  });
+
   it("stands the selector on the occurrence its scope names", () => {
     const setup = bearerSetup();
 
@@ -1257,6 +1309,80 @@ function bearerSetup(): {
     throw new Error("Missing bearer occurrences.");
   }
   return { context, roster, bearer, weapon, bearerChoice, weaponChoice };
+}
+
+/**
+ * Two unrelated root selections plus, optionally, a second force. The rule and
+ * its target share no ancestor, so only a force traversal can connect them.
+ */
+function forceSetup(secondForce = false): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly target: RosterSelection;
+  readonly targetChoice: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const detachmentChoice = choice(context, "force-detachment");
+  const ruleChoice = choice(context, "force-rule");
+  const targetChoice = choice(context, "force-target");
+  let roster = createRoster({
+    id: rosterId("force-roster"),
+    name: "Force roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) throw new Error("Missing force fixture force.");
+  const definition = {
+    kind: "forceEntry" as const,
+    key: projectionKey(force.source),
+    ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+  };
+  roster = successful(
+    addRosterForce(roster, { id: forceOccurrenceId("force-one"), definition }),
+  );
+  if (secondForce) {
+    roster = successful(
+      addRosterForce(roster, { id: forceOccurrenceId("force-two"), definition }),
+    );
+  }
+  for (const [label, entry] of [
+    ["detachment", detachmentChoice],
+    ["target", targetChoice],
+  ] as const) {
+    roster = successful(
+      addRosterSelectionToForce(roster, forceOccurrenceId("force-one"), {
+        id: selectionOccurrenceId(`force-${label}`),
+        definition: {
+          kind: entry.kind,
+          key: projectionKey(entry.occurrence),
+          ...(entry.id === undefined ? {} : { sourceId: entry.id }),
+        },
+      }),
+    );
+  }
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("force-detachment"),
+      {
+        id: selectionOccurrenceId("force-rule"),
+        definition: {
+          kind: ruleChoice.kind,
+          key: projectionKey(ruleChoice.occurrence),
+          ...(ruleChoice.id === undefined ? {} : { sourceId: ruleChoice.id }),
+        },
+      },
+    ),
+  );
+  const target = roster.forces[0]?.selections[1];
+  if (target === undefined) throw new Error("Missing force target occurrence.");
+  return { context, roster, target, targetChoice };
 }
 
 function traversalSetup(): {

@@ -146,6 +146,30 @@ export function resolveAffectsAnchor(
 }
 
 /**
+ * How far a `forces` selector reaches in this roster.
+ *
+ * A `forces` segment leaves the anchor's subtree and names the roster's forces,
+ * so the target set is every occurrence they contain rather than a path from one
+ * anchor. All 24 corpus instances are detachment abilities — *Lords of the
+ * Warp*, *Cohort Cybernetica*, *Sanctified Orators* — whose effects are
+ * army-wide by construction.
+ *
+ * With exactly one force and no nested forces, "every force in the roster" and
+ * "the force containing the declarer" name the same set, so the reading is
+ * unambiguous. The browser editor enforces that shape. A headless roster may
+ * hold more, and there the two readings can differ with nothing to establish
+ * which New Recruit uses, so the determination is refused instead.
+ */
+export function forceTraversalReach(roster: Roster): "all" | "unresolved" {
+  const first = roster.forces[0];
+  return roster.forces.length === 1 &&
+    first !== undefined &&
+    first.forces.length === 0
+    ? "all"
+    : "unresolved";
+}
+
+/**
  * True when the selector's traversal reaches an occurrence sitting at `route`.
  *
  * Verified against New Recruit on 2026-08-19: `entries` alone does not descend
@@ -347,18 +371,27 @@ export function collectAffectsRoutedSelectionModifiers<
         partial = true;
         continue;
       }
-      const anchor = resolveAffectsAnchor(
-        declarer,
-        entry.modifier.scope,
-        locations,
-        choices,
-      );
-      if (anchor.kind !== "resolved") {
-        partial = true;
-        continue;
+      // A `forces` selector leaves the anchor's subtree entirely, so neither
+      // the anchor nor the path to this occurrence decides anything.
+      if (selector.entersForces) {
+        if (forceTraversalReach(roster) !== "all") {
+          partial = true;
+          continue;
+        }
+      } else {
+        const anchor = resolveAffectsAnchor(
+          declarer,
+          entry.modifier.scope,
+          locations,
+          choices,
+        );
+        if (anchor.kind !== "resolved") {
+          partial = true;
+          continue;
+        }
+        const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
+        if (!reaches(selector, route)) continue;
       }
-      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
-      if (!reaches(selector, route)) continue;
       collected.push({
         modifier: entry.modifier as unknown as Modifier,
         grouped: entry.grouped,

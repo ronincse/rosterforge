@@ -138,18 +138,26 @@ describe("battleScribe affects selector", () => {
     });
   });
 
-  it("does not support force traversal", () => {
+  it("reads force traversal as leaving the anchor's subtree", () => {
     const parsed = parseBattleScribeAffectsSelector(
       "self.entries.forces.recursive.dbd4-63-af05-998.profiles.Unit",
     );
 
+    // Every corpus instance of this shape is a detachment ability, whose
+    // effect is army-wide by construction. `entersForces` says the anchor and
+    // the path from it stop deciding anything; the consumer decides the reach.
     expect(parsed).toMatchObject({
-      supported: false,
+      supported: true,
       traversal: "descendants",
+      entersForces: true,
       filterId: "dbd4-63-af05-998",
       profileTypeName: "Unit",
-      issues: ["forceTraversal"],
+      issues: [],
     });
+    // A selector without the segment is unaffected.
+    expect(
+      parseBattleScribeAffectsSelector("self.entries.recursive.profiles.Unit"),
+    ).toMatchObject({ entersForces: false });
   });
 
   it("reads a path that stops before `profiles` as selecting occurrences", () => {

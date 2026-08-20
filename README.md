@@ -109,6 +109,8 @@ This repository currently contains the first development slice:
 - `affects` routing anchored at the modifier's `scope`, so an enhancement reaches
   its bearer's wargear without being its parent, for both category and
   characteristic modifiers;
+- `affects` force traversal, so a detachment ability reaches every occurrence
+  the roster's forces contain, withheld when the roster holds more than one;
 - pure parsing of the observed `affects` selector grammar into traversal,
   optional filter ID, terminus, and profile-type name, distinguishing selectors
   that target profiles from those that target the reached occurrences, with no

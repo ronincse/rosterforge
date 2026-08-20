@@ -1622,6 +1622,26 @@ an owner-relative selector could not have reached anything; its modifiers carry
 `scope="model"`, and the model is the bearer. `resolveAffectsAnchor` therefore
 resolves the anchor per modifier before routing.
 
+### Force traversal
+
+A `forces` segment leaves the anchor's subtree entirely and names the roster's
+forces, so neither the anchor nor the path to a given occurrence decides
+anything: the target set is every occurrence the forces contain, subject to the
+selector's category filter and profile type.
+
+All 24 corpus instances are detachment abilities — *Lords of the Warp*,
+*Cohort Cybernetica*, *Sanctified Orators* — written as
+`self.entries.forces.recursive.[<categoryId>.]profiles.<typeName>`. Their
+effects are army-wide by construction, and their declaring upgrade shares no
+ancestor with the units they reach.
+
+`forceTraversalReach` guards the one ambiguity. With exactly one force and no
+nested forces, "every force in the roster" and "the force containing the
+declarer" name the same set, so the reading is unambiguous — and the browser
+editor enforces that shape. A headless roster may hold more, and there the two
+readings can differ with nothing to establish which New Recruit uses, so the
+modifier is refused and the report is incomplete.
+
 Supported anchors are the declarer itself (absent scope or `self`), `parent`,
 `root-entry`, and the nearest ancestor-or-self of a named type (`model`, `unit`,
 `model-or-unit`, `upgrade`). `force` and `roster` name collections rather than

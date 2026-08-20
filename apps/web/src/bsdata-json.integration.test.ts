@@ -250,12 +250,12 @@ describe.skipIf(realDataDirectory === undefined)(
         ).toEqual({
           total: 1_859,
           distinctValues: 79,
-          supported: 1_835,
-          unsupported: 24,
+          supported: 1_859,
+          unsupported: 0,
           traversalOwn: 344,
           traversalChildren: 168,
           traversalDescendants: 1_347,
-          forceTraversal: 24,
+          entersForces: 24,
           targetProfiles: 1_753,
           targetSelections: 106,
           targetSelectionsCategoryField: 89,
@@ -272,7 +272,7 @@ describe.skipIf(realDataDirectory === undefined)(
           distinctProfileTypeNames: 3,
           undeclaredProfileTypeNames: 0,
           characteristicTargets: 1_265,
-          characteristicTargetsSupported: 1_246,
+          characteristicTargetsSupported: 1_265,
         });
         expect(
           selectionAnnotationModifierSummary(
@@ -2412,7 +2412,7 @@ function affectsSelectorSummary(
     traversalOwn: 0,
     traversalChildren: 0,
     traversalDescendants: 0,
-    forceTraversal: 0,
+    entersForces: 0,
     targetProfiles: 0,
     targetSelections: 0,
     targetSelectionsCategoryField: 0,
@@ -2451,6 +2451,7 @@ function affectsSelectorSummary(
           : "traversalDescendants",
     );
     for (const issue of parsed.issues) add(issue);
+    if (parsed.entersForces) add("entersForces");
     add(parsed.target === "profiles" ? "targetProfiles" : "targetSelections");
     if (parsed.target === "selections" && modifier.field === "category") {
       add("targetSelectionsCategoryField");

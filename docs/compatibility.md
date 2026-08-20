@@ -404,6 +404,10 @@
   optional filter ID, terminus, and profile-type name, with force traversal the
   only remaining unsupported shape; parsing performs no resolution and no
   execution
+- `affects` force traversal: a `forces` segment leaves the anchor's subtree and
+  names the roster's forces, so the target set is every occurrence they contain.
+  All 24 corpus instances are detachment abilities, whose effects are army-wide
+  by construction
 - Selector terminus: a path ending in `profiles.<typeName>` targets profiles, a
   path stopping before it targets the reached occurrences themselves, which is
   what a selection-level field such as `category` requires
@@ -429,9 +433,9 @@
   more than one number in the value, a value with no number at all, a malformed
   `position`, or a non-integer operand.
 - `append` whose `join` separator is absent
-- `affects` selectors whose traversal leaves the anchor's subtree, chiefly force
-  traversal; routing to the anchor's own, child, and descendant occurrences and
-  profiles is executed.
+- Force traversal in a roster holding more than one force, or any nested force.
+  With a single force the two readings of `forces` name the same set; with more
+  they can differ and nothing establishes which New Recruit uses.
 - `affects` modifiers whose `scope` names a collection (`force`, `roster`) or a
   type with no matching ancestor; there is no single occurrence to stand on, so
   the determination is withheld rather than treated as a no-op.
@@ -904,9 +908,10 @@ closed vocabulary: `self`, `entries`, `forces`, `recursive`, `profiles`, a
 profile-type name, or one object ID. Nothing is unresolved and nothing is
 unclassified.
 
-Parsing those 1,859 values yields 1,835 supported selectors and 24 unsupported
-ones, all 24 force traversals. Traversal splits 344 owner-only, 168 direct-child,
-and 1,347 recursive. By terminus, 1,753 target profiles and 106 target the
+Parsing those 1,859 values now yields **1,859 supported selectors and none
+unsupported**: the grammar is fully covered. Traversal splits 344 owner-only,
+168 direct-child, and 1,347 recursive, with 24 additionally carrying a `forces`
+segment. By terminus, 1,753 target profiles and 106 target the
 reached occurrences; 89 of those 106 are `category` modifiers, 15 are
 `annotation`, and two are `decrement` on cost or characteristic fields. One
 selections-terminus value also carries a force traversal and so stays

@@ -14,7 +14,6 @@ export type AffectsSelectorTraversal = "own" | "children" | "descendants";
 
 export type AffectsSelectorIssue =
   | "empty"
-  | "forceTraversal"
   | "missingProfileTypeName"
   | "unexpectedSegment";
 
@@ -64,6 +63,15 @@ export interface AffectsSelector {
    */
   readonly entersGroups: boolean;
   /**
+   * True when the selector carries a `forces` segment, which leaves the
+   * anchor's own subtree and reaches the roster's forces instead.
+   *
+   * All 24 corpus instances are detachment abilities written as
+   * `self.entries.forces.recursive.…`, so the traversal keywords around it are
+   * subsumed: the target set is every occurrence the forces contain.
+   */
+  readonly entersForces: boolean;
+  /**
    * A single object ID narrowing the traversal. The observed corpus uses
    * category entries here, and once a selection entry. Resolving its kind needs
    * a catalogue graph, so the parser only records it.
@@ -105,6 +113,7 @@ export function parseBattleScribeAffectsSelector(
       target: "selections",
       explicitSelf: false,
       entersGroups: false,
+      entersForces: false,
       issues: ["empty"],
     };
   }
@@ -113,6 +122,7 @@ export function parseBattleScribeAffectsSelector(
   let explicitSelf = false;
   let entries = false;
   let entersGroups = false;
+  let entersForces = false;
   let recursive = false;
   while (
     index < segments.length &&
@@ -122,8 +132,8 @@ export function parseBattleScribeAffectsSelector(
     if (segment === "self") explicitSelf = true;
     else if (segment === "entries") entries = true;
     else if (segment === "group") entersGroups = true;
+    else if (segment === "forces") entersForces = true;
     else if (segment === "recursive") recursive = true;
-    else issues.push("forceTraversal");
     index += 1;
   }
   const traversal: AffectsSelectorTraversal = recursive
@@ -171,6 +181,7 @@ export function parseBattleScribeAffectsSelector(
     target,
     explicitSelf,
     entersGroups,
+    entersForces,
     ...(filterId === undefined ? {} : { filterId }),
     ...(profileTypeName === undefined ? {} : { profileTypeName }),
     issues,
