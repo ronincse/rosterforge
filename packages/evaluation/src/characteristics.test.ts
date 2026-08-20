@@ -385,6 +385,35 @@ describe("roster profile characteristic display", () => {
     });
   });
 
+  it("clamps rather than rounds for floor and ceil", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-clamped"),
+      ),
+    );
+
+    // A T'au Ethereal's Move is 6", incremented by 4 and then `ceil 9`, and
+    // New Recruit shows 9". So `ceil` is an upper bound, not a rounding step,
+    // and the text around the number survives.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '9"',
+    });
+    // `floor 2` on a save improved to 3+ leaves it at 3+. If floor *set* the
+    // value instead of bounding it, this would read 2+ and every unit with
+    // this pairing would show the best possible save.
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "3+",
+    });
+    expect(report.completeness).toBe("complete");
+  });
+
   it("runs the bonus-slot idiom end to end", () => {
     const setup = characteristicSetup();
 

@@ -1382,12 +1382,14 @@ characteristic's exact `typeId` on the same profile. Targets are never inferred
 from `name` or `typeName`. A profile that repeats one characteristic type makes
 that target ambiguous rather than applying the modifier to every match.
 
-`set`, `append`, `increment`, `decrement`, and `replace` are the supported
-operations. `set` replaces the projected lexical value and never reads the value
-it replaces, so it needs no numeric grammar for observed forms such as `3+`,
-`36"`, or `D6`. `floor` and `ceil` would require an unestablished bound rule, so
-they remain preserved, source-located, and unapplied. This evaluator therefore
-does not reuse the numeric modifier
+`set`, `append`, `increment`, `decrement`, `floor`, `ceil`, and `replace` are
+the supported operations — every operation the pinned corpus uses on a
+characteristic. `set` replaces the projected lexical value and never reads the
+value it replaces, so it needs no numeric grammar for observed forms such as
+`3+`, `36"`, or `D6`. `multiply`, `divide`, and `modulo` are defined by the
+format but appear nowhere in the corpus, so they stay unsupported rather than
+being written speculatively. This evaluator therefore does not reuse the numeric
+modifier
 kernel; it reuses the shared applicability, modifier-group applicability, and
 group-execution collectors, which do fit unchanged.
 
@@ -1450,6 +1452,13 @@ The structural argument agrees: New Recruit is generic over arbitrary game
 systems and cannot know which characteristic types are inverted, so it has no
 basis for a game-aware rule. Authors pick the operation that produces the right
 digit.
+
+`floor` and `ceil` bound the same numeric match rather than rounding it:
+`floor` raises it to at least its operand, `ceil` lowers it to at most. A T'au
+Ethereal's Move is `6"`, incremented by 4 and then `ceil 9`, and New Recruit
+shows `9"`. All 25 corpus `floor`s pair with a `decrement` on an inverted
+characteristic — `floor 2` on a save improved to `3+` leaves it at `3+`, where a
+rule that *set* the value would show the best possible save on every such unit.
 
 **Which number changes** comes from `position`, documented by New Recruit's
 editor as the 1-based index of the match to affect, negative counting from the

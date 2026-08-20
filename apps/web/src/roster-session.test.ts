@@ -806,6 +806,7 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
       "profile-grouped-order",
       "profile-grouped-conditional",
       "profile-unsupported-operations",
+      "profile-clamped",
       "profile-bonus-slot",
       "profile-inert-attributes",
       "profile-corrupted-input",

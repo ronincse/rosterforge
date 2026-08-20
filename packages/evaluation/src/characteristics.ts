@@ -54,6 +54,8 @@ export type RosterCharacteristicModifierKind =
   | "append"
   | "increment"
   | "decrement"
+  | "floor"
+  | "ceil"
   | "replace";
 
 export type RosterCharacteristicModifierIssue =
@@ -740,9 +742,14 @@ function evaluateStep<
   // `set` never reads what it replaces; every other operation does, so each
   // has more ways to be undecidable.
   let output = modifier.value;
-  if (kind === "increment" || kind === "decrement") {
+  if (
+    kind === "increment" ||
+    kind === "decrement" ||
+    kind === "floor" ||
+    kind === "ceil"
+  ) {
     const operand =
-      modifier.value !== undefined && /^-?\d+$/u.test(modifier.value.trim())
+      modifier.value !== undefined && isIntegerText(modifier.value.trim())
         ? Number.parseInt(modifier.value.trim(), 10)
         : undefined;
     if (modifier.value !== undefined && operand === undefined) {
@@ -755,11 +762,19 @@ function evaluateStep<
       if ("issue" in selection) {
         issues.push(selection.issue);
       } else {
-        output = applyArithmetic(
-          input,
-          selection.matches,
-          kind === "increment" ? operand : -operand,
-        );
+        // `floor` is a lower bound and `ceil` an upper one, not rounding. A
+        // T'au Ethereal's Move is `6"`, incremented by 4 and then `ceil 9`,
+        // and New Recruit shows 9" -- a clamp, not a rounding step. `floor 2`
+        // on a `3+` save likewise leaves it alone rather than setting it.
+        const map =
+          kind === "increment"
+            ? (value: number): number => value + operand
+            : kind === "decrement"
+              ? (value: number): number => value - operand
+              : kind === "floor"
+                ? (value: number): number => Math.max(value, operand)
+                : (value: number): number => Math.min(value, operand);
+        output = applyToMatches(input, selection.matches, map);
       }
     }
   }
@@ -1043,6 +1058,8 @@ function characteristicKind(
     value === "append" ||
     value === "increment" ||
     value === "decrement" ||
+    value === "floor" ||
+    value === "ceil" ||
     value === "replace"
     ? value
     : undefined;
@@ -1163,14 +1180,14 @@ function positionedMatches(
 }
 
 /** Rewrites the selected matches, right to left so earlier offsets stay valid. */
-function applyArithmetic(
+function applyToMatches(
   input: string,
   matches: readonly NumericMatch[],
-  delta: number,
+  map: (value: number) => number,
 ): string {
   let output = input;
   for (const match of [...matches].reverse()) {
-    const next = String(match.value + delta);
+    const next = String(map(match.value));
     output = output.slice(0, match.start) + next + output.slice(match.end);
   }
   return output;

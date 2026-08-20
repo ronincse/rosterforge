@@ -92,7 +92,8 @@ This repository currently contains the first development slice:
 - characteristic `replace` of the literal term `arg` declares, deleting the
   match when no value is given, treating a term that matches nothing as an
   applied no-op;
-- lexical `increment` and `decrement` on the numeric match `position` selects,
+- lexical `increment`, `decrement`, `floor`, and `ceil` on the numeric match
+  `position` selects, the last two bounding the value rather than rounding it,
   as plain signed arithmetic that preserves the surrounding text, withheld when
   the target number cannot be placed;
 - read-only profile visibility for direct and grouped Boolean `set` hidden

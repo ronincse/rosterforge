@@ -344,6 +344,8 @@
   as an applied no-op rather than a refusal
 - An effective value withheld when an unapplied step precedes a later step that
   reads its input, since only `set` discards what it was handed
+- Characteristic `floor` and `ceil` as bounds on the selected numeric match --
+  at least, and at most -- rather than rounding
 - Lexical `increment` and `decrement` on the numeric match `position` selects,
   as plain signed arithmetic with no game-aware inversion, preserving the text
   around the number; the direction is confirmed against New Recruit rather than
@@ -410,9 +412,9 @@
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
-- Characteristic operations other than `set`, `append`, `increment`,
-  `decrement`, and `replace`: `floor` and `ceil` need an unestablished bound
-  rule. They remain ordered, observable, and unapplied.
+- `multiply`, `divide`, and `modulo` on characteristics. The format defines
+  them; the pinned corpus uses none of the three, so no rule is written for
+  behavior that cannot be checked against data.
 - `replace` with an absent or empty `arg` or with a Boolean `value`
 - Arithmetic whose target number cannot be placed: no declared `position` with
   more than one number in the value, a value with no number at all, a malformed

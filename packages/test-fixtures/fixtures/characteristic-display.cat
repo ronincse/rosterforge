@@ -98,9 +98,27 @@
               typeId="characteristic-save">4+</characteristic>
           </characteristics>
           <modifiers>
-            <modifier type="floor" field="characteristic-save" value="1" />
+            <modifier type="multiply" field="characteristic-save" value="1" />
             <modifier type="multiply" field="characteristic-move" value="8"
               futureBehavior="unknown" />
+          </modifiers>
+        </profile>
+        <profile id="profile-clamped" name="Clamped"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <!-- Mirrors a T'au Ethereal: 6" incremented by 4, capped at 9. -->
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+            <!-- Mirrors an improved save clamped at 2+: the bound is not
+                 reached, so the value is left alone. -->
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="increment" field="characteristic-move" value="4" />
+            <modifier type="ceil" field="characteristic-move" value="9" />
+            <modifier type="decrement" field="characteristic-save" value="1" />
+            <modifier type="floor" field="characteristic-save" value="2" />
           </modifiers>
         </profile>
         <profile id="profile-bonus-slot" name="Bonus Slot"
@@ -150,7 +168,7 @@
           </characteristics>
           <modifiers>
             <!-- Unsupported, so its effect on the value is unknown... -->
-            <modifier type="floor" field="characteristic-move" value="1" />
+            <modifier type="multiply" field="characteristic-move" value="1" />
             <!-- ...and this one reads the value it was handed, so its clean
                  result is still built on an unknown input. -->
             <modifier type="increment" field="characteristic-move" value="1" />
@@ -328,7 +346,7 @@
               typeId="characteristic-move">6"</characteristic>
           </characteristics>
           <modifiers>
-            <modifier type="floor" field="characteristic-move" value="1" />
+            <modifier type="multiply" field="characteristic-move" value="1" />
             <modifier type="set" field="characteristic-move" value='9"' />
           </modifiers>
         </profile>
@@ -340,7 +358,7 @@
           </characteristics>
           <modifiers>
             <modifier type="set" field="characteristic-move" value='9"' />
-            <modifier type="floor" field="characteristic-move" value="1" />
+            <modifier type="multiply" field="characteristic-move" value="1" />
           </modifiers>
         </profile>
         <profile id="profile-unresolved-applicability"
@@ -586,7 +604,7 @@
           affects="self.entries.profiles.Unit" />
         <!-- ...then an unsupported operation routed to the same characteristic
              must take that value back to unknown. -->
-        <modifier type="floor" field="characteristic-move" value="1"
+        <modifier type="multiply" field="characteristic-move" value="1"
           affects="self.entries.profiles.Unit" />
       </modifiers>
     </selectionEntry>
