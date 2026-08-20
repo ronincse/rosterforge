@@ -474,6 +474,40 @@
   info-group materialization.
 - Known structures and fields not included in the current typed surface
 
+## Constraint Coverage At The Pinned Commit
+
+The pinned corpus holds **26,259 constraints**. Measured against the shapes the
+evaluator accepts, **25,932 (98.8%) already fit**:
+
+| Shape | Count |
+|---|---|
+| Supported | 25,932 |
+| ID-valued (category) scope | 116 |
+| Carries `automatic` | 109 |
+| `unit` scope | 69 |
+| `root-entry` scope | 19 |
+| `model` scope | 13 |
+| `field="associations"` | 1 |
+
+By kind they are overwhelmingly structural counts: 14,667 `max selections` and
+7,595 `min selections`, then 3,958 Crusade limits. Only 19 target `pts`
+directly. Scopes are 19,056 `parent`, 4,013 `self`, 1,550 `force`, and 1,423
+`roster` — all four supported.
+
+### The matched-play points limit works today
+
+The game system gives the *Army Roster* force `max pts = 0`, and raises it with
+game-system-level modifiers conditioned on the chosen battle size:
+`set 1000` for Incursion, `set 2000` for Strike Force, `set 3000` for Onslaught,
+each gated by a condition group requiring that size to be selected in force scope
+and the manual override not to be. A pinned test builds that roster and confirms
+the effective limit moves from 0 to 1000, which is what New Recruit displays as
+"150 / 1000 pts".
+
+The remaining points-limit path is the `Override points limit?` entry, which
+uses an `increment` carrying `repeats`. Repeat shapes stay unsupported, so an
+overridden limit is reported incomplete rather than guessed.
+
 ## Deferred
 
 - Cache eviction and quota controls, retries, repository update discovery,

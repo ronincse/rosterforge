@@ -21,6 +21,7 @@ import {
   evaluateRosterSelectionName,
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
+  inspectRosterForceConstraintsInRoster,
   modifierTargetedCategoryIds,
   parseBattleScribeAffectsSelector,
 } from "@rosterforge/evaluation";
@@ -969,6 +970,122 @@ describe.skipIf(realDataDirectory === undefined)(
         if (!withoutIndex.ok || !withIndex.ok) return;
         expect(withoutIndex.value.status).toBe("unresolved");
         expect(withIndex.value.status).toBe("satisfied");
+      },
+      120_000,
+    );
+
+    it(
+      "raises the pinned points limit when a battle size is chosen",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Chaos - Death Guard.json",
+          "Chaos - Chaos Daemons Library.json",
+          "Chaos - Chaos Knights Library.json",
+          "Library - Astartes Heresy Legends.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-points-limit",
+              importedAt: "2026-08-21T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-points-roster"),
+          forceId: forceOccurrenceId("real-points-force"),
+          name: "Points Limit Roster",
+        });
+        if (!session.ok) throw new Error("Expected roster session.");
+
+        // The game system gives Army Roster `max pts = 0`; choosing a battle
+        // size is what raises it. Stone's New Recruit screenshot reads
+        // "150 / 1000 pts" for an Incursion.
+        const pointsLimit = (current: LocalRosterSession): {
+          readonly base: number | undefined;
+          readonly effective: number | undefined;
+        } => {
+          const inspected = inspectRosterForceConstraintsInRoster(
+            current.roster,
+            current.catalogue.context,
+            { inspectionScope: "conditions" },
+          );
+          if (!inspected.ok) throw new Error("Expected a force report.");
+          const report = inspected.value.forces
+            .flatMap(({ constraints }) => constraints)
+            .find(
+              (candidate) =>
+                candidate.constraint.node.attributes["id"] ===
+                "a00c-6979-992f-046b",
+            );
+          if (report === undefined) {
+            throw new Error("Expected the pinned points constraint.");
+          }
+          return { base: report.baseLimit, effective: report.limit };
+        };
+
+        expect(pointsLimit(session.value).base).toBe(0);
+
+        const battleSize = localRosterRootChoices(session.value.catalogue).find(
+          ({ materialized }) => materialized.name === "Battle Size",
+        );
+        if (battleSize === undefined) {
+          throw new Error("Expected the Battle Size root choice.");
+        }
+        let current = addLocalRosterRootSelection(session.value, battleSize, {
+          selectionId: selectionOccurrenceId("points-battle-size"),
+        });
+        if (!current.ok) throw new Error("Expected Battle Size to be added.");
+        // The sizes sit in a nested group of the same name.
+        const sizeGroup = localRosterChildChoices(
+          current.value,
+          selectionOccurrenceId("points-battle-size"),
+        ).find(({ name }) => name === "Battle Size");
+        if (sizeGroup === undefined) throw new Error("Expected the size group.");
+        current = addLocalRosterChildSelection(
+          current.value,
+          selectionOccurrenceId("points-battle-size"),
+          sizeGroup,
+          { selectionId: selectionOccurrenceId("points-size-group") },
+        );
+        if (!current.ok) throw new Error("Expected the size group to be added.");
+        const incursion = localRosterChildChoices(
+          current.value,
+          selectionOccurrenceId("points-size-group"),
+        ).find(({ name }) => (name ?? "").startsWith("1. Incursion"));
+        if (incursion === undefined) throw new Error("Expected Incursion.");
+        current = addLocalRosterChildSelection(
+          current.value,
+          selectionOccurrenceId("points-size-group"),
+          incursion,
+          { selectionId: selectionOccurrenceId("points-incursion") },
+        );
+        if (!current.ok) throw new Error("Expected Incursion to be added.");
+
+        const raised = pointsLimit(current.value);
+        expect(raised.base).toBe(0);
+        expect(raised.effective).toBe(1000);
       },
       120_000,
     );
