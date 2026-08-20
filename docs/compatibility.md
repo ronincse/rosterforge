@@ -338,7 +338,8 @@
   unapplied rather than producing a value the source does not mean
 - Lexical `increment` and `decrement` on the numeric match `position` selects,
   as plain signed arithmetic with no game-aware inversion, preserving the text
-  around the number
+  around the number; the direction is confirmed against New Recruit rather than
+  inferred
 - Attribution for characteristics changed by another selection's `affects`
   selector, naming the declaring occurrence in occurrence details with a verb
   matching the operation, so a value that differs from the profile's own

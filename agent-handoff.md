@@ -81,7 +81,7 @@ owner reprioritises).
 | `append` with an empty `join` | Open | unblocks once `replace` lands — it is the bonus-slot idiom's first step |
 | `floor`/`ceil` | Open | need a bound rule; a different shape from `increment`/`decrement` |
 | `position` on `append` | Open | 4 corpus instances, all Keywords. New Recruit applied one visibly with `position` present and no positional effect, so it looks inert there — the editor does not offer `position` for `append`. |
-| `annotation` modifiers | Open | 15 corpus instances |
+| `annotation` modifiers | Open | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
@@ -138,14 +138,11 @@ actually asked for.
 
 ### Open questions needing the owner
 
-**None currently block work.** The sign-convention question was answered from the
-corpus on 2026-08-20 rather than by experiment — see that entry for the evidence
-and for how to falsify it cheaply if it ever looks wrong.
+**None.** Every rule the evaluator executes now rests on either a corpus
+measurement or a direct New Recruit observation, not on inference.
 
-A confirmation would still be welcome when convenient, because it is the one
-settled rule that rests on inference rather than observation: in New Recruit,
-find any unit whose save improves and check whether the displayed `Sv` digit
-goes **down**. If it does, the current implementation is right.
+The last inferred one — the arithmetic sign convention — was confirmed by
+experiment on 2026-08-20. See the arithmetic entry for the observation.
 
 Open and deliberately not chased: what an embedded ID means when it names a
 selection entry rather than a category. One corpus instance.
@@ -2302,9 +2299,21 @@ types are catalogue-defined data, so nothing tells it that `Sv` is roll-under.
 It has no basis for a game-aware inversion, and authors pick whichever operation
 produces the right digit.
 
-**How to falsify this cheaply** if it ever looks wrong: in New Recruit, find any
-unit whose save improves and check whether the displayed `Sv` digit goes down.
-If it goes up, this entry is wrong and 614 modifiers change direction.
+**Confirmed by experiment, 2026-08-20.** Stone gave a Genestealer Cults
+Patriarch the *Gene Affliction* battle scar in New Recruit:
+
+| Stat | Before | After | Data operation |
+|---|---|---|---|
+| T | 5 | **4** | `decrement T by 1` |
+| WS | 2+ | **3+** | `increment WS by 1` |
+
+Both changed for the worse, as a battle scar should, and the data reaches that
+with *opposite* verbs. That is only possible if the operation acts on the digit.
+The prediction written before the test was exactly this, so the rule is now
+observed rather than inferred.
+
+(BS was not observable — a Patriarch carries only melee claws, so no BS is
+displayed. WS is the same inverted family and settles it.)
 
 ### `position`
 

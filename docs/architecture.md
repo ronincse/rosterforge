@@ -1419,7 +1419,15 @@ becomes `10`, `4+` becomes `3+`, `-1` becomes `-2`.
 
 **The arithmetic is plain and signed. There is no game-aware inversion.** A
 `4+` save decremented is `3+`, and whether that counts as better or worse is
-not this evaluator's concern. Three independent lines of evidence:
+not this evaluator's concern.
+
+Confirmed against New Recruit on 2026-08-20. A Genestealer Cults Patriarch given
+the *Gene Affliction* battle scar goes T `5` to `4` and WS `2+` to `3+`. Both
+are penalties, as a scar should be, and the data applies `decrement` to the
+first and `increment` to the second. Opposite verbs, one intent — which is only
+possible if the operation acts on the digit rather than on the meaning.
+
+The corpus says the same thing three more ways:
 
 - Of 64 corpus arithmetic modifiers targeting an inverted characteristic
   (`Sv`, `WS`, `BS`, `LD`), 60 are `decrement` and sit on entries whose names
