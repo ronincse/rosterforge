@@ -127,6 +127,16 @@ export interface RosterCharacteristicProfileSource<
 const visibilityField = "hidden";
 
 /**
+ * The display-annotation pseudo-field.
+ *
+ * No node in the pinned corpus declares an `annotation` of its own, so its base
+ * is always empty and every value it ever shows is built by modifiers. New
+ * Recruit renders it in parentheses after the name it decorates —
+ * `Manreaper - sweep (Furnace of Plagues)`.
+ */
+const annotationField = "annotation";
+
+/**
  * Where a step's modifier was declared. `own` means the profile declared it;
  * `affects` means the profile's owning selection declared it and routed it here
  * with an `affects` selector.
@@ -240,6 +250,29 @@ export type RosterProfileVisibilityStatus =
   | "hidden"
   | "unresolved";
 
+/**
+ * The effective display annotation of one profile.
+ *
+ * `value` is absent when a step could not be applied, on the same terms as a
+ * characteristic: the text is unknown rather than partially built.
+ */
+export interface RosterProfileAnnotationReport<
+  Profile extends RosterCharacteristicProfileSource =
+    RosterCharacteristicProfileSource,
+> {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
+  readonly profile: Profile;
+  /** Always empty: no corpus node declares an annotation of its own. */
+  readonly baseValue: string;
+  readonly value?: string;
+  readonly steps: readonly RosterCharacteristicStep<
+    Profile["modifiers"][number]
+  >[];
+  readonly completeness: ValidationCompleteness;
+}
+
 export interface RosterProfileVisibilityReport<
   Profile extends RosterCharacteristicProfileSource =
     RosterCharacteristicProfileSource,
@@ -295,6 +328,11 @@ export function evaluateRosterProfileCharacteristics<
   )) {
     if (modifier.field === visibilityField) {
       visibilityModifiers.push(modifier);
+      continue;
+    }
+    // Annotation has its own report, so it is neither a characteristic target
+    // nor unrouted display behavior.
+    if (modifier.field === annotationField) {
       continue;
     }
     const reason = routingReason(modifier, routable);
@@ -530,6 +568,113 @@ export function evaluateRosterProfileCharacteristics<
  * A hidden profile is reported, never removed. Presentation decides what to do
  * with the status.
  */
+/**
+ * Reports the effective display annotation of one profile.
+ *
+ * Annotation is a decoration on the profile's *name*, not a characteristic, so
+ * it gets its own report rather than a slot in the characteristic list. The
+ * base is always empty; the value comes entirely from `append`, `set`, and
+ * `replace` modifiers, most of them routed here by an `affects` selector on an
+ * enhancement or upgrade elsewhere in the roster.
+ */
+export function evaluateRosterProfileAnnotation<
+  Profile extends RosterCharacteristicProfileSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  profile: Profile,
+): Result<RosterProfileAnnotationReport<Profile>> {
+  type Modifier = Profile["modifiers"][number];
+
+  const diagnostics: Diagnostic[] = [];
+  const steps: RosterCharacteristicStep<Modifier>[] = [];
+  let lost = false;
+
+  const run = (
+    modifier: Modifier,
+    grouped: boolean,
+    applicability: NumericModifierApplicability,
+    origin: RosterCharacteristicStepOrigin,
+    declaredBy: RosterSelection,
+  ): void => {
+    const step = evaluateStep<Modifier>(
+      currentValue(steps, ""),
+      modifier,
+      grouped,
+      applicability,
+      origin,
+      declaredBy,
+    );
+    steps.push(step.step);
+    diagnostics.push(...step.diagnostics);
+  };
+
+  for (const { modifier, grouped } of profileOwnedModifiers<Modifier>(profile)) {
+    if (modifier.field !== annotationField) continue;
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      modifier,
+      grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "own",
+      owner,
+    );
+  }
+
+  const routed = collectAffectsRoutedModifiers(roster, context, owner, profile);
+  if (routed.partial) lost = true;
+  for (const entry of routed.modifiers) {
+    if (entry.modifier.field !== annotationField) continue;
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      entry.declaredBy,
+      entry.modifier,
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      entry.modifier as Modifier,
+      entry.grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "affects",
+      entry.declaredBy,
+    );
+  }
+
+  const value = lost ? undefined : effectiveValue(steps, "");
+  return success(
+    {
+      roster,
+      context,
+      owner,
+      profile,
+      baseValue: "",
+      ...(value === undefined ? {} : { value }),
+      completeness:
+        lost || steps.some(({ status }) => status === "unapplied")
+          ? "incomplete"
+          : "complete",
+      steps,
+    },
+    diagnostics,
+  );
+}
+
 export function evaluateRosterProfileVisibility<
   Profile extends RosterCharacteristicProfileSource,
 >(

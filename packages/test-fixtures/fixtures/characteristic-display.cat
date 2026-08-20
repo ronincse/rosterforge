@@ -519,6 +519,15 @@
             <modifier type="replace" field="characteristic-save" arg="6"
               value="2" affects="self.entries.recursive.profiles.Unit"
               scope="model" />
+            <!-- Annotation decorates the profile's name. Its base is always
+                 empty, so the first append emits no separator and the second
+                 joins onto it. -->
+            <modifier type="append" field="annotation" value="Bearer Enhancement"
+              join=", " affects="self.entries.recursive.profiles.Unit"
+              scope="model" />
+            <modifier type="append" field="annotation" value="Second Source"
+              join=", " affects="self.entries.recursive.profiles.Unit"
+              scope="model" />
           </modifiers>
         </selectionEntry>
         <selectionEntry id="bearer-weapon" name="Bearer Weapon" type="upgrade">

@@ -25,6 +25,7 @@ import {
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import {
+  evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
 } from "./characteristics.js";
@@ -829,6 +830,51 @@ describe("affects traversal", () => {
       "applied",
       "applied",
     ]);
+  });
+
+  it("builds a routed profile annotation from an empty base", () => {
+    const setup = bearerSetup();
+
+    const annotation = successful(
+      evaluateRosterProfileAnnotation(
+        setup.roster,
+        setup.context,
+        setup.weapon,
+        profile(setup.weaponChoice, "profile-bearer-weapon"),
+      ),
+    );
+
+    // No corpus node declares an annotation, so the base is empty and the
+    // whole value is built by modifiers routed from the enhancement. The
+    // first append emits no separator; the second joins onto the first.
+    expect(annotation).toMatchObject({
+      baseValue: "",
+      value: "Bearer Enhancement, Second Source",
+      completeness: "complete",
+    });
+    expect(annotation.steps.map(({ origin }) => origin)).toEqual([
+      "affects",
+      "affects",
+    ]);
+  });
+
+  it("keeps annotation out of the characteristic report", () => {
+    const setup = bearerSetup();
+
+    const characteristics = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.weapon,
+        profile(setup.weaponChoice, "profile-bearer-weapon"),
+      ),
+    );
+
+    // Annotation has its own report, so it is neither a characteristic target
+    // nor unrouted display behavior, and it no longer costs the characteristic
+    // report its completeness.
+    expect(characteristics.unroutedModifiers).toEqual([]);
+    expect(characteristics.completeness).toBe("complete");
   });
 
   it("does not let a descendant selector reach the anchor itself", () => {

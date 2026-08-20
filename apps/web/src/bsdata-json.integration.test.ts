@@ -16,6 +16,7 @@ import type {
 } from "@rosterforge/battlescribe-data";
 import {
   evaluateRosterCondition,
+  evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
@@ -1126,6 +1127,32 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(attacks?.steps.some((step) => step.status === "unapplied")).toBe(
           false,
         );
+
+        // The same enhancement routes an `annotation` here, which New Recruit
+        // renders after the weapon name: "Manreaper - sweep (Furnace of
+        // Plagues)". Its base is empty, so the whole value is built here.
+        const manreaperOccurrence = occurrences.find(
+          (entry) => entry.id === manreaperId,
+        );
+        const manreaperChoice = localRosterSelectionChoice(
+          current.ok ? current.value : session.value,
+          manreaperId,
+        );
+        const meleeProfile = manreaperChoice?.profiles.find(
+          (candidate) => candidate.typeName === "Melee Weapons",
+        );
+        if (manreaperOccurrence === undefined || meleeProfile === undefined) {
+          throw new Error("Expected the Manreaper melee profile.");
+        }
+        const annotation = evaluateRosterProfileAnnotation(
+          roster,
+          context,
+          manreaperOccurrence,
+          meleeProfile,
+        );
+        if (!annotation.ok) throw new Error("Expected an annotation report.");
+        expect(annotation.value.baseValue).toBe("");
+        expect(annotation.value.value).toBe("Furnace of Plagues");
 
         // The same screenshot shows the Lord's own Unit profile unchanged:
         // `self.entries.recursive` names the anchor's descendants, and the

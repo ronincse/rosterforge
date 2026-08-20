@@ -345,6 +345,8 @@
   as an applied no-op rather than a refusal
 - An effective value withheld when an unapplied step precedes a later step that
   reads its input, since only `set` discards what it was handed
+- Profile display annotation as its own report, built from an always-empty base
+  by the same operations and `affects` routing as characteristics
 - Characteristic `floor` and `ceil` as bounds on the selected numeric match --
   at least, and at most -- rather than rounding
 - Lexical `increment` and `decrement` on the numeric match `position` selects,
@@ -431,9 +433,11 @@
   deciding them needs the membership pass one is computing.
 - Characteristic modifiers owned by selection entries, entry links, info links,
   or info groups rather than by the profile itself
-- Profile-owned `name` and observed `annotation` modifiers; they are retained as
-  unrouted display behavior and make a characteristic report incomplete rather
-  than being silently ignored
+- Profile-owned `name` modifiers; they are retained as unrouted display
+  behavior and make a characteristic report incomplete rather than being
+  silently ignored
+- Selection-level `annotation`, which New Recruit renders after a unit's name;
+  only profile annotation is evaluated
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or

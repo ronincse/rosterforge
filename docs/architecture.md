@@ -1506,6 +1506,24 @@ An attribute outside the known set — anything that is not `join`, `arg`, or
 `position` — still withholds the step. Only these three are known to belong to
 specific operations, so only these three can be known noise elsewhere.
 
+### Profile annotation
+
+`evaluateRosterProfileAnnotation` reports the effective display annotation of one
+profile. Annotation decorates the profile's *name* rather than being one of its
+characteristics, so it gets its own report instead of a slot in the
+characteristic list, and it no longer costs the characteristic report its
+completeness.
+
+**Its base is always empty.** No node in the pinned corpus declares an
+`annotation` of its own, so the entire value is built by modifiers — 590 of
+them, almost all `append` through a `", "` separator, and almost all routed here
+by an `affects` selector on an enhancement or upgrade elsewhere in the roster.
+
+New Recruit renders it in parentheses after the name it decorates:
+`Manreaper - sweep (Furnace of Plagues)`, `Patriarch (Gene Affliction)`. Both
+were observed on 2026-08-20. Selection-level annotation — the second of those —
+is not yet evaluated; only profiles are.
+
 ### Reading operations and step order
 
 `set` is the only operation that *discards* its input. `append`, `increment`,
