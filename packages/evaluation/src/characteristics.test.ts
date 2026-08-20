@@ -174,6 +174,84 @@ describe("roster profile characteristic display", () => {
     ]);
   });
 
+  it("refuses a value an unapplied step fed into a reading operation", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-corrupted-input"),
+      ),
+    );
+
+    // The increment applied cleanly, but it read a value an unsupported
+    // `floor` had already made unknown. Reporting its result would be a
+    // confidently wrong number. Only `set` repairs an unknown input, because
+    // it is the one operation that does not read what it replaces.
+    expect(report.characteristics[0]?.steps.map(({ status }) => status)).toEqual([
+      "unapplied",
+      "applied",
+    ]);
+    expect(report.characteristics[0]).not.toHaveProperty("value");
+  });
+
+  it("replaces a literal search term, deleting it when no value is given", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-replace"),
+      ),
+    );
+
+    // `arg` is the search term. An absent `value` deletes the match, which is
+    // how 164 of the corpus's 189 replaces are written.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "D6+0",
+      value: "D6",
+      steps: [{ status: "applied", kind: "replace", output: "D6" }],
+    });
+    // Corpus authors include the separator in the search term so removing a
+    // keyword does not leave a dangling comma.
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "Assault, Lethal Hits",
+      value: "Assault",
+    });
+    expect(report.completeness).toBe("complete");
+  });
+
+  it("treats a replace that matches nothing as an applied no-op", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-replace-nomatch"),
+      ),
+    );
+
+    // Collapsing a bonus slot on a weapon that never had one is the idiom's
+    // normal path. Refusing here would leave every unmodified weapon's
+    // Attacks unresolved, so it is an applied step that changes nothing.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "11",
+      value: "11",
+      steps: [{ status: "applied", kind: "replace", output: "11" }],
+    });
+    // A Boolean is not replacement text; substituting it would print `4true`.
+    expect(report.characteristics[1]?.steps).toMatchObject([
+      { status: "unapplied", issues: ["booleanReplacement"] },
+    ]);
+    expect(report.characteristics[1]).not.toHaveProperty("value");
+  });
+
   it("applies lexical arithmetic to the positioned numeric match", () => {
     const setup = characteristicSetup();
 
@@ -634,6 +712,34 @@ describe("affects traversal", () => {
       steps: [{ status: "applied", origin: "affects", output: '9"' }],
     });
     expect(weapon.completeness).toBe("complete");
+  });
+
+  it("chains routed steps with each other, not only with the owner's own", () => {
+    const setup = bearerSetup();
+
+    const weapon = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.weapon,
+        profile(setup.weaponChoice, "profile-bearer-weapon"),
+      ),
+    );
+
+    // The enhancement routes an increment and then a replace at the same
+    // characteristic. Save 5+ increments to 6+, and only then does the
+    // replace find its "6". If each routed step were handed the owner's
+    // value instead of the running one, the replace would match nothing and
+    // the answer would be 6+.
+    const save = weapon.characteristics[1];
+    expect(save).toMatchObject({
+      baseValue: "5+",
+      value: "2+",
+    });
+    expect(save?.steps.map(({ status }) => status)).toEqual([
+      "applied",
+      "applied",
+    ]);
   });
 
   it("does not let a descendant selector reach the anchor itself", () => {

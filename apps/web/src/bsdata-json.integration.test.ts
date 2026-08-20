@@ -1114,12 +1114,18 @@ describe.skipIf(realDataDirectory === undefined)(
         ]);
         expect(Number(strength?.value)).toBe(Number(strength?.baseValue) + 1);
 
-        // A carries the bonus-slot idiom's unsupported `replace` steps, so it
-        // stays honestly unresolved rather than showing a partly-applied value.
+        // A closes the whole bonus-slot idiom end to end. The `+0` append is
+        // filtered to weapons whose Attacks is a dice expression, which this
+        // one is not, so the slot is never opened; the two `replace` steps
+        // find nothing and pass through; the positioned `increment` adds one.
+        // Stone's screenshot shows 11.
         const attacks = manreaper.characteristics.find(
           ({ characteristic }) => characteristic.name === "A",
         );
-        expect(attacks).not.toHaveProperty("value");
+        expect(Number(attacks?.value)).toBe(Number(attacks?.baseValue) + 1);
+        expect(attacks?.steps.some((step) => step.status === "unapplied")).toBe(
+          false,
+        );
 
         // The same screenshot shows the Lord's own Unit profile unchanged:
         // `self.entries.recursive` names the anchor's descendants, and the

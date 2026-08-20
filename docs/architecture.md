@@ -1382,12 +1382,12 @@ characteristic's exact `typeId` on the same profile. Targets are never inferred
 from `name` or `typeName`. A profile that repeats one characteristic type makes
 that target ambiguous rather than applying the modifier to every match.
 
-`set`, `append`, `increment`, and `decrement` are the supported operations.
-`set` replaces the projected lexical value and never reads the value it
-replaces, so it needs no numeric grammar for observed forms such as `3+`, `36"`,
-or `D6`. `floor`, `ceil`, and `replace` would each require an unestablished
-bound or search rule, so they remain preserved, source-located, and unapplied.
-This evaluator therefore does not reuse the numeric modifier
+`set`, `append`, `increment`, `decrement`, and `replace` are the supported
+operations. `set` replaces the projected lexical value and never reads the value
+it replaces, so it needs no numeric grammar for observed forms such as `3+`,
+`36"`, or `D6`. `floor` and `ceil` would require an unestablished bound rule, so
+they remain preserved, source-located, and unapplied. This evaluator therefore
+does not reuse the numeric modifier
 kernel; it reuses the shared applicability, modifier-group applicability, and
 group-execution collectors, which do fit unchanged.
 
@@ -1455,6 +1455,44 @@ guessed at. A value containing exactly one number needs no default, because
 every reading selects the same match — which covers most real stat lines. A
 value with no number at all (`-`, `N/A`, `Melee`) is refused with
 `noNumericMatch`, and a non-integer operand with `nonIntegerOperand`.
+
+### `replace`
+
+`replace` rewrites occurrences of the literal search term its `arg` declares.
+An absent `value` deletes the match, which is how 164 of the corpus's 189
+characteristic replaces are written — `arg` is present on all 189, which is what
+establishes it as the search term rather than a format or a flag.
+
+**A search term that matches nothing is an applied no-op**, not a refusal.
+Collapsing a bonus slot on a weapon that never had one is the idiom's normal
+path; refusing there would leave every unmodified weapon's Attacks unresolved.
+This mirrors `add` of a category a selection already has, which is likewise an
+applied step recording no change.
+
+Refused: an absent or empty `arg`, and a `value` of `true` or `false`. Twenty
+corpus replaces carry a Boolean where replacement text belongs, all of them in
+the bonus-slot idiom where the intent is deletion; substituting the literal text
+would print `D6true`.
+
+`join` has no meaning for a search and replace and the editor does not offer it
+there, so the 93 corpus replaces carrying one stay unsupported rather than
+having the attribute quietly ignored.
+
+### Reading operations and step order
+
+`set` is the only operation that *discards* its input. `append`, `increment`,
+`decrement`, and `replace` all read the value they are handed, which has two
+consequences that did not exist when `set` stood alone:
+
+- **Steps chain in one sequence.** An occurrence's own steps and the steps
+  routed to it by `affects` selectors form a single running value, and routed
+  steps chain with each other. A positioned `increment` followed by a routed
+  `replace` has to see the incremented value.
+- **An unapplied step poisons what follows it.** A later step can apply cleanly
+  and still be built on an input this evaluator could not compute, so its result
+  is not trustworthy. The effective value is therefore unknown whenever an
+  unapplied step precedes the end — unless an applied `set` sits after it, which
+  rebuilds the value from scratch and repairs everything before it.
 
 Execution order matches the rest of the package: the profile's own ordered
 modifiers first, then its top-level modifier groups in source order, with each

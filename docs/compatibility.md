@@ -336,6 +336,11 @@
   verbatim, chaining through successive appends; appends with no separator, an
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
+- Characteristic `replace` of the literal search term `arg` declares, deleting
+  the match when no `value` is given, with a term that matches nothing recorded
+  as an applied no-op rather than a refusal
+- An effective value withheld when an unapplied step precedes a later step that
+  reads its input, since only `set` discards what it was handed
 - Lexical `increment` and `decrement` on the numeric match `position` selects,
   as plain signed arithmetic with no game-aware inversion, preserving the text
   around the number; the direction is confirmed against New Recruit rather than
@@ -402,9 +407,11 @@
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
-- Characteristic operations other than `set`, `append`, `increment`, and
-  `decrement`: `floor`, `ceil`, and `replace` each need an unestablished bound
-  or search rule. They remain ordered, observable, and unapplied.
+- Characteristic operations other than `set`, `append`, `increment`,
+  `decrement`, and `replace`: `floor` and `ceil` need an unestablished bound
+  rule. They remain ordered, observable, and unapplied.
+- `replace` with an absent or empty `arg`, with a Boolean `value`, or carrying a
+  `join`, which has no meaning for a search and replace
 - Arithmetic whose target number cannot be placed: no declared `position` with
   more than one number in the value, a value with no number at all, a malformed
   `position`, or a non-integer operand.

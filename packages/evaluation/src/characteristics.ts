@@ -53,7 +53,8 @@ export type RosterCharacteristicModifierKind =
   | "set"
   | "append"
   | "increment"
-  | "decrement";
+  | "decrement"
+  | "replace";
 
 export type RosterCharacteristicModifierIssue =
   | "applicabilityUnresolved"
@@ -69,7 +70,10 @@ export type RosterCharacteristicModifierIssue =
   | "nonIntegerOperand"
   | "noNumericMatch"
   | "ambiguousPosition"
-  | "unsupportedPosition";
+  | "unsupportedPosition"
+  | "missingSearchTerm"
+  | "emptySearchTerm"
+  | "booleanReplacement";
 
 export type RosterCharacteristicRoutingReason =
   | "missingField"
@@ -441,8 +445,14 @@ export function evaluateRosterProfileCharacteristics<
       lostDirect = true;
       continue;
     }
+    // Routed steps chain with each other, not just with the owner's own
+    // steps. `set` ignored its input so this was invisible until `append`,
+    // `increment`, `decrement`, and `replace` began reading theirs: a
+    // positioned increment followed by a routed replace has to see the
+    // incremented value.
+    const priorRouted = routedSteps.get(report) ?? [];
     const step = evaluateStep<Modifier>(
-      currentValue(report.steps, report.baseValue),
+      currentValue([...report.steps, ...priorRouted], report.baseValue),
       entry.modifier as Modifier,
       entry.grouped,
       evaluated.value.evaluated ? evaluated.value.status : "unresolved",
@@ -450,7 +460,7 @@ export function evaluateRosterProfileCharacteristics<
       entry.declaredBy,
     );
     diagnostics.push(...step.diagnostics);
-    routedSteps.set(report, [...(routedSteps.get(report) ?? []), step.step]);
+    routedSteps.set(report, [...priorRouted, step.step]);
   }
   const finalised = characteristics.map((report) => {
     const extra = routedSteps.get(report);
@@ -722,7 +732,9 @@ function evaluateStep<
   } else if (kind === undefined) {
     issues.push("unsupportedType");
   }
-  if (modifier.value === undefined) {
+  // `replace` with no `value` deletes the match, which is how 164 of the 189
+  // corpus replaces are written, so an absent value is not a defect there.
+  if (modifier.value === undefined && kind !== "replace") {
     issues.push("missingValue");
   }
 
@@ -749,6 +761,38 @@ function evaluateStep<
           selection.matches,
           kind === "increment" ? operand : -operand,
         );
+      }
+    }
+  }
+  if (kind === "replace") {
+    const needle = modifier.node.attributes["arg"];
+    if (needle === undefined) {
+      issues.push("missingSearchTerm");
+    } else if (needle === "") {
+      // An empty search term matches everywhere and nowhere.
+      issues.push("emptySearchTerm");
+    } else if (modifier.value === "true" || modifier.value === "false") {
+      // 20 corpus replaces carry a Boolean where a replacement string belongs,
+      // all of them in the bonus-slot idiom where the intent is deletion.
+      // Substituting the literal text would print "D6true".
+      issues.push("booleanReplacement");
+    } else {
+      const found = substringMatches(input, needle);
+      if (found.length === 0) {
+        // Nothing to replace is an applied no-op, not a failure: removing a
+        // bonus slot from a weapon that never had one is the idiom's normal
+        // path. This mirrors an `add` of a category the selection already has.
+        output = input;
+      } else {
+        const selection = selectByPosition(
+          found,
+          modifier.node.attributes["position"],
+        );
+        if ("issue" in selection) {
+          issues.push(selection.issue);
+        } else {
+          output = spliceSpans(input, selection.matches, modifier.value ?? "");
+        }
       }
     }
   }
@@ -961,27 +1005,36 @@ function currentValue<Modifier extends RosterCharacteristicModifierSource>(
 }
 
 /**
- * The effective value is known when nothing after the last applied step could
- * still change it. Every supported operation replaces its input rather than
- * reading it, so an unapplied step before the last applied step cannot affect
- * the result. An unapplied step after it leaves the value unknown.
+ * The effective value, or `undefined` when a step this evaluator could not
+ * apply leaves it untrustworthy.
+ *
+ * `set` is the only operation that discards its input, so it repairs whatever
+ * came before it: an unapplied step ahead of an applied `set` cannot affect the
+ * result. Every other operation *reads* the value it is given, so an unapplied
+ * step ahead of one corrupts its input even though the step itself applied
+ * cleanly. That case reports unknown rather than a confidently wrong number.
  */
 function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
   steps: readonly RosterCharacteristicStep<Modifier>[],
   baseValue: string,
 ): string | undefined {
-  let lastApplied = -1;
+  let lastUnapplied = -1;
   for (let index = 0; index < steps.length; index += 1) {
-    if (steps[index]?.status === "applied") {
-      lastApplied = index;
-    }
-  }
-  for (let index = lastApplied + 1; index < steps.length; index += 1) {
     if (steps[index]?.status === "unapplied") {
-      return undefined;
+      lastUnapplied = index;
     }
   }
-  return currentValue(steps, baseValue);
+  if (lastUnapplied === -1) return currentValue(steps, baseValue);
+  // Nothing after `lastUnapplied` is unapplied, so an applied `set` there
+  // rebuilds the value from scratch and everything after it reads a sound
+  // input.
+  for (let index = steps.length - 1; index > lastUnapplied; index -= 1) {
+    const step = steps[index];
+    if (step?.status === "applied" && step.kind === "set") {
+      return currentValue(steps, baseValue);
+    }
+  }
+  return undefined;
 }
 
 function characteristicKind(
@@ -990,7 +1043,8 @@ function characteristicKind(
   return value === "set" ||
     value === "append" ||
     value === "increment" ||
-    value === "decrement"
+    value === "decrement" ||
+    value === "replace"
     ? value
     : undefined;
 }
@@ -1031,6 +1085,73 @@ function numericMatches(input: string): readonly NumericMatch[] {
  * more than one number is refused rather than guessed at. A value with exactly
  * one number needs no default: every reading selects the same match.
  */
+/** True for a decimal integer, optionally signed. No other numeric forms. */
+function isIntegerText(value: string): boolean {
+  const body = value.startsWith("-") ? value.slice(1) : value;
+  return (
+    body.length > 0 &&
+    [...body].every((char) => char >= "0" && char <= "9")
+  );
+}
+
+interface ValueSpan {
+  readonly start: number;
+  readonly end: number;
+}
+
+/** Every occurrence of a literal search term, left to right. */
+function substringMatches(input: string, needle: string): readonly ValueSpan[] {
+  const out: ValueSpan[] = [];
+  let from = 0;
+  for (;;) {
+    const at = input.indexOf(needle, from);
+    if (at === -1) break;
+    out.push({ start: at, end: at + needle.length });
+    from = at + needle.length;
+  }
+  return out;
+}
+
+/** Overwrites the given spans, right to left so earlier offsets stay valid. */
+function spliceSpans(
+  input: string,
+  spans: readonly ValueSpan[],
+  replacement: string,
+): string {
+  let output = input;
+  for (const span of [...spans].reverse()) {
+    output = output.slice(0, span.start) + replacement + output.slice(span.end);
+  }
+  return output;
+}
+
+/**
+ * Narrows a match list to the one `position` names.
+ *
+ * Shared by arithmetic and `replace`, because the attribute means the same
+ * thing for both: which match within the value to affect.
+ */
+function selectByPosition<Span extends ValueSpan>(
+  matches: readonly Span[],
+  declared: string | undefined,
+):
+  | { readonly matches: readonly Span[] }
+  | { readonly issue: RosterCharacteristicModifierIssue } {
+  if (declared === undefined) {
+    return matches.length <= 1
+      ? { matches }
+      : { issue: "ambiguousPosition" };
+  }
+  if (!isIntegerText(declared)) return { issue: "unsupportedPosition" };
+  const position = Number.parseInt(declared, 10);
+  if (position === 0) return { matches };
+  const index = position > 0 ? position - 1 : matches.length + position;
+  const selected = matches[index];
+  return selected === undefined
+    ? { issue: "unsupportedPosition" }
+    : { matches: [selected] };
+}
+
 function positionedMatches(
   input: string,
   declared: string | undefined,
@@ -1039,19 +1160,7 @@ function positionedMatches(
   | { readonly issue: RosterCharacteristicModifierIssue } {
   const matches = numericMatches(input);
   if (matches.length === 0) return { issue: "noNumericMatch" };
-  if (declared === undefined) {
-    return matches.length === 1
-      ? { matches }
-      : { issue: "ambiguousPosition" };
-  }
-  if (!/^-?\d+$/u.test(declared)) return { issue: "unsupportedPosition" };
-  const position = Number.parseInt(declared, 10);
-  if (position === 0) return { matches };
-  const index = position > 0 ? position - 1 : matches.length + position;
-  const selected = matches[index];
-  return selected === undefined
-    ? { issue: "unsupportedPosition" }
-    : { matches: [selected] };
+  return selectByPosition(matches, declared);
 }
 
 /** Rewrites the selected matches, right to left so earlier offsets stay valid. */
@@ -1206,6 +1315,12 @@ function unsupportedAttributes(
   if (modifier.type === "increment" || modifier.type === "decrement") {
     supported.add("position");
   }
+  // `arg` is the search term and `position` picks which occurrence of it to
+  // rewrite, so both are part of the operation.
+  if (modifier.type === "replace") {
+    supported.add("arg");
+    supported.add("position");
+  }
   // A routed modifier reached this profile *because* of its selector, and its
   // scope is overridden, so neither counts against it.
   if (origin === "affects") {
@@ -1269,6 +1384,21 @@ function modifierDiagnostic(
       "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_EMPTY",
       "An append characteristic modifier joins with an empty separator, which the corpus uses only to open a bonus slot for operations that are not evaluated.",
       "join",
+    ],
+    missingSearchTerm: [
+      "EVALUATION_CHARACTERISTIC_REPLACE_SEARCH_MISSING",
+      "A replace characteristic modifier declares no search term.",
+      "arg",
+    ],
+    emptySearchTerm: [
+      "EVALUATION_CHARACTERISTIC_REPLACE_SEARCH_EMPTY",
+      "A replace characteristic modifier's search term is empty.",
+      "arg",
+    ],
+    booleanReplacement: [
+      "EVALUATION_CHARACTERISTIC_REPLACE_VALUE_BOOLEAN",
+      "A replace characteristic modifier's replacement value is a Boolean rather than text.",
+      "value",
     ],
     nonIntegerOperand: [
       "EVALUATION_CHARACTERISTIC_ARITHMETIC_OPERAND_UNSUPPORTED",

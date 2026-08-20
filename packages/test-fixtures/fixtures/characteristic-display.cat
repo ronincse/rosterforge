@@ -99,8 +99,57 @@
           </characteristics>
           <modifiers>
             <modifier type="floor" field="characteristic-save" value="1" />
-            <modifier type="replace" field="characteristic-move" value="8"
+            <modifier type="multiply" field="characteristic-move" value="8"
               arg="6" />
+          </modifiers>
+        </profile>
+        <profile id="profile-corrupted-input" name="Corrupted Input"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- Unsupported, so its effect on the value is unknown... -->
+            <modifier type="floor" field="characteristic-move" value="1" />
+            <!-- ...and this one reads the value it was handed, so its clean
+                 result is still built on an unknown input. -->
+            <modifier type="increment" field="characteristic-move" value="1" />
+          </modifiers>
+        </profile>
+        <profile id="profile-replace" name="Replace"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">D6+0</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">Assault, Lethal Hits</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- Deleting a match: no value means replace with nothing. -->
+            <modifier type="replace" field="characteristic-move"
+              arg="+0" />
+            <!-- The separator travels with the keyword being removed. -->
+            <modifier type="replace" field="characteristic-save"
+              arg=", Lethal Hits" />
+          </modifiers>
+        </profile>
+        <profile id="profile-replace-nomatch" name="Replace No Match"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">11</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- The bonus slot was never opened, so there is nothing to
+                 collapse. That is the idiom's normal path, not a failure. -->
+            <modifier type="replace" field="characteristic-move"
+              arg="+0" />
+            <!-- A Boolean where replacement text belongs would print "4true". -->
+            <modifier type="replace" field="characteristic-save"
+              arg="4" value="true" />
           </modifiers>
         </profile>
         <profile id="profile-arithmetic" name="Arithmetic"
@@ -405,6 +454,14 @@
           <modifiers>
             <modifier type="set" field="characteristic-move" value='9"'
               affects="self.entries.recursive.profiles.Unit" scope="model" />
+            <!-- Two routed steps on one characteristic. The replace only
+                 finds its search term if it reads the increment's output, so
+                 this fails if routed steps stop chaining. -->
+            <modifier type="increment" field="characteristic-save" value="1"
+              affects="self.entries.recursive.profiles.Unit" scope="model" />
+            <modifier type="replace" field="characteristic-save" arg="6"
+              value="2" affects="self.entries.recursive.profiles.Unit"
+              scope="model" />
           </modifiers>
         </selectionEntry>
         <selectionEntry id="bearer-weapon" name="Bearer Weapon" type="upgrade">

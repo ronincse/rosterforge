@@ -89,6 +89,9 @@ This repository currently contains the first development slice:
 - characteristic `append` through the separator its `join` declares, withheld
   when the separator is absent or empty so a bonus-slot placeholder never
   displays as a finished value;
+- characteristic `replace` of the literal term `arg` declares, deleting the
+  match when no value is given, treating a term that matches nothing as an
+  applied no-op;
 - lexical `increment` and `decrement` on the numeric match `position` selects,
   as plain signed arithmetic that preserves the surrounding text, withheld when
   the target number cannot be placed;
@@ -136,7 +139,7 @@ repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
 cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
-`floor`/`ceil`, `replace`, `arg` behavior, `name` and `annotation` modifiers,
+`floor`/`ceil`, `name` and `annotation` modifiers,
 modifier-group repeats, constraint enforcement, full legality validation,
 automatic saving, durable undo history, roster reordering, and BattleScribe
 .ros/.rosz import and interchange export.

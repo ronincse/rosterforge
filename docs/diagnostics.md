@@ -913,7 +913,15 @@ EVALUATION_CHARACTERISTIC_ARITHMETIC_OPERAND_UNSUPPORTED
 EVALUATION_CHARACTERISTIC_ARITHMETIC_NO_MATCH
 EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_AMBIGUOUS
 EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_REPLACE_SEARCH_MISSING
+EVALUATION_CHARACTERISTIC_REPLACE_SEARCH_EMPTY
+EVALUATION_CHARACTERISTIC_REPLACE_VALUE_BOOLEAN
 ```
+
+The three `REPLACE_` codes mark a `replace` that cannot be executed: no search
+term, an empty one that would match everywhere, or a Boolean where replacement
+text belongs. A search term that simply finds no match is not an error — it is
+an applied step that changes nothing.
 
 The three `APPEND_` codes mark an `append` that cannot be executed: no declared
 `join` separator, an empty one, or nothing to append onto. An empty separator is
