@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (bonus slot closed)
+## Current Status — 2026-08-20 (characteristic operations complete)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **425 passed, 7 skipped (432)**.
+  `git diff --check` all pass. `pnpm test` is **426 passed, 7 skipped (433)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -79,9 +79,10 @@ owner reprioritises).
 | Lexical `increment`/`decrement` | Done | plain signed arithmetic, no game-aware inversion — sign convention settled from the corpus, see the 2026-08-20 arithmetic entry |
 | `replace` using `arg` as the search term | Done | `arg` present on all 189 corpus replaces; a term matching nothing is an applied no-op |
 | `append` with an empty `join` | Done | confirmed in New Recruit; the `+0` bonus-slot idiom now runs end to end |
-| **`floor`/`ceil`** | **Next** | need a bound rule, different in shape from `increment`/`decrement`. Measure first — the corpus may hold very few, and `multiply`/`divide`/`modulo` may be worth folding in. |
+| `floor`/`ceil` | Done | bounds, not rounding — confirmed against a T'au Ethereal |
+| `multiply`/`divide`/`modulo` | Open | defined by the format, **zero** corpus instances; do not write a speculative rule |
 | `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
-| `annotation` modifiers | Open | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
+| **`annotation` modifiers** | **Next** | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
@@ -2615,5 +2616,74 @@ Remaining: `floor`/`ceil`, `multiply`/`divide`/`modulo`, `annotation`, and
 2. **`annotation` modifiers** — 15 instances, rendering already observed twice:
    the value is appended to the displayed name in parentheses.
 3. **`name` modifiers** — 7,673 instances but 86% Crusade; still last.
+
+No open questions require the owner.
+
+## Completed Assignment — Bounds, 2026-08-20
+
+Baseline `234f64a`; resulting implementation commit `55f1c7a`.
+
+### What changed
+
+`floor` raises the selected numeric match to at least its operand; `ceil` lowers
+it to at most. Both are **bounds, not rounding**.
+
+### The evidence
+
+A T'au Ethereal settles the shape: Move `6"`, `increment 4`, then `ceil 9`, and
+New Recruit displays `9"`. That rules out rounding.
+
+It also has to be a bound rather than a *set*: 23 of the 25 corpus `floor`s pair
+with a `decrement` on an inverted characteristic (WS, BS, Sv) at value 2. If
+`floor` set the value, every one of those units would display the best possible
+save or skill. As a bound, `floor 2` on a save improved to `3+` correctly leaves
+it at `3+`.
+
+### Corpus reach
+
+| Operation | Count | Shape |
+|---|---|---|
+| `floor` | 25 | 23 on WS/BS/Sv at 2; one each bounding OC and M at 0 |
+| `ceil` | 8 | all on M at 9 |
+
+**Every operation the pinned corpus uses on a characteristic now executes:**
+`set` (415), `append` (490), `increment` (451), `decrement` (163), `replace`
+(189), `floor` (25), `ceil` (8).
+
+`multiply`, `divide`, and `modulo` are defined by the format but appear **zero**
+times. They stay unsupported deliberately: writing a rule for behavior that
+cannot be checked against data is exactly what this project avoids. If a future
+corpus adds them, measure first.
+
+### A note on fixtures
+
+Several fixtures had been using `floor` as a stand-in for "an unsupported
+operation", and needed swapping to `multiply` so their tests kept their meaning.
+That has now happened three times — `increment`, then `replace`, then `floor`.
+**Whoever implements the next operation should expect the same**, and should
+prefer `multiply` as the stand-in, since it has no corpus instances and so is
+the least likely to become supported.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **426 passed, 7 skipped (433 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+The characteristic *operation* surface is complete. What remains on the display
+side is other target fields, not other arithmetic:
+
+1. **`annotation` modifiers** — 15 instances. Rendering already observed twice in
+   New Recruit: the value is appended to the displayed name in parentheses,
+   `Patriarch (Gene Affliction)` and `Manreaper - sweep (Furnace of Plagues)`. It
+   annotates the *name*, and reaches weapon profiles through the same `affects`
+   routing already built. This is the last small, well-evidenced item.
+2. **`name` modifiers** — 7,673 instances but 86% Crusade. Large, and the
+   annotation work above will establish how a display name is composed, so it is
+   better attempted after.
+3. **`affects` force traversal** — 24 selectors; needs a force-collection anchor
+   rule, which is a genuinely new decision.
 
 No open questions require the owner.
