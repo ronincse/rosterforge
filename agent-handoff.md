@@ -44,11 +44,37 @@ diagnostic codes.
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **7 passed**; without it those 7 are the skipped tests.
-- **Pushed.** `main` was pushed at `8f1913d`; commits after that are local again.
+- **Pushed.** `main` was last pushed at `8f1913d`; everything after that is
+  local. If you are working from a fresh clone rather than the owner's machine,
+  check that those commits reached the remote before assuming this document
+  matches the code.
 - **Active area.** Display-fidelity modifiers — Task 8 of the original work
-  order, under "Historical Record" below. The characteristic
-  and category surfaces both execute a meaningful subset; what remains is in the
-  roadmap.
+  order, under "Historical Record" below.
+
+### Picking up from here
+
+The **characteristic operation surface is complete**: `set`, `append`,
+`increment`, `decrement`, `replace`, `floor`, and `ceil` all execute, with
+`position` placement, `affects` routing anchored at `scope`, and category
+filtering. `multiply`/`divide`/`modulo` are unsupported on purpose — the format
+defines them and the corpus uses none.
+
+The next boundary is **selection-level `annotation`** (roadmap section A). One
+structural note before you start: profile annotation reuses the
+profile-matching routing collector in `characteristics.ts`, but selection
+annotation needs the **selections-terminus** collector that `categories.ts` has.
+Expect either a third collector or a shared extraction — `affects-routing.ts`
+already exists for exactly this kind of sharing and is where the traversal
+helpers live.
+
+Two habits this session earned the hard way, both worth keeping:
+
+1. **Write the real-data pin.** It caught defects the synthetics missed three
+   separate times, including two step-chaining bugs that `set` had been hiding
+   for months because it is the only operation that does not read its input.
+2. **When a mechanism's pieces sit on different entries, stop analysing and ask
+   for an observation.** Two questions stalled for a whole checkpoint each until
+   a single New Recruit screenshot settled them.
 
 ## Remaining Work To Feature Complete
 
