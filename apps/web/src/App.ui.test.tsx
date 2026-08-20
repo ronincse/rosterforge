@@ -1379,6 +1379,7 @@ describe("App local catalogue flow", () => {
         createDraftId={() => "draft-ui"}
         createEntityId={(kind) => `${kind}-draft-ui`}
         now={() => "2026-07-23T17:00:00.000Z"}
+        autosaveDelayMs={0}
       />,
     );
 
@@ -1442,6 +1443,22 @@ describe("App local catalogue flow", () => {
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),
     ).toBeTruthy();
+
+    // With a draft active the user has already asked for this roster to be
+    // kept, so a further edit rewrites it without another click.
+    const storedAmount = (): number | undefined =>
+      records.get("draft-ui")?.roster.forces[0]?.selections[0]?.amount;
+    fireEvent.click(screen.getByText("Selection details"));
+    fireEvent.change(screen.getByLabelText("Amount"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Set amount" }));
+    await waitFor(() => {
+      expect(storedAmount()).toBe(3);
+    });
+    // The rewrite is what clears the indicator, so it also proves the
+    // persisted roster is the one now on screen.
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
     const saved = records.get("draft-ui");
     expect(saved).toMatchObject({
       id: "draft-ui",

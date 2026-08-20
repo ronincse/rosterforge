@@ -127,6 +127,8 @@ This repository currently contains the first development slice:
   unresolved label, a hidden/unresolved visibility label, a per-profile
   incomplete note, and the declaring occurrence's name when another selection's
   `affects` selector routed the change;
+- debounced autosave to an already-active roster draft, leaving never-saved
+  rosters out of the draft shelf;
 - unsaved-change tracking with a workspace indicator and a reload guard, since
   saving is manual and undo history is held in memory;
 - bounded in-memory undo and redo over exact immutable roster-session snapshots;

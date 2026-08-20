@@ -61,6 +61,8 @@ export interface RosterForgeAppControllerOptions {
     kind: "roster" | "force" | "selection",
   ) => string;
   readonly now?: () => string;
+  /** Debounce before an active draft is rewritten. See {@link defaultAutosaveDelayMs}. */
+  readonly autosaveDelayMs?: number;
 }
 
 export type LoadState =
@@ -94,6 +96,14 @@ export type DraftShelfState =
       readonly diagnostics: readonly Diagnostic[];
     };
 
+/**
+ * How long the roster must sit unchanged before an active draft is rewritten.
+ *
+ * Long enough that a burst of edits writes once, short enough that a closed tab
+ * loses seconds rather than minutes.
+ */
+export const defaultAutosaveDelayMs = 2_000;
+
 export interface ActiveDraft {
   readonly id: string;
   readonly createdAt: string;
@@ -115,6 +125,7 @@ export function useRosterForgeAppController({
   createDraftId = defaultDraftId,
   createEntityId = defaultEntityId,
   now = () => new Date().toISOString(),
+  autosaveDelayMs = defaultAutosaveDelayMs,
 }: RosterForgeAppControllerOptions) {
   const importSequence = useRef(0);
   const draftListSequence = useRef(0);
@@ -588,8 +599,39 @@ export function useRosterForgeAppController({
     });
   }
 
-  // An unsaved roster is lost on reload: saving is manual and history is held
-  // in memory. Say so, and make the browser ask before discarding it.
+  // Once a roster has an active draft the user has already asked for it to be
+  // kept, so keeping it current needs no further prompting. This deliberately
+  // does not create a draft for a roster that has never been saved: that would
+  // fill the shelf with entries nobody asked for, at roughly 8 MB of catalogue
+  // bytes each. The recovery slot covers that case instead.
+  const saveRef = useRef(saveRosterDraft);
+  saveRef.current = saveRosterDraft;
+  const pendingRoster = rosterSession?.roster;
+  useEffect(() => {
+    if (activeDraft === undefined) return undefined;
+    if (pendingRoster === undefined || pendingRoster === persistedRoster) {
+      return undefined;
+    }
+    if (draftAction.kind !== "idle") return undefined;
+    // Depending on the roster identity restarts the timer on every edit, so a
+    // burst of changes writes once when it settles.
+    const timer = setTimeout(() => {
+      void saveRef.current();
+    }, autosaveDelayMs);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    activeDraft,
+    autosaveDelayMs,
+    draftAction.kind,
+    pendingRoster,
+    persistedRoster,
+  ]);
+
+  // An unsaved roster is lost on reload: saving is manual until a draft exists,
+  // and history is held in memory. Say so, and make the browser ask before
+  // discarding it.
   const unsavedChanges =
     rosterSession !== undefined && rosterSession.roster !== persistedRoster;
   useEffect(() => {

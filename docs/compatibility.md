@@ -86,6 +86,11 @@
   rules, and recursively nested info groups, with ordered characteristics,
   direct/linked origin, definition source filenames, and unresolved info-link
   reasons
+- Debounced autosave to an **already-active** draft, so a roster the user has
+  chosen to keep stays current without further clicks. A roster that has never
+  been saved is never given a draft automatically: each draft embeds its own
+  catalogue source bytes, roughly 8 MB for one faction closure, and the shelf
+  is meant to hold lists the user asked to keep
 - Unsaved-change tracking: the exact roster last written to or read from the
   draft store is retained, and identity against it decides whether anything has
   changed. The workspace shows an unsaved indicator and the browser asks before
