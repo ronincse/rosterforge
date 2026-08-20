@@ -259,6 +259,73 @@ export function evaluationSelectionIdentityCandidate(
   return { occurrence, resolution, status, effectiveIds };
 }
 
+/**
+ * Where a typed scope resolved to, or that it could not be resolved.
+ *
+ * An absent `occurrence` with `unresolved: false` means the roster genuinely
+ * has no ancestor of that type, which is a different answer from not knowing.
+ */
+export interface TypedSelectionScopeResolution {
+  readonly occurrence?: RosterSelection;
+  readonly unresolved: boolean;
+}
+
+/** The selection-entry types a typed scope name accepts. */
+export function typedSelectionTypes(
+  scope: string | undefined,
+): readonly string[] | undefined {
+  switch (scope) {
+    case "unit":
+      return ["unit"];
+    case "model":
+      return ["model"];
+    case "model-or-unit":
+      return ["model", "unit"];
+    case "upgrade":
+      return ["upgrade"];
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The nearest ancestor-or-self whose definition carries one of `types`.
+ *
+ * Shared by condition and constraint scope resolution: `unit`, `model`,
+ * `model-or-unit`, and `upgrade` all name a containing entry by its type.
+ */
+export function nearestTypedSelection(
+  owner: RosterSelectionLocation,
+  choices: EvaluationChoiceIndex,
+  catalogueMatches: boolean,
+  types: readonly string[],
+): TypedSelectionScopeResolution {
+  for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
+    const resolution = resolveEvaluationSelection(
+      occurrence,
+      choices,
+      catalogueMatches,
+    );
+    const typedStates = resolution.choices.map(
+      (choice) =>
+        choice.kind === "selectionEntry" &&
+        choice.type !== undefined &&
+        types.includes(choice.type),
+    );
+    if (typedStates.length > 0 && typedStates.every(Boolean)) {
+      return { occurrence, unresolved: false };
+    }
+    if (
+      resolution.status === "resolved" ||
+      (typedStates.length > 0 && typedStates.every((value) => !value))
+    ) {
+      continue;
+    }
+    return { unresolved: true };
+  }
+  return { unresolved: false };
+}
+
 export function evaluationSelectionScope(
   roster: Roster,
   owner: RosterSelectionLocation,

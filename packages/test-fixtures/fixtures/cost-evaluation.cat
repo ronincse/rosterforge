@@ -32,6 +32,30 @@
         <cost name="supply" typeId="cost-supply" value="0" />
       </costs>
     </selectionEntry>
+    <selectionEntry id="scope-unit" name="Scope Unit" type="unit">
+      <selectionEntries>
+        <selectionEntry id="scope-model-a" name="Scope Model A" type="model">
+          <selectionEntries>
+            <selectionEntry id="scope-weapon-a" name="Scope Weapon A"
+              type="upgrade">
+              <constraints>
+                <!-- Counted across the containing unit, not the model, so two
+                     models each taking one still breaks the cap. -->
+                <constraint id="scope-weapon-a-max" type="max"
+                  field="selections" scope="unit" value="1" shared="true"
+                  includeChildSelections="true" />
+              </constraints>
+            </selectionEntry>
+          </selectionEntries>
+        </selectionEntry>
+        <selectionEntry id="scope-model-b" name="Scope Model B" type="model">
+          <selectionEntries>
+            <entryLink id="scope-weapon-link" name="Scope Weapon A"
+              targetId="scope-weapon-a" type="selectionEntry" />
+          </selectionEntries>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="cost-issues" name="Incomplete Costs" type="unit">
       <costs>
         <cost name="untyped" value="3" />

@@ -29,6 +29,8 @@ import {
   type EvaluationSelectionResolution,
   type EvaluationSelectionScope,
   type RosterSelectionLocation,
+  nearestTypedSelection,
+  typedSelectionTypes,
 } from "./selection-context.js";
 import {
   evaluateNumericModifierSequence,
@@ -597,15 +599,35 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     limit >= 0 &&
     constraint.percentValue !== true &&
     attributes.length === 0;
-  const occurrences = canCollect
-    ? evaluationSelectionScope(
-        roster,
-        ownerLocations[0] as RosterSelectionLocation,
-        scope,
-        constraint.includeChildSelections === true,
-        constraint.includeChildForces === true,
-      )
-    : [];
+  // A typed scope counts inside the nearest containing entry of that type, so
+  // it has to be resolved before the scope can be walked. An unresolvable one
+  // withholds the count rather than falling back to a wider set.
+  const typedScopeTypes = typedSelectionTypes(constraint.scope);
+  const typedScope =
+    canCollect && typedScopeTypes !== undefined
+      ? nearestTypedSelection(
+          ownerLocations[0] as RosterSelectionLocation,
+          choices,
+          catalogueMatches,
+          typedScopeTypes,
+        )
+      : undefined;
+  const typedScopeUsable =
+    typedScopeTypes === undefined ||
+    (typedScope !== undefined &&
+      !typedScope.unresolved &&
+      typedScope.occurrence !== undefined);
+  const occurrences =
+    canCollect && typedScopeUsable
+      ? evaluationSelectionScope(
+          roster,
+          ownerLocations[0] as RosterSelectionLocation,
+          scope,
+          constraint.includeChildSelections === true,
+          constraint.includeChildForces === true,
+          typedScope?.occurrence,
+        )
+      : [];
   const candidates = occurrences.map((occurrence) =>
     evaluationSelectionIdentityCandidate(
       occurrence,
@@ -910,13 +932,29 @@ function supportedConstraintType(
   return value === "min" || value === "max" ? value : undefined;
 }
 
+/**
+ * The constraint scopes this evaluator can count over.
+ *
+ * `unit`, `model`, `model-or-unit`, and `upgrade` name a containing entry by its
+ * type; `root-entry` names the top-level selection. They resolve through the
+ * same nearest-typed-ancestor walk conditions already use, so a constraint and a
+ * condition written with the same scope agree.
+ *
+ * `ancestor` stays out: it names a chain rather than one containing occurrence,
+ * and it does not appear on any corpus constraint.
+ */
 function supportedScope(
   value: string | undefined,
 ): EvaluationSelectionScope | undefined {
   return value === "self" ||
     value === "parent" ||
     value === "force" ||
-    value === "roster"
+    value === "roster" ||
+    value === "root-entry" ||
+    value === "unit" ||
+    value === "model" ||
+    value === "model-or-unit" ||
+    value === "upgrade"
     ? value
     : undefined;
 }

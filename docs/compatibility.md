@@ -268,6 +268,10 @@
   selection IDs, type tokens, and `any`
 - Six numeric count comparisons with exact or bounded counts, entry-link versus
   shared-definition identity, and conservative unresolved candidates
+- Selection-constraint scopes `unit`, `model`, `model-or-unit`, `upgrade`, and
+  `root-entry`, resolved through the same nearest-typed-ancestor walk conditions
+  use, so a constraint and a condition written with the same scope agree; an
+  unresolvable typed scope withholds the count rather than widening it
 - Read-only non-negative `min`/`max` selection-constraint reports for self,
   parent, force, and roster scopes, with bounded counts and no validity state
 - Ordered per-selection constraint collections retaining every projected child
@@ -484,10 +488,10 @@ evaluator accepts, **25,932 (98.8%) already fit**:
 | Supported | 25,932 |
 | ID-valued (category) scope | 116 |
 | Carries `automatic` | 109 |
-| `unit` scope | 69 |
-| `root-entry` scope | 19 |
-| `model` scope | 13 |
 | `field="associations"` | 1 |
+
+The 101 `unit`, `model`, and `root-entry` scopes are now supported, so the
+remaining shape gap is 226 constraints — under 1%.
 
 By kind they are overwhelmingly structural counts: 14,667 `max selections` and
 7,595 `min selections`, then 3,958 Crusade limits. Only 19 target `pts`

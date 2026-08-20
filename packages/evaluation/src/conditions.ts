@@ -35,7 +35,6 @@ import {
   evaluationSelectionTree,
   evaluationSelectionsInForces,
   indexEvaluationChoices,
-  resolveEvaluationSelection,
   rosterMatchesCatalogueContext,
   rosterSelectionLocations,
   type EffectiveCategoryIndex,
@@ -44,6 +43,9 @@ import {
   type EvaluationSelectionIdentityCandidate,
   type EvaluationSelectionScope,
   type RosterSelectionLocation,
+  nearestTypedSelection,
+  typedSelectionTypes,
+  type TypedSelectionScopeResolution,
 } from "./selection-context.js";
 
 export type RosterConditionComparison =
@@ -179,10 +181,6 @@ export interface RosterSelectionConditionGroupReport<
   readonly localConditionGroups: readonly RosterLocalConditionGroupSource[];
 }
 
-interface TypedSelectionScopeResolution {
-  readonly occurrence?: RosterSelection;
-  readonly unresolved: boolean;
-}
 
 type IdSelectionScopeStatus =
   | "notApplicable"
@@ -1091,37 +1089,6 @@ function comparisonStatus(
   return "unresolved";
 }
 
-function nearestTypedSelection(
-  owner: RosterSelectionLocation,
-  choices: EvaluationChoiceIndex,
-  catalogueMatches: boolean,
-  types: readonly string[],
-): TypedSelectionScopeResolution {
-  for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
-    const resolution = resolveEvaluationSelection(
-      occurrence,
-      choices,
-      catalogueMatches,
-    );
-    const typedStates = resolution.choices.map(
-      (choice) =>
-        choice.kind === "selectionEntry" &&
-        choice.type !== undefined &&
-        types.includes(choice.type),
-    );
-    if (typedStates.length > 0 && typedStates.every(Boolean)) {
-      return { occurrence, unresolved: false };
-    }
-    if (
-      resolution.status === "resolved" ||
-      (typedStates.length > 0 && typedStates.every((value) => !value))
-    ) {
-      continue;
-    }
-    return { unresolved: true };
-  }
-  return { unresolved: false };
-}
 
 function nearestIdentitySelection(
   owner: RosterSelectionLocation,
@@ -1289,22 +1256,6 @@ function selectionCountScope(
   );
 }
 
-function typedSelectionTypes(
-  scope: RosterConditionScope | undefined,
-): readonly string[] | undefined {
-  switch (scope) {
-    case "unit":
-      return ["unit"];
-    case "model":
-      return ["model"];
-    case "model-or-unit":
-      return ["model", "unit"];
-    case "upgrade":
-      return ["upgrade"];
-    default:
-      return undefined;
-  }
-}
 
 function idSelectionScope(
   scope: RosterConditionScope | undefined,

@@ -79,6 +79,46 @@ describe("roster selection constraints", () => {
     expect(resolution.choices[0]?.occurrence).toBe(selected.occurrence);
   });
 
+  it("counts a unit-scoped constraint across the whole unit", () => {
+    const context = catalogueContext();
+    let roster = addRootSelection(emptyRoster(context), choice(context, "scope-unit"), "scope-root");
+    const addChild = (parent: string, id: string, child: string): void => {
+      roster = successful(
+        addRosterSelectionToSelection(roster, selectionOccurrenceId(parent), {
+          id: selectionOccurrenceId(child),
+          definition: {
+            kind: choice(context, id).kind,
+            key: projectionKey(choice(context, id).occurrence),
+            ...(choice(context, id).id === undefined
+              ? {}
+              : { sourceId: choice(context, id).id }),
+          },
+        }),
+      );
+    };
+    addChild("scope-root", "scope-model-a", "model-a");
+    addChild("scope-root", "scope-model-b", "model-b");
+    addChild("model-a", "scope-weapon-a", "weapon-a");
+    addChild("model-b", "scope-weapon-a", "weapon-b");
+
+    const inspected = inspectRosterSelectionConstraintsInRoster(roster, context);
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    const report = inspected.value.selections
+      .flatMap(({ constraints }) => constraints)
+      .find(
+        (candidate) =>
+          candidate.constraint.node.attributes["id"] === "scope-weapon-a-max",
+      );
+    expect(report).toBeDefined();
+
+    // Each model holds one, so a `parent` scope would see 1 and pass. Counted
+    // across the unit it is 2, which is what the cap actually means.
+    expect(report?.observed).toBe(2);
+    expect(report?.limit).toBe(1);
+    expect(report?.status).toBe("violated");
+  });
+
   it("collects selection reports in deterministic roster order", () => {
     const context = catalogueContext();
     const alpha = choice(context, "entry-alpha");

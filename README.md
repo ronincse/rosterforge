@@ -80,6 +80,8 @@ This repository currently contains the first development slice:
 - focused responsive roster-building workspace with persistent Roster, Add
   units, and Checks navigation plus separate selected-roster and
   catalogue-browser panes;
+- selection constraints counted over `unit`, `model`, `model-or-unit`,
+  `upgrade`, and `root-entry` scopes as well as self, parent, force, and roster;
 - occurrence-level direct and linked rule/profile details with characteristics,
   source filenames, and observable unresolved info links;
 - headless read-only characteristic-display reports for one profile and one
