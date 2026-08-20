@@ -275,6 +275,26 @@ describe.skipIf(realDataDirectory === undefined)(
           characteristicTargetsSupported: 1_246,
         });
         expect(
+          selectionAnnotationModifierSummary(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual({
+          total: 68,
+          direct: 53,
+          routed: 15,
+          grouped: 61,
+          ungrouped: 7,
+          set: 39,
+          append: 29,
+          withConditions: 52,
+          withConditionGroups: 16,
+          withRepeats: 0,
+          missingJoin: 7,
+          scoped: 0,
+          withFilterId: 0,
+        });
+
+        expect(
           categoryModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -2111,6 +2131,56 @@ function projectedModifiersWithOwnership(
     }
   }
   return rows;
+}
+
+function selectionAnnotationModifierSummary(
+  projections: readonly BattleScribeProjection[],
+): Readonly<Record<string, number>> {
+  const counts: Record<string, number> = {
+    total: 0,
+    direct: 0,
+    routed: 0,
+    grouped: 0,
+    ungrouped: 0,
+    set: 0,
+    append: 0,
+    withConditions: 0,
+    withConditionGroups: 0,
+    withRepeats: 0,
+    missingJoin: 0,
+    scoped: 0,
+    withFilterId: 0,
+  };
+  const add = (key: string): void => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+
+  for (const { modifier, grouped } of projectedModifiersWithOwnership(
+    projections,
+  )) {
+    if (modifier.field !== "annotation") continue;
+    const affects = modifier.node.attributes["affects"];
+    if (affects !== undefined) {
+      const selector = parseBattleScribeAffectsSelector(affects);
+      if (selector.target !== "selections") continue;
+      add("routed");
+      if (selector.filterId !== undefined) add("withFilterId");
+    } else {
+      add("direct");
+    }
+    add("total");
+    add(grouped ? "grouped" : "ungrouped");
+    if (modifier.type === "set") add("set");
+    if (modifier.type === "append") {
+      add("append");
+      if (modifier.node.attributes["join"] === undefined) add("missingJoin");
+    }
+    if (modifier.conditions.length > 0) add("withConditions");
+    if (modifier.conditionGroups.length > 0) add("withConditionGroups");
+    if (modifier.repeats.length > 0) add("withRepeats");
+    if (modifier.scope !== undefined) add("scoped");
+  }
+  return counts;
 }
 
 function projectedSelectionEntryIds(

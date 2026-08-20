@@ -14,6 +14,7 @@ import type { Roster, RosterSelection } from "@rosterforge/roster-model";
 import { parseBattleScribeAffectsSelector } from "./affects.js";
 import {
   affectsModifiers,
+  collectAffectsRoutedSelectionModifiers,
   hasAffectsModifier,
   reaches,
   resolveAffectsAnchor,
@@ -114,6 +115,14 @@ export interface RosterCharacteristicProfileSource<
   readonly typeName?: string;
   readonly hidden?: boolean;
   readonly characteristics: readonly Characteristic[];
+  readonly modifiers: readonly Modifier[];
+  readonly modifierGroups: readonly RosterModifierGroupSource<Modifier>[];
+}
+
+export interface RosterSelectionAnnotationSource<
+  Modifier extends RosterCharacteristicModifierSource =
+    RosterCharacteristicModifierSource,
+> {
   readonly modifiers: readonly Modifier[];
   readonly modifierGroups: readonly RosterModifierGroupSource<Modifier>[];
 }
@@ -269,6 +278,29 @@ export interface RosterProfileAnnotationReport<
   readonly value?: string;
   readonly steps: readonly RosterCharacteristicStep<
     Profile["modifiers"][number]
+  >[];
+  readonly completeness: ValidationCompleteness;
+}
+
+/**
+ * The effective display annotation decorating one roster selection's name.
+ *
+ * The source name remains unchanged. `value` is only the text rendered in
+ * parentheses after it and is absent when an applicable step cannot be applied.
+ */
+export interface RosterSelectionAnnotationReport<
+  Choice extends RosterSelectionAnnotationSource =
+    RosterSelectionAnnotationSource,
+> {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
+  readonly choice: Choice;
+  /** Always empty: no corpus node declares an annotation of its own. */
+  readonly baseValue: string;
+  readonly value?: string;
+  readonly steps: readonly RosterCharacteristicStep<
+    Choice["modifiers"][number]
   >[];
   readonly completeness: ValidationCompleteness;
 }
@@ -675,6 +707,203 @@ export function evaluateRosterProfileAnnotation<
   );
 }
 
+/**
+ * Reports the effective display annotation decorating one exact roster
+ * selection occurrence.
+ *
+ * Direct modifiers on the selected definition run first, followed by its
+ * modifier groups in source order and then modifiers routed to this occurrence
+ * by a selections-terminus `affects` selector. Profile-terminus annotation
+ * modifiers are a separate surface and are ignored here.
+ */
+export function evaluateRosterSelectionAnnotation<
+  Choice extends RosterSelectionAnnotationSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  choice: Choice,
+): Result<RosterSelectionAnnotationReport<Choice>> {
+  type Modifier = Choice["modifiers"][number];
+
+  const diagnostics: Diagnostic[] = [];
+  const steps: RosterCharacteristicStep<Modifier>[] = [];
+  const effectiveCategories = effectiveRosterCategories(roster, context);
+  let lost = false;
+
+  const run = (
+    modifier: Modifier,
+    grouped: boolean,
+    applicability: NumericModifierApplicability,
+    origin: RosterCharacteristicStepOrigin,
+    declaredBy: RosterSelection,
+  ): void => {
+    const step = evaluateStep<Modifier>(
+      currentValue(steps, ""),
+      modifier,
+      grouped,
+      applicability,
+      origin,
+      declaredBy,
+    );
+    steps.push(step.step);
+    diagnostics.push(...step.diagnostics);
+  };
+
+  for (const modifier of choice.modifiers.filter(
+    (candidate) =>
+      candidate.field === annotationField &&
+      candidate.node.attributes["affects"] === undefined,
+  )) {
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      modifier,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      modifier,
+      false,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "own",
+      owner,
+    );
+  }
+
+  const groupTargetsOwnAnnotation = (
+    group: RosterModifierGroupSource<Modifier>,
+  ): boolean =>
+    group.modifiers.some(
+      (modifier) =>
+        modifier.field === annotationField &&
+        modifier.node.attributes["affects"] === undefined,
+    ) || group.modifierGroups.some(groupTargetsOwnAnnotation);
+  const groupedOwnAnnotationCount = (
+    group: RosterModifierGroupSource<Modifier>,
+  ): number =>
+    group.modifiers.filter(
+      (modifier) =>
+        modifier.field === annotationField &&
+        modifier.node.attributes["affects"] === undefined,
+    ).length +
+    group.modifierGroups.reduce(
+      (count, child) => count + groupedOwnAnnotationCount(child),
+      0,
+    );
+
+  const relevantGroups = choice.modifierGroups.filter(
+    groupTargetsOwnAnnotation,
+  );
+  const groupReports: RosterModifierGroupApplicabilityReport<
+    Choice["modifierGroups"][number]
+  >[] = [];
+  for (const group of relevantGroups) {
+    const evaluated = evaluateRosterModifierGroupApplicability(
+      roster,
+      context,
+      owner,
+      group,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    groupReports.push(evaluated.value);
+  }
+  const grouped = collectRosterModifierGroupExecution<Modifier>(
+    groupReports,
+    annotationField,
+  );
+  const groupedEntries = grouped.entries.filter(
+    ({ modifier }) => modifier.node.attributes["affects"] === undefined,
+  );
+  const expectedGrouped = relevantGroups.reduce(
+    (count, group) => count + groupedOwnAnnotationCount(group),
+    0,
+  );
+  if (
+    groupReports.length !== relevantGroups.length ||
+    groupedEntries.length !== expectedGrouped
+  ) {
+    lost = true;
+  }
+  for (const entry of groupedEntries) {
+    run(
+      entry.modifier,
+      true,
+      !entry.evaluated || entry.status === "unresolved"
+        ? "unresolved"
+        : entry.status,
+      "own",
+      owner,
+    );
+  }
+
+  const routed =
+    collectAffectsRoutedSelectionModifiers<RosterCharacteristicModifierSource>(
+      roster,
+      context,
+      owner,
+      annotationField,
+    );
+  if (routed.partial) lost = true;
+  for (const entry of routed.modifiers) {
+    if (entry.selector.filterId !== undefined) {
+      const categories = effectiveCategories.get(owner);
+      if (categories === undefined) {
+        lost = true;
+        continue;
+      }
+      if (!categories.includes(entry.selector.filterId)) continue;
+    }
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      entry.declaredBy,
+      entry.modifier,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      entry.modifier as Modifier,
+      entry.grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "affects",
+      entry.declaredBy,
+    );
+  }
+
+  const value = lost ? undefined : effectiveValue(steps, "");
+  return success(
+    {
+      roster,
+      context,
+      owner,
+      choice,
+      baseValue: "",
+      ...(value === undefined ? {} : { value }),
+      completeness:
+        lost || steps.some(({ status }) => status === "unapplied")
+          ? "incomplete"
+          : "complete",
+      steps,
+    },
+    diagnostics,
+  );
+}
+
 export function evaluateRosterProfileVisibility<
   Profile extends RosterCharacteristicProfileSource,
 >(
@@ -862,8 +1091,8 @@ function evaluateStep<
   if (modifier.repeats.length > 0) {
     issues.push("repeated");
   }
-  // `affects` overrides `scope` in New Recruit, which is what authors target
-  // when they write both, so a routed modifier's scope is not an issue.
+  // Routed evaluation has already used `scope` to choose the selector anchor,
+  // so that scope is supported rather than an issue on the reached target.
   if (modifier.scope !== undefined && origin === "own") {
     issues.push("scoped");
   }
@@ -960,11 +1189,9 @@ function evaluateStep<
       issues.push(separator.issue);
     } else if (modifier.value !== undefined) {
       // Appending onto an empty value emits no separator, the way any ordinary
-      // join behaves. Confirmed against New Recruit on 2026-08-20: the corpus's
-      // 590 `annotation` modifiers all append through a `", "` separator onto a
-      // field no node ever declares, so every one of them starts from empty --
-      // and a Manreaper carrying one displays "(Furnace of Plagues)", not
-      // "(, Furnace of Plagues)".
+      // join behaves. Confirmed against New Recruit on 2026-08-20: annotation
+      // fields start empty, and a Manreaper carrying one displays
+      // "(Furnace of Plagues)", not "(, Furnace of Plagues)".
       output =
         input === ""
           ? modifier.value

@@ -19,14 +19,7 @@ import {
   type EvaluationSelectionChoice,
 } from "./selection-context.js";
 
-import { parseBattleScribeAffectsSelector } from "./affects.js";
-import {
-  affectsModifiers,
-  hasAffectsModifier,
-  reaches,
-  resolveAffectsAnchor,
-  routeFromAnchor,
-} from "./affects-routing.js";
+import { collectAffectsRoutedSelectionModifiers } from "./affects-routing.js";
 
 import {
   evaluateRosterModifierApplicability,
@@ -586,9 +579,9 @@ export function modifierTargetedCategoryIds(
 /**
  * Category modifiers that an `affects` selector routes to this occurrence.
  *
- * The selector must terminate at an occurrence rather than at a profile: a
- * `category` field lives on the selection, so a `profiles.<typeName>` path
- * names something this modifier cannot change.
+ * The shared collector owns traversal and anchoring. This caller owns filter
+ * membership because category pass one must use modifier immunity rather than
+ * recursively consulting the effective-category index it is building.
  */
 function collectAffectsRoutedCategoryModifiers(
   roster: Roster,
@@ -599,78 +592,33 @@ function collectAffectsRoutedCategoryModifiers(
   readonly contributions: readonly InboundCategoryContribution[];
   readonly partial: boolean;
 } {
-  if (!rosterMatchesCatalogueContext(roster, context)) {
-    return { contributions: [], partial: false };
-  }
-  const choices = indexEvaluationChoices(context);
-  const locations = rosterSelectionLocations(roster);
-  const ownerLocation = locations.find(
-    (location) => location.occurrence === owner,
-  );
-  if (ownerLocation === undefined) {
-    return { contributions: [], partial: false };
-  }
-
-  // Any occurrence in the roster can declare a selector that reaches here: a
-  // scope may anchor it at a shared ancestor, which is exactly how an
-  // enhancement reaches its bearer's weapons without being their parent.
-  // Roster document order keeps step order deterministic.
-  const candidates = locations.map(({ occurrence }) => occurrence);
+  const routed =
+    collectAffectsRoutedSelectionModifiers<RosterCategoryModifierSource>(
+      roster,
+      context,
+      owner,
+      categoryField,
+    );
   const contributions: InboundCategoryContribution[] = [];
-  let partial = false;
+  let partial = routed.partial;
 
-  for (const declarer of candidates) {
-    const resolution = resolveEvaluationSelection(declarer, choices, true);
-    const choice = resolution.choices[0];
-    if (resolution.status !== "resolved" || choice === undefined) {
-      // An unreadable ancestor might declare a selector aimed here.
-      partial = true;
-      continue;
-    }
-    if (!hasAffectsModifier(choice)) continue;
-
-    for (const entry of affectsModifiers(choice)) {
-      const modifier = entry.modifier as RosterCategoryModifierSource;
-      if (modifier.field !== categoryField) continue;
-      const value = modifier.node.attributes["affects"];
-      if (value === undefined) continue;
-      const selector = parseBattleScribeAffectsSelector(value);
-      if (!selector.supported || selector.target !== "selections") {
-        // Unsupported traversal, or a path naming profiles this modifier
-        // cannot change. Either way it might have been aimed here.
+  for (const entry of routed.modifiers) {
+    const { modifier, selector } = entry;
+    if (selector.filterId !== undefined) {
+      if (modifierTargetedCategoryIds(context).has(selector.filterId)) {
+        // Some modifier can change membership in the filter category, so pass
+        // one cannot decide whether this occurrence qualifies.
         partial = true;
         continue;
       }
-      // `scope` names where the selector stands; `affects` names where it
-      // walks. Confirmed in New Recruit.
-      const anchor = resolveAffectsAnchor(
-        declarer,
-        modifier.scope,
-        locations,
-        choices,
-      );
-      if (anchor.kind !== "resolved") {
-        partial = true;
-        continue;
-      }
-      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
-      if (!reaches(selector, route)) continue;
-      if (selector.filterId !== undefined) {
-        if (modifierTargetedCategoryIds(context).has(selector.filterId)) {
-          // Some modifier can change membership in the filter category, so
-          // pass one cannot decide whether this occurrence qualifies.
-          partial = true;
-          continue;
-        }
-        if (!staticCategories.includes(selector.filterId)) continue;
-      }
-      contributions.push({
-        modifier,
-        grouped: entry.grouped,
-        origin: "affects",
-        declaredBy: declarer,
-      });
+      if (!staticCategories.includes(selector.filterId)) continue;
     }
+    contributions.push({
+      modifier,
+      grouped: entry.grouped,
+      origin: "affects",
+      declaredBy: entry.declaredBy,
+    });
   }
   return { contributions, partial };
 }
@@ -830,8 +778,8 @@ function unsupportedAttributes(
   origin: RosterCategoryStepOrigin = "own",
 ): readonly string[] {
   const supported = new Set(["type", "field", "value", "scope", "comment"]);
-  // A routed modifier reached this occurrence *because* of its selector, and
-  // `affects` overrides `scope`, so neither counts against it.
+  // A routed modifier reached this occurrence because `scope` chose its
+  // anchor and `affects` walked from there, so neither counts against it.
   if (origin === "affects") {
     supported.add("affects");
   }

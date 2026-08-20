@@ -87,8 +87,8 @@ export interface AffectsSelector {
  *
  * The supported shape is any arrangement of the traversal keywords `self`,
  * `entries`, `group`, and `recursive`, followed by an optional filter ID and
- * `profiles.<profileTypeName>`. Force traversal and paths that stop at an entry
- * rather than a profile are recorded as unsupported instead of being guessed.
+ * either `profiles.<profileTypeName>` or the selection terminus itself. Force
+ * traversal is recorded as unsupported instead of being guessed.
  */
 export function parseBattleScribeAffectsSelector(
   value: string,

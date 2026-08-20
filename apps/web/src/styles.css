@@ -1702,6 +1702,13 @@ h1 {
   font-weight: 800;
 }
 
+.selection-annotation-completeness {
+  margin: 6px 0 0;
+  color: #7d641f;
+  font-size: 0.58rem;
+  line-height: 1.35;
+}
+
 .child-choice-list {
   display: flex;
   align-items: flex-start;

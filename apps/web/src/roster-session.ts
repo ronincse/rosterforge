@@ -12,6 +12,7 @@ import {
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
+  evaluateRosterSelectionAnnotation,
   evaluateRosterSelectionCategories,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
@@ -30,6 +31,7 @@ import {
   type RosterProfileAnnotationReport,
   type RosterProfileCharacteristicReport,
   type RosterProfileVisibilityReport,
+  type RosterSelectionAnnotationReport,
   type RosterSelectionCategoryReport,
   type RosterSelectionInitializationPlan,
   type RosterSelectionChoiceGroupInspection,
@@ -494,6 +496,38 @@ export function inspectLocalRosterConstraints(
       forces: forces.value,
     },
     diagnostics,
+  );
+}
+
+/**
+ * Evaluates the display annotation decorating one exact roster selection name.
+ *
+ * This adapter resolves the selected occurrence and materialized choice only;
+ * operation, applicability, and routing semantics stay in `evaluation`.
+ */
+export function inspectLocalRosterSelectionAnnotation(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<RosterSelectionAnnotationReport> {
+  const occurrence = findRosterSelection(session.roster.forces, selectionId);
+  const choice = session.selectionChoices.get(selectionId);
+  if (occurrence === undefined || choice === undefined) {
+    return failure([
+      {
+        code: "APP_ROSTER_ANNOTATION_SELECTION_UNAVAILABLE",
+        message:
+          "A selection annotation inspection requires a known roster selection occurrence and its materialized choice.",
+        severity: "error",
+        impacts: ["validation"],
+        details: { selectionId },
+      },
+    ]);
+  }
+  return evaluateRosterSelectionAnnotation(
+    session.roster,
+    session.catalogue.context,
+    occurrence,
+    choice,
   );
 }
 

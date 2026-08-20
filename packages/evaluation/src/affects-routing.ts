@@ -1,7 +1,17 @@
-import type { RosterSelection } from "@rosterforge/roster-model";
+import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
+
+import type { Roster, RosterSelection } from "@rosterforge/roster-model";
 
 import {
+  parseBattleScribeAffectsSelector,
+  type AffectsSelector,
+} from "./affects.js";
+
+import {
+  indexEvaluationChoices,
   resolveEvaluationSelection,
+  rosterMatchesCatalogueContext,
+  rosterSelectionLocations,
   type EvaluationChoiceIndex,
   type EvaluationSelectionChoice,
 } from "./selection-context.js";
@@ -31,7 +41,9 @@ export interface AffectsDeclaredModifier<Modifier> {
   readonly grouped: boolean;
 }
 
-interface AffectsModifierSource {
+export interface AffectsModifierSource {
+  readonly field?: string;
+  readonly scope?: string;
   readonly node: { readonly attributes: Readonly<Record<string, string>> };
 }
 
@@ -266,4 +278,94 @@ export function hasAffectsModifier<Modifier extends AffectsModifierSource>(
   choice: AffectsModifierContainer<Modifier>,
 ): boolean {
   return affectsModifiers(choice).length > 0;
+}
+
+export interface AffectsRoutedSelectionModifier<
+  Modifier extends AffectsModifierSource = AffectsModifierSource,
+> {
+  readonly modifier: Modifier;
+  readonly grouped: boolean;
+  readonly declaredBy: RosterSelection;
+  readonly selector: AffectsSelector;
+}
+
+export interface AffectsRoutedSelectionModifiers<
+  Modifier extends AffectsModifierSource = AffectsModifierSource,
+> {
+  readonly modifiers: readonly AffectsRoutedSelectionModifier<Modifier>[];
+  /** True when a relevant selector might reach the occurrence but cannot be resolved. */
+  readonly partial: boolean;
+}
+
+/**
+ * Collects one field's modifiers whose `affects` path terminates at an exact
+ * roster selection occurrence.
+ *
+ * This is the common traversal half shared by category and selection-display
+ * evaluation. It deliberately leaves an optional filter ID to the caller:
+ * category evaluation must use its modifier-immunity rule to avoid a cycle,
+ * while other fields can consult the effective-category index directly.
+ */
+export function collectAffectsRoutedSelectionModifiers<
+  Modifier extends AffectsModifierSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  field: string,
+): AffectsRoutedSelectionModifiers<Modifier> {
+  if (!rosterMatchesCatalogueContext(roster, context)) {
+    return { modifiers: [], partial: false };
+  }
+  const choices = indexEvaluationChoices(context);
+  const locations = rosterSelectionLocations(roster);
+  if (!locations.some(({ occurrence }) => occurrence === owner)) {
+    return { modifiers: [], partial: false };
+  }
+
+  const collected: AffectsRoutedSelectionModifier<Modifier>[] = [];
+  let partial = false;
+  for (const { occurrence: declarer } of locations) {
+    const resolution = resolveEvaluationSelection(declarer, choices, true);
+    const choice = resolution.choices[0];
+    if (resolution.status !== "resolved" || choice === undefined) {
+      // An unreadable occurrence might declare a selector aimed here.
+      partial = true;
+      continue;
+    }
+    if (!hasAffectsModifier(choice)) continue;
+
+    for (const entry of affectsModifiers(choice)) {
+      if (entry.modifier.field !== field) continue;
+      const value = entry.modifier.node.attributes["affects"];
+      if (value === undefined) continue;
+      const selector = parseBattleScribeAffectsSelector(value);
+      // A profile terminus targets a different object even when it uses the
+      // same field name, as `annotation` does in the pinned corpus.
+      if (selector.target !== "selections") continue;
+      if (!selector.supported) {
+        partial = true;
+        continue;
+      }
+      const anchor = resolveAffectsAnchor(
+        declarer,
+        entry.modifier.scope,
+        locations,
+        choices,
+      );
+      if (anchor.kind !== "resolved") {
+        partial = true;
+        continue;
+      }
+      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
+      if (!reaches(selector, route)) continue;
+      collected.push({
+        modifier: entry.modifier as unknown as Modifier,
+        grouped: entry.grouped,
+        declaredBy: declarer,
+        selector,
+      });
+    }
+  }
+  return { modifiers: collected, partial };
 }

@@ -884,10 +884,9 @@ EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED
 EVALUATION_CATEGORY_MODIFIER_VALUE_MISSING
 ```
 
-Only `add` and `remove` execute, so `set-primary` and `unset-primary` produce
-the unsupported-type code. Those two are the one unsupported shape that provably
-cannot change membership, so they withhold only the report's primary
-determination; every other code withholds effective membership as well. A
+`add`, `remove`, `set-primary`, and `unset-primary` execute. A primary
+operation withholds only the report's primary determination when it cannot be
+applied; every other code withholds effective membership as well. A
 not-applicable step emits nothing and does not make the report incomplete.
 Attribute-shaped problems point to the exact modifier attribute, and `comment`
 is recognized as inert metadata. This evaluator sets no validity state, does not
@@ -934,10 +933,10 @@ them, or a `position` that is malformed or selects no match.
 Attribute-shaped problems point to the exact modifier attribute; the generic
 code points to the first unsupported attribute and keeps the complete attribute
 map in details. `comment` is recognized as inert metadata and does not trigger
-it, matching modifier groups and conditions. `set` is the only executed
-operation, so every other observed kind — including `increment`, `decrement`,
-`floor`, `ceil`, `append`, and `replace` — produces the unsupported-type code
-and leaves its step unapplied.
+it, matching modifier groups and conditions. `set`, `append`, `replace`,
+`increment`, `decrement`, `floor`, and `ceil` execute for supported shapes.
+`multiply`, `divide`, `modulo`, and unknown kinds produce the unsupported-type
+code and leave their step unapplied.
 
 Profile-visibility evaluation separately emits:
 
@@ -954,8 +953,9 @@ characteristic value.
 
 The two target codes describe routing rather than execution.
 `TARGET_MISSING` covers a profile-owned modifier with no `field`, a `field` that
-names no characteristic on its own profile, and non-characteristic display
-fields such as `name` and the observed `annotation` extension.
+names no characteristic on its own profile, and unsupported
+non-characteristic display fields such as `name`. Annotation is routed to its
+own profile or selection report instead.
 `TARGET_AMBIGUOUS` covers a profile that repeats one characteristic type; no
 match is chosen. Both keep the modifier observable in `unroutedModifiers` and
 make the profile report incomplete.
@@ -966,6 +966,16 @@ incomplete, while the effective value can still be known when no unapplied step
 follows the last applied step. Condition, modifier-group, and repeat diagnostics
 retain their ordinary codes and locations. This evaluator sets no validity state
 and never mutates a roster.
+
+The browser adapter can additionally emit:
+
+```text
+APP_ROSTER_ANNOTATION_SELECTION_UNAVAILABLE
+```
+
+It means selection-annotation inspection was requested for an occurrence or
+materialized choice absent from the current local session. It is an adapter
+failure, not a claim that the catalogue's annotation is invalid.
 
 Unresolved candidates widen the report's count interval. A report may still
 have `status: "satisfied" | "unsatisfied"` when every count inside that interval

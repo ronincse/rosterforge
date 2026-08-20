@@ -33,6 +33,7 @@ import {
   inspectLocalRosterChildChoices,
   inspectLocalRosterRootChoices,
   inspectLocalRosterSelectionCategories,
+  inspectLocalRosterSelectionAnnotation,
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
   localRosterSelectionChoice,
@@ -1246,7 +1247,18 @@ function RosterSelectionItem({
     selection.id,
   );
   const choice = localRosterSelectionChoice(session, selection.id);
+  const annotation = useMemo(
+    () => inspectLocalRosterSelectionAnnotation(session, selection.id),
+    [session, selection.id],
+  );
   const name = selection.name ?? "Unnamed selection";
+  const annotationValue = annotation.ok ? annotation.value.value : undefined;
+  const annotatedName =
+    annotationValue === undefined || annotationValue === ""
+      ? name
+      : `${name} (${annotationValue})`;
+  const annotationIncomplete =
+    !annotation.ok || annotation.value.completeness === "incomplete";
   const childrenContainAttention = selection.selections.some((child) =>
     selectionSubtreeHasAttention(child, attentionSelectionIds),
   );
@@ -1264,7 +1276,7 @@ function RosterSelectionItem({
     >
       <div className="selection-occurrence">
         <span>
-          <strong>{name}</strong>
+          <strong>{annotatedName}</strong>
           <small>{selection.id}</small>
         </span>
         <button
@@ -1275,6 +1287,11 @@ function RosterSelectionItem({
           Remove
         </button>
       </div>
+      {annotationIncomplete && (
+        <p className="selection-annotation-completeness">
+          Display annotation unresolved for this selection.
+        </p>
+      )}
       {childChoices.ok && childChoices.value.direct.length > 0 && (
         <div className="child-choice-list">
           {childChoices.value.direct.map((direct) => {

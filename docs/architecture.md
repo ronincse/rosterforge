@@ -1408,9 +1408,8 @@ model.
 
 Appending onto an **empty** value emits no separator, the way any ordinary join
 behaves. Confirmed against New Recruit on 2026-08-20 by the annotation field:
-all 590 corpus `annotation` modifiers append through a `", "` separator onto a
-field no node ever declares, so every one starts from empty — and a Manreaper
-carrying one displays `(Furnace of Plagues)`, not `(, Furnace of Plagues)`.
+annotation starts from an empty base, and a Manreaper carrying one displays
+`(Furnace of Plagues)`, not `(, Furnace of Plagues)`.
 
 One case stays unapplied: **no `join` declared at all**. Nothing establishes a
 default separator, and unlike an empty one it is not written deliberately.
@@ -1506,32 +1505,34 @@ An attribute outside the known set — anything that is not `join`, `arg`, or
 `position` — still withholds the step. Only these three are known to belong to
 specific operations, so only these three can be known noise elsewhere.
 
-### Profile annotation
+### Profile and selection annotation
 
-`evaluateRosterProfileAnnotation` reports the effective display annotation of one
-profile. Annotation decorates the profile's *name* rather than being one of its
-characteristics, so it gets its own report instead of a slot in the
-characteristic list, and it no longer costs the characteristic report its
-completeness.
+`evaluateRosterProfileAnnotation` reports the effective display annotation of
+one profile, while `evaluateRosterSelectionAnnotation` reports the decoration
+for one exact selection occurrence. Annotation decorates a source name rather
+than becoming a characteristic or replacing that source name, so each target
+gets its own report.
 
-**Its base is always empty.** No node in the pinned corpus declares an
-`annotation` of its own, so the entire value is built by modifiers — 590 of
-them, almost all `append` through a `", "` separator, and almost all routed here
-by an `affects` selector on an enhancement or upgrade elsewhere in the roster.
+**The base is always empty.** No node in the pinned corpus declares an
+`annotation` of its own, so modifiers build the entire value. The corpus has
+590 annotation modifiers in total, split by target rather than by field name:
 
-New Recruit renders it in parentheses after the name it decorates:
-`Manreaper - sweep (Furnace of Plagues)`, `Patriarch (Gene Affliction)`. Both
-were observed on 2026-08-20, and the workspace now renders profile annotations
-the same way. An unresolved annotation is omitted rather than shown partially;
-the profile's incomplete note already reports it.
+- 522 target profiles: 35 direct and 487 routed; 521 `append` and one
+  `replace`. Seventeen appends omit `join` and remain incomplete.
+- 68 target selections: 53 direct and 15 routed; 39 `set` and 29 `append`.
+  Seven appends omit `join` and remain incomplete.
 
-Annotation completeness folds into the profile's overall completeness in the
-browser inspection, alongside characteristics and visibility.
+Selection-direct modifiers and groups run first in source order, then supported
+selections-terminus `affects` modifiers in roster document order. A
+profile-terminus modifier using the same field is ignored because it decorates a
+different object.
 
-Selection-level annotation — `Patriarch (Gene Affliction)` — is not evaluated.
-It is the same field decorating a selection's name rather than a profile's, and
-it needs the selections-terminus routing collector that `categories.ts` has
-rather than the profile one this uses. 68 corpus modifiers target it.
+New Recruit renders annotations in parentheses after the name they decorate,
+and the workspace does the same for both profiles and selections. An unresolved
+annotation is omitted rather than shown partially; the relevant profile or
+selection displays an incomplete note. Profile annotation completeness folds
+into profile inspection alongside characteristics and visibility. Selection
+annotation completeness stays attached to the occurrence-name decoration.
 
 ### Reading operations and step order
 
@@ -1567,8 +1568,8 @@ unapplied step after it leaves the value unknown. A report can therefore expose
 a known effective value while remaining `incomplete`.
 
 Any profile-owned modifier that does not route to exactly one characteristic on
-its own profile — including `name`, the observed `annotation` field, and
-characteristic types belonging to another profile — is retained as an
+its own profile — including `name` and characteristic types belonging to
+another profile — is retained as an
 `unroutedModifiers` entry with a reason, diagnosed at its source location, and
 makes the report incomplete. This evaluator does not decide profile naming,
 `affects` retargeting, or info-group modifier behavior, so it cannot prove that

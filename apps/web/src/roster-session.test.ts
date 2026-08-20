@@ -18,6 +18,7 @@ import {
   inspectLocalRosterChildChoices,
   inspectLocalRosterConstraints,
   inspectLocalRosterRootChoices,
+  inspectLocalRosterSelectionAnnotation,
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterStructuralStatus,
   inspectLocalRosterSupportedValidation,
@@ -787,6 +788,42 @@ describe("createLocalRosterSession", () => {
   });
 });
 
+describe("inspectLocalRosterSelectionAnnotation", () => {
+  it("adapts one exact occurrence's annotation report", async () => {
+    const session = await characteristicSession(
+      "affects-owner",
+      "affects-owner-occurrence",
+    );
+
+    const inspected = inspectLocalRosterSelectionAnnotation(
+      session,
+      selectionOccurrenceId("affects-owner-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    expect(inspected.value).toMatchObject({
+      baseValue: "",
+      value: "Own Selection",
+      completeness: "complete",
+    });
+  });
+
+  it("rejects an occurrence that is not in the roster", async () => {
+    const session = await characteristicSession();
+
+    const inspected = inspectLocalRosterSelectionAnnotation(
+      session,
+      selectionOccurrenceId("missing-occurrence"),
+    );
+
+    expect(inspected.ok).toBe(false);
+    expect(inspected.diagnostics.map(({ code }) => code)).toEqual([
+      "APP_ROSTER_ANNOTATION_SELECTION_UNAVAILABLE",
+    ]);
+  });
+});
+
 describe("inspectLocalRosterSelectionCharacteristics", () => {
   it("reports every profile of one occurrence in render order", async () => {
     const session = await characteristicSession();
@@ -914,7 +951,10 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
   });
 });
 
-async function characteristicSession() {
+async function characteristicSession(
+  rootId = "characteristic-owner",
+  occurrenceId = "characteristic-owner-occurrence",
+) {
   const prepared = await prepareLocalCatalogueLibrary(
     [
       { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
@@ -942,7 +982,7 @@ async function characteristicSession() {
   const root = catalogue === undefined
     ? undefined
     : localRosterRootChoices(catalogue).find(
-        ({ materialized }) => materialized.id === "characteristic-owner",
+        ({ materialized }) => materialized.id === rootId,
       );
   if (catalogue === undefined || force === undefined || root === undefined) {
     throw new Error("Expected characteristic-display roster choices.");
@@ -954,7 +994,7 @@ async function characteristicSession() {
   });
   if (!created.ok) throw new Error("Expected roster creation.");
   const withOwner = addLocalRosterRootSelection(created.value, root, {
-    selectionId: selectionOccurrenceId("characteristic-owner-occurrence"),
+    selectionId: selectionOccurrenceId(occurrenceId),
   });
   if (!withOwner.ok) throw new Error("Expected owner selection.");
   return withOwner.value;

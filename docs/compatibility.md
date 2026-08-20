@@ -349,6 +349,10 @@
   by the same operations and `affects` routing as characteristics, rendered in
   parentheses after the profile name and folded into that profile's
   completeness
+- Selection display annotation as its own always-empty report, executing direct
+  and recursively grouped modifiers before selections-terminus `affects`
+  modifiers, rendered in parentheses after the occurrence name with unresolved
+  output withheld and identified
 - Characteristic `floor` and `ceil` as bounds on the selected numeric match --
   at least, and at most -- rather than rounding
 - Lexical `increment` and `decrement` on the numeric match `position` selects,
@@ -438,8 +442,7 @@
 - Profile-owned `name` modifiers; they are retained as unrouted display
   behavior and make a characteristic report incomplete rather than being
   silently ignored
-- Selection-level `annotation`, which New Recruit renders after a unit's name;
-  only profile annotation is evaluated
+
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
 - Conditional, modified, percentage, malformed, extension-driven, or
@@ -827,9 +830,19 @@ profile-owned `hidden` modifier is grouped and none sets `false`. Exactly one of
 the 13,451 projected-and-generic profiles declares a static `hidden="true"`.
 Because a `hidden` modifier cannot change a characteristic value, it no longer
 makes a characteristic report incomplete; visibility owns its own completeness.
-The remaining `annotation`, `name`, and cross-profile characteristic modifiers
-are still retained as unrouted display behavior and still make their
-characteristic report incomplete.
+The remaining `name` and cross-profile characteristic modifiers are retained as
+unrouted display behavior and still make their characteristic report
+incomplete. Annotation has its own report and no longer affects characteristic
+completeness.
+
+Across every ownership surface, the pinned corpus contains 590
+`field="annotation"` modifiers. Target-aware classification splits them into
+522 profile modifiers (35 direct, 487 routed; 521 `append`, one `replace`) and
+68 selection modifiers (53 direct, 15 routed; 39 `set`, 29 `append`). Of the
+selection forms, 61 are grouped, 52 carry conditions, 16 carry condition
+groups, none carries a repeat or scope, and none embeds a filter ID. Seven
+selection appends and 17 profile appends omit `join`; those steps remain
+observable and make only their annotation report incomplete.
 
 The pinned corpus contains 892 `field="category"` modifiers: 532 `add`, 328
 `set-primary`, 27 `remove`, and five `unset-primary`. All 892 values resolve to

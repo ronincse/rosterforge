@@ -488,6 +488,9 @@
         <!-- Traversal beyond the owner is not executed. -->
         <modifier type="set" field="characteristic-move" value='1"'
           affects="self.entries.recursive.profiles.Unit" />
+        <!-- No selector means the annotation decorates this occurrence. -->
+        <modifier type="append" field="annotation" value="Own Selection"
+          join=", " />
       </modifiers>
     </selectionEntry>
     <selectionEntry id="affects-bearer" name="Affects Bearer" type="model">
@@ -519,6 +522,11 @@
             <modifier type="replace" field="characteristic-save" arg="6"
               value="2" affects="self.entries.recursive.profiles.Unit"
               scope="model" />
+            <!-- A selections terminus decorates every reached occurrence,
+                 independently of the profile annotations below. -->
+            <modifier type="append" field="annotation"
+              value="Bearer Selection" join=", "
+              affects="self.entries.recursive" scope="model" />
             <!-- Annotation decorates the profile's name. Its base is always
                  empty, so the first append emits no separator and the second
                  joins onto it. -->
@@ -542,6 +550,10 @@
               </characteristics>
             </profile>
           </profiles>
+          <modifiers>
+            <modifier type="append" field="annotation"
+              value="Weapon Own" join=", " />
+          </modifiers>
         </selectionEntry>
       </selectionEntries>
     </selectionEntry>

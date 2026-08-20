@@ -179,6 +179,10 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           <costs>
             <cost name="Points" typeId="cost-points" value="10" />
           </costs>
+          <modifiers>
+            <modifier type="append" field="annotation"
+              value="Master-crafted" join=", " />
+          </modifiers>
           <profiles>
             <profile
               id="profile-special-weapon"
@@ -962,7 +966,7 @@ describe("App local catalogue flow", () => {
       }),
     );
     expect(await screen.findByText("selection-ui-3")).toBeTruthy();
-    expect(screen.getByText("Special Weapon")).toBeTruthy();
+    expect(screen.getByText("Special Weapon (Master-crafted)")).toBeTruthy();
     expect(within(costs).getByText("170")).toBeTruthy();
     expect(
       screen.getAllByRole("button", { name: /Add Special Weapon/u }),
@@ -974,6 +978,9 @@ describe("App local catalogue flow", () => {
     const weapon = screen.getByText("selection-ui-3").closest("li");
     expect(weapon).toBeTruthy();
     const weaponNode = within(weapon as HTMLElement);
+    expect(
+      weaponNode.getByText("Special Weapon (Master-crafted)"),
+    ).toBeTruthy();
     fireEvent.click(weaponNode.getByText("Selection details"));
     expect(
       weaponNode.getByText("Special Weapon profile (Veteran Issue)"),

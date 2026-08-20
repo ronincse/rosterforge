@@ -28,6 +28,7 @@ import {
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
+  evaluateRosterSelectionAnnotation,
 } from "./characteristics.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
@@ -457,8 +458,7 @@ describe("roster profile characteristic display", () => {
     );
 
     // Appending onto an empty value emits no separator, the way any ordinary
-    // join behaves. Every one of the corpus's 590 `annotation` modifiers
-    // starts from empty and appends through `", "`, and New Recruit shows
+    // join behaves. Annotation fields start empty, and New Recruit shows
     // "(Furnace of Plagues)" rather than "(, Furnace of Plagues)".
     expect(report.characteristics[0]).toMatchObject({
       baseValue: "",
@@ -856,6 +856,75 @@ describe("affects traversal", () => {
       "affects",
       "affects",
     ]);
+  });
+
+  it("builds an annotation declared directly on a selection", () => {
+    const setup = characteristicSetup("affects-owner");
+
+    const annotation = successful(
+      evaluateRosterSelectionAnnotation(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        setup.ownerChoice,
+      ),
+    );
+
+    expect(annotation).toMatchObject({
+      baseValue: "",
+      value: "Own Selection",
+      completeness: "complete",
+    });
+    expect(annotation.steps).toMatchObject([
+      {
+        status: "applied",
+        origin: "own",
+        input: "",
+        output: "Own Selection",
+      },
+    ]);
+  });
+
+  it("runs direct annotation before selections-terminus annotation", () => {
+    const setup = bearerSetup();
+
+    const annotation = successful(
+      evaluateRosterSelectionAnnotation(
+        setup.roster,
+        setup.context,
+        setup.weapon,
+        setup.weaponChoice,
+      ),
+    );
+
+    // Profile-terminus annotations on the same enhancement are ignored here.
+    // The weapon's own annotation runs first, then the selection-targeted one.
+    expect(annotation).toMatchObject({
+      baseValue: "",
+      value: "Weapon Own, Bearer Selection",
+      completeness: "complete",
+    });
+    expect(annotation.steps.map(({ origin, declaredBy }) => ({
+      origin,
+      declaredBy: declaredBy.id,
+    }))).toEqual([
+      { origin: "own", declaredBy: "bearer-weapon" },
+      { origin: "affects", declaredBy: "bearer-enhancement" },
+    ]);
+
+    const bearer = successful(
+      evaluateRosterSelectionAnnotation(
+        setup.roster,
+        setup.context,
+        setup.bearer,
+        setup.bearerChoice,
+      ),
+    );
+    expect(bearer).toMatchObject({
+      value: "",
+      steps: [],
+      completeness: "complete",
+    });
   });
 
   it("keeps annotation out of the characteristic report", () => {
