@@ -102,8 +102,13 @@ export type DraftShelfState =
  *
  * Long enough that a burst of edits writes once, short enough that a closed tab
  * loses seconds rather than minutes.
+ *
+ * It is deliberately not shorter. A draft record embeds its catalogue source
+ * bytes — 8.2 MB for one faction, and the app permits importing far more — and
+ * every write rewrites all of them. Until drafts reference their bytes instead
+ * of carrying them, this delay is what bounds the churn.
  */
-export const defaultAutosaveDelayMs = 2_000;
+export const defaultAutosaveDelayMs = 5_000;
 
 /** What the recovery prompt needs to describe an unsaved roster. */
 export interface RecoverableRoster {
@@ -690,13 +695,16 @@ export function useRosterForgeAppController({
     if (pendingRoster === undefined || pendingRoster === persistedRoster) {
       return undefined;
     }
+    // An active draft is already being kept current, and a draft record is
+    // expensive to rewrite, so the slot only covers rosters nothing else saves.
+    if (activeDraft !== undefined) return undefined;
     const timer = setTimeout(() => {
       void recoveryRef.current();
     }, autosaveDelayMs);
     return () => {
       clearTimeout(timer);
     };
-  }, [autosaveDelayMs, pendingRoster, persistedRoster]);
+  }, [activeDraft, autosaveDelayMs, pendingRoster, persistedRoster]);
 
   // Once the roster is persisted as a real draft the slot has nothing to
   // recover, so it is cleared rather than left to be offered next session.

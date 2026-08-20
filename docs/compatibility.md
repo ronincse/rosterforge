@@ -532,6 +532,27 @@ The remaining points-limit path is the `Override points limit?` entry, which
 uses an `increment` carrying `repeats`. Repeat shapes stay unsupported, so an
 overridden limit is reported incomplete rather than guessed.
 
+## Draft Storage Cost
+
+A draft record **embeds its catalogue source bytes**. One faction closure is
+**8.2 MB**; the app permits importing far more, and `maxTotalFileBytes` allows
+256 MB. Every write rewrites all of them, because IndexedDB replaces whole
+records and `decodeLocalRosterDraft` copies each file through
+`Uint8Array.from`.
+
+That was tolerable when saving was a button press. Autosave makes it periodic,
+so two things bound the churn today:
+
+- the autosave debounce, deliberately five seconds rather than shorter;
+- the recovery slot skipping its write whenever an active draft is already being
+  kept current, so a session writes one record rather than two.
+
+**The proper fix is to store bytes once and have drafts reference them**, keyed
+by import batch. That would also deduplicate bytes across drafts sharing a
+batch, which is the single largest storage win available. It needs a store
+schema change with a fallback for records written before it, so it is recorded
+here rather than attempted alongside the autosave work that exposed it.
+
 ## Deferred
 
 - Cache eviction and quota controls, retries, repository update discovery,
