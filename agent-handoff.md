@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (legality measured)
+## Current Status — 2026-08-21 (constraint scopes)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **437 passed, 8 skipped (445)**.
+  `git diff --check` all pass. `pnpm test` is **438 passed, 8 skipped (446)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -128,9 +128,9 @@ points limit works end to end and is now pinned.
 | Two-dimensional validity/completeness contract | Done | |
 | Structural, selection-condition, and force-constraint reports | Done | |
 | Matched-play points limit | Done | pinned: `max pts` 0 → 1000 on choosing Incursion |
-| **`unit`/`model`/`root-entry` constraint scopes** | **Next** | 101 corpus constraints; the largest remaining shape gap and ordinary matched-play limits |
+| `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
 | ID-valued (category) constraint scopes | Open | 116 corpus constraints |
-| `automatic` constraint attribute | Open | 109 corpus constraints; currently trips the unsupported-attribute check |
+| **`automatic` constraint attribute** | **Next** | 109 corpus constraints; currently trips the unsupported-attribute check. Measure what it means before supporting *or* ignoring it. |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -3255,5 +3255,73 @@ so reaching them takes two hops from the root.
 2. **`automatic`** — measure it before deciding. 109 constraints.
 3. **ID-valued constraint scopes** — 116 constraints; needs the effective
    category index, so mind the single-pass rule that governs `categories.ts`.
+
+No open questions require the owner.
+
+## Completed Assignment — Constraint Scopes, 2026-08-21
+
+Baseline `aafab17`; resulting implementation commit `ab1c7da`.
+
+### What changed
+
+`unit`, `model`, `model-or-unit`, `upgrade`, and `root-entry` now count as
+selection-constraint scopes — 101 corpus constraints, the largest remaining
+shape gap. They are ordinary matched-play weapon limits: 43 are "max 1 per
+unit", 18 "max 2 per unit".
+
+### Almost none of it was new
+
+`evaluationSelectionScope` already handled every one of these scopes, and
+`conditions.ts` already resolved a typed scope to its nearest containing entry.
+The two helpers doing it — `typedSelectionTypes` and `nearestTypedSelection` —
+were private to `conditions.ts`, so they moved to `selection-context.ts` where
+both consumers can reach them. Behavior-neutral: the condition tests passed
+unchanged before and after.
+
+The real gain is not the 101 constraints but that **a constraint and a condition
+written with the same scope now agree by construction** rather than by
+coincidence. They were two implementations of one idea.
+
+**Worth checking elsewhere:** this was the third shared-machinery extraction
+after `affects-routing.ts` and `evaluateSelectionTextField`. When a second
+consumer needs a private helper, moving it has consistently been cheaper and
+safer than reimplementing.
+
+### The refusal
+
+An unresolvable typed scope withholds the count rather than falling back to a
+wider set. A roster with no containing unit reports incomplete instead of
+silently counting the whole force, which would understate a violation.
+
+### The test uses the shape the corpus writes
+
+Two models under one unit, each taking the same weapon. A `parent` scope sees
+one and passes; counted across the unit it is two, which is what the cap means.
+Without the fix the test reads 1 and passes for the wrong reason.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **438 passed, 8 skipped (446 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Constraint coverage now
+
+226 of 26,259 corpus constraints remain outside a supported shape — under 1%:
+116 ID-valued scopes, 109 carrying `automatic`, and one `associations` field.
+
+### Next recommended boundary
+
+1. **`automatic`** — 109 constraints carry it, and `unsupportedAttributes` does
+   not list it, so every one currently trips the attribute check. **Measure what
+   it means first.** It may be inert authoring noise like `arg` on an append, or
+   it may change whether the constraint is enforced at all; those have opposite
+   correct handling.
+2. **ID-valued constraint scopes** — 116 constraints scoped to a category. Needs
+   the effective-category index, so mind the single-pass rule governing
+   `categories.ts`.
+3. **Sections C through E** — roster interchange is low priority by owner
+   decision; catalogue cache and editing durability are untouched and
+   unmeasured.
 
 No open questions require the owner.
