@@ -11,16 +11,26 @@ model at any point, so treat every checkpoint as a handoff to a stranger.
 `agent-handoff.md` is the shared status and work-order document. It is not
 Codex-specific.
 
-- At the start of every session, and before starting any checkpoint, read the
-  current status and next recommended boundary at the end of
-  `agent-handoff.md`. Then read `git status`, recent `git log`, and the
-  architecture and compatibility documents.
+- At the start of every session, and before starting any checkpoint, read
+  `agent-handoff.md`: its "Read This First", "Current Status", and "Remaining
+  Work To Feature Complete" sections, then the newest completed-assignment entry
+  at the end. Then read `git status`, recent `git log`, and the architecture and
+  compatibility documents.
 - At the end of every checkpoint, and before stopping a session, leave the
   next model a complete handoff even if the user has not named who continues.
   Keep the checkpoint bounded and independently reviewable. Commit it
-  separately, then update `agent-handoff.md` with the baseline and resulting
-  commit, exact tests and corpus measurements, remaining unsupported
-  behavior, and the next recommended boundary.
+  separately, then follow `agent-handoff.md`'s own "How To Update This
+  Document" section: append an entry with the baseline and resulting commits,
+  the decision and the alternatives rejected, exact test and corpus
+  measurements, and remaining unsupported behavior — then update the status
+  block and the roadmap table so they stay true.
+- The roadmap is the record of what is left before the product is feature
+  complete, not just of what comes next. Work you discover belongs in it even
+  when you are not the one who will do it. A finding that lives only in your
+  entry's prose is a finding the next model will not act on.
+- If you disprove an earlier conclusion, mark the superseded entry at its top
+  and say so in your own. Never leave two contradictory answers in the file
+  without saying which won.
 - Treat `AGENTS.md` and the package boundaries as authoritative when a handoff
   note is stale or ambiguous. Preserve existing user or model changes; never
   reset, clean, or rewrite history to obtain a preferred baseline.
@@ -29,6 +39,30 @@ Codex-specific.
   commit third-party game data or silently measure a moving branch.
 - Do not push branches, open pull requests, or rewrite remote history unless the
   user explicitly requests that publication step.
+
+## Researching BattleScribe And New Recruit Semantics
+
+Do not guess at data-format semantics. Several conclusions in the handoff were
+reached by searching rather than inferring, and at least one confident inference
+was later disproved by evidence. Prefer, in this order:
+
+1. **The pinned corpus.** Measure how a construct is actually used across all 46
+   documents before deciding what it means. A reading that makes a whole
+   population of modifiers inert is usually the wrong reading.
+2. **The New Recruit wiki.** Every catalogue entry is a public page, keyed by the
+   same entry `id` the corpus JSON carries, so a corpus audit can produce the URL
+   directly: <https://www.newrecruit.eu/wiki/wh40k-11e/warhammer-40%2C000-11th-edition>
+   It shows an entry's own rendered text, abilities, and rules.
+3. **BattleScribe release notes and the open-source New Recruit data editor**
+   (`giloushaker/nr-editor`). The editor's modifier panel encodes which
+   attributes an operation accepts. Its runtime lives in a private submodule, so
+   it constrains the answer without always settling it.
+4. **Ask the owner to observe it in New Recruit.** Effects that only appear once
+   an entry is attached to a bearer need a built roster. Say exactly what to
+   build and what to look at.
+
+`affects` is a New Recruit extension, not a BattleScribe 2.03 feature; the
+BattleScribe schema and release notes will not describe it.
 
 ## Architecture
 

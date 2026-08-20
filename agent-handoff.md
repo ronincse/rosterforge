@@ -1,15 +1,179 @@
-# RosterForge — Review Findings And Revised Work Order
+# RosterForge — Agent Handoff And Work Order
 
-This document is a response to the handoff summary you produced. It was written
-after an independent audit of the workspace and of the pinned corpus at
+The shared status and work-order document for every model working on this
+repository. `AGENTS.md` governs *how* to work. This file records *what is done,
+what is left, and what is blocked*.
+
+## Read This First
+
+A new session reads, in this order:
+
+1. **Current Status** — where the project stands right now.
+2. **Remaining Work To Feature Complete** — the roadmap. This is the
+   authoritative to-do list.
+3. The **newest** `## Completed Assignment` entry at the end of this file, for
+   the immediate context you are picking up.
+
+Everything between is an **append-only history**. Read an older entry when you
+need the reasoning behind a decision — the corpus measurements and the rejected
+alternatives are in there, and re-deriving them is expensive. Do not read the
+history as a to-do list: each entry ends with a "Next recommended boundary" that
+was true when written and is superseded by the roadmap below.
+
+Some entries are explicitly **superseded** by later evidence and say so at the
+top. Honour that marking; the conclusions in a superseded entry are wrong.
+
+Then read `git log`, `git status`, `docs/architecture.md`, and
+`docs/compatibility.md`.
+
+## Current Status — 2026-08-20
+
+RosterForge reads BattleScribe 2.03 community data and builds matched-play
+rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
+layering and evaluator boundaries, `docs/compatibility.md` owns the exhaustive
+record of what is and is not supported, and `docs/diagnostics.md` owns
+diagnostic codes.
+
+- **Branch.** Work happens on `main`, which is **ahead of `origin/main` and
+  deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
+  asking for that step. `git status -sb` gives the current count.
+- **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` all pass. `pnpm test` is **417 passed, 7 skipped (424)**.
+  The production build retains only Vite's existing large-chunk warning.
+- **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
+  `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
+  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
+  is **7 passed**; without it those 7 are the skipped tests.
+- **Active area.** Display-fidelity modifiers — Task 8 of the original work
+  order, under "Historical Record" below. The characteristic
+  and category surfaces both execute a meaningful subset; what remains is in the
+  roadmap.
+
+## Remaining Work To Feature Complete
+
+`docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
+the map, not the territory** — it groups that record into product milestones so
+a new session can see the shape of what is left. Keep both current.
+
+Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
+**Blocked** (needs an answer recorded below), **Deferred** (out of scope until
+the owner reprioritises).
+
+### A. Display-fidelity modifiers — *active area*
+
+| Item | Status | Note |
+|---|---|---|
+| Profile modifier projection | Done | |
+| Characteristic `set` | Done | lexical replacement; needs no numeric grammar |
+| Characteristic `append` | Done | non-empty `join` only |
+| Profile visibility (`hidden`) | Done | all 154 corpus instances fit |
+| `affects` grammar parsing | Done | including the selections terminus |
+| `affects` traversal execution | Done | own/children/descendants; group rule verified in New Recruit |
+| `affects` anchoring at `scope` | Done | confirmed 2026-08-20; see the newest entry |
+| Category `add`/`remove`/`set-primary`/`unset-primary` | Done | |
+| Effective category membership feeding conditions | Done | single-pass rule; 7 cyclic cases stay unknown |
+| Category `affects` routing | Done | filters resolved by modifier-immunity |
+| **`position`** | **Next** | 1-based index of the match within a value, negative from the end, `0` = all. Semantics known. Gates the positioned `increment`/`decrement` and the `Keywords` append New Recruit visibly applies. |
+| `replace` using `arg` as the search term | Open | strongly evidenced by the `+0` idiom; see the 2026-08-20 entry |
+| `append` with an empty `join` | Open | unblocks once `position` and `replace` land — it is the bonus-slot idiom's first step |
+| Lexical arithmetic: `increment`/`decrement`/`floor`/`ceil` | **Blocked** | sign convention on inverted characteristics |
+| `annotation` modifiers | Open | 15 corpus instances |
+| `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
+| Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
+| `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
+
+### B. Legality and validation
+
+| Item | Status |
+|---|---|
+| Two-dimensional validity/completeness contract | Done |
+| Structural, selection-condition, and force-constraint reports | Done |
+| Aggregate general-constraint enforcement | Deferred |
+| Cost limits, grouped-modifier costs, broader cost behavior | Deferred |
+| Broader condition semantics and unsupported repeat shapes | Deferred |
+
+### C. Roster interchange
+
+| Item | Status |
+|---|---|
+| Browser print/save-PDF presentation export | Done |
+| `.ros`/`.rosz` ingestion, projection, import | Deferred — the largest single remaining feature |
+| `.ros`/`.rosz` interchange export | Deferred |
+| Exact XML/JSON reserialization | Deferred |
+
+### D. Catalogue sources and cache
+
+| Item | Status |
+|---|---|
+| Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
+| Cache eviction and quota controls, retries, atomic publication | Deferred |
+| Repository update discovery, branch tracking, GitHub auth | Deferred |
+| Gallery discovery and cache-management UI | Deferred |
+
+### E. Editing and durability
+
+| Item | Status |
+|---|---|
+| Headless roster commands: add, remove, rename, amount, duplicate, relocate, reorder | Done |
+| Browser drafts in IndexedDB with exact definition-key restoration | Done |
+| In-memory undo/redo over immutable snapshots | Done |
+| Durable undo history and automatic saving | Deferred |
+| Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
+
+### Open questions needing the owner
+
+Only one remains. It is a New Recruit experiment, not a judgement call:
+
+- **Sign convention.** On an inverted characteristic such as a `3+` save, does
+  `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
+  Nothing in the corpus settles it and guessing produces confidently wrong
+  saves. This blocks all lexical arithmetic.
+
+Open and deliberately not chased: what an embedded ID means when it names a
+selection entry rather than a category. One corpus instance.
+
+## How To Update This Document
+
+You are writing for a stranger — possibly a different model, with none of your
+context. Before you stop, and at the end of every checkpoint:
+
+1. **Append a `## Completed Assignment` entry** at the end of the file with the
+   baseline and resulting commit hashes, what changed and *why that decision
+   rather than the alternatives*, exact corpus measurements, exact test and gate
+   numbers, and what stayed unsupported.
+2. **Update "Current Status"** above — the date, gate numbers, branch state. A
+   stale status is worse than none, because it is believed.
+3. **Update the roadmap table.** Move what you finished to Done, promote the new
+   **Next**, and add anything you discovered. If you found work nobody knew
+   about, it belongs in the table, not only in your entry's prose.
+4. **Update `docs/compatibility.md`** whenever a behavior boundary moved, and
+   `docs/architecture.md` and `docs/diagnostics.md` when structure or codes
+   changed. The roadmap maps them; it does not replace them.
+5. **If you disproved an earlier conclusion**, mark the superseded entry at its
+   top and say so in your own. Do not silently leave two contradictory answers
+   in the file — the next reader cannot tell which won.
+
+Record what you *did not* do and why, not only what you did. A checkpoint
+descoped for a good reason is useful information; one descoped silently reads as
+an oversight.
+
+---
+
+## Historical Record
+
+Everything below is append-only. The section immediately following was the
+original review that set the work order; the `## Completed Assignment` entries
+after it run oldest to newest.
+
+This document began as a response to an earlier handoff summary, written after an
+independent audit of the workspace and of the pinned corpus at
 `E:\GitHub\wh40k-11e` (commit `54c189f4fd01878351fab05586d3b38d9c7f6ddc`).
 
-Treat it as a correction to the "Planned Next Work" section of your summary, not
-as a replacement for the project's engineering rules. `AGENTS.md` still governs:
-one bounded task per session, focused tests, diagnostics, documentation updates,
-and all four checks passing before a task is complete.
+## Original Status Snapshot — 2026-08-14
 
-## Current Status — 2026-08-14
+> Superseded by **Current Status** above. Kept because the checkpoint
+> entries below refer to the task numbering it introduces. The counts here are
+> historical and no longer accurate.
 
 Tasks 1 through 6 below, the first bounded Task 7 presentation-export
 checkpoint, and eight Task 8 checkpoints — profile modifier projection,
@@ -1246,6 +1410,12 @@ of its open questions and corrected one earlier claim.
 
 ## Research Checkpoint — `affects` Semantics, 2026-08-17
 
+> **Partly superseded.** Its "Precedence, not composition" finding — that
+> `affects` overrides `scope` — was disproved in New Recruit on 2026-08-20.
+> The two compose: `scope` chooses where the selector stands, `affects` chooses
+> where it walks. See "Completed Assignment — `affects` Anchoring". The rest of
+> this entry (profile-type matching, `position`, `modulo`) still holds.
+
 No code change. Documentation only, following the same
 search-before-inferring approach that settled `set-primary`.
 
@@ -1857,6 +2027,11 @@ Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
 
 ## Completed Assignment — Category `affects` Routing, 2026-08-19
+
+> **Partly superseded.** Its "relocated anchor" withholding and the
+> `EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED` diagnostic were removed on
+> 2026-08-20 once New Recruit answered the question they were guarding. The
+> modifier-immunity rule for category filters still holds.
 
 Baseline `9f8b125`; resulting implementation commit `33e5f2b`.
 

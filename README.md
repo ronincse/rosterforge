@@ -133,11 +133,15 @@ repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
 cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
-non-`set` characteristic operations, `affects` retargeting execution,
-`join`/`arg`/`position` behavior, characteristic modifiers owned outside their
-profile, modifier-group repeats, constraint
-enforcement, full legality validation, automatic saving, durable undo history,
-roster reordering, and BattleScribe .ros/.rosz import and interchange export.
+lexical arithmetic operations (`increment`, `decrement`, `floor`, `ceil`),
+`replace`, `arg`/`position` behavior, `name` and `annotation` modifiers,
+modifier-group repeats, constraint enforcement, full legality validation,
+automatic saving, durable undo history, roster reordering, and BattleScribe
+.ros/.rosz import and interchange export.
+
+`agent-handoff.md` carries the current status and the roadmap of what remains
+before the product is feature complete; `docs/compatibility.md` is the
+exhaustive per-behavior record.
 
 ## Requirements
 
