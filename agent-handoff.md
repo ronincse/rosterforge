@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (characteristic operations complete)
+## Current Status — 2026-08-20 (annotation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **426 passed, 7 skipped (433)**.
+  `git diff --check` all pass. `pnpm test` is **428 passed, 7 skipped (435)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -67,7 +67,7 @@ owner reprioritises).
 |---|---|---|
 | Profile modifier projection | Done | |
 | Characteristic `set` | Done | lexical replacement; needs no numeric grammar |
-| Characteristic `append` | Done | any declared `join`, including the empty separator |
+| Characteristic `append` | Done | any declared `join` including the empty one; onto an empty value it emits no separator. Only an absent `join` withholds. |
 | Profile visibility (`hidden`) | Done | all 154 corpus instances fit |
 | `affects` grammar parsing | Done | including the selections terminus |
 | `affects` traversal execution | Done | own/children/descendants; group rule verified in New Recruit |
@@ -82,7 +82,9 @@ owner reprioritises).
 | `floor`/`ceil` | Done | bounds, not rounding — confirmed against a T'au Ethereal |
 | `multiply`/`divide`/`modulo` | Open | defined by the format, **zero** corpus instances; do not write a speculative rule |
 | `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
-| **`annotation` modifiers** | **Next** | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
+| Profile `annotation` | Done | 590 modifiers, always-empty base; own report so it no longer costs characteristics their completeness |
+| **Selection `annotation`** | **Next** | the other half — `Patriarch (Gene Affliction)`. Same field, but decorates a selection's name rather than a profile's. |
+| Rendering annotation in the workspace | Open | headless only so far; New Recruit shows it in parentheses after the name |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
@@ -2685,5 +2687,74 @@ side is other target fields, not other arithmetic:
    better attempted after.
 3. **`affects` force traversal** — 24 selectors; needs a force-collection anchor
    rule, which is a genuinely new decision.
+
+No open questions require the owner.
+
+## Completed Assignment — Annotation, 2026-08-20
+
+Baseline `9db002b`; resulting implementation commits `829a63f` (empty-value
+append) and `367bbd0` (annotation evaluation).
+
+### Two findings from one measurement
+
+Auditing `annotation` produced a fact that settled an unrelated open question:
+**no node in the pinned corpus declares an `annotation` attribute of its own.**
+Zero, out of every node in 46 documents.
+
+That means all 590 annotation modifiers append onto an **empty** value through a
+`", "` separator. Stone's screenshot shows the result as
+`Manreaper - sweep (Furnace of Plagues)` — not `(, Furnace of Plagues)`. So
+appending onto an empty value emits no separator, which is the question the
+append checkpoint had left open as `emptyAppendInput`. That issue and its
+diagnostic are now gone, and an absent `join` is the only append shape that
+cannot be executed.
+
+**Worth carrying forward:** the answer came from measuring a *different* field.
+When a question stalls, look for another part of the data that has to obey the
+same rule.
+
+### Annotation itself
+
+`evaluateRosterProfileAnnotation` reports one profile's effective annotation. It
+decorates the profile's *name* rather than being one of its characteristics, so
+it gets its own report. Two consequences:
+
+- It reuses the existing step machinery and `affects` routing unchanged — 590
+  modifiers, almost all `append`, almost all routed from an enhancement.
+- It is no longer classed as unrouted display behavior, so it stops costing the
+  characteristic report its completeness. That was a real drag: any profile an
+  enhancement annotated had unresolved characteristics for no good reason.
+
+Corpus shape: 590 modifiers, ~560 `append` (mostly `join=", "`), 24 `set`, 1
+`replace`. Scopes span `model`, `model-or-unit`, `root-entry`, `upgrade`, and
+`roster`, all handled by the anchor rule already in place.
+
+Real data: the Lord of Contagion's Manreaper resolves to `Furnace of Plagues`.
+
+### What this deliberately does not do
+
+- **Selection-level annotation.** `Patriarch (Gene Affliction)` in Stone's other
+  screenshot decorates a *unit's* name. Same field, different target, and the
+  selection surface has no equivalent evaluator yet.
+- **Rendering.** Nothing displays the annotation. The rule is known from two
+  observations — parentheses after the name — but the workspace does not use it.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **428 passed, 7 skipped (435 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **Selection-level `annotation`** — the other half of the same field, and the
+   smaller of the two remaining display gaps.
+2. **Render annotation in the workspace** — parentheses after the name, for both
+   profiles and selections. Best done after (1) so one presentation pass covers
+   both, matching how characteristics were done.
+3. **`name` modifiers** — 7,673 instances but 86% Crusade. Doing (1) and (2)
+   first will establish how a display name is composed, which is most of the
+   design work this needs.
+4. **`affects` force traversal** — 24 selectors; a genuinely new anchor decision.
 
 No open questions require the owner.
