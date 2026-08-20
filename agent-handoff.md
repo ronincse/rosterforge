@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (replace)
+## Current Status — 2026-08-20 (inert attributes)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **423 passed, 7 skipped (430)**.
+  `git diff --check` all pass. `pnpm test` is **424 passed, 7 skipped (431)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -78,10 +78,9 @@ owner reprioritises).
 | `position` for arithmetic | Done | 1-based index, negative from the end, `0` = all; absent position refused when the value has more than one number |
 | Lexical `increment`/`decrement` | Done | plain signed arithmetic, no game-aware inversion — sign convention settled from the corpus, see the 2026-08-20 arithmetic entry |
 | `replace` using `arg` as the search term | Done | `arg` present on all 189 corpus replaces; a term matching nothing is an applied no-op |
-| **`append` with an empty `join`** | **Next** | now safe: a later `replace` collapses an unused slot, which is why the empty separator was withheld. Also needs `arg` treated as inert on `append` — 89 corpus appends carry one meaninglessly. Together these close the idiom for weapons whose Attacks *is* a dice expression. |
+| **`append` with an empty `join`** | **Next** | 270 corpus instances. Not the freebie the last entry predicted — see the 2026-08-20 inert-attributes entry for why the slot-collapse crosses entity boundaries. Needs a decision, not just enablement. |
 | `floor`/`ceil` | Open | need a bound rule; a different shape from `increment`/`decrement` |
-| `position` on `append` | Open | 4 corpus instances, all Keywords. New Recruit applied one visibly with `position` present and no positional effect, so it looks inert there — the editor does not offer `position` for `append`. |
-| `join` on `replace` | Open | 93 corpus replaces carry one meaninglessly. Inert by the same reasoning as `position` on `append`, but unverified, so currently withheld. |
+| `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
 | `annotation` modifiers | Open | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
@@ -2466,3 +2465,83 @@ observed in New Recruit.
    already landed.
 
 No open questions require the owner.
+
+## Completed Assignment — Inert Attributes, 2026-08-20
+
+Baseline `06a25fd`; resulting implementation commit `785a961`.
+
+### The rule
+
+New Recruit's editor offers `join` only for `append`, `arg` only for `replace`,
+and `position` for `replace` and the arithmetic pair. Where one of those three
+appears on an operation outside that set, it is **inert authoring noise** and no
+longer withholds the step.
+
+Evidence, per attribute:
+
+| Attribute | Where it is noise | Why we can say so |
+|---|---|---|
+| `arg` on `append` | 90 instances | **All 90 are identical to that append's own value.** No operation could act on that. |
+| `position` on `append` | 4 instances | New Recruit was observed applying a Keywords append carrying `position="-1"` with no positional effect — Stone's Furnace of Plagues screenshot. |
+| `join` on `replace` | 93 instances | No separator semantics exist for a search and replace. 82 of the 93 are the empty string. |
+
+Anything **outside** those three still withholds. Only these are known to belong
+to specific operations, so only these can be known noise elsewhere. An unknown
+extension attribute is still unsupported behavior.
+
+This reverses the narrower rule recorded in the append checkpoint, which held
+that `join` "stays unsupported on every other operation, where it has no
+established meaning". The evidence above is what changed.
+
+### Real data
+
+The Lord of Contagion's Manreaper now shows **both** changes Stone observed in
+New Recruit: the +1 Strength, and the Devastating Wounds keyword. The keyword
+was the last thing the append gate withheld.
+
+### The empty-`join` append is not the freebie the last entry predicted
+
+The previous entry said this would unblock "now that `replace` lands", because a
+later replace collapses an unused `+0` slot. Measuring it properly says
+otherwise, and the next session should not take that claim at face value.
+
+Of 268 empty-`join` appends measured at entry scope, only **87** are followed by
+a collapsing `replace` of the same term in the same entry. The other 181 are on
+**weapons** — Prism Cannon, Missile Launcher, Eyeburst — and are conditional on a
+Crusade weapon upgrade being selected (`Heirloom (A+1)` 103 times,
+`Master-worked (D+1)` 64, `Brutal (S+1)` 2).
+
+So the mechanism spans two entities: the *weapon* opens the slot when its upgrade
+is present, and an *enhancement* elsewhere bumps or collapses it. Whether the
+collapse always accompanies the opening cannot be settled from the modifier lists
+alone, and executing the append without it prints `D6+0` where the source means
+`D6` — the exact failure the original withholding existed to prevent.
+
+Three ways forward, for whoever takes it:
+
+1. **Observe it.** In New Recruit, give a weapon with a dice-expression Attacks
+   its `Heirloom (A+1)` upgrade and see whether the displayed Attacks reads
+   `D6+1`, `D6`, or `D6+0`. That settles it in one screenshot.
+2. **Look ahead at evaluation time.** The full step list for a characteristic is
+   known before any step runs, so the append could execute only when a later step
+   consumes the appended text. Correct, but more machinery than the case may
+   deserve.
+3. **Leave it withheld.** Costs the dice-expression weapons their resolved
+   Attacks, which is a narrower population than it first appears.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **424 passed, 7 skipped (431 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **`append` with an empty `join`**, via option 1 above — one New Recruit
+   observation settles a 270-modifier population. This is the only item where a
+   cheap experiment beats more analysis.
+2. **`floor`/`ceil`** — need a bound rule, a different shape from the arithmetic
+   already landed.
+3. **`annotation` modifiers** — 15 instances, and the rendering is already
+   observed twice: the value is appended to the displayed name in parentheses.
+4. **`name` modifiers** — 7,673 instances but 86% Crusade; still last.
