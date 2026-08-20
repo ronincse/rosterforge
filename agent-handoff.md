@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (selection annotation rendered)
+## Current Status — 2026-08-21 (force traversal)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **432 passed, 7 skipped (439)**.
+  `git diff --check` all pass. `pnpm test` is **434 passed, 7 skipped (441)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -111,7 +111,8 @@ owner reprioritises).
 | Profile `annotation` | Done | 522 target profiles; always-empty base; own report so it no longer costs characteristics their completeness |
 | Selection `annotation` | Done | 68 target selections; direct/grouped plus selections-terminus routing, rendered after occurrence names |
 | Rendering profile annotation | Done | parentheses after the profile name, folded into that profile's completeness |
-| **`affects` force traversal** | **Next** | 24 selectors; measure force anchors and targets before choosing a collection rule |
+| `affects` force traversal | Done | 24 detachment abilities; target set is every occurrence the roster's forces contain, withheld above one force |
+| **Withheld routing vs withheld steps** | **Next** | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Reconcile: an unresolvable modifier could have targeted anything. |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
 
@@ -2915,3 +2916,104 @@ selectors reach before writing execution. Keep `name` modifiers last because
 86% are Crusade content.
 
 No owner input is currently required.
+## Completed Assignment — Force Traversal, 2026-08-21
+
+Baseline `27e9ffd`; resulting implementation commit `202aeae`.
+
+### First, Codex's checkpoint reviewed
+
+`f508c26` (selection annotation) was verified before this work started: all
+gates pass, the shared `collectAffectsRoutedSelectionModifiers` extraction is
+sound, and `categories.ts` still applies its modifier-immunity filter rule
+through it. Its corpus correction stands and is worth repeating: the earlier
+**590** annotation count combined both target kinds. The real split is **522
+profile targets and 68 selection targets**, and `Patriarch (Gene Affliction)`
+was a *profile*-target example — that screenshot row was the Unit profile, not
+the occurrence name.
+
+### What changed
+
+A `forces` segment leaves the anchor's subtree and names the roster's forces, so
+neither the anchor nor the path to a given occurrence decides anything. The
+target set is every occurrence the forces contain, still filtered by the
+selector's category and profile type.
+
+### Why this was decidable without an experiment
+
+The measurement made it uniform. All 24 instances share one shape:
+
+```
+self.entries.forces.recursive.[<categoryId>.]profiles.<typeName>
+```
+
+Their owners are all `upgrade` entries sitting under a **Detachment** —
+*Lords of the Warp*, *Devotees of Destruction*, *Cohort Cybernetica*,
+*Sanctified Orators*, *Might of the Moritoi*. Detachment abilities are army-wide
+by construction, and the declaring upgrade shares **no ancestor** with the units
+it reaches, so anchor-relative routing could never have connected them. There is
+only one reading that makes 24 of 24 do anything.
+
+Target fields: 4 `annotation`, 3 `decrement LD`, 3 `increment OC`, 3
+`increment M`, 2 `append Keywords`, 2 `set InSv`, 2 `increment W`, 2
+`increment S`, 1 `add category`, 1 `decrement M`, 1 `increment Range`. Filters
+name categories such as `Vehicle`, `Squadron`, `Transport`, `Plasma`,
+`Non-Monster Character`.
+
+### The one ambiguity, and its guard
+
+Does `forces` mean *every* force in the roster, or the force *containing the
+declarer*? Scopes vary across `roster`, `force`, `parent`, `model-or-unit`, and
+`root-entry`, so the scope does not settle it.
+
+It does not have to. With exactly one force and no nested forces the two
+readings name the same set — and `apps/web/src/roster-session.ts` **enforces**
+that shape, rejecting any saved roster with more than one root force or any
+nested force. A headless roster may hold more, and there `forceTraversalReach`
+refuses rather than picking a reading.
+
+### The grammar is now closed
+
+The pinned census moves from 1,835 supported / 24 unsupported to **1,859 / 0**.
+Every `affects` selector in the corpus parses and executes. Characteristic-
+targeting selectors go from 1,246 supported to all 1,265. The
+`forceTraversal` issue was removed from `AffectsSelectorIssue` as unreachable.
+
+### A gap found while testing, deliberately not fixed here
+
+Writing the multi-force guard exposed an inconsistency older than this
+checkpoint:
+
+| Situation | Report | Characteristic value |
+|---|---|---|
+| A *step* is unapplied | incomplete | **cleared** |
+| Routing is *unresolvable* | incomplete | **keeps its printed value** |
+
+An unresolvable modifier could have targeted any characteristic on the profile,
+so keeping every printed value is a more confident answer than the evidence
+supports. The report-level `incomplete` does warn, and the browser surfaces it,
+so this is not silent — but the two paths should agree.
+
+Fixing it is a broader change than force traversal and would touch every
+`partial` path (unreadable ancestors, unsupported selectors, unresolved
+anchors), so it is recorded as its own boundary rather than folded in. The new
+test asserts today's behavior explicitly so the change is visible when someone
+makes it.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **434 passed, 7 skipped (441 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **Withheld routing versus withheld steps** — reconcile the table above. Start
+   by measuring how many pinned-corpus profiles actually hit a `partial` routing
+   path; if it is rare, the honest behavior costs little.
+2. **`name` modifiers** — 7,673 instances but 86% Crusade. Both annotation
+   surfaces are done, so how a display name is composed is now established.
+3. **Beyond display fidelity** — roadmap sections B through E are largely
+   untouched. Legality and validation (section B) is the largest gap that
+   affects matched-play use.
+
+No open questions require the owner.
