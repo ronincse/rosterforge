@@ -34,6 +34,7 @@ import {
   inspectLocalRosterRootChoices,
   inspectLocalRosterSelectionCategories,
   inspectLocalRosterSelectionAnnotation,
+  inspectLocalRosterSelectionName,
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
   localRosterSelectionChoice,
@@ -1252,11 +1253,24 @@ function RosterSelectionItem({
     [session, selection.id],
   );
   const name = selection.name ?? "Unnamed selection";
+  // A catalogue `name` modifier refines the displayed name — the corpus uses it
+  // for Crusade rank suffixes such as "(Battle-hardened)". It runs on whatever
+  // the occurrence is currently called, so a user rename composes with it.
+  const evaluatedName = useMemo(
+    () => inspectLocalRosterSelectionName(session, selection.id, name),
+    [session, selection.id, name],
+  );
+  const displayName =
+    evaluatedName.ok && evaluatedName.value.value !== undefined
+      ? evaluatedName.value.value
+      : name;
+  const nameIncomplete =
+    !evaluatedName.ok || evaluatedName.value.completeness === "incomplete";
   const annotationValue = annotation.ok ? annotation.value.value : undefined;
   const annotatedName =
     annotationValue === undefined || annotationValue === ""
-      ? name
-      : `${name} (${annotationValue})`;
+      ? displayName
+      : `${displayName} (${annotationValue})`;
   const annotationIncomplete =
     !annotation.ok || annotation.value.completeness === "incomplete";
   const childrenContainAttention = selection.selections.some((child) =>
@@ -1287,6 +1301,11 @@ function RosterSelectionItem({
           Remove
         </button>
       </div>
+      {nameIncomplete && (
+        <p className="selection-annotation-completeness">
+          Display name unresolved for this selection.
+        </p>
+      )}
       {annotationIncomplete && (
         <p className="selection-annotation-completeness">
           Display annotation unresolved for this selection.

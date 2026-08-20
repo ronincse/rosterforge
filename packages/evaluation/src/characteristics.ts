@@ -147,6 +147,16 @@ const visibilityField = "hidden";
 const annotationField = "annotation";
 
 /**
+ * The display-name field.
+ *
+ * Unlike `annotation`, this one has a real base: the name the catalogue already
+ * declares. Modifiers refine it — the corpus's 7,673 instances are overwhelmingly
+ * Crusade rank suffixes such as `(Battle-hardened)`, gated by experience-point
+ * condition groups so exactly one band applies at a time.
+ */
+const nameField = "name";
+
+/**
  * Where a step's modifier was declared. `own` means the profile declared it;
  * `affects` means the profile's owning selection declared it and routed it here
  * with an `affects` selector.
@@ -725,6 +735,61 @@ export function evaluateRosterSelectionAnnotation<
   owner: RosterSelection,
   choice: Choice,
 ): Result<RosterSelectionAnnotationReport<Choice>> {
+  return evaluateSelectionTextField(
+    roster,
+    context,
+    owner,
+    choice,
+    annotationField,
+    "",
+  );
+}
+
+/**
+ * Reports one occurrence's effective display name.
+ *
+ * The base is supplied by the caller rather than read from the choice, because
+ * an occurrence may carry a user rename. The browser passes the name currently
+ * displayed, so a rename and a catalogue modifier compose instead of competing:
+ * rename the unit and its Crusade rank still follows it.
+ */
+export function evaluateRosterSelectionName<
+  Choice extends RosterSelectionAnnotationSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  choice: Choice,
+  baseName: string,
+): Result<RosterSelectionAnnotationReport<Choice>> {
+  return evaluateSelectionTextField(
+    roster,
+    context,
+    owner,
+    choice,
+    nameField,
+    baseName,
+  );
+}
+
+/**
+ * Shared engine for the selection-level text fields.
+ *
+ * `annotation` and `name` differ only in which field they read and what they
+ * start from, so they run the same passes: the occurrence's own modifiers,
+ * then its grouped ones, then those routed here by a selections-terminus
+ * `affects` selector.
+ */
+function evaluateSelectionTextField<
+  Choice extends RosterSelectionAnnotationSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  choice: Choice,
+  field: string,
+  baseValue: string,
+): Result<RosterSelectionAnnotationReport<Choice>> {
   type Modifier = Choice["modifiers"][number];
 
   const diagnostics: Diagnostic[] = [];
@@ -740,7 +805,7 @@ export function evaluateRosterSelectionAnnotation<
     declaredBy: RosterSelection,
   ): void => {
     const step = evaluateStep<Modifier>(
-      currentValue(steps, ""),
+      currentValue(steps, baseValue),
       modifier,
       grouped,
       applicability,
@@ -753,7 +818,7 @@ export function evaluateRosterSelectionAnnotation<
 
   for (const modifier of choice.modifiers.filter(
     (candidate) =>
-      candidate.field === annotationField &&
+      candidate.field === field &&
       candidate.node.attributes["affects"] === undefined,
   )) {
     const evaluated = evaluateRosterModifierApplicability(
@@ -777,29 +842,29 @@ export function evaluateRosterSelectionAnnotation<
     );
   }
 
-  const groupTargetsOwnAnnotation = (
+  const groupTargetsOwnField = (
     group: RosterModifierGroupSource<Modifier>,
   ): boolean =>
     group.modifiers.some(
       (modifier) =>
-        modifier.field === annotationField &&
+        modifier.field === field &&
         modifier.node.attributes["affects"] === undefined,
-    ) || group.modifierGroups.some(groupTargetsOwnAnnotation);
-  const groupedOwnAnnotationCount = (
+    ) || group.modifierGroups.some(groupTargetsOwnField);
+  const groupedOwnFieldCount = (
     group: RosterModifierGroupSource<Modifier>,
   ): number =>
     group.modifiers.filter(
       (modifier) =>
-        modifier.field === annotationField &&
+        modifier.field === field &&
         modifier.node.attributes["affects"] === undefined,
     ).length +
     group.modifierGroups.reduce(
-      (count, child) => count + groupedOwnAnnotationCount(child),
+      (count, child) => count + groupedOwnFieldCount(child),
       0,
     );
 
   const relevantGroups = choice.modifierGroups.filter(
-    groupTargetsOwnAnnotation,
+    groupTargetsOwnField,
   );
   const groupReports: RosterModifierGroupApplicabilityReport<
     Choice["modifierGroups"][number]
@@ -821,13 +886,13 @@ export function evaluateRosterSelectionAnnotation<
   }
   const grouped = collectRosterModifierGroupExecution<Modifier>(
     groupReports,
-    annotationField,
+    field,
   );
   const groupedEntries = grouped.entries.filter(
     ({ modifier }) => modifier.node.attributes["affects"] === undefined,
   );
   const expectedGrouped = relevantGroups.reduce(
-    (count, group) => count + groupedOwnAnnotationCount(group),
+    (count, group) => count + groupedOwnFieldCount(group),
     0,
   );
   if (
@@ -853,7 +918,7 @@ export function evaluateRosterSelectionAnnotation<
       roster,
       context,
       owner,
-      annotationField,
+      field,
     );
   if (routed.partial) lost = true;
   for (const entry of routed.modifiers) {
@@ -886,14 +951,14 @@ export function evaluateRosterSelectionAnnotation<
     );
   }
 
-  const value = lost ? undefined : effectiveValue(steps, "");
+  const value = lost ? undefined : effectiveValue(steps, baseValue);
   return success(
     {
       roster,
       context,
       owner,
       choice,
-      baseValue: "",
+      baseValue,
       ...(value === undefined ? {} : { value }),
       completeness:
         lost || steps.some(({ status }) => status === "unapplied")

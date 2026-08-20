@@ -115,6 +115,8 @@ This repository currently contains the first development slice:
   optional filter ID, terminus, and profile-type name, distinguishing selectors
   that target profiles from those that target the reached occurrences, with no
   resolution or execution;
+- catalogue-refined selection display names, sharing an engine with selection
+  annotation and composing with a user rename;
 - profile display annotations, built from an always-empty base by the same
   operations and routing as characteristics, shown in parentheses after the
   profile name;

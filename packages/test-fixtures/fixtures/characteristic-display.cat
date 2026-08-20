@@ -493,6 +493,20 @@
           join=", " />
       </modifiers>
     </selectionEntry>
+    <selectionEntry id="name-owner" name="Name Owner" type="unit">
+      <modifiers>
+        <!-- No join: the separator defaults to a single space, which is how
+             the corpus writes 7,503 Crusade rank suffixes. -->
+        <modifier type="append" field="name" value="(Veteran)" />
+        <!-- An explicit separator still wins, and appends chain. -->
+        <modifier type="append" field="name" value="Elite" join=" - " />
+      </modifiers>
+    </selectionEntry>
+    <selectionEntry id="name-replaced" name="Name Replaced" type="unit">
+      <modifiers>
+        <modifier type="set" field="name" value="Renamed By Catalogue" />
+      </modifiers>
+    </selectionEntry>
     <selectionEntry id="force-detachment" name="Force Detachment" type="unit">
       <selectionEntries>
         <!-- A detachment ability: it reaches the whole army, not its own

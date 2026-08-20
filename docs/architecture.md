@@ -1538,6 +1538,29 @@ selection displays an incomplete note. Profile annotation completeness folds
 into profile inspection alongside characteristics and visibility. Selection
 annotation completeness stays attached to the occurrence-name decoration.
 
+### Selection display name
+
+`evaluateRosterSelectionName` reports one occurrence's effective display name.
+It shares its engine with selection annotation — the two differ only in the field
+they read and what they start from — so both run the same passes: the
+occurrence's own modifiers, its grouped ones, then those routed by a
+selections-terminus `affects` selector.
+
+The base is supplied by the caller rather than read from the choice, because an
+occurrence may carry a user rename. The browser passes the name currently
+displayed, so a rename and a catalogue modifier **compose** instead of
+competing: rename a unit and its Crusade rank still follows it. Commands and
+accessible labels keep using the un-refined name.
+
+The corpus's 7,673 `name` modifiers are overwhelmingly Crusade rank suffixes —
+`(Battle-ready)`, `(Blooded)`, `(Battle-hardened)`, `(Heroic)`, `(Legendary)`,
+1,319 or 1,320 instances each. They are mutually exclusive through
+**experience-point condition groups on the modifier**: `atMost 5`, `>5 atMost
+15`, `>15 atMost 30`, and so on. Those are evaluated by the ordinary modifier
+applicability path, so an unsupported condition form withholds the name rather
+than stacking every rank onto one unit. A pinned test holds that line: a Lord of
+Contagion in a non-Crusade roster keeps its plain name.
+
 ### Reading operations and step order
 
 `set` is the only operation that *discards* its input. `append`, `increment`,

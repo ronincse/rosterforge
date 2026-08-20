@@ -13,6 +13,7 @@ import {
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
   evaluateRosterSelectionAnnotation,
+  evaluateRosterSelectionName,
   evaluateRosterSelectionCategories,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
@@ -505,6 +506,34 @@ export function inspectLocalRosterConstraints(
  * This adapter resolves the selected occurrence and materialized choice only;
  * operation, applicability, and routing semantics stay in `evaluation`.
  */
+export function inspectLocalRosterSelectionName(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+  baseName: string,
+): Result<RosterSelectionAnnotationReport> {
+  const occurrence = findRosterSelection(session.roster.forces, selectionId);
+  const choice = session.selectionChoices.get(selectionId);
+  if (occurrence === undefined || choice === undefined) {
+    return failure([
+      {
+        code: "APP_ROSTER_NAME_SELECTION_UNAVAILABLE",
+        message:
+          "A selection name inspection requires a known roster selection occurrence and its materialized choice.",
+        severity: "error",
+        impacts: ["validation"],
+        details: { selectionId },
+      },
+    ]);
+  }
+  return evaluateRosterSelectionName(
+    session.roster,
+    session.catalogue.context,
+    occurrence,
+    choice,
+    baseName,
+  );
+}
+
 export function inspectLocalRosterSelectionAnnotation(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,

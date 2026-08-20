@@ -345,6 +345,9 @@
   as an applied no-op rather than a refusal
 - An effective value withheld when an unapplied step precedes a later step that
   reads its input, since only `set` discards what it was handed
+- Selection display name as its own report, sharing an engine with selection
+  annotation, based on the name currently displayed so a user rename composes
+  with a catalogue modifier rather than competing with it
 - Profile display annotation as its own report, built from an always-empty base
   by the same operations and `affects` routing as characteristics, rendered in
   parentheses after the profile name and folded into that profile's
@@ -448,7 +451,7 @@
   or info groups rather than by the profile itself
 - Profile-owned `name` modifiers; they are retained as unrouted display
   behavior and make a characteristic report incomplete rather than being
-  silently ignored
+  silently ignored. Selection-level `name` is evaluated.
 
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`

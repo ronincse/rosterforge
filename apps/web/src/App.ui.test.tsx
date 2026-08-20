@@ -100,6 +100,9 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
       </categoryLinks>
       <modifiers>
         <modifier type="add" field="category" value="cat-battleline" />
+        <!-- A catalogue name modifier, the shape the corpus uses for Crusade
+             rank suffixes. No join, so the separator defaults to a space. -->
+        <modifier type="append" field="name" value="(Elite)" />
         <modifier
           type="set"
           field="characteristic-move"
@@ -833,6 +836,8 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(addInfantry);
     expect(await screen.findByText("selection-ui-1")).toBeTruthy();
+    // The catalogue's name modifier refines the displayed name.
+    expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
     expect(undo).toHaveProperty("disabled", false);
     expect(redo).toHaveProperty("disabled", true);
     const selectionDetails =
@@ -903,7 +908,7 @@ describe("App local catalogue flow", () => {
       within(selectedRoster).getByRole("button", { name: "Rename" }),
     );
     expect(
-      within(selectedRoster).getAllByText("Veterans").length,
+      within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
     const amountInput = within(selectedRoster).getByLabelText("Amount");
     fireEvent.change(amountInput, { target: { value: "2" } });
@@ -923,7 +928,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(addInfantry);
     expect(screen.getByText("selection-ui-2")).toBeTruthy();
     expect(
-      within(selectedRoster).getAllByText("Infantry Squad"),
+      within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
     expect(
       within(workspaceNavigation).getByRole("link", {
@@ -1005,7 +1010,7 @@ describe("App local catalogue flow", () => {
     expect(screen.queryByText("selection-ui-3")).toBeNull();
     expect(screen.getByText("selection-ui-2")).toBeTruthy();
     expect(
-      within(selectedRoster).getAllByText("Infantry Squad"),
+      within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
     expect(within(costs).getByText("80")).toBeTruthy();
     expect(
@@ -1032,7 +1037,7 @@ describe("App local catalogue flow", () => {
     expect(screen.getByText("selection-ui-1")).toBeTruthy();
     expect(screen.getByText("selection-ui-3")).toBeTruthy();
     expect(
-      within(selectedRoster).getAllByText("Veterans").length,
+      within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
     expect(within(costs).getByText("170")).toBeTruthy();
     expect(redo).toHaveProperty("disabled", false);

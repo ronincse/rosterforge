@@ -29,6 +29,7 @@ import {
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
   evaluateRosterSelectionAnnotation,
+  evaluateRosterSelectionName,
 } from "./characteristics.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
@@ -1079,6 +1080,47 @@ describe("affects traversal", () => {
     // way to find the source without this.
     expect(applied[0]?.declaredBy.id).toBe(setup.owner.id);
     expect(applied[0]?.declaredBy.id).not.toBe(setup.groupChild.id);
+  });
+});
+
+describe("roster selection name", () => {
+  it("refines the catalogue name and chains appends", () => {
+    const setup = characteristicSetup("name-owner");
+
+    const report = successful(
+      evaluateRosterSelectionName(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        setup.ownerChoice,
+        "Name Owner",
+      ),
+    );
+
+    // The first append declares no separator, so it takes the default space;
+    // the second declares its own. Both read the running value.
+    expect(report).toMatchObject({
+      baseValue: "Name Owner",
+      value: "Name Owner (Veteran) - Elite",
+      completeness: "complete",
+    });
+  });
+
+  it("lets a catalogue set replace the name outright", () => {
+    const setup = characteristicSetup("name-replaced");
+
+    const report = successful(
+      evaluateRosterSelectionName(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        setup.ownerChoice,
+        "Name Replaced",
+      ),
+    );
+
+    // `set` discards the base, exactly as it does for a characteristic.
+    expect(report.value).toBe("Renamed By Catalogue");
   });
 });
 

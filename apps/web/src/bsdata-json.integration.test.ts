@@ -18,6 +18,7 @@ import {
   evaluateRosterCondition,
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterSelectionName,
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
   modifierTargetedCategoryIds,
@@ -1147,6 +1148,29 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(attacks?.steps.some((step) => step.status === "unapplied")).toBe(
           false,
         );
+
+        // A Lord of Contagion carries the corpus's Crusade rank name appends,
+        // each gated by an experience-point condition group. This roster has no
+        // Crusade force, so none may fire: the name must stay "Lord of
+        // Contagion" rather than collecting every rank suffix at once.
+        const lordChoice = localRosterSelectionChoice(
+          current.ok ? current.value : session.value,
+          lordId,
+        );
+        const lordOccurrence = occurrences.find((entry) => entry.id === lordId);
+        if (lordChoice === undefined || lordOccurrence === undefined) {
+          throw new Error("Expected the Lord of Contagion occurrence.");
+        }
+        const evaluatedName = evaluateRosterSelectionName(
+          roster,
+          context,
+          lordOccurrence,
+          lordChoice,
+          "Lord of Contagion",
+        );
+        if (!evaluatedName.ok) throw new Error("Expected a name report.");
+        expect(evaluatedName.value.value).not.toContain("(Battle-ready)");
+        expect(evaluatedName.value.value).not.toContain("(Legendary)");
 
         // The same enhancement routes an `annotation` here, which New Recruit
         // renders after the weapon name: "Manreaper - sweep (Furnace of
