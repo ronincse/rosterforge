@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (annotation)
+## Current Status — 2026-08-20 (annotation rendered)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -84,7 +84,7 @@ owner reprioritises).
 | `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
 | Profile `annotation` | Done | 590 modifiers, always-empty base; own report so it no longer costs characteristics their completeness |
 | **Selection `annotation`** | **Next** | the other half — `Patriarch (Gene Affliction)`. Same field, but decorates a selection's name rather than a profile's. |
-| Rendering annotation in the workspace | Open | headless only so far; New Recruit shows it in parentheses after the name |
+| Rendering profile annotation | Done | parentheses after the profile name, folded into that profile's completeness |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
@@ -2756,5 +2756,65 @@ Real data: the Lord of Contagion's Manreaper resolves to `Furnace of Plagues`.
    first will establish how a display name is composed, which is most of the
    design work this needs.
 4. **`affects` force traversal** — 24 selectors; a genuinely new anchor decision.
+
+No open questions require the owner.
+
+## Completed Assignment — Annotation Rendering, 2026-08-20
+
+Baseline `6e75e54`; resulting implementation commit `0b136c8`.
+
+### What changed
+
+A profile's display annotation now renders in parentheses after its name —
+`Special Weapon profile (Veteran Issue)` — matching New Recruit. An unresolved
+annotation is omitted rather than shown partially; the profile's incomplete note
+already reports it.
+
+Annotation completeness folds into the profile's completeness in the browser
+inspection, alongside characteristics and visibility.
+
+### A completeness improvement worth naming
+
+Before the annotation work, an `annotation` modifier was classed as *unrouted
+display behavior* and made the whole **characteristic** report incomplete. So a
+weapon an enhancement merely annotated showed unresolved stats, for no reason
+connected to its stats.
+
+Now:
+
+| Case | Before | After |
+|---|---|---|
+| Annotation resolves cleanly | characteristics incomplete | **complete** |
+| Annotation cannot be applied | characteristics incomplete | incomplete, attributed to the *annotation* |
+
+Same honesty, better attribution, and a real gain for the common case.
+
+### Sequencing note
+
+The previous entry recommended doing selection-level annotation *before* any
+rendering, so one presentation pass covered both. That was wrong: profile
+annotation and selection annotation render at **different sites** — a profile
+header versus an occurrence name — so there was no shared pass to save. Doing
+the visible half first was the better order.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **428 passed, 7 skipped (435 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **Selection-level `annotation`** — 68 corpus modifiers (53 declared on a
+   selection with no `affects`, 15 routed to selections). It needs the
+   **selections-terminus** routing collector that `categories.ts` has, not the
+   profile-matching one `characteristics.ts` uses, so expect either a third
+   collector or a shared extraction. Rendering is then a small follow-on at the
+   occurrence-name site.
+2. **`name` modifiers** — 7,673 instances but 86% Crusade. Selection annotation
+   will establish how an occurrence's display name is composed, which is most of
+   the design this needs.
+3. **`affects` force traversal** — 24 selectors; a genuinely new anchor decision
+   for collection scopes.
 
 No open questions require the owner.
