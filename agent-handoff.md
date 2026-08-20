@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (constraint scopes complete)
+## Current Status — 2026-08-21 (unsaved-change tracking)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -45,8 +45,8 @@ diagnostic codes.
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **8 passed**; without it those 8 are the skipped tests.
-- **Active area.** Display-fidelity modifiers — Task 8 of the original work
-  order, under "Historical Record" below.
+- **Active area.** Editing durability (roadmap section E). Sections A and B —
+  display fidelity and legality — are effectively complete.
 
 ### Picking up from here
 
@@ -133,7 +133,7 @@ points limit works end to end and is now pinned.
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
 | `automatic` driving auto-fill | Open | unverified, unconsumed. `initialization.ts` reads parent-scoped minima and does not look at it. |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
-| **Sections C–E** | **Next** | catalogue cache and editing durability are unmeasured; measure before planning |
+| Sections C–E | Measured | see section E; editing durability had the worse gap and is now the active area |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -174,7 +174,9 @@ actually asked for.
 | Headless roster commands: add, remove, rename, amount, duplicate, relocate, reorder | Done |
 | Browser drafts in IndexedDB with exact definition-key restoration | Done |
 | In-memory undo/redo over immutable snapshots | Done |
-| Durable undo history and automatic saving | Deferred |
+| Unsaved-change tracking, indicator, and reload guard | Done |
+| **Autosave to an already-active draft** | **Next** | unambiguous and small; see the 2026-08-21 entry for why creating a draft automatically is *not* |
+| Durable undo history | Deferred |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
 ### Open questions needing the owner
@@ -3479,3 +3481,74 @@ corpus-first method that drove sections A and B does not apply. Expect to start
 from what the app does instead.
 
 No open questions block work.
+
+## Completed Assignment — Unsaved-Change Tracking, 2026-08-21
+
+Baseline `98c5d65`; resulting implementation commit `3cf8ddd`.
+
+### Measuring D against E
+
+Both were unmeasured. Section E was worse, and worse than its own roadmap entry
+suggested.
+
+| | Section D — cache | Section E — durability |
+|---|---|---|
+| Failure | storage pressure | **silent loss of work** |
+| Surfaced? | yes, browser stores catch and diagnose | **no** |
+| Scale | the pinned corpus is 172 MB of JSON | everything since the last manual save |
+
+`saveRosterDraft` was called from exactly one place — a button. Undo history is
+in memory. There was no dirty tracking, no indicator, and no unload guard. Close
+the tab and the roster was gone, silently. For a tool whose entire activity is
+building a list, that is the worst failure available, and it outranked anything
+in section D.
+
+### What changed
+
+The controller retains the exact roster last written to or read from the draft
+store. Rosters are immutable and every command returns a new one, so **identity
+is an exact dirty test** — no deep comparison, no false positives from
+re-renders. A new or cleared roster has never been persisted and reads as
+unsaved from its first edit.
+
+The workspace shows "Unsaved changes" beside the save button, and a
+`beforeunload` listener is registered *only while changes are pending*, so the
+browser asks before discarding them and stays silent otherwise.
+
+### What this deliberately does not do
+
+Autosave. The two halves are not equally decided:
+
+- **Saving to an already-active draft on a debounce** is unambiguous. The user
+  has already chosen to persist this roster; keeping it current is what they
+  asked for. Good next checkpoint.
+- **Creating a draft automatically** for a roster never saved is a product
+  decision, not a technical one. It changes what the draft shelf means — it
+  would fill with unnamed rosters the user never asked to keep. Worth asking
+  Stone rather than guessing.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **440 passed, 8 skipped (448 total)**.
+
+### A note on method for sections C–E
+
+Sections A and B were driven by corpus measurement: count the shapes, find the
+population, decide from evidence. **That does not transfer here.** These are
+product features, and the corpus says nothing about them. The equivalent move is
+to read what the app actually does — which is how this gap was found, by
+grepping for every call site of `saveRosterDraft` and finding exactly one.
+
+### Next recommended boundary
+
+1. **Autosave to an already-active draft**, debounced. Small, unambiguous, and
+   it closes most of the remaining loss window.
+2. **Section D — cache limits.** No eviction or quota policy exists. Browser
+   stores do catch and diagnose failures, so this degrades visibly rather than
+   silently; lower priority than it first looked.
+3. **Durable undo history** — survives reload, and depends on how autosave lands.
+
+One question for Stone when convenient: should an unsaved roster autosave into a
+new draft automatically, or stay unsaved until asked? Plus the older
+`automatic`/auto-fill observation, still open.
