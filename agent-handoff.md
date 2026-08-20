@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (collection anchoring)
+## Current Status — 2026-08-21 (display names)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **435 passed, 7 skipped (442)**.
+  `git diff --check` all pass. `pnpm test` is **437 passed, 7 skipped (444)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -91,7 +91,7 @@ owner reprioritises).
 |---|---|---|
 | Profile modifier projection | Done | |
 | Characteristic `set` | Done | lexical replacement; needs no numeric grammar |
-| Characteristic `append` | Done | any declared `join` including the empty one; onto an empty value it emits no separator. Only an absent `join` withholds. |
+| Characteristic `append` | Done | every shape executes: absent `join` defaults to a space, empty concatenates, empty base emits no separator |
 | Profile visibility (`hidden`) | Done | all 154 corpus instances fit |
 | `affects` grammar parsing | Done | including the selections terminus |
 | `affects` traversal execution | Done | own/children/descendants; group rule verified in New Recruit |
@@ -111,7 +111,9 @@ owner reprioritises).
 | Rendering profile annotation | Done | parentheses after the profile name, folded into that profile's completeness |
 | `affects` force anchoring | Done | 31 detachment abilities, via a `forces` segment or a `force`/`roster` scope; traversal depth still distinguishes the force's own selections from everything below |
 | Withheld routing vs withheld steps | Open | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Now a **rare** path: no corpus modifier reaches it. Reconcile when something makes it common. |
-| **`name` modifiers** | **Next** | 7,673 instances but 86% Crusade; both annotation surfaces are done, so display-name composition is established |
+| Selection `name` modifiers | Done | 7,673 instances, overwhelmingly Crusade rank suffixes gated by XP condition groups |
+| Profile `name` modifiers | Open | five corpus instances; still unrouted display behavior |
+| **Legality and validation** | **Next** | roadmap section B, entirely unmeasured; the largest gap affecting matched-play use |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
 
@@ -3085,5 +3087,88 @@ being fixed speculatively. Reconcile it when something makes it common.
    affects matched-play use, and nothing in it has been measured yet.
 3. **Withheld routing vs withheld steps** — see above; unreachable from the
    corpus today.
+
+No open questions require the owner.
+
+## Completed Assignment — Display Names, 2026-08-21
+
+Baseline `3a09575`; resulting implementation commits `689c305` (append
+separator default) and `40e701f` (selection names).
+
+### The measurement corrected two earlier claims
+
+**"86% Crusade" was wrong**, or rather right for the wrong reason. Classifying by
+catalogue path put only 133 of 7,673 in Crusade sections. Classifying by *value*
+tells the real story: 1,319–1,320 instances each of `(Battle-ready)`,
+`(Blooded)`, `(Battle-hardened)`, `(Heroic)`, and `(Legendary)` — Crusade rank
+suffixes attached directly to unit entries, not filed under a Crusade group.
+
+**"An absent `join` cannot be executed" was also wrong.** 7,503 name appends
+declare no `join`, and **none** carries leading whitespace in its value. Stone's
+Fire Prism screenshot renders `Fire Prism (Battle-hardened)` — with a space. A
+no-separator default would render all 7,503 broken, which shipping community
+data would not be. So an absent `join` defaults to a single space, and every
+append shape now executes.
+
+The 41 appends that do declare `join=" "` are redundant rather than
+load-bearing, matching the copy-paste pattern already seen with `arg` and
+`position`.
+
+### The failure mode worth knowing about
+
+Four of the Fire Prism's five rank appends have no conditions *on the modifier*
+and sit in an unconditional group. Read naively, every unit would display
+`Name (Battle-ready) (Blooded) (Battle-hardened) (Heroic)`.
+
+They are gated by **`conditionGroups` on the modifier itself** — experience-point
+bands: `atMost 5`, `>5 atMost 15`, `>15 atMost 30`, `>30 atMost 50`, `>50`.
+`evaluateRosterModifierApplicability` already evaluates those, so an unsupported
+condition form withholds the name rather than stacking ranks.
+
+The pinned suite now holds that line: a Lord of Contagion in a non-Crusade roster
+keeps its plain name. **If a future change makes modifier condition groups
+unresolvable, that test is what catches it.**
+
+### The implementation shares rather than copies
+
+Codex's `evaluateRosterSelectionAnnotation` was ~130 lines of passes over own,
+grouped, and routed modifiers. `name` needs exactly that with a different field
+and a non-empty base, so the function was generalised into
+`evaluateSelectionTextField` and both are now thin wrappers. Behavior-neutral:
+the annotation tests pass unchanged.
+
+### One product decision
+
+A `name` modifier's base is supplied by the caller, not read from the choice,
+because an occurrence may carry a user rename. The browser passes the name
+currently displayed, so a rename and a catalogue modifier **compose** — rename a
+unit and its rank still follows it — rather than one silently winning. Commands
+and accessible labels keep the un-refined name.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **437 passed, 7 skipped (444 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Display fidelity is now essentially complete
+
+Executing: every characteristic operation, `affects` routing with occurrence and
+force anchoring, category membership, profile visibility, profile and selection
+annotation, and selection names. What remains of section A is five profile-owned
+`name` modifiers and two deliberate refusals (a non-immune category filter, and
+routing versus steps).
+
+### Next recommended boundary
+
+**Legality and validation — roadmap section B.** It is entirely unmeasured and is
+the largest gap that affects matched-play use: aggregate constraint enforcement,
+cost limits, and broader condition semantics are all still deferred. Start with a
+corpus-first research checkpoint the way display fidelity was started, because
+nothing here has numbers attached yet.
+
+Smaller items if a bounded piece is wanted first: profile `name` modifiers (five
+instances), or the routing-versus-steps reconciliation (currently unreachable
+from corpus data).
 
 No open questions require the owner.
