@@ -346,7 +346,9 @@
 - An effective value withheld when an unapplied step precedes a later step that
   reads its input, since only `set` discards what it was handed
 - Profile display annotation as its own report, built from an always-empty base
-  by the same operations and `affects` routing as characteristics
+  by the same operations and `affects` routing as characteristics, rendered in
+  parentheses after the profile name and folded into that profile's
+  completeness
 - Characteristic `floor` and `ceil` as bounds on the selected numeric match --
   at least, and at most -- rather than rounding
 - Lexical `increment` and `decrement` on the numeric match `position` selects,

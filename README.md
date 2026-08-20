@@ -113,8 +113,9 @@ This repository currently contains the first development slice:
   optional filter ID, terminus, and profile-type name, distinguishing selectors
   that target profiles from those that target the reached occurrences, with no
   resolution or execution;
-- headless profile display-annotation reports, built from an always-empty base
-  by the same operations and routing as characteristics;
+- profile display annotations, built from an always-empty base by the same
+  operations and routing as characteristics, shown in parentheses after the
+  profile name;
 - evaluated characteristic values in occurrence details, showing the effective
   value, the source value as a labelled base when it changed, an explicit
   unresolved label, a hidden/unresolved visibility label, a per-profile

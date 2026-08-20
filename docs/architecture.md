@@ -1521,8 +1521,17 @@ by an `affects` selector on an enhancement or upgrade elsewhere in the roster.
 
 New Recruit renders it in parentheses after the name it decorates:
 `Manreaper - sweep (Furnace of Plagues)`, `Patriarch (Gene Affliction)`. Both
-were observed on 2026-08-20. Selection-level annotation — the second of those —
-is not yet evaluated; only profiles are.
+were observed on 2026-08-20, and the workspace now renders profile annotations
+the same way. An unresolved annotation is omitted rather than shown partially;
+the profile's incomplete note already reports it.
+
+Annotation completeness folds into the profile's overall completeness in the
+browser inspection, alongside characteristics and visibility.
+
+Selection-level annotation — `Patriarch (Gene Affliction)` — is not evaluated.
+It is the same field decorating a selection's name rather than a profile's, and
+it needs the selections-terminus routing collector that `categories.ts` has
+rather than the profile one this uses. 68 corpus modifiers target it.
 
 ### Reading operations and step order
 

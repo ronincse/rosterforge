@@ -1804,6 +1804,15 @@ function SelectionProfile({
       ? profile.value.name
       : profile.value.name ?? profile.value.definition.name;
   const { typeName, characteristics } = profile.value;
+  // New Recruit shows a display annotation in parentheses after the name it
+  // decorates -- "Manreaper - sweep (Furnace of Plagues)". An unresolved one is
+  // simply omitted; the profile's incomplete note already says so.
+  const annotation = report?.annotation.value;
+  const displayName = name ?? "Unnamed profile";
+  const annotatedName =
+    annotation === undefined || annotation === ""
+      ? displayName
+      : `${displayName} (${annotation})`;
   const source =
     profile.origin === "Direct"
       ? profile.value.source.filename
@@ -1817,7 +1826,7 @@ function SelectionProfile({
     >
       <header>
         <div>
-          <strong>{name ?? "Unnamed profile"}</strong>
+          <strong>{annotatedName}</strong>
           <span>{typeName ?? "Unspecified profile type"}</span>
         </div>
         <small>

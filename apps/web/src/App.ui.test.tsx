@@ -113,6 +113,13 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           join=", "
           affects="self.entries.profiles.Unit"
         />
+        <modifier
+          type="append"
+          field="annotation"
+          value="Veteran Issue"
+          join=", "
+          affects="self.entries.profiles.Unit"
+        />
       </modifiers>
       <costs>
         <cost name="Points" typeId="cost-points" value="80" />
@@ -968,7 +975,9 @@ describe("App local catalogue flow", () => {
     expect(weapon).toBeTruthy();
     const weaponNode = within(weapon as HTMLElement);
     fireEvent.click(weaponNode.getByText("Selection details"));
-    expect(weaponNode.getByText("Special Weapon profile")).toBeTruthy();
+    expect(
+      weaponNode.getByText("Special Weapon profile (Veteran Issue)"),
+    ).toBeTruthy();
     expect(weaponNode.getByText("9")).toBeTruthy();
     expect(weaponNode.getByText("Base 4")).toBeTruthy();
     expect(weaponNode.getByText("Set by Veterans")).toBeTruthy();
@@ -977,6 +986,8 @@ describe("App local catalogue flow", () => {
     expect(weaponNode.getByText("Heavy, Assault")).toBeTruthy();
     expect(weaponNode.getByText("Base Heavy")).toBeTruthy();
     expect(weaponNode.getByText("Added by Veterans")).toBeTruthy();
+    // A display annotation renders in parentheses after the profile name, the
+    // way New Recruit shows it.
 
     fireEvent.click(
       screen.getByRole("button", {

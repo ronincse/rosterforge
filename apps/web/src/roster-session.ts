@@ -9,6 +9,7 @@ import type {
 import {
   composeSupportedRosterValidation,
   evaluateRosterCostsWithSelectionConditions,
+  evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileVisibility,
   evaluateRosterSelectionCategories,
@@ -26,6 +27,7 @@ import {
   type EmptySingleForceRootChoiceInspection,
   type EmptySingleForceRosterStructuralStatus,
   type RosterForceConstraintsInRosterReport,
+  type RosterProfileAnnotationReport,
   type RosterProfileCharacteristicReport,
   type RosterProfileVisibilityReport,
   type RosterSelectionCategoryReport,
@@ -101,6 +103,8 @@ export interface LocalRosterProfileCharacteristics {
   readonly profile: LocalRosterProfile;
   readonly report: RosterProfileCharacteristicReport;
   readonly visibility: RosterProfileVisibilityReport;
+  /** The display annotation decorating this profile's name, if any. */
+  readonly annotation: RosterProfileAnnotationReport;
   readonly completeness: ValidationCompleteness;
 }
 
@@ -542,20 +546,32 @@ export function inspectLocalRosterSelectionCharacteristics(
       occurrence,
       profile,
     );
-    diagnostics.push(...report.diagnostics, ...visibility.diagnostics);
-    if (!report.ok || !visibility.ok) {
+    const annotation = evaluateRosterProfileAnnotation(
+      session.roster,
+      session.catalogue.context,
+      occurrence,
+      profile,
+    );
+    diagnostics.push(
+      ...report.diagnostics,
+      ...visibility.diagnostics,
+      ...annotation.diagnostics,
+    );
+    if (!report.ok || !visibility.ok || !annotation.ok) {
       incomplete = true;
       return;
     }
     const completeness: ValidationCompleteness =
       report.value.completeness === "complete" &&
-      visibility.value.completeness === "complete"
+      visibility.value.completeness === "complete" &&
+      annotation.value.completeness === "complete"
         ? "complete"
         : "incomplete";
     const entry: LocalRosterProfileCharacteristics = {
       profile,
       report: report.value,
       visibility: visibility.value,
+      annotation: annotation.value,
       completeness,
     };
     profiles.push(entry);
