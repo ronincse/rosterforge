@@ -384,10 +384,14 @@
 - Selector terminus: a path ending in `profiles.<typeName>` targets profiles, a
   path stopping before it targets the reached occurrences themselves, which is
   what a selection-level field such as `category` requires
-- Owner-relative `affects` routing for category modifiers, sharing the traversal
-  machinery with the characteristic evaluator, with an embedded filter category
-  resolved from static links when no modifier anywhere in the composed catalogue
-  can change membership in it
+- `affects` routing anchored at the modifier's `scope`, for both category and
+  characteristic modifiers, so an enhancement reaches its bearer's wargear
+  without being its parent; supported anchors are the declarer, `parent`,
+  `root-entry`, and the nearest `model`/`unit`/`model-or-unit`/`upgrade`
+  ancestor-or-self
+- An embedded filter category on a routed category modifier, resolved from
+  static links when no modifier anywhere in the composed catalogue can change
+  membership in it
 
 ## Parsed But Not Evaluated
 
@@ -403,13 +407,12 @@
   positioned `increment`/`decrement` and a later `replace` that are themselves
   unevaluated, so executing it alone would display a value the source does not
   mean.
-- `affects` selectors that traverse beyond the declaring occurrence's own
-  subtree, chiefly force traversal; owner-relative routing to own, child, and
-  descendant occurrences and profiles is executed.
-- Category `affects` selectors that reach nothing from their own occurrence
-  while a `scope` names another anchor. All 89 corpus instances have this shape,
-  and whether the scope relocates the anchor is unestablished, so membership is
-  withheld and diagnosed rather than silently left unchanged.
+- `affects` selectors whose traversal leaves the anchor's subtree, chiefly force
+  traversal; routing to the anchor's own, child, and descendant occurrences and
+  profiles is executed.
+- `affects` modifiers whose `scope` names a collection (`force`, `roster`) or a
+  type with no matching ancestor; there is no single occurrence to stand on, so
+  the determination is withheld rather than treated as a no-op.
 - Category `affects` filters naming a category that some modifier can change;
   deciding them needs the membership pass one is computing.
 - Generic `arg` and `position` behavior on characteristic modifiers, `join` on
@@ -897,14 +900,15 @@ with `all` or an absent segment meaning any type and an unmatched name treated
 as invalid authoring. The `position` attribute is a 1-based index of which match
 within a value to affect, where negative counts from the end and `0` means all;
 it applies to string operations such as `replace`, not to append placement.
-`affects` also **overrides** `scope` rather than composing with it: when
-`affects` is present and is not the literal `self`, it determines the target.
+`affects` and `scope` **compose**: the scope chooses the occurrence the selector
+stands on, the selector chooses where it walks from there. An earlier reading
+had `affects` override `scope` outright; New Recruit disproved it on 2026-08-20
+(see the architecture document's `affects` anchoring section).
 
-Traversal now executes for every verified form. A selector declared by an
-occurrence or any of its ancestors routes to this profile when the occurrence
-falls in its target set: `own` reaches the declarer, `children` its direct child
-entries plus group members when the selector carries `group`, and `descendants`
-every descendant. An embedded category ID filters the set using the same
+Traversal now executes for every verified form. A selector declared by *any*
+occurrence routes to this profile when the occurrence falls in its target set:
+`own` reaches the anchor, `children` its direct child entries plus group members
+when the selector carries `group`, and `descendants` every descendant. An embedded category ID filters the set using the same
 effective membership condition identity uses; unknown membership leaves the
 report incomplete rather than guessing.
 

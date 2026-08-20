@@ -1296,19 +1296,10 @@ cases. The scan reads whole documents rather than roster-reachable choices,
 because immunity is a claim about the catalogue: a modifier on an entry this
 roster never uses still disproves it.
 
-**The relocated anchor, and why the corpus population is withheld.** All 89
-corpus category `affects` modifiers are declared on `upgrade` entries that have
-no descendant entries at all, and all 89 also carry a `scope`. Under the settled
-owner-relative rule — verified in New Recruit for a model reaching its own
-weapons — every one of them is vacuous, which is not a plausible reading of what
-the authors wrote. The alternative is that the `scope` names the anchor and the
-selector navigates from there, and nothing establishes that.
-
-Rather than pick one, a selector that does not reach its own occurrence while a
-scope names another anchor withholds the determination and emits
-`EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED`. Scope-free owner-relative
-routing executes normally. This keeps the corpus population exactly as honest as
-it was before while making the settled rule available where it applies.
+**The anchor.** All 89 corpus category `affects` modifiers are declared on
+`upgrade` entries with no descendant entries at all, and all 89 carry a `scope`.
+They resolve through the shared anchor rule above: the scope stands the selector
+on the bearer, and it walks down to the bearer's wargear.
 
 Only extension-free `add` and `remove` execute, in the order already
 documented elsewhere: direct owner modifiers first, then top-level groups in
@@ -1479,9 +1470,28 @@ declared type routes nothing. A profile whose type does not resolve uniquely
 makes the report incomplete when the owner carries any `affects` modifier at
 all, because one of them might have targeted it.
 
-`affects` **overrides** `scope` rather than composing with it, so a routed
-modifier's scope is not counted against it and neither is the `affects`
-attribute itself. Routed steps record `origin: "affects"` and run after the
+`affects` and `scope` **compose**: the scope chooses where the selector stands,
+the selector chooses where it walks. Neither attribute is counted against a
+routed modifier.
+
+This corrects an earlier reading, which had `affects` overriding `scope`
+outright. Confirmed against New Recruit on 2026-08-20: a Death Guard Lord of
+Contagion carrying the Furnace of Plagues enhancement has its *Manreaper*
+profiles modified while its own Unit profile is untouched. The enhancement has
+no child entries at all and is the weapon's sibling rather than its ancestor, so
+an owner-relative selector could not have reached anything; its modifiers carry
+`scope="model"`, and the model is the bearer. `resolveAffectsAnchor` therefore
+resolves the anchor per modifier before routing.
+
+Supported anchors are the declarer itself (absent scope or `self`), `parent`,
+`root-entry`, and the nearest ancestor-or-self of a named type (`model`, `unit`,
+`model-or-unit`, `upgrade`). `force` and `roster` name collections rather than
+one occurrence and stay unsupported, as does a typed scope with no matching
+ancestor — refused rather than silently treated as a no-op.
+
+Because the anchor can be a shared ancestor, *any* occurrence in the roster can
+declare a selector that reaches a given one. The routed collectors therefore
+scan the whole roster in document order rather than only the ancestor chain. Routed steps record `origin: "affects"` and run after the
 profile's own, which keeps a profile-owned modifier authoritative over an
 inherited one. Every step also records `declaredBy`, the occurrence that owns
 the modifier. For an own step that is the profile's own occurrence and carries

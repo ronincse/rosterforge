@@ -16,7 +16,8 @@ import {
   affectsModifiers,
   hasAffectsModifier,
   reaches,
-  routeFromDeclarer,
+  resolveAffectsAnchor,
+  routeFromAnchor,
 } from "./affects-routing.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 import {
@@ -818,10 +819,11 @@ function collectAffectsRoutedModifiers(
   }
 
   const typeName = declaredProfileTypeName(context, profile);
-  // Nearest ancestor first is irrelevant to the result but keeps step order
-  // deterministic: outermost declaration runs first, like source order.
-  const chain = [...ownerLocation.ancestors].reverse();
-  const candidates = [...chain, owner];
+  // Any occurrence in the roster can declare a selector that reaches here: a
+  // scope may anchor it at a shared ancestor, which is exactly how an
+  // enhancement reaches its bearer's weapons without being their parent.
+  // Roster document order keeps step order deterministic.
+  const candidates = locations.map(({ occurrence }) => occurrence);
 
   const collected: {
     readonly modifier: RosterCharacteristicModifierSource;
@@ -847,7 +849,6 @@ function collectAffectsRoutedModifiers(
       partial = true;
       continue;
     }
-    const route = routeFromDeclarer(declarer, owner, locations, choices);
     for (const entry of affectsModifiers(choice)) {
       const value = entry.modifier.node.attributes.affects;
       if (value === undefined) continue;
@@ -855,6 +856,22 @@ function collectAffectsRoutedModifiers(
       if (!selector.supported || selector.profileTypeName === undefined) {
         continue;
       }
+      // `scope` names where the selector stands; `affects` names where it
+      // walks. Confirmed in New Recruit, so the anchor is resolved per
+      // modifier rather than assumed to be the declarer.
+      const anchor = resolveAffectsAnchor(
+        declarer,
+        entry.modifier.scope,
+        locations,
+        choices,
+      );
+      if (anchor.kind !== "resolved") {
+        // A scope naming a collection, or one that cannot be resolved, might
+        // have anchored somewhere that reaches this profile.
+        partial = true;
+        continue;
+      }
+      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
       const wanted = selector.profileTypeName.toLowerCase();
       if (wanted !== "all" && wanted !== typeName.toLowerCase()) {
         continue;

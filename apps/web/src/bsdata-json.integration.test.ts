@@ -952,6 +952,170 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "stands a pinned affects selector on the model its scope names",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Chaos - Death Guard.json",
+          "Chaos - Chaos Daemons Library.json",
+          "Chaos - Chaos Knights Library.json",
+          "Library - Astartes Heresy Legends.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-affects-anchor",
+              importedAt: "2026-08-20T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Death Guard catalogue.");
+        }
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-anchor-roster"),
+          forceId: forceOccurrenceId("real-anchor-force"),
+          name: "Affects Anchor Roster",
+        });
+        if (!session.ok) throw new Error("Expected roster session.");
+
+        const lordRoot = localRosterRootChoices(session.value.catalogue).find(
+          ({ materialized }) => materialized.name === "Lord of Contagion",
+        );
+        if (lordRoot === undefined) {
+          throw new Error("Expected the Lord of Contagion root choice.");
+        }
+        const lordId = selectionOccurrenceId("anchor-lord");
+        let current = addLocalRosterRootSelection(session.value, lordRoot, {
+          selectionId: lordId,
+        });
+        if (!current.ok) throw new Error("Expected the Lord to be added.");
+
+        const addChild = (
+          parentId: SelectionOccurrenceId,
+          childName: string,
+          childId: string,
+        ): SelectionOccurrenceId => {
+          if (!current.ok) throw new Error("Expected a session.");
+          const choice = localRosterChildChoices(current.value, parentId).find(
+            ({ name }) => name === childName,
+          );
+          if (choice === undefined) {
+            throw new Error(`Expected the ${childName} choice.`);
+          }
+          const id = selectionOccurrenceId(childId);
+          current = addLocalRosterChildSelection(
+            current.value,
+            parentId,
+            choice,
+            { selectionId: id },
+          );
+          if (!current.ok) throw new Error(`Expected ${childName} to be added.`);
+          return id;
+        };
+
+        const wargearId = addChild(lordId, "Wargear", "anchor-wargear");
+        const manreaperId = addChild(wargearId, "Manreaper", "anchor-manreaper");
+        const enhancementsId = addChild(
+          lordId,
+          "Enhancements",
+          "anchor-enhancements",
+        );
+        addChild(
+          enhancementsId,
+          "Furnace of Plagues",
+          "anchor-furnace",
+        );
+        if (!current.ok) return;
+
+        const roster = current.value.roster;
+        const context = current.value.catalogue.context;
+        const occurrences = rosterSelections(
+          roster.forces.flatMap(({ selections }) => selections),
+        );
+        const reportFor = (
+          id: SelectionOccurrenceId,
+          typeName: string,
+        ) => {
+          const occurrence = occurrences.find((entry) => entry.id === id);
+          const choice = localRosterSelectionChoice(
+            current.ok ? current.value : session.value,
+            id,
+          );
+          const found = choice?.profiles.find(
+            (candidate) => candidate.typeName === typeName,
+          );
+          if (occurrence === undefined || found === undefined) {
+            throw new Error(`Expected a ${typeName} profile on ${id}.`);
+          }
+          const evaluated = evaluateRosterProfileCharacteristics(
+            roster,
+            context,
+            occurrence,
+            found,
+          );
+          if (!evaluated.ok) throw new Error("Expected a report.");
+          return evaluated.value;
+        };
+
+        // Furnace of Plagues has no child entries at all and is the Manreaper's
+        // *sibling*, so an owner-relative selector could never reach it. Its
+        // modifiers carry `scope="model"`, which stands them on the Lord.
+        const manreaper = reportFor(manreaperId, "Melee Weapons");
+        const routed = manreaper.characteristics.flatMap(({ steps }) =>
+          steps.filter((step) => step.origin === "affects"),
+        );
+        expect(routed.length).toBeGreaterThan(0);
+        expect(
+          routed.every((step) => step.declaredBy.id === "anchor-furnace"),
+        ).toBe(true);
+
+        // Stone's New Recruit screenshot shows this weapon gaining Devastating
+        // Wounds alongside its printed Lethal Hits. The append that does it
+        // reaches the weapon -- that is the anchoring this test pins -- but it
+        // carries `position`, which stays unsupported, so the value is honestly
+        // unresolved rather than shown half-applied.
+        const keywords = manreaper.characteristics.find(
+          ({ characteristic }) => characteristic.name === "Keywords",
+        );
+        expect(keywords).toBeDefined();
+        expect(keywords?.baseValue ?? "").toContain("Lethal Hits");
+        expect(keywords?.baseValue ?? "").not.toContain("Devastating Wounds");
+        expect(keywords?.steps).toMatchObject([
+          { status: "unapplied", origin: "affects", kind: "append" },
+        ]);
+        expect(keywords).not.toHaveProperty("value");
+        expect(manreaper.completeness).toBe("incomplete");
+
+        // The same screenshot shows the Lord's own Unit profile unchanged:
+        // `self.entries.recursive` names the anchor's descendants, and the
+        // anchor is not one of them.
+        const lord = reportFor(lordId, "Unit");
+        expect(
+          lord.characteristics.flatMap(({ steps }) =>
+            steps.filter((step) => step.origin === "affects"),
+          ),
+        ).toEqual([]);
+      },
+      120_000,
+    );
+
+    it(
       "routes a pinned affects selector past groups, filters by category, and appends",
       async () => {
         if (realDataDirectory === undefined) {

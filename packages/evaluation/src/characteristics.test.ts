@@ -556,6 +556,52 @@ describe("affects traversal", () => {
     expect(report.characteristics[0]?.completeness).toBe("incomplete");
   });
 
+  it("stands the selector on the occurrence its scope names", () => {
+    const setup = bearerSetup();
+
+    const weapon = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.weapon,
+        profile(setup.weaponChoice, "profile-bearer-weapon"),
+      ),
+    );
+
+    // The enhancement declaring this modifier is the weapon's *sibling*, not
+    // its ancestor, and has no children at all. It reaches the weapon only
+    // because `scope="model"` stands the selector on the bearer.
+    expect(weapon.characteristics[0]).toMatchObject({
+      baseValue: '4"',
+      value: '9"',
+      steps: [{ status: "applied", origin: "affects", output: '9"' }],
+    });
+    expect(weapon.completeness).toBe("complete");
+  });
+
+  it("does not let a descendant selector reach the anchor itself", () => {
+    const setup = bearerSetup();
+
+    const bearer = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.bearer,
+        profile(setup.bearerChoice, "profile-bearer-unit"),
+      ),
+    );
+
+    // Confirmed in New Recruit: the Lord of Contagion's own Unit profile is
+    // untouched while its weapons change. `self.entries.recursive` names the
+    // anchor's descendants, and the anchor is not one of them.
+    expect(bearer.characteristics[0]).toMatchObject({
+      baseValue: '6"',
+      value: '6"',
+      steps: [],
+    });
+    expect(bearer.completeness).toBe("complete");
+  });
+
   it("attributes a routed step to the occurrence that declared it", () => {
     const setup = traversalSetup();
 
@@ -767,6 +813,83 @@ function characteristicSetup(rootId = "characteristic-owner"): {
     throw new Error("Missing characteristic fixture owner.");
   }
   return { context, roster, owner, ownerChoice: ownerChoice };
+}
+
+/**
+ * A model carrying an enhancement and a weapon, mirroring the shape confirmed
+ * in New Recruit: the enhancement has no children, so its selector can only
+ * reach the weapon by standing on the model its `scope` names.
+ */
+function bearerSetup(): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly bearer: RosterSelection;
+  readonly weapon: RosterSelection;
+  readonly bearerChoice: EvaluationSelectionChoice;
+  readonly weaponChoice: EvaluationSelectionChoice;
+} {
+  const context = catalogueContext();
+  const bearerChoice = choice(context, "affects-bearer");
+  const enhancementChoice = choice(context, "bearer-enhancement");
+  const weaponChoice = choice(context, "bearer-weapon");
+  let roster = createRoster({
+    id: rosterId("bearer-roster"),
+    name: "Bearer roster",
+    catalogue: {
+      kind: "catalogue",
+      key: projectionKey(context.document.projection),
+      sourceId: context.document.metadata.id,
+    },
+  });
+  const force = context.forces.definitions.find(
+    ({ source }) => source.id === "force-patrol",
+  );
+  if (force === undefined) throw new Error("Missing bearer fixture force.");
+  roster = successful(
+    addRosterForce(roster, {
+      id: forceOccurrenceId("bearer-force"),
+      definition: {
+        kind: "forceEntry",
+        key: projectionKey(force.source),
+        ...(force.source.id === undefined ? {} : { sourceId: force.source.id }),
+      },
+    }),
+  );
+  roster = successful(
+    addRosterSelectionToForce(roster, forceOccurrenceId("bearer-force"), {
+      id: selectionOccurrenceId("bearer-occurrence"),
+      definition: {
+        kind: bearerChoice.kind,
+        key: projectionKey(bearerChoice.occurrence),
+        ...(bearerChoice.id === undefined ? {} : { sourceId: bearerChoice.id }),
+      },
+    }),
+  );
+  for (const [label, child] of [
+    ["enhancement", enhancementChoice],
+    ["weapon", weaponChoice],
+  ] as const) {
+    roster = successful(
+      addRosterSelectionToSelection(
+        roster,
+        selectionOccurrenceId("bearer-occurrence"),
+        {
+          id: selectionOccurrenceId(`bearer-${label}`),
+          definition: {
+            kind: child.kind,
+            key: projectionKey(child.occurrence),
+            ...(child.id === undefined ? {} : { sourceId: child.id }),
+          },
+        },
+      ),
+    );
+  }
+  const bearer = roster.forces[0]?.selections[0];
+  const weapon = bearer?.selections[1];
+  if (bearer === undefined || weapon === undefined) {
+    throw new Error("Missing bearer occurrences.");
+  }
+  return { context, roster, bearer, weapon, bearerChoice, weaponChoice };
 }
 
 function traversalSetup(): {

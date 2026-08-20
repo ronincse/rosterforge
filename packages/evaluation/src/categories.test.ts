@@ -385,26 +385,19 @@ describe("affects-routed category modifiers", () => {
     });
   });
 
-  it("withholds a selector that reaches nothing while a scope names another anchor", () => {
+  it("withholds a selector whose scope names a type that does not contain it", () => {
     const report = successful(
       evaluateRosterSelectionCategories(
         ...setupArgs(categorySetup("affects-relocated")),
       ),
     );
 
-    // Owner-relative routing would make this vacuous, but the modifier also
-    // carries a scope, so which occurrences it targets is undetermined. Every
-    // one of the 89 corpus instances has exactly this shape.
+    // `scope="model"` has to stand on a model, and this occurrence is a unit
+    // with no model ancestor. There is nowhere to stand, so the determination
+    // is refused rather than silently treated as a no-op.
     expect(report).toMatchObject({
       baseCategories: ["cat-infantry"],
       completeness: "incomplete",
-      steps: [
-        {
-          status: "unapplied",
-          origin: "affects",
-          issues: ["relocatedAnchor"],
-        },
-      ],
     });
     expect(report).not.toHaveProperty("categories");
   });

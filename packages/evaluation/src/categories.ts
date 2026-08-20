@@ -24,7 +24,8 @@ import {
   affectsModifiers,
   hasAffectsModifier,
   reaches,
-  routeFromDeclarer,
+  resolveAffectsAnchor,
+  routeFromAnchor,
 } from "./affects-routing.js";
 
 import {
@@ -78,8 +79,7 @@ export type RosterCategoryModifierIssue =
   | "unsupportedAttributes"
   | "missingType"
   | "unsupportedType"
-  | "missingValue"
-  | "relocatedAnchor";
+  | "missingValue";
 
 export interface RosterCategoryLinkSource {
   readonly targetId?: ObjectId;
@@ -446,46 +446,6 @@ export function evaluateRosterSelectionCategories<
     );
   }
 
-  // An `affects` selector on this occurrence that does not reach this
-  // occurrence, while a `scope` names a different anchor, has an undetermined
-  // target set.
-  //
-  // The settled owner-relative rule -- verified in New Recruit for a model
-  // reaching its own weapons -- makes such a selector vacuous. Every one of the
-  // pinned corpus's 89 category `affects` modifiers is declared on an `upgrade`
-  // entry with no descendant entries at all, so under that rule none of them
-  // could ever do anything, which is not a plausible reading of the authors'
-  // intent. The alternative reading is that the `scope` names the anchor and
-  // the selector navigates from there; nothing establishes it. Rather than pick
-  // one, the determination is withheld and diagnosed.
-  for (const modifier of choice.modifiers.filter(
-    (candidate) =>
-      candidate.field === categoryField &&
-      candidate.node.attributes["affects"] !== undefined &&
-      candidate.scope !== undefined,
-  )) {
-    const selector = parseBattleScribeAffectsSelector(
-      modifier.node.attributes["affects"] as string,
-    );
-    if (selector.traversal === "own" && selector.target === "selections") {
-      // It does name this occurrence, so the routed pass settles it.
-      continue;
-    }
-    membershipKnown = false;
-    primaryKnown = false;
-    steps.push({
-      status: "unapplied",
-      modifier,
-      grouped: false,
-      origin: "affects",
-      declaredBy: owner,
-      issues: ["relocatedAnchor"],
-    });
-    diagnostics.push(
-      categoryDiagnostic(modifier, "relocatedAnchor", "affects"),
-    );
-  }
-
   // Routed steps run last. A selector reaches this occurrence from outside its
   // own declaration, so treating it as the final word matches the inbound-scope
   // rule already in force above.
@@ -651,9 +611,11 @@ function collectAffectsRoutedCategoryModifiers(
     return { contributions: [], partial: false };
   }
 
-  // Outermost declaration first, so step order stays deterministic and matches
-  // the source order a reader would expect.
-  const candidates = [...[...ownerLocation.ancestors].reverse(), owner];
+  // Any occurrence in the roster can declare a selector that reaches here: a
+  // scope may anchor it at a shared ancestor, which is exactly how an
+  // enhancement reaches its bearer's weapons without being their parent.
+  // Roster document order keeps step order deterministic.
+  const candidates = locations.map(({ occurrence }) => occurrence);
   const contributions: InboundCategoryContribution[] = [];
   let partial = false;
 
@@ -667,7 +629,6 @@ function collectAffectsRoutedCategoryModifiers(
     }
     if (!hasAffectsModifier(choice)) continue;
 
-    const route = routeFromDeclarer(declarer, owner, locations, choices);
     for (const entry of affectsModifiers(choice)) {
       const modifier = entry.modifier as RosterCategoryModifierSource;
       if (modifier.field !== categoryField) continue;
@@ -680,6 +641,19 @@ function collectAffectsRoutedCategoryModifiers(
         partial = true;
         continue;
       }
+      // `scope` names where the selector stands; `affects` names where it
+      // walks. Confirmed in New Recruit.
+      const anchor = resolveAffectsAnchor(
+        declarer,
+        modifier.scope,
+        locations,
+        choices,
+      );
+      if (anchor.kind !== "resolved") {
+        partial = true;
+        continue;
+      }
+      const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
       if (!reaches(selector, route)) continue;
       if (selector.filterId !== undefined) {
         if (modifierTargetedCategoryIds(context).has(selector.filterId)) {
@@ -904,11 +878,6 @@ function categoryDiagnostic(
       "EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED",
       `Category modifier operation ${modifier.type} is not supported.`,
       "type",
-    ],
-    relocatedAnchor: [
-      "EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED",
-      "A category modifier's affects selector reaches nothing from its own occurrence while a scope names another anchor, so its target set is undetermined.",
-      "affects",
     ],
     missingValue: [
       "EVALUATION_CATEGORY_MODIFIER_VALUE_MISSING",

@@ -882,14 +882,7 @@ EVALUATION_CATEGORY_MODIFIER_ATTRIBUTES_UNSUPPORTED
 EVALUATION_CATEGORY_MODIFIER_TYPE_MISSING
 EVALUATION_CATEGORY_MODIFIER_TYPE_UNSUPPORTED
 EVALUATION_CATEGORY_MODIFIER_VALUE_MISSING
-EVALUATION_CATEGORY_MODIFIER_ANCHOR_RELOCATED
 ```
-
-`ANCHOR_RELOCATED` marks an `affects` selector that reaches nothing from its own
-occurrence while a `scope` names another anchor. Owner-relative routing would
-make it vacuous, and whether the scope relocates the anchor is unestablished, so
-the determination is withheld rather than silently reported as unchanged. All 89
-pinned-corpus category `affects` modifiers have this shape.
 
 Only `add` and `remove` execute, so `set-primary` and `unset-primary` produce
 the unsupported-type code. Those two are the one unsupported shape that provably

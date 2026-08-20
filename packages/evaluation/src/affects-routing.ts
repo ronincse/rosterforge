@@ -41,6 +41,99 @@ interface AffectsModifierContainer<Modifier> {
 }
 
 /**
+ * Where an `affects` selector starts walking from.
+ *
+ * `unsupported` means the scope names a collection rather than one occurrence,
+ * so no single anchor exists.
+ */
+export type AffectsAnchorResolution =
+  | { readonly kind: "resolved"; readonly anchor: RosterSelection }
+  | { readonly kind: "unresolved" }
+  | { readonly kind: "unsupported" };
+
+interface AffectsSelectionLocation {
+  readonly occurrence: RosterSelection;
+  readonly ancestors: readonly RosterSelection[];
+}
+
+/**
+ * Resolves the occurrence an `affects` selector's `self` refers to.
+ *
+ * Confirmed against New Recruit on 2026-08-20. A Death Guard Lord of Contagion
+ * carrying the Furnace of Plagues enhancement has its *Manreaper* profiles
+ * modified, while its own Unit profile is untouched. The enhancement has no
+ * child entries at all, so an owner-relative selector could not have reached
+ * anything. Its modifiers carry `scope="model"`, and the model is the bearer —
+ * so the scope names the anchor and the selector walks down from there.
+ *
+ * This supersedes the earlier reading that `affects` overrides `scope`. The two
+ * compose: `scope` chooses where to stand, `affects` chooses where to walk.
+ */
+export function resolveAffectsAnchor(
+  declarer: RosterSelection,
+  scope: string | undefined,
+  locations: readonly AffectsSelectionLocation[],
+  choices: EvaluationChoiceIndex,
+): AffectsAnchorResolution {
+  if (scope === undefined || scope === "self") {
+    return { kind: "resolved", anchor: declarer };
+  }
+  // A collection is not one occurrence, so there is nothing to stand on.
+  if (scope === "force" || scope === "roster" || scope === "ancestor") {
+    return { kind: "unsupported" };
+  }
+  const location = locations.find(
+    (candidate) => candidate.occurrence === declarer,
+  );
+  if (location === undefined) return { kind: "unresolved" };
+
+  if (scope === "parent") {
+    const parent = location.ancestors[0];
+    // A top-level occurrence's parent is a force, not a selection.
+    return parent === undefined
+      ? { kind: "unsupported" }
+      : { kind: "resolved", anchor: parent };
+  }
+  if (scope === "root-entry") {
+    const root = location.ancestors[location.ancestors.length - 1];
+    return { kind: "resolved", anchor: root ?? declarer };
+  }
+
+  const types =
+    scope === "model"
+      ? ["model"]
+      : scope === "unit"
+        ? ["unit"]
+        : scope === "model-or-unit"
+          ? ["model", "unit"]
+          : scope === "upgrade"
+            ? ["upgrade"]
+            : undefined;
+  if (types === undefined) return { kind: "unsupported" };
+
+  for (const occurrence of [declarer, ...location.ancestors]) {
+    const resolution = resolveEvaluationSelection(occurrence, choices, true);
+    const typed = resolution.choices.map(
+      (choice) =>
+        choice.kind === "selectionEntry" &&
+        choice.type !== undefined &&
+        types.includes(choice.type),
+    );
+    if (typed.length > 0 && typed.every(Boolean)) {
+      return { kind: "resolved", anchor: occurrence };
+    }
+    if (resolution.status === "resolved" || (typed.length > 0 && !typed.some(Boolean))) {
+      continue;
+    }
+    // An unreadable step might have been the anchor.
+    return { kind: "unresolved" };
+  }
+  // Nothing of that type contains the declarer, so the modifier has nowhere to
+  // stand. Refused rather than silently treated as a no-op.
+  return { kind: "unresolved" };
+}
+
+/**
  * True when the selector's traversal reaches an occurrence sitting at `route`.
  *
  * Verified against New Recruit on 2026-08-19: `entries` alone does not descend
@@ -61,14 +154,14 @@ export function reaches(
 }
 
 /**
- * Measures the path from a declaring occurrence down to one of its descendants.
+ * Measures the path from the anchor occurrence down to one of its descendants.
  *
  * The entry-step count treats a selection-entry-group occurrence as a non-entry
  * step, so the result holds whether the roster flattens groups (browser
  * editing) or retains them (headless construction).
  */
-export function routeFromDeclarer(
-  declarer: RosterSelection,
+export function routeFromAnchor(
+  anchor: RosterSelection,
   owner: RosterSelection,
   locations: readonly {
     readonly occurrence: RosterSelection;
@@ -76,7 +169,7 @@ export function routeFromDeclarer(
   }[],
   choices: EvaluationChoiceIndex,
 ): AffectsRoute {
-  if (declarer === owner) {
+  if (anchor === owner) {
     return { entrySteps: 0, viaGroup: false, reachable: true };
   }
   const ownerLocation = locations.find(
@@ -85,11 +178,11 @@ export function routeFromDeclarer(
   if (ownerLocation === undefined) {
     return { entrySteps: 0, viaGroup: false, reachable: false };
   }
-  const index = ownerLocation.ancestors.indexOf(declarer);
+  const index = ownerLocation.ancestors.indexOf(anchor);
   if (index === -1) {
     return { entrySteps: 0, viaGroup: false, reachable: false };
   }
-  // `ancestors` is nearest-first, so everything before the declarer plus the
+  // `ancestors` is nearest-first, so everything before the anchor plus the
   // occurrence itself is the path walked down from it.
   const path = [...ownerLocation.ancestors.slice(0, index), owner];
   let entrySteps = 0;
@@ -106,7 +199,7 @@ export function routeFromDeclarer(
   if (!viaGroup) {
     // A flattened roster keeps group members as direct children, so the
     // definition side decides whether the hop passed through a group.
-    viaGroup = passesThroughGroupDefinition(declarer, path[0], choices);
+    viaGroup = passesThroughGroupDefinition(anchor, path[0], choices);
   }
   return { entrySteps, viaGroup, reachable: true };
 }

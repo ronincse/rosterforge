@@ -91,7 +91,7 @@ This repository currently contains the first development slice:
   displays as a finished value;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
-- owner-relative `affects` routing, so a selection's modifier reaches its own
+- `affects` routing, so a selection's modifier reaches its own
   profiles of a named profile type, matched case-insensitively against declared
   types and overriding the modifier's scope;
 - occurrence keywords in the roster workspace, showing effective categories
@@ -99,9 +99,9 @@ This repository currently contains the first development slice:
 - read-only effective category membership per roster occurrence, executing
   scope-free `add`/`remove` while preserving `set-primary`/`unset-primary` as
   an unresolved primary determination;
-- owner-relative `affects` routing for category modifiers, resolving an embedded
-  filter category from static links when no modifier can change it, and
-  withholding the case where a scope may relocate the anchor;
+- `affects` routing anchored at the modifier's `scope`, so an enhancement reaches
+  its bearer's wargear without being its parent, for both category and
+  characteristic modifiers;
 - pure parsing of the observed `affects` selector grammar into traversal,
   optional filter ID, terminus, and profile-type name, distinguishing selectors
   that target profiles from those that target the reached occurrences, with no
