@@ -332,10 +332,10 @@
   label when a sequence cannot be completed, and a per-profile incomplete note;
   direct profiles, linked profile info links, and recursive info-group profiles
   all use the same evaluated report
-- Characteristic `append` through its declared `join` separator, used verbatim,
-  including the empty separator that opens the corpus's `+0` bonus slot,
-  emitting no separator when the value appended onto is empty, and chaining
-  through successive appends; appends with no separator, an
+- Characteristic `append` through its `join` separator, used verbatim, defaulting
+  to a single space when absent, including the empty separator that opens the
+  corpus's `+0` bonus slot, emitting no separator when the value appended onto is
+  empty, and chaining through successive appends; appends with no separator, an
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
 - `join`, `arg`, and `position` treated as inert where the operation does not
@@ -433,7 +433,7 @@
 - Arithmetic whose target number cannot be placed: no declared `position` with
   more than one number in the value, a value with no number at all, a malformed
   `position`, or a non-integer operand.
-- `append` whose `join` separator is absent
+
 - Force anchoring in a roster holding more than one force, or any nested force.
   With a single force the two readings name the same set; with more they can
   differ and nothing establishes which New Recruit uses.

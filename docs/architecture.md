@@ -1411,8 +1411,12 @@ behaves. Confirmed against New Recruit on 2026-08-20 by the annotation field:
 annotation starts from an empty base, and a Manreaper carrying one displays
 `(Furnace of Plagues)`, not `(, Furnace of Plagues)`.
 
-One case stays unapplied: **no `join` declared at all**. Nothing establishes a
-default separator, and unlike an empty one it is not written deliberately.
+An **absent** `join` defaults to a single space, so every append shape now
+executes. Confirmed against New Recruit on 2026-08-21: an Aeldari Fire Prism
+carries `append name "(Battle-hardened)"` with no `join` and no leading
+whitespace in the value, and New Recruit renders `Fire Prism (Battle-hardened)`.
+None of the corpus's 7,503 name appends written that way carries its own
+separator, so a no-separator default would render every one of them broken.
 
 The declared separator is used verbatim and never normalised: the corpus's most
 common one is a comma followed by a **non-breaking** space, and collapsing it to

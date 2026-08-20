@@ -445,7 +445,7 @@ describe("roster profile characteristic display", () => {
     expect(report.completeness).toBe("complete");
   });
 
-  it("withholds an append with no separator, and joins onto an empty value", () => {
+  it("defaults an absent separator to a space, and joins onto an empty value", () => {
     const setup = characteristicSetup();
 
     const report = successful(
@@ -465,11 +465,14 @@ describe("roster profile characteristic display", () => {
       value: "Assault",
       steps: [{ status: "applied", kind: "append", output: "Assault" }],
     });
-    // An absent separator is still refused: nothing establishes a default.
-    expect(report.characteristics[1]?.steps).toMatchObject([
-      { status: "unapplied", issues: ["missingSeparator"] },
-    ]);
-    expect(report.characteristics[1]).not.toHaveProperty("value");
+    // An absent separator defaults to a single space. An Aeldari Fire Prism
+    // carries `append name "(Battle-hardened)"` with no `join` and no leading
+    // whitespace, and New Recruit renders "Fire Prism (Battle-hardened)".
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "4+ Lance",
+      steps: [{ status: "applied", kind: "append", output: "4+ Lance" }],
+    });
   });
 
   it("does not execute a modifier carrying generic behavior attributes", () => {

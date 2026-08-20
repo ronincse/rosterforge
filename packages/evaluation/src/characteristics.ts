@@ -69,7 +69,6 @@ export type RosterCharacteristicModifierIssue =
   | "missingType"
   | "unsupportedType"
   | "missingValue"
-  | "missingSeparator"
   | "nonIntegerOperand"
   | "noNumericMatch"
   | "ambiguousPosition"
@@ -1187,9 +1186,7 @@ function evaluateStep<
   }
   if (kind === "append") {
     const separator = appendSeparator(modifier);
-    if ("issue" in separator) {
-      issues.push(separator.issue);
-    } else if (modifier.value !== undefined) {
+    if (modifier.value !== undefined) {
       // Appending onto an empty value emits no separator, the way any ordinary
       // join behaves. Confirmed against New Recruit on 2026-08-20: annotation
       // fields start empty, and a Manreaper carrying one displays
@@ -1589,15 +1586,18 @@ function applyToMatches(
  * while its focused lances, whose Attacks is a plain `2`, is simply `3`,
  * because the category filter keeps the slot off non-dice values.
  *
- * Only an *absent* `join` is refused. Nothing establishes a default separator,
- * and unlike the empty one it is not written deliberately.
+ * An *absent* `join` defaults to a single space. Confirmed against New Recruit
+ * on 2026-08-21: an Aeldari Fire Prism carries `append name "(Battle-hardened)"`
+ * with no `join` and no leading whitespace in the value, and New Recruit renders
+ * "Fire Prism (Battle-hardened)". None of the 7,503 corpus name appends written
+ * this way carries its own separator, so a no-separator default would render
+ * every one of them broken.
  */
 function appendSeparator(
   modifier: RosterCharacteristicModifierSource,
-): { readonly separator: string } | { readonly issue: RosterCharacteristicModifierIssue } {
+): { readonly separator: string } {
   const declared = modifier.node.attributes["join"];
-  if (declared === undefined) return { issue: "missingSeparator" };
-  return { separator: declared };
+  return { separator: declared ?? " " };
 }
 
 function routableCharacteristicTypeIds(
@@ -1793,11 +1793,6 @@ function modifierDiagnostic(
       "EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING",
       "A characteristic modifier has no replacement value.",
       "value",
-    ],
-    missingSeparator: [
-      "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_MISSING",
-      "An append characteristic modifier declares no join separator.",
-      "join",
     ],
     missingSearchTerm: [
       "EVALUATION_CHARACTERISTIC_REPLACE_SEARCH_MISSING",
