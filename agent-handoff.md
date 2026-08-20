@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (draft write cost)
+## Current Status — 2026-08-21 (draft byte storage)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -177,8 +177,8 @@ actually asked for.
 | Unsaved-change tracking, indicator, and reload guard | Done |
 | Autosave to an already-active draft | Done | debounced, tunable through the existing options seam |
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
-| **Draft byte storage** | **Next** | drafts embed their catalogue bytes and rewrite them on every save; store once and reference by batch |
-| Durable undo history | Open | survives reload; the only remaining loss is the undo stack |
+| Draft byte storage | Done | bytes stored once per import batch, collected when the last draft referencing them goes |
+| **Durable undo history** | **Next** | the roster survives a reload; the undo stack does not |
 | Durable undo history | Deferred |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
@@ -3695,6 +3695,69 @@ Check both before committing to an approach.
 2. **Durable undo history** — the roster survives a reload; the undo stack does
    not. Worth doing *after* the storage fix, since it would otherwise add to the
    record being rewritten.
+3. **Profile `name` modifiers** — five corpus instances, the last of section A.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Completed Assignment — Draft Byte Storage, 2026-08-21
+
+Baseline `c57ade6`; resulting implementation commit `475edb4`.
+
+### What changed
+
+Catalogue bytes now live **once per import batch** under a reserved
+`files:<batchId>` key. A draft record keeps empty placeholders, so saving
+rewrites only the small record; the batch is written once, on the first save
+that references it. `load` and `list` reassemble the two, so nothing outside
+the store sees the split.
+
+This is the fix the previous checkpoint specified and deliberately deferred.
+
+### Three consequences
+
+- **Drafts sharing an import batch share one copy of its bytes.** That is the
+  largest storage saving available anywhere in the app, and it also softens
+  section D's missing eviction policy.
+- **A batch is collected when the last draft referencing it is deleted.** Shared
+  bytes outlive one draft but not all of them.
+- **Records written before the split still load.** Both read paths fall back to
+  the embedded files when no batch record exists, so no migration step and no
+  version bump were needed.
+
+### The delete test earned its keep
+
+The first working version leaked: deleting a draft left its batch bytes behind
+forever. Nothing in the new code noticed — but an existing test asserting
+`records.size === 0` after a delete failed immediately, which is what forced the
+collection pass.
+
+That is the second time in two days an **existing negative assertion** caught a
+gap in new work; the constraint-scope checkpoint was the first. Worth keeping in
+mind when widening behavior: the tests protecting the old shape are often the
+only thing watching.
+
+### Interface note for whoever touches the store next
+
+`LocalRosterDraftRecordBackend.put` now takes `StoredRecord` — a draft *or* a
+batch-files record — rather than a draft, because the store holds two kinds. The
+in-memory backend in `App.ui.test.tsx` needed only its map type widened plus an
+`asStoredDraft` helper to narrow reads back. Any new backend must key on
+`record.id` rather than assuming a draft shape.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **441 passed, 8 skipped (449 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Next recommended boundary
+
+1. **Durable undo history.** The roster now survives a reload; the undo stack
+   does not. It is the last thing in section E that loses anything, and it is
+   now safe to attempt: adding history to a draft record no longer means
+   rewriting the catalogue with it.
+2. **Section D — cache eviction and quota.** Still absent, though the byte
+   sharing above reduces the pressure.
 3. **Profile `name` modifiers** — five corpus instances, the last of section A.
 
 Still open, unblocking: the `automatic`/auto-fill observation.
