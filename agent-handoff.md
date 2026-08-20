@@ -1964,3 +1964,117 @@ All three open questions are New Recruit experiments and can be batched:
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
+
+## Completed Assignment — `affects` Anchoring, 2026-08-20
+
+Baseline `bc85b5a`; resulting implementation commit `930d078`.
+
+**This supersedes two earlier entries.** The 2026-08-17 research checkpoint's
+"Precedence, not composition" finding, and the "relocated anchor" question in the
+2026-08-19 category-routing entry, are both resolved by evidence below. Do not
+follow their conclusions.
+
+### The evidence
+
+Stone built a Death Guard Lord of Contagion with the Virulent Vectorium
+detachment and gave it the Furnace of Plagues enhancement. Result: **both
+Manreaper profiles modified** (A and S shown as changed, Devastating Wounds
+added to Keywords, weapon names suffixed with the enhancement), and the **Lord's
+own Unit profile untouched** — M, T, Sv, W, LD, OC, InSv all unchanged.
+
+Furnace of Plagues (`fc03-ee34-9e65-b5d0`) is `type="upgrade"` with **zero**
+child entries, entry links, and groups. It is the Manreaper's *sibling*: both sit
+in groups beneath the model. Under the owner-relative rule nothing it declares
+could reach anything. Every one of its modifiers carries `scope="model"`.
+
+So `scope` chooses where the selector stands and `affects` chooses where it
+walks. They compose. The untouched Unit profile is a second confirmation:
+`self.entries.recursive` names the anchor's *descendants*, and the anchor is not
+one of them.
+
+### What changed
+
+`resolveAffectsAnchor` in `affects-routing.ts` resolves the anchor per modifier:
+the declarer for an absent scope or `self`; `parent`; `root-entry`; and the
+nearest ancestor-or-self of a named type for `model`, `unit`, `model-or-unit`,
+and `upgrade`. `force` and `roster` name collections rather than one occurrence,
+and a typed scope with no matching ancestor has nowhere to stand — both withhold
+rather than silently no-op. `routeFromDeclarer` became `routeFromAnchor`.
+
+Both evaluators use it, so this changed characteristic routing as well as
+category routing — necessarily, since the confirming evidence is about
+characteristic modifiers.
+
+Because an anchor can be a shared ancestor, **any** occurrence can declare a
+selector that reaches a given one. The routed collectors now scan the whole
+roster in document order rather than the ancestor chain.
+
+The `relocatedAnchor` issue and its diagnostic were removed; they existed only to
+avoid guessing at this question.
+
+### A second question answered for free
+
+The same modifier dump decodes the `+0` bonus-slot idiom end to end, on one
+entry, in execution order:
+
+1. `append "+0"` join="" to weapons in `Attacks Dx Weapon` — opens the slot
+2. `replace` arg="+0" to weapons already in `Attacks Dx+0 Modifier` — collapses a
+   slot a previous source opened
+3. `increment 1` position=-1 — bumps the digit after the `+`
+4. `decrement 1` position=-1 for one excluded category
+5. `replace` arg="+0" — removes the slot if the bonus ended at zero
+6. `add category "Attacks Dx+0 Modifier"` — marks the weapon so the *next*
+   source sees an open slot
+
+This makes **`arg` the search term for `replace`** about as close to confirmed as
+the corpus can get: steps 2 and 5 only make sense as "find `+0`, replace with
+nothing". It also confirms `position: -1` selects the last numeric match. Both
+were listed as open questions; `replace` is now plausibly unblocked, though no
+one has watched a slot collapse in the app.
+
+### Tests
+
+Two synthetic tests on a new bearer/enhancement fixture pair: the enhancement's
+selector reaches its *sibling* weapon, and does **not** reach the anchor's own
+profile. The `affects-owner` fixture lost its `scope="parent"`, which had been
+added specifically to assert the now-disproven override rule.
+
+Real-data pin reproducing the screenshots: routed steps reaching the Manreaper
+are all attributed to the Furnace of Plagues occurrence, and the Lord's own Unit
+profile has none. The Manreaper's Keywords stay unresolved because that append
+carries `position` — the anchoring is what the test pins, not the value.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **417 passed, 7 skipped (424 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Useful for future sessions
+
+New Recruit publishes every catalogue entry as a browsable web page, keyed by the
+same entry id the corpus JSON carries:
+<https://www.newrecruit.eu/wiki/wh40k-11e/warhammer-40%2C000-11th-edition/chaos---death-guard/fc03-ee34-9e65-b5d0/furnace-of-plagues>
+
+It shows an entry's own rendered text. Effects that only appear once an entry is
+attached to a bearer still need a built roster to observe.
+
+### Next recommended boundary
+
+1. **`position` support**, which is now the single highest-value item. It gates
+   the `increment`/`decrement` steps of the idiom above and the Keywords append
+   that Stone can see working in New Recruit but this evaluator still withholds.
+   Semantics are known: 1-based index of the match within a value, negative from
+   the end, `0` meaning all.
+2. **`replace`**, using `arg` as the search term. Strongly evidenced above.
+   Together with `position` this would light up the whole `+0` idiom.
+3. **Lexical arithmetic** for `increment`/`decrement`/`floor`/`ceil` — still
+   blocked on the one remaining experiment.
+
+Only one open question is left for New Recruit:
+
+- **Sign convention.** On an inverted characteristic such as a `3+` save, does
+  `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
+
+Open and not worth chasing: what an embedded ID means when it names a selection
+entry rather than a category. One corpus instance.
