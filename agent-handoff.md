@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (display names)
+## Current Status — 2026-08-21 (legality measured)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **437 passed, 7 skipped (444)**.
+  `git diff --check` all pass. `pnpm test` is **437 passed, 8 skipped (445)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **7 passed**; without it those 7 are the skipped tests.
+  is **8 passed**; without it those 8 are the skipped tests.
 - **Active area.** Display-fidelity modifiers — Task 8 of the original work
   order, under "Historical Record" below.
 
@@ -113,19 +113,26 @@ owner reprioritises).
 | Withheld routing vs withheld steps | Open | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Now a **rare** path: no corpus modifier reaches it. Reconcile when something makes it common. |
 | Selection `name` modifiers | Done | 7,673 instances, overwhelmingly Crusade rank suffixes gated by XP condition groups |
 | Profile `name` modifiers | Open | five corpus instances; still unrouted display behavior |
-| **Legality and validation** | **Next** | roadmap section B, entirely unmeasured; the largest gap affecting matched-play use |
+| Legality and validation | Measured | see section B — much smaller than assumed; the points limit already works |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
 
 ### B. Legality and validation
 
-| Item | Status |
-|---|---|
-| Two-dimensional validity/completeness contract | Done |
-| Structural, selection-condition, and force-constraint reports | Done |
-| Aggregate general-constraint enforcement | Deferred |
-| Cost limits, grouped-modifier costs, broader cost behavior | Deferred |
-| Broader condition semantics and unsupported repeat shapes | Deferred |
+Measured 2026-08-21. **Far smaller than the roadmap assumed**: 25,932 of 26,259
+corpus constraints (98.8%) already fit a supported shape, and the matched-play
+points limit works end to end and is now pinned.
+
+| Item | Status | Note |
+|---|---|---|
+| Two-dimensional validity/completeness contract | Done | |
+| Structural, selection-condition, and force-constraint reports | Done | |
+| Matched-play points limit | Done | pinned: `max pts` 0 → 1000 on choosing Incursion |
+| **`unit`/`model`/`root-entry` constraint scopes** | **Next** | 101 corpus constraints; the largest remaining shape gap and ordinary matched-play limits |
+| ID-valued (category) constraint scopes | Open | 116 corpus constraints |
+| `automatic` constraint attribute | Open | 109 corpus constraints; currently trips the unsupported-attribute check |
+| `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
+| Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
 
@@ -3170,5 +3177,83 @@ nothing here has numbers attached yet.
 Smaller items if a bounded piece is wanted first: profile `name` modifiers (five
 instances), or the routing-versus-steps reconciliation (currently unreachable
 from corpus data).
+
+No open questions require the owner.
+
+## Research Checkpoint — Legality Measured, 2026-08-21
+
+Baseline `73ea13a`; resulting commit `f37a354`. One pinned test added; no
+evaluator behavior changed.
+
+### The roadmap was wrong about the size of this
+
+Section B was recorded as "the largest gap affecting matched-play use", entirely
+unmeasured. Measuring first — before building anything on that assumption —
+says otherwise.
+
+**Constraint coverage.** The corpus holds 26,259 constraints. Against the shapes
+the evaluator accepts, **25,932 (98.8%) already fit**:
+
+| Shape | Count |
+|---|---|
+| Supported | 25,932 |
+| ID-valued (category) scope | 116 |
+| Carries `automatic` | 109 |
+| `unit` scope | 69 |
+| `root-entry` scope | 19 |
+| `model` scope | 13 |
+| `field="associations"` | 1 |
+
+By kind they are overwhelmingly structural: 14,667 `max selections`, 7,595
+`min selections`, 3,958 Crusade limits, and only 19 targeting `pts` directly.
+Scopes are 19,056 `parent`, 4,013 `self`, 1,550 `force`, 1,423 `roster` — all
+four supported.
+
+### The points limit already works
+
+This was the thing worth checking first, because it is what "is my list legal?"
+actually means in matched play.
+
+The game system gives the *Army Roster* force `max pts = 0`, then raises it with
+game-system-level modifiers on that constraint: `set 1000`, `set 2000`,
+`set 3000`, each gated by a **condition group** requiring the matching battle
+size in force scope and the manual override not to be selected. Same
+`conditionGroups` mechanism as the Crusade rank names.
+
+The new pinned test builds an Army Roster, adds *Battle Size → 1. Incursion*,
+and confirms the effective limit moves from 0 to 1000 — which is what New Recruit
+shows Stone as "150 / 1000 pts". It passes today with no code change.
+
+Note the roster shape: the sizes sit in a nested group also called *Battle Size*,
+so reaching them takes two hops from the root.
+
+### What is actually left
+
+- **`unit`/`model`/`root-entry` scopes** — 101 constraints. Ordinary
+  matched-play limits ("max 1 per unit"), and the largest remaining shape gap.
+- **ID-valued scopes** — 116 constraints scoped to a category rather than a
+  structural relationship.
+- **`automatic`** — 109 constraints carry it and `unsupportedAttributes` does
+  not list it, so they trip the attribute check. Measure what it means before
+  either supporting or ignoring it; it may be inert noise like `arg` on an
+  append, or it may not.
+- **`Override points limit?`** — an `increment` carrying `repeats`. Repeat
+  shapes stay unsupported, so an overridden limit is honestly incomplete.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **437 passed, 8 skipped (445 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Next recommended boundary
+
+1. **`unit`, `model`, and `root-entry` constraint scopes** — 101 constraints,
+   the biggest remaining shape gap, and the same nearest-typed-ancestor
+   resolution `resolveAffectsAnchor` already implements for `affects`. Likely
+   reusable.
+2. **`automatic`** — measure it before deciding. 109 constraints.
+3. **ID-valued constraint scopes** — 116 constraints; needs the effective
+   category index, so mind the single-pass rule that governs `categories.ts`.
 
 No open questions require the owner.
