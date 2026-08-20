@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (force traversal)
+## Current Status — 2026-08-21 (collection anchoring)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **434 passed, 7 skipped (441)**.
+  `git diff --check` all pass. `pnpm test` is **435 passed, 7 skipped (442)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -109,8 +109,9 @@ owner reprioritises).
 | Profile `annotation` | Done | 522 target profiles; always-empty base; own report so it no longer costs characteristics their completeness |
 | Selection `annotation` | Done | 68 target selections; direct/grouped plus selections-terminus routing, rendered after occurrence names |
 | Rendering profile annotation | Done | parentheses after the profile name, folded into that profile's completeness |
-| `affects` force traversal | Done | 24 detachment abilities; target set is every occurrence the roster's forces contain, withheld above one force |
-| **Withheld routing vs withheld steps** | **Next** | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Reconcile: an unresolvable modifier could have targeted anything. |
+| `affects` force anchoring | Done | 31 detachment abilities, via a `forces` segment or a `force`/`roster` scope; traversal depth still distinguishes the force's own selections from everything below |
+| Withheld routing vs withheld steps | Open | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Now a **rare** path: no corpus modifier reaches it. Reconcile when something makes it common. |
+| **`name` modifiers** | **Next** | 7,673 instances but 86% Crusade; both annotation surfaces are done, so display-name composition is established |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
 
@@ -3013,5 +3014,76 @@ makes it.
 3. **Beyond display fidelity** — roadmap sections B through E are largely
    untouched. Legality and validation (section B) is the largest gap that
    affects matched-play use.
+
+No open questions require the owner.
+
+## Completed Assignment — Collection Anchoring, 2026-08-21
+
+Baseline `7a9fd77`; resulting implementation commit `4124659`.
+
+### Started as a different checkpoint
+
+The plan was to fix the honesty gap recorded last time: unresolvable *routing*
+leaves a characteristic's printed value in place, while an unapplied *step*
+clears it. The first move was to measure how often that path is reached.
+
+The measurement redirected the work. Of 1,859 `affects` modifiers, only **seven**
+still hit an unresolvable anchor — all `scope="force"` with no `forces` segment.
+And reading them showed they should not be unresolvable at all: they are
+detachment abilities of exactly the same class as the 24 the previous checkpoint
+handled.
+
+| Owner | Modifier | Selector |
+|---|---|---|
+| Cult of the Arkifane | `add category` ×4 | `self.entries.recursive.<Lord Discordant>` etc. |
+| Cult of the Arkifane | `set InSv 5+` | `self.entries.<Heretic Astartes Vehicle>.profiles.Unit` |
+| Lords of Dread | `increment OC 2` | `self.entries.<Knight Character>.profiles.Unit` |
+| Solar Spearhead | `increment M 2` | `self.entries.<AC Walker>.profiles.Unit` |
+
+So a collection scope and a `forces` segment mean the same thing: **anchor at
+the roster's force collection**. Resolving them was better than making them
+honestly unknown.
+
+### It also corrected the previous checkpoint
+
+Force traversal shipped with a shortcut: an `entersForces` selector reached
+*every* occurrence, skipping the route entirely. That is right for all 24 —
+they all carry `recursive` — but wrong for these seven, four of which use
+`self.entries.<categoryId>` with **no** `recursive`. From a force, `entries`
+means the force's own selections, not everything beneath them.
+
+`routeFromForce` now measures properly: a root selection is one entry step from
+the force, its children two. The new test pins both depths against one rule of
+each kind, so collapsing a force anchor back to "everything" fails visibly.
+
+**Worth carrying forward:** a shortcut that happens to be right for every case in
+front of you is still a shortcut. This one survived exactly one checkpoint.
+
+### The honesty gap, deferred on evidence
+
+With the seven resolved, no corpus modifier reaches the unresolvable-routing
+path at all. The remaining sources are an unreadable occurrence, a profile type
+that does not resolve uniquely, `scope="ancestor"` (zero corpus instances), and a
+category filter whose membership is unknown. The gap is real but currently
+unreachable from real data, so it moves from **Next** to **Open** rather than
+being fixed speculatively. Reconcile it when something makes it common.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **435 passed, 7 skipped (442 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **`name` modifiers** — 7,673 instances, 86% Crusade. The last large piece of
+   display fidelity. Both annotation surfaces are done, so how a display name is
+   composed is established; measure the non-Crusade 14% first, since that is
+   what matched play actually sees.
+2. **Beyond display fidelity** — roadmap sections B through E are largely
+   untouched. **Legality and validation** (section B) is the largest gap that
+   affects matched-play use, and nothing in it has been measured yet.
+3. **Withheld routing vs withheld steps** — see above; unreachable from the
+   corpus today.
 
 No open questions require the owner.
