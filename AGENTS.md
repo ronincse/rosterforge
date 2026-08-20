@@ -37,8 +37,35 @@ Codex-specific.
 - For changes justified by pinned real data, extend the optional gitignored
   corpus integration test and verify the configured repository revision. Never
   commit third-party game data or silently measure a moving branch.
-- Do not push branches, open pull requests, or rewrite remote history unless the
-  user explicitly requests that publication step.
+## Publishing
+
+Pushing is how work reaches the next model. A checkpoint that stays local is
+invisible to anyone working from a fresh clone, so **push your own commits** —
+you do not need to ask.
+
+- **Push at the end of a checkpoint, once every gate passes**: `pnpm lint`,
+  `pnpm typecheck`, `pnpm test`, `pnpm build`, and `git diff --check`. Never push
+  work you have not verified; CI is a second opinion, not the first one.
+- **Push the documentation with the code.** The handoff entry, status block, and
+  roadmap belong in the same push as the change they describe, so the remote is
+  never a state no document explains.
+- **Confirm CI afterwards** and say what it reported. A green local run and a red
+  remote one is exactly the discrepancy the next model needs told about.
+- **If someone else's unpushed commits are sitting on the branch**, verify them
+  against the same gates before pushing them along with yours, and say in your
+  report whose work you published.
+
+Still ask first:
+
+- **Force-pushing or rewriting remote history.** Both can destroy work that is
+  not yours, and neither is ever needed by the ordinary checkpoint rhythm. If a
+  push is rejected, reconcile by merging or rebasing your own local commits, not
+  by overwriting the remote.
+- **Opening pull requests.** This repository ships directly to `main` with CI as
+  the gate; a PR is a different, outward-facing act and is not part of the
+  normal loop.
+- **Anything that leaves this repository** — publishing packages, deploying,
+  posting to an external service.
 
 ## Researching BattleScribe And New Recruit Semantics
 

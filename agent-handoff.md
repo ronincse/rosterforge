@@ -34,9 +34,10 @@ layering and evaluator boundaries, `docs/compatibility.md` owns the exhaustive
 record of what is and is not supported, and `docs/diagnostics.md` owns
 diagnostic codes.
 
-- **Branch.** Work happens on `main`, which is **ahead of `origin/main` and
-  deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
-  asking for that step. `git status -sb` gives the current count.
+- **Branch.** Work happens on `main` and is **pushed at the end of each
+  checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
+  "Publishing" for what still requires the owner (force-push, history rewrites,
+  pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **434 passed, 7 skipped (441)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -44,9 +45,6 @@ diagnostic codes.
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **7 passed**; without it those 7 are the skipped tests.
-- **Baseline.** `origin/main` and `main` were level at `9283c64` before this
-  checkpoint. Selection annotation landed locally as `f508c26`; it has not been
-  pushed.
 - **Active area.** Display-fidelity modifiers — Task 8 of the original work
   order, under "Historical Record" below.
 
