@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (constraint attributes)
+## Current Status — 2026-08-21 (constraint scopes complete)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **439 passed, 8 skipped (447)**.
+  `git diff --check` all pass. `pnpm test` is **440 passed, 8 skipped (448)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -132,7 +132,8 @@ points limit works end to end and is now pinned.
 | ID-valued (category) constraint scopes | Open | 116 corpus constraints |
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
 | `automatic` driving auto-fill | Open | unverified, unconsumed. `initialization.ts` reads parent-scoped minima and does not look at it. |
-| **ID-valued constraint scopes** | **Next** | 116 corpus constraints scoped to a category; needs the effective-category index, so mind the single-pass rule |
+| ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
+| **Sections C–E** | **Next** | catalogue cache and editing durability are unmeasured; measure before planning |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -3398,5 +3399,83 @@ and one `associations` field.
    observation, and it changes what a freshly added squad looks like.
 3. **Sections C through E** — catalogue cache and editing durability remain
    unmeasured. Roster interchange is low priority by owner decision.
+
+No open questions block work.
+
+## Completed Assignment — Identity Scopes, 2026-08-21
+
+Baseline `1233fa7`; resulting implementation commit `39fdc50`.
+
+### A correction to the previous entry
+
+I recorded these 116 as "scoped to a category" and warned about the single-pass
+rule. **Both were wrong.** They name selection *entries*: Troupe, Khorne
+Berzerkers, Reavers, Legionaries, Star System. No effective-category index is
+involved and `categories.ts` never comes into it.
+
+Measuring what the scope IDs actually resolved to took one query and removed the
+whole complication. Worth doing before planning around a dependency.
+
+### What changed
+
+A constraint scope written as an object ID now names a containing occurrence —
+`max 4 Players per <Troupe>`, `max 1 Reaver per <Reavers>` — and the count runs
+inside it.
+
+Mostly reuse again, the fourth time in this stretch: `conditions.ts` already had
+`nearestIdentitySelection`, so it moved to `selection-context.ts` beside the
+typed resolver moved there last checkpoint. `evaluationSelectionScope` gained an
+`identity` variant that counts within the named occurrence exactly as the typed
+scopes already did.
+
+### The shape check, and why it matters
+
+A scope only counts as an identity scope if it **looks like an object ID** —
+hexadecimal groups joined by dashes.
+
+Without that, any unrecognised scope string would have been read as an ID,
+resolved against nothing, and the bound reported *satisfied* for the wrong
+reason. The existing fixture writes `scope="category-unit"` precisely to
+exercise the unsupported path, and it caught this: the first attempt turned that
+test from "diagnoses an unsupported scope" into a silent pass.
+
+**Worth carrying forward:** when widening what an evaluator accepts, check what
+the *existing* negative tests were protecting. That fixture was the only thing
+standing between a reasonable-looking change and a class of silently satisfied
+constraints.
+
+An identity scope matching no ancestor withholds the count rather than counting
+zero, matching the typed-scope rule.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **440 passed, 8 skipped (448 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Section B is effectively done
+
+Every constraint scope the corpus writes is now supported. The remaining shape
+gap is **one constraint**: a single `field="associations"`, which is not a
+selection count at all.
+
+Constraint coverage went 25,932 → 26,258 of 26,259 across four checkpoints, and
+the matched-play points limit is pinned.
+
+### Next recommended boundary
+
+Section B has nothing left worth a checkpoint. The unmeasured areas are:
+
+1. **Section D — catalogue sources and cache.** Cache eviction, quota, retries,
+   update discovery, atomic publication. All deferred and none measured.
+2. **Section E — editing and durability.** Durable undo history and automatic
+   saving are deferred; sibling reordering and force renaming exist headless but
+   not in the UI.
+3. **`automatic` and auto-fill** — still open, still one observation away, and
+   it changes what a freshly added squad looks like.
+
+Both C-through-E areas are product features rather than data semantics, so the
+corpus-first method that drove sections A and B does not apply. Expect to start
+from what the app does instead.
 
 No open questions block work.
