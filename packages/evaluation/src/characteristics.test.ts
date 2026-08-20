@@ -443,7 +443,7 @@ describe("roster profile characteristic display", () => {
     expect(report.completeness).toBe("complete");
   });
 
-  it("withholds an append with no separator and one with nothing to join onto", () => {
+  it("withholds an append with no separator, and joins onto an empty value", () => {
     const setup = characteristicSetup();
 
     const report = successful(
@@ -455,13 +455,19 @@ describe("roster profile characteristic display", () => {
       ),
     );
 
-    expect(report.characteristics[0]?.steps).toMatchObject([
-      { status: "unapplied", issues: ["emptyAppendInput"] },
-    ]);
+    // Appending onto an empty value emits no separator, the way any ordinary
+    // join behaves. Every one of the corpus's 590 `annotation` modifiers
+    // starts from empty and appends through `", "`, and New Recruit shows
+    // "(Furnace of Plagues)" rather than "(, Furnace of Plagues)".
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "",
+      value: "Assault",
+      steps: [{ status: "applied", kind: "append", output: "Assault" }],
+    });
+    // An absent separator is still refused: nothing establishes a default.
     expect(report.characteristics[1]?.steps).toMatchObject([
       { status: "unapplied", issues: ["missingSeparator"] },
     ]);
-    expect(report.characteristics[0]).not.toHaveProperty("value");
     expect(report.characteristics[1]).not.toHaveProperty("value");
   });
 

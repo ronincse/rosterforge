@@ -67,7 +67,6 @@ export type RosterCharacteristicModifierIssue =
   | "unsupportedType"
   | "missingValue"
   | "missingSeparator"
-  | "emptyAppendInput"
   | "nonIntegerOperand"
   | "noNumericMatch"
   | "ambiguousPosition"
@@ -814,13 +813,17 @@ function evaluateStep<
     const separator = appendSeparator(modifier);
     if ("issue" in separator) {
       issues.push(separator.issue);
-    } else if (input.trim() === "" && separator.separator !== "") {
-      // Whether a separator is emitted with nothing on its left is not
-      // established, and the corpus has characteristics that are genuinely
-      // empty. An *empty* separator raises no such question.
-      issues.push("emptyAppendInput");
     } else if (modifier.value !== undefined) {
-      output = `${input}${separator.separator}${modifier.value}`;
+      // Appending onto an empty value emits no separator, the way any ordinary
+      // join behaves. Confirmed against New Recruit on 2026-08-20: the corpus's
+      // 590 `annotation` modifiers all append through a `", "` separator onto a
+      // field no node ever declares, so every one of them starts from empty --
+      // and a Manreaper carrying one displays "(Furnace of Plagues)", not
+      // "(, Furnace of Plagues)".
+      output =
+        input === ""
+          ? modifier.value
+          : `${input}${separator.separator}${modifier.value}`;
     }
   }
 
@@ -1448,11 +1451,6 @@ function modifierDiagnostic(
       "EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_UNSUPPORTED",
       "An arithmetic characteristic modifier's position is malformed or selects no match.",
       "position",
-    ],
-    emptyAppendInput: [
-      "EVALUATION_CHARACTERISTIC_APPEND_INPUT_EMPTY",
-      "An append characteristic modifier has no value to append onto, and whether the separator is emitted is not established.",
-      "join",
     ],
   };
   const [code, message, attribute] = descriptions[issue];

@@ -1406,14 +1406,14 @@ slot opened and was bumped — while its focused lances, whose Attacks is a plai
 slot off the non-dice value, so the two branches of the idiom are visible on one
 model.
 
-Two cases stay unapplied:
+Appending onto an **empty** value emits no separator, the way any ordinary join
+behaves. Confirmed against New Recruit on 2026-08-20 by the annotation field:
+all 590 corpus `annotation` modifiers append through a `", "` separator onto a
+field no node ever declares, so every one starts from empty — and a Manreaper
+carrying one displays `(Furnace of Plagues)`, not `(, Furnace of Plagues)`.
 
-- **No `join` declared.** Nothing establishes a default separator, and unlike an
-  empty one it is not written deliberately.
-- **An empty value to append onto, with a non-empty separator.** Whether a
-  separator is emitted with nothing to its left is not established, and the
-  corpus does contain empty characteristics. An empty separator raises no such
-  question.
+One case stays unapplied: **no `join` declared at all**. Nothing establishes a
+default separator, and unlike an empty one it is not written deliberately.
 
 The declared separator is used verbatim and never normalised: the corpus's most
 common one is a comma followed by a **non-breaking** space, and collapsing it to

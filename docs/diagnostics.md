@@ -907,7 +907,6 @@ EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING
 EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING
 EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_AMBIGUOUS
 EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_MISSING
-EVALUATION_CHARACTERISTIC_APPEND_INPUT_EMPTY
 EVALUATION_CHARACTERISTIC_ARITHMETIC_OPERAND_UNSUPPORTED
 EVALUATION_CHARACTERISTIC_ARITHMETIC_NO_MATCH
 EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_AMBIGUOUS
@@ -922,10 +921,10 @@ term, an empty one that would match everywhere, or a Boolean where replacement
 text belongs. A search term that simply finds no match is not an error — it is
 an applied step that changes nothing.
 
-The two `APPEND_` codes mark an `append` that cannot be executed: no declared
-`join` separator at all, or nothing to append onto through a non-empty one. An
-*empty* separator is executed — it is the corpus's bonus-slot idiom, and the
-operations that complete that idiom are evaluated too.
+`APPEND_SEPARATOR_MISSING` marks an `append` with no declared `join` at all,
+which is the only shape that cannot be executed. An *empty* separator is
+executed — it is the corpus's bonus-slot idiom — and appending onto an empty
+value emits no separator.
 
 The four `ARITHMETIC_` codes mark an `increment` or `decrement` that could not
 be placed or performed: a non-integer operand, a value with no number in it, a
