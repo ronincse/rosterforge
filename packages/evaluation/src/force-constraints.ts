@@ -1064,7 +1064,10 @@ function unsupportedAttributes(
     "shared",
     "includeChildSelections",
     "includeChildForces",
+    // See `constraints.ts`: `automatic` does not change what a bound means.
+    "automatic",
     "message",
+    "comment",
   ]);
   return Object.keys(constraint.node.attributes).filter(
     (attribute) => !supported.has(attribute),

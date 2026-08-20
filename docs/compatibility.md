@@ -268,6 +268,11 @@
   selection IDs, type tokens, and `any`
 - Six numeric count comparisons with exact or bounded counts, entry-link versus
   shared-definition identity, and conservative unresolved candidates
+- The `automatic` constraint attribute treated as not changing what a bound
+  means. All 109 corpus instances carry an already-supported shape, and
+  `automatic="false"` sits on squad sizes such as Khorne Berzerker `min 5` and
+  Recon Troopers `min 9`, which are plainly enforced. Whether it governs
+  auto-filling a roster is unverified and not consumed.
 - Selection-constraint scopes `unit`, `model`, `model-or-unit`, `upgrade`, and
   `root-entry`, resolved through the same nearest-typed-ancestor walk conditions
   use, so a constraint and a condition written with the same scope agree; an
@@ -487,11 +492,11 @@ evaluator accepts, **25,932 (98.8%) already fit**:
 |---|---|
 | Supported | 25,932 |
 | ID-valued (category) scope | 116 |
-| Carries `automatic` | 109 |
 | `field="associations"` | 1 |
 
-The 101 `unit`, `model`, and `root-entry` scopes are now supported, so the
-remaining shape gap is 226 constraints — under 1%.
+The 101 `unit`, `model`, and `root-entry` scopes and the 109 constraints
+carrying `automatic` are now all supported, so the remaining shape gap is **117
+constraints — 0.4%**.
 
 By kind they are overwhelmingly structural counts: 14,667 `max selections` and
 7,595 `min selections`, then 3,958 Crusade limits. Only 19 target `pts`

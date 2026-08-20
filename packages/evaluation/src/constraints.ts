@@ -976,6 +976,14 @@ function unsupportedAttributes(
     "shared",
     "includeChildSelections",
     "includeChildForces",
+    // `automatic` cannot change what a bound *means*: all 109 corpus instances
+    // carry an already-supported shape, and `automatic="false"` sits on squad
+    // sizes such as Khorne Berzerker `min 5` and Recon Troopers `min 9` — rules
+    // that are plainly enforced. Whether it governs auto-filling a roster is a
+    // separate, unverified question and is not consumed here.
+    "automatic",
+    "message",
+    "comment",
   ]);
   return Object.keys(constraint.node.attributes).filter(
     (attribute) => !supported.has(attribute),

@@ -32,6 +32,19 @@
         <cost name="supply" typeId="cost-supply" value="0" />
       </costs>
     </selectionEntry>
+    <selectionEntry id="auto-squad" name="Auto Squad" type="unit">
+      <selectionEntries>
+        <selectionEntry id="auto-model" name="Auto Model" type="model">
+          <constraints>
+            <!-- A squad-size rule carrying `automatic`. The attribute governs
+                 auto-filling, not whether the bound holds, so the report must
+                 still evaluate it. -->
+            <constraint id="auto-model-min" type="min" field="selections"
+              scope="parent" value="2" shared="true" automatic="false" />
+          </constraints>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="scope-unit" name="Scope Unit" type="unit">
       <selectionEntries>
         <selectionEntry id="scope-model-a" name="Scope Model A" type="model">

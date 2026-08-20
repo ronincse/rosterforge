@@ -79,6 +79,47 @@ describe("roster selection constraints", () => {
     expect(resolution.choices[0]?.occurrence).toBe(selected.occurrence);
   });
 
+  it("evaluates a bound carrying the automatic attribute", () => {
+    const context = catalogueContext();
+    let roster = addRootSelection(
+      emptyRoster(context),
+      choice(context, "auto-squad"),
+      "auto-root",
+    );
+    // One model where the squad requires two.
+    roster = successful(
+      addRosterSelectionToSelection(roster, selectionOccurrenceId("auto-root"), {
+        id: selectionOccurrenceId("auto-model-1"),
+        definition: {
+          kind: choice(context, "auto-model").kind,
+          key: projectionKey(choice(context, "auto-model").occurrence),
+          ...(choice(context, "auto-model").id === undefined
+            ? {}
+            : { sourceId: choice(context, "auto-model").id }),
+        },
+      }),
+    );
+
+    const inspected = inspectRosterSelectionConstraintsInRoster(roster, context);
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    const report = inspected.value.selections
+      .flatMap(({ constraints }) => constraints)
+      .find(
+        (candidate) =>
+          candidate.constraint.node.attributes["id"] === "auto-model-min",
+      );
+
+    // `automatic` governs whether a roster editor fills the squad in, not
+    // whether the minimum holds. In the corpus it sits on rules like Khorne
+    // Berzerker "min 5", which are plainly enforced, so the bound is still
+    // evaluated rather than being dismissed as an unknown attribute.
+    expect(report).toBeDefined();
+    expect(report?.status).toBe("violated");
+    expect(report?.observed).toBe(1);
+    expect(report?.limit).toBe(2);
+  });
+
   it("counts a unit-scoped constraint across the whole unit", () => {
     const context = catalogueContext();
     let roster = addRootSelection(emptyRoster(context), choice(context, "scope-unit"), "scope-root");
