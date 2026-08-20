@@ -1624,16 +1624,26 @@ resolves the anchor per modifier before routing.
 
 ### Force traversal
 
-A `forces` segment leaves the anchor's subtree entirely and names the roster's
-forces, so neither the anchor nor the path to a given occurrence decides
-anything: the target set is every occurrence the forces contain, subject to the
-selector's category filter and profile type.
+A selector anchors at the roster's **force collection** in either of two ways: a
+`forces` segment in the path, or a collection `scope` of `force`/`roster`. Both
+mean the same thing, and the ordinary traversal rules then run from the force
+rather than from an occurrence.
 
-All 24 corpus instances are detachment abilities — *Lords of the Warp*,
-*Cohort Cybernetica*, *Sanctified Orators* — written as
-`self.entries.forces.recursive.[<categoryId>.]profiles.<typeName>`. Their
-effects are army-wide by construction, and their declaring upgrade shares no
-ancestor with the units they reach.
+That distinction matters. `routeFromForce` counts a root selection as one entry
+step from the force and its children as two, so `self.entries.<categoryId>` with
+`scope="force"` reaches the force's own selections and stops, while
+`self.entries.forces.recursive.<categoryId>` reaches everything below them.
+Collapsing a force anchor to "every occurrence" would over-reach the first form.
+
+All 31 corpus instances are detachment abilities — *Lords of the Warp*,
+*Cohort Cybernetica*, *Sanctified Orators*, *Cult of the Arkifane*, *Solar
+Spearhead*. 24 carry the `forces` segment; the other seven use `scope="force"`
+with the same target shape. Their effects are army-wide by construction, and
+their declaring upgrade shares no ancestor with the units they reach, which is
+why anchor-relative routing could never have connected them.
+
+`ancestor` remains unsupported: it names a chain rather than one occurrence or
+one collection, and nothing establishes which link it means.
 
 `forceTraversalReach` guards the one ambiguity. With exactly one force and no
 nested forces, "every force in the roster" and "the force containing the

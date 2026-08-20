@@ -404,10 +404,11 @@
   optional filter ID, terminus, and profile-type name, with force traversal the
   only remaining unsupported shape; parsing performs no resolution and no
   execution
-- `affects` force traversal: a `forces` segment leaves the anchor's subtree and
-  names the roster's forces, so the target set is every occurrence they contain.
-  All 24 corpus instances are detachment abilities, whose effects are army-wide
-  by construction
+- `affects` anchoring at the roster's force collection, through either a
+  `forces` segment or a `force`/`roster` scope, with traversal depth still
+  distinguishing the force's own selections from everything below them. All 31
+  corpus instances are detachment abilities, whose effects are army-wide by
+  construction
 - Selector terminus: a path ending in `profiles.<typeName>` targets profiles, a
   path stopping before it targets the reached occurrences themselves, which is
   what a selection-level field such as `category` requires
@@ -433,9 +434,11 @@
   more than one number in the value, a value with no number at all, a malformed
   `position`, or a non-integer operand.
 - `append` whose `join` separator is absent
-- Force traversal in a roster holding more than one force, or any nested force.
-  With a single force the two readings of `forces` name the same set; with more
-  they can differ and nothing establishes which New Recruit uses.
+- Force anchoring in a roster holding more than one force, or any nested force.
+  With a single force the two readings name the same set; with more they can
+  differ and nothing establishes which New Recruit uses.
+- `scope="ancestor"` on an `affects` modifier: it names a chain rather than one
+  occurrence or one collection.
 - `affects` modifiers whose `scope` names a collection (`force`, `roster`) or a
   type with no matching ancestor; there is no single occurrence to stand on, so
   the determination is withheld rather than treated as a no-op.

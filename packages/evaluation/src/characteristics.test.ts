@@ -805,6 +805,42 @@ describe("affects traversal", () => {
     expect(report.completeness).toBe("complete");
   });
 
+  it("keeps entries and recursive distinct from a force anchor", () => {
+    const setup = forceSetup();
+
+    const read = (
+      occurrence: RosterSelection,
+      entry: EvaluationSelectionChoice,
+      id: string,
+    ) =>
+      successful(
+        evaluateRosterProfileCharacteristics(
+          setup.roster,
+          setup.context,
+          occurrence,
+          profile(entry, id),
+        ),
+      );
+    const target = read(setup.target, setup.targetChoice, "profile-force-target");
+    const deep = read(setup.deep, setup.deepChoice, "profile-force-deep");
+
+    // `self.entries.forces.recursive` reaches every occurrence, so Move changes
+    // at both depths.
+    expect(target.characteristics[0]).toMatchObject({ value: '9"' });
+    expect(deep.characteristics[0]).toMatchObject({ value: '9"' });
+    // `self.entries` with a collection scope anchors at the force but does not
+    // recurse, so it reaches the force's own selection and stops. Collapsing a
+    // force anchor to "everything" would wrongly change the deeper Save too.
+    expect(target.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "2+",
+    });
+    expect(deep.characteristics[1]).toMatchObject({
+      baseValue: "5+",
+      value: "5+",
+    });
+  });
+
   it("withholds a force traversal when the roster holds more than one force", () => {
     const setup = forceSetup(true);
 
@@ -1319,12 +1355,15 @@ function forceSetup(secondForce = false): {
   readonly context: BattleScribeCatalogueContext;
   readonly roster: Roster;
   readonly target: RosterSelection;
+  readonly deep: RosterSelection;
   readonly targetChoice: EvaluationSelectionChoice;
+  readonly deepChoice: EvaluationSelectionChoice;
 } {
   const context = catalogueContext();
   const detachmentChoice = choice(context, "force-detachment");
   const ruleChoice = choice(context, "force-rule");
   const targetChoice = choice(context, "force-target");
+  const deepChoice = choice(context, "force-deep");
   let roster = createRoster({
     id: rosterId("force-roster"),
     name: "Force roster",
@@ -1380,9 +1419,26 @@ function forceSetup(secondForce = false): {
       },
     ),
   );
+  roster = successful(
+    addRosterSelectionToSelection(
+      roster,
+      selectionOccurrenceId("force-target"),
+      {
+        id: selectionOccurrenceId("force-deep"),
+        definition: {
+          kind: deepChoice.kind,
+          key: projectionKey(deepChoice.occurrence),
+          ...(deepChoice.id === undefined ? {} : { sourceId: deepChoice.id }),
+        },
+      },
+    ),
+  );
   const target = roster.forces[0]?.selections[1];
-  if (target === undefined) throw new Error("Missing force target occurrence.");
-  return { context, roster, target, targetChoice };
+  const deep = target?.selections[0];
+  if (target === undefined || deep === undefined) {
+    throw new Error("Missing force target occurrences.");
+  }
+  return { context, roster, target, deep, targetChoice, deepChoice };
 }
 
 function traversalSetup(): {

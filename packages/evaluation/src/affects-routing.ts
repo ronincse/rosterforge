@@ -59,7 +59,13 @@ interface AffectsModifierContainer<Modifier> {
  * so no single anchor exists.
  */
 export type AffectsAnchorResolution =
+  /** One occurrence: the selector walks down from it. */
   | { readonly kind: "resolved"; readonly anchor: RosterSelection }
+  /**
+   * The roster's force collection. The selector walks down from the force
+   * itself, so a root selection is one entry step away.
+   */
+  | { readonly kind: "force" }
   | { readonly kind: "unresolved" }
   | { readonly kind: "unsupported" };
 
@@ -90,8 +96,17 @@ export function resolveAffectsAnchor(
   if (scope === undefined || scope === "self") {
     return { kind: "resolved", anchor: declarer };
   }
-  // A collection is not one occurrence, so there is nothing to stand on.
-  if (scope === "force" || scope === "roster" || scope === "ancestor") {
+  // `force` and `roster` name the force collection, and the selector walks
+  // down from it. All seven corpus instances are detachment abilities written as
+  // `self.entries[.recursive].<categoryId>[.profiles.<typeName>]` — the same
+  // shape as the `forces`-segment form, with the scope naming the collection
+  // instead of the selector.
+  if (scope === "force" || scope === "roster") {
+    return { kind: "force" };
+  }
+  // `ancestor` names a chain rather than one occurrence or one collection, and
+  // nothing establishes which link it means.
+  if (scope === "ancestor") {
     return { kind: "unsupported" };
   }
   const location = locations.find(
@@ -167,6 +182,56 @@ export function forceTraversalReach(roster: Roster): "all" | "unresolved" {
     first.forces.length === 0
     ? "all"
     : "unresolved";
+}
+
+/**
+ * Measures the path from the roster's force collection down to one occurrence.
+ *
+ * The force sits one step above every root selection, so a root selection is one
+ * entry step away and its children are two. That keeps `entries` distinct from
+ * `recursive` for a force-anchored selector: `self.entries.<category>` reaches
+ * the force's own selections, while `self.entries.recursive.<category>` reaches
+ * everything below them.
+ */
+export function routeFromForce(
+  owner: RosterSelection,
+  locations: readonly AffectsSelectionLocation[],
+  choices: EvaluationChoiceIndex,
+): AffectsRoute {
+  const location = locations.find(
+    (candidate) => candidate.occurrence === owner,
+  );
+  if (location === undefined) {
+    return { entrySteps: 0, viaGroup: false, reachable: false };
+  }
+  // `ancestors` is nearest-first; the walk down from the force is its reverse.
+  const path = [...location.ancestors].reverse().concat(owner);
+  let entrySteps = 0;
+  let viaGroup = false;
+  for (const step of path) {
+    const choice = resolveEvaluationSelection(step, choices, true).choices[0];
+    if (choice?.kind === "selectionEntryGroup") {
+      viaGroup = true;
+      continue;
+    }
+    entrySteps += 1;
+  }
+  if (!viaGroup) {
+    // A flattened roster keeps group members as direct children, so the
+    // definition side decides whether any hop passed through a group.
+    for (let index = 0; index + 1 < path.length; index += 1) {
+      const parent = path[index];
+      const child = path[index + 1];
+      if (
+        parent !== undefined &&
+        passesThroughGroupDefinition(parent, child, choices)
+      ) {
+        viaGroup = true;
+        break;
+      }
+    }
+  }
+  return { entrySteps, viaGroup, reachable: true };
 }
 
 /**
@@ -371,27 +436,29 @@ export function collectAffectsRoutedSelectionModifiers<
         partial = true;
         continue;
       }
-      // A `forces` selector leaves the anchor's subtree entirely, so neither
-      // the anchor nor the path to this occurrence decides anything.
-      if (selector.entersForces) {
-        if (forceTraversalReach(roster) !== "all") {
-          partial = true;
-          continue;
-        }
-      } else {
-        const anchor = resolveAffectsAnchor(
-          declarer,
-          entry.modifier.scope,
-          locations,
-          choices,
-        );
-        if (anchor.kind !== "resolved") {
-          partial = true;
-          continue;
-        }
-        const route = routeFromAnchor(anchor.anchor, owner, locations, choices);
-        if (!reaches(selector, route)) continue;
+      // A `forces` segment and a collection scope both anchor at the force;
+      // otherwise the scope names one occurrence to stand on.
+      const anchor = selector.entersForces
+        ? ({ kind: "force" } as const)
+        : resolveAffectsAnchor(
+            declarer,
+            entry.modifier.scope,
+            locations,
+            choices,
+          );
+      if (anchor.kind === "unresolved" || anchor.kind === "unsupported") {
+        partial = true;
+        continue;
       }
+      if (anchor.kind === "force" && forceTraversalReach(roster) !== "all") {
+        partial = true;
+        continue;
+      }
+      const route =
+        anchor.kind === "force"
+          ? routeFromForce(owner, locations, choices)
+          : routeFromAnchor(anchor.anchor, owner, locations, choices);
+      if (!reaches(selector, route)) continue;
       collected.push({
         modifier: entry.modifier as unknown as Modifier,
         grouped: entry.grouped,
