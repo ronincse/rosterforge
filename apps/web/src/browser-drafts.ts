@@ -41,6 +41,16 @@ const databaseName = "rosterforge";
 const databaseVersion = 1;
 const objectStoreName = "local-roster-drafts";
 
+/**
+ * The reserved key for the unsaved-roster recovery slot.
+ *
+ * It shares the draft store so it reuses the same validation and byte limits,
+ * but it is not a draft the user asked to keep: `list` hides it so it never
+ * reaches the shelf. Exactly one exists at a time, which bounds its cost to one
+ * catalogue closure rather than one per experiment.
+ */
+export const recoveryDraftId = "__recovery__";
+
 export function createLocalRosterDraftStore(
   backend: LocalRosterDraftRecordBackend,
 ): LocalRosterDraftStore {
@@ -62,7 +72,10 @@ export function createLocalRosterDraftStore(
       for (const record of records) {
         const decoded = decodeLocalRosterDraft(record);
         diagnostics.push(...decoded.diagnostics);
-        if (decoded.ok) summaries.push(summarizeDraft(decoded.value));
+        // The recovery slot lives in this store but is not a saved draft.
+        if (decoded.ok && isShelfDraft(decoded.value)) {
+          summaries.push(summarizeDraft(decoded.value));
+        }
       }
       summaries.sort(
         (left, right) =>
@@ -238,6 +251,10 @@ function unavailableDraftStore(): LocalRosterDraftStore {
     save: async () => unavailable(),
     delete: async () => unavailable(),
   };
+}
+
+function isShelfDraft(draft: LocalRosterDraft): boolean {
+  return draft.id !== recoveryDraftId;
 }
 
 function summarizeDraft(draft: LocalRosterDraft): LocalRosterDraftSummary {

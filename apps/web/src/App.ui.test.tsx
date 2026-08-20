@@ -1368,6 +1368,60 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
   });
 
+  it("offers to recover an unsaved roster from a previous session", async () => {
+    const { store, records } = memoryDraftStore();
+    const mount = () =>
+      render(
+        <App
+          draftStore={store}
+          createBatchId={() => "recover-batch"}
+          createDraftId={() => "recover-draft"}
+          createEntityId={(kind) => `${kind}-recover`}
+          now={() => "2026-07-23T18:00:00.000Z"}
+          autosaveDelayMs={0}
+        />,
+      );
+
+    mount();
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", catalogueBytes),
+        ],
+      },
+    });
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.change(screen.getByLabelText("Roster name"), {
+      target: { value: "Recovered Patrol" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+    );
+
+    // Never saved as a draft, so the shelf stays empty while the recovery
+    // slot fills. That separation is the whole point of the slot.
+    await waitFor(() => {
+      expect(records.has("__recovery__")).toBe(true);
+    });
+    expect(records.has("recover-draft")).toBe(false);
+
+    // A new session finds it and offers it rather than reopening silently.
+    cleanup();
+    mount();
+    const prompt = await screen.findByRole("region", {
+      name: "Unsaved roster",
+    });
+    expect(within(prompt).getByText("Recovered Patrol")).toBeTruthy();
+
+    fireEvent.click(within(prompt).getByRole("button", { name: "Discard" }));
+    await waitFor(() => {
+      expect(records.has("__recovery__")).toBe(false);
+    });
+    expect(screen.queryByRole("region", { name: "Unsaved roster" })).toBeNull();
+  });
+
   it("saves, reopens, and confirms deletion of a browser-local draft", async () => {
     const { store, records } = memoryDraftStore();
     const printRoster = vi.fn(() => false);

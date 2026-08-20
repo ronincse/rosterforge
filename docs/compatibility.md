@@ -86,6 +86,10 @@
   rules, and recursively nested info groups, with ordered characteristics,
   direct/linked origin, definition source filenames, and unresolved info-link
   reasons
+- An unsaved-roster recovery slot: a single reserved record, kept current on
+  the same debounce, hidden from the draft shelf, and *offered* on the next
+  visit rather than reopened silently. Cleared once the roster is saved as a
+  real draft or the offer is declined
 - Debounced autosave to an **already-active** draft, so a roster the user has
   chosen to keep stays current without further clicks. A roster that has never
   been saved is never given a draft automatically: each draft embeds its own

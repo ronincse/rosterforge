@@ -26,6 +26,7 @@ import {
 } from "./browser-files.js";
 import {
   createIndexedDbLocalRosterDraftStore,
+  recoveryDraftId,
   type LocalRosterDraftStore,
   type LocalRosterDraftSummary,
 } from "./browser-drafts.js";
@@ -104,6 +105,12 @@ export type DraftShelfState =
  */
 export const defaultAutosaveDelayMs = 2_000;
 
+/** What the recovery prompt needs to describe an unsaved roster. */
+export interface RecoverableRoster {
+  readonly rosterName: string;
+  readonly updatedAt: string;
+}
+
 export interface ActiveDraft {
   readonly id: string;
   readonly createdAt: string;
@@ -148,6 +155,12 @@ export function useRosterForgeAppController({
    * comparison, no false positives from re-renders.
    */
   const [persistedRoster, setPersistedRoster] = useState<Roster>();
+  /**
+   * A roster found in the recovery slot at startup, offered rather than
+   * restored: silently reopening stale work is its own kind of surprise.
+   */
+  const [recoverableRoster, setRecoverableRoster] =
+    useState<RecoverableRoster>();
   const [selectedKey, setSelectedKey] = useState<string>();
   const [rosterHistory, setRosterHistory] =
     useState<BoundedHistory<LocalRosterSession>>();
@@ -379,6 +392,32 @@ export function useRosterForgeAppController({
     );
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const found = await draftStore.load(recoveryDraftId);
+      if (cancelled || !found.ok || found.value === undefined) return;
+      setRecoverableRoster({
+        rosterName: found.value.roster.name,
+        updatedAt: found.value.updatedAt,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // The slot is read once per session; later writes are this session's own.
+  }, [draftStore]);
+
+  async function discardRecoverableRoster() {
+    setRecoverableRoster(undefined);
+    await draftStore.delete(recoveryDraftId);
+  }
+
+  async function recoverUnsavedRoster() {
+    setRecoverableRoster(undefined);
+    await loadRosterDraft(recoveryDraftId);
   }
 
   async function refreshDraftShelf() {
@@ -629,6 +668,43 @@ export function useRosterForgeAppController({
     persistedRoster,
   ]);
 
+  // The recovery slot covers the case the draft autosave cannot: a roster the
+  // user has never saved. One slot, overwritten, so its cost stays at one
+  // catalogue closure however many rosters get tried.
+  const recoveryRef = useRef<() => Promise<void>>(async () => undefined);
+  recoveryRef.current = async () => {
+    if (loadState.kind !== "loaded" || rosterSession === undefined) return;
+    const stamp = now();
+    const draft = createLocalRosterDraft({
+      id: recoveryDraftId,
+      createdAt: stamp,
+      updatedAt: stamp,
+      catalogueKey: rosterSession.catalogue.key,
+      import: draftImport(loadState.library),
+      roster: rosterSession.roster,
+    });
+    if (!draft.ok) return;
+    await draftStore.save(draft.value);
+  };
+  useEffect(() => {
+    if (pendingRoster === undefined || pendingRoster === persistedRoster) {
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      void recoveryRef.current();
+    }, autosaveDelayMs);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [autosaveDelayMs, pendingRoster, persistedRoster]);
+
+  // Once the roster is persisted as a real draft the slot has nothing to
+  // recover, so it is cleared rather than left to be offered next session.
+  useEffect(() => {
+    if (persistedRoster === undefined) return;
+    void draftStore.delete(recoveryDraftId);
+  }, [draftStore, persistedRoster]);
+
   // An unsaved roster is lost on reload: saving is manual until a draft exists,
   // and history is held in memory. Say so, and make the browser ask before
   // discarding it.
@@ -648,6 +724,9 @@ export function useRosterForgeAppController({
   return {
     loadState,
     unsavedChanges,
+    recoverableRoster,
+    recoverUnsavedRoster,
+    discardRecoverableRoster,
     draftShelf,
     draftAction,
     activeDraft,

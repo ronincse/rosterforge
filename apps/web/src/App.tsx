@@ -52,6 +52,9 @@ export function App(props: AppProps) {
     draftAction,
     activeDraft,
     unsavedChanges,
+    recoverableRoster,
+    recoverUnsavedRoster,
+    discardRecoverableRoster,
     selectedCatalogue,
     rosterHistory,
     rosterSession,
@@ -136,9 +139,32 @@ export function App(props: AppProps) {
 
           <p className="privacy-note">
             Catalogue data is parsed locally. Nothing is uploaded. Drafts are
-            saved only when you choose Save draft.
+            saved when you choose Save draft, and kept current after that.
+            Unsaved work is held for recovery until you save or discard it.
           </p>
         </section>
+
+        {/* Offered rather than restored: silently reopening stale work from a
+            previous session is its own kind of surprise. */}
+        {recoverableRoster !== undefined && (
+          <section className="recovery-prompt" aria-label="Unsaved roster">
+            <p>
+              An unsaved roster from your last session was found:{" "}
+              <strong>{recoverableRoster.rosterName}</strong>.
+            </p>
+            <div className="recovery-actions">
+              <button type="button" onClick={() => void recoverUnsavedRoster()}>
+                Recover roster
+              </button>
+              <button
+                type="button"
+                onClick={() => void discardRecoverableRoster()}
+              >
+                Discard
+              </button>
+            </div>
+          </section>
+        )}
 
         <RemoteCatalogueSourcePanel
           state={remoteSource.state}
