@@ -29,6 +29,7 @@ import {
   type EvaluationSelectionResolution,
   type EvaluationSelectionScope,
   type RosterSelectionLocation,
+  nearestIdentitySelection,
   nearestTypedSelection,
   typedSelectionTypes,
 } from "./selection-context.js";
@@ -603,17 +604,29 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   // it has to be resolved before the scope can be walked. An unresolvable one
   // withholds the count rather than falling back to a wider set.
   const typedScopeTypes = typedSelectionTypes(constraint.scope);
-  const typedScope =
-    canCollect && typedScopeTypes !== undefined
+  const needsContainer = typedScopeTypes !== undefined || scope === "identity";
+  const typedScope = !canCollect
+    ? undefined
+    : typedScopeTypes !== undefined
       ? nearestTypedSelection(
           ownerLocations[0] as RosterSelectionLocation,
           choices,
           catalogueMatches,
           typedScopeTypes,
         )
-      : undefined;
+      : scope === "identity"
+        ? nearestIdentitySelection(
+            ownerLocations[0] as RosterSelectionLocation,
+            choices,
+            catalogueMatches,
+            constraint.scope as ObjectId,
+            // No category index here: a category-identity scope stays
+            // unresolved, and no corpus constraint writes one.
+            undefined,
+          )
+        : undefined;
   const typedScopeUsable =
-    typedScopeTypes === undefined ||
+    !needsContainer ||
     (typedScope !== undefined &&
       !typedScope.unresolved &&
       typedScope.occurrence !== undefined);
@@ -956,7 +969,38 @@ function supportedScope(
     value === "model-or-unit" ||
     value === "upgrade"
     ? value
-    : undefined;
+    : // A scope shaped like an object ID names a containing occurrence. The
+      // corpus writes 116 of these against selection entries —
+      // `max 4 Players per <Troupe>`, `max 1 Reaver per <Reavers>`.
+      //
+      // `ancestor` names a chain rather than one occurrence, and an unknown
+      // scope *word* is not an ID, so both stay unsupported. Requiring the ID
+      // shape is what keeps them apart.
+      value !== undefined && looksLikeObjectId(value)
+      ? "identity"
+      : undefined;
+}
+
+/**
+ * True for a BattleScribe object ID: hexadecimal groups joined by dashes.
+ *
+ * Distinguishes a scope naming an entry, `4986-bf86-beb4-13ac`, from an
+ * unrecognised scope word such as `category-unit`, which must stay unsupported
+ * rather than being resolved against nothing.
+ */
+function looksLikeObjectId(value: string): boolean {
+  const segments = value.split("-");
+  return (
+    segments.length > 1 &&
+    segments.every(
+      (segment) =>
+        segment.length > 0 &&
+        [...segment].every(
+          (char) =>
+            (char >= "0" && char <= "9") || (char >= "a" && char <= "f"),
+        ),
+    )
+  );
 }
 
 function finiteValue(value: number | undefined): number | undefined {

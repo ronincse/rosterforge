@@ -268,6 +268,10 @@
   selection IDs, type tokens, and `any`
 - Six numeric count comparisons with exact or bounded counts, entry-link versus
   shared-definition identity, and conservative unresolved candidates
+- Constraint scopes written as an object ID, naming a containing occurrence —
+  `max 4 Players per <Troupe>`. Resolved through the same identity walk
+  conditions use. A scope that is not ID-shaped, such as an unrecognised word,
+  stays unsupported rather than being resolved against nothing
 - The `automatic` constraint attribute treated as not changing what a bound
   means. All 109 corpus instances carry an already-supported shape, and
   `automatic="false"` sits on squad sizes such as Khorne Berzerker `min 5` and
@@ -491,12 +495,10 @@ evaluator accepts, **25,932 (98.8%) already fit**:
 | Shape | Count |
 |---|---|
 | Supported | 25,932 |
-| ID-valued (category) scope | 116 |
 | `field="associations"` | 1 |
 
-The 101 `unit`, `model`, and `root-entry` scopes and the 109 constraints
-carrying `automatic` are now all supported, so the remaining shape gap is **117
-constraints — 0.4%**.
+Every constraint scope the corpus writes is now supported, so the remaining
+shape gap is **one constraint** — a single `field="associations"`.
 
 By kind they are overwhelmingly structural counts: 14,667 `max selections` and
 7,595 `min selections`, then 3,958 Crusade limits. Only 19 target `pts`

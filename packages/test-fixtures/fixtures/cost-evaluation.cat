@@ -32,6 +32,30 @@
         <cost name="supply" typeId="cost-supply" value="0" />
       </costs>
     </selectionEntry>
+    <selectionEntry id="beef-cafe" name="Identity Troupe" type="unit">
+      <selectionEntries>
+        <selectionEntry id="id-model-a" name="Identity Model A" type="model">
+          <selectionEntries>
+            <selectionEntry id="id-player" name="Identity Player" type="upgrade">
+              <constraints>
+                <!-- Scoped by the containing entry's own ID rather than by a
+                     structural keyword: one Player per Troupe, however many
+                     models the Troupe holds. -->
+                <constraint id="id-player-max" type="max" field="selections"
+                  scope="beef-cafe" value="1" shared="true"
+                  includeChildSelections="true" />
+              </constraints>
+            </selectionEntry>
+          </selectionEntries>
+        </selectionEntry>
+        <selectionEntry id="id-model-b" name="Identity Model B" type="model">
+          <selectionEntries>
+            <entryLink id="id-player-link" name="Identity Player"
+              targetId="id-player" type="selectionEntry" />
+          </selectionEntries>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="auto-squad" name="Auto Squad" type="unit">
       <selectionEntries>
         <selectionEntry id="auto-model" name="Auto Model" type="model">

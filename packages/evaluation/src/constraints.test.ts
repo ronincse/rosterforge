@@ -79,6 +79,49 @@ describe("roster selection constraints", () => {
     expect(resolution.choices[0]?.occurrence).toBe(selected.occurrence);
   });
 
+  it("counts a constraint scoped by a containing entry id", () => {
+    const context = catalogueContext();
+    let roster = addRootSelection(
+      emptyRoster(context),
+      choice(context, "beef-cafe"),
+      "id-root",
+    );
+    const addChild = (parent: string, id: string, child: string): void => {
+      const entry = choice(context, id);
+      roster = successful(
+        addRosterSelectionToSelection(roster, selectionOccurrenceId(parent), {
+          id: selectionOccurrenceId(child),
+          definition: {
+            kind: entry.kind,
+            key: projectionKey(entry.occurrence),
+            ...(entry.id === undefined ? {} : { sourceId: entry.id }),
+          },
+        }),
+      );
+    };
+    addChild("id-root", "id-model-a", "id-model-1");
+    addChild("id-root", "id-model-b", "id-model-2");
+    addChild("id-model-1", "id-player", "id-player-1");
+    addChild("id-model-2", "id-player", "id-player-2");
+
+    const inspected = inspectRosterSelectionConstraintsInRoster(roster, context);
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    const report = inspected.value.selections
+      .flatMap(({ constraints }) => constraints)
+      .find(
+        (candidate) =>
+          candidate.constraint.node.attributes["id"] === "id-player-max",
+      );
+
+    // The scope names the Troupe by its own id, so the count spans both
+    // models. A `parent` scope would see one each and pass.
+    expect(report).toBeDefined();
+    expect(report?.observed).toBe(2);
+    expect(report?.limit).toBe(1);
+    expect(report?.status).toBe("violated");
+  });
+
   it("evaluates a bound carrying the automatic attribute", () => {
     const context = catalogueContext();
     let roster = addRootSelection(

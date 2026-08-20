@@ -49,7 +49,9 @@ export type EvaluationSelectionScope =
   | "model-or-unit"
   | "upgrade"
   | "force"
-  | "roster";
+  | "roster"
+  /** A scope written as an object ID, naming a containing occurrence. */
+  | "identity";
 
 export type EvaluationSelectionCandidateStatus =
   | "match"
@@ -326,6 +328,48 @@ export function nearestTypedSelection(
   return { unresolved: false };
 }
 
+/**
+ * The nearest ancestor-or-self matching a scope written as an object ID.
+ *
+ * Shared by condition and constraint scope resolution. The corpus writes
+ * these against selection entries — `max 4 Players per <Troupe>` — so an
+ * absent category index only leaves a category-identity scope unresolved.
+ */
+export function nearestIdentitySelection(
+  owner: RosterSelectionLocation,
+  choices: EvaluationChoiceIndex,
+  catalogueMatches: boolean,
+  targetId: ObjectId,
+  effectiveCategories: EffectiveCategoryIndex | undefined,
+): TypedSelectionScopeResolution {
+  for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
+    const local = evaluationSelectionIdentityCandidate(
+      occurrence,
+      choices,
+      catalogueMatches,
+      targetId,
+      false,
+      effectiveCategories,
+    );
+    const shared = evaluationSelectionIdentityCandidate(
+      occurrence,
+      choices,
+      catalogueMatches,
+      targetId,
+      true,
+      effectiveCategories,
+    );
+    if (local.status === "match" || shared.status === "match") {
+      return { occurrence, unresolved: false };
+    }
+    if (local.status === "different" && shared.status === "different") {
+      continue;
+    }
+    return { unresolved: true };
+  }
+  return { unresolved: false };
+}
+
 export function evaluationSelectionScope(
   roster: Roster,
   owner: RosterSelectionLocation,
@@ -354,7 +398,8 @@ export function evaluationSelectionScope(
     scope === "unit" ||
     scope === "model" ||
     scope === "model-or-unit" ||
-    scope === "upgrade"
+    scope === "upgrade" ||
+    scope === "identity"
   ) {
     return typedScope === undefined
       ? []

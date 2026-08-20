@@ -38,14 +38,13 @@ import {
   rosterMatchesCatalogueContext,
   rosterSelectionLocations,
   type EffectiveCategoryIndex,
-  type EvaluationChoiceIndex,
   type EvaluationSelectionChoice,
   type EvaluationSelectionIdentityCandidate,
   type EvaluationSelectionScope,
   type RosterSelectionLocation,
+  nearestIdentitySelection,
   nearestTypedSelection,
   typedSelectionTypes,
-  type TypedSelectionScopeResolution,
 } from "./selection-context.js";
 
 export type RosterConditionComparison =
@@ -1090,40 +1089,6 @@ function comparisonStatus(
 }
 
 
-function nearestIdentitySelection(
-  owner: RosterSelectionLocation,
-  choices: EvaluationChoiceIndex,
-  catalogueMatches: boolean,
-  targetId: ObjectId,
-  effectiveCategories: EffectiveCategoryIndex | undefined,
-): TypedSelectionScopeResolution {
-  for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
-    const local = evaluationSelectionIdentityCandidate(
-      occurrence,
-      choices,
-      catalogueMatches,
-      targetId,
-      false,
-      effectiveCategories,
-    );
-    const shared = evaluationSelectionIdentityCandidate(
-      occurrence,
-      choices,
-      catalogueMatches,
-      targetId,
-      true,
-      effectiveCategories,
-    );
-    if (local.status === "match" || shared.status === "match") {
-      return { occurrence, unresolved: false };
-    }
-    if (local.status === "different" && shared.status === "different") {
-      continue;
-    }
-    return { unresolved: true };
-  }
-  return { unresolved: false };
-}
 
 function catalogueIdentityCandidate(
   context: BattleScribeCatalogueContext,
