@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (annotation rendered)
+## Current Status — 2026-08-20 (selection annotation rendered)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,16 +38,15 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **428 passed, 7 skipped (435)**.
+  `git diff --check` all pass. `pnpm test` is **432 passed, 7 skipped (439)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **7 passed**; without it those 7 are the skipped tests.
-- **Pushed.** `main` was last pushed at `8f1913d`; everything after that is
-  local. If you are working from a fresh clone rather than the owner's machine,
-  check that those commits reached the remote before assuming this document
-  matches the code.
+- **Baseline.** `origin/main` and `main` were level at `9283c64` before this
+  checkpoint. Selection annotation landed locally as `f508c26`; it has not been
+  pushed.
 - **Active area.** Display-fidelity modifiers — Task 8 of the original work
   order, under "Historical Record" below.
 
@@ -59,13 +58,14 @@ The **characteristic operation surface is complete**: `set`, `append`,
 filtering. `multiply`/`divide`/`modulo` are unsupported on purpose — the format
 defines them and the corpus uses none.
 
-The next boundary is **selection-level `annotation`** (roadmap section A). One
-structural note before you start: profile annotation reuses the
-profile-matching routing collector in `characteristics.ts`, but selection
-annotation needs the **selections-terminus** collector that `categories.ts` has.
-Expect either a third collector or a shared extraction — `affects-routing.ts`
-already exists for exactly this kind of sharing and is where the traversal
-helpers live.
+Selection-level `annotation` is complete: direct and grouped modifiers execute,
+selections-terminus `affects` routes through a shared collector, and the
+workspace decorates occurrence names without mutating their source names.
+
+The next bounded research target is **`affects` force traversal** (roadmap
+section A): 24 selectors remain unsupported, including one selections-terminus
+form. Measure their anchors and targets before choosing a force-collection rule.
+Keep `name` modifiers last; 86% of their 7,673 instances are Crusade content.
 
 Two habits this session earned the hard way, both worth keeping:
 
@@ -108,10 +108,10 @@ owner reprioritises).
 | `floor`/`ceil` | Done | bounds, not rounding — confirmed against a T'au Ethereal |
 | `multiply`/`divide`/`modulo` | Open | defined by the format, **zero** corpus instances; do not write a speculative rule |
 | `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
-| Profile `annotation` | Done | 590 modifiers, always-empty base; own report so it no longer costs characteristics their completeness |
-| **Selection `annotation`** | **Next** | the other half — `Patriarch (Gene Affliction)`. Same field, but decorates a selection's name rather than a profile's. |
+| Profile `annotation` | Done | 522 target profiles; always-empty base; own report so it no longer costs characteristics their completeness |
+| Selection `annotation` | Done | 68 target selections; direct/grouped plus selections-terminus routing, rendered after occurrence names |
 | Rendering profile annotation | Done | parentheses after the profile name, folded into that profile's completeness |
-| `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
+| **`affects` force traversal** | **Next** | 24 selectors; measure force anchors and targets before choosing a collection rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 | `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
 
@@ -2718,6 +2718,13 @@ No open questions require the owner.
 
 ## Completed Assignment — Annotation, 2026-08-20
 
+> **Partly superseded by Selection Annotation below.** The 590 count here was
+> the total for both target kinds, not profile annotation alone. The correct
+> split is 522 profile targets and 68 selection targets. `Patriarch (Gene
+> Affliction)` is also a profile-target example despite appearing beside a
+> selection name in New Recruit. The empty-base and append conclusions remain
+> valid.
+
 Baseline `9db002b`; resulting implementation commits `829a63f` (empty-value
 append) and `367bbd0` (annotation evaluation).
 
@@ -2844,3 +2851,67 @@ the visible half first was the better order.
    for collection scopes.
 
 No open questions require the owner.
+
+## Completed Assignment — Selection Annotation, 2026-08-20
+
+Baseline `9283c64`; resulting implementation commit `f508c26`
+(`feat: render selection annotations`). Not pushed, no pull request.
+
+### What changed
+
+`evaluateRosterSelectionAnnotation` now reports the display decoration for one
+exact roster occurrence without changing its projected or roster source name.
+Direct modifiers run first, followed by recursively grouped modifiers in source
+order and then selections-terminus `affects` modifiers in roster document
+order. Profile-terminus annotation on the same declarer is deliberately ignored:
+the field name is shared, but the selector target names a different object.
+
+The traversal and anchoring half moved into
+`collectAffectsRoutedSelectionModifiers` in `affects-routing.ts`. Category
+evaluation reuses it while retaining its modifier-immunity filter rule; selection
+annotation applies optional filters through the effective-category index.
+
+The browser adapter resolves the exact occurrence and materialized choice. The
+workspace renders a known non-empty value as `Name (Annotation)`, with base
+names preserved for commands and accessible labels. Unknown output is omitted
+rather than rendered partially, and the occurrence gets an explicit unresolved
+annotation note.
+
+### Corpus correction and pin
+
+The earlier 590 count accidentally combined two target kinds. At pinned
+`BSData/wh40k-11e` commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`:
+
+- 522 modifiers target profiles: 35 direct, 487 routed; 521 `append` and one
+  `replace`; 17 appends omit `join`.
+- 68 target selections: 53 direct, 15 routed; 61 grouped, seven ungrouped; 39
+  `set` and 29 `append`; 52 have conditions, 16 condition groups, zero repeats,
+  zero scopes, and zero filter IDs; seven appends omit `join`.
+
+The optional integration test pins that exact 68-modifier shape across all 46
+documents. The seven missing-`join` appends remain preserved, diagnosed, and
+incomplete under the already-established append rule. No default separator was
+invented.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` pass.
+- `pnpm test`: **432 passed, 7 skipped (439 total)**.
+- Focused evaluator/session/UI tests: **63 passed**.
+- Pinned real-data suite: **7 passed**.
+
+### Remaining behavior and next boundary
+
+This checkpoint adds no catalogue resolution, cost or constraint calculation,
+validation command guard, persistence behavior, or new roster semantics.
+`multiply`/`divide`/`modulo` remain deliberately unsupported with zero corpus
+instances. The 24 `affects` force traversals and 7,673 `name` modifiers remain
+open.
+
+Take **`affects` force traversal** next as a corpus-first research checkpoint.
+Determine what force collection each scope anchors and which occurrences the 24
+selectors reach before writing execution. Keep `name` modifiers last because
+86% are Crusade content.
+
+No owner input is currently required.
