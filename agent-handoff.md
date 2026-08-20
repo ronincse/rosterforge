@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (constraint scopes)
+## Current Status — 2026-08-21 (constraint attributes)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **438 passed, 8 skipped (446)**.
+  `git diff --check` all pass. `pnpm test` is **439 passed, 8 skipped (447)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -130,7 +130,9 @@ points limit works end to end and is now pinned.
 | Matched-play points limit | Done | pinned: `max pts` 0 → 1000 on choosing Incursion |
 | `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
 | ID-valued (category) constraint scopes | Open | 116 corpus constraints |
-| **`automatic` constraint attribute** | **Next** | 109 corpus constraints; currently trips the unsupported-attribute check. Measure what it means before supporting *or* ignoring it. |
+| `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
+| `automatic` driving auto-fill | Open | unverified, unconsumed. `initialization.ts` reads parent-scoped minima and does not look at it. |
+| **ID-valued constraint scopes** | **Next** | 116 corpus constraints scoped to a category; needs the effective-category index, so mind the single-pass rule |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -3325,3 +3327,76 @@ Without the fix the test reads 1 and passes for the wrong reason.
    unmeasured.
 
 No open questions require the owner.
+
+## Completed Assignment — Constraint Attributes, 2026-08-21
+
+Baseline `3a04a90`; resulting implementation commit `984d427`.
+
+### What changed
+
+109 corpus constraints carry `automatic`, and because the attribute check did
+not list it, every one was dismissed as unsupported behavior and reported
+incomplete. They are squad sizes and wargear caps — exactly the rules matched
+play cares about. They now evaluate.
+
+`message` and `comment` are accepted alongside as inert metadata, matching how
+`comment` is already treated on modifiers.
+
+### How the ambiguity was resolved without an experiment
+
+Two readings were plausible and they have opposite correct handling: inert
+authoring noise, or a switch that decides whether the constraint is enforced.
+
+The corpus settles it. All 109 carry an **already-supported shape** —
+`parent`-scoped `selections` min/max — so the attribute is additive rather than
+a semantic switch. And `automatic="false"` sits on:
+
+| Entry | Constraint |
+|---|---|
+| Khorne Berzerker | `min 5`, `max 19` |
+| Recon Troopers | `min 9`, `max 9` |
+| Ravener | `min 5`, `max 5` |
+
+Those are squad sizes. They are plainly enforced, so `automatic="false"` cannot
+mean "not a real limit". Whichever way it reads, `min 5` is still `min 5`, which
+is all the constraint report needs.
+
+A second argument reinforces it: 26,150 constraints carry no `automatic` at all.
+If the attribute switched enforcement, its absence would be ambiguous everywhere.
+An additive hint with a default is the only coherent reading.
+
+### The part deliberately not done
+
+`automatic` most likely governs whether a roster editor **auto-fills** the squad.
+That is unverified, and nothing here consumes it — `initialization.ts` is
+untouched.
+
+It is worth someone's attention, though: descendant initialization *does* read
+parent-scoped minima (`unsupportedBoundProperties` checks specific properties,
+not unknown attributes), so RosterForge will auto-create five Khorne Berzerkers
+for a constraint marked `automatic="false"`. Whether New Recruit does the same is
+exactly the kind of thing one screenshot would settle.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **439 passed, 8 skipped (447 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Constraint coverage now
+
+**117 of 26,259 remain outside a supported shape — 0.4%**: 116 ID-valued scopes
+and one `associations` field.
+
+### Next recommended boundary
+
+1. **ID-valued constraint scopes** — 116 constraints scoped to a category rather
+   than a structural relationship. Needs the effective-category index, so mind
+   the single-pass rule governing `categories.ts`; `conditions.ts` already has an
+   ID-scope resolver worth reading first.
+2. **`automatic` and auto-fill** — see above. Cheap to settle with an
+   observation, and it changes what a freshly added squad looks like.
+3. **Sections C through E** — catalogue cache and editing durability remain
+   unmeasured. Roster interchange is low priority by owner decision.
+
+No open questions block work.
