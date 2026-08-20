@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20
+## Current Status — 2026-08-20 (arithmetic)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,12 +38,13 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **417 passed, 7 skipped (424)**.
+  `git diff --check` all pass. `pnpm test` is **419 passed, 7 skipped (426)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **7 passed**; without it those 7 are the skipped tests.
+- **Pushed.** `main` was pushed at `8f1913d`; commits after that are local again.
 - **Active area.** Display-fidelity modifiers — Task 8 of the original work
   order, under "Historical Record" below. The characteristic
   and category surfaces both execute a meaningful subset; what remains is in the
@@ -74,10 +75,12 @@ owner reprioritises).
 | Category `add`/`remove`/`set-primary`/`unset-primary` | Done | |
 | Effective category membership feeding conditions | Done | single-pass rule; 7 cyclic cases stay unknown |
 | Category `affects` routing | Done | filters resolved by modifier-immunity |
-| **`position`** | **Next** | 1-based index of the match within a value, negative from the end, `0` = all. Semantics known. Gates the positioned `increment`/`decrement` and the `Keywords` append New Recruit visibly applies. |
-| `replace` using `arg` as the search term | Open | strongly evidenced by the `+0` idiom; see the 2026-08-20 entry |
-| `append` with an empty `join` | Open | unblocks once `position` and `replace` land — it is the bonus-slot idiom's first step |
-| Lexical arithmetic: `increment`/`decrement`/`floor`/`ceil` | **Blocked** | sign convention on inverted characteristics |
+| `position` for arithmetic | Done | 1-based index, negative from the end, `0` = all; absent position refused when the value has more than one number |
+| Lexical `increment`/`decrement` | Done | plain signed arithmetic, no game-aware inversion — sign convention settled from the corpus, see the 2026-08-20 arithmetic entry |
+| **`replace` using `arg` as the search term** | **Next** | strongly evidenced by the `+0` idiom. With it the whole bonus-slot mechanism resolves, including the Attacks values that are still withheld on real weapons. |
+| `append` with an empty `join` | Open | unblocks once `replace` lands — it is the bonus-slot idiom's first step |
+| `floor`/`ceil` | Open | need a bound rule; a different shape from `increment`/`decrement` |
+| `position` on `append` | Open | 4 corpus instances, all Keywords. New Recruit applied one visibly with `position` present and no positional effect, so it looks inert there — the editor does not offer `position` for `append`. |
 | `annotation` modifiers | Open | 15 corpus instances |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
@@ -135,12 +138,14 @@ actually asked for.
 
 ### Open questions needing the owner
 
-Only one remains. It is a New Recruit experiment, not a judgement call:
+**None currently block work.** The sign-convention question was answered from the
+corpus on 2026-08-20 rather than by experiment — see that entry for the evidence
+and for how to falsify it cheaply if it ever looks wrong.
 
-- **Sign convention.** On an inverted characteristic such as a `3+` save, does
-  `increment 1` mean `4+` (arithmetic on the digit) or `2+` (an improvement)?
-  Nothing in the corpus settles it and guessing produces confidently wrong
-  saves. This blocks all lexical arithmetic.
+A confirmation would still be welcome when convenient, because it is the one
+settled rule that rests on inference rather than observation: in New Recruit,
+find any unit whose save improves and check whether the displayed `Sv` digit
+goes **down**. If it does, the current implementation is right.
 
 Open and deliberately not chased: what an embedded ID means when it names a
 selection entry rather than a category. One corpus instance.
@@ -2266,3 +2271,100 @@ Only one open question is left for New Recruit:
 
 Open and not worth chasing: what an embedded ID means when it names a selection
 entry rather than a category. One corpus instance.
+## Completed Assignment — Lexical Arithmetic, 2026-08-20
+
+Baseline `8f1913d`; resulting implementation commit `03376af`.
+
+**This resolves the sign-convention question that three earlier entries recorded
+as blocking.** It was answered from the corpus, not by experiment.
+
+### The sign convention
+
+`increment` and `decrement` are **plain signed arithmetic on a number inside the
+value**, with no game-aware inversion. `4+` decremented is `3+`; `-1`
+decremented is `-2`; `D6+0` incremented at the last match is `D6+1`.
+
+The question was whether `increment 1` on a `3+` save means `4+` (arithmetic) or
+`2+` (improvement). Three independent lines of corpus evidence say arithmetic:
+
+| Evidence | Count | Reading |
+|---|---|---|
+| `decrement` on inverted characteristics (`Sv`/`WS`/`BS`/`LD`) | 60 of 64 | owners are upgrades — *Kabalite Trueborn*, *Spotter*, *Force weapon*. Plain arithmetic makes these improvements. |
+| `increment` on the same | 4 | includes *Gene Affliction* raising BS and WS. Plain arithmetic makes an affliction a penalty; the inverted reading would make it a bonus. |
+| `decrement` on `AP` (written negative) | 44 of 70 | owners are *Neverblade*, *Razor Claws*, *Cursed Fang*. Signed arithmetic takes `-1` to `-2`, the improvement those names imply. |
+
+The two families point the same way and the `increment` cases point the same way
+in reverse, which is what makes this more than a majority argument.
+
+The structural argument agrees independently: `affects` is a New Recruit
+extension and New Recruit is generic over arbitrary game systems. Characteristic
+types are catalogue-defined data, so nothing tells it that `Sv` is roll-under.
+It has no basis for a game-aware inversion, and authors pick whichever operation
+produces the right digit.
+
+**How to falsify this cheaply** if it ever looks wrong: in New Recruit, find any
+unit whose save improves and check whether the displayed `Sv` digit goes down.
+If it goes up, this entry is wrong and 614 modifiers change direction.
+
+### `position`
+
+New Recruit's editor documents it as the 1-based index of the match to affect,
+negative from the end, `0` meaning all. The pinned corpus writes only `-1` (148
+arithmetic modifiers) and `1` (3 replaces), plus 5 malformed `""`.
+
+When `position` is **absent** the default is not established. Rather than guess,
+a value with more than one number is refused (`ambiguousPosition`); a value with
+exactly one number needs no default, because every reading picks the same match.
+That covers most real stat lines — `8`, `4+`, `-1`, `24"` — so the refusal is
+narrow. Values with no number at all (`-`, `N/A`, `Melee`) are refused with
+`noNumericMatch`, malformed positions with `unsupportedPosition`, and non-integer
+operands with `nonIntegerOperand`.
+
+A numeric match is `-?\d+`, so the sign travels with the digits. That is what
+makes `AP -1` behave and what keeps `D6+2` a two-match value.
+
+### Corpus reach
+
+614 characteristic modifiers are `increment`/`decrement`. 161 characteristic
+modifiers carry `position`: 101 `increment -1`, 47 `decrement -1`, 4 `append -1`,
+4 `increment ""`, 1 `set ""`, 4 `replace`.
+
+### Tests
+
+Two synthetic tests on new fixture profiles: positioned arithmetic on `D6+0` and
+an inverted `4+` save; and the three refusals. Existing fixtures that used
+`increment` as a stand-in for "unsupported operation" were switched to `floor`,
+which is still unsupported, so those tests keep their meaning rather than being
+rewritten around the new behavior.
+
+Two real-data pins now show stat lines changing:
+
+- The Death Guard Helbrute's **Power scourge** goes Attacks `8` → `10`, while
+  the *Close combat weapon* outside the filter category keeps its printed `5`.
+  Same operation, different answer — which is what makes the category filter
+  observable.
+- The Lord of Contagion's **Manreaper** gains the +1 Strength visible in Stone's
+  New Recruit screenshot. Its Attacks stays unresolved, because the bonus-slot
+  idiom's `replace` steps are still unsupported and a partly-applied value is
+  still refused.
+
+`docs/diagnostics.md` was missing the three `APPEND_` codes from the earlier
+append checkpoint; they are added here alongside the four `ARITHMETIC_` ones.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **419 passed, 7 skipped (426 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **`replace` using `arg` as the search term.** This is the last piece of the
+   `+0` bonus-slot idiom. With it, the Attacks values still withheld on real
+   weapons resolve, and the mechanism the last three checkpoints kept circling
+   finally closes. Evidence for `arg` is in the 2026-08-20 anchoring entry.
+2. **`position` on `append`** — 4 corpus instances. New Recruit visibly applied
+   one with `position` present and no positional effect, and the editor does not
+   offer `position` for `append`, so it looks inert there. Small and evidenced.
+3. **`floor`/`ceil`** — need a bound rule, a different shape from the arithmetic
+   landed here.
