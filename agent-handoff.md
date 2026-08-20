@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (roster durability)
+## Current Status — 2026-08-21 (draft write cost)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -177,7 +177,8 @@ actually asked for.
 | Unsaved-change tracking, indicator, and reload guard | Done |
 | Autosave to an already-active draft | Done | debounced, tunable through the existing options seam |
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
-| **Durable undo history** | **Next** | survives reload; the only remaining loss is the undo stack |
+| **Draft byte storage** | **Next** | drafts embed their catalogue bytes and rewrite them on every save; store once and reference by batch |
+| Durable undo history | Open | survives reload; the only remaining loss is the undo stack |
 | Durable undo history | Deferred |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
@@ -3622,3 +3623,78 @@ change or a rename when a non-destructive edit is needed.
 Still open, unblocking: the `automatic`/auto-fill observation. Stone judged it
 optional because it cannot produce a wrong answer, only a different starting
 state.
+
+## Completed Assignment — Draft Write Cost, 2026-08-21
+
+Baseline `32ed963`; resulting implementation commit `126544f`.
+
+### A regression I introduced, found by checking my own work
+
+Before adding durable undo history to the draft record, I checked what a draft
+write actually costs. It is worse than I assumed when shipping autosave.
+
+A draft record **embeds its catalogue source bytes**. `decodeLocalRosterDraft`
+copies every file through `Uint8Array.from`, and IndexedDB replaces whole
+records, so **every write rewrites every byte**.
+
+| | |
+|---|---|
+| One faction closure (Death Guard) | **8.2 MB** |
+| `maxTotalFileBytes` permitted | 256 MB |
+| Full pinned corpus, which the app can import | 172 MB |
+
+As a button press that was fine. The previous two commits made it periodic, and
+doubled it: the active-draft autosave *and* the recovery slot were both writing
+on every settle. At the default two-second debounce that is roughly 8 MB/s of
+IndexedDB churn while editing a single faction — and far worse for a larger
+import.
+
+**The lesson is the checking, not the bug.** Autosave and the recovery slot both
+passed their tests and did exactly what they claimed. The cost only showed up
+when the next checkpoint asked "what does one of these writes actually cost?"
+before adding to it. Worth doing that before extending any hot path.
+
+### What this commit does
+
+Two bounds, both obviously correct and neither a redesign:
+
+- The recovery slot **skips its write whenever an active draft is already being
+  kept current**. A session now writes one record per settle, not two.
+- The debounce is **five seconds**, not two, with the reason recorded beside the
+  constant so it is not shortened without weighing the cost.
+
+### What it deliberately does not do
+
+Fix the actual problem. **Store the bytes once and have drafts reference them by
+import batch.** That also deduplicates bytes across drafts sharing a batch,
+which is the largest storage win available anywhere in the app and would soften
+section D's missing eviction policy at the same time.
+
+It needs a store schema change plus a fallback for records already written, so
+it wants a clear head and its own checkpoint rather than being bolted onto the
+work that exposed it. The design is written up in `docs/compatibility.md` under
+"Draft Storage Cost".
+
+Sketch for whoever takes it: the current backend is a single id-keyed store, and
+`memoryDraftStore` in the UI tests implements that interface, so widening it
+breaks tests. Storing the files record under a reserved key in the same store —
+`files:<batchId>` — avoids an interface change, but `save` must still validate
+the whole draft before splitting it, and `load` must reassemble before decoding.
+Check both before committing to an approach.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **441 passed, 8 skipped (449 total)**.
+
+### Next recommended boundary
+
+1. **Draft byte storage** — the fix above. Highest value: it is a correctness-
+   adjacent performance defect, it is on a hot path now, and it improves storage
+   for every draft.
+2. **Durable undo history** — the roster survives a reload; the undo stack does
+   not. Worth doing *after* the storage fix, since it would otherwise add to the
+   record being rewritten.
+3. **Profile `name` modifiers** — five corpus instances, the last of section A.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
