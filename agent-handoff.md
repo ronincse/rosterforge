@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (inert attributes)
+## Current Status — 2026-08-20 (bonus slot closed)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **424 passed, 7 skipped (431)**.
+  `git diff --check` all pass. `pnpm test` is **425 passed, 7 skipped (432)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -67,7 +67,7 @@ owner reprioritises).
 |---|---|---|
 | Profile modifier projection | Done | |
 | Characteristic `set` | Done | lexical replacement; needs no numeric grammar |
-| Characteristic `append` | Done | non-empty `join` only |
+| Characteristic `append` | Done | any declared `join`, including the empty separator |
 | Profile visibility (`hidden`) | Done | all 154 corpus instances fit |
 | `affects` grammar parsing | Done | including the selections terminus |
 | `affects` traversal execution | Done | own/children/descendants; group rule verified in New Recruit |
@@ -78,8 +78,8 @@ owner reprioritises).
 | `position` for arithmetic | Done | 1-based index, negative from the end, `0` = all; absent position refused when the value has more than one number |
 | Lexical `increment`/`decrement` | Done | plain signed arithmetic, no game-aware inversion — sign convention settled from the corpus, see the 2026-08-20 arithmetic entry |
 | `replace` using `arg` as the search term | Done | `arg` present on all 189 corpus replaces; a term matching nothing is an applied no-op |
-| **`append` with an empty `join`** | **Next** | 270 corpus instances. Not the freebie the last entry predicted — see the 2026-08-20 inert-attributes entry for why the slot-collapse crosses entity boundaries. Needs a decision, not just enablement. |
-| `floor`/`ceil` | Open | need a bound rule; a different shape from `increment`/`decrement` |
+| `append` with an empty `join` | Done | confirmed in New Recruit; the `+0` bonus-slot idiom now runs end to end |
+| **`floor`/`ceil`** | **Next** | need a bound rule, different in shape from `increment`/`decrement`. Measure first — the corpus may hold very few, and `multiply`/`divide`/`modulo` may be worth folding in. |
 | `join`/`arg`/`position` outside their operation | Done | inert authoring noise; anything *else* unknown still withholds |
 | `annotation` modifiers | Open | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
@@ -2545,3 +2545,75 @@ Three ways forward, for whoever takes it:
 3. **`annotation` modifiers** — 15 instances, and the rendering is already
    observed twice: the value is appended to the displayed name in parentheses.
 4. **`name` modifiers** — 7,673 instances but 86% Crusade; still last.
+
+## Completed Assignment — Bonus Slot Closed, 2026-08-20
+
+Baseline `0f89f5d`; resulting implementation commit `a3ab09f`.
+
+### What changed
+
+An empty `join` is a real separator that concatenates directly, not a missing
+one. With `increment`, `decrement`, `replace`, and `position` all executing, the
+`+0` bonus-slot idiom now runs end to end.
+
+### The observation that settled it
+
+Stone built an Aeldari Fire Prism with the *Heirloom (A+1)* Crusade upgrade.
+Both branches of the idiom are visible on one model:
+
+| Weapon profile | Base Attacks | Displayed | Why |
+|---|---|---|---|
+| Prism Cannon — dispersed pulse | `2D6` | **`2D6+1`** | a dice expression, so it is in `Attacks Dx Weapon`; the slot opens and the positioned increment bumps it |
+| Prism Cannon — focused lances | `2` | **`3`** | not a dice expression, so no slot; the increment hits the number directly |
+| Shuriken Cannon | `3` | `3` | no Heirloom, untouched |
+
+The synthetic regression mirrors that model exactly, both branches in one
+profile.
+
+### A prediction that was wrong, and why
+
+The `replace` entry predicted this would be a free consequence of `replace`
+landing, because a trailing replace collapses an unused slot. **Measuring said
+otherwise**, and the correction is worth carrying forward:
+
+Only **87 of 268** empty-separator appends are followed by a collapsing
+`replace` in the *same entry*. The other 181 sit on **weapons** — Prism Cannon,
+Missile Launcher, Eyeburst — conditional on a Crusade upgrade
+(`Heirloom (A+1)` 103, `Master-worked (D+1)` 64, `Brutal (S+1)` 2). Their
+increment lives on the upgrade entry and reaches them through `affects` routing.
+
+So the mechanism spans two entities, which is why static analysis of modifier
+lists could not settle it and one screenshot could. **When a mechanism's pieces
+sit on different entries, stop analysing and ask for an observation.**
+
+### What still withholds
+
+- An **absent** `join`. Nothing establishes a default separator, and unlike an
+  empty one it is not written deliberately. 7 corpus instances.
+- Appending onto an **empty value through a non-empty separator** — whether the
+  separator is emitted with nothing to its left is unestablished. An empty
+  separator raises no such question.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **425 passed, 7 skipped (432 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### State of the characteristic surface
+
+Executing: `set`, `append`, `increment`, `decrement`, `replace`, with `position`
+placement, `affects` routing anchored at `scope`, and category filtering.
+Remaining: `floor`/`ceil`, `multiply`/`divide`/`modulo`, `annotation`, and
+`name`.
+
+### Next recommended boundary
+
+1. **`floor`/`ceil`** — a bound rule, different in shape from the arithmetic
+   already landed. Measure first: this may be smaller than its place in the list
+   suggests, and `multiply`/`divide`/`modulo` may be worth folding in.
+2. **`annotation` modifiers** — 15 instances, rendering already observed twice:
+   the value is appended to the displayed name in parentheses.
+3. **`name` modifiers** — 7,673 instances but 86% Crusade; still last.
+
+No open questions require the owner.
