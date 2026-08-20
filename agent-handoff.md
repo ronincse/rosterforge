@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (unsaved-change tracking)
+## Current Status — 2026-08-21 (roster durability)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **440 passed, 8 skipped (448)**.
+  `git diff --check` all pass. `pnpm test` is **441 passed, 8 skipped (449)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -175,7 +175,9 @@ actually asked for.
 | Browser drafts in IndexedDB with exact definition-key restoration | Done |
 | In-memory undo/redo over immutable snapshots | Done |
 | Unsaved-change tracking, indicator, and reload guard | Done |
-| **Autosave to an already-active draft** | **Next** | unambiguous and small; see the 2026-08-21 entry for why creating a draft automatically is *not* |
+| Autosave to an already-active draft | Done | debounced, tunable through the existing options seam |
+| Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
+| **Durable undo history** | **Next** | survives reload; the only remaining loss is the undo stack |
 | Durable undo history | Deferred |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
@@ -3552,3 +3554,71 @@ grepping for every call site of `saveRosterDraft` and finding exactly one.
 One question for Stone when convenient: should an unsaved roster autosave into a
 new draft automatically, or stay unsaved until asked? Plus the older
 `automatic`/auto-fill observation, still open.
+
+## Completed Assignment — Roster Durability, 2026-08-21
+
+Baseline `3cf8ddd`; resulting implementation commits `e806008` (autosave to an
+active draft) and `c80e75b` (recovery slot).
+
+Stone chose the sequence and asked for the recovery offer to be a prompt rather
+than a silent restore.
+
+### The two halves
+
+**Autosave to an active draft.** Once a roster has a draft the user has already
+asked for it to be kept, so edits rewrite it after a two-second debounce —
+tunable through the same options seam the id factories and clock already use.
+Depending on the roster identity restarts the timer per edit, so a burst writes
+once when it settles.
+
+**The recovery slot.** A single reserved record, `__recovery__`, kept current on
+the same debounce for *any* unsaved roster. It shares the draft store, so it
+reuses that validation and byte limits, but `list` hides it: it never reaches
+the shelf and never becomes an entry to prune. Cleared once the roster is
+persisted as a real draft.
+
+On the next visit it is **offered, not restored**, naming the roster with
+Recover and Discard.
+
+### Why not simply autosave everything
+
+Each draft embeds its own catalogue source bytes — **8.2 MB** for the Death
+Guard closure. Autosaving every experiment into the shelf would multiply that
+per attempt, on a store with no eviction policy, *and* turn the shelf from "lists
+I chose to keep" into a log needing housekeeping. One overwritten slot bounds
+the cost to a single closure however many rosters get tried.
+
+That measurement is what decided the design, and it is worth re-checking before
+anyone revisits it.
+
+### Testing note
+
+Both tests drive the real flow rather than seeding state. The recovery test
+builds a roster, never saves it, confirms the shelf stays empty while the slot
+fills, remounts, and finds the offer waiting.
+
+One trap worth recording: with the debounce set to zero the "Unsaved changes"
+indicator clears too fast to observe, so asserting on it is racy. Assert on the
+**store** instead — it is what actually matters. Also note the UI tests inject
+fixed id factories, so a second `add` of the same entry collides; use an amount
+change or a rename when a non-destructive edit is needed.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **441 passed, 8 skipped (449 total)**.
+- Pinned real-data suite — **8 passed**.
+
+### Next recommended boundary
+
+1. **Durable undo history.** With both saves in place the roster itself survives
+   a reload; the undo stack does not. It is the last piece of section E that
+   loses anything.
+2. **Section D — cache limits.** Still no eviction or quota policy. Browser
+   stores catch and diagnose failures, so it degrades visibly rather than
+   silently, which keeps it below undo history.
+3. **Profile `name` modifiers** — five corpus instances, the last of section A.
+
+Still open, unblocking: the `automatic`/auto-fill observation. Stone judged it
+optional because it cannot produce a wrong answer, only a different starting
+state.
