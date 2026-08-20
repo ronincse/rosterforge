@@ -86,9 +86,9 @@ This repository currently contains the first development slice:
   roster occurrence, executing exact-`typeId` lexical `set` modifiers in
   owner-direct then grouped source order while preserving unsupported
   operations, extensions, and unrouted profile modifiers as incomplete;
-- characteristic `append` through the separator its `join` declares, withheld
-  when the separator is absent or empty so a bonus-slot placeholder never
-  displays as a finished value;
+- characteristic `append` through the separator its `join` declares, including
+  the empty separator that opens the corpus's `+0` bonus slot, which the
+  positioned arithmetic and trailing replace then complete;
 - characteristic `replace` of the literal term `arg` declares, deleting the
   match when no value is given, treating a term that matches nothing as an
   applied no-op;

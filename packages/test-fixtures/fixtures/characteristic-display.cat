@@ -103,6 +103,27 @@
               futureBehavior="unknown" />
           </modifiers>
         </profile>
+        <profile id="profile-bonus-slot" name="Bonus Slot"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <!-- A dice expression: the slot opens and is bumped. -->
+            <characteristic name="Move"
+              typeId="characteristic-move">2D6</characteristic>
+            <!-- A plain number: no slot, incremented directly. -->
+            <characteristic name="Save"
+              typeId="characteristic-save">2</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="append" field="characteristic-move" value="+0"
+              join="" />
+            <modifier type="increment" field="characteristic-move" value="1"
+              position="-1" />
+            <modifier type="replace" field="characteristic-move" arg="+0" />
+            <modifier type="increment" field="characteristic-save" value="1"
+              position="-1" />
+            <modifier type="replace" field="characteristic-save" arg="+0" />
+          </modifiers>
+        </profile>
         <profile id="profile-inert-attributes" name="Inert Attributes"
           typeId="profile-type-unit" typeName="Unit">
           <characteristics>

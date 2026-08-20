@@ -1392,20 +1392,26 @@ kernel; it reuses the shared applicability, modifier-group applicability, and
 group-execution collectors, which do fit unchanged.
 
 `append` concatenates its value onto the running value through the separator
-its `join` attribute declares. That is text handling rather than arithmetic, so
-it is decidable — but only with a **non-empty** separator, and only onto a value
-that is not itself empty. Three cases stay unapplied:
+its `join` attribute declares. An **empty** separator is a real separator that
+concatenates directly; the corpus uses it to open a `+0` bonus slot that a
+positioned `increment` then bumps and a trailing `replace` collapses if it is
+still zero. This evaluator executes all three, so the idiom runs end to end.
 
-- **No `join` declared.** Nothing establishes a default separator.
-- **An empty `join`.** This is not a list append. Every corpus instance writes
-  `+0` onto a numeric characteristic to open a bonus slot that a later
-  positioned `increment`/`decrement` bumps and a later `replace` removes when it
-  is still zero. None of those three is executed here, so concatenating alone
-  would print `A 2+0` where the source means `A 2` — a confident wrong answer
-  rather than an honest unknown.
-- **An empty value to append onto.** Whether a separator is emitted with nothing
-  to its left is not established, and the corpus does contain empty
-  characteristics.
+Confirmed against New Recruit on 2026-08-20. An Aeldari Fire Prism carrying the
+*Heirloom (A+1)* upgrade displays its dispersed pulse Attacks as `2D6+1` — the
+slot opened and was bumped — while its focused lances, whose Attacks is a plain
+`2`, simply reads `3`. The `Attacks Dx Weapon` category filter is what keeps the
+slot off the non-dice value, so the two branches of the idiom are visible on one
+model.
+
+Two cases stay unapplied:
+
+- **No `join` declared.** Nothing establishes a default separator, and unlike an
+  empty one it is not written deliberately.
+- **An empty value to append onto, with a non-empty separator.** Whether a
+  separator is emitted with nothing to its left is not established, and the
+  corpus does contain empty characteristics. An empty separator raises no such
+  question.
 
 The declared separator is used verbatim and never normalised: the corpus's most
 common one is a comma followed by a **non-breaking** space, and collapsing it to

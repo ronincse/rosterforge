@@ -365,7 +365,7 @@ describe("roster profile characteristic display", () => {
     });
   });
 
-  it("withholds an append that joins with an empty separator", () => {
+  it("concatenates directly when the separator is empty", () => {
     const setup = characteristicSetup();
 
     const report = successful(
@@ -377,14 +377,41 @@ describe("roster profile characteristic display", () => {
       ),
     );
 
-    // An empty separator is the corpus's bonus-slot idiom: `4+` would become
-    // `4+0`, which is only correct once the positioned increment and the later
-    // replace run. Neither is executed, so the value stays unknown.
-    expect(report.characteristics[1]?.steps).toMatchObject([
-      { status: "unapplied", kind: "append", issues: ["emptySeparator"] },
-    ]);
-    expect(report.characteristics[1]).not.toHaveProperty("value");
-    expect(report.completeness).toBe("incomplete");
+    // An empty separator is a real separator, not a missing one.
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "4+0",
+      steps: [{ status: "applied", kind: "append", output: "4+0" }],
+    });
+  });
+
+  it("runs the bonus-slot idiom end to end", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-bonus-slot"),
+      ),
+    );
+
+    // Confirmed against New Recruit with an Aeldari Fire Prism carrying the
+    // Heirloom (A+1) upgrade. A dice expression opens a `+0` slot, the
+    // positioned increment bumps it, and the trailing replace finds nothing
+    // left to collapse.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "2D6",
+      value: "2D6+1",
+    });
+    // The same Fire Prism's other profile has a plain Attacks of 2 and simply
+    // reads 3: no slot is opened, so the increment hits the number itself.
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "2",
+      value: "3",
+    });
+    expect(report.completeness).toBe("complete");
   });
 
   it("withholds an append with no separator and one with nothing to join onto", () => {

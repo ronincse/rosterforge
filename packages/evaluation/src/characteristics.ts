@@ -65,7 +65,6 @@ export type RosterCharacteristicModifierIssue =
   | "unsupportedType"
   | "missingValue"
   | "missingSeparator"
-  | "emptySeparator"
   | "emptyAppendInput"
   | "nonIntegerOperand"
   | "noNumericMatch"
@@ -800,10 +799,10 @@ function evaluateStep<
     const separator = appendSeparator(modifier);
     if ("issue" in separator) {
       issues.push(separator.issue);
-    } else if (input.trim() === "") {
+    } else if (input.trim() === "" && separator.separator !== "") {
       // Whether a separator is emitted with nothing on its left is not
       // established, and the corpus has characteristics that are genuinely
-      // empty, so the one case that would need the answer stays unapplied.
+      // empty. An *empty* separator raises no such question.
       issues.push("emptyAppendInput");
     } else if (modifier.value !== undefined) {
       output = `${input}${separator.separator}${modifier.value}`;
@@ -1180,20 +1179,22 @@ function applyArithmetic(
 /**
  * The separator an `append` joins with, or the reason it cannot be executed.
  *
- * A declared but *empty* separator is not a list append. Every one of the 181
- * corpus instances writes `+0` onto a numeric characteristic to open a bonus
- * slot that a later positioned `increment`/`decrement` bumps and a later
- * `replace` removes when it is still zero. None of those three operations is
- * executed here, so concatenating alone would print `A 2+0` where the source
- * means `A 2`. Withholding keeps the characteristic honestly unresolved
- * instead.
+ * An empty separator is a real separator: it concatenates directly. The corpus
+ * uses it to open a `+0` bonus slot that a positioned `increment` then bumps,
+ * which this evaluator executes end to end. Confirmed against New Recruit on
+ * 2026-08-20: an Aeldari Fire Prism with the *Heirloom (A+1)* upgrade displays
+ * its dispersed pulse Attacks as `2D6+1` — slot opened, then incremented —
+ * while its focused lances, whose Attacks is a plain `2`, is simply `3`,
+ * because the category filter keeps the slot off non-dice values.
+ *
+ * Only an *absent* `join` is refused. Nothing establishes a default separator,
+ * and unlike the empty one it is not written deliberately.
  */
 function appendSeparator(
   modifier: RosterCharacteristicModifierSource,
 ): { readonly separator: string } | { readonly issue: RosterCharacteristicModifierIssue } {
   const declared = modifier.node.attributes["join"];
   if (declared === undefined) return { issue: "missingSeparator" };
-  if (declared === "") return { issue: "emptySeparator" };
   return { separator: declared };
 }
 
@@ -1394,11 +1395,6 @@ function modifierDiagnostic(
     missingSeparator: [
       "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_MISSING",
       "An append characteristic modifier declares no join separator.",
-      "join",
-    ],
-    emptySeparator: [
-      "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_EMPTY",
-      "An append characteristic modifier joins with an empty separator, which the corpus uses only to open a bonus slot for operations that are not evaluated.",
       "join",
     ],
     missingSearchTerm: [
