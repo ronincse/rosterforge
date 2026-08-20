@@ -56,8 +56,9 @@ the map, not the territory** — it groups that record into product milestones s
 a new session can see the shape of what is left. Keep both current.
 
 Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
-**Blocked** (needs an answer recorded below), **Deferred** (out of scope until
-the owner reprioritises).
+**Blocked** (needs an answer recorded below), **Low priority** (in scope, but do
+not take it ahead of anything else), and **Deferred** (out of scope until the
+owner reprioritises).
 
 ### A. Display-fidelity modifiers — *active area*
 
@@ -97,9 +98,21 @@ the owner reprioritises).
 | Item | Status |
 |---|---|
 | Browser print/save-PDF presentation export | Done |
-| `.ros`/`.rosz` ingestion, projection, import | Deferred — the largest single remaining feature |
-| `.ros`/`.rosz` interchange export | Deferred |
-| Exact XML/JSON reserialization | Deferred |
+| `.ros`/`.rosz` ingestion, projection, import | Low priority |
+| `.ros`/`.rosz` interchange export | Low priority |
+| Exact XML/JSON reserialization | Low priority |
+
+Owner decision, 2026-08-20: **`.ros`/`.rosz` is low priority.** It is a large
+feature and it is not what the ecosystem is moving toward — BSData now publishes
+catalogue data as JSON, and the tools this product is measured against are
+web-based rather than trading BattleScribe roster files.
+
+Note for whoever picks this up: `.ros`/`.rosz` are *roster* files (a saved army
+list), which is a separate concern from the `.cat`/`.gst`/`.catz`/`.gstz`
+catalogue formats that JSON supersedes — catalogue ingestion already handles both
+XML and JSON and is unaffected by this decision. The cost here is that a user
+cannot bring an existing army list in from another tool. Revisit if that is
+actually asked for.
 
 ### D. Catalogue sources and cache
 
