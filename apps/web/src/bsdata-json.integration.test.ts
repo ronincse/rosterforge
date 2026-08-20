@@ -1086,10 +1086,10 @@ describe.skipIf(realDataDirectory === undefined)(
         ).toBe(true);
 
         // Stone's New Recruit screenshot shows this weapon gaining Devastating
-        // Wounds alongside its printed Lethal Hits. The append that does it
-        // reaches the weapon -- that is the anchoring this test pins -- but it
-        // carries `position`, which stays unsupported, so the value is honestly
-        // unresolved rather than shown half-applied.
+        // Wounds alongside its printed Lethal Hits. The append carries a
+        // `position`, which the editor does not offer for `append` and which
+        // New Recruit visibly ignored, so it is treated as inert noise and the
+        // keyword lands.
         const keywords = manreaper.characteristics.find(
           ({ characteristic }) => characteristic.name === "Keywords",
         );
@@ -1097,10 +1097,10 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(keywords?.baseValue ?? "").toContain("Lethal Hits");
         expect(keywords?.baseValue ?? "").not.toContain("Devastating Wounds");
         expect(keywords?.steps).toMatchObject([
-          { status: "unapplied", origin: "affects", kind: "append" },
+          { status: "applied", origin: "affects", kind: "append" },
         ]);
-        expect(keywords).not.toHaveProperty("value");
-        expect(manreaper.completeness).toBe("incomplete");
+        expect(keywords?.value ?? "").toContain("Lethal Hits");
+        expect(keywords?.value ?? "").toContain("Devastating Wounds");
 
         // Stone's screenshot shows this weapon's S raised by one. That modifier
         // is the only one targeting S, so unlike A -- which also carries an

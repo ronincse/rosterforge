@@ -1303,7 +1303,23 @@ function unsupportedAttributes(
   modifier: RosterCharacteristicModifierSource,
   origin: RosterCharacteristicStepOrigin = "own",
 ): readonly string[] {
-  const supported = new Set(["type", "field", "value", "scope", "comment"]);
+  const supported = new Set([
+    "type",
+    "field",
+    "value",
+    "scope",
+    "comment",
+    // `join`, `arg`, and `position` are each consumed by the operations that
+    // accept them -- `join` by `append`, `arg` by `replace`, `position` by
+    // `replace` and the arithmetic pair -- and are inert authoring noise on
+    // the rest. New Recruit's editor offers each only where it applies, so a
+    // stray one is copy-paste between modifiers rather than behavior. The
+    // corpus agrees: all 90 `arg` attributes on an `append` are identical to
+    // that append's own value, which no operation could act on.
+    "join",
+    "arg",
+    "position",
+  ]);
   // `join` is the separator `append` concatenates with, so it is part of that
   // operation rather than unrouted behavior. It stays unsupported on every
   // other operation, where it has no established meaning.

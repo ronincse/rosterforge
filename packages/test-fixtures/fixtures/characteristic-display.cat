@@ -100,7 +100,25 @@
           <modifiers>
             <modifier type="floor" field="characteristic-save" value="1" />
             <modifier type="multiply" field="characteristic-move" value="8"
-              arg="6" />
+              futureBehavior="unknown" />
+          </modifiers>
+        </profile>
+        <profile id="profile-inert-attributes" name="Inert Attributes"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">Assault</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- `position` and `arg` are not offered for `append`. Both are
+                 copy-paste noise and neither changes the result. -->
+            <modifier type="append" field="characteristic-move" value="Heavy"
+              join=", " position="-1" arg="Heavy" />
+            <!-- `join` is not offered for `replace`. -->
+            <modifier type="replace" field="characteristic-save" arg="4"
+              value="2" join="" />
           </modifiers>
         </profile>
         <profile id="profile-corrupted-input" name="Corrupted Input"

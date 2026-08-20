@@ -174,6 +174,33 @@ describe("roster profile characteristic display", () => {
     ]);
   });
 
+  it("ignores an attribute the operation does not accept", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-inert-attributes"),
+      ),
+    );
+
+    // New Recruit's editor offers `join` only for `append`, `arg` only for
+    // `replace`, and `position` for neither of those two. A stray one is
+    // copy-paste between modifiers, and New Recruit was observed applying an
+    // append that carried a `position` with no positional effect.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "Assault",
+      value: "Assault, Heavy",
+    });
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "2+",
+    });
+    expect(report.completeness).toBe("complete");
+  });
+
   it("refuses a value an unapplied step fed into a reading operation", () => {
     const setup = characteristicSetup();
 

@@ -1474,9 +1474,22 @@ corpus replaces carry a Boolean where replacement text belongs, all of them in
 the bonus-slot idiom where the intent is deletion; substituting the literal text
 would print `D6true`.
 
-`join` has no meaning for a search and replace and the editor does not offer it
-there, so the 93 corpus replaces carrying one stay unsupported rather than
-having the attribute quietly ignored.
+### Attributes an operation does not accept
+
+New Recruit's editor offers `join` only for `append`, `arg` only for `replace`,
+and `position` for `replace` and the arithmetic pair. Where one appears on an
+operation outside that set it is **inert authoring noise**, not behavior, and it
+does not withhold the step.
+
+This is evidence, not convenience. All 90 corpus `arg` attributes on an `append`
+are *identical to that append's own value*, which no operation could act on. New
+Recruit was observed applying a Keywords `append` that carried `position="-1"`
+with no positional effect. And no separator semantics exist for a search and
+replace, which is what a `join` on `replace` would have to mean.
+
+An attribute outside the known set — anything that is not `join`, `arg`, or
+`position` — still withholds the step. Only these three are known to belong to
+specific operations, so only these three can be known noise elsewhere.
 
 ### Reading operations and step order
 

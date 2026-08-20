@@ -336,6 +336,8 @@
   verbatim, chaining through successive appends; appends with no separator, an
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
+- `join`, `arg`, and `position` treated as inert where the operation does not
+  accept them, so copy-paste noise between modifiers does not withhold a step
 - Characteristic `replace` of the literal search term `arg` declares, deleting
   the match when no `value` is given, with a term that matches nothing recorded
   as an applied no-op rather than a refusal
@@ -410,8 +412,7 @@
 - Characteristic operations other than `set`, `append`, `increment`,
   `decrement`, and `replace`: `floor` and `ceil` need an unestablished bound
   rule. They remain ordered, observable, and unapplied.
-- `replace` with an absent or empty `arg`, with a Boolean `value`, or carrying a
-  `join`, which has no meaning for a search and replace
+- `replace` with an absent or empty `arg` or with a Boolean `value`
 - Arithmetic whose target number cannot be placed: no declared `position` with
   more than one number in the value, a value with no number at all, a malformed
   `position`, or a non-integer operand.
@@ -428,9 +429,7 @@
   the determination is withheld rather than treated as a no-op.
 - Category `affects` filters naming a category that some modifier can change;
   deciding them needs the membership pass one is computing.
-- Generic `arg` behavior, `position` on any operation other than `increment`
-  and `decrement`, `join` on any operation other than `append`, and
-  characteristic modifiers owned by selection entries, entry links, info links,
+- Characteristic modifiers owned by selection entries, entry links, info links,
   or info groups rather than by the profile itself
 - Profile-owned `name` and observed `annotation` modifiers; they are retained as
   unrouted display behavior and make a characteristic report incomplete rather
