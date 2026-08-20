@@ -806,6 +806,8 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
       "profile-grouped-order",
       "profile-grouped-conditional",
       "profile-unsupported-operations",
+      "profile-arithmetic",
+      "profile-arithmetic-refused",
       "profile-append",
       "profile-append-empty",
       "profile-extension-attributes",

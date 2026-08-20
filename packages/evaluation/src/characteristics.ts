@@ -49,7 +49,11 @@ import type { NumericModifierApplicability } from "./modifiers.js";
  * arithmetic — but only when the separator is non-empty; see
  * `appendSeparator`.
  */
-export type RosterCharacteristicModifierKind = "set" | "append";
+export type RosterCharacteristicModifierKind =
+  | "set"
+  | "append"
+  | "increment"
+  | "decrement";
 
 export type RosterCharacteristicModifierIssue =
   | "applicabilityUnresolved"
@@ -61,7 +65,11 @@ export type RosterCharacteristicModifierIssue =
   | "missingValue"
   | "missingSeparator"
   | "emptySeparator"
-  | "emptyAppendInput";
+  | "emptyAppendInput"
+  | "nonIntegerOperand"
+  | "noNumericMatch"
+  | "ambiguousPosition"
+  | "unsupportedPosition";
 
 export type RosterCharacteristicRoutingReason =
   | "missingField"
@@ -718,9 +726,32 @@ function evaluateStep<
     issues.push("missingValue");
   }
 
-  // `set` never reads what it replaces; `append` reads both the separator and
-  // the value it concatenates onto, so it has two more ways to be undecidable.
+  // `set` never reads what it replaces; every other operation does, so each
+  // has more ways to be undecidable.
   let output = modifier.value;
+  if (kind === "increment" || kind === "decrement") {
+    const operand =
+      modifier.value !== undefined && /^-?\d+$/u.test(modifier.value.trim())
+        ? Number.parseInt(modifier.value.trim(), 10)
+        : undefined;
+    if (modifier.value !== undefined && operand === undefined) {
+      issues.push("nonIntegerOperand");
+    } else if (operand !== undefined) {
+      const selection = positionedMatches(
+        input,
+        modifier.node.attributes["position"],
+      );
+      if ("issue" in selection) {
+        issues.push(selection.issue);
+      } else {
+        output = applyArithmetic(
+          input,
+          selection.matches,
+          kind === "increment" ? operand : -operand,
+        );
+      }
+    }
+  }
   if (kind === "append") {
     const separator = appendSeparator(modifier);
     if ("issue" in separator) {
@@ -956,7 +987,85 @@ function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
 function characteristicKind(
   value: string | undefined,
 ): RosterCharacteristicModifierKind | undefined {
-  return value === "set" || value === "append" ? value : undefined;
+  return value === "set" ||
+    value === "append" ||
+    value === "increment" ||
+    value === "decrement"
+    ? value
+    : undefined;
+}
+
+/**
+ * A signed integer inside a characteristic value, with where it sits.
+ *
+ * Values are lexical: `10`, `3+`, `-1`, `D6+0`, `24"`. Arithmetic works on
+ * the digits and preserves everything around them.
+ */
+interface NumericMatch {
+  readonly start: number;
+  readonly end: number;
+  readonly value: number;
+}
+
+function numericMatches(input: string): readonly NumericMatch[] {
+  const out: NumericMatch[] = [];
+  for (const match of input.matchAll(/-?\d+/gu)) {
+    if (match.index === undefined) continue;
+    out.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      value: Number.parseInt(match[0], 10),
+    });
+  }
+  return out;
+}
+
+/**
+ * Chooses which numeric matches an operation affects.
+ *
+ * New Recruit's editor documents `position` as the "1-Based index of the match
+ * to affect", supporting negative indexes, with `0` meaning all. The pinned
+ * corpus only ever writes `-1` and `1`.
+ *
+ * When `position` is absent the default is **not** established, so a value with
+ * more than one number is refused rather than guessed at. A value with exactly
+ * one number needs no default: every reading selects the same match.
+ */
+function positionedMatches(
+  input: string,
+  declared: string | undefined,
+):
+  | { readonly matches: readonly NumericMatch[] }
+  | { readonly issue: RosterCharacteristicModifierIssue } {
+  const matches = numericMatches(input);
+  if (matches.length === 0) return { issue: "noNumericMatch" };
+  if (declared === undefined) {
+    return matches.length === 1
+      ? { matches }
+      : { issue: "ambiguousPosition" };
+  }
+  if (!/^-?\d+$/u.test(declared)) return { issue: "unsupportedPosition" };
+  const position = Number.parseInt(declared, 10);
+  if (position === 0) return { matches };
+  const index = position > 0 ? position - 1 : matches.length + position;
+  const selected = matches[index];
+  return selected === undefined
+    ? { issue: "unsupportedPosition" }
+    : { matches: [selected] };
+}
+
+/** Rewrites the selected matches, right to left so earlier offsets stay valid. */
+function applyArithmetic(
+  input: string,
+  matches: readonly NumericMatch[],
+  delta: number,
+): string {
+  let output = input;
+  for (const match of [...matches].reverse()) {
+    const next = String(match.value + delta);
+    output = output.slice(0, match.start) + next + output.slice(match.end);
+  }
+  return output;
 }
 
 /**
@@ -1092,6 +1201,11 @@ function unsupportedAttributes(
   if (modifier.type === "append") {
     supported.add("join");
   }
+  // `position` selects which numeric match an arithmetic operation affects, so
+  // it is part of that operation rather than unrouted behavior.
+  if (modifier.type === "increment" || modifier.type === "decrement") {
+    supported.add("position");
+  }
   // A routed modifier reached this profile *because* of its selector, and its
   // scope is overridden, so neither counts against it.
   if (origin === "affects") {
@@ -1155,6 +1269,26 @@ function modifierDiagnostic(
       "EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_EMPTY",
       "An append characteristic modifier joins with an empty separator, which the corpus uses only to open a bonus slot for operations that are not evaluated.",
       "join",
+    ],
+    nonIntegerOperand: [
+      "EVALUATION_CHARACTERISTIC_ARITHMETIC_OPERAND_UNSUPPORTED",
+      "An arithmetic characteristic modifier's value is not an integer.",
+      "value",
+    ],
+    noNumericMatch: [
+      "EVALUATION_CHARACTERISTIC_ARITHMETIC_NO_MATCH",
+      "An arithmetic characteristic modifier found no number to change in the value.",
+      undefined,
+    ],
+    ambiguousPosition: [
+      "EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_AMBIGUOUS",
+      "An arithmetic characteristic modifier declares no position and the value contains more than one number.",
+      "position",
+    ],
+    unsupportedPosition: [
+      "EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_UNSUPPORTED",
+      "An arithmetic characteristic modifier's position is malformed or selects no match.",
+      "position",
     ],
     emptyAppendInput: [
       "EVALUATION_CHARACTERISTIC_APPEND_INPUT_EMPTY",

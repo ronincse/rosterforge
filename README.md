@@ -89,6 +89,9 @@ This repository currently contains the first development slice:
 - characteristic `append` through the separator its `join` declares, withheld
   when the separator is absent or empty so a bonus-slot placeholder never
   displays as a finished value;
+- lexical `increment` and `decrement` on the numeric match `position` selects,
+  as plain signed arithmetic that preserves the surrounding text, withheld when
+  the target number cannot be placed;
 - read-only profile visibility for direct and grouped Boolean `set` hidden
   modifiers, using the projected profile flag as the base;
 - `affects` routing, so a selection's modifier reaches its own
@@ -133,8 +136,7 @@ repository package and one immutable WH40K 11e snapshot is available in the web
 source picker. Additional source configuration, repository update discovery,
 cache management, and retries remain deferred,
 along with broader condition application, dynamic source-default amounts,
-lexical arithmetic operations (`increment`, `decrement`, `floor`, `ceil`),
-`replace`, `arg`/`position` behavior, `name` and `annotation` modifiers,
+`floor`/`ceil`, `replace`, `arg` behavior, `name` and `annotation` modifiers,
 modifier-group repeats, constraint enforcement, full legality validation,
 automatic saving, durable undo history, roster reordering, and BattleScribe
 .ros/.rosz import and interchange export.

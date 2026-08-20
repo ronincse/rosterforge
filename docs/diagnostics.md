@@ -906,7 +906,24 @@ EVALUATION_CHARACTERISTIC_MODIFIER_TYPE_UNSUPPORTED
 EVALUATION_CHARACTERISTIC_MODIFIER_VALUE_MISSING
 EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_MISSING
 EVALUATION_CHARACTERISTIC_MODIFIER_TARGET_AMBIGUOUS
+EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_MISSING
+EVALUATION_CHARACTERISTIC_APPEND_SEPARATOR_EMPTY
+EVALUATION_CHARACTERISTIC_APPEND_INPUT_EMPTY
+EVALUATION_CHARACTERISTIC_ARITHMETIC_OPERAND_UNSUPPORTED
+EVALUATION_CHARACTERISTIC_ARITHMETIC_NO_MATCH
+EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_AMBIGUOUS
+EVALUATION_CHARACTERISTIC_ARITHMETIC_POSITION_UNSUPPORTED
 ```
+
+The three `APPEND_` codes mark an `append` that cannot be executed: no declared
+`join` separator, an empty one, or nothing to append onto. An empty separator is
+the corpus's bonus-slot idiom rather than a list append, so applying it alone
+would print a value the source does not mean.
+
+The four `ARITHMETIC_` codes mark an `increment` or `decrement` that could not
+be placed or performed: a non-integer operand, a value with no number in it, a
+value with more than one number and no declared `position` to choose between
+them, or a `position` that is malformed or selects no match.
 
 Attribute-shaped problems point to the exact modifier attribute; the generic
 code points to the first unsupported attribute and keeps the complete attribute

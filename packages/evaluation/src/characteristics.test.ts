@@ -174,6 +174,63 @@ describe("roster profile characteristic display", () => {
     ]);
   });
 
+  it("applies lexical arithmetic to the positioned numeric match", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-arithmetic"),
+      ),
+    );
+
+    // `position: -1` is the last number, so the bonus slot's 0 changes and the
+    // dice expression around it is preserved untouched.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "D6+0",
+      value: "D6+1",
+      steps: [{ status: "applied", kind: "increment", output: "D6+1" }],
+    });
+    // Arithmetic is plain and signed: `decrement` on a `4+` save gives `3+`,
+    // which is the improvement the corpus authors write it for. The evaluator
+    // does not know or care that a save is inverted -- New Recruit is generic
+    // over game systems and cannot know either.
+    expect(report.characteristics[1]).toMatchObject({
+      baseValue: "4+",
+      value: "3+",
+      steps: [{ status: "applied", kind: "decrement", output: "3+" }],
+    });
+    expect(report.completeness).toBe("complete");
+  });
+
+  it("refuses arithmetic it cannot place or cannot perform", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-arithmetic-refused"),
+      ),
+    );
+
+    // No declared position and two numbers in the value: the default is not
+    // established, so which number to change is a guess.
+    expect(report.characteristics[0]?.steps).toMatchObject([
+      { status: "unapplied", issues: ["ambiguousPosition"] },
+    ]);
+    // `-` has no number to change at all.
+    expect(report.characteristics[1]?.steps).toMatchObject([
+      { status: "unapplied", issues: ["noNumericMatch"] },
+    ]);
+    expect(report.characteristics[0]).not.toHaveProperty("value");
+    expect(report.characteristics[1]).not.toHaveProperty("value");
+    expect(report.completeness).toBe("incomplete");
+  });
+
   it("chains appends through their declared separator", () => {
     const setup = characteristicSetup();
 

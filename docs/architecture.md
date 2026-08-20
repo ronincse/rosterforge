@@ -1382,12 +1382,12 @@ characteristic's exact `typeId` on the same profile. Targets are never inferred
 from `name` or `typeName`. A profile that repeats one characteristic type makes
 that target ambiguous rather than applying the modifier to every match.
 
-`set` and `append` are the supported operations. `set` replaces the projected
-lexical value and never reads the value it replaces, so it needs no numeric
-grammar for observed forms such as `3+`, `36"`, or `D6`. `increment`,
-`decrement`, `floor`, `ceil`, and `replace` would each require an unestablished
-lexical arithmetic or search rule, so they remain preserved, source-located, and
-unapplied. This evaluator therefore does not reuse the numeric modifier
+`set`, `append`, `increment`, and `decrement` are the supported operations.
+`set` replaces the projected lexical value and never reads the value it
+replaces, so it needs no numeric grammar for observed forms such as `3+`, `36"`,
+or `D6`. `floor`, `ceil`, and `replace` would each require an unestablished
+bound or search rule, so they remain preserved, source-located, and unapplied.
+This evaluator therefore does not reuse the numeric modifier
 kernel; it reuses the shared applicability, modifier-group applicability, and
 group-execution collectors, which do fit unchanged.
 
@@ -1410,6 +1410,43 @@ that is not itself empty. Three cases stay unapplied:
 The declared separator is used verbatim and never normalised: the corpus's most
 common one is a comma followed by a **non-breaking** space, and collapsing it to
 an ordinary space would silently alter displayed text.
+
+### Lexical arithmetic
+
+`increment` and `decrement` add a signed integer to a number *inside* the
+lexical value, preserving everything around it: `D6+0` becomes `D6+1`, `8`
+becomes `10`, `4+` becomes `3+`, `-1` becomes `-2`.
+
+**The arithmetic is plain and signed. There is no game-aware inversion.** A
+`4+` save decremented is `3+`, and whether that counts as better or worse is
+not this evaluator's concern. Three independent lines of evidence:
+
+- Of 64 corpus arithmetic modifiers targeting an inverted characteristic
+  (`Sv`, `WS`, `BS`, `LD`), 60 are `decrement` and sit on entries whose names
+  denote an upgrade — *Kabalite Trueborn*, *Spotter*, *Force weapon*. Plain
+  arithmetic makes those improvements.
+- The four `increment` cases include *Gene Affliction*, which raises `BS` and
+  `WS`. Plain arithmetic makes an affliction a penalty; the inverted reading
+  would make it a bonus, contradicting the name.
+- `AP` is written negative and 44 of its 70 arithmetic modifiers are
+  `decrement`, on weapons such as *Neverblade* and *Razor Claws*. Signed
+  arithmetic takes `-1` to `-2`, which is the improvement those names imply.
+
+The structural argument agrees: New Recruit is generic over arbitrary game
+systems and cannot know which characteristic types are inverted, so it has no
+basis for a game-aware rule. Authors pick the operation that produces the right
+digit.
+
+**Which number changes** comes from `position`, documented by New Recruit's
+editor as the 1-based index of the match to affect, negative counting from the
+end, `0` meaning all. The pinned corpus writes only `-1` and `1`.
+
+When `position` is absent the default is **not** established, so a value
+containing more than one number is refused with `ambiguousPosition` rather than
+guessed at. A value containing exactly one number needs no default, because
+every reading selects the same match — which covers most real stat lines. A
+value with no number at all (`-`, `N/A`, `Melee`) is refused with
+`noNumericMatch`, and a non-integer operand with `nonIntegerOperand`.
 
 Execution order matches the rest of the package: the profile's own ordered
 modifiers first, then its top-level modifier groups in source order, with each

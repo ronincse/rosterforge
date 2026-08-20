@@ -248,7 +248,7 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           </characteristics>
           <modifiers>
             <modifier
-              type="increment"
+              type="floor"
               field="characteristic-move"
               value="1"
             />

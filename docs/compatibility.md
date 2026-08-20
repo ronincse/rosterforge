@@ -336,6 +336,9 @@
   verbatim, chaining through successive appends; appends with no separator, an
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
+- Lexical `increment` and `decrement` on the numeric match `position` selects,
+  as plain signed arithmetic with no game-aware inversion, preserving the text
+  around the number
 - Attribution for characteristics changed by another selection's `affects`
   selector, naming the declaring occurrence in occurrence details with a verb
   matching the operation, so a value that differs from the profile's own
@@ -398,10 +401,12 @@
 - Unsupported condition forms applied to modifiers; grouped cost arithmetic
   outside selection-condition reports, modifiers with their own scope, and
   unsupported, multiple, or extension-driven repeats
-- Characteristic operations other than `set` and `append`: `increment`,
-  `decrement`, `floor`, `ceil`, and `replace` each need an unestablished lexical
-  arithmetic or search rule for observed values such as `3+`, `36"`, and `D6`.
-  They remain ordered, observable, and unapplied.
+- Characteristic operations other than `set`, `append`, `increment`, and
+  `decrement`: `floor`, `ceil`, and `replace` each need an unestablished bound
+  or search rule. They remain ordered, observable, and unapplied.
+- Arithmetic whose target number cannot be placed: no declared `position` with
+  more than one number in the value, a value with no number at all, a malformed
+  `position`, or a non-integer operand.
 - `append` whose `join` separator is absent or empty, and `append` onto an empty
   value. An empty separator is the corpus's bonus-slot idiom, completed by a
   positioned `increment`/`decrement` and a later `replace` that are themselves
@@ -415,10 +420,10 @@
   the determination is withheld rather than treated as a no-op.
 - Category `affects` filters naming a category that some modifier can change;
   deciding them needs the membership pass one is computing.
-- Generic `arg` and `position` behavior on characteristic modifiers, `join` on
-  any operation other than `append`, and characteristic modifiers owned by
-  selection entries, entry links, info links, or info groups rather than by the
-  profile itself
+- Generic `arg` behavior, `position` on any operation other than `increment`
+  and `decrement`, `join` on any operation other than `append`, and
+  characteristic modifiers owned by selection entries, entry links, info links,
+  or info groups rather than by the profile itself
 - Profile-owned `name` and observed `annotation` modifiers; they are retained as
   unrouted display behavior and make a characteristic report incomplete rather
   than being silently ignored

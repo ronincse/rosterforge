@@ -1102,6 +1102,25 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(keywords).not.toHaveProperty("value");
         expect(manreaper.completeness).toBe("incomplete");
 
+        // Stone's screenshot shows this weapon's S raised by one. That modifier
+        // is the only one targeting S, so unlike A -- which also carries an
+        // unsupported `replace` -- the value resolves end to end. This is the
+        // first real stat line this evaluator changes.
+        const strength = manreaper.characteristics.find(
+          ({ characteristic }) => characteristic.name === "S",
+        );
+        expect(strength?.steps).toMatchObject([
+          { status: "applied", kind: "increment", origin: "affects" },
+        ]);
+        expect(Number(strength?.value)).toBe(Number(strength?.baseValue) + 1);
+
+        // A carries the bonus-slot idiom's unsupported `replace` steps, so it
+        // stays honestly unresolved rather than showing a partly-applied value.
+        const attacks = manreaper.characteristics.find(
+          ({ characteristic }) => characteristic.name === "A",
+        );
+        expect(attacks).not.toHaveProperty("value");
+
         // The same screenshot shows the Lord's own Unit profile unchanged:
         // `self.entries.recursive` names the anchor's descendants, and the
         // anchor is not one of them.
@@ -1274,23 +1293,17 @@ describe.skipIf(realDataDirectory === undefined)(
         // the two category members gain the bonus.
         expect(routedSteps(closeCombat)).toEqual([]);
 
-        // Routing is proven by an attributed unapplied step rather than a
-        // changed value: the operation is `increment`, which the lexical kernel
-        // does not execute, and the real modifier also carries `position: -1`,
-        // which selects which match within a value to affect and is likewise
-        // unsupported. Both are reported rather than silently ignored.
+        // The routed operation is `increment 2` on Attacks. Its value has one
+        // number, so no position is needed to place it, and it executes.
         expect(routedSteps(scourge)).toMatchObject([
-          {
-            status: "unapplied",
-            issues: ["unsupportedAttributes", "unsupportedType"],
-          },
+          { status: "applied", kind: "increment" },
         ]);
         const attacks = scourge.characteristics.find(
           ({ characteristic }) => characteristic.name === "A",
         );
-        expect(attacks).toMatchObject({ baseValue: "8" });
-        expect(attacks).not.toHaveProperty("value");
-        // The unreached profile stays fully known.
+        expect(attacks).toMatchObject({ baseValue: "8", value: "10" });
+        // The unreached profile keeps its printed value, which is what makes
+        // the category filter observable: same operation, different answer.
         expect(
           closeCombat.characteristics.find(
             ({ characteristic }) => characteristic.name === "A",

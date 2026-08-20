@@ -98,9 +98,41 @@
               typeId="characteristic-save">4+</characteristic>
           </characteristics>
           <modifiers>
-            <modifier type="increment" field="characteristic-save" value="1" />
+            <modifier type="floor" field="characteristic-save" value="1" />
             <modifier type="replace" field="characteristic-move" value="8"
               arg="6" />
+          </modifiers>
+        </profile>
+        <profile id="profile-arithmetic" name="Arithmetic"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <!-- Two numbers, so a bare increment cannot pick one. -->
+            <characteristic name="Move"
+              typeId="characteristic-move">D6+0</characteristic>
+            <!-- Inverted stat: decrement improves it, which is plain
+                 arithmetic on the digit. -->
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <modifier type="increment" field="characteristic-move" value="1"
+              position="-1" />
+            <modifier type="decrement" field="characteristic-save" value="1" />
+          </modifiers>
+        </profile>
+        <profile id="profile-arithmetic-refused" name="Arithmetic Refused"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">D6+0</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">-</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- No position and two numbers: which one is not established. -->
+            <modifier type="increment" field="characteristic-move" value="1" />
+            <!-- Nothing numeric to change. -->
+            <modifier type="increment" field="characteristic-save" value="1" />
           </modifiers>
         </profile>
         <profile id="profile-append" name="Append"
@@ -208,7 +240,7 @@
               typeId="characteristic-move">6"</characteristic>
           </characteristics>
           <modifiers>
-            <modifier type="increment" field="characteristic-move" value="1" />
+            <modifier type="floor" field="characteristic-move" value="1" />
             <modifier type="set" field="characteristic-move" value='9"' />
           </modifiers>
         </profile>
@@ -220,7 +252,7 @@
           </characteristics>
           <modifiers>
             <modifier type="set" field="characteristic-move" value='9"' />
-            <modifier type="increment" field="characteristic-move" value="1" />
+            <modifier type="floor" field="characteristic-move" value="1" />
           </modifiers>
         </profile>
         <profile id="profile-unresolved-applicability"
@@ -458,7 +490,7 @@
           affects="self.entries.profiles.Unit" />
         <!-- ...then an unsupported operation routed to the same characteristic
              must take that value back to unknown. -->
-        <modifier type="increment" field="characteristic-move" value="1"
+        <modifier type="floor" field="characteristic-move" value="1"
           affects="self.entries.profiles.Unit" />
       </modifiers>
     </selectionEntry>
