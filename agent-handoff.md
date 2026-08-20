@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-20 (arithmetic)
+## Current Status — 2026-08-20 (replace)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,7 +38,7 @@ diagnostic codes.
   deliberately unpushed** — `AGENTS.md` forbids pushing without the owner
   asking for that step. `git status -sb` gives the current count.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **419 passed, 7 skipped (426)**.
+  `git diff --check` all pass. `pnpm test` is **423 passed, 7 skipped (430)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -77,10 +77,11 @@ owner reprioritises).
 | Category `affects` routing | Done | filters resolved by modifier-immunity |
 | `position` for arithmetic | Done | 1-based index, negative from the end, `0` = all; absent position refused when the value has more than one number |
 | Lexical `increment`/`decrement` | Done | plain signed arithmetic, no game-aware inversion — sign convention settled from the corpus, see the 2026-08-20 arithmetic entry |
-| **`replace` using `arg` as the search term** | **Next** | strongly evidenced by the `+0` idiom. With it the whole bonus-slot mechanism resolves, including the Attacks values that are still withheld on real weapons. |
-| `append` with an empty `join` | Open | unblocks once `replace` lands — it is the bonus-slot idiom's first step |
+| `replace` using `arg` as the search term | Done | `arg` present on all 189 corpus replaces; a term matching nothing is an applied no-op |
+| **`append` with an empty `join`** | **Next** | now safe: a later `replace` collapses an unused slot, which is why the empty separator was withheld. Also needs `arg` treated as inert on `append` — 89 corpus appends carry one meaninglessly. Together these close the idiom for weapons whose Attacks *is* a dice expression. |
 | `floor`/`ceil` | Open | need a bound rule; a different shape from `increment`/`decrement` |
 | `position` on `append` | Open | 4 corpus instances, all Keywords. New Recruit applied one visibly with `position` present and no positional effect, so it looks inert there — the editor does not offer `position` for `append`. |
+| `join` on `replace` | Open | 93 corpus replaces carry one meaninglessly. Inert by the same reasoning as `position` on `append`, but unverified, so currently withheld. |
 | `annotation` modifiers | Open | 15 corpus instances. **Rendering observed twice in New Recruit:** the value is appended to the displayed name in parentheses — `Patriarch (Gene Affliction)`, `Manreaper - sweep (Furnace of Plagues)`. It annotates the *name*, and it reaches weapon profiles through the same `affects` routing. |
 | `affects` force traversal | Open | 24 selectors; needs a force-collection anchor rule |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
@@ -2377,3 +2378,91 @@ append checkpoint; they are added here alongside the four `ARITHMETIC_` ones.
    offer `position` for `append`, so it looks inert there. Small and evidenced.
 3. **`floor`/`ceil`** — need a bound rule, a different shape from the arithmetic
    landed here.
+
+## Completed Assignment — Characteristic `replace`, 2026-08-20
+
+Baseline `f01a1d8`; resulting implementation commit `f7f288f`.
+
+### `arg` is the search term
+
+Confirmed as far as the corpus can: **`arg` is present on all 189** characteristic
+`replace` modifiers, never absent. `value` is absent on 164 of them, so deleting
+a match is the dominant use.
+
+| Shape | Count |
+|---|---|
+| `arg="+0"`, no value | 154 |
+| `arg="+0"`, `value=true` | 20 |
+| keyword removals (`", Assault"`, `"Devastating Wounds"`, …) | 11 |
+| `Rapid Fire N` upgrades, with `position` | 4 |
+
+Authors include the separator in the search term (`", Assault"`) so removing a
+keyword leaves no dangling comma — which only makes sense if `arg` is matched
+literally.
+
+### The decisions
+
+**A search term that matches nothing is an applied no-op, not a refusal.**
+Collapsing a bonus slot on a weapon that never had one is the idiom's normal
+path. Refusing there would leave every unmodified weapon's Attacks unresolved,
+which is the opposite of the point. This mirrors `add` of a category a selection
+already has — an applied step recording no change.
+
+**Refused:** absent or empty `arg`; a `value` of `true`/`false` (20 instances
+carry a Boolean where replacement text belongs — substituting the literal would
+print `D6true`); and a stray `join`, which has no meaning for a search and
+replace. That last one withholds 93 of 189, and is the most likely thing a
+future session will want to relax; it is in the roadmap as its own item.
+
+### Two bugs the pin caught
+
+`set` had been hiding both, because it is the only operation that *discards* its
+input. Once four operations began *reading* theirs, they surfaced immediately —
+and only against real data.
+
+1. **Routed steps did not chain with each other.** Each was handed
+   `currentValue(report.steps, …)` — the owner's *own* steps only — so a
+   positioned `increment` followed by a routed `replace` saw the pre-increment
+   value. Real symptom: a Manreaper's Attacks incremented to 6, then silently
+   fell back to 5.
+2. **`effectiveValue` assumed an unapplied step before the last applied step
+   could not matter.** Its comment said so in as many words: "Every supported
+   operation replaces its input rather than reading it." That stopped being true
+   three checkpoints ago. A later step can apply cleanly and still be built on an
+   input this evaluator could not compute. The value is now unknown whenever an
+   unapplied step precedes the end, *unless* an applied `set` sits after it and
+   rebuilds from scratch.
+
+Both have synthetic regressions now; without the fixes they read `6+` and `7"`.
+
+**Worth carrying forward:** the second bug is the kind that grows quietly. Every
+time an operation is added, check whether it reads its input, and whether any
+rule elsewhere assumes it does not.
+
+### Real data
+
+The Lord of Contagion's Manreaper now resolves Attacks **end to end through the
+whole bonus-slot idiom**: the `+0` append is filtered away from a weapon whose
+Attacks is not a dice expression, both `replace` steps pass through finding
+nothing, and the positioned `increment` adds one. That matches what Stone
+observed in New Recruit.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **423 passed, 7 skipped (430 total)**.
+- Pinned real-data suite — **7 passed**.
+
+### Next recommended boundary
+
+1. **`append` with an empty `join`, plus `arg` inert on `append`.** Now safe:
+   the empty separator was withheld because nothing collapsed an unused slot,
+   and `replace` now does. 89 corpus appends also carry a meaningless `arg`.
+   Together these close the idiom for weapons whose Attacks *is* a dice
+   expression (`D6` → `D6+1`), which is the remaining half of the mechanism.
+2. **`position` on `append`** and **`join` on `replace`** — both look inert,
+   both unverified. Small, and they unblock 4 and 93 modifiers respectively.
+3. **`floor`/`ceil`** — need a bound rule, a different shape from the arithmetic
+   already landed.
+
+No open questions require the owner.
