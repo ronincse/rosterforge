@@ -86,6 +86,10 @@
   rules, and recursively nested info groups, with ordered characteristics,
   direct/linked origin, definition source filenames, and unresolved info-link
   reasons
+- Unsaved-change tracking: the exact roster last written to or read from the
+  draft store is retained, and identity against it decides whether anything has
+  changed. The workspace shows an unsaved indicator and the browser asks before
+  a reload discards it
 - In-memory undo and redo for successful structural edits, retaining exact
   immutable session snapshots, clearing redo after a branched edit, and capping
   retained past snapshots at 100

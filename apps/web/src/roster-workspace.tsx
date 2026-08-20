@@ -73,6 +73,7 @@ export function RosterOverview({
   onPrintRoster,
   isSavingDraft,
   hasSavedDraft,
+  unsavedChanges,
 }: {
   readonly session: LocalRosterSession;
   readonly diagnostics: readonly Diagnostic[];
@@ -100,6 +101,7 @@ export function RosterOverview({
   readonly onPrintRoster: (roster: RosterPrintViewModel) => boolean;
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
+  readonly unsavedChanges: boolean;
 }) {
   const force = session.roster.forces[0];
   const rootFilterId = useId();
@@ -178,6 +180,13 @@ export function RosterOverview({
               ? "Update saved draft"
               : "Save draft"}
         </button>
+        {/* Saving is manual and undo history is in memory, so an unsaved roster
+            is lost on reload. Say so rather than letting it look persisted. */}
+        {unsavedChanges && (
+          <span className="unsaved-changes" role="status">
+            Unsaved changes
+          </span>
+        )}
         <button
           className="print-roster-action"
           type="button"

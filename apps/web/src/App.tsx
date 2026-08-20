@@ -51,6 +51,7 @@ export function App(props: AppProps) {
     draftShelf,
     draftAction,
     activeDraft,
+    unsavedChanges,
     selectedCatalogue,
     rosterHistory,
     rosterSession,
@@ -190,6 +191,7 @@ export function App(props: AppProps) {
               onPrintRoster={props.printRoster ?? openRosterPrintView}
               isSavingDraft={draftAction.kind === "saving"}
               hasSavedDraft={activeDraft !== undefined}
+              unsavedChanges={unsavedChanges}
             />
           )}
         </section>
@@ -224,6 +226,7 @@ function LibraryWorkspace({
   onPrintRoster,
   isSavingDraft,
   hasSavedDraft,
+  unsavedChanges,
 }: {
   readonly library: LocalCatalogueLibrary;
   readonly diagnostics: readonly Diagnostic[];
@@ -260,6 +263,7 @@ function LibraryWorkspace({
   readonly onPrintRoster: (roster: RosterPrintViewModel) => boolean;
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
+  readonly unsavedChanges: boolean;
 }) {
   const rosterActive =
     rosterSession !== undefined &&
@@ -299,6 +303,7 @@ function LibraryWorkspace({
             onPrintRoster={onPrintRoster}
             isSavingDraft={isSavingDraft}
             hasSavedDraft={hasSavedDraft}
+            unsavedChanges={unsavedChanges}
           />
         ) : selectedCatalogue === undefined ? (
           <div className="inspector-placeholder">

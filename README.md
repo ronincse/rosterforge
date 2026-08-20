@@ -127,6 +127,8 @@ This repository currently contains the first development slice:
   unresolved label, a hidden/unresolved visibility label, a per-profile
   incomplete note, and the declaring occurrence's name when another selection's
   `affects` selector routed the change;
+- unsaved-change tracking with a workspace indicator and a reload guard, since
+  saving is manual and undo history is held in memory;
 - bounded in-memory undo and redo over exact immutable roster-session snapshots;
 - occurrence-specific selection rename and reset-to-definition-name controls;
 - occurrence-specific amount editing with source default/step visibility,

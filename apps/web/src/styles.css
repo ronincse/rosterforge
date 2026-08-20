@@ -2749,3 +2749,9 @@ footer {
     align-self: flex-start;
   }
 }
+
+.unsaved-changes {
+  color: #8a6d00;
+  font-size: 0.85em;
+  align-self: center;
+}

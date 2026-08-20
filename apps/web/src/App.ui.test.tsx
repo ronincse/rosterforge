@@ -1430,8 +1430,14 @@ describe("App local catalogue flow", () => {
       "The browser blocked the printable roster window.",
     );
 
+    // Saving is manual and undo history is in memory, so an edited roster is
+    // lost on reload. The workspace has to say so before it is saved.
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
     await within(shelf).findByText("Saved Saved Patrol in this browser.");
+    // ...and stop saying so once it is.
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
     expect(within(shelf).getByText("Saved Patrol")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),

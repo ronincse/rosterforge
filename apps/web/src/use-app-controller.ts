@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { BattleScribeForceDefinition } from "@rosterforge/data-graph";
+import type { Roster } from "@rosterforge/roster-model";
 import type { Diagnostic } from "@rosterforge/foundation";
 import {
   createLocalRosterDraft,
@@ -128,6 +129,14 @@ export function useRosterForgeAppController({
     diagnostics: [],
   });
   const [activeDraft, setActiveDraft] = useState<ActiveDraft>();
+  /**
+   * The exact roster last written to or read from the draft store.
+   *
+   * Rosters are immutable and every command returns a new one, so identity is
+   * an exact test for "has anything changed since it was persisted" — no
+   * comparison, no false positives from re-renders.
+   */
+  const [persistedRoster, setPersistedRoster] = useState<Roster>();
   const [selectedKey, setSelectedKey] = useState<string>();
   const [rosterHistory, setRosterHistory] =
     useState<BoundedHistory<LocalRosterSession>>();
@@ -173,6 +182,7 @@ export function useRosterForgeAppController({
     setActiveDraft(undefined);
     setDraftAction({ kind: "idle", diagnostics: [] });
     setRosterHistory(undefined);
+    setPersistedRoster(undefined);
     setRosterDiagnostics([]);
     setLoadState({ kind: "loading", fileCount: files.length });
 
@@ -222,6 +232,7 @@ export function useRosterForgeAppController({
     setActiveDraft(undefined);
     setDraftAction({ kind: "idle", diagnostics: [] });
     setRosterHistory(undefined);
+    setPersistedRoster(undefined);
     setRosterDiagnostics([]);
     setSelectedKey(catalogueKey);
     setLoadState({
@@ -235,6 +246,7 @@ export function useRosterForgeAppController({
     setSelectedKey(key);
     setActiveDraft(undefined);
     setRosterHistory(undefined);
+    setPersistedRoster(undefined);
     setRosterDiagnostics([]);
   }
 
@@ -254,12 +266,14 @@ export function useRosterForgeAppController({
     if (result.ok) {
       setActiveDraft(undefined);
       setRosterHistory(createBoundedHistory(result.value));
+      setPersistedRoster(undefined);
     }
   }
 
   function clearRoster() {
     setActiveDraft(undefined);
     setRosterHistory(undefined);
+    setPersistedRoster(undefined);
     setRosterDiagnostics([]);
   }
 
@@ -413,6 +427,7 @@ export function useRosterForgeAppController({
     }
 
     setActiveDraft({ id: draft.value.id, createdAt });
+    setPersistedRoster(rosterSession.roster);
     const listDiagnostics = await refreshDraftShelf();
     setDraftAction({
       kind: "idle",
@@ -453,6 +468,7 @@ export function useRosterForgeAppController({
     const draft = loaded.value;
     setActiveDraft(undefined);
     setRosterHistory(undefined);
+    setPersistedRoster(undefined);
     setRosterDiagnostics([]);
     setLoadState({ kind: "loading", fileCount: draft.import.files.length });
 
@@ -522,6 +538,7 @@ export function useRosterForgeAppController({
 
       setRosterHistory(createBoundedHistory(restored.value));
       setActiveDraft({ id: draft.id, createdAt: draft.createdAt });
+      setPersistedRoster(restored.value.roster);
       setDraftAction({
         kind: "idle",
         message: `Opened ${draft.roster.name}.`,
@@ -571,8 +588,24 @@ export function useRosterForgeAppController({
     });
   }
 
+  // An unsaved roster is lost on reload: saving is manual and history is held
+  // in memory. Say so, and make the browser ask before discarding it.
+  const unsavedChanges =
+    rosterSession !== undefined && rosterSession.roster !== persistedRoster;
+  useEffect(() => {
+    if (!unsavedChanges) return undefined;
+    const guard = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", guard);
+    return () => {
+      window.removeEventListener("beforeunload", guard);
+    };
+  }, [unsavedChanges]);
+
   return {
     loadState,
+    unsavedChanges,
     draftShelf,
     draftAction,
     activeDraft,
