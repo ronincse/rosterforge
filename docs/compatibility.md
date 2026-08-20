@@ -540,18 +540,23 @@ A draft record **embeds its catalogue source bytes**. One faction closure is
 records and `decodeLocalRosterDraft` copies each file through
 `Uint8Array.from`.
 
-That was tolerable when saving was a button press. Autosave makes it periodic,
-so two things bound the churn today:
+**Bytes are now stored once per import batch** under a reserved `files:<batchId>`
+key, and a draft record keeps empty placeholders. Saving a draft rewrites only
+the small record; the batch is written once, on the first save that references
+it. Loading reassembles the two, so nothing outside the store sees the split.
 
-- the autosave debounce, deliberately five seconds rather than shorter;
-- the recovery slot skipping its write whenever an active draft is already being
-  kept current, so a session writes one record rather than two.
+Consequences worth knowing:
 
-**The proper fix is to store bytes once and have drafts reference them**, keyed
-by import batch. That would also deduplicate bytes across drafts sharing a
-batch, which is the single largest storage win available. It needs a store
-schema change with a fallback for records written before it, so it is recorded
-here rather than attempted alongside the autosave work that exposed it.
+- Drafts sharing an import batch share one copy of its bytes, which is the
+  largest storage saving available in the app.
+- A batch is collected when the last draft referencing it is deleted, so shared
+  bytes outlive one draft but not all of them.
+- Records written before the split carry their own bytes and still load: both
+  `list` and `load` fall back to the embedded files when no batch record exists.
+
+Two further bounds remain on autosave, independent of the split: the debounce is
+five seconds rather than shorter, and the recovery slot skips its write whenever
+an active draft is already being kept current.
 
 ## Deferred
 

@@ -63,17 +63,32 @@ describe("local roster draft store", () => {
     });
   });
 
-  it("validates and copies draft bytes before writing a record", async () => {
+  it("stores batch bytes once and keeps them out of the draft record", async () => {
     const value = draft("saved", "2026-07-23T12:01:00.000Z");
     const sourceBytes = value.import.files[0]!.bytes;
     const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
 
-    const result = await createLocalRosterDraftStore(backend).save(value);
+    const result = await store.save(value);
 
     expect(result).toEqual({ ok: true, value: undefined, diagnostics: [] });
+    // The draft record keeps placeholders: rewriting it must not rewrite the
+    // catalogue, which is megabytes even for one faction.
     const stored = records.get("saved") as LocalRosterDraft | undefined;
-    expect(stored?.import.files[0]?.bytes).toEqual(sourceBytes);
-    expect(stored?.import.files[0]?.bytes).not.toBe(sourceBytes);
+    expect(stored?.import.files[0]?.bytes).toEqual(new Uint8Array(0));
+
+    // The bytes live once under the batch, still defensively copied.
+    const shared = records.get(
+      `files:${value.import.batchId}`,
+    ) as { files: readonly { bytes: Uint8Array }[] } | undefined;
+    expect(shared?.files[0]?.bytes).toEqual(sourceBytes);
+    expect(shared?.files[0]?.bytes).not.toBe(sourceBytes);
+
+    // Loading reassembles them, so callers never see the split.
+    const loaded = await store.load("saved");
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) return;
+    expect(loaded.value?.import.files[0]?.bytes).toEqual(sourceBytes);
   });
 
   it.each([

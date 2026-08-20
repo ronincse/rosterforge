@@ -30,10 +30,27 @@ export interface LocalRosterDraftStore {
   readonly delete: (id: string) => Promise<Result<void>>;
 }
 
+/** Anything the store keeps: a draft, or a batch's shared source files. */
+export type StoredRecord = LocalRosterDraft | DraftFilesRecord;
+
+/**
+ * The source files of one import batch, stored once and referenced by every
+ * draft that came from it.
+ *
+ * A draft record embeds its catalogue bytes, and IndexedDB replaces whole
+ * records, so leaving them there meant every autosave rewrote every byte — 8.2
+ * MB for one faction, far more for a wider import. Batch bytes never change, so
+ * they are written once and the draft record keeps empty placeholders.
+ */
+export interface DraftFilesRecord {
+  readonly id: string;
+  readonly files: readonly LocalRosterDraft["import"]["files"][number][];
+}
+
 export interface LocalRosterDraftRecordBackend {
   readonly getAll: () => Promise<readonly unknown[]>;
   readonly get: (id: string) => Promise<unknown>;
-  readonly put: (draft: LocalRosterDraft) => Promise<void>;
+  readonly put: (record: StoredRecord) => Promise<void>;
   readonly delete: (id: string) => Promise<void>;
 }
 
@@ -50,6 +67,43 @@ const objectStoreName = "local-roster-drafts";
  * catalogue closure rather than one per experiment.
  */
 export const recoveryDraftId = "__recovery__";
+
+const filesKeyPrefix = "files:";
+
+function filesKey(batchId: string): string {
+  return `${filesKeyPrefix}${batchId}`;
+}
+
+function isFilesRecord(value: unknown): value is DraftFilesRecord {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === "string" &&
+    (value as { id: string }).id.startsWith(filesKeyPrefix) &&
+    Array.isArray((value as { files?: unknown }).files)
+  );
+}
+
+/** The draft as stored: real bytes live in the batch's files record. */
+function withoutBytes(draft: LocalRosterDraft): LocalRosterDraft {
+  return {
+    ...draft,
+    import: {
+      ...draft.import,
+      files: draft.import.files.map((file) => ({
+        ...file,
+        bytes: new Uint8Array(0),
+      })),
+    },
+  };
+}
+
+function withFiles(
+  draft: LocalRosterDraft,
+  files: DraftFilesRecord["files"],
+): LocalRosterDraft {
+  return { ...draft, import: { ...draft.import, files } };
+}
 
 export function createLocalRosterDraftStore(
   backend: LocalRosterDraftRecordBackend,
@@ -69,13 +123,21 @@ export function createLocalRosterDraftStore(
 
       const summaries: LocalRosterDraftSummary[] = [];
       const diagnostics: Diagnostic[] = [];
+      const filesByKey = new Map<string, DraftFilesRecord["files"]>();
       for (const record of records) {
+        if (isFilesRecord(record)) filesByKey.set(record.id, record.files);
+      }
+      for (const record of records) {
+        if (isFilesRecord(record)) continue;
         const decoded = decodeLocalRosterDraft(record);
         diagnostics.push(...decoded.diagnostics);
         // The recovery slot lives in this store but is not a saved draft.
-        if (decoded.ok && isShelfDraft(decoded.value)) {
-          summaries.push(summarizeDraft(decoded.value));
-        }
+        if (!decoded.ok || !isShelfDraft(decoded.value)) continue;
+        // Records written before bytes were split still carry their own.
+        const files =
+          filesByKey.get(filesKey(decoded.value.import.batchId)) ??
+          decoded.value.import.files;
+        summaries.push(summarizeDraft(withFiles(decoded.value, files)));
       }
       summaries.sort(
         (left, right) =>
@@ -96,16 +158,31 @@ export function createLocalRosterDraftStore(
           error,
         );
       }
-      return record === undefined
-        ? success(undefined)
-        : decodeLocalRosterDraft(record);
+      if (record === undefined) return success(undefined);
+      const decoded = decodeLocalRosterDraft(record);
+      if (!decoded.ok) return decoded;
+      const stored = await backend.get(filesKey(decoded.value.import.batchId));
+      // A record written before the split carries its own bytes.
+      const files = isFilesRecord(stored)
+        ? stored.files
+        : decoded.value.import.files;
+      return success(
+        withFiles(decoded.value, files),
+        decoded.diagnostics,
+      );
     },
 
     async save(draft) {
       const decoded = decodeLocalRosterDraft(draft);
       if (!decoded.ok) return decoded;
       try {
-        await backend.put(decoded.value);
+        // Batch bytes never change, so they are written once and every later
+        // save of any draft from that batch writes only the small record.
+        const key = filesKey(decoded.value.import.batchId);
+        if ((await backend.get(key)) === undefined) {
+          await backend.put({ id: key, files: decoded.value.import.files });
+        }
+        await backend.put(withoutBytes(decoded.value));
         return success(undefined);
       } catch (error: unknown) {
         return operationFailure(
@@ -118,7 +195,24 @@ export function createLocalRosterDraftStore(
 
     async delete(id) {
       try {
+        // Learn which batch this draft referenced before it is gone.
+        const removed = await backend.get(id);
+        const decoded =
+          removed === undefined ? undefined : decodeLocalRosterDraft(removed);
         await backend.delete(id);
+
+        // Shared bytes outlive one draft, but not all of them: collect the
+        // batch once nothing references it, or it leaks megabytes forever.
+        if (decoded?.ok === true) {
+          const batchId = decoded.value.import.batchId;
+          const remaining = await backend.getAll();
+          const stillUsed = remaining.some((record) => {
+            if (isFilesRecord(record)) return false;
+            const other = decodeLocalRosterDraft(record);
+            return other.ok && other.value.import.batchId === batchId;
+          });
+          if (!stillUsed) await backend.delete(filesKey(batchId));
+        }
         return success(undefined);
       } catch (error: unknown) {
         return operationFailure(

@@ -20,6 +20,7 @@ import { App } from "./App.js";
 import {
   createLocalRosterDraftStore,
   type LocalRosterDraftRecordBackend,
+  type StoredRecord,
 } from "./browser-drafts.js";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import {
@@ -1501,7 +1502,8 @@ describe("App local catalogue flow", () => {
     // With a draft active the user has already asked for this roster to be
     // kept, so a further edit rewrites it without another click.
     const storedAmount = (): number | undefined =>
-      records.get("draft-ui")?.roster.forces[0]?.selections[0]?.amount;
+      asStoredDraft(records.get("draft-ui"))?.roster.forces[0]?.selections[0]
+        ?.amount;
     fireEvent.click(screen.getByText("Selection details"));
     fireEvent.change(screen.getByLabelText("Amount"), {
       target: { value: "3" },
@@ -1513,7 +1515,7 @@ describe("App local catalogue flow", () => {
     // The rewrite is what clears the indicator, so it also proves the
     // persisted roster is the one now on screen.
     expect(screen.queryByText("Unsaved changes")).toBeNull();
-    const saved = records.get("draft-ui");
+    const saved = asStoredDraft(records.get("draft-ui"));
     expect(saved).toMatchObject({
       id: "draft-ui",
       catalogueKey: expect.any(String),
@@ -1536,12 +1538,18 @@ describe("App local catalogue flow", () => {
         name: "Saved Patrol",
       },
     });
-    expect(Array.from(saved?.import.files[0]?.bytes ?? [])).toEqual(
+    // The bytes live once under the batch rather than in the draft, so
+    // rewriting a draft on every autosave does not rewrite the catalogue.
+    const batch = records.get("files:draft-ui-batch") as
+      | { files: readonly { bytes: Uint8Array }[] }
+      | undefined;
+    expect(Array.from(batch?.files[0]?.bytes ?? [])).toEqual(
       Array.from(gameSystemBytes),
     );
-    expect(Array.from(saved?.import.files[1]?.bytes ?? [])).toEqual(
+    expect(Array.from(batch?.files[1]?.bytes ?? [])).toEqual(
       Array.from(catalogueBytes),
     );
+    expect(saved?.import.files[0]?.bytes.byteLength).toBe(0);
 
     fireEvent.click(
       screen.getByRole("button", { name: "Change roster setup" }),
@@ -1606,11 +1614,18 @@ function workspaceFixtureBytes(filename: string): Uint8Array {
   );
 }
 
+/** The store also holds shared batch-file records; narrow to real drafts. */
+function asStoredDraft(
+  record: StoredRecord | undefined,
+): LocalRosterDraft | undefined {
+  return record !== undefined && "roster" in record ? record : undefined;
+}
+
 function memoryDraftStore(): {
   readonly store: ReturnType<typeof createLocalRosterDraftStore>;
-  readonly records: Map<string, LocalRosterDraft>;
+  readonly records: Map<string, StoredRecord>;
 } {
-  const records = new Map<string, LocalRosterDraft>();
+  const records = new Map<string, StoredRecord>();
   const backend: LocalRosterDraftRecordBackend = {
     getAll: async () => [...records.values()],
     get: async (id) => records.get(id),
