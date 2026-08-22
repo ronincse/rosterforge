@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (repository byte cache bounded)
+## Current Status — 2026-08-22 (repository caches bounded)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **462 passed, 8 skipped (470)**.
+  `git diff --check` all pass. `pnpm test` is **466 passed, 8 skipped (474)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed** (470 total); without it those 8 are the skipped tests.
+  is **8 passed** (474 total); without it those 8 are the skipped tests.
 - **Active area.** Catalogue sources and cache (roadmap section D). Editing
   durability is complete; sections A and B retain listed small or deferred gaps.
 - **Comments.** Changed cache exports document their measured costs and
@@ -62,14 +62,14 @@ Selection-level `annotation` is complete: direct and grouped modifiers execute,
 selections-terminus `affects` routes through a shared collector, and the
 workspace decorates occurrence names without mutating their source names.
 
-Section E is **complete**. The repository **byte** cache is now bounded to 256
-MiB and evicts least-recently-used re-downloadable entries; it never touches
-saved drafts.
+Section E is **complete**. The repository **byte** cache is bounded to 256 MiB,
+and the separate remote-index **metadata** cache is bounded to 32 MiB; both
+evict least-recently-used re-downloadable entries and never touch saved drafts.
 
-The current **Next is the separate remote-index metadata cache** in section D.
-That third IndexedDB database is bounded to 32 MiB per entry but has no total
-bound or eviction. Measure its payload before choosing a limit.
-`navigator.storage.estimate()` remains a separate origin-wide headroom task.
+The current **Next is origin-wide storage headroom before a write** in section
+D. None of the three databases consults `navigator.storage.estimate()`. Keep
+deterministic cache bounds separate from decisions about warning or refusing a
+write when irreplaceable drafts share the browser quota.
 
 Keep profile `name` modifiers late in section A; only five instances remain.
 
@@ -178,8 +178,8 @@ actually asked for.
 | Draft storage reporting | Done | *draft store*; summaries carry `batchId`, the shelf counts a shared batch once |
 | Draft quota failure handling | Done | *draft store*; a refused write is named, an orphaned batch is rolled back, autosave stops retrying |
 | Repository byte-cache eviction and quota | Done | 16 MiB per entry, 256 MiB total, LRU sidecars; drafts are never candidates |
-| **Repository metadata-cache eviction** | **Next** | third database; 32 MiB per entry but no total bound or eviction |
-| Storage headroom before a write | Open | `navigator.storage.estimate()` is consulted by none of the three stores |
+| Repository metadata-cache eviction | Done | 32 MiB per entry and total, replacement-aware LRU sidecars; drafts are never candidates |
+| **Storage headroom before a write** | **Next** | `navigator.storage.estimate()` is consulted by none of the three stores |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
@@ -193,7 +193,7 @@ actually asked for.
   downloaded bytes. It now has LRU sidecars and a 256 MiB source-byte bound.
 - `rosterforge-pinned-repository-metadata-cache` /
   `pinned-repository-metadata` holds re-downloadable remote-index JSON. It
-  remains bounded only per entry and is section D's current `Next`.
+  now has its own LRU sidecars and a 32 MiB per-entry and total bound.
 
 `navigator.storage.estimate()` reports origin-wide usage across all three, so
 headroom remains separate from either cache's deterministic bound.
@@ -4292,6 +4292,11 @@ Still open, unblocking: the `automatic`/auto-fill observation.
 
 ## Completed Assignment — Repository Byte-Cache Eviction, 2026-08-22
 
+> Measurement correction, 2026-08-22: the 67,554,454-byte figure below is the
+> CRLF-expanded Windows checkout, not the exact pinned Git blobs that the remote
+> cache stores. Those blobs total 65,641,889 bytes (62.60 MiB). The 256 MiB
+> policy and all eviction conclusions are unchanged.
+
 Baseline `cbf0a42`; implementation commit `7c2ac00`
 (`feat: bound the repository byte cache`).
 
@@ -4335,3 +4340,60 @@ Do not copy the byte-cache limit without measuring its JSON payload and retained
 revision count. Then address origin-wide storage headroom.
 
 No owner input is currently required.
+
+## Completed Assignment — Repository Metadata-Cache Eviction, 2026-08-22
+
+Baseline `b13a6c9`; implementation commit `8c58486`
+(`feat: bound the repository metadata cache`).
+
+Only the re-downloadable remote-index database and its source-size estimate
+changed. The saved-draft database was neither read nor modified.
+
+### Measurement first
+
+The production remote-index path listed the exact pinned GitHub tree while a
+read-through test cache served `git show` bytes for commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`. The resulting report is
+**181,985 bytes**: 46 file reports, 46 document summaries, 109 catalogue links,
+and the one existing invalid-empty-`defaultCostLimit` diagnostic. Exact Git
+objects total **65,641,889 bytes (62.60 MiB)**; the seven-file Imperial Knights
+closure is **7,521,360 bytes**.
+
+The earlier 67,554,454-byte corpus total measured a Windows checkout after CRLF
+expansion. It remains a valid local-file import measurement but was wrong for
+remote-download estimates and byte-cache storage. The configured first-browse
+estimate and remote-cache documentation now use exact Git-object bytes.
+
+### Policy and implementation
+
+The 32 MiB total matches the existing 32 MiB per-entry limit. It therefore
+always admits one maximally accepted report and currently retains 184 pinned
+reports of the measured size. LRU won over FIFO because cache hits reveal reuse.
+Access time lives in `pinned-repository-metadata-lru`, so a hit rewrites a
+small sidecar rather than as much as 32 MiB of JSON.
+
+Database version 2 migrates valid version-1 records with access time zero and
+drops malformed legacy records. Writes exclude a replacement's old size,
+evict oldest record/sidecar pairs before the atomic put, and clear only this
+disposable metadata database when accounting is malformed. A failed sidecar
+touch leaves a valid hit usable. Draft records are never candidates.
+
+### Verification
+
+Four tests were added, 462 -> **466 passed**. Reversing the LRU comparator made
+the new reuse test fail at its assertion that the recently read report survived;
+the correct comparator was then restored.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and
+  `git diff --check` — pass.
+- `pnpm test` — **466 passed, 8 skipped (474 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — **8 passed**.
+- Build retains only the existing large-chunk warning.
+
+### Next boundary
+
+Take **storage headroom before a write** next. It deliberately stayed separate:
+`navigator.storage.estimate()` is origin-wide and includes two disposable
+caches plus irreplaceable drafts, while deterministic cache bounds can be
+settled without choosing a user-data refusal or warning policy. No cache
+management UI, retry policy, or draft eviction was added.
