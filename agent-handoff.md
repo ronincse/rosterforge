@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (draft storage reporting)
+## Current Status — 2026-08-22 (quota failure handling)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **453 passed, 8 skipped (461)**.
+  `git diff --check` all pass. `pnpm test` is **458 passed, 8 skipped (466)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed** (461 total); without it those 8 are the skipped tests.
+  is **8 passed** (466 total); without it those 8 are the skipped tests.
 - **Active area.** Catalogue sources and cache (roadmap section D). Sections A,
   B, and E — display fidelity, legality, and editing durability — are complete.
 - **Comment coverage.** 81 of 668 exported symbols (12%), up from 42. The
@@ -182,7 +182,8 @@ actually asked for.
 |---|---|
 | Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
 | Draft storage reporting | Done | summaries carry `batchId`; the shelf counts a shared batch once instead of once per draft |
-| **Cache eviction and quota controls** | **Next** | reporting is honest now; nothing still bounds total draft-store size, and it holds three record kinds |
+| Quota failure handling | Done | a refused write is named, an orphaned batch is rolled back, and autosave stops retrying |
+| **Cache eviction and quota controls** | **Next** | failures are legible now; nothing still *prevents* one — no size bound, no eviction, no `storage.estimate()` |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
@@ -4192,6 +4193,88 @@ Reporting only. Still absent, and still section D:
    Read `navigator.storage.estimate()` first and decide whether the policy is
    size-triggered or age-based; note that freeing a draft frees its batch only
    when no sibling draft still references it.
+2. **Profile `name` modifiers** — five corpus instances, the last of section A.
+3. **`automatic` driving auto-fill** — unverified and unconsumed.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Completed Assignment — Quota Failure Handling, 2026-08-22
+
+Baseline `85a9334`; resulting implementation commit `60294ad`.
+
+Second small checkpoint of the session, again scoped to the budget. Section D
+is "eviction and quota"; this is the **quota** half, and it turned out to hold
+three defects that needed no policy to fix.
+
+### What was wrong
+
+1. **A refused write was indistinguishable from any other.** Out of space
+   reported `PERSISTENCE_DRAFT_WRITE_FAILED` with no advice.
+2. **A failed save could orphan its batch record forever.** `save` writes the
+   batch first and it is by far the largest record. A batch is only reclaimed
+   when the last draft referencing it is *deleted*, so a batch written by a save
+   that then died had no draft, no referrer, and no path to collection. Worst on
+   a quota failure, where the orphan occupies the space that was already short.
+3. **Autosave retried the failed write forever.** The effect re-arms on roster
+   identity and on `draftAction.kind` returning to idle. A failure updates
+   neither `persistedRoster` nor the roster, so it fired again every five
+   seconds for the rest of the session — against a browser that had just said it
+   was full.
+
+(2) and (3) both predate this checkpoint. (2) arrived with the byte split, (3)
+with autosave.
+
+### What changed
+
+- `PERSISTENCE_DRAFT_QUOTA_EXCEEDED`, matched **by error name** rather than
+  `instanceof DOMException`: the error crosses from the IndexedDB
+  implementation, which under test is a different realm with a different
+  `DOMException`. Firefox's historical `NS_ERROR_DOM_QUOTA_REACHED` is treated
+  alike. The message names the fix and the catch — shared source files are only
+  freed when the last draft sharing them goes.
+- A save rolls back **only a batch it created itself**. One that was already
+  present belongs to the drafts already referencing it, and deleting it would
+  strand them.
+- `autosaveBlockedRoster` holds the roster whose save failed and the effect
+  skips it. The next edit is a new roster and is tried normally; the save button
+  always tries, because that is the user asking.
+
+### Tests
+
+Five added, 453 → 458.
+
+- Store (4): both quota error names mapping to the new code, the rollback of a
+  self-created batch, and the negative case — a pre-existing batch surviving a
+  later draft's failed save.
+- UI (1): a draft saves, the next autosave is refused on space, and no further
+  write follows. Removing the block makes it fail with a third write, checked.
+
+The UI store helper needed a `failWritesAfter` option; it deliberately does not
+count the recovery slot, which writes before any draft exists and would
+otherwise consume the allowance.
+
+### What section D still needs
+
+Failures are legible; nothing yet **prevents** one.
+
+- No bound on total store size, and no eviction by age or size.
+- `navigator.storage.estimate()` is still not consulted, so the app cannot warn
+  before a write fails, only report afterwards.
+- A quota failure during the *recovery slot* write is silent by design
+  (`recoveryRef` discards its result). Worth revisiting if the slot ever
+  matters more than the active draft.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **458 passed, 8 skipped (466 total)**.
+- `docs/compatibility.md` and `docs/diagnostics.md` both updated.
+
+### Next recommended boundary
+
+1. **Eviction and a size bound** — the other half of section D. Start from
+   `navigator.storage.estimate()`, and remember that deleting a draft frees its
+   batch only when no sibling still references it.
 2. **Profile `name` modifiers** — five corpus instances, the last of section A.
 3. **`automatic` driving auto-fill** — unverified and unconsumed.
 
