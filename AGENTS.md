@@ -128,6 +128,39 @@ BattleScribe schema and release notes will not describe it.
 - Never silently ignore unsupported data or report incomplete validation as
   complete.
 
+## Comments
+
+Code you write is code a stranger inherits, possibly a different model with none
+of your context. **Every change ships with the comments that change needs**,
+written while you still hold the understanding that makes them correct.
+
+- **Comment as you go; do not schedule sweeps.** A retroactive pass by someone
+  who did not write the code produces confidently wrong comments, and a wrong
+  comment is worse than none because the next reader trusts it instead of
+  checking. `packages/evaluation/src/affects-routing.ts` is well documented
+  because each checkpoint recorded what it had just verified.
+- **Verify every claim against the code before writing it.** Read the call
+  sites; run the thing if reading is not enough. If you cannot confirm what
+  something does, say so in `agent-handoff.md` rather than guessing in a
+  comment.
+- **Prefer why over what.** Corpus counts, rejected alternatives, and recorded
+  observations earn their place. A comment restating a type is noise and rots at
+  the next refactor. `affects-routing.ts` is the house style.
+- **Always write down non-obvious costs and invariants.** What a function
+  allocates or rewrites on a hot path, what identity or ordering guarantees
+  callers depend on, what a value's absence means. This is the class that has
+  actually caused regressions here: nothing recorded that
+  `decodeLocalRosterDraft` copies every imported byte, and autosave was built on
+  top of it.
+- **Give every new or changed export a doc comment** unless the type genuinely
+  says everything — plain data shapes need none. When you change what an
+  existing export does, update its comment in the same commit or delete it.
+- **Head a new file with what it is for** and how it fits the package direction,
+  not a list of its contents.
+
+Comment quality is reviewable work. A comment you cannot defend against the code
+should not be committed.
+
 ## Tests And Documentation
 
 - Use project-owned synthetic fixtures in normal tests.
@@ -139,5 +172,5 @@ BattleScribe schema and release notes will not describe it.
 ## Completion
 
 A coding task is complete only when scoped implementation, focused tests,
-diagnostics, documentation, and all relevant checks pass. Do not continue into
-later project phases without an explicit request.
+diagnostics, comments, documentation, and all relevant checks pass. Do not
+continue into later project phases without an explicit request.

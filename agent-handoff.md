@@ -3978,6 +3978,19 @@ it Done — and now names durable undo history.
   were **not** updated, deliberately: no behaviour boundary, package boundary,
   or diagnostic code moved.
 
+### Owner decision — comments are a standing rule now, not a checkpoint
+
+Stone asked, after reviewing the 12%, whether comment work should continue as a
+focus. It should not, and `AGENTS.md` now carries a `## Comments` section saying
+so explicitly: **every change ships with the comments that change needs**,
+written by whoever holds the context, and comments are part of the completion
+criteria alongside tests and diagnostics.
+
+Read that section as a prohibition on sweeps as much as a requirement to
+comment. The remaining 587 undocumented exports are not a queue. They get
+documented when a checkpoint touches them and can verify what it writes —
+which is exactly how `affects-routing.ts` became the best-documented file here.
+
 ### Next recommended boundary
 
 1. **Durable undo history.** The last thing in section E that still loses work
