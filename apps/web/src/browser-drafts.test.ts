@@ -237,6 +237,74 @@ describe("local roster draft store", () => {
     expect(records.size).toBe(0);
   });
 
+  it.each(["QuotaExceededError", "NS_ERROR_DOM_QUOTA_REACHED"])(
+    "reports %s as a quota failure rather than a generic write failure",
+    async (name) => {
+      const { backend } = memoryBackend();
+      const store = createLocalRosterDraftStore({
+        ...backend,
+        put: async () => {
+          throw quotaError(name);
+        },
+      });
+
+      const result = await store.save(
+        draft("saved", "2026-07-23T12:01:00.000Z"),
+      );
+
+      expect(result).toMatchObject({
+        ok: false,
+        diagnostics: [
+          expect.objectContaining({
+            code: "PERSISTENCE_DRAFT_QUOTA_EXCEEDED",
+          }),
+        ],
+      });
+    },
+  );
+
+  it("removes a batch it created when the save then fails", async () => {
+    const { backend, records } = memoryBackend();
+    let writes = 0;
+    const store = createLocalRosterDraftStore({
+      ...backend,
+      put: async (record) => {
+        // Let the batch land, then fail: the batch is the large record, and an
+        // orphaned one is never collected because collection runs on delete.
+        writes += 1;
+        if (writes > 1) throw quotaError("QuotaExceededError");
+        await backend.put(record);
+      },
+    });
+
+    const result = await store.save(draft("saved", "2026-07-23T12:01:00.000Z"));
+
+    expect(result.ok).toBe(false);
+    expect(records.size).toBe(0);
+  });
+
+  it("keeps a batch another draft already saved when a later save fails", async () => {
+    const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+    await store.save(draft("first", "2026-07-23T12:01:00.000Z"));
+    const before = new Set(records.keys());
+
+    const failing = createLocalRosterDraftStore({
+      ...backend,
+      put: async (record) => {
+        if (record.id === "second") throw quotaError("QuotaExceededError");
+        await backend.put(record);
+      },
+    });
+    expect((await failing.save(draft("second", "2026-07-23T12:02:00.000Z"))).ok)
+      .toBe(false);
+
+    // The rollback only covers a batch this save created; this one is still
+    // referenced by the draft that saved successfully.
+    expect(new Set(records.keys())).toEqual(before);
+    expect(records.has("files:batch-1")).toBe(true);
+  });
+
   it("reports unavailable IndexedDB without throwing", async () => {
     const store = createIndexedDbLocalRosterDraftStore(null);
 
@@ -301,6 +369,12 @@ function draft(id: string, updatedAt: string): LocalRosterDraft {
     throw new Error("Expected fixture draft creation to succeed.");
   }
   return result.value;
+}
+
+function quotaError(name: string): Error {
+  const error = new Error("The quota has been exceeded.");
+  error.name = name;
+  return error;
 }
 
 function draftWithHistory(

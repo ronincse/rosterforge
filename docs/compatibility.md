@@ -576,6 +576,27 @@ marks a card whose batch is shared.
 This is reporting only. Nothing evicts, and nothing bounds the total the store
 may reach; see the roadmap's section D.
 
+Running out of space is handled as far as reporting it honestly:
+
+- A write the browser refuses on space is reported as
+  `PERSISTENCE_DRAFT_QUOTA_EXCEEDED` rather than as a generic write failure, and
+  says that drafts imported together only free their source files when the last
+  of them is deleted.
+- A save that fails **removes a batch record it created in that same save**.
+  The batch is written first and is by far the largest record, and a batch is
+  otherwise only reclaimed when the last draft referencing it is deleted — so an
+  orphan from a half-finished save would never be collected, and would occupy
+  exactly the space that was already short. A batch that was already present is
+  left alone; it belongs to the drafts that already reference it.
+- Autosave **stops retrying a roster whose save failed**. It re-arms on roster
+  identity and on the draft action returning to idle, so a persistent failure
+  would otherwise rewrite the same bytes every few seconds for the rest of the
+  session. The next edit produces a new roster and is tried normally, and the
+  save button always tries, because that is the user asking.
+
+`navigator.storage.estimate()` is still not consulted, so the app cannot say how
+close to the browser's quota it is before a write fails.
+
 ## Draft Undo History
 
 A saved draft stores its undo history so a reload does not cost the stack. It is

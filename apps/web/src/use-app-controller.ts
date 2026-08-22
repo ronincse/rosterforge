@@ -168,6 +168,17 @@ export function useRosterForgeAppController({
    */
   const [recoverableRoster, setRecoverableRoster] =
     useState<RecoverableRoster>();
+  /**
+   * The roster whose last automatic save failed.
+   *
+   * Autosave re-arms on the roster identity and on `draftAction` returning to
+   * idle, so a failure would otherwise retry the same bytes every few seconds
+   * for the rest of the session. That is worst in the case most likely to cause
+   * it: a browser out of room, where retrying writes megabytes it cannot take.
+   * The next edit produces a new roster and is tried normally, and the save
+   * button always is, because that is the user asking.
+   */
+  const [autosaveBlockedRoster, setAutosaveBlockedRoster] = useState<Roster>();
   const [selectedKey, setSelectedKey] = useState<string>();
   const [rosterHistory, setRosterHistory] =
     useState<BoundedHistory<LocalRosterSession>>();
@@ -495,6 +506,7 @@ export function useRosterForgeAppController({
     });
     const saved = await draftStore.save(draft.value);
     if (!saved.ok) {
+      setAutosaveBlockedRoster(rosterSession.roster);
       setDraftAction({
         kind: "idle",
         message: "The roster draft was not saved.",
@@ -503,6 +515,7 @@ export function useRosterForgeAppController({
       return;
     }
 
+    setAutosaveBlockedRoster(undefined);
     setActiveDraft({ id: draft.value.id, createdAt });
     setPersistedRoster(rosterSession.roster);
     const listDiagnostics = await refreshDraftShelf();
@@ -678,6 +691,7 @@ export function useRosterForgeAppController({
     if (pendingRoster === undefined || pendingRoster === persistedRoster) {
       return undefined;
     }
+    if (pendingRoster === autosaveBlockedRoster) return undefined;
     if (draftAction.kind !== "idle") return undefined;
     // Depending on the roster identity restarts the timer on every edit, so a
     // burst of changes writes once when it settles.
@@ -689,6 +703,7 @@ export function useRosterForgeAppController({
     };
   }, [
     activeDraft,
+    autosaveBlockedRoster,
     autosaveDelayMs,
     draftAction.kind,
     pendingRoster,

@@ -323,12 +323,16 @@ export function createLocalRosterDraftStore(
     async save(draft) {
       const decoded = decodeLocalRosterDraft(boundedHistoryDraft(draft));
       if (!decoded.ok) return decoded;
+      // Only a batch this save creates may be rolled back. One that was already
+      // there belongs to whichever drafts already reference it.
+      let createdBatchKey: string | undefined;
       try {
         // Batch bytes never change, so they are written once and every later
         // save of any draft from that batch writes only the small record.
         const key = filesKey(decoded.value.import.batchId);
         if ((await backend.get(key)) === undefined) {
           await backend.put({ id: key, files: decoded.value.import.files });
+          createdBatchKey = key;
         }
         const history = decoded.value.history;
         const historyRecordKey = historyKey(decoded.value.id);
@@ -349,11 +353,29 @@ export function createLocalRosterDraftStore(
         await backend.put(withoutBytes(withoutHistory(decoded.value)));
         return success(undefined);
       } catch (error: unknown) {
-        return operationFailure(
-          "PERSISTENCE_DRAFT_WRITE_FAILED",
-          "The roster draft could not be saved in this browser.",
-          error,
-        );
+        // The batch is written first and is by far the largest record, so a
+        // save that dies after it leaves megabytes that nothing will ever
+        // collect: a batch is only reclaimed when the last draft referencing it
+        // is deleted, and this one never got a draft. Worst on a quota failure,
+        // where the orphan occupies the space that was already short.
+        if (createdBatchKey !== undefined) {
+          try {
+            await backend.delete(createdBatchKey);
+          } catch {
+            // Reporting the write failure matters more than the tidy-up.
+          }
+        }
+        return isQuotaExceeded(error)
+          ? operationFailure(
+              "PERSISTENCE_DRAFT_QUOTA_EXCEEDED",
+              "This browser is out of room for saved roster drafts. Delete a draft to free space — drafts imported together share one copy of their source files, so those files are only freed when the last of them goes.",
+              error,
+            )
+          : operationFailure(
+              "PERSISTENCE_DRAFT_WRITE_FAILED",
+              "The roster draft could not be saved in this browser.",
+              error,
+            );
       }
     },
 
@@ -552,6 +574,24 @@ function countSelections(selections: readonly RosterSelection[]): number {
     (total, selection) =>
       total + 1 + countSelections(selection.selections),
     0,
+  );
+}
+
+/**
+ * Whether a backend rejection was the browser refusing on space.
+ *
+ * Matched by `name` rather than `instanceof DOMException`: the error crosses
+ * from the IndexedDB implementation, which in a test environment is a different
+ * realm with a different `DOMException`. Firefox reported the same condition as
+ * `NS_ERROR_DOM_QUOTA_REACHED` for years, so both names are treated alike.
+ */
+function isQuotaExceeded(error: unknown): boolean {
+  const name =
+    typeof error === "object" && error !== null
+      ? (error as { name?: unknown }).name
+      : undefined;
+  return (
+    name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED"
   );
 }
 

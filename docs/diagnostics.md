@@ -274,10 +274,16 @@ IndexedDB access can emit:
 PERSISTENCE_INDEXEDDB_UNAVAILABLE
 PERSISTENCE_DRAFT_READ_FAILED
 PERSISTENCE_DRAFT_WRITE_FAILED
+PERSISTENCE_DRAFT_QUOTA_EXCEEDED
 PERSISTENCE_DRAFT_DELETE_FAILED
 ```
 
-The unavailable code means the browser exposes no usable IndexedDB API.
+The unavailable code means the browser exposes no usable IndexedDB API. The
+quota code is the write failure the browser attributes to space, recognised by
+error name (`QuotaExceededError`, or Firefox's `NS_ERROR_DOM_QUOTA_REACHED`)
+rather than by class, because the error crosses realms. It carries advice a
+generic write failure cannot: which drafts to delete, and that shared source
+files are only freed when the last draft referencing them goes.
 Operation failures retain a non-sensitive error message as `details.cause`.
 Listing skips malformed records but returns valid summaries with their decoder
 diagnostics. A malformed requested record, failed save, or failed delete

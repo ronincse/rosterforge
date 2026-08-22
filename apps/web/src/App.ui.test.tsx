@@ -19,6 +19,7 @@ import type { LocalRosterDraft } from "@rosterforge/persistence";
 import { App } from "./App.js";
 import {
   createLocalRosterDraftStore,
+  recoveryDraftId,
   type LocalRosterDraftRecordBackend,
   type StoredRecord,
 } from "./browser-drafts.js";
@@ -1423,6 +1424,63 @@ describe("App local catalogue flow", () => {
     expect(screen.queryByRole("region", { name: "Unsaved roster" })).toBeNull();
   });
 
+  it("stops autosaving after a quota failure until the roster changes", async () => {
+    // Autosave re-arms on roster identity and on the action returning to idle,
+    // so without a block a full browser is rewritten every few seconds for the
+    // rest of the session - and quota is exactly the failure that persists.
+    const { store, writes } = memoryDraftStore({ failWritesAfter: 1 });
+    render(
+      <App
+        draftStore={store}
+        printRoster={() => true}
+        createBatchId={() => "quota-batch"}
+        createDraftId={() => "quota-draft"}
+        createEntityId={(kind) => `${kind}-quota`}
+        now={() => "2026-08-22T17:00:00.000Z"}
+        autosaveDelayMs={0}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", catalogueBytes),
+        ],
+      },
+    });
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.change(screen.getByLabelText("Roster name"), {
+      target: { value: "Quota Patrol" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+    );
+    await screen.findByText("selection-quota");
+
+    // The first save is allowed through, so a draft becomes active.
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await screen.findByText(/Saved Quota Patrol in this browser\./u);
+    expect(writes()).toBe(1);
+
+    // The next edit autosaves, and the store refuses on space.
+    fireEvent.click(screen.getByText("Selection details"));
+    fireEvent.change(screen.getByLabelText("Amount"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Set amount" }));
+    await screen.findByText(/out of room for saved roster drafts/u);
+    const afterFailure = writes();
+    expect(afterFailure).toBe(2);
+
+    // The roster is unchanged, so nothing retries it. Before the block this
+    // rearmed every time the action returned to idle.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(writes()).toBe(afterFailure);
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+  });
+
   it("saves, reopens, and confirms deletion of a browser-local draft", async () => {
     const { store, records } = memoryDraftStore();
     const printRoster = vi.fn(() => false);
@@ -1631,15 +1689,32 @@ function asStoredDraft(
   return record !== undefined && "roster" in record ? record : undefined;
 }
 
-function memoryDraftStore(): {
+function memoryDraftStore(options?: {
+  readonly failWritesAfter?: number;
+}): {
   readonly store: ReturnType<typeof createLocalRosterDraftStore>;
   readonly records: Map<string, StoredRecord>;
+  readonly writes: () => number;
 } {
   const records = new Map<string, StoredRecord>();
+  let draftWrites = 0;
   const backend: LocalRosterDraftRecordBackend = {
     getAll: async () => [...records.values()],
     get: async (id) => records.get(id),
     put: async (draft) => {
+      // The recovery slot writes before any draft exists; it is not the write
+      // under test and must not consume the allowance.
+      if ("roster" in draft && draft.id !== recoveryDraftId) {
+        draftWrites += 1;
+        if (
+          options?.failWritesAfter !== undefined &&
+          draftWrites > options.failWritesAfter
+        ) {
+          const error = new Error("The quota has been exceeded.");
+          error.name = "QuotaExceededError";
+          throw error;
+        }
+      }
       records.set(draft.id, draft);
     },
     delete: async (id) => {
@@ -1649,5 +1724,6 @@ function memoryDraftStore(): {
   return {
     store: createLocalRosterDraftStore(backend),
     records,
+    writes: () => draftWrites,
   };
 }
