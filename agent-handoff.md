@@ -181,12 +181,30 @@ actually asked for.
 | Item | Status |
 |---|---|
 | Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
-| Draft storage reporting | Done | summaries carry `batchId`; the shelf counts a shared batch once instead of once per draft |
-| Quota failure handling | Done | a refused write is named, an orphaned batch is rolled back, and autosave stops retrying |
-| **Cache eviction and quota controls** | **Next** | failures are legible now; nothing still *prevents* one — no size bound, no eviction, no `storage.estimate()` |
+| Draft storage reporting | Done | *draft store*; summaries carry `batchId`, the shelf counts a shared batch once |
+| Draft quota failure handling | Done | *draft store*; a refused write is named, an orphaned batch is rolled back, autosave stops retrying |
+| **Repository cache eviction and quota** | **Next** | *repository cache*; no total bound, no eviction, and its backend has no `delete` — see the note below |
+| Storage headroom before a write | Open | `navigator.storage.estimate()` is consulted by neither store, so both can only report a quota failure after the fact |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
+
+**Two stores, and they are not the same problem.** A correction, 2026-08-22:
+earlier rows in this section were written as though "the cache" meant one thing.
+
+- `rosterforge` / `local-roster-drafts` holds **saved drafts** — work the user
+  asked to keep. The 2026-08-22 checkpoints hardened this one. Nothing here may
+  be deleted to reclaim space without the owner deciding that first; evicting a
+  saved roster is not a cache operation.
+- `rosterforge-pinned-repository-cache` / `pinned-repository-bytes` holds
+  **downloaded catalogue bytes**, keyed by pinned revision. This is a true cache:
+  every entry is re-downloadable, so evicting it costs a download and nothing
+  else. It bounds `maxEntryBytes` at 16 MB per entry and bounds nothing in total.
+
+This section's `Next` is the **repository** cache. Note before starting:
+`BrowserRepositoryCacheRecordBackend` exposes only `get` and `put`, so eviction
+needs a backend method that does not exist yet, and the in-memory backends in
+the tests implement that interface.
 
 ### E. Editing and durability
 
