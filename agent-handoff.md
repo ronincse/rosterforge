@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (durable undo history)
+## Current Status — 2026-08-22 (draft storage reporting)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **450 passed, 8 skipped (458)**.
+  `git diff --check` all pass. `pnpm test` is **453 passed, 8 skipped (461)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed** (458 total); without it those 8 are the skipped tests.
+  is **8 passed** (461 total); without it those 8 are the skipped tests.
 - **Active area.** Catalogue sources and cache (roadmap section D). Sections A,
   B, and E — display fidelity, legality, and editing durability — are complete.
 - **Comment coverage.** 81 of 668 exported symbols (12%), up from 42. The
@@ -181,7 +181,8 @@ actually asked for.
 | Item | Status |
 |---|---|
 | Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
-| **Cache eviction and quota controls** | **Next** | nothing bounds total draft-store size, and it now holds three record kinds |
+| Draft storage reporting | Done | summaries carry `batchId`; the shelf counts a shared batch once instead of once per draft |
+| **Cache eviction and quota controls** | **Next** | reporting is honest now; nothing still bounds total draft-store size, and it holds three record kinds |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
@@ -4128,5 +4129,70 @@ Nine added, 441 → 450.
 2. **Profile `name` modifiers** — five corpus instances, the last of section A.
 3. **`automatic` driving auto-fill** — still unverified and unconsumed;
    `initialization.ts` reads parent-scoped minima and does not look at it.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Completed Assignment — Draft Storage Reporting, 2026-08-22
+
+Baseline `f7dce17`; resulting implementation commit `f5f54c9`.
+
+A deliberately small checkpoint — the session was near its budget, and this was
+the piece of section D worth having before the rest of it.
+
+### The defect
+
+`LocalRosterDraftSummary.totalFileBytes` is the size of a draft's **import
+batch**. Since the byte split a batch is stored once and shared by every draft
+imported with it, but the shelf printed that figure on every card with nothing
+marking it shared. Three drafts on one 8.2 MB catalogue read as **24.6 MB**.
+
+Nobody had lied on purpose: the field meant "this draft's files" when it was
+written, and the byte split changed what it meant without changing its name or
+its readers. Worth remembering when a storage layer starts sharing something.
+
+### The fix
+
+Summaries carry `batchId`. The shelf groups by it, totals distinct batches in
+its heading, and appends "shared" to a card whose batch more than one draft
+uses. The doc comment on `totalFileBytes` now says what it is the size of.
+
+### Why this before eviction
+
+An eviction policy scoring drafts by `totalFileBytes` would have been built on
+the inflated number. Deleting the largest-looking draft can free **nothing** if
+a sibling still references its batch — the batch is only collected when the last
+referencing draft goes. That is a policy that reports success and frees no
+space, and it would have been hard to spot from the outside.
+
+### Scope, and what is still missing
+
+Reporting only. Still absent, and still section D:
+
+- Nothing bounds the total the store may reach.
+- Nothing evicts, by age or size or anything else.
+- `navigator.storage.estimate()` is not consulted, so the app cannot say how
+  close to the browser's quota it is, and a quota failure surfaces as the
+  generic `PERSISTENCE_DRAFT_WRITE_FAILED`.
+- The heading counts catalogue batches only. Draft records and
+  `history:<draftId>` records are real but small — a history is capped at 256 KB
+  against an 8.2 MB batch — and folding them in would need `list` to size
+  records it deliberately does not read.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **453 passed, 8 skipped (461 total)**, three added: a new
+  `saved-draft-shelf.test.tsx` covering the shared, unshared, and empty cases,
+  plus a `batchId` assertion on the existing list test.
+- `docs/compatibility.md` gained a "Draft Storage Reporting" section.
+
+### Next recommended boundary
+
+1. **Cache eviction and quota** — the rest of section D, now on honest numbers.
+   Read `navigator.storage.estimate()` first and decide whether the policy is
+   size-triggered or age-based; note that freeing a draft frees its batch only
+   when no sibling draft still references it.
+2. **Profile `name` modifiers** — five corpus instances, the last of section A.
+3. **`automatic` driving auto-fill** — unverified and unconsumed.
 
 Still open, unblocking: the `automatic`/auto-fill observation.
