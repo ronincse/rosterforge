@@ -639,8 +639,8 @@ Consequences worth knowing:
 
 ## Deferred
 
-- Cache eviction and quota controls, retries, repository update discovery,
-  and atomic publication of a downloaded closure
+- Origin-wide storage-headroom reporting, quota-management UI, retries,
+  repository update discovery, and atomic publication of a downloaded closure
 - Inferring catalogue paths from catalogue-link names without downloading and
   verifying exact target IDs; visibility still uses only documents supplied to
   graph resolution by the caller
@@ -762,11 +762,25 @@ hit or network response. Corrupt cache entries fall back to the network;
 unavailable cache storage does not block a valid download. The web application
 has defensive IndexedDB adapters for copied source bytes and bounded metadata.
 Byte records are isolated by provider, repository, commit, path, and blob ID.
-Metadata records are isolated by provider, repository, commit, and pinned tree
-object ID; their versioned JSON payloads are bounded and structurally decoded
-before service-level report/tree consistency checks. Malformed, oversized,
-unavailable, or tree-incompatible metadata falls back to fresh sequential
-indexing. No eviction policy or quota-management UI is implemented yet.
+
+The byte cache now limits source data to 16 MiB per record and 256 MiB total.
+Writes account for replacements and remove least-recently-used records before
+adding a value that would cross the total. Reads update a separate, small
+versioned sidecar rather than cloning the source bytes: the pinned corpus is
+64.42 MiB in 46 records, while its serialized LRU sidecars total 13,463 bytes
+(293 bytes average). Existing version-1 records migrate with access time zero,
+so known recent entries win over history the application cannot reconstruct.
+Malformed legacy byte records are removed; malformed later sidecars clear only
+this re-downloadable cache. Drafts remain in their separate database and are
+never eviction candidates.
+
+Remote-index metadata records remain isolated by provider, repository, commit,
+and pinned tree object ID; their versioned JSON payloads are bounded and
+structurally decoded before service-level report/tree consistency checks.
+Malformed, oversized, unavailable, or tree-incompatible metadata falls back to
+fresh sequential indexing. The byte-cache total does not use
+`navigator.storage.estimate()`; origin-wide storage headroom and
+quota-management UI remain separate work.
 
 The headless orchestrator can now build a compact remote metadata index by
 processing the pinned tree sequentially, then acquire only the selected

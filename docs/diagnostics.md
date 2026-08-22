@@ -151,13 +151,22 @@ blob size or object-ID mismatch remains an error and returns no file. Git blob
 verification also fails closed when Web Crypto cannot calculate the SHA-1 used
 by the pinned Git tree.
 
-The browser IndexedDB adapter deliberately throws on malformed record
+The browser IndexedDB adapter deliberately throws on malformed byte-record
 envelopes, mismatched immutable keys, oversized stored values, and database
 failures. The repository boundary translates those exceptions into
 `REPOSITORY_CACHE_READ_FAILED` or `REPOSITORY_CACHE_WRITE_FAILED`; a verified
-network response can still complete the operation. If IndexedDB is absent, the
-application omits the optional cache and acquisition proceeds with cache status
-`unavailable` rather than emitting a persistence error.
+network response can still complete the operation. Enumeration, eviction, and
+the final byte/sidecar write are all part of the write path and therefore use
+the existing write-failed code.
+
+LRU sidecars are defensive accounting for a disposable cache. A malformed
+sidecar causes that repository cache alone to be cleared before the verified
+network value is written. A failed sidecar touch leaves the valid cache hit
+usable, at the cost of making it an earlier eviction candidate; it emits no
+diagnostic because no imported bytes or user-authored data were lost. If
+IndexedDB is absent, the application omits the optional cache and acquisition
+proceeds with cache status `unavailable` rather than emitting a persistence
+error.
 
 The browser remote-source service can additionally emit:
 

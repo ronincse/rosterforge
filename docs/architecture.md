@@ -219,9 +219,23 @@ write failures are warnings when verified network acquisition succeeds.
 `acquireCachedPinnedGitHubBattleScribeFile` then sends either verified source
 through the same download-provenance and ingestion path. The package defines
 only `PinnedRepositoryByteCache`. `apps/web` supplies the native IndexedDB
-adapter in a separate versioned database. Its records copy the immutable cache
-key, bytes, and optional media type; reads decode and bound each record before
-the repository package performs the authoritative Git blob verification.
+adapter in database `rosterforge-pinned-repository-cache`. Byte records copy the
+immutable cache key, bytes, and optional media type; reads decode and bound each
+record before the repository package performs the authoritative Git blob
+verification.
+
+The browser adapter bounds source bytes to 16 MiB per entry and 256 MiB total,
+matching the repository package's maximum accepted acquisition. Before a write,
+it evicts least-recently-used records until the replacement fits. LRU state
+lives in a separate `pinned-repository-byte-metadata` object store: a hit writes
+only a roughly 293-byte sidecar rather than rewriting a source record as large
+as 16 MiB. On the pinned 46-file corpus those sidecars total 13,463 bytes beside
+64.42 MiB of source. Database version 2 migrates valid version-1 records with an
+unknown access time of zero, making them the first candidates without inventing
+history; malformed legacy records are discarded. If later accounting metadata
+cannot be decoded, the adapter clears this re-downloadable cache before writing
+rather than permitting unbounded storage. It never reads, deletes, or otherwise
+changes the separate local-draft database.
 
 The application also stores a compact metadata-index report in a separate
 versioned IndexedDB database keyed by provider, repository, exact commit, and
