@@ -60,11 +60,16 @@
       <selectionEntries>
         <selectionEntry id="auto-model" name="Auto Model" type="model">
           <constraints>
-            <!-- A squad-size rule carrying `automatic`. The attribute governs
-                 auto-filling, not whether the bound holds, so the report must
-                 still evaluate it. -->
+            <!-- Initial construction reads this minimum even when automatic is
+                 false. The flag only gates later bound-change reconciliation. -->
             <constraint id="auto-model-min" type="min" field="selections"
               scope="parent" value="2" shared="true" automatic="false" />
+          </constraints>
+        </selectionEntry>
+        <selectionEntry id="auto-upgrade" name="Auto Upgrade" type="upgrade">
+          <constraints>
+            <constraint id="auto-upgrade-min" type="min" field="selections"
+              scope="parent" value="1" shared="true" automatic="true" />
           </constraints>
         </selectionEntry>
       </selectionEntries>

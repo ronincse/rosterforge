@@ -658,8 +658,10 @@ Consequences worth knowing:
 - Automatic application of source `defaultAmount`, dynamic modifiers targeting
   it, comma-delimited default semantics, and hard enforcement of source `step`;
   supported initialization minima remain distinct occurrences
-- Conditional or grouped automatic-root requirements, implicit choices for
-  groups whose default is absent or `none`, and post-edit maximum enforcement
+- Conditional or grouped automatic-root requirements and implicit choices for
+  groups whose default is absent or `none`
+- Post-edit automatic-constraint reconciliation: New Recruit clamps entries,
+  groups, and sub-units after a bound carrying `automatic: true` changes
 - `.ros`/`.rosz` ingestion, projection, import, and interchange export;
   browser print/save-PDF is presentation output only
 - Grouped-modifier costs, broader cost-limit behavior, aggregate general-
@@ -894,11 +896,19 @@ selection-entry groups use `defaultSelectionEntryId: "none"`. Conditions in
 document targets rather than selection objects.
 
 The same pinned JSON corpus contains 109 constraint objects with a native
-Boolean `automatic` property that is not part of the supported BattleScribe
-2.03 typed constraint surface. The generic JSON/XML node retains each value.
-Initialization ignores max-only occurrences when no automatic minimum is
-needed; if such an extension affects a bound required for automatic expansion,
-the planner leaves that expansion incomplete instead of inventing semantics.
+Boolean `automatic` property that is not part of the BattleScribe 2.03 typed
+constraint surface. The generic JSON/XML node retains each value: 88 are `true`,
+21 are `false`; 29 are minima and 80 are maxima. Of these, 108 are parent-scoped
+selection bounds and one is a self-scoped custom-field maximum.
+
+New Recruit 35.66 settles two different behaviors. Its initial-selection path
+reads ordinary minima without consulting `automatic`, so RosterForge now does
+the same for otherwise supported bounds whether the value is absent, `false`, or
+`true`. Its later constraint-change handler runs only for `automatic: true` and
+clamps entries, selection groups, and sub-units to the changed min/max. That
+post-edit reconciliation remains unsupported. Modifier-controlled,
+child-inclusive, malformed, or otherwise unsupported initialization bounds
+remain incomplete independently of `automatic`.
 
 The Army Roster force definition has one constraint with a native `message`
 property, also outside the 2.03 typed constraint surface. Its exact text remains

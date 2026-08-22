@@ -1197,8 +1197,12 @@ Unsupported and modifier-controlled bound diagnostics point to the projected
 constraint. Conflicting bounds and resource limits point to the materialized
 choice occurrence. Default diagnostics point to the group's
 `@defaultSelectionEntryId` and retain the requested ID and match count.
-Malformed, percentage, child-inclusive, extension-driven, or non-integer
-parent-selection bounds are never converted into automatic quantities.
+Malformed, percentage, child-inclusive, unknown-extension, or non-integer
+parent-selection bounds are never converted into automatic quantities. The
+generic `automatic` property is an explicit exception: New Recruit does not
+consult it during initial creation, so that attribute alone no longer emits
+`EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED`. Modifier-controlled and
+otherwise unsupported bounds retain their existing diagnostics.
 
 An absent group default and `defaultSelectionEntryId="none"` are ordinary
 pending user choices, not diagnostics. A modifier-controlled base minimum of

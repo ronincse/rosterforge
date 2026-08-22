@@ -146,6 +146,12 @@ interface InitializationState {
 
 const defaultMaxPlannedSelections = 4_096;
 
+// The New Recruit initializer reads minima without consulting automatic; only
+// its later constraint-change handler tests the flag. Treating the extension
+// as inert here lets both true and false corpus bounds seed initial selections
+// without claiming support for that separate post-edit repair behavior.
+const inertInitializationConstraintAttributes = ["automatic"] as const;
+
 export function planRosterSelectionInitialization(
   choice: EvaluationSelectionChoice,
   options: RosterSelectionInitializationOptions = {},
@@ -1021,6 +1027,7 @@ function unsupportedRootBoundProperties(
     "shared",
     "includeChildSelections",
     "includeChildForces",
+    ...inertInitializationConstraintAttributes,
   ]);
   for (const attribute of Object.keys(constraint.node.attributes)) {
     if (!knownAttributes.has(attribute)) {
@@ -1125,6 +1132,7 @@ function unsupportedBoundProperties(
     "shared",
     "includeChildSelections",
     "includeChildForces",
+    ...inertInitializationConstraintAttributes,
   ]);
   for (const attribute of Object.keys(constraint.node.attributes)) {
     if (!knownAttributes.has(attribute)) {

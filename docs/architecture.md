@@ -486,8 +486,9 @@ therefore observe the same selected count. Other roots retain their visible
 occurrence identity. `inspectLocalRosterRootChoices` joins those identities to
 the current top-level force selections. The browser shows selected and required
 counts and disables an add only when a supported maximum is reached.
-Conditional, malformed, or extension-driven bounds remain incomplete and do
-not become edit limits.
+Conditional, malformed, or bounds with unknown behavioral extensions remain
+incomplete and do not become edit limits. The generic `automatic` extension
+is specifically inert for this initial bound inspection.
 
 When an add caller supplies a descendant-ID factory, the session asks
 `evaluation` for a read-only initialization plan before applying its safe
@@ -496,8 +497,13 @@ entries become repeated occurrences. Selection-entry groups are transparent
 containers: their already-required children count first, and a remaining
 minimum uses the exact direct entry named by `defaultSelectionEntryId`.
 `defaultSelectionEntryId="none"` and an absent default remain pending user
-choices. Modifier-controlled, malformed, percentage, extension-driven, or
-otherwise unsupported bounds are not guessed. The operation constructs one
+choices. Modifier-controlled, malformed, percentage, unknown-extension, or
+otherwise unsupported bounds are not guessed. The observed New Recruit
+`automatic` constraint property does not alter initial creation: supported
+minima seed descendants whether that generic value is absent, `false`, or `true`.
+New Recruit uses `true` only in a separate later constraint-change handler that
+clamps entries, groups, and sub-units; RosterForge does not yet perform that
+post-edit reconciliation. The operation constructs one
 new immutable session only after every planned child add succeeds, so a
 duplicate generated ID or other builder failure exposes no partial session.
 Each selected occurrence is limited to 4,096 automatically planned

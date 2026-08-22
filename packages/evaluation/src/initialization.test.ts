@@ -17,6 +17,59 @@ import {
 } from "./initialization.js";
 
 describe("roster selection initialization", () => {
+  it("initializes minima regardless of the automatic extension value", () => {
+    const graph = resolveBattleScribeDataGraph([
+      parseFixture("projection.gst"),
+      parseFixture("cost-evaluation.cat"),
+    ]);
+    if (!graph.ok) throw new Error("Expected fixture graph.");
+    const contexts = composeBattleScribeCatalogueContexts(graph.value);
+    if (!contexts.ok) throw new Error("Expected fixture contexts.");
+    const context = contexts.value.catalogues.find(
+      ({ document }) => document.metadata.id === "cost-evaluation",
+    );
+    const root = context?.roots.roots.find(
+      ({ materialized }) =>
+        materialized.kind !== "unresolvedEntryLink" &&
+        materialized.id === "auto-squad",
+    );
+    if (
+      root === undefined ||
+      root.materialized.kind === "unresolvedEntryLink"
+    ) {
+      throw new Error("Expected automatic-constraint fixture root.");
+    }
+
+    const planned = planRosterSelectionInitialization(root.materialized);
+
+    expect(planned.ok).toBe(true);
+    if (!planned.ok) return;
+    expect(planned.diagnostics).toEqual([]);
+    expect(planned.value).toMatchObject({
+      completeness: "complete",
+      plannedSelectionCount: 3,
+      additions: [
+        {
+          choice: { id: "auto-model", name: "Auto Model" },
+          quantity: 2,
+        },
+        {
+          choice: { id: "auto-upgrade", name: "Auto Upgrade" },
+          quantity: 1,
+        },
+      ],
+    });
+    expect(
+      root.materialized.selectionEntries.map((choice) => [
+        choice.id,
+        choice.constraints[0]?.node.attributes["automatic"],
+      ]),
+    ).toEqual([
+      ["auto-model", "false"],
+      ["auto-upgrade", "true"],
+    ]);
+  });
+
   it("plans unconditional minimum children and transparent group defaults", () => {
     const graph = resolveBattleScribeDataGraph([
       parseFixture("projection.gst"),

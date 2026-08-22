@@ -215,6 +215,21 @@ describe.skipIf(realDataDirectory === undefined)(
           roster: 6,
         });
         expect(
+          automaticConstraintSummary(
+            result.value.documents.map(({ root }) => root),
+          ),
+        ).toEqual({
+          total: 109,
+          true: 88,
+          false: 21,
+          min: 29,
+          max: 80,
+          selections: 108,
+          parent: 108,
+          self: 1,
+        });
+
+        expect(
           profileOwnedCharacteristicModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -3364,6 +3379,59 @@ function negativeConstraintSummary(
         element.attributes.scope === "parent" ||
         element.attributes.scope === "force" ||
         element.attributes.scope === "roster"
+      ) {
+        counts[element.attributes.scope] += 1;
+      }
+    }
+    for (const child of element.children) {
+      if (child.kind === "element") visit(child);
+    }
+  };
+  for (const root of roots) visit(root);
+  return counts;
+}
+
+function automaticConstraintSummary(
+  roots: readonly OrderedXmlElement[],
+): Readonly<{
+  total: number;
+  true: number;
+  false: number;
+  min: number;
+  max: number;
+  selections: number;
+  parent: number;
+  self: number;
+}> {
+  const counts = {
+    total: 0,
+    true: 0,
+    false: 0,
+    min: 0,
+    max: 0,
+    selections: 0,
+    parent: 0,
+    self: 0,
+  };
+  const visit = (element: OrderedXmlElement): void => {
+    if (
+      element.name === "constraint" &&
+      (element.attributes.automatic === "true" ||
+        element.attributes.automatic === "false")
+    ) {
+      counts.total += 1;
+      counts[element.attributes.automatic] += 1;
+      if (
+        element.attributes.type === "min" ||
+        element.attributes.type === "max"
+      ) {
+        counts[element.attributes.type] += 1;
+      }
+      counts.selections +=
+        element.attributes.field === "selections" ? 1 : 0;
+      if (
+        element.attributes.scope === "parent" ||
+        element.attributes.scope === "self"
       ) {
         counts[element.attributes.scope] += 1;
       }

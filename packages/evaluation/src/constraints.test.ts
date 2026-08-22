@@ -153,10 +153,10 @@ describe("roster selection constraints", () => {
           candidate.constraint.node.attributes["id"] === "auto-model-min",
       );
 
-    // `automatic` governs whether a roster editor fills the squad in, not
-    // whether the minimum holds. In the corpus it sits on rules like Khorne
-    // Berzerker "min 5", which are plainly enforced, so the bound is still
-    // evaluated rather than being dismissed as an unknown attribute.
+    // The `automatic` flag gates later bound-change repair, not initial
+    // construction or whether the minimum holds. In the corpus it sits on
+    // rules like Khorne Berzerker "min 5", which are plainly enforced, so the
+    // bound is still evaluated rather than dismissed as an unknown attribute.
     expect(report).toBeDefined();
     expect(report?.status).toBe("violated");
     expect(report?.observed).toBe(1);

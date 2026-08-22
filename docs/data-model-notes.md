@@ -698,11 +698,18 @@ and aggregate legality remain outside this boundary.
 
 `planRosterSelectionInitialization` is a deterministic, read-only projection
 from one exact materialized selection choice to a tree of planned descendant
-occurrences. It accepts only non-negative safe-integer `min` and `max`
-constraints with `field="selections"` and `scope="parent"`. A direct selection
-entry's supported minimum becomes its planned quantity; nested plans repeat
-with each occurrence. Repetition remains a set of independent roster
-occurrences rather than a quantity property.
+occurrences. It accepts only non-negative safe-integer `min` and `max` constraints
+with `field="selections"` and `scope="parent"`. The supported minimum of a direct
+selection entry becomes its planned quantity; nested plans repeat with each
+occurrence. Repetition remains a set of independent roster occurrences rather
+than a quantity property.
+
+The New Recruit `automatic` constraint extension remains on the generic node,
+outside the BattleScribe 2.03 typed constraint projection. It is inert for
+this plan: supported minima are read whether the property is absent, `false`, or
+`true`. The shipped New Recruit 35.66 runtime follows the same initial path and
+tests `true` only in a later bound-change handler. RosterForge does not yet model
+that post-edit clamping behavior.
 
 Selection-entry groups are choice containers in this plan, not planned roster
 occurrences. Supported required child entries are counted first. If the group
@@ -717,8 +724,9 @@ Constraint-targeting modifiers on a positive minimum or a maximum needed to
 bound an automatic default prevent that automatic addition. A modified base
 minimum of zero also makes the affected branch incomplete, but it emits no
 action diagnostic because no unconditional addition was suppressed. Percentage
-values, child-inclusion flags, invalid numbers, unknown behavior attributes,
-conflicting bounds, and unsupported parent-bound shapes are likewise never
+values, child-inclusion flags, invalid numbers, behavioral attributes other
+than the inert `automatic` extension, conflicting bounds, and unsupported
+parent-bound shapes are likewise never
 coerced into quantities.
 
 Plans expose exact materialized choices, ordered additions, quantities, nested
