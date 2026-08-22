@@ -40,6 +40,13 @@ describe("local roster draft store", () => {
       totalFileBytes: 3,
       selectionCount: 1,
     });
+    // Both fixtures import as batch-1, and the bytes are stored once for it.
+    // Without the batch a reader has no way to tell shared bytes from a second
+    // copy, and summing the summaries would double the real cost.
+    expect(result.value.map(({ batchId }) => batchId)).toEqual([
+      "batch-1",
+      "batch-1",
+    ]);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "PERSISTENCE_DRAFT_FORMAT_UNSUPPORTED",

@@ -23,7 +23,16 @@ export interface LocalRosterDraftSummary {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly fileCount: number;
+  /**
+   * The size of this draft's import batch — not of this draft alone.
+   *
+   * Batch bytes are stored once and shared by every draft imported together, so
+   * adding this up across drafts overstates what the browser is holding, by a
+   * whole catalogue closure per sharing draft. Group by `batchId` first.
+   */
   readonly totalFileBytes: number;
+  /** Which batch `totalFileBytes` belongs to, so shared bytes count once. */
+  readonly batchId: string;
   readonly selectionCount: number;
 }
 
@@ -520,6 +529,7 @@ function summarizeDraft(draft: LocalRosterDraft): LocalRosterDraftSummary {
       (total, file) => total + file.bytes.byteLength,
       0,
     ),
+    batchId: draft.import.batchId,
     selectionCount: draft.roster.forces.reduce(
       (total, force) => total + countForceSelections(force),
       0,

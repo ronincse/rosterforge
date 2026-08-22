@@ -561,6 +561,21 @@ Two further bounds remain on autosave, independent of the split: the debounce is
 five seconds rather than shorter, and the recovery slot skips its write whenever
 an active draft is already being kept current.
 
+## Draft Storage Reporting
+
+The saved-draft shelf reports what the browser is actually holding, which since
+the byte split is not the sum of its cards.
+
+`LocalRosterDraftSummary.totalFileBytes` is the size of the draft's **import
+batch**, and a batch is stored once and shared by every draft imported with it.
+Adding the summaries up therefore counts a whole catalogue closure again for
+each sharing draft — 8.2 MB per repeat for one faction. Summaries carry
+`batchId` so a reader can group first; the shelf totals distinct batches and
+marks a card whose batch is shared.
+
+This is reporting only. Nothing evicts, and nothing bounds the total the store
+may reach; see the roadmap's section D.
+
 ## Draft Undo History
 
 A saved draft stores its undo history so a reload does not cost the stack. It is
