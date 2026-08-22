@@ -150,9 +150,9 @@ const annotationField = "annotation";
  * The display-name field.
  *
  * Unlike `annotation`, this one has a real base: the name the catalogue already
- * declares. Modifiers refine it — the corpus's 7,673 instances are overwhelmingly
- * Crusade rank suffixes such as `(Battle-hardened)`, gated by experience-point
- * condition groups so exactly one band applies at a time.
+ * declares. The corpus has 7,678 instances: 7,673 selection-name modifiers,
+ * overwhelmingly condition-gated Crusade ranks, and five grouped profile-name
+ * modifiers that distinguish shield-bearing model profiles.
  */
 const nameField = "name";
 
@@ -294,9 +294,32 @@ export interface RosterProfileAnnotationReport<
 }
 
 /**
+ * The effective display name of one profile.
+ *
+ * The projected profile and its source name remain unchanged. The caller
+ * supplies the base because a materialized info link may override its target
+ * profile's name; the value is absent when applicable behavior cannot be applied.
+ */
+export interface RosterProfileNameReport<
+  Profile extends RosterCharacteristicProfileSource =
+    RosterCharacteristicProfileSource,
+> {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
+  readonly profile: Profile;
+  readonly baseValue: string;
+  readonly value?: string;
+  readonly steps: readonly RosterCharacteristicStep<
+    Profile["modifiers"][number]
+  >[];
+  readonly completeness: ValidationCompleteness;
+}
+
+/**
  * The effective display annotation decorating one roster selection's name.
  *
- * The source name remains unchanged. `value` is only the text rendered in
+ * The source name remains unchanged. Its value is only the text rendered in
  * parentheses after it and is absent when an applicable step cannot be applied.
  */
 export interface RosterSelectionAnnotationReport<
@@ -373,9 +396,12 @@ export function evaluateRosterProfileCharacteristics<
       visibilityModifiers.push(modifier);
       continue;
     }
-    // Annotation has its own report, so it is neither a characteristic target
-    // nor unrouted display behavior.
-    if (modifier.field === annotationField) {
+    // Name and annotation have their own reports, so neither is a
+    // characteristic target nor unrouted display behavior.
+    if (
+      modifier.field === annotationField ||
+      modifier.field === nameField
+    ) {
       continue;
     }
     const reason = routingReason(modifier, routable);
@@ -707,6 +733,170 @@ export function evaluateRosterProfileAnnotation<
       owner,
       profile,
       baseValue: "",
+      ...(value === undefined ? {} : { value }),
+      completeness:
+        lost || steps.some(({ status }) => status === "unapplied")
+          ? "incomplete"
+          : "complete",
+      steps,
+    },
+    diagnostics,
+  );
+}
+
+/**
+ * Reports one profile's effective display name.
+ *
+ * The caller supplies the base so a materialized info-link name override is
+ * respected. Direct modifiers run first, followed by modifier groups in
+ * source order and then selection-owned affects modifiers routed to this
+ * profile. The projected profile and link remain unchanged.
+ */
+export function evaluateRosterProfileName<
+  Profile extends RosterCharacteristicProfileSource,
+>(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  profile: Profile,
+  baseName: string,
+): Result<RosterProfileNameReport<Profile>> {
+  type Modifier = Profile["modifiers"][number];
+
+  const diagnostics: Diagnostic[] = [];
+  const steps: RosterCharacteristicStep<Modifier>[] = [];
+  const effectiveCategories = effectiveRosterCategories(roster, context);
+  let lost = false;
+
+  const run = (
+    modifier: Modifier,
+    grouped: boolean,
+    applicability: NumericModifierApplicability,
+    origin: RosterCharacteristicStepOrigin,
+    declaredBy: RosterSelection,
+  ): void => {
+    const step = evaluateStep<Modifier>(
+      currentValue(steps, baseName),
+      modifier,
+      grouped,
+      applicability,
+      origin,
+      declaredBy,
+    );
+    steps.push(step.step);
+    diagnostics.push(...step.diagnostics);
+  };
+
+  const directTargets = profile.modifiers.filter(
+    (modifier) => modifier.field === nameField,
+  );
+  for (const modifier of directTargets) {
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      owner,
+      modifier,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      modifier,
+      false,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "own",
+      owner,
+    );
+  }
+
+  const relevantGroups = profile.modifierGroups.filter((group) =>
+    groupTargetsField(group, nameField),
+  );
+  const groupReports: RosterModifierGroupApplicabilityReport<
+    Profile["modifierGroups"][number]
+  >[] = [];
+  for (const group of relevantGroups) {
+    const evaluated = evaluateRosterModifierGroupApplicability(
+      roster,
+      context,
+      owner,
+      group,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    groupReports.push(evaluated.value);
+  }
+  const grouped = collectRosterModifierGroupExecution<Modifier>(
+    groupReports,
+    nameField,
+  );
+  const expectedGrouped = relevantGroups.reduce(
+    (count, group) => count + groupedTargetCount<Modifier>(group, nameField),
+    0,
+  );
+  if (
+    groupReports.length !== relevantGroups.length ||
+    grouped.entries.length !== expectedGrouped
+  ) {
+    lost = true;
+  }
+  for (const entry of grouped.entries) {
+    run(
+      entry.modifier,
+      true,
+      !entry.evaluated || entry.status === "unresolved"
+        ? "unresolved"
+        : entry.status,
+      "own",
+      owner,
+    );
+  }
+
+  const routed = collectAffectsRoutedModifiers(
+    roster,
+    context,
+    owner,
+    profile,
+  );
+  if (routed.partial) lost = true;
+  for (const entry of routed.modifiers) {
+    if (entry.modifier.field !== nameField) continue;
+    const evaluated = evaluateRosterModifierApplicability(
+      roster,
+      context,
+      entry.declaredBy,
+      entry.modifier,
+      { effectiveCategories },
+    );
+    diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok) {
+      lost = true;
+      continue;
+    }
+    run(
+      entry.modifier as Modifier,
+      entry.grouped,
+      evaluated.value.evaluated ? evaluated.value.status : "unresolved",
+      "affects",
+      entry.declaredBy,
+    );
+  }
+
+  const value = lost ? undefined : effectiveValue(steps, baseName);
+  return success(
+    {
+      roster,
+      context,
+      owner,
+      profile,
+      baseValue: baseName,
       ...(value === undefined ? {} : { value }),
       completeness:
         lost || steps.some(({ status }) => status === "unapplied")

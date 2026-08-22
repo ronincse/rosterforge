@@ -913,7 +913,7 @@ is recognized as inert metadata. This evaluator sets no validity state, does not
 aggregate categories across occurrences, and does not change how conditions
 compare category identity.
 
-Characteristic-display evaluation can emit:
+Characteristic and display-text evaluation can emit:
 
 ```text
 EVALUATION_CHARACTERISTIC_MODIFIER_APPLICABILITY_UNRESOLVED
@@ -969,21 +969,22 @@ use the ordinary modifier-group and condition codes. A `hidden` modifier never
 appears in the characteristic codes below, because it cannot change a
 characteristic value.
 
-The two target codes describe routing rather than execution.
-`TARGET_MISSING` covers a profile-owned modifier with no `field`, a `field` that
-names no characteristic on its own profile, and unsupported
-non-characteristic display fields such as `name`. Annotation is routed to its
-own profile or selection report instead.
+The two target codes describe characteristic routing rather than execution.
+`TARGET_MISSING` covers a profile-owned modifier with no `field` or a `field`
+that names no characteristic on its own profile. Profile `name`, `annotation`,
+and `hidden` fields route to their own reports instead.
 `TARGET_AMBIGUOUS` covers a profile that repeats one characteristic type; no
 match is chosen. Both keep the modifier observable in `unroutedModifiers` and
-make the profile report incomplete.
+make the characteristic report incomplete.
 
 A not-applicable step emits nothing and does not make a report incomplete. Every
-other unapplied step makes both its characteristic and the profile report
-incomplete, while the effective value can still be known when no unapplied step
-follows the last applied step. Condition, modifier-group, and repeat diagnostics
-retain their ordinary codes and locations. This evaluator sets no validity state
-and never mutates a roster.
+other unapplied step makes its field report and enclosing profile inspection
+incomplete, while an effective characteristic can still be known when no
+unapplied step follows the last applied step. Profile-name evaluation uses the
+same operation codes plus ordinary condition and modifier-group diagnostics.
+When its value is unknown the browser retains the source name and shows the
+profile's incomplete note; characteristic completeness remains independent.
+Evaluation sets no validity state and never mutates a roster or projection.
 
 The browser adapter can additionally emit:
 

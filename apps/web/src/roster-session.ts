@@ -11,6 +11,7 @@ import {
   evaluateRosterCostsWithSelectionConditions,
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterProfileName,
   evaluateRosterProfileVisibility,
   evaluateRosterSelectionAnnotation,
   evaluateRosterSelectionName,
@@ -31,6 +32,7 @@ import {
   type RosterForceConstraintsInRosterReport,
   type RosterProfileAnnotationReport,
   type RosterProfileCharacteristicReport,
+  type RosterProfileNameReport,
   type RosterProfileVisibilityReport,
   type RosterSelectionAnnotationReport,
   type RosterSelectionCategoryReport,
@@ -105,6 +107,8 @@ export type LocalRosterProfile =
 export interface LocalRosterProfileCharacteristics {
   readonly profile: LocalRosterProfile;
   readonly report: RosterProfileCharacteristicReport;
+  /** Effective display name; the projected source name is unchanged. */
+  readonly name: RosterProfileNameReport;
   readonly visibility: RosterProfileVisibilityReport;
   /** The display annotation decorating this profile's name, if any. */
   readonly annotation: RosterProfileAnnotationReport;
@@ -622,8 +626,9 @@ export function inspectLocalRosterSelectionAnnotation(
 }
 
 /**
- * Evaluates the displayed characteristics of every profile shown for one exact
- * roster selection occurrence: its direct profiles, its resolved profile info
+ * Evaluates the displayed name, annotation, visibility, and characteristics
+ * of every profile shown for one exact roster selection occurrence: its direct
+ * profiles, its resolved profile info
  * links, and the profiles of its recursive info groups, in that render order.
  *
  * The reports are keyed by the exact profile object so the presentation layer
@@ -664,6 +669,13 @@ export function inspectLocalRosterSelectionCharacteristics(
       occurrence,
       profile,
     );
+    const name = evaluateRosterProfileName(
+      session.roster,
+      session.catalogue.context,
+      occurrence,
+      profile,
+      localRosterProfileBaseName(profile),
+    );
     const visibility = evaluateRosterProfileVisibility(
       session.roster,
       session.catalogue.context,
@@ -678,15 +690,17 @@ export function inspectLocalRosterSelectionCharacteristics(
     );
     diagnostics.push(
       ...report.diagnostics,
+      ...name.diagnostics,
       ...visibility.diagnostics,
       ...annotation.diagnostics,
     );
-    if (!report.ok || !visibility.ok || !annotation.ok) {
+    if (!report.ok || !name.ok || !visibility.ok || !annotation.ok) {
       incomplete = true;
       return;
     }
     const completeness: ValidationCompleteness =
       report.value.completeness === "complete" &&
+      name.value.completeness === "complete" &&
       visibility.value.completeness === "complete" &&
       annotation.value.completeness === "complete"
         ? "complete"
@@ -694,6 +708,7 @@ export function inspectLocalRosterSelectionCharacteristics(
     const entry: LocalRosterProfileCharacteristics = {
       profile,
       report: report.value,
+      name: name.value,
       visibility: visibility.value,
       annotation: annotation.value,
       completeness,
@@ -739,6 +754,14 @@ export function inspectLocalRosterSelectionCharacteristics(
     },
     diagnostics,
   );
+}
+
+function localRosterProfileBaseName(profile: LocalRosterProfile): string {
+  const name =
+    "definition" in profile
+      ? profile.name ?? profile.definition.name
+      : profile.name;
+  return name ?? "Unnamed profile";
 }
 
 /**

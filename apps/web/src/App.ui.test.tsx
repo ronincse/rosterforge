@@ -167,7 +167,21 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           </characteristics>
           <modifiers>
             <modifier type="set" field="characteristic-move" value="8" />
+            <modifier type="append" field="annotation"
+              value="Veteran Issue" join=", " />
           </modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="name"
+                  value="Veteran Infantry profile" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" field="selections"
+                  scope="self" childId="any" value="1" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
         </profile>
       </profiles>
       <rules>
@@ -854,7 +868,12 @@ describe("App local catalogue flow", () => {
     expect(within(selectedRoster).getByText("Keywords")).toBeTruthy();
     expect(within(selectedRoster).getByText("Battleline")).toBeTruthy();
     expect(within(selectedRoster).getByText("added")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Infantry profile")).toBeTruthy();
+    // Profile-name groups run before the separately routed annotation.
+    expect(
+      within(selectedRoster).getByText(
+        "Veteran Infantry profile (Veteran Issue)",
+      ),
+    ).toBeTruthy();
     expect(within(selectedRoster).getAllByText("Move")).toHaveLength(2);
     // A supported profile set replaces the displayed value and keeps the
     // source value visible as the base.

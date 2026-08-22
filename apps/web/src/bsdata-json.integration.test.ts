@@ -18,6 +18,7 @@ import {
   evaluateRosterCondition,
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterProfileName,
   evaluateRosterSelectionName,
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
@@ -246,6 +247,76 @@ describe.skipIf(realDataDirectory === undefined)(
           supportedSetGrouped: 56,
         });
         expect(
+          profileNameModifierRows(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual([
+          {
+            filename: "Imperium - Adepta Sororitas.json",
+            profileId: "aa7-bf29-422a-6219",
+            profileName: "Mortifier",
+            type: "set",
+            value: "Mortifier w/ sarcophagus",
+            join: null,
+            groupType: "and",
+            scope: "f027-a14f-7bcb-90fd",
+            childId: "e8dd-ba31-be8a-ef32",
+            shared: true,
+            includeChildSelections: true,
+          },
+          {
+            filename: "Imperium - Deathwatch.json",
+            profileId: "76a7-e9a3-dac6-dda5",
+            profileName: "Deathwatch Terminator Sergeant",
+            type: "set",
+            value: "Deathwatch Terminator Sgt w/ Storm Shield",
+            join: null,
+            groupType: "and",
+            scope: "4595-7ad2-617a-c07d",
+            childId: "f831-6dfb-6b1b-8112",
+            shared: true,
+            includeChildSelections: true,
+          },
+          {
+            filename: "Imperium - Deathwatch.json",
+            profileId: "fbb6-8d06-f810-4677",
+            profileName: "Deathwatch Terminator",
+            type: "set",
+            value: "Deathwatch Terminator w/ Storm Shield",
+            join: null,
+            groupType: "and",
+            scope: "45fa-9a7-8352-362e",
+            childId: "6d89-f8ad-8cac-18b4",
+            shared: true,
+            includeChildSelections: true,
+          },
+          {
+            filename: "Imperium - Space Marines.json",
+            profileId: "ba06-7619-6891-ab7b",
+            profileName: "Assault Terminator Sergeant",
+            type: "set",
+            value: "Assault Terminator Sergeant w/ Storm Shield",
+            join: null,
+            groupType: "and",
+            scope: "c3d5-605c-2976-9ee1",
+            childId: "96bf-3cb4-69ff-a8ce",
+            shared: true,
+            includeChildSelections: true,
+          },
+          {
+            filename: "Imperium - Space Wolves.json",
+            profileId: "b42c-d1fb-d98b-d92d",
+            profileName: "Wolf Guard Terminator Pack Leader",
+            type: "append",
+            value: "(Storm shield)",
+            join: null,
+            groupType: "and",
+            scope: "1f70-af8a-871e-979f",
+            childId: "d576-d444-2286-9eeb",
+            shared: true,
+            includeChildSelections: true,
+          },
+        ]);        expect(
           affectsSelectorSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -612,6 +683,185 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ costType }) => costType.name === "pts",
           ),
         ).toMatchObject({ value: 375 });
+      },
+      120_000,
+    );
+
+    it(
+      "renames a pinned Mortifier profile when its sarcophagus is selected",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Imperium - Adepta Sororitas.json",
+          "Imperium - Imperial Knights - Library.json",
+          "Imperium - Agents of the Imperium.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-mortifier-name",
+              importedAt: "2026-08-22T00:00:00.000Z",
+            },
+          },
+        );
+
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.value.documents).toHaveLength(requiredFilenames.size);
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Imperium - Adepta Sororitas",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        expect(catalogue).toBeDefined();
+        expect(forceDefinition).toBeDefined();
+        if (catalogue === undefined || forceDefinition === undefined) return;
+
+        const session = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-mortifier-name-roster"),
+          forceId: forceOccurrenceId("real-mortifier-name-force"),
+          name: "Mortifier name roster",
+        });
+        expect(session.ok).toBe(true);
+        if (!session.ok) return;
+        const root = localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.name === "Mortifiers",
+        );
+        expect(root?.materialized.definitionId).toBe(
+          "3c3f-f02d-c05c-492a",
+        );
+        if (root === undefined) return;
+        const withUnit = addLocalRosterRootSelection(session.value, root, {
+          selectionId: selectionOccurrenceId("real-mortifiers-unit"),
+        });
+        expect(withUnit.ok).toBe(true);
+        if (!withUnit.ok) return;
+
+        const modelChoices = inspectLocalRosterChildChoices(
+          withUnit.value,
+          selectionOccurrenceId("real-mortifiers-unit"),
+        );
+        expect(modelChoices.ok).toBe(true);
+        if (!modelChoices.ok) return;
+        const modelGroup = modelChoices.value.groups.find(({ choices }) =>
+          choices.some(
+            ({ id, definitionId }) =>
+              id === "f027-a14f-7bcb-90fd" ||
+              definitionId === "f027-a14f-7bcb-90fd",
+          ),
+        );
+        const modelChoice = modelGroup?.choices.find(
+          ({ id, definitionId }) =>
+            id === "f027-a14f-7bcb-90fd" ||
+            definitionId === "f027-a14f-7bcb-90fd",
+        );
+        expect(modelChoice?.name).toBe("Mortifier");
+        if (modelGroup === undefined || modelChoice === undefined) return;
+        const withModel = chooseLocalRosterChildGroupEntry(
+          withUnit.value,
+          selectionOccurrenceId("real-mortifiers-unit"),
+          modelGroup.group,
+          modelChoice,
+          { selectionId: selectionOccurrenceId("real-mortifier-model") },
+        );
+        expect(withModel.ok).toBe(true);
+        if (!withModel.ok) return;
+
+        const model = rosterSelections(
+          withModel.value.roster.forces.flatMap(({ selections }) => selections),
+        ).find(
+          ({ id }) =>
+            localRosterSelectionChoice(withModel.value, id)?.id ===
+            "f027-a14f-7bcb-90fd",
+        );
+        expect(model).toBeDefined();
+        if (model === undefined) return;
+        const selectedModelChoice = localRosterSelectionChoice(
+          withModel.value,
+          model.id,
+        );
+        const profile = selectedModelChoice?.profiles.find(
+          ({ id }) => id === "aa7-bf29-422a-6219",
+        );
+        expect(selectedModelChoice?.name).toBe("Mortifier");
+        expect(profile?.name).toBe("Mortifier");
+        if (selectedModelChoice === undefined || profile === undefined) return;
+
+        const before = evaluateRosterProfileName(
+          withModel.value.roster,
+          catalogue.context,
+          model,
+          profile,
+          profile.name ?? "Unnamed profile",
+        );
+        expect(before.ok).toBe(true);
+        expect(before.diagnostics).toEqual([]);
+        if (!before.ok) return;
+        expect(before.value).toMatchObject({
+          baseValue: "Mortifier",
+          value: "Mortifier",
+          completeness: "complete",
+          steps: [{ status: "notApplicable", grouped: true }],
+        });
+
+        const sarcophagus = selectionChoiceByDefinitionId(
+          selectedModelChoice,
+          "e8dd-ba31-be8a-ef32",
+        );
+        expect(sarcophagus?.name).toBe("Anchorite Sarcophagus");
+        if (sarcophagus === undefined) return;
+        const withSarcophagus = addLocalRosterChildSelection(
+          withModel.value,
+          model.id,
+          sarcophagus,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-mortifier-anchorite-sarcophagus",
+            ),
+          },
+        );
+        expect(withSarcophagus.ok).toBe(true);
+        if (!withSarcophagus.ok) return;
+        const updatedModel = rosterSelections(
+          withSarcophagus.value.roster.forces.flatMap(
+            ({ selections }) => selections,
+          ),
+        ).find(({ id }) => id === model.id);
+        expect(updatedModel).toBeDefined();
+        if (updatedModel === undefined) return;
+
+        const after = evaluateRosterProfileName(
+          withSarcophagus.value.roster,
+          catalogue.context,
+          updatedModel,
+          profile,
+          profile.name ?? "Unnamed profile",
+        );
+        expect(after.ok).toBe(true);
+        expect(after.diagnostics).toEqual([]);
+        if (!after.ok) return;
+        expect(after.value).toMatchObject({
+          baseValue: "Mortifier",
+          value: "Mortifier w/ sarcophagus",
+          completeness: "complete",
+          steps: [
+            {
+              status: "applied",
+              kind: "set",
+              grouped: true,
+              input: "Mortifier",
+              output: "Mortifier w/ sarcophagus",
+            },
+          ],
+        });
       },
       120_000,
     );
@@ -2846,6 +3096,67 @@ function projectedProfiles(
   return profiles;
 }
 
+function profileNameModifierRows(
+  projections: readonly BattleScribeProjection[],
+): readonly Readonly<Record<string, unknown>>[] {
+  const rows: Record<string, unknown>[] = [];
+  const addGroup = (
+    profile: ProfileProjection,
+    group: ModifierGroupProjection,
+  ): void => {
+    for (const modifier of group.modifiers) {
+      if (modifier.field !== "name") continue;
+      const condition = group.conditions[0];
+      rows.push({
+        filename: profile.source.filename,
+        profileId: profile.id,
+        profileName: profile.name,
+        type: modifier.type,
+        value: modifier.value,
+        join: modifier.node.attributes["join"] ?? null,
+        groupType: group.type,
+        scope: condition?.scope,
+        childId: condition?.childId,
+        shared: condition?.shared,
+        includeChildSelections: condition?.includeChildSelections,
+      });
+      expect(modifier.conditions).toEqual([]);
+      expect(modifier.conditionGroups).toEqual([]);
+      expect(modifier.repeats).toEqual([]);
+      expect(group.conditions).toHaveLength(1);
+      expect(condition).toMatchObject({
+        type: "atLeast",
+        field: "selections",
+        value: "1",
+      });
+      expect(group.conditionGroups).toEqual([]);
+      expect(group.repeats).toEqual([]);
+    }
+    for (const child of group.modifierGroups) {
+      addGroup(profile, child);
+    }
+  };
+
+  for (const profile of projectedProfiles(projections)) {
+    for (const modifier of profile.modifiers) {
+      if (modifier.field === "name") {
+        throw new Error(
+          "Unexpected ungrouped profile-name modifier " +
+            (profile.id ?? "missing-id") +
+            ".",
+        );
+      }
+    }
+    for (const group of profile.modifierGroups) {
+      addGroup(profile, group);
+    }
+  }
+  return rows.sort((left, right) =>
+    JSON.stringify([left["filename"], left["profileId"]]).localeCompare(
+      JSON.stringify([right["filename"], right["profileId"]]),
+    ),
+  );
+}
 function profileOwnedVisibilityModifierSummary(
   projections: readonly BattleScribeProjection[],
 ): Readonly<Record<string, number>> {

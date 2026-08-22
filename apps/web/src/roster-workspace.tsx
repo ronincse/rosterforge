@@ -1846,16 +1846,18 @@ function SelectionProfile({
   readonly profile: SelectionProfileDetail;
   readonly report: LocalRosterProfileCharacteristics | undefined;
 }) {
-  const name =
+  const baseName =
     profile.origin === "Direct"
-      ? profile.value.name
-      : profile.value.name ?? profile.value.definition.name;
+      ? profile.value.name ?? "Unnamed profile"
+      : profile.value.name ??
+        profile.value.definition.name ??
+        "Unnamed profile";
   const { typeName, characteristics } = profile.value;
-  // New Recruit shows a display annotation in parentheses after the name it
-  // decorates -- "Manreaper - sweep (Furnace of Plagues)". An unresolved one is
-  // simply omitted; the profile's incomplete note already says so.
+  // Effective name runs before annotation: "Mortifier w/ sarcophagus" can
+  // still receive a separate parenthesized decoration. An unresolved name
+  // falls back to the source while the profile's incomplete note stays visible.
+  const displayName = report?.name.value ?? baseName;
   const annotation = report?.annotation.value;
-  const displayName = name ?? "Unnamed profile";
   const annotatedName =
     annotation === undefined || annotation === ""
       ? displayName

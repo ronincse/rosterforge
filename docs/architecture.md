@@ -545,14 +545,14 @@ marks the ones a modifier added, shows a removed keyword struck through instead
 of hiding it, and states plainly when membership is unresolved. It adds no
 evaluation semantics.
 
-`inspectLocalRosterSelectionCharacteristics` evaluates the displayed
-characteristics and visibility of every profile shown for one exact occurrence —
-its direct profiles, its resolved profile info links, and the profiles of its
-recursive info groups, in that render order. Each entry retains both reports
-plus their shared completeness, keyed by the exact profile object so the panel
-looks one up without re-deriving identity. The adapter adds no evaluation
-semantics; it only supplies the occurrence and catalogue context, and an unknown
-occurrence is an ordinary application diagnostic.
+`inspectLocalRosterSelectionCharacteristics` evaluates the displayed name,
+annotation, visibility, and characteristics of every profile shown for one
+exact occurrence — its direct profiles, resolved profile info links, and the
+profiles of recursive info groups, in that render order. Each entry retains
+all four reports plus their shared completeness, keyed by the exact profile
+object so the panel looks one up without re-deriving identity. The adapter adds
+no evaluation semantics; it supplies the occurrence, catalogue context, and
+the displayed base name. An unknown occurrence is an application diagnostic.
 
 The workspace renders the effective value when it is known. A characteristic
 whose value changed also shows its source value labelled as the base, so the
@@ -1570,6 +1570,27 @@ selection displays an incomplete note. Profile annotation completeness folds
 into profile inspection alongside characteristics and visibility. Selection
 annotation completeness stays attached to the occurrence-name decoration.
 
+### Profile display name
+
+`evaluateRosterProfileName` reports one profile's effective display name
+without changing the projected profile or a materialized info link. The caller
+supplies the displayed base name, so an info-link name override is refined
+instead of being replaced by the definition's name. Direct modifiers run first,
+then condition-aware modifier groups in source order, then supported
+profile-terminus `affects` routes. The workspace renders that result before its
+separate parenthesized annotation and falls back to the base when the name is
+unresolved, while retaining the profile's incomplete note.
+
+The pinned corpus has exactly five profile-owned `field="name"` modifiers:
+four `set` and one `append`. Every modifier sits in one top-level `and` group;
+the modifier itself has no conditions, condition groups, repeats, scope, or
+behavior attributes. Its group has one `atLeast 1 selections` condition whose
+`scope` is the owning model's source ID and whose `childId` names a selected
+wargear entry, with `shared` and `includeChildSelections` both true. The four
+sets rename shield-bearing profiles outright. The Space Wolves append adds
+`(Storm shield)` with no `join`, so the established default-space separator
+produces the displayed suffix.
+
 ### Selection display name
 
 `evaluateRosterSelectionName` reports one occurrence's effective display name.
@@ -1626,13 +1647,13 @@ unapplied step *before* the last applied step cannot affect the result, while an
 unapplied step after it leaves the value unknown. A report can therefore expose
 a known effective value while remaining `incomplete`.
 
-Any profile-owned modifier that does not route to exactly one characteristic on
-its own profile — including `name` and characteristic types belonging to
-another profile — is retained as an
-`unroutedModifiers` entry with a reason, diagnosed at its source location, and
-makes the report incomplete. This evaluator does not decide profile naming,
-`affects` retargeting, or info-group modifier behavior, so it cannot prove that
-such a modifier leaves the display unchanged.
+Any profile-owned modifier not delegated to the name, annotation, or visibility
+reports that does not route to exactly one characteristic on its own profile —
+including characteristic types belonging to another profile — is retained as
+an `unroutedModifiers` entry with a reason, diagnosed at its source location,
+and makes the report incomplete. The characteristic evaluator does not decide
+info-group modifier ownership, so it cannot prove that such a modifier leaves
+the display unchanged.
 
 A modifier declared by the profile's owner **or any of its ancestors** can route
 here through an `affects` selector. The evaluator walks the owner's ancestor

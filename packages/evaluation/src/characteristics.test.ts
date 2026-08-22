@@ -27,6 +27,7 @@ import { fixtureBytes } from "@rosterforge/test-fixtures";
 import {
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
+  evaluateRosterProfileName,
   evaluateRosterProfileVisibility,
   evaluateRosterSelectionAnnotation,
   evaluateRosterSelectionName,
@@ -1083,6 +1084,79 @@ describe("affects traversal", () => {
   });
 });
 
+describe("roster profile name", () => {
+  it("keeps condition-gated groups inert until their ID-scoped child is selected", () => {
+    const setup = profileNameSetup(false);
+
+    const report = successful(
+      evaluateRosterProfileName(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-name-grouped"),
+        "Profile Name",
+      ),
+    );
+
+    expect(report).toMatchObject({
+      baseValue: "Profile Name",
+      value: "Profile Name",
+      completeness: "complete",
+      steps: [
+        { status: "notApplicable", grouped: true },
+        { status: "notApplicable", grouped: true },
+      ],
+    });
+  });
+
+  it("runs grouped set and append in order when the child is selected", () => {
+    const setup = profileNameSetup(true);
+    const source = profile(setup.ownerChoice, "profile-name-grouped");
+
+    const report = successful(
+      evaluateRosterProfileName(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        source,
+        "Profile Name",
+      ),
+    );
+
+    expect(report).toMatchObject({
+      baseValue: "Profile Name",
+      value: "Profile Name w/ shield (Veteran)",
+      completeness: "complete",
+      steps: [
+        {
+          status: "applied",
+          kind: "set",
+          input: "Profile Name",
+          output: "Profile Name w/ shield",
+          grouped: true,
+        },
+        {
+          status: "applied",
+          kind: "append",
+          input: "Profile Name w/ shield",
+          output: "Profile Name w/ shield (Veteran)",
+          grouped: true,
+        },
+      ],
+    });
+
+    const characteristics = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        source,
+      ),
+    );
+    expect(characteristics.unroutedModifiers).toEqual([]);
+    expect(characteristics.completeness).toBe("complete");
+  });
+});
 describe("roster selection name", () => {
   it("refines the catalogue name and chains appends", () => {
     const setup = characteristicSetup("name-owner");
@@ -1315,6 +1389,34 @@ function characteristicSetup(rootId = "characteristic-owner"): {
   return { context, roster, owner, ownerChoice: ownerChoice };
 }
 
+function profileNameSetup(includeTrigger: boolean): {
+  readonly context: BattleScribeCatalogueContext;
+  readonly roster: Roster;
+  readonly owner: RosterSelection;
+  readonly ownerChoice: EvaluationSelectionChoice;
+} {
+  const setup = characteristicSetup("profile-name-owner");
+  if (!includeTrigger) return setup;
+
+  const trigger = choice(setup.context, "profile-name-trigger");
+  const roster = successful(
+    addRosterSelectionToSelection(
+      setup.roster,
+      setup.owner.id,
+      {
+        id: selectionOccurrenceId("profile-name-trigger-occurrence"),
+        definition: {
+          kind: trigger.kind,
+          key: projectionKey(trigger.occurrence),
+          ...(trigger.id === undefined ? {} : { sourceId: trigger.id }),
+        },
+      },
+    ),
+  );
+  const owner = roster.forces[0]?.selections[0];
+  if (owner === undefined) throw new Error("Missing profile-name owner.");
+  return { ...setup, roster, owner };
+}
 /**
  * A model carrying an enhancement and a weapon, mirroring the shape confirmed
  * in New Recruit: the enhancement has no children, so its selector can only

@@ -377,6 +377,9 @@
 - Selection display name as its own report, sharing an engine with selection
   annotation, based on the name currently displayed so a user rename composes
   with a catalogue modifier rather than competing with it
+- Profile display name as its own report, based on the direct or linked name
+  currently displayed, executing direct and condition-aware grouped modifiers
+  before supported profile-terminus `affects` routes without mutating source data
 - Profile display annotation as its own report, built from an always-empty base
   by the same operations and `affects` routing as characteristics, rendered in
   parentheses after the profile name and folded into that profile's
@@ -478,9 +481,6 @@
   deciding them needs the membership pass one is computing.
 - Characteristic modifiers owned by selection entries, entry links, info links,
   or info groups rather than by the profile itself
-- Profile-owned `name` modifiers; they are retained as unrouted display
-  behavior and make a characteristic report incomplete rather than being
-  silently ignored. Selection-level `name` is evaluated.
 
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
@@ -1034,10 +1034,21 @@ profile-owned `hidden` modifier is grouped and none sets `false`. Exactly one of
 the 13,451 projected-and-generic profiles declares a static `hidden="true"`.
 Because a `hidden` modifier cannot change a characteristic value, it no longer
 makes a characteristic report incomplete; visibility owns its own completeness.
-The remaining `name` and cross-profile characteristic modifiers are retained as
-unrouted display behavior and still make their characteristic report
-incomplete. Annotation has its own report and no longer affects characteristic
-completeness.
+
+The five profile-owned `name` modifiers now execute through their own display
+report. Four are `set` and one is `append`; all five are inside one top-level
+`and` group with a single `atLeast 1 selections` condition. Each condition
+uses an ID-valued scope naming the owning model and a `childId` naming selected
+wargear, with `shared` and `includeChildSelections` true. The modifiers
+themselves carry no conditions, condition groups, repeats, scope, `affects`,
+`join`, `arg`, or `position`. The four sets produce shield-specific profile
+names; the Space Wolves append relies on the default-space separator for
+`(Storm shield)`. Name completeness is independent and no longer penalizes
+characteristic completeness.
+
+The six cross-profile characteristic modifiers remain unrouted display behavior
+and still make their characteristic report incomplete. Annotation has its own
+report and likewise does not affect characteristic completeness.
 
 Across every ownership surface, the pinned corpus contains 590
 `field="annotation"` modifiers. Target-aware classification splits them into
@@ -1045,8 +1056,9 @@ Across every ownership surface, the pinned corpus contains 590
 68 selection modifiers (53 direct, 15 routed; 39 `set`, 29 `append`). Of the
 selection forms, 61 are grouped, 52 carry conditions, 16 carry condition
 groups, none carries a repeat or scope, and none embeds a filter ID. Seven
-selection appends and 17 profile appends omit `join`; those steps remain
-observable and make only their annotation report incomplete.
+selection appends and 17 profile appends omit `join`; the established
+default-space rule executes them, and an empty annotation base emits no leading
+separator.
 
 The pinned corpus contains 892 `field="category"` modifiers: 532 `add`, 328
 `set-primary`, 27 `remove`, and five `unset-primary`. All 892 values resolve to

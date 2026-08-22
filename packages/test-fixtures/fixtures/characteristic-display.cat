@@ -455,6 +455,51 @@
         </profile>
       </profiles>
     </selectionEntry>
+    <selectionEntry id="profile-name-owner" name="Profile Name Owner"
+      type="model">
+      <profiles>
+        <profile id="profile-name-grouped" name="Profile Name"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">6"</characteristic>
+          </characteristics>
+          <modifierGroups>
+            <!-- Mirrors all five corpus profile-name modifiers: the
+                 modifier is unconditional and its group owns the
+                 ID-scoped selection condition. -->
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" field="name"
+                  value="Profile Name w/ shield" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" field="selections"
+                  scope="profile-name-owner"
+                  childId="profile-name-trigger" value="1"
+                  shared="true" includeChildSelections="true" />
+              </conditions>
+            </modifierGroup>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="append" field="name"
+                  value="(Veteran)" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" field="selections"
+                  scope="profile-name-owner"
+                  childId="profile-name-trigger" value="1"
+                  shared="true" includeChildSelections="true" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
+        </profile>
+      </profiles>
+      <selectionEntries>
+        <selectionEntry id="profile-name-trigger" name="Storm Shield"
+          type="upgrade" />
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="affects-owner" name="Affects Owner" type="unit">
       <profiles>
         <profile id="profile-routed-unit" name="Routed Unit"

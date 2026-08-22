@@ -936,6 +936,45 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
     });
   });
 
+  it("composes a condition-gated effective profile name", async () => {
+    const selectionId = selectionOccurrenceId(
+      "profile-name-owner-occurrence",
+    );
+    const session = await characteristicSession(
+      "profile-name-owner",
+      selectionId,
+    );
+    const trigger = localRosterChildChoices(session, selectionId)[0];
+    if (trigger === undefined) throw new Error("Expected name trigger.");
+    const withTrigger = addLocalRosterChildSelection(
+      session,
+      selectionId,
+      trigger,
+      {
+        selectionId: selectionOccurrenceId(
+          "profile-name-trigger-occurrence",
+        ),
+      },
+    );
+    if (!withTrigger.ok) throw new Error("Expected name trigger selection.");
+
+    const inspected = inspectLocalRosterSelectionCharacteristics(
+      withTrigger.value,
+      selectionId,
+    );
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    expect(inspected.value.profiles[0]).toMatchObject({
+      name: {
+        baseValue: "Profile Name",
+        value: "Profile Name w/ shield (Veteran)",
+        completeness: "complete",
+      },
+      report: { completeness: "complete", unroutedModifiers: [] },
+      completeness: "complete",
+    });
+  });
   it("rejects an occurrence that is not in the roster", async () => {
     const session = await characteristicSession();
 
