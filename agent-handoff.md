@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (repository caches bounded; headroom researched)
+## Current Status — 2026-08-22 (profile display fidelity complete)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,17 +39,18 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **466 passed, 8 skipped (474)**.
+  `git diff --check` all pass. `pnpm test` is **469 passed, 9 skipped (478)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed** (474 total); without it those 8 are the skipped tests.
-- **Active area.** Display fidelity (roadmap section A). Both repository caches
-  are bounded; reliable storage-headroom preflight is unavailable from the
-  browser API and is now deferred. Editing durability is complete.
-- **Comments.** Changed cache exports document their measured costs and
-  invariants alongside the existing documented front door.
+  is **9 passed** (478 total); without it those 9 are the skipped tests.
+- **Active area.** Legality and initialization semantics (roadmap section B).
+  Every observed profile-name modifier now executes and section A has no
+  remaining corpus-backed display gap. Editing durability is complete.
+- **Comments.** The profile-name report and evaluator document source
+  immutability, caller-supplied linked-name bases, execution order, and the
+  corpus split between selection and profile targets.
 
 ### Picking up from here
 
@@ -67,15 +68,15 @@ Section E is **complete**. The repository **byte** cache is bounded to 256 MiB,
 and the separate remote-index **metadata** cache is bounded to 32 MiB; both
 evict least-recently-used re-downloadable entries and never touch saved drafts.
 
-The current **Next is profile `name` modifiers** in section A, the final
-observed display-fidelity gap (five pinned-corpus instances). Measure them before
-choosing routing or presentation semantics.
+The current **Next is `automatic` driving auto-fill** in section B. Constraint
+evaluation already treats the attribute as inert to the bound itself; the
+remaining question is whether and how its 109 corpus instances alter initial
+selection creation. Inventory first, then consult nr-editor/New Recruit rather
+than inferring behavior from the attribute name.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
 quota, and cannot safely refuse a write or trigger cache deletion.
-
-Keep profile `name` modifiers late in section A; only five instances remain.
 
 Three habits earned the hard way, all worth keeping:
 
@@ -128,7 +129,7 @@ owner reprioritises).
 | `affects` force anchoring | Done | 31 detachment abilities, via a `forces` segment or a `force`/`roster` scope; traversal depth still distinguishes the force's own selections from everything below |
 | Withheld routing vs withheld steps | Open | when routing is *unresolvable* the report is incomplete but each characteristic keeps its printed value; when a *step* is unapplied the value is cleared. Now a **rare** path: no corpus modifier reaches it. Reconcile when something makes it common. |
 | Selection `name` modifiers | Done | 7,673 instances, overwhelmingly Crusade rank suffixes gated by XP condition groups |
-| Profile `name` modifiers | Open | five corpus instances; still unrouted display behavior |
+| Profile `name` modifiers | Done | five grouped, condition-gated corpus instances; four `set`, one default-space `append`; exact Mortifier transition pinned |
 | Legality and validation | Measured | see section B — much smaller than assumed; the points limit already works |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
 
@@ -147,9 +148,9 @@ points limit works end to end and is now pinned.
 | `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
 
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
-| `automatic` driving auto-fill | Open | unverified, unconsumed. `initialization.ts` reads parent-scoped minima and does not look at it. |
+| `automatic` driving auto-fill | Next | unverified, unconsumed; inventory all 109 values and bound contexts before changing initialization |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
-| Sections C–E | Measured | see section E; editing durability had the worse gap and is now the active area |
+| Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -4456,3 +4457,86 @@ No tests changed. The immediately preceding full gates remain **466 passed,
 Return to section A for the final observed display gap: **profile `name`
 modifiers**, five pinned-corpus instances. Measure their ownership, routing,
 conditions, and expected presentation before implementing them.
+
+## Completed Assignment — Profile Display Names, 2026-08-22
+
+Baseline `d869233`; resulting implementation commit `736d530`
+(`feat: evaluate profile display names`).
+
+### Measurement
+
+The pinned 46-document corpus has exactly five profile-owned
+`field="name"` modifiers. Four are `set`; the Space Wolves form is `append`
+with no `join`, so it uses the established default-space separator. Every one
+is inside one top-level `and` group with a single `atLeast 1 selections`
+condition. The condition's ID-valued scope names the owning model, `childId`
+names selected wargear, and `shared` plus `includeChildSelections` are true.
+The modifiers themselves have no conditions, condition groups, repeats, scope,
+`affects`, `join`, `arg`, or `position`.
+
+The exact profile IDs are pinned in Adepta Sororitas, Deathwatch (two), Space
+Marines, and Space Wolves. The operation values are four shield-specific names
+and the `(Storm shield)` suffix.
+
+### Implementation
+
+`evaluateRosterProfileName` is a read-only report over the existing projection.
+The caller supplies the base name so a materialized info-link override composes
+correctly. Direct profile modifiers run first, then condition-aware modifier
+groups in source order, then the already-supported profile-terminus `affects`
+path. Unsupported applicable behavior withholds the effective name and makes
+only the name/profile inspection incomplete.
+
+`field="name"` is no longer misclassified as an unrouted characteristic
+target. The browser session folds the name report into each profile's
+completeness and the workspace renders effective name, then parenthesized
+annotation. The projected profile, generic node, link wrapper, and source bytes
+are never mutated or cloned.
+
+No diagnostic code was added: text operations use the existing structured
+characteristic-operation codes, while group and condition failures retain
+their existing source-located codes.
+
+### Real-data proof
+
+The new optional test builds the pinned Sororitas Mortifiers root, explicitly
+selects model definition `f027-a14f-7bcb-90fd`, then profile
+`aa7-bf29-422a-6219`. Before wargear, the grouped step is not applicable and
+the value stays `Mortifier`. Selecting Anchorite Sarcophagus
+`e8dd-ba31-be8a-ef32` makes that exact step apply and produces
+`Mortifier w/ sarcophagus`.
+
+The test also records a useful graph distinction: the visible Mortifiers root
+is a catalogue-link occurrence; `3c3f-f02d-c05c-492a` is its `definitionId`,
+not its occurrence `id`.
+
+### Verification
+
+Three ordinary tests were added, **466 -> 469 passed**: grouped false and true
+paths in the evaluator, plus browser-session composition. The existing UI test
+now proves an effective profile name renders before its own annotation. The
+optional pinned suite gained the exact Mortifier transition, **8 -> 9 passed**.
+
+For the negative control, grouped name execution was temporarily forced to
+`notApplicable`. The new evaluator test failed with both operations left at the
+base `Profile Name`; the implementation was restored and the test passed.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — pass.
+- `pnpm test` — **469 passed, 9 skipped (478 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — **9 passed**.
+- Build retains only the existing large-chunk warning.
+
+### Remaining boundary
+
+All observed profile-name behavior is supported. The six profile-owned
+characteristic modifiers targeting another profile remain unrouted, and
+`multiply`/`divide`/`modulo` remain deliberately unsupported because the
+pinned corpus contains none. No catalogue resolution, cost calculation, or
+validation enforcement changed.
+
+Take **`automatic` driving auto-fill** next as a research-first checkpoint.
+Inventory its 109 corpus constraints by Boolean value, bound kind, scope, and
+selection context; then consult nr-editor or observe New Recruit before
+changing `initialization.ts`. Stone previously judged this optional because it
+can change only the starting state, not the supported bound result. No owner
+input is currently required.
