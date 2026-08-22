@@ -178,7 +178,8 @@ actually asked for.
 | Autosave to an already-active draft | Done | debounced, tunable through the existing options seam |
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
 | Draft byte storage | Done | bytes stored once per import batch, collected when the last draft referencing them goes |
-| **Durable undo history** | **Next** | the roster survives a reload; the undo stack does not |
+| **Comment the public API surface** | **Next** | 6% of exported symbols are documented; see the 2026-08-21 measurement entry for scope and what *not* to do |
+| Durable undo history | Open | the roster survives a reload; the undo stack does not |
 | Durable undo history | Deferred |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
@@ -3761,3 +3762,71 @@ in-memory backend in `App.ui.test.tsx` needed only its map type widened plus an
 3. **Profile `name` modifiers** — five corpus instances, the last of section A.
 
 Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Research Note — Comment Coverage, 2026-08-21
+
+No code change. Measured because Stone asked whether the codebase reads well
+enough for an unrelated model to pick up.
+
+### The measurement
+
+Across 80 source files, excluding tests:
+
+**42 of 653 exported symbols are documented — 6%.**
+
+The split maps almost exactly onto files touched during recent checkpoints:
+
+| File | Lines | Comment lines | Exports documented |
+|---|---|---|---|
+| `evaluation/affects-routing.ts` | 328 | 26% | **80%** |
+| `evaluation/categories.ts` | 689 | 15% | 31% |
+| `evaluation/characteristics.ts` | 1,596 | 14% | 33% |
+| `web/browser-drafts.ts` | 356 | 7% | 38% |
+| `web/roster-workspace.tsx` | **2,230** | 1% | **0%** |
+| `roster-model/commands.ts` | **1,880** | **0** | **0%** (26 exports) |
+| `evaluation/conditions.ts` | 1,425 | 1% | 0% |
+| `data-graph/resolve.ts` | 1,289 | **0** | 0% |
+| `evaluation/initialization.ts` | 1,231 | **0** | 0% |
+| `data-graph/materialize.ts` | 1,077 | **0** | 0% |
+
+The largest and oldest files have **no comments at all**. Recent work is the
+exception, not the house style.
+
+### Why it matters here, and how much
+
+The project's premise is cross-model handoffs, so a stranger reading
+`commands.ts` has only the code. Two things soften that: `agent-handoff.md` and
+`docs/architecture.md` already carry the *reasoning*, which is the expensive
+part, and 449 tests act as executable specification.
+
+Evidence from one long session, both directions:
+
+- Reading code to answer questions a doc comment would have answered cost
+  perhaps 5–10% of the session. Real friction, not fatal.
+- **One gap caused a regression.** Nothing recorded that
+  `decodeLocalRosterDraft` copies every file's bytes. Autosave was built on top
+  of it and created an 8 MB-per-write problem, fixed two checkpoints later. A
+  single line on that function would have caught it at design time.
+
+### Recommended scope, and the trap
+
+**Do not sweep all 653 exports.** A retroactive pass by someone who did not
+write the code produces *confidently wrong* comments, which are worse than none,
+and comments restating a type rot on the next refactor.
+
+Target two things:
+
+1. **The public API surface a stranger meets first** — `roster-model/commands.ts`
+   and the `evaluation` entry points. These are the front door and the worst
+   documented.
+2. **Non-obvious costs and invariants** — the byte copying in
+   `decodeLocalRosterDraft`, the single-pass rule, immutability guarantees,
+   execution ordering. Exactly the class that caused the regression above.
+
+Skip `battlescribe-data/types.ts` (51 exports that are self-describing shapes)
+and anything where the type already says it. Prefer *why* over *what*: the house
+style, visible in `affects-routing.ts`, is corpus counts, rejected alternatives,
+and observations — not restatement.
+
+Verify each claim against the code before writing it. An unverified comment is a
+liability the next reader will trust.
