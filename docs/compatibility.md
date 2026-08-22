@@ -778,7 +778,9 @@ Remote-index metadata records remain isolated by provider, repository, commit,
 and pinned tree object ID; their versioned JSON payloads are bounded and
 structurally decoded before service-level report/tree consistency checks.
 Malformed, oversized, unavailable, or tree-incompatible metadata falls back to
-fresh sequential indexing. The byte-cache total does not use
+fresh sequential indexing. Remote-index metadata remains bounded per entry but
+not in total; its eviction is the next separate cache boundary. The byte-cache
+total does not use
 `navigator.storage.estimate()`; origin-wide storage headroom and
 quota-management UI remain separate work.
 

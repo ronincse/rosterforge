@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (quota failure handling)
+## Current Status — 2026-08-22 (repository byte cache bounded)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,18 +39,16 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **458 passed, 8 skipped (466)**.
+  `git diff --check` all pass. `pnpm test` is **462 passed, 8 skipped (470)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed** (466 total); without it those 8 are the skipped tests.
-- **Active area.** Catalogue sources and cache (roadmap section D). Sections A,
-  B, and E — display fidelity, legality, and editing durability — are complete.
-- **Comment coverage.** 81 of 668 exported symbols (12%), up from 42. The
-  documented set is the front door: `roster-model/commands.ts` and `types.ts`,
-  `evaluation/index.ts` and `validation.ts`, `persistence/local-roster-draft.ts`,
-  plus `evaluation/affects-routing.ts`, which remains the house-style sample.
+  is **8 passed** (470 total); without it those 8 are the skipped tests.
+- **Active area.** Catalogue sources and cache (roadmap section D). Editing
+  durability is complete; sections A and B retain listed small or deferred gaps.
+- **Comments.** Changed cache exports document their measured costs and
+  invariants alongside the existing documented front door.
 
 ### Picking up from here
 
@@ -64,20 +62,16 @@ Selection-level `annotation` is complete: direct and grouped modifiers execute,
 selections-terminus `affects` routes through a shared collector, and the
 workspace decorates occurrence names without mutating their source names.
 
-Section E is **complete**: the roster, its catalogue bytes, and now a tail of
-its undo history all survive a reload. The current **Next is section D — cache
-eviction and quota**. Nothing bounds the total size of the draft store, which
-now holds three kinds of record (drafts, `files:<batchId>`, `history:<draftId>`),
-and a user who imports several batches cannot reclaim space without deleting
-drafts.
+Section E is **complete**. The repository **byte** cache is now bounded to 256
+MiB and evicts least-recently-used re-downloadable entries; it never touches
+saved drafts.
 
-Before adding anything to a store write, measure what one costs. Two
-checkpoints running have had their design decided by that number, most recently
-the discovery that persisting a full undo history would have written 3.2 MB per
-autosave settle.
+The current **Next is the separate remote-index metadata cache** in section D.
+That third IndexedDB database is bounded to 32 MiB per entry but has no total
+bound or eviction. Measure its payload before choosing a limit.
+`navigator.storage.estimate()` remains a separate origin-wide headroom task.
 
-Keep profile `name` modifiers last in section A; 86% of the 7,673 instances are
-Crusade content.
+Keep profile `name` modifiers late in section A; only five instances remain.
 
 Three habits earned the hard way, all worth keeping:
 
@@ -103,7 +97,7 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-### A. Display-fidelity modifiers — *active area*
+### A. Display-fidelity modifiers
 
 | Item | Status | Note |
 |---|---|---|
@@ -133,7 +127,7 @@ owner reprioritises).
 | Profile `name` modifiers | Open | five corpus instances; still unrouted display behavior |
 | Legality and validation | Measured | see section B — much smaller than assumed; the points limit already works |
 | Category filter naming a non-immune category | Blocked | would need a fixpoint instead of the single pass; deliberate |
-| `name` modifiers | Open | 7,673 instances but 86% Crusade — sequence last despite the count |
+
 
 ### B. Legality and validation
 
@@ -147,7 +141,7 @@ points limit works end to end and is now pinned.
 | Structural, selection-condition, and force-constraint reports | Done | |
 | Matched-play points limit | Done | pinned: `max pts` 0 → 1000 on choosing Incursion |
 | `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
-| ID-valued (category) constraint scopes | Open | 116 corpus constraints |
+
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
 | `automatic` driving auto-fill | Open | unverified, unconsumed. `initialization.ts` reads parent-scoped minima and does not look at it. |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
@@ -183,28 +177,26 @@ actually asked for.
 | Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
 | Draft storage reporting | Done | *draft store*; summaries carry `batchId`, the shelf counts a shared batch once |
 | Draft quota failure handling | Done | *draft store*; a refused write is named, an orphaned batch is rolled back, autosave stops retrying |
-| **Repository cache eviction and quota** | **Next** | *repository cache*; no total bound, no eviction, and its backend has no `delete` — see the note below |
-| Storage headroom before a write | Open | `navigator.storage.estimate()` is consulted by neither store, so both can only report a quota failure after the fact |
+| Repository byte-cache eviction and quota | Done | 16 MiB per entry, 256 MiB total, LRU sidecars; drafts are never candidates |
+| **Repository metadata-cache eviction** | **Next** | third database; 32 MiB per entry but no total bound or eviction |
+| Storage headroom before a write | Open | `navigator.storage.estimate()` is consulted by none of the three stores |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
 
-**Two stores, and they are not the same problem.** A correction, 2026-08-22:
-earlier rows in this section were written as though "the cache" meant one thing.
+**Three databases, and they are not the same problem.** Correction to the
+2026-08-22 two-store note:
 
-- `rosterforge` / `local-roster-drafts` holds **saved drafts** — work the user
-  asked to keep. The 2026-08-22 checkpoints hardened this one. Nothing here may
-  be deleted to reclaim space without the owner deciding that first; evicting a
-  saved roster is not a cache operation.
+- `rosterforge` / `local-roster-drafts` holds saved drafts. Never evict these
+  without an owner decision.
 - `rosterforge-pinned-repository-cache` / `pinned-repository-bytes` holds
-  **downloaded catalogue bytes**, keyed by pinned revision. This is a true cache:
-  every entry is re-downloadable, so evicting it costs a download and nothing
-  else. It bounds `maxEntryBytes` at 16 MB per entry and bounds nothing in total.
+  downloaded bytes. It now has LRU sidecars and a 256 MiB source-byte bound.
+- `rosterforge-pinned-repository-metadata-cache` /
+  `pinned-repository-metadata` holds re-downloadable remote-index JSON. It
+  remains bounded only per entry and is section D's current `Next`.
 
-This section's `Next` is the **repository** cache. Note before starting:
-`BrowserRepositoryCacheRecordBackend` exposes only `get` and `put`, so eviction
-needs a backend method that does not exist yet, and the in-memory backends in
-the tests implement that interface.
+`navigator.storage.estimate()` reports origin-wide usage across all three, so
+headroom remains separate from either cache's deterministic bound.
 
 ### E. Editing and durability
 
@@ -4297,3 +4289,49 @@ Failures are legible; nothing yet **prevents** one.
 3. **`automatic` driving auto-fill** — unverified and unconsumed.
 
 Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Completed Assignment — Repository Byte-Cache Eviction, 2026-08-22
+
+Baseline `cbf0a42`; implementation commit `7c2ac00`
+(`feat: bound the repository byte cache`).
+
+Only `rosterforge-pinned-repository-cache` changed. Saved drafts were neither
+read nor evicted. The pinned 46-file corpus is **64.42 MiB** (67,554,454 bytes);
+its largest file is 7,041,250 bytes. The 256 MiB total comes directly from
+`defaultRemoteBattleScribeRepositoryLimits.maxTotalBytes` so one maximally
+accepted repository can fit.
+
+LRU won over FIFO because hits reveal reuse. Access time could not live in a byte
+record: that would rewrite up to 16 MiB per hit. Versioned sidecars total 13,463
+bytes for the corpus, 293 bytes average and 308 maximum.
+
+Database version 2 adds `pinned-repository-byte-metadata`. Writes account for
+replacement, then evict oldest byte/sidecar pairs. Valid version-1 records
+migrate at time zero; malformed legacy records are discarded. Malformed later
+accounting clears only this disposable cache. A failed sidecar touch keeps the
+valid hit usable.
+
+`navigator.storage.estimate()` stays separate because it is origin-wide and
+includes irreplaceable drafts plus three cache databases.
+
+### Verification
+
+Four tests were added, 458 → **462 passed**. Reversing the comparator made the
+LRU test fail before the implementation was restored.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — pass.
+- `pnpm test` — **462 passed, 8 skipped (470 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — **8 passed**.
+- Build retains only the existing large-chunk warning.
+
+### Correction and next boundary
+
+The incoming handoff omitted the third database,
+`rosterforge-pinned-repository-metadata-cache`. It is re-downloadable, limited
+to 32 MiB per entry, and unbounded in total. The roadmap now records it.
+
+Take **repository metadata-cache eviction** next as a measure-first checkpoint.
+Do not copy the byte-cache limit without measuring its JSON payload and retained
+revision count. Then address origin-wide storage headroom.
+
+No owner input is currently required.
