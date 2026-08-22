@@ -276,6 +276,86 @@ describe("local roster draft codec", () => {
     });
   });
 
+  it("decodes an undo history, scoping occurrence IDs per snapshot", () => {
+    // Every snapshot is the same roster at a different moment, so the same
+    // occurrence IDs recur throughout. Rejecting that would reject every
+    // history a draft can hold.
+    const value = {
+      ...rawDraft(),
+      history: {
+        past: [rosterFixture(), rosterFixture()],
+        future: [rosterFixture()],
+      },
+    };
+
+    const result = decodeLocalRosterDraft(value);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.history?.past).toHaveLength(2);
+    expect(result.value.history?.future).toHaveLength(1);
+    expect(result.value.history?.past[0]?.forces[0]?.id).toBe(
+      result.value.roster.forces[0]?.id,
+    );
+  });
+
+  it("treats an absent history as absent rather than empty", () => {
+    const result = decodeLocalRosterDraft(rawDraft());
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(Object.hasOwn(result.value, "history")).toBe(false);
+  });
+
+  it("reports a malformed history snapshot with its own path", () => {
+    const result = decodeLocalRosterDraft({
+      ...rawDraft(),
+      history: {
+        past: [rosterFixture()],
+        future: [{ ...rosterFixture(), name: 7 }],
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      diagnostics: [
+        expect.objectContaining({
+          code: "PERSISTENCE_DRAFT_INVALID",
+          details: expect.objectContaining({
+            path: ["history", "future", "0", "name"],
+          }),
+        }),
+      ],
+    });
+  });
+
+  it("rejects a history beyond the configured entry limit", () => {
+    const result = decodeLocalRosterDraft(
+      {
+        ...rawDraft(),
+        history: {
+          past: [rosterFixture(), rosterFixture()],
+          future: [rosterFixture()],
+        },
+      },
+      { maxHistoryEntries: 2 },
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      diagnostics: [
+        expect.objectContaining({
+          code: "PERSISTENCE_DRAFT_LIMIT_EXCEEDED",
+          details: expect.objectContaining({
+            limit: "maxHistoryEntries",
+            configured: 2,
+            observed: 3,
+          }),
+        }),
+      ],
+    });
+  });
+
   it("rejects update timestamps before draft creation", () => {
     const result = decodeLocalRosterDraft({
       ...rawDraft(),

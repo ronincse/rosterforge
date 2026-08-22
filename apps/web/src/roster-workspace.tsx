@@ -180,8 +180,10 @@ export function RosterOverview({
               ? "Update saved draft"
               : "Save draft"}
         </button>
-        {/* Saving is manual and undo history is in memory, so an unsaved roster
-            is lost on reload. Say so rather than letting it look persisted. */}
+        {/* Saving is manual, so an unsaved roster is lost on reload, and its
+            undo history with it: a saved draft carries a trimmed history, one
+            that was never saved has nowhere to put it. Say so rather than
+            letting it look persisted. */}
         {unsavedChanges && (
           <span className="unsaved-changes" role="status">
             Unsaved changes

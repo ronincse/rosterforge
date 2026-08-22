@@ -263,10 +263,74 @@ export function createLocalRosterSession(
   return success(session, diagnostics);
 }
 
+/**
+ * Everything a restore needs that depends on the catalogue rather than on the
+ * roster being restored.
+ *
+ * Building it is the whole cost of a restore: measured against the pinned
+ * corpus, `restoreLocalRosterSession` took 19 ms for a 4-selection roster and
+ * 19 ms for a 99-selection one, because it walks every root the catalogue
+ * materializes before it looks at the roster at all. Restoring an undo history
+ * one snapshot at a time would pay that per entry, so the plural form builds
+ * this once.
+ */
+interface LocalRosterRestoreContext {
+  readonly catalogue: LocalCatalogueChoice;
+  readonly choiceIndex: ReadonlyMap<
+    string,
+    readonly BattleScribeRosterSelectionChoice[]
+  >;
+  readonly forceDefinitions: readonly BattleScribeForceDefinition[];
+}
+
+function createLocalRosterRestoreContext(
+  catalogue: LocalCatalogueChoice,
+): LocalRosterRestoreContext {
+  return {
+    catalogue,
+    choiceIndex: indexSelectionChoices(catalogue),
+    forceDefinitions: flattenForceDefinitions(
+      catalogue.context.forces.definitions,
+    ),
+  };
+}
+
+/**
+ * Rebuilds a session for each roster against one shared catalogue context.
+ *
+ * Used to restore a saved undo history, where every snapshot resolves against
+ * the same catalogue. Fails as a unit: a history with one unrestorable snapshot
+ * is not a history anyone can step through, so the caller gets the diagnostics
+ * rather than a silently shortened stack.
+ */
+export function restoreLocalRosterSessions(
+  catalogue: LocalCatalogueChoice,
+  rosters: readonly Roster[],
+): Result<readonly LocalRosterSession[]> {
+  const context = createLocalRosterRestoreContext(catalogue);
+  const sessions: LocalRosterSession[] = [];
+  const diagnostics: Diagnostic[] = [];
+  for (const roster of rosters) {
+    const restored = restoreWithContext(context, roster);
+    diagnostics.push(...restored.diagnostics);
+    if (!restored.ok) return failure(diagnostics);
+    sessions.push(restored.value);
+  }
+  return success(sessions, diagnostics);
+}
+
 export function restoreLocalRosterSession(
   catalogue: LocalCatalogueChoice,
   roster: Roster,
 ): Result<LocalRosterSession> {
+  return restoreWithContext(createLocalRosterRestoreContext(catalogue), roster);
+}
+
+function restoreWithContext(
+  context: LocalRosterRestoreContext,
+  roster: Roster,
+): Result<LocalRosterSession> {
+  const { catalogue } = context;
   const expectedCatalogue = rosterCatalogueReference(catalogue.context);
   if (
     roster.catalogue.key !== expectedCatalogue.key ||
@@ -306,9 +370,7 @@ export function restoreLocalRosterSession(
     ]);
   }
 
-  const forceDefinitions = flattenForceDefinitions(
-    catalogue.context.forces.definitions,
-  ).filter(
+  const forceDefinitions = context.forceDefinitions.filter(
     (definition) =>
       rosterDefinitionKeyForSource(
         definition.source.source.sourceId,
@@ -332,14 +394,13 @@ export function restoreLocalRosterSession(
     ]);
   }
 
-  const choiceIndex = indexSelectionChoices(catalogue);
   const selectionChoices = new Map<
     SelectionOccurrenceId,
     BattleScribeRosterSelectionChoice
   >();
   const diagnostics = restoreSelectionChoices(
     rootForce.selections,
-    choiceIndex,
+    context.choiceIndex,
     selectionChoices,
     catalogue,
   );

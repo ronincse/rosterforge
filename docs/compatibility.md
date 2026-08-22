@@ -99,9 +99,12 @@
   draft store is retained, and identity against it decides whether anything has
   changed. The workspace shows an unsaved indicator and the browser asks before
   a reload discards it
-- In-memory undo and redo for successful structural edits, retaining exact
-  immutable session snapshots, clearing redo after a branched edit, and capping
-  retained past snapshots at 100
+- Undo and redo for successful structural edits, retaining exact immutable
+  session snapshots, clearing redo after a branched edit, and capping retained
+  past snapshots at 100
+- A saved draft carries a trimmed tail of that history across a reload, stored
+  under a reserved `history:<draftId>` key. See "Draft Undo History" below for
+  what survives and why it is a tail rather than all of it
 - Recursive occurrence-specific selection rename and reset-to-definition-name
   controls, with non-empty trimmed custom names and undo/redo participation
 - Versioned, bounded local-roster-draft envelopes retaining ordered source
@@ -557,6 +560,46 @@ Consequences worth knowing:
 Two further bounds remain on autosave, independent of the split: the debounce is
 five seconds rather than shorter, and the recovery slot skips its write whenever
 an active draft is already being kept current.
+
+## Draft Undo History
+
+A saved draft stores its undo history so a reload does not cost the stack. It is
+a **tail**, not the whole thing, and deliberately so.
+
+A roster snapshot is small on its own — **34 KB** for a 99-selection Aeldari
+list, measured against the pinned corpus. But a store replaces whole records, so
+persisting the full in-memory depth of 100 would put **3.2 MB** on every autosave
+settle, which is the write cost the byte split above was written to remove.
+
+The bounds, in the order they bind:
+
+- The persisted history lives under `history:<draftId>`, not inside the draft
+  record, so `list` never reads or validates it. Only `load` does.
+- `maxHistoryEntries` caps it at **20** entries across past and future together;
+  a record exceeding that is refused as `PERSISTENCE_DRAFT_LIMIT_EXCEEDED`.
+- A **256 KB** budget in the browser store then trims it further, keeping the
+  entries nearest the present. For a large roster that is roughly seven undo
+  steps; for a small one it is the full twenty.
+- Past is filled before future, because undo is what anyone reaches for first
+  after a reload.
+
+Consequences worth knowing:
+
+- Each snapshot is decoded in its own occurrence-ID and node scope. The same IDs
+  recur across snapshots by construction — they are one roster at different
+  moments — so a shared scope would reject every history.
+- Restoring is done in one pass against a shared catalogue context. Rebuilding
+  the choice index per snapshot measured **490 ms** for a 20-deep history
+  against **27 ms** shared, because the index walks the whole catalogue and does
+  not depend on the roster at all.
+- A snapshot that no longer resolves costs the history, not the roster: the
+  draft opens with an empty stack and reports
+  `WEB_ROSTER_DRAFT_HISTORY_UNAVAILABLE`.
+- Records written before the history existed still load; an absent history stays
+  absent rather than becoming an empty one.
+- An unsaved roster still has no history across a reload. The recovery slot
+  carries one, but a roster that has never been saved and never settled has
+  nowhere to keep it.
 
 ## Deferred
 

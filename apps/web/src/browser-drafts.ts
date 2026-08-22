@@ -1,6 +1,8 @@
 import {
   decodeLocalRosterDraft,
+  defaultLocalRosterDraftLimits,
   type LocalRosterDraft,
+  type LocalRosterDraftHistory,
 } from "@rosterforge/persistence";
 import {
   failure,
@@ -8,7 +10,11 @@ import {
   type Diagnostic,
   type Result,
 } from "@rosterforge/foundation";
-import type { RosterForce, RosterSelection } from "@rosterforge/roster-model";
+import type {
+  Roster,
+  RosterForce,
+  RosterSelection,
+} from "@rosterforge/roster-model";
 
 export interface LocalRosterDraftSummary {
   readonly id: string;
@@ -30,8 +36,11 @@ export interface LocalRosterDraftStore {
   readonly delete: (id: string) => Promise<Result<void>>;
 }
 
-/** Anything the store keeps: a draft, or a batch's shared source files. */
-export type StoredRecord = LocalRosterDraft | DraftFilesRecord;
+/** Anything the store keeps: a draft, a batch's source files, or a history. */
+export type StoredRecord =
+  | LocalRosterDraft
+  | DraftFilesRecord
+  | DraftHistoryRecord;
 
 /**
  * The source files of one import batch, stored once and referenced by every
@@ -45,6 +54,19 @@ export type StoredRecord = LocalRosterDraft | DraftFilesRecord;
 export interface DraftFilesRecord {
   readonly id: string;
   readonly files: readonly LocalRosterDraft["import"]["files"][number][];
+}
+
+/**
+ * One draft's undo history, stored beside the draft rather than inside it.
+ *
+ * Kept separate so `list` never pays for it: a shelf summary needs a name, a
+ * date, and a selection count, and validating twenty roster snapshots per draft
+ * on every shelf refresh is work for nothing. `load` is the only reader.
+ */
+export interface DraftHistoryRecord {
+  readonly id: string;
+  readonly past: readonly Roster[];
+  readonly future: readonly Roster[];
 }
 
 export interface LocalRosterDraftRecordBackend {
@@ -69,9 +91,102 @@ const objectStoreName = "local-roster-drafts";
 export const recoveryDraftId = "__recovery__";
 
 const filesKeyPrefix = "files:";
+const historyKeyPrefix = "history:";
+
+/**
+ * How much undo history is worth rewriting on every autosave.
+ *
+ * A roster snapshot measured 34 KB for a 99-selection list against the pinned
+ * corpus, so this is roughly seven undo steps for a large roster and the full
+ * twenty for a small one. A byte budget rather than a count, because the cost
+ * that matters is bytes rewritten per settle and a snapshot grows with the
+ * roster. Raising it re-opens the write problem the draft byte split closed.
+ */
+const maxHistoryBytes = 256 * 1024;
 
 function filesKey(batchId: string): string {
   return `${filesKeyPrefix}${batchId}`;
+}
+
+function historyKey(draftId: string): string {
+  return `${historyKeyPrefix}${draftId}`;
+}
+
+function isHistoryRecord(value: unknown): value is DraftHistoryRecord {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === "string" &&
+    (value as { id: string }).id.startsWith(historyKeyPrefix) &&
+    Array.isArray((value as { past?: unknown }).past) &&
+    Array.isArray((value as { future?: unknown }).future)
+  );
+}
+
+function isStoredDraftRecord(value: unknown): boolean {
+  return !isFilesRecord(value) && !isHistoryRecord(value);
+}
+
+/**
+ * The draft as stored: its history lives under `history:<draftId>`.
+ *
+ * Copies and removes rather than listing the fields to keep, so a field added
+ * to `LocalRosterDraft` later still reaches the record.
+ */
+function withoutHistory(draft: LocalRosterDraft): LocalRosterDraft {
+  const stored = { ...draft };
+  delete (stored as { history?: LocalRosterDraftHistory }).history;
+  return stored;
+}
+
+/**
+ * Keeps the history entries nearest the present and drops the rest.
+ *
+ * Past before future: after a reload the next thing anyone reaches for is undo,
+ * and a redo stack that outlived the undo steps it sits on top of would be a
+ * strange thing to hand back. Both share one budget, so a large roster keeps
+ * fewer of each rather than the same number at several times the cost.
+ */
+function trimHistory(
+  history: LocalRosterDraftHistory,
+  maxEntries: number,
+  maxBytes: number,
+): LocalRosterDraftHistory {
+  let entries = maxEntries;
+  let bytes = maxBytes;
+  const keep = (candidates: readonly Roster[]): Roster[] => {
+    const kept: Roster[] = [];
+    for (const roster of candidates) {
+      if (entries <= 0) break;
+      const size = JSON.stringify(roster).length;
+      // Stop rather than skip: dropping a middle entry would make undo jump
+      // over an edit the user made, which is worse than a shorter history.
+      if (size > bytes) break;
+      entries -= 1;
+      bytes -= size;
+      kept.push(roster);
+    }
+    return kept;
+  };
+  // `past` is oldest first, so its nearest entries are at the end.
+  const past = keep([...history.past].reverse()).reverse();
+  return { past, future: keep(history.future) };
+}
+
+function boundedHistoryDraft(draft: LocalRosterDraft): LocalRosterDraft {
+  if (draft.history === undefined) return draft;
+  return {
+    ...draft,
+    history: trimHistory(
+      draft.history,
+      defaultLocalRosterDraftLimits.maxHistoryEntries,
+      maxHistoryBytes,
+    ),
+  };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isFilesRecord(value: unknown): value is DraftFilesRecord {
@@ -128,7 +243,8 @@ export function createLocalRosterDraftStore(
         if (isFilesRecord(record)) filesByKey.set(record.id, record.files);
       }
       for (const record of records) {
-        if (isFilesRecord(record)) continue;
+        // Summaries need no history, so those records never reach the decoder.
+        if (!isStoredDraftRecord(record)) continue;
         const decoded = decodeLocalRosterDraft(record);
         diagnostics.push(...decoded.diagnostics);
         // The recovery slot lives in this store but is not a saved draft.
@@ -159,7 +275,30 @@ export function createLocalRosterDraftStore(
         );
       }
       if (record === undefined) return success(undefined);
-      const decoded = decodeLocalRosterDraft(record);
+
+      let storedHistory: unknown;
+      try {
+        storedHistory = await backend.get(historyKey(id));
+      } catch (error: unknown) {
+        return operationFailure(
+          "PERSISTENCE_DRAFT_READ_FAILED",
+          "The saved roster draft could not be read.",
+          error,
+        );
+      }
+      // Spliced in before decoding rather than attached after, so the snapshots
+      // are validated on the way out like everything else in the record.
+      const source =
+        isHistoryRecord(storedHistory) && isPlainRecord(record)
+          ? {
+              ...record,
+              history: {
+                past: storedHistory.past,
+                future: storedHistory.future,
+              },
+            }
+          : record;
+      const decoded = decodeLocalRosterDraft(source);
       if (!decoded.ok) return decoded;
       const stored = await backend.get(filesKey(decoded.value.import.batchId));
       // A record written before the split carries its own bytes.
@@ -173,7 +312,7 @@ export function createLocalRosterDraftStore(
     },
 
     async save(draft) {
-      const decoded = decodeLocalRosterDraft(draft);
+      const decoded = decodeLocalRosterDraft(boundedHistoryDraft(draft));
       if (!decoded.ok) return decoded;
       try {
         // Batch bytes never change, so they are written once and every later
@@ -182,7 +321,23 @@ export function createLocalRosterDraftStore(
         if ((await backend.get(key)) === undefined) {
           await backend.put({ id: key, files: decoded.value.import.files });
         }
-        await backend.put(withoutBytes(decoded.value));
+        const history = decoded.value.history;
+        const historyRecordKey = historyKey(decoded.value.id);
+        if (
+          history === undefined ||
+          (history.past.length === 0 && history.future.length === 0)
+        ) {
+          // Undoing back to the start leaves nothing to restore; a stale record
+          // would resurrect a history the draft no longer has.
+          await backend.delete(historyRecordKey);
+        } else {
+          await backend.put({
+            id: historyRecordKey,
+            past: history.past,
+            future: history.future,
+          });
+        }
+        await backend.put(withoutBytes(withoutHistory(decoded.value)));
         return success(undefined);
       } catch (error: unknown) {
         return operationFailure(
@@ -200,6 +355,8 @@ export function createLocalRosterDraftStore(
         const decoded =
           removed === undefined ? undefined : decodeLocalRosterDraft(removed);
         await backend.delete(id);
+        // A history belongs to exactly one draft, so it goes with it.
+        await backend.delete(historyKey(id));
 
         // Shared bytes outlive one draft, but not all of them: collect the
         // batch once nothing references it, or it leaks megabytes forever.

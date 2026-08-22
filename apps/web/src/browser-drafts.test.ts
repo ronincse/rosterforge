@@ -10,6 +10,7 @@ import {
   rosterDefinitionKey,
   rosterId,
   selectionOccurrenceId,
+  type Roster,
 } from "@rosterforge/roster-model";
 
 import {
@@ -137,6 +138,98 @@ describe("local roster draft store", () => {
     },
   );
 
+  it("stores the undo history in its own record and reassembles it on load", async () => {
+    const value = draftWithHistory(
+      "saved",
+      [historyRoster("past-1")],
+      [historyRoster("future-1")],
+    );
+    const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+
+    expect((await store.save(value)).ok).toBe(true);
+
+    // The draft record stays small: it is rewritten on every autosave settle.
+    const stored = records.get("saved") as LocalRosterDraft | undefined;
+    expect(stored === undefined ? true : Object.hasOwn(stored, "history")).toBe(
+      false,
+    );
+    expect(records.has("history:saved")).toBe(true);
+
+    const loaded = await store.load("saved");
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) return;
+    expect(loaded.value?.history?.past.map(({ name }) => name)).toEqual([
+      "past-1",
+    ]);
+    expect(loaded.value?.history?.future.map(({ name }) => name)).toEqual([
+      "future-1",
+    ]);
+  });
+
+  it("summarizes drafts without reading their history records", async () => {
+    const value = draftWithHistory("saved", [historyRoster("past-1")], []);
+    const { backend } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+    await store.save(value);
+
+    const result = await store.list();
+
+    // A history record reaching the draft decoder would diagnose a bad format.
+    expect(result.ok).toBe(true);
+    expect(result.diagnostics).toEqual([]);
+    if (!result.ok) return;
+    expect(result.value.map(({ id }) => id)).toEqual(["saved"]);
+  });
+
+  it("keeps the history nearest the present when the byte budget binds", async () => {
+    const past = Array.from({ length: 12 }, (_, index) =>
+      bulkyRoster(`past-${index}`),
+    );
+    const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+
+    expect((await store.save(draftWithHistory("saved", past, []))).ok).toBe(
+      true,
+    );
+
+    const stored = records.get("history:saved") as
+      | { readonly past: readonly Roster[] }
+      | undefined;
+    const kept = stored?.past.map(({ name }) => name) ?? [];
+    expect(kept.length).toBeGreaterThan(0);
+    expect(kept.length).toBeLessThan(past.length);
+    // The tail survives: the next thing anyone reaches for after a reload is
+    // undo, so the oldest snapshots are the ones worth dropping.
+    expect(kept).toEqual(
+      past.slice(past.length - kept.length).map(({ name }) => name),
+    );
+    expect(JSON.stringify(stored?.past).length).toBeLessThanOrEqual(
+      256 * 1024,
+    );
+  });
+
+  it("removes the history record once nothing is left to undo", async () => {
+    const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+
+    await store.save(draftWithHistory("saved", [historyRoster("past-1")], []));
+    expect(records.has("history:saved")).toBe(true);
+
+    await store.save(draftWithHistory("saved", [], []));
+    expect(records.has("history:saved")).toBe(false);
+  });
+
+  it("collects the history record when the draft is deleted", async () => {
+    const { backend, records } = memoryBackend();
+    const store = createLocalRosterDraftStore(backend);
+    await store.save(draftWithHistory("saved", [historyRoster("past-1")], []));
+
+    expect((await store.delete("saved")).ok).toBe(true);
+
+    expect(records.size).toBe(0);
+  });
+
   it("reports unavailable IndexedDB without throwing", async () => {
     const store = createIndexedDbLocalRosterDraftStore(null);
 
@@ -201,6 +294,73 @@ function draft(id: string, updatedAt: string): LocalRosterDraft {
     throw new Error("Expected fixture draft creation to succeed.");
   }
   return result.value;
+}
+
+function draftWithHistory(
+  id: string,
+  past: readonly Roster[],
+  future: readonly Roster[],
+): LocalRosterDraft {
+  const base = draft(id, "2026-07-23T12:01:00.000Z");
+  const result = createLocalRosterDraft({
+    id: base.id,
+    createdAt: base.createdAt,
+    updatedAt: base.updatedAt,
+    catalogueKey: base.catalogueKey,
+    import: base.import,
+    roster: base.roster,
+    history: { past, future },
+  });
+  if (!result.ok) {
+    throw new Error("Expected fixture draft creation to succeed.");
+  }
+  return result.value;
+}
+
+function historyRoster(name: string): Roster {
+  return {
+    id: rosterId(`roster-${name}`),
+    name,
+    catalogue: {
+      kind: "catalogue",
+      key: rosterDefinitionKey("fixture:catalogue"),
+      sourceId: objectId("catalogue-source"),
+    },
+    forces: [
+      {
+        id: forceOccurrenceId("force-history"),
+        definition: {
+          kind: "forceEntry",
+          key: rosterDefinitionKey("fixture:force"),
+        },
+        forces: [],
+        selections: [],
+      },
+    ],
+  };
+}
+
+/** Roughly 32 KB serialized, so a handful of snapshots exceed the budget. */
+function bulkyRoster(name: string): Roster {
+  const base = historyRoster(name);
+  const force = base.forces[0]!;
+  return {
+    ...base,
+    forces: [
+      {
+        ...force,
+        selections: Array.from({ length: 8 }, (_unused, index) => ({
+          id: selectionOccurrenceId(`selection-${index}`),
+          name: "x".repeat(4000),
+          definition: {
+            kind: "selectionEntry" as const,
+            key: rosterDefinitionKey("fixture:selection"),
+          },
+          selections: [],
+        })),
+      },
+    ],
+  };
 }
 
 function memoryBackend(initial: readonly unknown[] = []): {

@@ -1486,8 +1486,8 @@ describe("App local catalogue flow", () => {
       "The browser blocked the printable roster window.",
     );
 
-    // Saving is manual and undo history is in memory, so an edited roster is
-    // lost on reload. The workspace has to say so before it is saved.
+    // Saving is manual, so an edited roster is lost on reload until it has a
+    // draft. The workspace has to say so before it is saved.
     expect(screen.getByText("Unsaved changes")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
@@ -1566,6 +1566,16 @@ describe("App local catalogue flow", () => {
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),
     ).toBeTruthy();
+
+    // The undo stack came back with the roster. Before the history was stored
+    // this button was disabled after a reopen, and the amount edit above was
+    // unreachable for the rest of the session.
+    const reopenedUndo = screen.getByRole("button", { name: "Undo" });
+    expect(reopenedUndo.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(reopenedUndo);
+    await waitFor(() => {
+      expect(storedAmount()).toBeUndefined();
+    });
 
     fireEvent.click(
       within(shelf).getByRole("button", { name: "Delete Saved Patrol" }),

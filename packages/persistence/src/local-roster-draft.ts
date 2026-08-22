@@ -62,6 +62,7 @@ export interface LocalRosterDraftLimits {
   readonly maxRosterDepth: number;
   readonly maxTextLength: number;
   readonly maxDefinitionKeyLength: number;
+  readonly maxHistoryEntries: number;
 }
 
 export const defaultLocalRosterDraftLimits: LocalRosterDraftLimits = {
@@ -71,6 +72,7 @@ export const defaultLocalRosterDraftLimits: LocalRosterDraftLimits = {
   maxRosterDepth: 256,
   maxTextLength: 4_096,
   maxDefinitionKeyLength: 65_536,
+  maxHistoryEntries: 20,
 };
 
 /**
@@ -82,6 +84,24 @@ export const defaultLocalRosterDraftLimits: LocalRosterDraftLimits = {
  * browser the bytes themselves are stored once per `batchId` and this
  * record carries empty placeholders; see `browser-drafts.ts`.
  */
+/**
+ * The undo history a draft carries across a reload.
+ *
+ * Deliberately shallower than the in-memory history, which stays at 100. A
+ * roster snapshot is small on its own — 34 KB for a 99-selection list,
+ * measured against the pinned corpus — but a store rewrites whole records, so
+ * persisting all 100 would put 3.2 MB on every autosave and undo the write
+ * bound the previous checkpoint established. Twenty entries, further capped by
+ * a byte budget in the browser store, keeps a reload-surviving history at a few
+ * hundred KB.
+ */
+export interface LocalRosterDraftHistory {
+  /** Oldest first. The present roster is `roster`, not the end of this list. */
+  readonly past: readonly Roster[];
+  /** Nearest first, so `future[0]` is what one redo restores. */
+  readonly future: readonly Roster[];
+}
+
 export interface LocalRosterDraftImport {
   readonly batchId: string;
   readonly importedAt: string;
@@ -104,6 +124,7 @@ export interface LocalRosterDraft {
   readonly catalogueKey: string;
   readonly import: LocalRosterDraftImport;
   readonly roster: Roster;
+  readonly history?: LocalRosterDraftHistory;
 }
 
 export interface CreateLocalRosterDraftInput {
@@ -113,6 +134,7 @@ export interface CreateLocalRosterDraftInput {
   readonly catalogueKey: string;
   readonly import: LocalRosterDraftImport;
   readonly roster: Roster;
+  readonly history?: LocalRosterDraftHistory;
 }
 
 interface DecodeState {
@@ -228,6 +250,7 @@ export function decodeLocalRosterDraft(
         "Local roster draft update timestamp precedes its creation timestamp.",
       );
     }
+    const history = decodeHistory(record.history, state);
     const draft: LocalRosterDraft = {
       format: localRosterDraftFormat,
       version: localRosterDraftVersion,
@@ -240,7 +263,8 @@ export function decodeLocalRosterDraft(
         state,
       ),
       import: decodeImport(record.import, state),
-      roster: decodeRoster(record.roster, state),
+      roster: decodeRoster(record.roster, ["roster"], state),
+      ...(history === undefined ? {} : { history }),
     };
     return success(draft);
   } catch (error: unknown) {
@@ -339,28 +363,83 @@ function optionalSourceKind(
   invalid(path, "Imported file source kind is invalid.");
 }
 
-function decodeRoster(value: unknown, state: DecodeState): Roster {
-  const record = requiredRecord(value, ["roster"]);
-  const catalogue = requiredRecord(record.catalogue, ["roster", "catalogue"]);
+function decodeRoster(
+  value: unknown,
+  path: readonly string[],
+  state: DecodeState,
+): Roster {
+  const record = requiredRecord(value, path);
+  const catalogue = requiredRecord(record.catalogue, [...path, "catalogue"]);
   const kind = requiredString(
     catalogue.kind,
-    ["roster", "catalogue", "kind"],
+    [...path, "catalogue", "kind"],
     state,
   );
   if (kind !== "catalogue") {
-    invalid(["roster", "catalogue", "kind"], "Roster catalogue kind is invalid.");
+    invalid([...path, "catalogue", "kind"], "Roster catalogue kind is invalid.");
   }
   return {
-    id: rosterId(requiredString(record.id, ["roster", "id"], state)),
-    name: requiredString(record.name, ["roster", "name"], state),
+    id: rosterId(requiredString(record.id, [...path, "id"], state)),
+    name: requiredString(record.name, [...path, "name"], state),
     catalogue: {
       kind: "catalogue",
-      ...decodeDefinitionBase(catalogue, ["roster", "catalogue"], state),
+      ...decodeDefinitionBase(catalogue, [...path, "catalogue"], state),
     },
-    forces: requiredArray(record.forces, ["roster", "forces"]).map(
+    forces: requiredArray(record.forces, [...path, "forces"]).map(
       (force, index) =>
-        decodeForce(force, ["roster", "forces", String(index)], 1, state),
+        decodeForce(force, [...path, "forces", String(index)], 1, state),
     ),
+  };
+}
+
+/**
+ * Decodes the undo snapshots, each in its own ID and node scope.
+ *
+ * They are separate rosters rather than parts of one, so the same occurrence ID
+ * appearing in the present roster and in an undo snapshot is expected — it is
+ * the same selection before an edit. Sharing the scope would reject every
+ * history a draft could hold. Total work stays bounded because
+ * `maxHistoryEntries` caps how many scopes there can be.
+ */
+function decodeHistory(
+  value: unknown,
+  state: DecodeState,
+): LocalRosterDraftHistory | undefined {
+  if (value === undefined) return undefined;
+  const record = requiredRecord(value, ["history"]);
+  const past = requiredArray(record.past, ["history", "past"]);
+  const future = requiredArray(record.future, ["history", "future"]);
+  enforceLimit(
+    past.length + future.length <= state.limits.maxHistoryEntries,
+    ["history"],
+    "maxHistoryEntries",
+    state.limits.maxHistoryEntries,
+    past.length + future.length,
+  );
+  const decodeEntries = (
+    entries: readonly unknown[],
+    key: string,
+  ): readonly Roster[] =>
+    entries.map((entry, index) =>
+      decodeRoster(
+        entry,
+        ["history", key, String(index)],
+        historyEntryState(state),
+      ),
+    );
+  return {
+    past: decodeEntries(past, "past"),
+    future: decodeEntries(future, "future"),
+  };
+}
+
+function historyEntryState(state: DecodeState): DecodeState {
+  return {
+    limits: state.limits,
+    forceIds: new Set(),
+    selectionIds: new Set(),
+    nodes: 0,
+    fileBytes: state.fileBytes,
   };
 }
 
