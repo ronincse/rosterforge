@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-21 (draft byte storage)
+## Current Status — 2026-08-22 (public API comments)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -47,6 +47,10 @@ diagnostic codes.
   is **8 passed**; without it those 8 are the skipped tests.
 - **Active area.** Editing durability (roadmap section E). Sections A and B —
   display fidelity and legality — are effectively complete.
+- **Comment coverage.** 81 of 668 exported symbols (12%), up from 42. The
+  documented set is the front door: `roster-model/commands.ts` and `types.ts`,
+  `evaluation/index.ts` and `validation.ts`, `persistence/local-roster-draft.ts`,
+  plus `evaluation/affects-routing.ts`, which remains the house-style sample.
 
 ### Picking up from here
 
@@ -60,12 +64,20 @@ Selection-level `annotation` is complete: direct and grouped modifiers execute,
 selections-terminus `affects` routes through a shared collector, and the
 workspace decorates occurrence names without mutating their source names.
 
-The next bounded research target is **`affects` force traversal** (roadmap
-section A): 24 selectors remain unsupported, including one selections-terminus
-form. Measure their anchors and targets before choosing a force-collection rule.
-Keep `name` modifiers last; 86% of their 7,673 instances are Crusade content.
+`affects` force traversal is **done** — this paragraph named it as the next
+target until 2026-08-22 and the roadmap had already moved past it. The current
+**Next is durable undo history** (section E): the roster survives a reload, the
+undo stack does not. Adding history to a draft record is now safe because a
+draft write no longer rewrites the catalogue bytes with it.
 
-Two habits this session earned the hard way, both worth keeping:
+Read `roster-model/commands.ts` before touching the history: its header records
+which commands return the *same* roster for a no-op edit, which is what the
+unsaved-change indicator and the autosave trigger are built on.
+
+Keep profile `name` modifiers last in section A; 86% of the 7,673 instances are
+Crusade content.
+
+Three habits earned the hard way, all worth keeping:
 
 1. **Write the real-data pin.** It caught defects the synthetics missed three
    separate times, including two step-chaining bugs that `set` had been hiding
@@ -73,6 +85,10 @@ Two habits this session earned the hard way, both worth keeping:
 2. **When a mechanism's pieces sit on different entries, stop analysing and ask
    for an observation.** Two questions stalled for a whole checkpoint each until
    a single New Recruit screenshot settled them.
+3. **Ask what a hot path costs before extending it.** Autosave was built on
+   `decodeLocalRosterDraft` without anyone noticing it copies every byte of the
+   catalogue closure, and shipped an 8 MB-per-write regression. That cost is
+   now written on the function.
 
 ## Remaining Work To Feature Complete
 
@@ -178,10 +194,18 @@ actually asked for.
 | Autosave to an already-active draft | Done | debounced, tunable through the existing options seam |
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
 | Draft byte storage | Done | bytes stored once per import batch, collected when the last draft referencing them goes |
-| **Comment the public API surface** | **Next** | 6% of exported symbols are documented; see the 2026-08-21 measurement entry for scope and what *not* to do |
-| Durable undo history | Open | the roster survives a reload; the undo stack does not |
-| Durable undo history | Deferred |
+| Comment the public API surface | Done | the four front-door files; 42 → 81 of 668 exports. The remaining 587 are deliberate — see the note below the table |
+| **Durable undo history** | **Next** | the roster survives a reload; the undo stack does not. Safe to attempt now that a draft write no longer rewrites the catalogue |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
+
+**On the remaining 587 undocumented exports.** They are not a backlog item.
+The 2026-08-21 research note argued against a blanket sweep and the checkpoint
+that acted on it agrees: a retroactive comment written by someone who did not
+write the code is confidently wrong often enough to be a liability, and one
+restating a type rots at the next refactor. Two candidates would be worth a
+bounded pass if someone is already deep in them: `evaluation/characteristics.ts`
+(1,964 lines, 8 of 24 exports documented) and `apps/web/src/roster-session.ts`
+(1,583 lines, 3 of 41). Neither should be taken ahead of feature work.
 
 ### Open questions needing the owner
 
@@ -3830,3 +3854,137 @@ and observations — not restatement.
 
 Verify each claim against the code before writing it. An unverified comment is a
 liability the next reader will trust.
+
+## Completed Assignment — Public API Comments, 2026-08-22
+
+Baseline `6c7599e`; resulting implementation commit `e8075ad`.
+
+This is the checkpoint the previous entry's research note specified. No
+behaviour change: the diff is **395 added lines and zero removed**, every added
+line a comment or the blank line after a file header.
+
+### The measurement, re-run
+
+| | Before | After |
+|---|---|---|
+| Exported symbols documented | 42 | **81** |
+| Of a total of | 668 | 668 |
+| Share | 6% | **12%** |
+
+The note recorded 653 exports and slightly lower line counts — it put
+`commands.ts` at 1,880 lines where `wc -l` gives 1,993. My script counts
+`export` declarations by line; the difference is method, not content, and both
+give 6% before. The script is not committed — it is fifty lines and
+re-derivable, and pinning a metric invites optimising for it.
+
+### What was commented, and why those five files
+
+The note named two targets: the public API surface a stranger meets first, and
+non-obvious costs and invariants. That resolved to five files:
+
+- **`roster-model/commands.ts`** — 26 exports, 1,993 lines, and not one comment.
+  The worst-documented front door in the repository.
+- **`roster-model/types.ts`** — selectively. Four comments, not fifteen.
+- **`evaluation/index.ts`** — an orientation header. It was a bare list of
+  seventeen re-exports, which tells a newcomer nothing about where to start.
+- **`evaluation/validation.ts`** — 10 exports; the validity/completeness
+  composition rule that `AGENTS.md` treats as the project's central contract.
+- **`persistence/local-roster-draft.ts`** — the byte copy the note named by name.
+
+### The three facts most worth having written down
+
+1. **Which commands short-circuit a no-op edit, and which do not.**
+   `setRosterSelectionAmount`, both `replace...Definition` commands, both
+   `move...` commands, and both `reparent...` commands return the *same* roster
+   object when the edit changes nothing. `setRosterForceName`,
+   `setRosterSelectionName`, and `renameRoster` do not — writing back the name
+   something already has yields a new object.
+
+   That asymmetry is load-bearing rather than cosmetic: `use-app-controller.ts`
+   derives both the unsaved-change indicator and the autosave trigger from
+   `roster !== persistedRoster`. Renaming a force to its current name marks the
+   roster dirty and schedules a write; setting an amount to its current value
+   does not. I am recording the behaviour, not calling it a defect — I did not
+   find anything that depends on either half, and a documentation checkpoint is
+   the wrong place to change it.
+
+2. **`decodeLocalRosterDraft` copies every file's bytes.** `Uint8Array.from`
+   per file, so decoding allocates the whole catalogue closure again — 8.2 MB
+   for one Death Guard import against a 256 MB configured ceiling. The browser
+   store decodes on *every* save, so autosave still pays that copy each time it
+   settles, even now that the write itself is small. This is the gap that caused
+   the regression two checkpoints ago; it is now on the function.
+
+3. **A definition key is positional, and a retained `sourceId` is what saves
+   it.** The key is `JSON.stringify([sourceId, ...path])` with segments like
+   `sharedSelectionEntries[3]` — deliberately not the BattleScribe `id`, which
+   `data-graph` reports duplicates for rather than assuming unique. Source IDs
+   are batch-scoped (`local-file:<batchId>:<index>`), so re-importing the same
+   files under a new batch would key differently; draft records retain each
+   file's original `sourceId` and `repository` reuses it. That retention is the
+   entire mechanism behind "exact definition-key restoration" in the roadmap,
+   and nothing said so.
+
+### How the claims were verified
+
+Reading, mostly. Two things needed more:
+
+- The identity behaviour was checked by **probing the built package** rather
+  than reasoning about it — a throwaway script over `roster-model/dist` that
+  asserted each command's no-op return. It confirmed all seven short-circuits
+  and both name-setter exceptions, and confirmed that `2.5` is an accepted
+  selection amount while `0`, negatives, `NaN`, and `Infinity` are not.
+- The claim that dropping an unreadable constraint report loses no honesty was
+  chased through `constraints.ts`: a report missing its type, scope, or limit
+  always carries a shape diagnostic, any diagnostic makes that report
+  incomplete, and incompleteness propagates to the composed report. Without
+  that chain the comment would have been wrong.
+
+One claim was **written and then corrected before committing**: an early draft
+said re-importing the same bytes yields the same definition key. It does not —
+only the retained `sourceId` makes that true. Worth naming because it is exactly
+the failure mode the note warned about: plausible, load-bearing, and wrong.
+
+### What this deliberately did not do
+
+- **Sweep the remaining 587 exports.** The note argued against it and I agree
+  after doing the five files: the comments that earned their place came from
+  tracing behaviour across packages, which does not scale to 587 and produces
+  confident noise when rushed. There is now a paragraph under the section E
+  table saying so, so the next model does not read the 12% as a backlog.
+- **Comment `battlescribe-data/types.ts`.** 51 exports that are self-describing
+  shapes, as the note said.
+- **Change any behaviour**, including the name-setter asymmetry in (1).
+- **Commit the measurement script.**
+
+### A contradiction fixed in the roadmap
+
+Section E carried **two rows for durable undo history**, one `Open` and one
+`Deferred`. The `Deferred` row was residue from `8200db9`, which split
+"Durable undo history and automatic saving" to promote autosave and left the
+remainder behind; a later commit then added the `Open` row without noticing.
+Every recent entry recommends the work, so `Open` wins and the stale row is
+gone. The "Picking up from here" paragraph was stale in the same way — it still
+named `affects` force traversal as the next target after the roadmap had marked
+it Done — and now names durable undo history.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **441 passed, 8 skipped (449 total)**, unchanged.
+- Pinned real-data suite with `ROSTERFORGE_BSDATA_JSON_DIR=E:/GitHub/wh40k-11e`
+  — **449 passed (46 files)**, i.e. the 8 otherwise-skipped tests pass.
+- `docs/compatibility.md`, `docs/architecture.md`, and `docs/diagnostics.md`
+  were **not** updated, deliberately: no behaviour boundary, package boundary,
+  or diagnostic code moved.
+
+### Next recommended boundary
+
+1. **Durable undo history.** The last thing in section E that still loses work
+   on reload. Read the `commands.ts` header first — whether a command returns a
+   new roster is what the existing history and dirty-tracking are built on.
+2. **Section D — cache eviction and quota.** Still absent, though the batch byte
+   sharing reduced the pressure.
+3. **Profile `name` modifiers** — five corpus instances, the last of section A.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
