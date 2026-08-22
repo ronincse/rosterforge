@@ -1,3 +1,19 @@
+/**
+ * Folds the three validation reports into the one answer the UI shows.
+ *
+ * The two dimensions stay independent, which is the rule the rest of the
+ * evaluator is built around. `validity` says whether the roster breaks a
+ * rule this evaluator understands. `completeness` says whether it
+ * understood everything that applied. An incomplete report is not an
+ * invalid one, and `valid` + `incomplete` is the honest answer for a roster
+ * using behaviour RosterForge does not execute yet — never `valid` +
+ * `complete` by omission.
+ *
+ * "Supported" throughout this file means the subset of BattleScribe
+ * validation this evaluator executes; `docs/compatibility.md` is the
+ * exhaustive record of where that boundary sits.
+ */
+
 import {
   failure,
   success,
@@ -20,6 +36,10 @@ import type {
   RosterStructuralBoundStatus,
 } from "./structural-status.js";
 
+/**
+ * Structural bounds and constraints share one status vocabulary so
+ * findings from all three sources can sit in a single list.
+ */
 export type SupportedRosterValidationStatus =
   RosterStructuralBoundStatus;
 
@@ -62,6 +82,24 @@ export interface SupportedRosterValidationReport
   readonly findingCounts: SupportedRosterValidationFindingCounts;
 }
 
+/**
+ * Composes structural, selection-constraint, and force-constraint reports
+ * into a roster verdict.
+ *
+ * Fails rather than composing when the three did not come from the same
+ * roster and catalogue context objects, or when the constraint reports
+ * were produced at the wrong inspection scope. Both are caller mistakes
+ * that would otherwise yield a confident answer about a roster nobody
+ * asked about, which is worse than no answer.
+ *
+ * `validity` turns invalid on a structural failure or any violated bound.
+ * An `unresolved` bound does not: the evaluator could not decide, which is
+ * not the same as deciding against. Completeness is taken from the three
+ * inputs' own completeness flags, never inferred from the status counts.
+ *
+ * `findings` is everything that is not `satisfied`, so it carries violated
+ * and unresolved items together — the UI needs both in front of the user.
+ */
 export function composeSupportedRosterValidation(
   structural: EmptySingleForceRosterStructuralStatus,
   selectionConstraints: RosterSelectionConstraintsInRosterReport,
@@ -134,6 +172,18 @@ export function composeSupportedRosterValidation(
   });
 }
 
+/**
+ * True when a constraint report has enough shape to be worth counting.
+ *
+ * A report missing its type, scope, or limit describes a constraint the
+ * evaluator could not read at all; surfacing it as `unresolved` would put
+ * an item in front of the user that names nothing they can act on.
+ *
+ * Dropping it costs no honesty. `constraints.ts` records a shape
+ * diagnostic for each missing piece, any diagnostic makes that report
+ * incomplete, and incompleteness propagates up to the composed report —
+ * so the roster is still reported as not fully understood.
+ */
 export function isActionableSupportedConstraintReport(
   report:
     | RosterSelectionConstraintReport

@@ -1,3 +1,21 @@
+/**
+ * The stored shape of a roster draft, and the one validator both writing and
+ * reading go through.
+ *
+ * `createLocalRosterDraft` builds a draft *by decoding it*, so a draft that
+ * could not be loaded cannot be created either. There is deliberately no
+ * second, laxer path for values this process just produced.
+ *
+ * Everything arriving here is untrusted, including the app's own earlier
+ * output: a record in IndexedDB may have been written by a previous version
+ * or edited by hand. Decoding therefore checks structure, timestamps,
+ * occurrence-ID uniqueness, and every configured limit rather than trusting
+ * the record's shape.
+ *
+ * Bytes are held as `Uint8Array`, which structured clone preserves and JSON
+ * does not — a draft is an IndexedDB record, not a JSON document.
+ */
+
 import {
   failure,
   objectId,
@@ -20,9 +38,23 @@ import {
   type RosterSelectionDefinitionReference,
 } from "@rosterforge/roster-model";
 
+/**
+ * Checked before anything else is read, so an unrecognised or wrong-version
+ * record is refused after two field comparisons rather than after a full walk
+ * of a roster that was never going to load.
+ */
 export const localRosterDraftFormat = "rosterforge/local-roster-draft";
 export const localRosterDraftVersion = 1;
 
+/**
+ * Bounds on an untrusted draft record.
+ *
+ * `maxTotalFileBytes` is cumulative across the batch and tested as each
+ * file is read, so decoding stops at the file that crosses the line rather
+ * than after materialising them all. `maxDefinitionKeyLength` is far
+ * larger than `maxTextLength` because a definition key is a
+ * JSON-encoded source path, not a user-typed name.
+ */
 export interface LocalRosterDraftLimits {
   readonly maxFiles: number;
   readonly maxTotalFileBytes: number;
@@ -41,12 +73,28 @@ export const defaultLocalRosterDraftLimits: LocalRosterDraftLimits = {
   maxDefinitionKeyLength: 65_536,
 };
 
+/**
+ * The catalogue files a draft was built from, tagged with the batch that
+ * produced them.
+ *
+ * Each file keeps its original `sourceId`, which is what lets a rebuilt
+ * batch reproduce the same definition keys the roster references. In the
+ * browser the bytes themselves are stored once per `batchId` and this
+ * record carries empty placeholders; see `browser-drafts.ts`.
+ */
 export interface LocalRosterDraftImport {
   readonly batchId: string;
   readonly importedAt: string;
   readonly files: readonly LocalBattleScribeFile[];
 }
 
+/**
+ * A draft as stored.
+ *
+ * `catalogueKey` names which catalogue of the batch the roster was built
+ * against, so restoring can pick it out of the rebuilt library without
+ * inspecting the roster tree.
+ */
 export interface LocalRosterDraft {
   readonly format: typeof localRosterDraftFormat;
   readonly version: typeof localRosterDraftVersion;
@@ -87,6 +135,12 @@ class DraftDecodeError extends Error {
   }
 }
 
+/**
+ * Stamps the current format and version onto the input and validates it
+ * through `decodeLocalRosterDraft`, so construction and load cannot
+ * disagree about what a valid draft is. Inherits that function's byte
+ * copy.
+ */
 export function createLocalRosterDraft(
   input: CreateLocalRosterDraftInput,
   limits?: Partial<LocalRosterDraftLimits>,
@@ -101,6 +155,28 @@ export function createLocalRosterDraft(
   );
 }
 
+/**
+ * Validates an untrusted record and returns a draft.
+ *
+ * **It copies every file's bytes.** `decodeFile` runs `Uint8Array.from`
+ * per file, so decoding allocates the whole catalogue closure again — the
+ * handoff measured 8.2 MB for one Death Guard import, and the configured
+ * ceiling is 256 MB. The browser store decodes on *every* save, so an
+ * autosave pays that copy each time it settles even now that the write
+ * itself is small.
+ *
+ * Nothing in the signature suggests any of that, and it was not written
+ * down: autosave was built on top of this function and shipped an
+ * 8 MB-per-write regression that took two checkpoints to find. Weigh the
+ * copy before putting this on a hot path.
+ *
+ * Reports the *first* problem only — decoding throws internally and the
+ * catch turns it into a single diagnostic:
+ * `PERSISTENCE_DRAFT_LIMIT_EXCEEDED` when a configured limit was crossed,
+ * `PERSISTENCE_DRAFT_INVALID` otherwise, both carrying the path to the
+ * offending field. Anything that is not a decode failure is rethrown, so
+ * a bug here does not read as a corrupt draft.
+ */
 export function decodeLocalRosterDraft(
   value: unknown,
   limitOverrides?: Partial<LocalRosterDraftLimits>,

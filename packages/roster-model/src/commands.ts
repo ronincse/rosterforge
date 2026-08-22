@@ -1,3 +1,30 @@
+/**
+ * Every edit a roster can undergo, as pure functions over an immutable tree.
+ *
+ * A command takes a roster and returns a new one. Nothing here mutates its
+ * input, and forces and selections off the edited path keep their object
+ * identity, so a consumer can diff two rosters by reference instead of
+ * walking them. `apps/web` does exactly that: both the unsaved-change
+ * indicator and the autosave trigger test `roster !== persistedRoster`.
+ *
+ * That makes it load-bearing which commands short-circuit a no-op edit.
+ * `setRosterSelectionAmount`, the two `replace...Definition` commands, the
+ * two `move...` commands, and the two `reparent...` commands return the
+ * *same* roster when the edit would change nothing. The name setters and
+ * `renameRoster` do not: writing back the name something already has yields
+ * a new object and reads downstream as an unsaved change.
+ *
+ * Occurrence IDs are minted by the caller and are unique across the whole
+ * roster rather than per parent, so adding a selection under one force can
+ * fail on an ID already used under another. Forces and selections have
+ * separate namespaces.
+ *
+ * This package depends only on `foundation`: it knows nothing about
+ * catalogues, costs, constraints, or legality. A command can tell you an
+ * occurrence ID collides or a parent is missing; whether the selection is
+ * allowed at all is a question for `evaluation`.
+ */
+
 import {
   failure,
   success,
@@ -17,18 +44,35 @@ import type {
   SelectionOccurrenceId,
 } from "./types.js";
 
+/**
+ * A new roster's identity and the catalogue it is built against.
+ *
+ * The catalogue is fixed at creation; no command replaces it. Every
+ * definition key in the tree encodes the source it came from, so a roster
+ * repointed at a different catalogue would be a roster of dangling
+ * references rather than a converted one.
+ */
 export interface CreateRosterInput {
   readonly id: RosterId;
   readonly name: string;
   readonly catalogue: RosterCatalogueReference;
 }
 
+/**
+ * `name` is an occurrence-level override, not a required field.
+ * `roster-builder` seeds it from the definition's own name when adding
+ * from a catalogue, so in practice most occurrences carry one.
+ */
 export interface AddRosterForceInput {
   readonly id: ForceOccurrenceId;
   readonly definition: RosterForceDefinitionReference;
   readonly name?: string;
 }
 
+/**
+ * An absent `amount` means one and is stored as an absent property rather
+ * than an explicit `1`; read it through `rosterSelectionAmount`.
+ */
 export interface AddRosterSelectionInput {
   readonly id: SelectionOccurrenceId;
   readonly definition: RosterSelectionDefinitionReference;
@@ -36,17 +80,34 @@ export interface AddRosterSelectionInput {
   readonly amount?: number;
 }
 
+/**
+ * Mints a fresh occurrence ID for each copied selection.
+ *
+ * The caller supplies this because ID generation is its concern — the
+ * browser uses `crypto.randomUUID`, tests use counters — and this package
+ * stays deterministic. It is called once per node of the copied subtree in
+ * document order, parents before children.
+ */
 export interface DuplicateRosterSelectionIds {
   readonly selectionId: (
     sourceId: SelectionOccurrenceId,
   ) => SelectionOccurrenceId;
 }
 
+/** Adds force minting, because duplicating a force copies both kinds. */
 export interface DuplicateRosterForceIds
   extends DuplicateRosterSelectionIds {
   readonly forceId: (sourceId: ForceOccurrenceId) => ForceOccurrenceId;
 }
 
+/**
+ * Where a force lands after `reparentRosterForce`.
+ *
+ * `index` is its position in the destination's sibling list *after* the
+ * move, which is why `index === siblingCount` is legal: it appends. For a
+ * relocation within the same parent that list is one shorter than the one
+ * the caller can see, because the force has been lifted out of it.
+ */
 export type RosterForceDestination =
   | { readonly kind: "root"; readonly index: number }
   | {
@@ -55,6 +116,12 @@ export type RosterForceDestination =
       readonly index: number;
     };
 
+/**
+ * Where a selection lands after `reparentRosterSelection`. Unlike a force,
+ * it can move between a force parent and a selection parent, so the
+ * destination names which kind it is joining. `index` counts the same way
+ * as in `RosterForceDestination`.
+ */
 export type RosterSelectionDestination =
   | {
       readonly kind: "force";
@@ -120,10 +187,21 @@ interface SelectionTreeReorder {
   readonly siblingCount?: number;
 }
 
+/**
+ * One of the two commands returning a bare `Roster` rather than a `Result`
+ * (`renameRoster` is the other): an empty roster has nothing to collide
+ * with and no target to miss.
+ */
 export function createRoster(input: CreateRosterInput): Roster {
   return { ...input, forces: [] };
 }
 
+/**
+ * Appends a force at the roster's root.
+ *
+ * The duplicate-ID check covers the whole roster, nested forces included,
+ * not just the root list.
+ */
 export function addRosterForce(
   roster: Roster,
   input: AddRosterForceInput,
@@ -137,6 +215,14 @@ export function addRosterForce(
   });
 }
 
+/**
+ * Appends a force beneath an existing one at any depth.
+ *
+ * A missing parent reports `ROSTER_MODEL_MISSING_PARENT_FORCE`, while the
+ * commands that edit or remove an existing force report
+ * `ROSTER_MODEL_MISSING_FORCE`. The two codes stay distinct so a caller can
+ * tell a bad destination from a bad target.
+ */
 export function addRosterChildForce(
   roster: Roster,
   parentId: ForceOccurrenceId,
@@ -156,6 +242,13 @@ export function addRosterChildForce(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Appends a selection directly under a force.
+ *
+ * `amount` is checked before the ID, so an invalid amount is reported even
+ * when the ID also collides. Only zero, negative, and non-finite amounts are
+ * refused — 2.5 is accepted.
+ */
 export function addRosterSelectionToForce(
   roster: Roster,
   parentId: ForceOccurrenceId,
@@ -178,6 +271,10 @@ export function addRosterSelectionToForce(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Appends a selection under another selection, at any depth. Same amount
+ * validation and same roster-wide ID check as `addRosterSelectionToForce`.
+ */
 export function addRosterSelectionToSelection(
   roster: Roster,
   parentId: SelectionOccurrenceId,
@@ -200,10 +297,26 @@ export function addRosterSelectionToSelection(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Renames the roster, sharing the force tree unchanged.
+ *
+ * Always returns a new object, even for the name the roster already has,
+ * so a consumer treating identity as change will see one. `forces` keeps
+ * its identity, which is what makes this cheap on a large roster.
+ */
 export function renameRoster(roster: Roster, name: string): Roster {
   return { ...roster, name };
 }
 
+/**
+ * Sets or clears a force's name override.
+ *
+ * `undefined` removes the property rather than storing an explicit
+ * `undefined`, so a cleared name does not reach a saved draft as a key.
+ * Unlike the amount and definition setters this does not short-circuit:
+ * writing back the current name still rebuilds the path to the force and
+ * yields a new roster.
+ */
 export function setRosterForceName(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -216,6 +329,10 @@ export function setRosterForceName(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Sets or clears a selection's name override, with the same clearing and
+ * no-short-circuit behaviour as `setRosterForceName`.
+ */
 export function setRosterSelectionName(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -228,6 +345,14 @@ export function setRosterSelectionName(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Sets or clears a selection's quantity.
+ *
+ * Returns the roster unchanged when the amount already matches, so
+ * re-applying the value a control already shows does not read as an
+ * unsaved change. Clearing to `undefined` restores the implicit one rather
+ * than storing it.
+ */
 export function setRosterSelectionAmount(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -247,6 +372,15 @@ export function setRosterSelectionAmount(
   );
 }
 
+/**
+ * Repoints a force occurrence at a different definition, keeping its ID,
+ * name, and subtree.
+ *
+ * Compares by kind, key, and source ID and returns the roster unchanged
+ * when they match. `roster-builder` re-resolves occurrences against a
+ * catalogue context through this, so the common case — nothing moved —
+ * has to cost nothing.
+ */
 export function replaceRosterForceDefinition(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -263,6 +397,11 @@ export function replaceRosterForceDefinition(
   );
 }
 
+/**
+ * Repoints a selection occurrence, keeping its ID, name, amount, and
+ * descendants. Equal definitions return the roster unchanged, as in
+ * `replaceRosterForceDefinition`.
+ */
 export function replaceRosterSelectionDefinition(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -283,6 +422,13 @@ export function replaceRosterSelectionDefinition(
   );
 }
 
+/**
+ * Removes a force and everything beneath it.
+ *
+ * Nothing cascades: a selection elsewhere that only made sense alongside
+ * this force is left in place. Whether what remains is still legal is a
+ * question for `evaluation`, not for this package.
+ */
 export function removeRosterForce(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -294,6 +440,7 @@ export function removeRosterForce(
   return success({ ...roster, forces: update.forces });
 }
 
+/** Removes a selection and its descendants. Nothing else cascades. */
 export function removeRosterSelection(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -305,6 +452,14 @@ export function removeRosterSelection(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Reorders a force among its own siblings, wherever in the tree it sits.
+ *
+ * `toIndex` is where it should end up once lifted out of the list, so the
+ * last valid index is one less than the sibling count. Returns the roster
+ * unchanged when it is already there. Moving to a different parent is
+ * `reparentRosterForce`.
+ */
 export function moveRosterForce(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -331,6 +486,10 @@ export function moveRosterForce(
   );
 }
 
+/**
+ * Reorders a selection among its own siblings, under a force or under
+ * another selection. Index and no-op behaviour match `moveRosterForce`.
+ */
 export function moveRosterSelection(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -357,6 +516,16 @@ export function moveRosterSelection(
   );
 }
 
+/**
+ * Copies a force and its whole subtree, inserting the copy immediately
+ * after the source among its siblings.
+ *
+ * The duplication is validated in full before anything is inserted: if any
+ * minted ID collides with an existing occurrence, or with one minted
+ * earlier in the same copy, the command fails and the roster is untouched.
+ * Names, amounts, and definition references carry over verbatim, so the
+ * copy resolves against the same catalogue as its source.
+ */
 export function duplicateRosterForce(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -376,6 +545,10 @@ export function duplicateRosterForce(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Copies a selection subtree in beside its source, with the same
+ * all-or-nothing ID validation as `duplicateRosterForce`.
+ */
 export function duplicateRosterSelection(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -399,6 +572,17 @@ export function duplicateRosterSelection(
   return success({ ...roster, forces: update.forces });
 }
 
+/**
+ * Moves a force to a different parent, or to the root, at a chosen index.
+ *
+ * Refuses to move a force beneath itself or one of its own descendants,
+ * which would detach that subtree from the roster entirely.
+ *
+ * The index is validated against the destination *after* the source has
+ * been removed, so the `siblingCount` in a rejection is the post-removal
+ * one: moving the only root force to root index 1 fails, because by then
+ * the root list is empty.
+ */
 export function reparentRosterForce(
   roster: Roster,
   id: ForceOccurrenceId,
@@ -457,6 +641,14 @@ export function reparentRosterForce(
   return success({ ...roster, forces });
 }
 
+/**
+ * Moves a selection to a different force or selection parent, at a chosen
+ * index.
+ *
+ * Same cycle refusal and same after-removal index validation as
+ * `reparentRosterForce`. A move that changes neither parent nor index
+ * returns the roster unchanged.
+ */
 export function reparentRosterSelection(
   roster: Roster,
   id: SelectionOccurrenceId,
