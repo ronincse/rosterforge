@@ -253,8 +253,17 @@ version 2 adds `pinned-repository-metadata-lru`; reads touch that small sidecar
 instead of rewriting as much as 32 MiB. Version-1 records migrate with access
 time zero, malformed legacy records are discarded, and malformed later
 accounting clears only this re-downloadable metadata database. The adapter never
-touches local roster drafts. Origin-wide headroom through
-`navigator.storage.estimate()` remains a separate application concern.
+touches local roster drafts.
+
+`navigator.storage.estimate()` is not used as a preflight guard. Its usage
+and quota are origin-wide estimates rather than a per-database or guaranteed
+writable allowance. Current Chromium can report an artificial quota while
+keeping quota enforcement unchanged, and WebKit explicitly makes no guarantee
+that the reported amount can be stored. Blocking a draft or clearing a cache
+from that value would therefore discard useful behavior without proving the
+write invalid. The existing `QuotaExceededError` path remains authoritative;
+approximate storage reporting or persistent-storage requests are deferred
+product features.
 
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary

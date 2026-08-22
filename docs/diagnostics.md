@@ -295,10 +295,13 @@ rather than by class, because the error crosses realms. It carries advice a
 generic write failure cannot: which drafts to delete, and that shared source
 files are only freed when the last draft referencing them goes.
 Operation failures retain a non-sensitive error message as `details.cause`.
-Listing skips malformed records but returns valid summaries with their decoder
-diagnostics. A malformed requested record, failed save, or failed delete
-returns no successful value. The browser keeps the current in-memory roster
-usable when persistence fails.
+`navigator.storage.estimate()` is not treated as an earlier diagnostic:
+its origin-wide usage and quota are approximate, and browsers do not guarantee
+that the reported remainder is writable. A real write rejection remains the
+authoritative quota signal. Listing skips malformed records but returns valid
+summaries with their decoder diagnostics. A malformed requested record, failed
+save, or failed delete returns no successful value. The browser keeps the
+current in-memory roster usable when persistence fails.
 
 Draft opening and session restoration can additionally emit:
 

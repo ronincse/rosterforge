@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (repository caches bounded)
+## Current Status — 2026-08-22 (repository caches bounded; headroom researched)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -45,8 +45,9 @@ diagnostic codes.
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
   is **8 passed** (474 total); without it those 8 are the skipped tests.
-- **Active area.** Catalogue sources and cache (roadmap section D). Editing
-  durability is complete; sections A and B retain listed small or deferred gaps.
+- **Active area.** Display fidelity (roadmap section A). Both repository caches
+  are bounded; reliable storage-headroom preflight is unavailable from the
+  browser API and is now deferred. Editing durability is complete.
 - **Comments.** Changed cache exports document their measured costs and
   invariants alongside the existing documented front door.
 
@@ -66,10 +67,13 @@ Section E is **complete**. The repository **byte** cache is bounded to 256 MiB,
 and the separate remote-index **metadata** cache is bounded to 32 MiB; both
 evict least-recently-used re-downloadable entries and never touch saved drafts.
 
-The current **Next is origin-wide storage headroom before a write** in section
-D. None of the three databases consults `navigator.storage.estimate()`. Keep
-deterministic cache bounds separate from decisions about warning or refusing a
-write when irreplaceable drafts share the browser quota.
+The current **Next is profile `name` modifiers** in section A, the final
+observed display-fidelity gap (five pinned-corpus instances). Measure them before
+choosing routing or presentation semantics.
+
+Origin-wide storage headroom was researched and deferred:
+`navigator.storage.estimate()` is approximate, can report an artificial
+quota, and cannot safely refuse a write or trigger cache deletion.
 
 Keep profile `name` modifiers late in section A; only five instances remain.
 
@@ -179,7 +183,7 @@ actually asked for.
 | Draft quota failure handling | Done | *draft store*; a refused write is named, an orphaned batch is rolled back, autosave stops retrying |
 | Repository byte-cache eviction and quota | Done | 16 MiB per entry, 256 MiB total, LRU sidecars; drafts are never candidates |
 | Repository metadata-cache eviction | Done | 32 MiB per entry and total, replacement-aware LRU sidecars; drafts are never candidates |
-| **Storage headroom before a write** | **Next** | `navigator.storage.estimate()` is consulted by none of the three stores |
+| Storage headroom before a write | Deferred | estimate is origin-wide, approximate, and can be artificial; real quota failure remains authoritative |
 | Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
@@ -195,8 +199,9 @@ actually asked for.
   `pinned-repository-metadata` holds re-downloadable remote-index JSON. It
   now has its own LRU sidecars and a 32 MiB per-entry and total bound.
 
-`navigator.storage.estimate()` reports origin-wide usage across all three, so
-headroom remains separate from either cache's deterministic bound.
+`navigator.storage.estimate()` is origin-wide, approximate, and can expose an
+artificial quota. It cannot safely drive either cache eviction or draft refusal;
+approximate reporting remains deferred product UI.
 
 ### E. Editing and durability
 
@@ -4397,3 +4402,57 @@ Take **storage headroom before a write** next. It deliberately stayed separate:
 caches plus irreplaceable drafts, while deterministic cache bounds can be
 settled without choosing a user-data refusal or warning policy. No cache
 management UI, retry policy, or draft eviction was added.
+
+## Research Checkpoint — Storage Headroom, 2026-08-22
+
+Baseline `4b2bba5`. Documentation-only checkpoint; no runtime code changed.
+
+The proposed pre-write guard is not implementable honestly with
+`navigator.storage.estimate()`:
+
+- The Storage Standard defines usage and quota as estimates for the entire
+  origin, not for one of RosterForge's three IndexedDB databases.
+- A draft save may create a shared batch, replace a draft, replace or remove a
+  history record, and then write the draft. Raw payload size is not the storage
+  delta because IndexedDB encoding, compression, allocation, and tombstones are
+  implementation details.
+- Chromium's predictable-quota change reports an artificial quota for ordinary
+  sites while leaving actual enforcement unchanged. WebKit separately warns
+  that the reported quota does not guarantee the site can store that amount.
+
+Sources consulted:
+
+- WHATWG Storage Standard:
+  <https://storage.spec.whatwg.org/#dom-storagemanager-estimate>
+- Chromium predictable reported quota:
+  <https://groups.google.com/a/chromium.org/g/blink-dev/c/7q0YGQNVkjs/m/-iee67QrBQAJ>
+- WebKit storage policy:
+  <https://webkit.org/blog/14403/updates-to-storage-policy/>
+
+Three implementations were rejected:
+
+1. **Block when estimated headroom is below serialized input.** Replacement
+   writes can need less space than their input, and the reported quota can be
+   artificial; this would reject writes that may succeed.
+2. **Clear caches before a draft write.** An estimate cannot prove the draft
+   needs that space, so doing this would trade guaranteed downloads for no
+   guaranteed benefit.
+3. **Warn at an arbitrary percentage.** Chromium can keep the reported
+   remainder effectively constant, so the warning would be absent precisely
+   when a real quota refusal can still occur.
+
+The reliable boundary stays as implemented: both re-downloadable caches have
+deterministic LRU bounds, drafts are never evicted, and a real
+`QuotaExceededError` produces `PERSISTENCE_DRAFT_QUOTA_EXCEEDED` with
+cleanup guidance. Approximate usage UI or `navigator.storage.persist()` can be
+reconsidered as an explicit product feature, not as correctness.
+
+No tests changed. The immediately preceding full gates remain **466 passed,
+8 skipped (474 total)**, the pinned corpus is **8 passed**, and CI run
+`32602221329` passed all jobs in 41 seconds.
+
+### Next boundary
+
+Return to section A for the final observed display gap: **profile `name`
+modifiers**, five pinned-corpus instances. Measure their ownership, routing,
+conditions, and expected presentation before implementing them.

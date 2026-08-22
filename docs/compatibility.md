@@ -594,8 +594,14 @@ Running out of space is handled as far as reporting it honestly:
   session. The next edit produces a new roster and is tried normally, and the
   save button always tries, because that is the user asking.
 
-`navigator.storage.estimate()` is still not consulted, so the app cannot say how
-close to the browser's quota it is before a write fails.
+`navigator.storage.estimate()` is deliberately not used to predict whether a
+draft write will succeed. Both returned values are estimates, cover the whole
+origin rather than one database, and do not account reliably for replacement
+writes. Current Chromium may report an artificial quota while enforcing a
+different limit; WebKit likewise documents no guarantee that the reported
+amount can be stored. The browser's `QuotaExceededError` remains the only
+authoritative refusal. An approximate storage meter or a persistent-storage
+request would be product UI, not a safe preflight guard.
 
 ## Draft Undo History
 
@@ -639,8 +645,9 @@ Consequences worth knowing:
 
 ## Deferred
 
-- Origin-wide storage-headroom reporting, quota-management UI, retries,
-  repository update discovery, and atomic publication of a downloaded closure
+- Approximate origin-wide storage reporting, persistent-storage requests,
+  quota-management UI, retries, repository update discovery, and atomic
+  publication of a downloaded closure
 - Inferring catalogue paths from catalogue-link names without downloading and
   verifying exact target IDs; visibility still uses only documents supplied to
   graph resolution by the caller
@@ -787,9 +794,10 @@ report that would cross the total. Reads touch a separate
 at up to 32 MiB. Existing version-1 reports migrate at access time zero;
 malformed legacy reports are removed, and malformed later sidecars clear only
 this re-downloadable database. The measured pinned report is 181,985 bytes, so
-the default can retain 184 reports of that size. Neither cache uses
-`navigator.storage.estimate()`; origin-wide storage headroom and
-quota-management UI remain separate work.
+the default can retain 184 reports of that size. Neither cache uses `navigator.storage.estimate()`. The result is
+origin-wide and approximate, and current browsers do not promise that its
+reported remainder is writable, so it cannot safely drive eviction or refuse a
+write. Approximate quota-management UI remains deferred.
 
 The headless orchestrator can now build a compact remote metadata index by
 processing the pinned tree sequentially, then acquire only the selected
