@@ -6,6 +6,7 @@ import type { GitObjectSha } from "@rosterforge/repository";
 import {
   createBrowserRemoteCatalogueMetadataCache,
   createIndexedDbRemoteCatalogueMetadataCache,
+  type BrowserRemoteMetadataCacheMetadataRecord,
   type BrowserRemoteMetadataCacheRecordBackend,
 } from "./browser-remote-metadata-cache.js";
 import type {
@@ -15,8 +16,12 @@ import type {
 
 describe("browser remote catalogue metadata cache", () => {
   it("round-trips a defensive copy of metadata and diagnostics", async () => {
-    const { backend, records } = memoryBackend();
-    const cache = createBrowserRemoteCatalogueMetadataCache(backend);
+    const { backend, metadata, records } = memoryBackend();
+    const cache = createBrowserRemoteCatalogueMetadataCache(
+      backend,
+      {},
+      () => 12,
+    );
     const entry = validEntry();
 
     await cache.write(cacheKey(), entry);
@@ -44,6 +49,10 @@ describe("browser remote catalogue metadata cache", () => {
       "Fictional Catalogue",
     );
     expect(records.size).toBe(1);
+    expect([...metadata.values()][0]).toMatchObject({
+      byteLength: payloadBytes(validEntry()),
+      lastAccessedAt: 12,
+    });
   });
 
   it("isolates records by immutable repository and tree identity", async () => {
@@ -139,10 +148,91 @@ describe("browser remote catalogue metadata cache", () => {
     ).rejects.toThrow(/too many diagnostics/i);
   });
 
+  it("evicts least-recently-used indexes before exceeding the total bound", async () => {
+    const { backend, metadata, records } = memoryBackend();
+    const bytes = payloadBytes(validEntry());
+    let time = 0;
+    const cache = createBrowserRemoteCatalogueMetadataCache(
+      backend,
+      { maxEntryBytes: bytes, maxTotalBytes: bytes * 2 },
+      () => ++time,
+    );
+    const first = cacheKey({ repository: "first" });
+    const second = cacheKey({ repository: "second" });
+    const third = cacheKey({ repository: "third" });
+
+    await cache.write(first, validEntry());
+    await cache.write(second, validEntry());
+    await cache.read(first);
+    await cache.write(third, validEntry());
+
+    expect(await cache.read(first)).toBeDefined();
+    expect(await cache.read(second)).toBeUndefined();
+    expect(await cache.read(third)).toBeDefined();
+    expect(records.size).toBe(2);
+    expect(
+      [...metadata.values()].reduce<number>(
+        (total, record) =>
+          total +
+          (record as BrowserRemoteMetadataCacheMetadataRecord).byteLength,
+        0,
+      ),
+    ).toBe(bytes * 2);
+  });
+
+  it("accounts for a replacement without double-counting its old payload", async () => {
+    const { backend, records } = memoryBackend();
+    const bytes = payloadBytes(validEntry());
+    let time = 0;
+    const cache = createBrowserRemoteCatalogueMetadataCache(
+      backend,
+      { maxEntryBytes: bytes, maxTotalBytes: bytes * 2 },
+      () => ++time,
+    );
+    const first = cacheKey({ repository: "first" });
+    const second = cacheKey({ repository: "second" });
+
+    await cache.write(first, validEntry());
+    await cache.write(second, validEntry());
+    await cache.write(first, validEntry());
+
+    expect(await cache.read(second)).toBeDefined();
+    expect(records.size).toBe(2);
+  });
+
+  it("clears unaccountable metadata before accepting a new index", async () => {
+    const { backend, metadata, records } = memoryBackend();
+    records.set("orphan", { id: "orphan", payload: "{}" });
+    metadata.set("broken", { id: "broken" });
+
+    const cache = createBrowserRemoteCatalogueMetadataCache(backend);
+    await cache.write(cacheKey(), validEntry());
+
+    expect(records.size).toBe(1);
+    expect(metadata.size).toBe(1);
+    expect([...metadata.values()][0]).toMatchObject({
+      byteLength: payloadBytes(validEntry()),
+    });
+  });
+
+  it("keeps a valid hit usable when its LRU touch fails", async () => {
+    const cache = createBrowserRemoteCatalogueMetadataCache(
+      fixedRecordBackend(validRecord(), {
+        touch: async () => Promise.reject(new Error("touch failed")),
+      }),
+    );
+
+    await expect(cache.read(cacheKey())).resolves.toEqual(validEntry());
+  });
+
   it("propagates backend failures to the best-effort service boundary", async () => {
     const cache = createBrowserRemoteCatalogueMetadataCache({
       get: async () => Promise.reject(new Error("read failed")),
+      getAllMetadata: async () => [],
       put: async () => Promise.reject(new Error("write failed")),
+      touch: async () => undefined,
+      delete: async () => undefined,
+      clear: async () => undefined,
     });
 
     await expect(cache.read(cacheKey())).rejects.toThrow("read failed");
@@ -161,6 +251,17 @@ describe("browser remote catalogue metadata cache", () => {
         maxDocuments: 0,
       }),
     ).toThrow(/positive safe integer/i);
+    expect(() =>
+      createBrowserRemoteCatalogueMetadataCache(memoryBackend().backend, {
+        maxTotalBytes: 0,
+      }),
+    ).toThrow(/positive safe integer/i);
+    expect(() =>
+      createBrowserRemoteCatalogueMetadataCache(memoryBackend().backend, {
+        maxEntryBytes: 3,
+        maxTotalBytes: 2,
+      }),
+    ).toThrow(/must not exceed/i);
   });
 });
 
@@ -262,19 +363,37 @@ function validRecord(overrides: Record<string, unknown> = {}): unknown {
 function memoryBackend(): {
   readonly backend: BrowserRemoteMetadataCacheRecordBackend;
   readonly records: Map<string, unknown>;
+  readonly metadata: Map<string, unknown>;
 } {
   const records = new Map<string, unknown>();
+  const metadata = new Map<string, unknown>();
   return {
     records,
+    metadata,
     backend: {
       get: async (id) => records.get(id),
-      put: async (record) => {
+      getAllMetadata: async () => [...metadata.values()],
+      put: async (record, sidecar) => {
         if (typeof record !== "object" || record === null) {
           throw new Error("Expected an object record.");
         }
         const id = Reflect.get(record, "id");
         if (typeof id !== "string") throw new Error("Expected a record ID.");
         records.set(id, record);
+        metadata.set(sidecar.id, sidecar);
+      },
+      touch: async (sidecar) => {
+        if (records.has(sidecar.id)) metadata.set(sidecar.id, sidecar);
+      },
+      delete: async (ids) => {
+        for (const id of ids) {
+          records.delete(id);
+          metadata.delete(id);
+        }
+      },
+      clear: async () => {
+        records.clear();
+        metadata.clear();
       },
     },
   };
@@ -282,9 +401,29 @@ function memoryBackend(): {
 
 function fixedRecordBackend(
   record: unknown,
+  overrides: Partial<BrowserRemoteMetadataCacheRecordBackend> = {},
 ): BrowserRemoteMetadataCacheRecordBackend {
+  const metadata = new Map<
+    string,
+    BrowserRemoteMetadataCacheMetadataRecord
+  >();
   return {
     get: async () => record,
-    put: async () => undefined,
+    getAllMetadata: async () => [...metadata.values()],
+    put: async (_stored, sidecar) => {
+      metadata.set(sidecar.id, sidecar);
+    },
+    touch: async (sidecar) => {
+      metadata.set(sidecar.id, sidecar);
+    },
+    delete: async (ids) => {
+      for (const id of ids) metadata.delete(id);
+    },
+    clear: async () => metadata.clear(),
+    ...overrides,
   };
+}
+
+function payloadBytes(entry: RemoteCatalogueMetadataCacheEntry): number {
+  return new TextEncoder().encode(JSON.stringify(entry)).byteLength;
 }

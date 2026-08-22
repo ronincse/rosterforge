@@ -767,7 +767,7 @@ The byte cache now limits source data to 16 MiB per record and 256 MiB total.
 Writes account for replacements and remove least-recently-used records before
 adding a value that would cross the total. Reads update a separate, small
 versioned sidecar rather than cloning the source bytes: the pinned corpus is
-64.42 MiB in 46 records, while its serialized LRU sidecars total 13,463 bytes
+62.60 MiB of exact Git-blob source in 46 records, while its serialized LRU sidecars total 13,463 bytes
 (293 bytes average). Existing version-1 records migrate with access time zero,
 so known recent entries win over history the application cannot reconstruct.
 Malformed legacy byte records are removed; malformed later sidecars clear only
@@ -778,9 +778,16 @@ Remote-index metadata records remain isolated by provider, repository, commit,
 and pinned tree object ID; their versioned JSON payloads are bounded and
 structurally decoded before service-level report/tree consistency checks.
 Malformed, oversized, unavailable, or tree-incompatible metadata falls back to
-fresh sequential indexing. Remote-index metadata remains bounded per entry but
-not in total; its eviction is the next separate cache boundary. The byte-cache
-total does not use
+fresh sequential indexing.
+
+Metadata JSON is limited to 32 MiB per record and 32 MiB total. Writes account
+for replacement and evict least-recently-used pinned revisions before storing a
+report that would cross the total. Reads touch a separate
+`pinned-repository-metadata-lru` sidecar rather than rewriting a payload accepted
+at up to 32 MiB. Existing version-1 reports migrate at access time zero;
+malformed legacy reports are removed, and malformed later sidecars clear only
+this re-downloadable database. The measured pinned report is 181,985 bytes, so
+the default can retain 184 reports of that size. Neither cache uses
 `navigator.storage.estimate()`; origin-wide storage headroom and
 quota-management UI remain separate work.
 
@@ -827,10 +834,10 @@ tests use fictional data and mocked responses, so no third-party files or live
 network dependency enter the standard suite.
 
 A read-only orchestration proof against the same external checkout indexed all
-46 files sequentially from 67,554,454 verified cached bytes, then reacquired the
+46 files sequentially from 65,641,889 verified cached Git-object bytes, then reacquired the
 seven-file Imperial Knights closure entirely from cache. The focused closure
-retained 7,737,141 source bytes. Serializing the bounded metadata-cache entry
-produced 182,354 bytes for 46 document summaries, 109 catalogue links, and one
+retained 7,521,360 source bytes. Serializing the bounded metadata-cache entry
+produced 181,985 bytes for 46 document summaries, 109 catalogue links, and one
 diagnostic, comfortably below the 32 MiB browser limit. Both operation statuses
 were `complete`; the only diagnostic was the existing source-located invalid
 empty `defaultCostLimit` from `Warhammer 40,000.json`. Acquisition completeness

@@ -230,7 +230,7 @@ it evicts least-recently-used records until the replacement fits. LRU state
 lives in a separate `pinned-repository-byte-metadata` object store: a hit writes
 only a roughly 293-byte sidecar rather than rewriting a source record as large
 as 16 MiB. On the pinned 46-file corpus those sidecars total 13,463 bytes beside
-64.42 MiB of source. Database version 2 migrates valid version-1 records with an
+62.60 MiB of exact Git-blob source. Database version 2 migrates valid version-1 records with an
 unknown access time of zero, making them the first candidates without inventing
 history; malformed legacy records are discarded. If later accounting metadata
 cannot be decoded, the adapter clears this re-downloadable cache before writing
@@ -244,8 +244,17 @@ trees or source bytes. Every read defensively decodes provenance, diagnostics,
 file reports, and summaries, then the remote-source service checks the report
 against the newly listed trusted tree before use. Missing, malformed, oversized,
 or tree-incompatible records fall back to sequential indexing. Storage failures
-remain warnings when verified acquisition succeeds. Eviction and quota policy
-remain application concerns.
+remain warnings when verified acquisition succeeds.
+
+Metadata JSON is limited to 32 MiB per record and 32 MiB total. The pinned
+46-document report is 181,985 bytes, so the default bound can retain 184 reports
+of that size while still allowing one maximally accepted report. Database
+version 2 adds `pinned-repository-metadata-lru`; reads touch that small sidecar
+instead of rewriting as much as 32 MiB. Version-1 records migrate with access
+time zero, malformed legacy records are discarded, and malformed later
+accounting clears only this re-downloadable metadata database. The adapter never
+touches local roster drafts. Origin-wide headroom through
+`navigator.storage.estimate()` remains a separate application concern.
 
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary

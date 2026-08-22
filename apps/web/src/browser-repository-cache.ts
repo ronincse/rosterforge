@@ -23,7 +23,7 @@ export interface BrowserRepositoryCacheMetadataRecord {
  *
  * Metadata is separate because touching an LRU timestamp inside a byte record
  * would rewrite up to 16 MiB on every hit. Across the pinned 46-file corpus,
- * sidecars total 13,463 bytes (293 bytes average) beside 64.42 MiB of source.
+ * sidecars total 13,463 bytes (293 bytes average) beside 62.60 MiB of exact Git-blob source.
  * `delete` and `clear` affect both stores so byte records cannot outlive the
  * accounting used for eviction.
  */

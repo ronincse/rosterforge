@@ -50,7 +50,7 @@ export const defaultRemoteCatalogueSources: readonly RemoteCatalogueSourceDefini
         repository: "wh40k-11e",
         revision: "54c189f4fd01878351fab05586d3b38d9c7f6ddc",
       },
-      estimatedIndexBytes: 67_554_454,
+      estimatedIndexBytes: 65_641_889,
     },
   ];
 

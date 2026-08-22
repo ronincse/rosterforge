@@ -25,36 +25,73 @@ import type {
 
 export interface BrowserRemoteMetadataCacheLimits {
   readonly maxEntryBytes: number;
+  readonly maxTotalBytes: number;
   readonly maxFiles: number;
   readonly maxDocuments: number;
   readonly maxDiagnostics: number;
   readonly maxCatalogueLinks: number;
 }
 
+/**
+ * Browser storage primitives kept below the remote-index cache contract.
+ *
+ * Access metadata is separate because touching an LRU timestamp in the main
+ * record would rewrite a payload accepted at up to 32 MiB on every cache hit.
+ * Delete and clear operations keep records and accounting sidecars paired.
+ */
 export interface BrowserRemoteMetadataCacheRecordBackend {
   readonly get: (id: string) => Promise<unknown>;
-  readonly put: (record: unknown) => Promise<void>;
+  readonly getAllMetadata: () => Promise<readonly unknown[]>;
+  readonly put: (
+    record: unknown,
+    metadata: BrowserRemoteMetadataCacheMetadataRecord,
+  ) => Promise<void>;
+  readonly touch: (
+    metadata: BrowserRemoteMetadataCacheMetadataRecord,
+  ) => Promise<void>;
+  readonly delete: (ids: readonly string[]) => Promise<void>;
+  readonly clear: () => Promise<void>;
+}
+
+export interface BrowserRemoteMetadataCacheMetadataRecord {
+  readonly id: string;
+  readonly format: string;
+  readonly version: number;
+  readonly byteLength: number;
+  readonly lastAccessedAt: number;
 }
 
 const recordFormat = "rosterforge.pinned-repository-metadata-cache";
 const recordVersion = 1;
+const metadataFormat =
+  "rosterforge.pinned-repository-metadata-cache-metadata";
+const metadataVersion = 1;
 const databaseName = "rosterforge-pinned-repository-metadata-cache";
-const databaseVersion = 1;
+const databaseVersion = 2;
 const objectStoreName = "pinned-repository-metadata";
+const metadataStoreName = "pinned-repository-metadata-lru";
 const gitShaPattern = /^[0-9a-f]{40}$/u;
 
 export const defaultBrowserRemoteMetadataCacheLimits: BrowserRemoteMetadataCacheLimits =
   {
     maxEntryBytes: 32 * 1024 * 1024,
+    // One maximally accepted index can fit. The pinned 46-document index is
+    // currently 181,985 bytes, so real revisions remain plentiful but bounded.
+    maxTotalBytes: 32 * 1024 * 1024,
     maxFiles: 4096,
     maxDocuments: 4096,
     maxDiagnostics: 100_000,
     maxCatalogueLinks: 65_536,
   };
 
+/**
+ * Adapts browser records to the remote-index cache contract with an LRU
+ * total-byte bound. Valid hits survive a failed best-effort sidecar touch.
+ */
 export function createBrowserRemoteCatalogueMetadataCache(
   backend: BrowserRemoteMetadataCacheRecordBackend,
   limits: Partial<BrowserRemoteMetadataCacheLimits> = {},
+  now: () => number = Date.now,
 ): RemoteCatalogueMetadataCache {
   const resolvedLimits = {
     ...defaultBrowserRemoteMetadataCacheLimits,
@@ -63,30 +100,65 @@ export function createBrowserRemoteCatalogueMetadataCache(
   for (const [name, value] of Object.entries(resolvedLimits)) {
     assertPositiveInteger(value, name);
   }
+  if (resolvedLimits.maxEntryBytes > resolvedLimits.maxTotalBytes) {
+    throw new Error("maxEntryBytes must not exceed maxTotalBytes.");
+  }
 
   return {
     async read(key) {
       const id = cacheRecordId(key);
       const record = await backend.get(id);
       if (record === undefined) return undefined;
-      return decodeCacheRecord(record, id, key, resolvedLimits);
+      const decoded = decodeCacheRecord(record, id, key, resolvedLimits);
+      try {
+        await backend.touch(
+          cacheMetadata(id, decoded.byteLength, timestamp(now)),
+        );
+      } catch {
+        // A stale LRU timestamp may evict this disposable index sooner, but it
+        // must never turn a valid cached index into a network miss.
+      }
+      return decoded.entry;
     },
 
     async write(key, entry) {
       const payload = JSON.stringify(entry);
-      assertPayloadSize(payload, resolvedLimits.maxEntryBytes);
+      const byteLength = payloadByteLength(payload);
+      assertPayloadSize(byteLength, resolvedLimits.maxEntryBytes);
       decodePayload(JSON.parse(payload) as unknown, resolvedLimits);
-      await backend.put({
-        id: cacheRecordId(key),
-        format: recordFormat,
-        version: recordVersion,
-        key: { ...key },
-        payload,
-      });
+      const id = cacheRecordId(key);
+      const accessedAt = timestamp(now);
+      const storedMetadata = await backend.getAllMetadata();
+      let evicted: readonly string[];
+      try {
+        evicted = evictionIds(
+          storedMetadata.map(decodeCacheMetadata),
+          id,
+          byteLength,
+          resolvedLimits.maxTotalBytes,
+        );
+      } catch {
+        // Sidecars are authoritative for the total bound. Every index can be
+        // rebuilt, so clear unaccountable records before accepting a write.
+        await backend.clear();
+        evicted = [];
+      }
+      if (evicted.length > 0) await backend.delete(evicted);
+      await backend.put(
+        {
+          id,
+          format: recordFormat,
+          version: recordVersion,
+          key: { ...key },
+          payload,
+        },
+        cacheMetadata(id, byteLength, accessedAt),
+      );
     },
   };
 }
 
+/** Creates the bounded IndexedDB remote-index cache when available. */
 export function createIndexedDbRemoteCatalogueMetadataCache(
   indexedDb: IDBFactory | null | undefined = browserIndexedDb(),
   limits: Partial<BrowserRemoteMetadataCacheLimits> = {},
@@ -103,7 +175,10 @@ function decodeCacheRecord(
   expectedId: string,
   expectedKey: RemoteCatalogueMetadataCacheKey,
   limits: BrowserRemoteMetadataCacheLimits,
-): RemoteCatalogueMetadataCacheEntry {
+): {
+  readonly entry: RemoteCatalogueMetadataCacheEntry;
+  readonly byteLength: number;
+} {
   if (!isRecord(value)) throw invalidRecord("is not an object");
   if (value.id !== expectedId) throw invalidRecord("has an invalid ID");
   if (value.format !== recordFormat || value.version !== recordVersion) {
@@ -115,7 +190,8 @@ function decodeCacheRecord(
   if (typeof value.payload !== "string") {
     throw invalidRecord("does not contain a JSON payload");
   }
-  assertPayloadSize(value.payload, limits.maxEntryBytes);
+  const byteLength = payloadByteLength(value.payload);
+  assertPayloadSize(byteLength, limits.maxEntryBytes);
 
   let parsed: unknown;
   try {
@@ -123,7 +199,10 @@ function decodeCacheRecord(
   } catch {
     throw invalidRecord("does not contain valid JSON");
   }
-  return decodePayload(parsed, limits);
+  return {
+    entry: decodePayload(parsed, limits),
+    byteLength,
+  };
 }
 
 function decodePayload(
@@ -446,13 +525,96 @@ function diagnosticImpact(
   );
 }
 
-function assertPayloadSize(payload: string, maxEntryBytes: number): void {
-  const actualBytes = new TextEncoder().encode(payload).byteLength;
+function payloadByteLength(payload: string): number {
+  return new TextEncoder().encode(payload).byteLength;
+}
+
+function assertPayloadSize(actualBytes: number, maxEntryBytes: number): void {
   if (actualBytes > maxEntryBytes) {
     throw new Error(
       `The metadata cache payload exceeds the configured byte limit (${actualBytes} > ${maxEntryBytes}).`,
     );
   }
+}
+
+function cacheMetadata(
+  id: string,
+  byteLength: number,
+  lastAccessedAt: number,
+): BrowserRemoteMetadataCacheMetadataRecord {
+  return {
+    id,
+    format: metadataFormat,
+    version: metadataVersion,
+    byteLength,
+    lastAccessedAt,
+  };
+}
+
+function decodeCacheMetadata(
+  value: unknown,
+): BrowserRemoteMetadataCacheMetadataRecord {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    value.format !== metadataFormat ||
+    value.version !== metadataVersion ||
+    !nonNegativeSafeInteger(value.byteLength) ||
+    !nonNegativeSafeInteger(value.lastAccessedAt)
+  ) {
+    throw new Error("Metadata cache accounting is invalid.");
+  }
+  return {
+    id: value.id,
+    format: value.format,
+    version: value.version,
+    byteLength: value.byteLength,
+    lastAccessedAt: value.lastAccessedAt,
+  };
+}
+
+function evictionIds(
+  metadata: readonly BrowserRemoteMetadataCacheMetadataRecord[],
+  writtenId: string,
+  writtenBytes: number,
+  maxTotalBytes: number,
+): readonly string[] {
+  const retained = metadata.filter(({ id }) => id !== writtenId);
+  let totalBytes = retained.reduce(
+    (total, record) => safeByteTotal(total, record.byteLength),
+    writtenBytes,
+  );
+  const oldestFirst = [...retained].sort((left, right) => {
+    if (left.lastAccessedAt !== right.lastAccessedAt) {
+      return left.lastAccessedAt - right.lastAccessedAt;
+    }
+    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+  });
+  const evicted: string[] = [];
+  for (const record of oldestFirst) {
+    if (totalBytes <= maxTotalBytes) break;
+    evicted.push(record.id);
+    totalBytes -= record.byteLength;
+  }
+  return evicted;
+}
+
+function safeByteTotal(left: number, right: number): number {
+  const total = left + right;
+  if (!Number.isSafeInteger(total)) {
+    throw new Error("Metadata cache total exceeds a safe integer.");
+  }
+  return total;
+}
+
+function timestamp(now: () => number): number {
+  const value = now();
+  if (!nonNegativeSafeInteger(value)) {
+    throw new Error(
+      "Metadata cache timestamps must be non-negative safe integers.",
+    );
+  }
+  return value;
 }
 
 function gitSha(value: unknown): value is string {
@@ -488,10 +650,41 @@ function indexedDbBackend(
     async get(id) {
       return withObjectStore(indexedDb, "readonly", (store) => store.get(id));
     },
-    async put(record) {
-      await withObjectStore(indexedDb, "readwrite", (store) =>
-        store.put(record),
+    async getAllMetadata() {
+      return withObjectStore(
+        indexedDb,
+        "readonly",
+        (store) => store.getAll(),
+        metadataStoreName,
       );
+    },
+    async put(record, metadata) {
+      await withCacheStores(indexedDb, "readwrite", (records, sidecars) => {
+        records.put(record);
+        sidecars.put(metadata);
+      });
+    },
+    async touch(metadata) {
+      await withObjectStore(
+        indexedDb,
+        "readwrite",
+        (store) => store.put(metadata),
+        metadataStoreName,
+      );
+    },
+    async delete(ids) {
+      await withCacheStores(indexedDb, "readwrite", (records, sidecars) => {
+        for (const id of ids) {
+          records.delete(id);
+          sidecars.delete(id);
+        }
+      });
+    },
+    async clear() {
+      await withCacheStores(indexedDb, "readwrite", (records, sidecars) => {
+        records.clear();
+        sidecars.clear();
+      });
     },
   };
 }
@@ -500,16 +693,39 @@ async function withObjectStore<Value>(
   indexedDb: IDBFactory,
   mode: IDBTransactionMode,
   request: (store: IDBObjectStore) => IDBRequest<Value>,
+  storeName = objectStoreName,
 ): Promise<Value> {
   const database = await openDatabase(indexedDb);
   try {
-    const transaction = database.transaction(objectStoreName, mode);
+    const transaction = database.transaction(storeName, mode);
     const completion = transactionCompletion(transaction);
     const value = await requestResult(
-      request(transaction.objectStore(objectStoreName)),
+      request(transaction.objectStore(storeName)),
     );
     await completion;
     return value;
+  } finally {
+    database.close();
+  }
+}
+
+async function withCacheStores(
+  indexedDb: IDBFactory,
+  mode: IDBTransactionMode,
+  requests: (records: IDBObjectStore, metadata: IDBObjectStore) => void,
+): Promise<void> {
+  const database = await openDatabase(indexedDb);
+  try {
+    const transaction = database.transaction(
+      [objectStoreName, metadataStoreName],
+      mode,
+    );
+    const completion = transactionCompletion(transaction);
+    requests(
+      transaction.objectStore(objectStoreName),
+      transaction.objectStore(metadataStoreName),
+    );
+    await completion;
   } finally {
     database.close();
   }
@@ -519,10 +735,20 @@ function openDatabase(indexedDb: IDBFactory): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     let settled = false;
     const request = indexedDb.open(databaseName, databaseVersion);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(objectStoreName)) {
-        request.result.createObjectStore(objectStoreName, { keyPath: "id" });
+    request.onupgradeneeded = (event) => {
+      const transaction = request.transaction;
+      if (transaction === null) {
+        throw new Error("IndexedDB upgrade did not provide a transaction.");
       }
+      const records = request.result.objectStoreNames.contains(objectStoreName)
+        ? transaction.objectStore(objectStoreName)
+        : request.result.createObjectStore(objectStoreName, { keyPath: "id" });
+      const metadata = request.result.objectStoreNames.contains(
+        metadataStoreName,
+      )
+        ? transaction.objectStore(metadataStoreName)
+        : request.result.createObjectStore(metadataStoreName, { keyPath: "id" });
+      if (event.oldVersion < 2) migrateLegacyRecords(records, metadata);
     };
     request.onsuccess = () => {
       if (settled) {
@@ -542,6 +768,56 @@ function openDatabase(indexedDb: IDBFactory): Promise<IDBDatabase> {
       reject(new Error("IndexedDB upgrade was blocked by another tab."));
     };
   });
+}
+
+function migrateLegacyRecords(
+  records: IDBObjectStore,
+  metadata: IDBObjectStore,
+): void {
+  const cursorRequest = records.openCursor();
+  cursorRequest.onsuccess = () => {
+    const cursor = cursorRequest.result;
+    if (cursor === null) return;
+    const sidecar = legacyCacheMetadata(cursor.value);
+    if (sidecar === undefined) {
+      cursor.delete();
+    } else {
+      metadata.put(sidecar);
+    }
+    cursor.continue();
+  };
+}
+
+function legacyCacheMetadata(
+  value: unknown,
+): BrowserRemoteMetadataCacheMetadataRecord | undefined {
+  try {
+    if (
+      !isRecord(value) ||
+      typeof value.id !== "string" ||
+      value.format !== recordFormat ||
+      value.version !== recordVersion ||
+      !isCacheKey(value.key) ||
+      cacheRecordId(value.key) !== value.id ||
+      typeof value.payload !== "string"
+    ) {
+      return undefined;
+    }
+    const byteLength = payloadByteLength(value.payload);
+    assertPayloadSize(
+      byteLength,
+      defaultBrowserRemoteMetadataCacheLimits.maxEntryBytes,
+    );
+    decodePayload(
+      JSON.parse(value.payload) as unknown,
+      defaultBrowserRemoteMetadataCacheLimits,
+    );
+    // Version-1 records predate access tracking. Zero makes them the oldest
+    // candidates without inventing a last-used time.
+    return cacheMetadata(value.id, byteLength, 0);
+  } catch {
+    return undefined;
+  }
 }
 
 function requestResult<Value>(request: IDBRequest<Value>): Promise<Value> {

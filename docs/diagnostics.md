@@ -159,14 +159,15 @@ network response can still complete the operation. Enumeration, eviction, and
 the final byte/sidecar write are all part of the write path and therefore use
 the existing write-failed code.
 
-LRU sidecars are defensive accounting for a disposable cache. A malformed
-sidecar causes that repository cache alone to be cleared before the verified
-network value is written. A failed sidecar touch leaves the valid cache hit
-usable, at the cost of making it an earlier eviction candidate; it emits no
-diagnostic because no imported bytes or user-authored data were lost. If
-IndexedDB is absent, the application omits the optional cache and acquisition
-proceeds with cache status `unavailable` rather than emitting a persistence
-error.
+LRU sidecars are defensive accounting for the disposable byte and remote-index
+metadata caches. A malformed sidecar causes only its own cache database to be
+cleared before the verified or rebuilt value is written. A failed sidecar touch
+leaves the valid cache hit usable, at the cost of making it an earlier eviction
+candidate; it emits no diagnostic because no imported bytes or user-authored
+data were lost. Metadata enumeration, eviction, and paired record/sidecar writes
+use `WEB_REMOTE_INDEX_CACHE_WRITE_FAILED` at the service boundary. If IndexedDB
+is absent, the application omits the optional caches and acquisition proceeds
+with cache status `unavailable` rather than emitting a persistence error.
 
 The browser remote-source service can additionally emit:
 
