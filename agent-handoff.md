@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (public API comments)
+## Current Status — 2026-08-22 (durable undo history)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,14 +39,14 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **441 passed, 8 skipped (449)**.
+  `git diff --check` all pass. `pnpm test` is **450 passed, 8 skipped (458)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **8 passed**; without it those 8 are the skipped tests.
-- **Active area.** Editing durability (roadmap section E). Sections A and B —
-  display fidelity and legality — are effectively complete.
+  is **8 passed** (458 total); without it those 8 are the skipped tests.
+- **Active area.** Catalogue sources and cache (roadmap section D). Sections A,
+  B, and E — display fidelity, legality, and editing durability — are complete.
 - **Comment coverage.** 81 of 668 exported symbols (12%), up from 42. The
   documented set is the front door: `roster-model/commands.ts` and `types.ts`,
   `evaluation/index.ts` and `validation.ts`, `persistence/local-roster-draft.ts`,
@@ -64,15 +64,17 @@ Selection-level `annotation` is complete: direct and grouped modifiers execute,
 selections-terminus `affects` routes through a shared collector, and the
 workspace decorates occurrence names without mutating their source names.
 
-`affects` force traversal is **done** — this paragraph named it as the next
-target until 2026-08-22 and the roadmap had already moved past it. The current
-**Next is durable undo history** (section E): the roster survives a reload, the
-undo stack does not. Adding history to a draft record is now safe because a
-draft write no longer rewrites the catalogue bytes with it.
+Section E is **complete**: the roster, its catalogue bytes, and now a tail of
+its undo history all survive a reload. The current **Next is section D — cache
+eviction and quota**. Nothing bounds the total size of the draft store, which
+now holds three kinds of record (drafts, `files:<batchId>`, `history:<draftId>`),
+and a user who imports several batches cannot reclaim space without deleting
+drafts.
 
-Read `roster-model/commands.ts` before touching the history: its header records
-which commands return the *same* roster for a no-op edit, which is what the
-unsaved-change indicator and the autosave trigger are built on.
+Before adding anything to a store write, measure what one costs. Two
+checkpoints running have had their design decided by that number, most recently
+the discovery that persisting a full undo history would have written 3.2 MB per
+autosave settle.
 
 Keep profile `name` modifiers last in section A; 86% of the 7,673 instances are
 Crusade content.
@@ -179,7 +181,8 @@ actually asked for.
 | Item | Status |
 |---|---|
 | Pinned GitHub browsing, closure acquisition, byte caching, provenance | Done |
-| Cache eviction and quota controls, retries, atomic publication | Deferred |
+| **Cache eviction and quota controls** | **Next** | nothing bounds total draft-store size, and it now holds three record kinds |
+| Retries, atomic publication | Deferred |
 | Repository update discovery, branch tracking, GitHub auth | Deferred |
 | Gallery discovery and cache-management UI | Deferred |
 
@@ -195,7 +198,7 @@ actually asked for.
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
 | Draft byte storage | Done | bytes stored once per import batch, collected when the last draft referencing them goes |
 | Comment the public API surface | Done | the four front-door files; 42 → 81 of 668 exports. The remaining 587 are deliberate — see the note below the table |
-| **Durable undo history** | **Next** | the roster survives a reload; the undo stack does not. Safe to attempt now that a draft write no longer rewrites the catalogue |
+| Durable undo history | Done | a trimmed tail under `history:<draftId>`; 20 entries capped by a 256 KB budget, restored against one shared catalogue context |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
 **On the remaining 587 undocumented exports.** They are not a backlog item.
@@ -3726,6 +3729,13 @@ Still open, unblocking: the `automatic`/auto-fill observation.
 
 ## Completed Assignment — Draft Byte Storage, 2026-08-21
 
+**Partly superseded, 2026-08-22.** The work described here stands. Its "Next
+recommended boundary" does not: it says durable undo history "is now safe to
+attempt: adding history to a draft record no longer means rewriting the
+catalogue with it." Removing the catalogue from the write was necessary and not
+sufficient. A full 100-entry history is 3.2 MB of roster snapshots on its own,
+so it went in its own record instead. See the Durable Undo History entry.
+
 Baseline `c57ade6`; resulting implementation commit `475edb4`.
 
 ### What changed
@@ -3999,5 +4009,124 @@ which is exactly how `affects-routing.ts` became the best-documented file here.
 2. **Section D — cache eviction and quota.** Still absent, though the batch byte
    sharing reduced the pressure.
 3. **Profile `name` modifiers** — five corpus instances, the last of section A.
+
+Still open, unblocking: the `automatic`/auto-fill observation.
+
+## Completed Assignment — Durable Undo History, 2026-08-22
+
+Baseline `10b5c1b`; resulting implementation commit `2a562fc`.
+
+The last thing in section E that lost work on reload. A saved draft now carries
+a tail of its undo history under a reserved `history:<draftId>` key, and
+reopening rebuilds the sessions so undo and redo work immediately. The recovery
+slot gets one too, because it restores through the same path.
+
+### The measurement came first, and it changed the design
+
+The previous entry expected this to be easy: "adding history to a draft record
+no longer means rewriting the catalogue with it." That is true and still not
+enough. Measured against the pinned corpus, on a Xenos - Aeldari roster:
+
+| | |
+|---|---|
+| Roster snapshot, 99 selections | **34 KB** |
+| Full in-memory history depth | 100 |
+| Naive cost per autosave settle | **3.2 MB** |
+| What a draft record costs today | ~34 KB |
+
+3.2 MB every five seconds of active editing is 90× the current write and the
+same *class* of defect the draft byte split was written to remove. **Putting the
+history in the draft record is not viable**, and that assumption in the Draft
+Byte Storage entry should be read as superseded.
+
+The second measurement decided the restore path:
+
+| Restore of one roster | Time |
+|---|---|
+| 4 selections | 19.1 ms |
+| 99 selections | 19.2 ms |
+
+Identical, because `restoreLocalRosterSession` spends all of it in
+`indexSelectionChoices`, which walks every root the catalogue materializes and
+never looks at the roster. So a per-snapshot restore pays that per entry:
+
+| 20-deep history | Time |
+|---|---|
+| One `restoreLocalRosterSession` per snapshot | **490 ms** |
+| One shared context (`restoreLocalRosterSessions`) | **27 ms** |
+
+### What was built
+
+- **`history:<draftId>`, not the draft record.** Same shape as
+  `files:<batchId>`. It also keeps `list` out of it entirely: a shelf summary
+  needs a name and a date, and validating twenty snapshots per draft on every
+  refresh is work for nothing. `load` is the only reader.
+- **Bounded twice.** `maxHistoryEntries` caps 20 across past and future in the
+  persistence layer; a **256 KB** budget in the browser store then trims from
+  the far end. For a large roster that is roughly seven undo steps, for a small
+  one the full twenty. A byte budget because the cost that matters is bytes per
+  settle and a snapshot grows with the roster.
+- **Past fills before future.** Undo is what anyone reaches for after a reload,
+  and handing back a redo stack that outlived the undo steps under it would be
+  strange. Both share one budget.
+- **`restoreLocalRosterSessions`** takes one shared catalogue context. The
+  single-roster entry point delegates to it, so nothing else changed shape.
+- **Per-snapshot ID scopes.** The same occurrence IDs recur across snapshots by
+  construction — one roster at different moments — so decoding them in the
+  shared scope would have rejected every history a draft can hold. Total work
+  stays bounded because `maxHistoryEntries` caps the number of scopes.
+
+### The failure this deliberately does not propagate
+
+A snapshot that no longer resolves costs the **history**, never the roster. The
+draft opens with an empty stack and reports
+`WEB_ROSTER_DRAFT_HISTORY_UNAVAILABLE`. Refusing to open a perfectly good list
+because a stale undo step will not rebuild would be the wrong trade, and the
+fallback pays a second catalogue index only on that rare path.
+
+### Tests
+
+Nine added, 441 → 450.
+
+- Persistence (4): history decoding with recurring IDs across snapshots, absent
+  history staying absent rather than becoming empty, a malformed snapshot
+  reporting its own `["history","future","0","name"]` path, and the entry limit.
+- Browser store (5): the split and its reassembly, `list` not touching history
+  records, the byte budget keeping the tail, the record being removed once
+  nothing is left to undo, and collection on delete.
+- **The end-to-end one is the one that matters.** `App.ui.test.tsx` now saves a
+  draft, edits it, reopens it, and asserts Undo is enabled and reverts the edit.
+  I sabotaged `draftHistory` to return an empty past and confirmed it fails
+  (`expected true to be false`) before restoring it. A test that cannot fail is
+  worth nothing, and this one was cheap to check.
+
+### What this does not do
+
+- **Give an unsaved roster a durable history.** The recovery slot carries one,
+  but a roster that has never been saved and never settled has nowhere to put
+  it. That is the same boundary unsaved-change tracking already has.
+- **Persist history depth beyond the tail.** Restoring 20 and continuing to 100
+  in memory is the intended behaviour, not a gap.
+- **Handle a draft ID colliding with a reserved key prefix.** `files:` has had
+  the same property since the byte split and generated IDs are UUIDs.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **450 passed, 8 skipped (458 total)**.
+- Pinned real-data suite with `ROSTERFORGE_BSDATA_JSON_DIR=E:/GitHub/wh40k-11e`
+  — **458 passed (46 files)**.
+- `docs/compatibility.md` gained a "Draft Undo History" section with the numbers
+  above; `docs/diagnostics.md` gained the new code.
+
+### Next recommended boundary
+
+1. **Section D — cache eviction and quota.** The last structural gap in
+   durability. The store now holds three record kinds and nothing ever bounds
+   the total, so a user who imports several batches has no way to reclaim space
+   short of deleting drafts.
+2. **Profile `name` modifiers** — five corpus instances, the last of section A.
+3. **`automatic` driving auto-fill** — still unverified and unconsumed;
+   `initialization.ts` reads parent-scoped minima and does not look at it.
 
 Still open, unblocking: the `automatic`/auto-fill observation.
