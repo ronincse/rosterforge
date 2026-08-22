@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (profile display fidelity complete)
+## Current Status — 2026-08-22 (automatic initialization settled)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,7 +39,7 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **469 passed, 9 skipped (478)**.
+  `git diff --check` all pass. `pnpm test` is **470 passed, 9 skipped (479)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
@@ -68,11 +68,11 @@ Section E is **complete**. The repository **byte** cache is bounded to 256 MiB,
 and the separate remote-index **metadata** cache is bounded to 32 MiB; both
 evict least-recently-used re-downloadable entries and never touch saved drafts.
 
-The current **Next is `automatic` driving auto-fill** in section B. Constraint
-evaluation already treats the attribute as inert to the bound itself; the
-remaining question is whether and how its 109 corpus instances alter initial
-selection creation. Inventory first, then consult nr-editor/New Recruit rather
-than inferring behavior from the attribute name.
+Initial creation semantics for the New Recruit `automatic` extension are now
+settled: ordinary minima initialize whether the property is absent, `false`, or
+`true`. The current **Next is live `automatic: true` reconciliation** in section
+B: after a relevant bound changes, New Recruit clamps ordinary entries, groups,
+and sub-units. Inventory and measure the command path before adding that repair.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
@@ -148,7 +148,8 @@ points limit works end to end and is now pinned.
 | `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
 
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
-| `automatic` driving auto-fill | Next | unverified, unconsumed; inventory all 109 values and bound contexts before changing initialization |
+| `automatic` during initial creation | Done | New Recruit's initializer ignores the extension; supported minima seed for absent, `false`, and `true` |
+| `automatic: true` post-edit reconciliation | Next | New Recruit clamps ordinary entries, groups, and sub-units after relevant bound changes; RosterForge does not yet repair live selections |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
@@ -3382,6 +3383,12 @@ No open questions require the owner.
 
 ## Completed Assignment — Constraint Attributes, 2026-08-21
 
+> **Partially superseded 2026-08-22:** the unverified auto-fill hypothesis below
+> is settled by the later Automatic Constraint Initialization assignment.
+> Initial creation ignores `automatic`; `true` instead gates later
+> constraint-change reconciliation. The bound-evaluation conclusion remains
+> valid.
+
 Baseline `3a04a90`; resulting implementation commit `984d427`.
 
 ### What changed
@@ -4540,3 +4547,82 @@ selection context; then consult nr-editor or observe New Recruit before
 changing `initialization.ts`. Stone previously judged this optional because it
 can change only the starting state, not the supported bound result. No owner
 input is currently required.
+
+## Completed Assignment — Automatic Constraint Initialization, 2026-08-22
+
+Baseline `e32e520`; resulting implementation commit `973b8c3`
+(`fix: accept automatic bounds during initialization`).
+
+### Earlier hypothesis corrected
+
+The earlier suggestion that `automatic="false"` might suppress initial
+descendant creation was wrong. New Recruit's initializer reads min, max, and
+default selection amounts without consulting `automatic`. A separate
+constraint-change handler dispatches repair only when `automatic` is true.
+RosterForge now matches that split for initial creation; live repair remains
+open.
+
+The evidence came from New Recruit client 35.66, build
+`420bf6f1-2795-4c15-b21e-b789f9459b24`. Its shipped runtime has an initializer
+path (`Lk` / `Koe` / `Voe`) that reads bounds without `automatic`, followed by
+`onConstraintChanged`, which enqueues `automaticConstraintChanged` only for a
+truthy property. Handler `Joe` then clamps ordinary entries (`nae`), groups
+(`Zoe`), and sub-units (`eae` / `rae` / `tae`). Public nr-editor commit
+`2a5edd2767ea6e2fd44d166c20052b7c8aa7818d` added the raw-editor checkbox and a
+private runtime-submodule update, but did not itself expose those semantics.
+
+### Corpus measurement
+
+At pinned wh40k-11e commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, all 109 values are native
+Booleans: 88 true and 21 false. The constraints comprise 80 maxima and 29
+minima; 108 target `selections` and one targets ID
+`04b1-67f7-48cb-4f1f`; 108 use `parent` scope and one uses `self`.
+
+Their owners are 85 selection entries, 12 entry links, nine selection-entry
+groups, one shared selection entry, and two shared selection-entry groups.
+Forty entry owners are models, 46 are upgrades, and 12 are selection-entry
+links. `includeChildSelections` is false on 99, true on three, and absent on
+seven; `percentValue` and `includeChildForces` are each false on 20 and absent
+on 89. Fifty-seven owners carry more than one sibling constraint.
+
+No clean real-data behavior pin exists for the initial true case: every positive
+`automatic: true` minimum has modifier-confounded surrounding bounds. The
+optional corpus test therefore pins the exact inventory rather than pretending
+that a confounded example proves initialization behavior.
+
+### Implementation
+
+`initialization.ts` treats only the generic `automatic` attribute as inert when
+screening otherwise-supported root and parent bounds. Supported minima now seed
+identically when the extension is absent, false, or true. The extension remains
+outside the BattleScribe 2.03 typed projection because it is a New Recruit
+extension and its original Boolean text must remain visible on the generic node.
+
+The synthetic fixture has an `automatic="false"` model minimum of two and an
+`automatic="true"` upgrade minimum of one. The test proves both initialize,
+produce no unsupported diagnostics, and retain the exact generic attribute
+values. No command-level reconciliation, bound re-evaluation, catalogue
+resolution, or legality enforcement was added.
+
+### Verification
+
+One ordinary test was added, **469 -> 470 passed**. The optional pinned suite
+keeps **9 passed** and now asserts the exact 109-instance inventory above.
+
+For the negative control, the recognized attribute was temporarily renamed to
+`automatic-sabotaged`. The new synthetic test failed with two
+`EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED` diagnostics naming
+`automatic`; the implementation was restored and the focused suite passed.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — pass.
+- `pnpm test` — **470 passed, 9 skipped (479 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — **9 passed**.
+- Build retains only the existing large-chunk warning.
+
+### Remaining boundary
+
+Take **`automatic: true` post-edit reconciliation** next. Measure the immutable
+command cost and inventory affected entry/group/sub-unit paths before extending
+the hot edit path. New Recruit clamps these structures only after a relevant
+bound changes; ordinary initial creation is complete and should not be revisited.
