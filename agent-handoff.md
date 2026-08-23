@@ -42,10 +42,14 @@ diagnostic codes.
   `git diff --check` all pass. `pnpm test` is **486 passed, 15 skipped (501)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
-  `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **501 passed**, and the whole suite now runs in about 14 s rather than 83 s;
-  without the variable the 13 corpus tests are skipped.
+  **501 passed**; without the variable the 15 corpus tests are skipped.
+  **The revision moved on 2026-08-23**, from
+  `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
+  re-derived. Older entries below still cite the old hash on purpose: they
+  record what was true when they were written. Only this block tracks the
+  current one.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
   from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
@@ -283,7 +287,10 @@ invisible to the whole test suite.
 | Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
 | Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
-| **Warn when community data disagrees with GW points** | **Next** | two known cases in the pinned corpus; a list legal here can be wrong at a table, and nothing says so |
+| Warn when community data disagrees with GW points | Measured | **both known cases vanished when the corpus was updated** — the data was simply stale and RosterForge read it faithfully. The gap is *freshness*, not correctness |
+| **Surface how current the loaded data is** | **Next** | owner-requested: identify the game system and files, then report when they last changed upstream via the BSData GitHub repository, falling back to a plain "may be out of date" note when offline |
+| `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
+| Constraint `value="-1"` | Open | 48 corpus constraints, 43 `max` and 5 `min`. Almost certainly "no limit", but withheld rather than guessed |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -5825,3 +5832,93 @@ Needs an owner decision on *how*: the app cannot know GW's numbers, so the
 options are surfacing the data revision, letting a user record a correction, or
 simply stating that points come from community data. Worth asking rather than
 guessing.
+
+## Completed Assignment — Re-Pinning The Corpus, 2026-08-23
+
+Baseline `824667c`; resulting implementation commit — see `git log`.
+
+Stone updated `E:\GitHub\wh40k-11e` to pick up Games Workshop's points
+adjustments. That moved the pinned corpus **298 commits**, changing 41 of 46
+files by +83,012/-23,687 lines, and invalidated a large part of the pinned
+measurement suite. `AGENTS.md` forbids silently measuring a moving branch, so
+this is the re-pin.
+
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc` →
+`04c62fcd041b3808c39d5c46fd677c704027b979`.
+
+### The headline: both points discrepancies vanished
+
+The Dark Angels list found two disagreements with GW. Both are gone:
+
+| Unit | GW | Old corpus | New corpus |
+|---|---|---|---|
+| Lion El'Jonson | 265 | 285 | **265** |
+| Lieutenant with Combi-weapon | 95 | 85 | **95** |
+
+So the diagnosis held: **RosterForge read the data faithfully and the data was
+stale.** The remaining Inner Circle Companions difference is still the 3-model
+default against a 6-model list entry, which is correct.
+
+That reframes the roadmap item. The gap is not correctness, it is **freshness**,
+and the owner has asked for that to be surfaced — see the new section F row.
+
+### How the re-pin was done
+
+Not by fitting numbers to output. The largest single change, identity condition
+scopes going `self: 72 → 1,840`, was **independently recounted straight from the
+JSON** with a script that mirrors the test helper, and matched the app exactly:
+`{parent: 1083, self: 1840, localConditionGroupsSelf: 374}`. Six related counts
+in a second summary all moved to 374 together, which is the internal consistency
+you want before believing a jump like that.
+
+Three assertions were **relaxed rather than renumbered**, because they had
+pinned more than they meant to:
+
+- `routed.every(declaredBy === "anchor-furnace")` → `some`. The point is that a
+  childless sibling enhancement reaches the weapon by standing on the model its
+  scope names. Whether anything *else* also routes there is the catalogue's
+  business, and at this revision the Lord of Contagion gained its own.
+- The Keywords step list, same reason.
+- The Guardian Defenders incomplete-constraint list, now `arrayContaining`.
+
+### Two real gaps the fresh data exposed
+
+**`skipIfPresent` — 359 modifiers across 20 files.** The Lord of Contagion now
+carries two grouped `affects` appends with this attribute. It is unsupported, an
+unapplied step clears the value, and so **the pinned Manreaper's Keywords went
+from resolved to blank**. That is a genuine display regression caused by data,
+not by code, and it is the largest single display gap in the product. The values
+are the appended keyword strings themselves — `skipIfPresent="Lethal Hits"` on an
+append of "Lethal Hits" — which reads as deduplication, but that is inference and
+needs the wiki or an observation before anything is written.
+
+**Constraint `value="-1"` — 48 instances**, up from 26: 43 `max`, 5 `min`. One
+now sits on the Aeldari `Detachments` group, so that path reports
+`EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED` and stays incomplete. Almost
+certainly "no limit", still withheld rather than guessed.
+
+Both are now roadmap rows with their counts.
+
+### Also worth knowing
+
+- Missing references **improved**: `BS_GRAPH_MISSING_REFERENCE` 60 → 34, and
+  occurrences 147 → 114. The data got cleaner as well as newer.
+- The Aeldari Force Disposition option was renamed `Purge the Foe` →
+  `Reconnaissance`.
+- Historical entries in this file still cite the old hash **on purpose**. They
+  record what was true when written; only the status block tracks the current
+  revision.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **486 passed, 15 skipped (501 total)**.
+- Pinned corpus at the new revision — **501 passed**.
+
+### Next recommended boundary
+
+**Surface how current the loaded data is** (owner-requested). Identify the game
+system and files in play, then report when they last changed upstream in
+<https://github.com/BSData>, falling back to a plain "this data may be out of
+date" note when the app cannot reach GitHub. The owner also wants direct loading
+from that repository eventually; that is a larger feature and can wait.

@@ -186,33 +186,33 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          parent: 1_084,
-          self: 72,
-          localConditionGroupsSelf: 339,
+          parent: 1_083,
+          self: 1_840,
+          localConditionGroupsSelf: 374,
         });
         expect(
           extensionConditionGroupSummary(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          localGroups: 339,
-          localAtLeast: 339,
-          localParent: 339,
-          nestedBefore: 339,
-          nestedInstanceOf: 339,
-          countGroups: 59,
+          localGroups: 374,
+          localAtLeast: 374,
+          localParent: 374,
+          nestedBefore: 374,
+          nestedInstanceOf: 374,
+          countGroups: 58,
         });
         expect(
           negativeConstraintSummary(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          total: 26,
+          total: 48,
           min: 5,
-          max: 21,
-          selections: 17,
+          max: 43,
+          selections: 39,
           costs: 9,
-          parent: 5,
+          parent: 27,
           force: 15,
           roster: 6,
         });
@@ -221,13 +221,13 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          total: 109,
-          true: 88,
+          total: 110,
+          true: 89,
           false: 21,
           min: 29,
-          max: 80,
-          selections: 108,
-          parent: 108,
+          max: 81,
+          selections: 109,
+          parent: 109,
           self: 1,
         });
 
@@ -288,32 +288,32 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          total: 484,
-          direct: 369,
-          grouped: 115,
-          set: 205,
-          append: 213,
-          increment: 54,
+          total: 478,
+          direct: 366,
+          grouped: 112,
+          set: 202,
+          append: 212,
+          increment: 52,
           decrement: 6,
           floor: 4,
           replace: 2,
           otherOperations: 0,
           scoped: 16,
-          withConditions: 384,
-          withConditionGroups: 53,
+          withConditions: 382,
+          withConditionGroups: 52,
           withRepeats: 0,
           missingValue: 3,
           affects: 16,
-          join: 244,
+          join: 243,
           arg: 2,
           position: 0,
-          behaviorFree: 238,
-          targetOnProfile: 478,
-          targetAbsent: 6,
+          behaviorFree: 233,
+          targetOnProfile: 473,
+          targetAbsent: 5,
           targetAmbiguous: 0,
-          supportedSetSubset: 173,
+          supportedSetSubset: 170,
           supportedSetDirect: 117,
-          supportedSetGrouped: 56,
+          supportedSetGrouped: 53,
         });
         expect(
           profileNameModifierRows(
@@ -390,50 +390,50 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          total: 1_859,
-          distinctValues: 79,
-          supported: 1_859,
-          unsupported: 0,
-          traversalOwn: 344,
-          traversalChildren: 168,
-          traversalDescendants: 1_347,
-          entersForces: 24,
-          targetProfiles: 1_753,
-          targetSelections: 106,
-          targetSelectionsCategoryField: 89,
+          total: 2_562,
+          distinctValues: 126,
+          supported: 2_558,
+          unsupported: 4,
+          traversalOwn: 355,
+          traversalChildren: 298,
+          traversalDescendants: 1_909,
+          entersForces: 28,
+          targetProfiles: 2_319,
+          targetSelections: 243,
+          targetSelectionsCategoryField: 92,
           // Every one of them carries a scope, which is what makes the
           // owner-relative reading vacuous and the target set undetermined.
-          targetSelectionsCategoryFieldScoped: 89,
+          targetSelectionsCategoryFieldScoped: 92,
           missingProfileTypeName: 0,
-          unexpectedSegment: 0,
+          unexpectedSegment: 4,
           empty: 0,
-          withFilterId: 428,
-          filterCategoryEntry: 427,
-          filterSelectionEntry: 1,
-          filterUnresolved: 0,
+          withFilterId: 564,
+          filterCategoryEntry: 460,
+          filterSelectionEntry: 16,
+          filterUnresolved: 88,
           distinctProfileTypeNames: 3,
           undeclaredProfileTypeNames: 0,
-          characteristicTargets: 1_265,
-          characteristicTargetsSupported: 1_265,
+          characteristicTargets: 1_667,
+          characteristicTargetsSupported: 1_665,
         });
         expect(
           selectionAnnotationModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          total: 68,
+          total: 70,
           direct: 53,
-          routed: 15,
-          grouped: 61,
+          routed: 17,
+          grouped: 63,
           ungrouped: 7,
           set: 39,
-          append: 29,
+          append: 31,
           withConditions: 52,
           withConditionGroups: 16,
           withRepeats: 0,
           missingJoin: 7,
           scoped: 0,
-          withFilterId: 0,
+          withFilterId: 2,
         });
 
         expect(
@@ -441,23 +441,23 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          total: 892,
-          add: 532,
-          setPrimary: 328,
-          remove: 27,
+          total: 921,
+          add: 555,
+          setPrimary: 335,
+          remove: 26,
           unsetPrimary: 5,
           otherOperations: 0,
-          direct: 566,
-          grouped: 326,
-          scoped: 281,
-          affects: 89,
+          direct: 597,
+          grouped: 324,
+          scoped: 321,
+          affects: 92,
           arg: 83,
           join: 79,
-          withConditions: 463,
+          withConditions: 469,
           withConditionGroups: 4,
           withRepeats: 0,
-          valueResolvesToCategory: 892,
-          executable: 761,
+          valueResolvesToCategory: 921,
+          executable: 786,
         });
         expect(
           categoryConditionImpactSummary(
@@ -465,44 +465,44 @@ describe.skipIf(realDataDirectory === undefined)(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          categoryReferencingConditions: 5_047,
-          unaffected: 3_340,
+          categoryReferencingConditions: 7_054,
+          unaffected: 5_019,
           // 127 / 1,580 / 30 / 70 before scope resolution; 1,048 / 659 / 80 /
           // 20 after it and before set-primary execution.
-          wouldBecomeKnown: 1_605,
-          staysUnresolved: 102,
-          controlledCategories: 100,
-          executableOnlyCategories: 92,
-          blockedCategories: 8,
+          wouldBecomeKnown: 1_912,
+          staysUnresolved: 123,
+          controlledCategories: 102,
+          executableOnlyCategories: 91,
+          blockedCategories: 11,
         });
         expect(
           profileOwnedVisibilityModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
         ).toEqual({
-          profiles: 13_451,
+          profiles: 13_423,
           staticHidden: 1,
-          total: 154,
-          direct: 154,
+          total: 153,
+          direct: 153,
           grouped: 0,
-          set: 154,
+          set: 153,
           otherOperations: 0,
-          booleanTrue: 154,
+          booleanTrue: 153,
           booleanFalse: 0,
           scoped: 0,
-          withConditions: 125,
+          withConditions: 124,
           withConditionGroups: 29,
           withRepeats: 0,
           extensionAttributes: 0,
-          supportedShape: 154,
+          supportedShape: 153,
         });
         expect(
           groupedHiddenModifierSummary(
             result.value.documents.map(({ root }) => root),
           ),
         ).toEqual({
-          total: 309,
-          setTrue: 295,
+          total: 307,
+          setTrue: 293,
           setFalse: 14,
           maximumDepth: 1,
           unsupportedModifierShapes: 0,
@@ -571,8 +571,8 @@ describe.skipIf(realDataDirectory === undefined)(
           ({ code }) => code === "BS_GRAPH_MISSING_REFERENCE",
         );
         expect(graphDiagnosticSummary).toEqual({
-          BS_GRAPH_DUPLICATE_ID: 2,
-          BS_GRAPH_MISSING_REFERENCE: 60,
+          BS_GRAPH_DUPLICATE_ID: 3,
+          BS_GRAPH_MISSING_REFERENCE: 34,
           BS_MATERIALIZATION_ENTRY_LINK_CYCLE: 2,
         });
         expect(
@@ -581,12 +581,12 @@ describe.skipIf(realDataDirectory === undefined)(
               total + Number(details?.occurrenceCount ?? 0),
             0,
           ),
-        ).toBe(147);
+        ).toBe(114);
         expect(
           missingReferences.filter(
             ({ details }) => details?.kind === "defaultSelectionEntry",
           ),
-        ).toHaveLength(57);
+        ).toHaveLength(31);
         expect(
           missingReferences.filter(
             ({ details }) => details?.kind === "costType",
@@ -2063,26 +2063,48 @@ describe.skipIf(realDataDirectory === undefined)(
           steps.filter((step) => step.origin === "affects"),
         );
         expect(routed.length).toBeGreaterThan(0);
+        // `some`, not `every`: what this pins is that a sibling enhancement
+        // with no children of its own still reaches the weapon, by standing on
+        // the model its scope names. Whether anything *else* also routes here is
+        // the catalogue's business — at the 2026-08-23 revision the Lord of
+        // Contagion gained affects modifiers of its own, which broke an
+        // `every` that was never the point.
         expect(
-          routed.every((step) => step.declaredBy.id === "anchor-furnace"),
+          routed.some((step) => step.declaredBy.id === "anchor-furnace"),
         ).toBe(true);
 
         // Stone's New Recruit screenshot shows this weapon gaining Devastating
-        // Wounds alongside its printed Lethal Hits. The append carries a
-        // `position`, which the editor does not offer for `append` and which
-        // New Recruit visibly ignored, so it is treated as inert noise and the
-        // keyword lands.
+        // Wounds alongside its printed Lethal Hits, and the Furnace's append is
+        // what delivers it. That step still applies.
         const keywords = manreaper.characteristics.find(
           ({ characteristic }) => characteristic.name === "Keywords",
         );
         expect(keywords).toBeDefined();
         expect(keywords?.baseValue ?? "").toContain("Lethal Hits");
         expect(keywords?.baseValue ?? "").not.toContain("Devastating Wounds");
-        expect(keywords?.steps).toMatchObject([
-          { status: "applied", origin: "affects", kind: "append" },
+        expect(
+          keywords?.steps.filter(
+            (step) =>
+              step.origin === "affects" &&
+              step.declaredBy.id === "anchor-furnace",
+          ),
+        ).toMatchObject([{ status: "applied" }]);
+
+        // The printed value is nonetheless withheld, and this is a **known
+        // degradation** rather than the intended end state. At the 2026-08-23
+        // revision the Lord of Contagion carries two grouped appends with
+        // `skipIfPresent`, which this evaluator does not support; an unapplied
+        // step clears the value rather than printing a half-applied one. 359
+        // modifiers across 20 corpus files carry the attribute. See section A.
+        const withheld = keywords?.steps.filter(
+          (step) => step.status === "unapplied",
+        );
+        expect(withheld?.length).toBeGreaterThan(0);
+        expect(withheld).toMatchObject([
+          { grouped: true, issues: ["unsupportedAttributes"] },
+          { grouped: true, issues: ["unsupportedAttributes"] },
         ]);
-        expect(keywords?.value ?? "").toContain("Lethal Hits");
-        expect(keywords?.value ?? "").toContain("Devastating Wounds");
+        expect(keywords?.value ?? "").toBe("");
 
         // Stone's screenshot shows this weapon's S raised by one. That modifier
         // is the only one targeting S, so unlike A -- which also carries an
@@ -2817,7 +2839,16 @@ describe.skipIf(realDataDirectory === undefined)(
           },
         );
         if (!created.ok) throw new Error("Expected Aeldari roster session.");
-        expect(created.diagnostics).toEqual([]);
+        // The Aeldari `Detachments` group carries `max="-1"`. The corpus has 48
+        // negative-valued constraints and RosterForge withholds rather than
+        // guessing whether -1 means unlimited, so this path is incomplete by
+        // design. See the roadmap's section B.
+        expect(created.diagnostics).toEqual([
+          expect.objectContaining({
+            code: "EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED",
+            details: expect.objectContaining({ value: -1 }),
+          }),
+        ]);
         expect(
           created.value.roster.forces[0]?.selections.map(
             ({ name }) => name,
@@ -2981,11 +3012,14 @@ describe.skipIf(realDataDirectory === undefined)(
           "Warhost",
           "real-aeldari-warhost",
         );
+        // The Aeldari disposition was "Purge the Foe" at the 2026-08-21
+        // revision and is "Reconnaissance" at 2026-08-23. Which one it is does
+        // not matter to this test; having one chosen does.
         const configured = chooseNamedConfiguration(
           withDetachment,
           "Force Disposition",
-          "Purge the Foe",
-          "real-aeldari-purge-the-foe",
+          "Reconnaissance",
+          "real-aeldari-reconnaissance",
         );
         expect(
           configured.roster.forces[0]?.selections
@@ -2996,7 +3030,7 @@ describe.skipIf(realDataDirectory === undefined)(
           configured.roster.forces[0]?.selections
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
-        ).toEqual(["Purge the Foe"]);
+        ).toEqual(["Reconnaissance"]);
         const guardianDefenders = localRosterRootChoices(catalogue).find(
           ({ materialized }) =>
             materialized.name === "Guardian Defenders",
@@ -3068,7 +3102,11 @@ describe.skipIf(realDataDirectory === undefined)(
               .filter((diagnostic) => diagnostic.code === code).length,
           ]),
         );
-        expect(selectedChoiceDiagnosticSummary).toEqual({});
+        // The Aeldari `Detachments` group carries `max="-1"`, which is withheld
+        // rather than guessed at; see the roadmap's section B.
+        expect(selectedChoiceDiagnosticSummary).toEqual({
+          EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED: 1,
+        });
         const targetedScopeDiagnostics = selectedChoiceInspections
           .flatMap(({ diagnostics }) => diagnostics)
           .filter(
@@ -3260,6 +3298,7 @@ describe.skipIf(realDataDirectory === undefined)(
           expect(diagnosticCodeCounts(
             supported.value.structuralDiagnostics,
           )).toEqual({
+            EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED: 1,
             EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
           });
@@ -3282,10 +3321,27 @@ describe.skipIf(realDataDirectory === undefined)(
               selectedCount: 1,
               name: "Guardian Defenders",
             },
+            // The `Detachments` group carrying `max="-1"`; the bound cannot be
+            // decided while the value is withheld.
+            {
+              kind: "group",
+              status: "unresolved",
+              selectedCount: 1,
+              name: undefined,
+            },
           ]);
           expect(diagnosticCodeCounts(
             supported.value.constraintDiagnostics,
-          )).toEqual({ EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED: 3 });
+          // The 2026-08-23 revision brought more unsupported attributes on
+          // conditions and constraints; each one keeps the report incomplete
+          // rather than being guessed at.
+          )).toEqual({
+            EVALUATION_CONDITION_ATTRIBUTES_UNSUPPORTED: 3,
+            EVALUATION_CONDITION_FIELD_UNSUPPORTED: 3,
+            EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED: 5,
+            EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED: 8,
+            EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED: 1,
+          });
           expect(
             supported.value.constraints.selections.selections.flatMap(
               ({ owner, constraints: reports }) =>
@@ -3298,7 +3354,11 @@ describe.skipIf(realDataDirectory === undefined)(
                     type: constraint.type,
                   })),
             ),
-          ).toEqual([
+          // Contains rather than equals: the 2026-08-23 revision added more
+          // incomplete constraints on this unit, none of which change what these
+          // three pin.
+          ).toEqual(
+            expect.arrayContaining([
             {
               owner: "Guardian Defenders",
               field: "75bb-ded1-c86d-bdf0",
@@ -3317,7 +3377,8 @@ describe.skipIf(realDataDirectory === undefined)(
               scope: "self",
               type: "min",
             },
-          ]);
+            ]),
+          );
           expect(supported.value.structuralDiagnostics).toEqual(
             expect.arrayContaining([
               expect.objectContaining({
