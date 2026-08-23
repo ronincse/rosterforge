@@ -548,21 +548,48 @@ export function inspectLocalRosterRootChoices(
   const byRoot = new Map(
     inspected.value.choices.map((choice) => [choice.root, choice]),
   );
-  const rootSelections = session.roster.forces[0]?.selections ?? [];
-  const groups = localRosterRootChoiceGroups(session.catalogue).map(
-    (group): LocalRosterRootChoiceGroupState => ({
-      ...group,
-      choices: group.choices.map((choice) => {
-        const bound = byRoot.get(choice);
-        return localRosterRootChoiceState(
-          session,
-          choice,
-          rootSelections,
-          bound,
-        );
+  const force = session.roster.forces[0];
+  const rootSelections = force?.selections ?? [];
+  /**
+   * A root the catalogue is currently hiding is not offered.
+   *
+   * This is what keeps `[Legends]` units out of the browser until `Show
+   * Legends` is picked under `Show/Hide Options` — 72 of Death Guard's 137
+   * roots, and the same behaviour BattleScribe and New Recruit have. It also
+   * removes the deprecation notice that one catalogue ships as a selectable
+   * upgrade: it hides itself once the force holds anything, which a force with
+   * configuration slots always does.
+   *
+   * Same conservative rule as roster creation: only a root that is *certainly*
+   * hidden is dropped. `Show/Hide Options` itself resolves as visible, so the
+   * toggle that brings the rest back never disappears with them.
+   */
+  const offered = (choice: LocalRosterRootChoice): boolean => {
+    if (force === undefined) return true;
+    const visibility = evaluateRosterSelectionVisibility(
+      session.roster,
+      session.catalogue.context,
+      force,
+      choice.materialized,
+    );
+    return !visibility.ok || visibility.value.status !== "hidden";
+  };
+  const groups = localRosterRootChoiceGroups(session.catalogue)
+    .map(
+      (group): LocalRosterRootChoiceGroupState => ({
+        ...group,
+        choices: group.choices.filter(offered).map((choice) => {
+          const bound = byRoot.get(choice);
+          return localRosterRootChoiceState(
+            session,
+            choice,
+            rootSelections,
+            bound,
+          );
+        }),
       }),
-    }),
-  );
+    )
+    .filter(({ choices }) => choices.length > 0);
   return success(
     {
       groups,

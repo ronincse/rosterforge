@@ -1294,6 +1294,106 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "hides Legends and the deprecation notice until they are asked for",
+      async () => {
+        // A root the catalogue hides is not offered. That keeps [Legends] units
+        // out until `Show Legends` is picked under `Show/Hide Options`, which is
+        // how BattleScribe behaves, and it removes the deprecation notice one
+        // catalogue ships as a selectable upgrade.
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory),
+          {
+            import: {
+              batchId: "real-bsdata-json-hidden-roots",
+              importedAt: "2026-08-23T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Imperium - Adeptus Astartes - Dark Angels",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+        let identifier = 0;
+        const nextId = () => selectionOccurrenceId(`hidden-${++identifier}`);
+        const created = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("hidden-roster"),
+          forceId: forceOccurrenceId("hidden-force"),
+          name: "Hidden Roots Roster",
+          createSelectionId: nextId,
+        });
+        if (!created.ok) throw new Error("Expected roster session.");
+        let session = created.value;
+
+        const offered = () => {
+          const inspected = inspectLocalRosterRootChoices(session);
+          if (!inspected.ok) throw new Error("Expected root choices.");
+          return inspected.value.groups.flatMap(({ choices }) =>
+            choices.map(({ choice }) => choice.materialized.name ?? ""),
+          );
+        };
+
+        const before = offered();
+        expect(before.some((name) => name.startsWith("NOTICE"))).toBe(false);
+        expect(before.filter((name) => name.includes("[Legends]"))).toEqual([]);
+        // The toggle that brings them back must never disappear with them.
+        expect(
+          before.some((name) => name.startsWith("Show/Hide Options")),
+        ).toBe(true);
+
+        const options = localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            (materialized.name ?? "").startsWith("Show/Hide Options"),
+        );
+        if (options === undefined) throw new Error("Expected the options root.");
+        const withOptions = addLocalRosterRootSelection(session, options, {
+          selectionId: nextId(),
+          createSelectionId: nextId,
+        });
+        if (!withOptions.ok) throw new Error("Expected the options to be added.");
+        session = withOptions.value;
+
+        const owner = findRealSelection(
+          session.roster.forces[0]?.selections ?? [],
+          "Show/Hide Options",
+        );
+        if (owner === undefined) throw new Error("Expected the options.");
+        const children = inspectLocalRosterChildChoices(session, owner.id);
+        if (!children.ok) throw new Error("Expected option choices.");
+        const legends = children.value.direct.find(({ choice }) =>
+          (choice.name ?? "").startsWith("Show Legends"),
+        );
+        if (legends === undefined) throw new Error("Expected Show Legends.");
+        const shown = addLocalRosterChildSelection(
+          session,
+          owner.id,
+          legends.choice,
+          { selectionId: nextId(), createSelectionId: nextId },
+        );
+        if (!shown.ok) throw new Error("Expected Show Legends to be selected.");
+        session = shown.value;
+
+        // And back they come.
+        expect(
+          offered().filter((name) => name.includes("[Legends]")).length,
+        ).toBeGreaterThan(50);
+        // The notice is not Legends, and stays gone.
+        expect(offered().some((name) => name.startsWith("NOTICE"))).toBe(false);
+      },
+      120_000,
+    );
+
+    it(
       "keeps an allied library's configuration out of another faction's force",
       async () => {
         // 90 of the 109 catalogue links in the corpus set importRootEntries, so

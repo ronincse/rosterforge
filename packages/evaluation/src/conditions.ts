@@ -309,6 +309,7 @@ export function evaluateRosterCondition<
     supportedSelectionCountScope,
     costTypeFieldId,
     diagnostics,
+    options.prospectiveChild === true,
   );
   diagnoseIdSelectionScope(condition, idScope, diagnostics);
 
@@ -328,7 +329,11 @@ export function evaluateRosterCondition<
       supportedSelectionCountScope) ||
       (forceOwner &&
         forceOwnerLocations.length === 1 &&
-        (scope === "force" || scope === "roster")));
+        // `parent` for a prospective root names the force it would hang from,
+        // which is the owner already in hand. See `diagnoseConditionShape`.
+        (scope === "force" ||
+          scope === "roster" ||
+          (scope === "parent" && options.prospectiveChild === true))));
   const canCollectSelectionCosts =
     catalogueMatches &&
     !forceOwner &&
@@ -838,6 +843,7 @@ function diagnoseConditionShape(
   supportedSelectionCountScope: boolean,
   costTypeFieldId: ObjectId | undefined,
   diagnostics: Diagnostic[],
+  prospectiveChild: boolean,
 ): void {
   if (condition.type === undefined) {
     diagnostics.push(
@@ -885,7 +891,13 @@ function diagnoseConditionShape(
     forceOwner &&
     comparison !== undefined &&
     condition.field === "selections" &&
-    (scope === "force" || scope === "roster");
+    // A prospective child of a force is a root, and a root's parent *is* that
+    // force, so `parent` names the owner we are already standing on. Gated on
+    // the flag because for a real force owner — a force constraint — `parent`
+    // means the containing force instead, which is a different question.
+    (scope === "force" ||
+      scope === "roster" ||
+      (scope === "parent" && prospectiveChild));
   if (
     forceOwner &&
     condition.field !== "forces" &&

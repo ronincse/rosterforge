@@ -110,7 +110,7 @@ export function evaluateRosterSelectionVisibility(
         // The modifier belongs to `choice`, which is not in the roster: it is
         // being asked about as a prospective child of `owner`. A force owner
         // means a root, which has no ancestor selections to stand in.
-        prospectiveChild: !("forces" in owner),
+        prospectiveChild: true,
       },
     );
     diagnostics.push(...applicability.diagnostics);
@@ -138,7 +138,7 @@ export function evaluateRosterSelectionVisibility(
       group,
       {
         effectiveCategories: effectiveRosterCategories(roster, context),
-        prospectiveChild: !("forces" in owner),
+        prospectiveChild: true,
       },
     );
     diagnostics.push(...evaluated.diagnostics);
