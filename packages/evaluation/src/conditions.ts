@@ -224,6 +224,27 @@ export interface RosterConditionOptions {
    * scope, so passing one here never re-enters that computation.
    */
   readonly effectiveCategories?: EffectiveCategoryIndex;
+  /**
+   * True when the condition belongs to an entry that is not in the roster yet
+   * and would be added *below* `owner`.
+   *
+   * Visibility is asked about prospective children — "would this enhancement
+   * be offered on this character" — and the nearest thing that exists is the
+   * parent, so the parent is passed as the owner. That silently shifts every
+   * relative scope up one link, and `ancestor` is where it shows: an
+   * enhancement's ancestors include its bearer, but the bearer's own ancestors
+   * do not, and a top-level character has none at all.
+   *
+   * The corpus has **2,635** ancestor-scoped conditions, almost all
+   * `instanceOf`/`notInstanceOf` faction gates on enhancements. Without this
+   * they all resolved against an empty set, so every `notInstanceOf` fired and
+   * every detachment enhancement stayed hidden.
+   *
+   * Only `ancestor` is corrected. `self` and `parent` are shifted by the same
+   * off-by-one in principle, but nothing measured shows them misbehaving and
+   * widening this without evidence is how a fix becomes a regression.
+   */
+  readonly prospectiveChild?: boolean;
 }
 
 export function evaluateRosterCondition<
@@ -442,6 +463,7 @@ export function evaluateRosterCondition<
           condition.includeChildSelections === true,
           condition.includeChildForces === true,
           relativeScope.occurrence,
+          options.prospectiveChild === true,
         );
   const selectionCandidates = selectionOccurrences.map((occurrence) =>
     evaluationSelectionIdentityCandidate(

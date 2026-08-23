@@ -1294,6 +1294,117 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "offers a detachment's enhancements once that detachment is chosen",
+      async () => {
+        // External QA found every enhancement permanently hidden. The gate is an
+        // `ancestor`-scoped faction condition on a prospective child, and the
+        // parent stands in as owner while the child does not exist yet, so the
+        // chain was empty and every notInstanceOf fired.
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory),
+          {
+            import: {
+              batchId: "real-bsdata-json-enhancements",
+              importedAt: "2026-08-23T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+
+        const enhancementsFor = (detachment: string | undefined) => {
+          let identifier = 0;
+          const nextId = () =>
+            selectionOccurrenceId(`enh-${detachment ?? "none"}-${++identifier}`);
+          const created = createLocalRosterSession(catalogue, forceDefinition, {
+            rosterId: rosterId("enh-roster"),
+            forceId: forceOccurrenceId("enh-force"),
+            name: "Enhancements Roster",
+            createSelectionId: nextId,
+          });
+          if (!created.ok) throw new Error("Expected roster session.");
+          let session = created.value;
+
+          if (detachment !== undefined) {
+            const owner = findRealSelection(
+              session.roster.forces[0]?.selections ?? [],
+              "Detachment",
+            );
+            if (owner === undefined) throw new Error("Expected the slot.");
+            const children = inspectLocalRosterChildChoices(session, owner.id);
+            if (!children.ok) throw new Error("Expected detachment choices.");
+            const group = children.value.groups[0];
+            const option = group?.choices.find(
+              ({ name }) => name === detachment,
+            );
+            if (group === undefined || option === undefined) {
+              throw new Error(`Expected the ${detachment} detachment.`);
+            }
+            const chosen = chooseLocalRosterChildGroupEntry(
+              session,
+              owner.id,
+              group.group,
+              option,
+              { selectionId: nextId(), createSelectionId: nextId },
+            );
+            if (!chosen.ok) throw new Error("Expected the detachment to be set.");
+            session = chosen.value;
+          }
+
+          const lord = localRosterRootChoices(catalogue).find(
+            ({ materialized }) => materialized.name === "Lord of Contagion",
+          );
+          if (lord === undefined) throw new Error("Expected the Lord.");
+          const added = addLocalRosterRootSelection(session, lord, {
+            selectionId: nextId(),
+            createSelectionId: nextId,
+          });
+          if (!added.ok) throw new Error("Expected the Lord to be added.");
+          const owner = findRealSelection(
+            added.value.roster.forces[0]?.selections ?? [],
+            "Lord of Contagion",
+          );
+          if (owner === undefined) throw new Error("Expected the Lord.");
+          const children = inspectLocalRosterChildChoices(added.value, owner.id);
+          if (!children.ok) throw new Error("Expected child choices.");
+          const group = children.value.groups.find(({ group: g }) =>
+            (g.name ?? "").startsWith("Enhancement"),
+          );
+          return (group?.choices ?? []).map(({ name }) => name).sort();
+        };
+
+        // The four Virulent Vectorium enhancements, and only those.
+        expect(enhancementsFor("Virulent Vectorium")).toEqual([
+          "Arch Contaminator",
+          "Daemon Weapon of Nurgle",
+          "Furnace of Plagues",
+          "Revolting Regeneration",
+        ]);
+        // A different detachment offers different ones, so the gate still gates.
+        expect(enhancementsFor("Shamblerot Vectorium")).toEqual([
+          "Lord of the Walking Pox",
+          "Talisman of Burgeoning",
+        ]);
+        // And none at all before a detachment is chosen.
+        expect(enhancementsFor(undefined)).toEqual([]);
+      },
+      120_000,
+    );
+
+    it(
       "offers Force Disposition options only once a detachment is chosen",
       async () => {
         // This looked like the same defect as the nested wargear group and is

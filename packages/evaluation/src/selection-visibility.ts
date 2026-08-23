@@ -106,7 +106,12 @@ export function evaluateRosterSelectionVisibility(
       context,
       owner,
       modifier,
-      { effectiveCategories: effectiveRosterCategories(roster, context) },
+      {
+        effectiveCategories: effectiveRosterCategories(roster, context),
+        // The modifier belongs to `choice`, which is not in the roster: it is
+        // being asked about as a prospective child of `owner`.
+        prospectiveChild: true,
+      },
     );
     diagnostics.push(...applicability.diagnostics);
     if (!applicability.ok) {
@@ -131,7 +136,10 @@ export function evaluateRosterSelectionVisibility(
       context,
       owner,
       group,
-      { effectiveCategories: effectiveRosterCategories(roster, context) },
+      {
+        effectiveCategories: effectiveRosterCategories(roster, context),
+        prospectiveChild: true,
+      },
     );
     diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {

@@ -95,6 +95,8 @@ export interface RosterModifierGroupExecution<
 export interface RosterModifierGroupApplicabilityOptions {
   /** Effective category membership, forwarded to every nested evaluation. */
   readonly effectiveCategories?: EffectiveCategoryIndex;
+  /** Forwarded to every nested condition; see `RosterConditionOptions`. */
+  readonly prospectiveChild?: boolean;
 }
 
 export function evaluateRosterModifierGroupApplicability<
@@ -178,6 +180,7 @@ function evaluateModifierGroup<Group extends RosterModifierGroupSource>(
     ...(options.effectiveCategories === undefined
       ? {}
       : { effectiveCategories: options.effectiveCategories }),
+    ...(options.prospectiveChild === true ? { prospectiveChild: true } : {}),
   };
   const type = modifierGroupType(group.type);
   if (group.type === undefined) {

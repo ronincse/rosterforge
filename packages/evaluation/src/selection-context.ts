@@ -438,6 +438,7 @@ export function evaluationSelectionScope(
   includeChildSelections: boolean,
   includeChildForces: boolean,
   typedScope?: RosterSelection,
+  prospectiveChild = false,
 ): readonly RosterSelection[] {
   if (scope === "self") {
     return selectionsInTree([owner.occurrence], includeChildSelections);
@@ -450,7 +451,12 @@ export function evaluationSelectionScope(
     );
   }
   if (scope === "ancestor") {
-    return owner.ancestors;
+    // A prospective child's ancestors include the owner it would hang from.
+    // Without this an enhancement asked about on a top-level character sees an
+    // empty chain, and every faction gate in the corpus fires the wrong way.
+    return prospectiveChild
+      ? [owner.occurrence, ...owner.ancestors]
+      : owner.ancestors;
   }
   if (scope === "root-entry") {
     return selectionsInTree([owner.root], includeChildSelections);

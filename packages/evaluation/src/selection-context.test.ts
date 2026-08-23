@@ -20,6 +20,7 @@ import {
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import {
+  evaluationSelectionScope,
   indexEvaluationChoices,
   rosterSelectionLocations,
 } from "./selection-context.js";
@@ -98,6 +99,46 @@ describe("roster selection locations", () => {
     // ancestors, so a failing deep comparison prints the whole tree.
     expect(first === second).toBe(false);
     expect(second.length).toBe(first.length);
+  });
+});
+
+describe("ancestor scope for a prospective child", () => {
+  /**
+   * Visibility is asked about entries that are not in the roster yet, so the
+   * nearest thing that exists — the parent — is passed as the owner. That
+   * shifts relative scopes up one link, and `ancestor` is where it bites: an
+   * enhancement's ancestors include its bearer, but the bearer's own ancestors
+   * do not, and a top-level character has none at all.
+   *
+   * The corpus has 2,635 ancestor-scoped conditions, almost all faction gates
+   * on enhancements. Before this, every one of them resolved against an empty
+   * chain on a top-level character, so every `notInstanceOf` fired and no
+   * detachment enhancement was ever offered.
+   */
+  it("includes the owner, and does not for a real selection", () => {
+    const roster = fixtureRoster();
+    const location = rosterSelectionLocations(roster).find(
+      ({ occurrence }) => occurrence.id === selectionOccurrenceId("parent"),
+    );
+    if (location === undefined) throw new Error("Expected the parent.");
+
+    // A top-level selection has no ancestors of its own.
+    expect(
+      evaluationSelectionScope(roster, location, "ancestor", false, false),
+    ).toEqual([]);
+
+    // Asked about something that would hang below it, the owner is an ancestor.
+    expect(
+      evaluationSelectionScope(
+        roster,
+        location,
+        "ancestor",
+        false,
+        false,
+        undefined,
+        true,
+      ).map(({ id }) => id),
+    ).toEqual([selectionOccurrenceId("parent")]);
   });
 });
 

@@ -35,6 +35,8 @@ export interface RosterModifierApplicabilityOptions {
    * unresolved.
    */
   readonly effectiveCategories?: EffectiveCategoryIndex;
+  /** Forwarded to every condition; see `RosterConditionOptions`. */
+  readonly prospectiveChild?: boolean;
 }
 
 export interface RosterModifierApplicabilityReport<
@@ -67,6 +69,7 @@ export function evaluateRosterModifierApplicability<
     ...(options.effectiveCategories === undefined
       ? {}
       : { effectiveCategories: options.effectiveCategories }),
+    ...(options.prospectiveChild === true ? { prospectiveChild: true } : {}),
   };
   const conditions: RosterSelectionConditionReport[] = [];
   for (const condition of modifier.conditions) {
