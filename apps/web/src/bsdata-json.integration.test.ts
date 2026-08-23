@@ -1294,6 +1294,100 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "offers Force Disposition options only once a detachment is chosen",
+      async () => {
+        // This looked like the same defect as the nested wargear group and is
+        // not one at all: the group is conditional on the detachment, in every
+        // faction checked. Pinned so it is not investigated a third time.
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory),
+          {
+            import: {
+              batchId: "real-bsdata-json-disposition",
+              importedAt: "2026-08-23T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Imperium - Adeptus Astartes - Dark Angels",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+        let identifier = 0;
+        const nextId = () =>
+          selectionOccurrenceId(`disposition-${++identifier}`);
+        const created = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("disposition-roster"),
+          forceId: forceOccurrenceId("disposition-force"),
+          name: "Disposition Roster",
+          createSelectionId: nextId,
+        });
+        if (!created.ok) throw new Error("Expected roster session.");
+        let session = created.value;
+
+        const dispositionGroup = () => {
+          const owner = findRealSelection(
+            session.roster.forces[0]?.selections ?? [],
+            "Force Disposition",
+          );
+          if (owner === undefined) throw new Error("Expected the slot.");
+          const children = inspectLocalRosterChildChoices(session, owner.id);
+          if (!children.ok) throw new Error("Expected child choices.");
+          return children.value.groups[0];
+        };
+
+        // Nothing offerable, but the entries exist and are hidden: the
+        // difference the workspace now reports.
+        expect(dispositionGroup()?.choices).toEqual([]);
+        expect(dispositionGroup()?.hiddenChoiceCount ?? 0).toBeGreaterThan(0);
+
+        const detachmentOwner = findRealSelection(
+          session.roster.forces[0]?.selections ?? [],
+          "Detachment",
+        );
+        if (detachmentOwner === undefined) {
+          throw new Error("Expected the detachment slot.");
+        }
+        const detachments = inspectLocalRosterChildChoices(
+          session,
+          detachmentOwner.id,
+        );
+        if (!detachments.ok) throw new Error("Expected detachment choices.");
+        const group = detachments.value.groups[0];
+        const option = group?.choices.find(
+          ({ name }) => name === "Inner Circle Task Force",
+        );
+        if (group === undefined || option === undefined) {
+          throw new Error("Expected the Inner Circle Task Force.");
+        }
+        const chosen = chooseLocalRosterChildGroupEntry(
+          session,
+          detachmentOwner.id,
+          group.group,
+          option,
+          { selectionId: nextId(), createSelectionId: nextId },
+        );
+        if (!chosen.ok) throw new Error("Expected the detachment to be set.");
+        session = chosen.value;
+
+        expect(
+          dispositionGroup()?.choices.map(({ name }) => name),
+        ).toEqual(["Priority Assets"]);
+      },
+      120_000,
+    );
+
+    it(
       "satisfies a nested wargear group on the pinned Plague Champion",
       async () => {
         // The Death Guard Plague Champion has a `Wargear` group of 2 of 2 whose

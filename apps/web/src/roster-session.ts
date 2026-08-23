@@ -197,7 +197,18 @@ export interface AddLocalRosterRootSelectionInput {
 
 export interface LocalRosterChildChoiceGroup {
   readonly group: MaterializedSelectionEntryGroup;
+  /** The entries currently offerable: hidden ones are filtered out. */
   readonly choices: readonly BattleScribeRosterSelectionChoice[];
+  /**
+   * How many of the group's entries are hidden right now.
+   *
+   * Lets a caller tell "this group has nothing in it" from "this group has
+   * nothing *yet*". `Force Disposition` offers nothing until a detachment is
+   * chosen, in every faction checked — Dark Angels then offers Priority Assets
+   * and Death Guard offers Reconnaissance. Reporting that as no available
+   * entries reads like a broken catalogue rather than an order of operations.
+   */
+  readonly hiddenChoiceCount: number;
   readonly minimum?: number;
   readonly maximum?: number;
   readonly selected: readonly RosterSelection[];
@@ -1604,6 +1615,7 @@ function localRosterChildChoiceGroup(
   return {
     group: inspection.group,
     choices: visibleChoices,
+    hiddenChoiceCount: inspection.choices.length - visibleChoices.length,
     ...(inspection.minimum === undefined
       ? {}
       : {

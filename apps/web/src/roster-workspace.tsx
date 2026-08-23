@@ -1475,7 +1475,16 @@ function RosterSelectionChoiceGroup({
         {selectionGroupStatus(group)}
       </span>
       {group.choices.length === 0 ? (
-        <p>No resolved entries are available in this group.</p>
+        // "Nothing here" and "nothing yet" look identical to a user otherwise,
+        // and the second is much more common: a group whose options depend on a
+        // detachment offers none until one is chosen.
+        <p>
+          {group.hiddenChoiceCount > 0
+            ? `No options are available yet: ${group.hiddenChoiceCount} ${
+                group.hiddenChoiceCount === 1 ? "entry" : "entries"
+              } in this group depend on a choice not yet made.`
+            : "No entries are defined in this group."}
+        </p>
       ) : (
         <div className="child-choice-group-options">
           {group.choices.map((choice) => {
