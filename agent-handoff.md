@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (automatic initialization settled)
+## Current Status — 2026-08-22 (selected automatic reconciliation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,18 +39,19 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **470 passed, 9 skipped (479)**.
+  `git diff --check` all pass. `pnpm test` is **471 passed, 10 skipped (481)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
-  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the integration suite
-  is **9 passed** (478 total); without it those 9 are the skipped tests.
+  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
+  **481 passed**; without it the 10 corpus tests are skipped.
 - **Active area.** Legality and initialization semantics (roadmap section B).
   Every observed profile-name modifier now executes and section A has no
   remaining corpus-backed display gap. Editing durability is complete.
-- **Comments.** The profile-name report and evaluator document source
-  immutability, caller-supplied linked-name bases, execution order, and the
-  corpus split between selection and profile targets.
+- **Comments.** The automatic edit helper records the deployed-runtime branch,
+  pinned owner split, and measured reason the full Checks report cannot run in
+  the edit hot path. Changed command exports document their atomic history and
+  autosave behavior.
 
 ### Picking up from here
 
@@ -68,11 +69,14 @@ Section E is **complete**. The repository **byte** cache is bounded to 256 MiB,
 and the separate remote-index **metadata** cache is bounded to 32 MiB; both
 evict least-recently-used re-downloadable entries and never touch saved drafts.
 
-Initial creation semantics for the New Recruit `automatic` extension are now
+Initial creation semantics for the New Recruit `automatic` extension are
 settled: ordinary minima initialize whether the property is absent, `false`, or
-`true`. The current **Next is live `automatic: true` reconciliation** in section
-B: after a relevant bound changes, New Recruit clamps ordinary entries, groups,
-and sub-units. Inventory and measure the command path before adding that repair.
+`true`. Live reconciliation is now implemented for currently selected ordinary
+entries after count/query or effective-limit changes caused by roster edits.
+The current **Next is absent ordinary-choice activation** in section B. Begin
+by inventorying shared-definition wrappers under one parent, then cover the 11
+ordinary owner cases whose modifier-driven minimum can rise from zero. The one
+group case stays with the distinct group algorithm.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
@@ -149,7 +153,10 @@ points limit works end to end and is now pinned.
 
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
 | `automatic` during initial creation | Done | New Recruit's initializer ignores the extension; supported minima seed for absent, `false`, and `true` |
-| `automatic: true` post-edit reconciliation | Next | New Recruit clamps ordinary entries, groups, and sub-units after relevant bound changes; RosterForge does not yet repair live selections |
+| `automatic: true` selected ordinary reconciliation | Done | exact choice and parent; add/remove/amount/group-replacement edits; targeted condition-aware bounds; exact Drukhari Scourges transition pinned |
+| `automatic: true` absent ordinary activation | Next | inventory shared-definition wrappers first; 11 dynamic base-zero ordinary owners can become newly required |
+| `automatic: true` selection-entry groups | Open | five modifier-driven true owners, including the twelfth base-zero owner; New Recruit has a distinct algorithm |
+| `automatic: true` unit-typed sub-units | Low priority | New Recruit has distinct algorithms; zero pinned modifier-driven owners |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
 | `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
@@ -4550,6 +4557,11 @@ input is currently required.
 
 ## Completed Assignment — Automatic Constraint Initialization, 2026-08-22
 
+> Trigger correction, 2026-08-22: the final recommendation below is too
+> narrow. New Recruit reacts when either the selection query/count or the
+> effective constraint value changes and the result is violated. The
+> initialization conclusion itself remains correct.
+
 Baseline `e32e520`; resulting implementation commit `973b8c3`
 (`fix: accept automatic bounds during initialization`).
 
@@ -4626,3 +4638,105 @@ Take **`automatic: true` post-edit reconciliation** next. Measure the immutable
 command cost and inventory affected entry/group/sub-unit paths before extending
 the hot edit path. New Recruit clamps these structures only after a relevant
 bound changes; ordinary initial creation is complete and should not be revisited.
+
+## Completed Assignment — Selected Automatic Reconciliation, 2026-08-22
+
+Baseline `599ee3f`; resulting implementation commit `1396e10`
+(`feat: reconcile selected automatic constraints`).
+
+### Runtime evidence and trigger correction
+
+The deployed New Recruit 35.66 build
+`420bf6f1-2795-4c15-b21e-b789f9459b24` corrected the previous entry's
+trigger wording. Both `queryChanged` and `valueChanged` call
+`onConstraintChanged`. Its computed min/max state means violation, and only a
+constraint whose source carries true `automatic` enqueues
+`automaticConstraintChanged`. Handler `Joe` then dispatches to separate
+ordinary-entry (`nae`), group (`Zoe`), and sub-unit
+(`eae`/`rae`/`tae`) branches.
+
+The correct statement is therefore: live repair follows either a changed
+selection query/count or a changed effective bound when that change leaves the
+automatic constraint violated. Initial creation still ignores the extension.
+
+### Corpus and hot-path measurement
+
+Of 88 `automatic: true` constraints, 74 are modifier-driven across 54
+owners: 42 selection entries, six entry links, four selection-entry groups, one
+shared selection entry, and one shared selection-entry group. Those owners
+resolve to 49 ordinary entries, five groups, and zero unit-typed sub-units.
+Fourteen true constraints are static.
+
+Twelve modifier-driven minima start at zero and can make an absent choice newly
+required: 11 ordinary owners and one group. Ten positive-minimum dynamic owners
+already have a selected occurrence after supported initialization.
+
+The implementation was measured before the hot path changed. Ten complete
+Checks inspections over a pinned 41-selection Guardian roster took **30,215.7
+ms**, about 3.02 seconds each. Ten targeted evaluations of the selected
+Scourge min/max pair took **407.4 ms**, about 40.7 ms per pair. Running the
+whole validation report after every click was rejected.
+
+### Implementation
+
+After a successful root add, child add, max-one group replacement, removal, or
+amount edit, the web session scans only currently selected exact materialized
+choices carrying lexical `automatic="true"` or `automatic="1"`. It groups
+repeated occurrences under the same direct parent and invokes the existing
+selection-condition constraint evaluator directly.
+
+A complete violated ordinary-entry minimum raises the earliest occurrence. A
+complete violated maximum reduces or removes latest occurrences first. Each
+clamp is re-evaluated, with a ten-pass guard. The initiating command and every
+repair are returned as one immutable session result, so undo, redo, dirty
+tracking, recovery, and autosave see one action. Initial session creation uses
+the unreconciled add path and retains the already-settled initializer semantics.
+
+Incomplete evaluation never supplies a guessed amount. Selected groups,
+unit-typed child selections, a selector that disappears during a pass, a
+stalled repair, and the pass guard all have source-located compatibility
+diagnostics. Lexical `false`, `0`, absent, and unknown values remain
+observable and inert.
+
+### Tests and real-data proof
+
+The fictional fixture proves an amount of one grows to four, selecting an
+alternate lowers the dynamic min/max to three, an explicit amount of nine is
+clamped back to three, removing the alternate restores four, and
+`automatic="false"` remains at one. Adding a duplicate occurrence proves
+the maximum removes the newest occurrence and cleans its choice-index entry.
+The earlier immutable session remains unchanged.
+
+The pinned Drukhari test builds `Scourges with Shardcarbines`. Model
+`6e9b-38a8-e240-7a50` starts at four; selecting alternate model
+`313f-6619-806f-c4c7` applies the grouped decrements and changes the
+default model to exactly three while retaining the alternate at one.
+
+For the negative control, the enabled-value predicate was temporarily changed
+to look for `true-sabotaged`. The focused test failed at the first clamp,
+receiving one instead of four; the implementation was restored and the
+strengthened test passed.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and
+  `git diff --check` — pass.
+- `pnpm test` — **471 passed, 10 skipped (481 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — complete
+  suite **481 passed**, including 10 corpus tests.
+- Build retains only the existing large-chunk warning.
+
+### Remaining boundary
+
+Take **absent ordinary-choice activation** next, but begin with an identity
+inventory. A shared constraint counts by definition ID, while the current
+repair groups an exact materialized choice under one parent. Determine whether
+different wrappers of one shared definition can coexist under that parent in
+the pinned corpus; do not silently mutate across wrappers without evidence.
+
+Then implement the 11 ordinary base-zero owner cases if that identity question
+settles cleanly. The twelfth base-zero owner is a selection-entry group and
+belongs with the five-owner group algorithm. Unit-typed sub-unit repair has no
+pinned modifier-driven owner and stays low priority. No catalogue resolution,
+cost calculation, general validation enforcement, persistence, or UI behavior
+changed.
