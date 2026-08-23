@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (selected automatic reconciliation)
+## Current Status — 2026-08-22 (absent automatic activation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,19 +39,19 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **471 passed, 10 skipped (481)**.
+  `git diff --check` all pass. `pnpm test` is **473 passed, 11 skipped (484)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **481 passed**; without it the 10 corpus tests are skipped.
+  **484 passed**; without it the 11 corpus tests are skipped.
 - **Active area.** Legality and initialization semantics (roadmap section B).
   Every observed profile-name modifier now executes and section A has no
   remaining corpus-backed display gap. Editing durability is complete.
-- **Comments.** The automatic edit helper records the deployed-runtime branch,
-  pinned owner split, and measured reason the full Checks report cannot run in
-  the edit hot path. Changed command exports document their atomic history and
-  autosave behavior.
+- **Comments.** The automatic helper records the deployed-runtime branch,
+  54-owner split, twelve base-zero cases, three measured hot-path alternatives,
+  shared-wrapper refusal, and ephemeral-probe lifetime. Changed commands
+  document atomic history and autosave behavior.
 
 ### Picking up from here
 
@@ -71,12 +71,16 @@ evict least-recently-used re-downloadable entries and never touch saved drafts.
 
 Initial creation semantics for the New Recruit `automatic` extension are
 settled: ordinary minima initialize whether the property is absent, `false`, or
-`true`. Live reconciliation is now implemented for currently selected ordinary
+`true`. Live reconciliation now handles both selected and absent ordinary
 entries after count/query or effective-limit changes caused by roster edits.
-The current **Next is absent ordinary-choice activation** in section B. Begin
-by inventorying shared-definition wrappers under one parent, then cover the 11
-ordinary owner cases whose modifier-driven minimum can rise from zero. The one
-group case stays with the distinct group algorithm.
+The pinned Necron path activates Singularity Matrix when Pantheon of Woe makes
+it required, without leaking its ephemeral probe or mutating the prior session.
+
+The current **Next is automatic selection-entry-group reconciliation** in
+section B. New Recruit dispatches groups through a distinct algorithm. Inventory
+all five modifier-driven group owners and pin the one base-zero group before
+changing commands. Unit-typed sub-unit repair has no pinned modifier-driven
+owner and remains low priority.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
@@ -154,8 +158,9 @@ points limit works end to end and is now pinned.
 | `automatic` constraint attribute | Done | 109 corpus constraints; it cannot change what a bound means, so bounds carrying it now evaluate |
 | `automatic` during initial creation | Done | New Recruit's initializer ignores the extension; supported minima seed for absent, `false`, and `true` |
 | `automatic: true` selected ordinary reconciliation | Done | exact choice and parent; add/remove/amount/group-replacement edits; targeted condition-aware bounds; exact Drukhari Scourges transition pinned |
-| `automatic: true` absent ordinary activation | Next | inventory shared-definition wrappers first; 11 dynamic base-zero ordinary owners can become newly required |
-| `automatic: true` selection-entry groups | Open | five modifier-driven true owners, including the twelfth base-zero owner; New Recruit has a distinct algorithm |
+| `automatic: true` absent ordinary activation | Done | 11 base-zero ordinary owners; visible complete minima activate with caller IDs; exact Necron transition pinned |
+| `automatic: true` shared-wrapper identity | Low priority | zero entry-link references to the 11 pinned absent owners; cross-wrapper mutation stays diagnosed |
+| `automatic: true` selection-entry groups | Next | five modifier-driven true owners, including the twelfth base-zero owner; New Recruit has a distinct algorithm |
 | `automatic: true` unit-typed sub-units | Low priority | New Recruit has distinct algorithms; zero pinned modifier-driven owners |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
@@ -4740,3 +4745,118 @@ belongs with the five-owner group algorithm. Unit-typed sub-unit repair has no
 pinned modifier-driven owner and stays low priority. No catalogue resolution,
 cost calculation, general validation enforcement, persistence, or UI behavior
 changed.
+
+## Completed Assignment — Absent Automatic Activation, 2026-08-22
+
+Baseline `bd9c104`; resulting implementation commit `75a12e6`
+(`feat: activate absent automatic selections`).
+
+### Identity inventory settled first
+
+At pinned wh40k-11e commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, twelve modifier-driven
+`automatic: true` minima start at zero and can make an absent choice newly
+required. Eleven owners are ordinary entries and one is a selection-entry
+group.
+
+The eleven ordinary owners are six Leagues of Votann wargear choices
+(EtaCarn plasma gun `8619-9766-108e-f579`, Volkanite disintegrator
+`ee96-471c-ef12-d689`, Concussion gauntlet
+`4af9-1fdc-54b3-617a`, Plasma blade gauntlet
+`e5aa-490d-0302-1725`, Concussion maul
+`7719-aa64-5e16-9a9d`, Heavy plasma axe
+`697f-710e-738d-4ee3`), four Necron C'tan choices (Singularity Matrix
+`e402-fe4a-b246-540e`, Quantum Goad `8389-2298-cdf5-548f`,
+Animus Damper `f5b0-0570-d832-eb0b`, Reletavistic Tether
+`4b7a-0ee7-9cf0-8434`), and T'au Pulse carbine
+`9e02-6828-1052-5cc4`. Tyranid Specialisms
+`9c71-7661-3b6b-a27c` is the group case.
+
+All eleven ordinary modifiers set the effective minimum to exactly one. Ten
+choices are hidden until the same trigger reveals them; Pulse carbine is already
+visible. Searching all 46 documents found **zero entry-link references** to any
+of those eleven owner IDs. That settled the common path without inventing
+cross-wrapper identity semantics.
+
+### Implementation
+
+The web automatic helper was extracted from `roster-session.ts` so the
+selected and absent branches share one bounded command integration point.
+Selected clamps settle first. The absent branch then walks direct entries and
+transparent groups under selected occurrences in materialized order, skips
+already-selected exact choices and unit-typed sub-units, and requires a complete
+visible path.
+
+Each candidate is added only to a throwaway immutable roster snapshot. The
+existing condition-aware constraint inspector evaluates its effective minimum;
+a complete positive deficit creates one real occurrence at that amount through
+the caller's selection-ID factory. The temporary ID, probe roster, and temporary
+choice-map entry never escape. Catalogue projections, generic nodes, provenance,
+and imported bytes remain shared by reference.
+
+Root add, child add, max-one group replacement, remove, and amount commands now
+supply or accept the same ID factory. Every automatic activation remains part of
+the initiating immutable action, so undo, dirty tracking, recovery, and
+autosave do not see an internal edit.
+
+A missing ID factory emits
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE` and preserves
+the initiating edit. If a selected or absent effective selector counts an
+occurrence from another exact materialized wrapper,
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED` withholds
+cross-wrapper mutation. The fictional two-link fixture proves that guard.
+
+### Hot-path measurement
+
+The earlier comparison still governs the design: ten full Checks runs on the
+41-selection Guardian roster measured **30,215.7 ms**, while ten targeted
+Scourge min/max evaluations measured **407.4 ms**. After the absent scan was
+implemented, ten complete amount-command reconciliations on that Guardian
+session with no reachable absent candidate measured **1.2 ms total**, about
+0.12 ms per edit. The temporary timing instrumentation was removed.
+
+### Tests and real-data proof
+
+The synthetic activation case starts an ordinary choice at a modifier-controlled
+minimum of zero, reveals it and raises min/max to one, removes it when the
+trigger disappears, and reactivates it when the trigger returns. It also proves
+a missing factory emits a source-located structured warning, the earlier session
+stays unchanged, and no internal probe ID reaches the roster.
+
+The shared-wrapper case materializes one shared definition through two links.
+After the first wrapper is selected and its trigger raises the minimum, the
+second wrapper remains absent and the exact foreign occurrence is retained in
+the diagnostic.
+
+The pinned Necron test builds the Deceiver, selects Pantheon of Woe
+(`1707-57c5-676e-90d9`), and proves Singularity Matrix
+(`e402-fe4a-b246-540e`) appears beneath the Deceiver at exactly one.
+The prior session remains unchanged.
+
+Two negative controls were run. Disabling the automatic-minimum predicate made
+the activation test fail at its first expected ID-unavailable diagnostic.
+Disabling only the shared-selector guard made the dedicated wrapper test fail
+with no compatibility warning. Both changes were restored and the tests passed.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and
+  `git diff --check` — pass.
+- `pnpm test` — **473 passed, 11 skipped (484 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — complete
+  suite **484 passed**, including 11 corpus tests.
+- Build retains only the existing large-chunk warning.
+
+### Remaining boundary
+
+Take **automatic selection-entry-group reconciliation** next. Inventory all
+five modifier-driven group owners and reproduce the one base-zero Tyranid
+Specialisms transition before implementing New Recruit's distinct group
+algorithm. Do not route it through the ordinary-entry amount logic merely
+because both branches eventually change a selected count.
+
+Unit-typed sub-unit repair remains low priority because the pinned corpus has
+zero modifier-driven owners. Cross-wrapper automatic mutation also remains low
+priority and diagnosed: none of the eleven supported absent owners is linked.
+No catalogue resolution, cost calculation, general validation enforcement,
+persistence, or UI behavior changed.
