@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **493 passed, 17 skipped (510)**.
+  `git diff --check` all pass. `pnpm test` is **493 passed, 18 skipped (511)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **510 passed**; without the variable the 17 corpus tests are skipped.
+  **511 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -292,9 +292,8 @@ invisible to the whole test suite.
 | Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
-| NOTICE text offered as an addable unit | Blocked | it *is* a visibility problem and filtering roots by visibility fixes it — but the same filter hides 72 `[Legends]` units per faction whose `Show Legends` toggle is unreachable. Needs the row below first |
-| **`Show/Hide Options` is unreachable** | **Next** | a game-system configuration group holding `Show Legends`. Not among the root choices, so 72 hidden units per faction have no toggle. Unblocks the row above |
-| `skipIfPresent` on modifiers | Open | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
+| NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
+| **`skipIfPresent` on modifiers** | **Next** | 359 modifiers across 20 files; unsupported, and it withholds printed values — the pinned Manreaper's Keywords are blank. Largest display gap. Pin the semantics against the wiki or an observation first |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
@@ -6146,6 +6145,11 @@ remains the largest display gap at 359 modifiers.
 
 ## Research Note — The NOTICE Root Is Not A Small Fix, 2026-08-23
 
+**Superseded, later on 2026-08-23.** Its conclusion that `Show/Hide Options` is
+unreachable is **wrong**: the scan that showed it printed through `tail` and the
+matching line scrolled off. The group is offered in the browser, and the fix
+shipped in `707ea12`. The corpus measurements below still hold.
+
 No code change. Investigated the QA finding that the catalogue's deprecation
 notice is offered as an addable unit, expecting a filter and finding a
 dependency.
@@ -6206,3 +6210,71 @@ suite still passes at **17 tests** after the investigation.
 `Show/Hide Options`, as above. If that turns out to be deep, `skipIfPresent`
 (359 modifiers, the largest display gap) is the better use of a checkpoint than
 forcing the notice fix through.
+
+## Completed Assignment — Hidden Roots, 2026-08-23
+
+Baseline `39f6edc`; resulting implementation commit `707ea12`.
+
+### Correcting the previous note
+
+The research note before this one concluded the notice fix was **blocked**
+because `Show/Hide Options` was unreachable. **That was wrong**, and it was
+wrong for an embarrassing reason: the scan that "proved" it printed its results
+through `tail`, and the line naming the group scrolled off the top. The group is
+in `context.roots.roots`, in `localRosterRootChoices`, and is offered in the
+browser.
+
+Two things follow. The blocked note is superseded, and the lesson is narrow but
+real: **a tool that truncates output can manufacture a negative result.** The
+same command that found nothing would have found it with `grep`.
+
+### What was actually true
+
+`Show/Hide Options` is *not* auto-created, and that is correct. It carries
+`min 1 force selections` and an **unconditional modifier setting that very
+constraint to 0**. It is offered, not required — which is what a display toggle
+should be.
+
+Its children are the toggles: `Show Legends`, `Show Unaligned Forces`,
+`Show Unaligned Fortifications`, `Show Crucible Characters`, `Show Chaos
+Knights`, `Show Titans`.
+
+### The change
+
+Root choices are filtered by visibility, the same conservative rule roster
+creation uses: only a root that is *certainly* hidden is dropped.
+
+| Catalogue | Offered before | After | After `Show Legends` |
+|---|---|---|---|
+| Dark Angels | 111 | **110** | 189 (79 Legends back) |
+| Death Guard | 137 | **65** | 104 (39 Legends back) |
+
+The notice is gone, `[Legends]` units hide until asked for — as BattleScribe
+does — and `Show/Hide Options` resolves as visible so the toggle never
+disappears with the units it controls. That last point is the one that made the
+change safe, and it is pinned.
+
+### Two narrow condition gates
+
+A prospective child of a **force** is a root, and a root's parent *is* that
+force, so `scope="parent"` names the owner already in hand. Both the shape check
+and the collection now allow it, gated on the `prospectiveChild` flag from the
+previous entry — because for a *real* force owner, a force constraint,
+`parent` means the containing force, which is a different question entirely.
+
+That is the condition the notice hides behind: hide once the parent holds
+anything, and a force with configuration slots always does.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **493 passed, 18 skipped (511 total)**.
+- Pinned corpus — **511 passed**. The new pin fails when the filter is bypassed.
+
+### Next recommended boundary
+
+**`skipIfPresent`.** 359 modifiers across 20 files, and it currently blanks the
+pinned Manreaper's Keywords entirely. Largest remaining display gap. Its values
+are the appended keyword strings themselves, which reads as deduplication — but
+that is inference, so pin it against the New Recruit wiki or an observation
+before writing a rule.
