@@ -661,10 +661,9 @@ Consequences worth knowing:
   supported initialization minima remain distinct occurrences
 - Conditional or grouped automatic-root requirements and implicit choices for
   groups whose default is absent or `none`
-- Automatic selection-entry-group reconciliation and New Recruit's distinct
-  automatic sub-unit algorithms. Selected and absent ordinary entries are
-  reconciled after root/child add, child-group replacement, removal, and amount
-  edits
+- Automatic distribution through nested selection-entry groups and New
+  Recruit's distinct automatic sub-unit algorithms. The pinned
+  modifier-driven groups have only direct model or upgrade children
 - Automatic activation when a shared selector already counts another exact
   materialized wrapper; that ambiguity remains diagnosed rather than guessed
 - `.ros`/`.rosz` ingestion, projection, import, and interchange export;
@@ -915,32 +914,54 @@ violated entry, selection group, or sub-unit to the current min/max.
 
 Of the 88 true corpus constraints, 74 are modifier-controlled across 54 owners:
 49 ordinary entries, five selection-entry groups, and no unit-typed sub-units.
-Twelve modifier-driven minima start at zero: eleven ordinary entries and one
-group. None of those eleven ordinary owner IDs is targeted by an `entryLink`
-anywhere in the pinned 46-document corpus. Ten are hidden and become visible
-under the same trigger that raises the minimum; the T'au Pulse carbine is
-already visible.
+The exact group owners are World Eaters Dishonoured
+`972c-1a7a-a57a-aa0c`, Tyranid Specialisms
+`9c71-7661-3b6b-a27c` and Ranged Weapons
+`93f9-6099-8613-801c`, plus T'au Krootox Riders
+`aee2-c887-105a-ea1b` and Ranged Weapons
+`82dc-f84f-1b88-b8fd`. All five have only direct children; resolving their
+entry links finds model or upgrade children and no unit-typed sub-units.
 
-RosterForge implements both selected and absent ordinary-entry branches. A
-successful root/child add, child-group replacement, removal, or amount edit
-first clamps complete selected violations under their exact parent. It then
-walks visible absent direct and transparent-group choices, evaluates an
-ephemeral occurrence against the condition-aware effective minimum, and adds
-one real occurrence for a complete positive deficit. The caller supplies its
-occurrence ID; internal probe IDs never enter the session.
+Twelve modifier-driven minima start at zero: eleven ordinary entries and
+Specialisms. None of those eleven ordinary owner IDs is targeted by an
+`entryLink` anywhere in the pinned 46-document corpus. Ten are hidden and
+become visible under the same trigger that raises the minimum; the T'au Pulse
+carbine is already visible. Specialisms is a shared group reached through three
+Crucible organism wrappers.
 
-The pinned Drukhari case changes four default Scourges to three when its
-alternate model is selected. The pinned Necron case selects Pantheon of Woe
-(`1707-57c5-676e-90d9`) and activates Singularity Matrix
-(`e402-fe4a-b246-540e`) at exactly one beneath the already-selected
-Deceiver, while leaving the prior session unchanged.
+RosterForge implements the selected and absent ordinary-entry branches and the
+direct-child selection-entry-group branch. A successful root/child add,
+child-group replacement, removal, or amount edit first clamps complete selected
+ordinary violations under their exact parent. It next evaluates visible
+automatic groups by inserting a group occurrence only into a throwaway roster,
+which preserves the group's relative condition scopes while the durable group
+remains transparent.
 
-Selection-entry-group and sub-unit algorithms remain deferred. A missing
-occurrence-ID factory and an absent selector that already counts another exact
-materialized wrapper are source-located compatibility warnings, not guessed
-edits. Modifier-controlled, child-inclusive, malformed, or otherwise
-unsupported initialization bounds remain incomplete independently of
-`automatic`.
+A group deficit fills visible direct children in stable source order up to each
+complete effective maximum; an excess trims reverse order down to each complete
+effective minimum. The exact group child from the initiating edit receives New
+Recruit's first-choice priority before that reversal. Missing children receive
+caller-generated occurrence IDs. The synthetic test proves source-order fill,
+reverse trim, direct-choice priority, unchanged prior sessions, and a
+source-located missing-ID warning.
+
+After groups settle, RosterForge walks visible absent ordinary direct and
+transparent-group choices, evaluates an ephemeral occurrence against the
+condition-aware effective minimum, and adds one real occurrence for a complete
+positive deficit. Internal probe IDs and temporary group occurrences never
+enter the session. The pinned Drukhari case changes four default Scourges to
+three; the pinned Necron case activates Singularity Matrix; and the pinned
+Genestealer Cults case raises Specialisms from zero to one and selects Burrowing
+Claws at amount one beneath Node Organism [Crucible].
+
+The runtime group algorithm also has nested-group and unit-typed sub-unit
+branches outside the measured corpus shape. RosterForge diagnoses and withholds
+those repairs, as well as conflicting or unsatisfiable visible child bounds.
+A missing occurrence-ID factory and an absent ordinary selector that already
+counts another exact materialized wrapper are source-located compatibility
+warnings, not guessed edits. Modifier-controlled, child-inclusive, malformed,
+or otherwise unsupported initialization bounds remain incomplete independently
+of `automatic`.
 
 The Army Roster force definition has one constraint with a native `message`
 property, also outside the 2.03 typed constraint surface. Its exact text remains

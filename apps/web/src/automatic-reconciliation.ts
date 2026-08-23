@@ -6,7 +6,10 @@
  * repairs through caller-provided immutable session operations.
  */
 
-import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
+import type {
+  BattleScribeCatalogueContext,
+  MaterializedSelectionEntryGroup,
+} from "@rosterforge/data-graph";
 import {
   evaluateRosterSelectionVisibilityPath,
   inspectRosterSelectionConstraintWithSelectionConditions,
@@ -51,6 +54,12 @@ interface AutomaticReconciliationSession {
  */
 export interface LocalRosterAutomaticReconciliationOptions {
   readonly createSelectionId?: () => SelectionOccurrenceId;
+  /**
+   * The exact materialized choice changed by the initiating command. New
+   * Recruit considers that choice first while filling a group and first while
+   * trimming the reversed order, so a direct group edit behaves predictably.
+   */
+  readonly preferredChoice?: BattleScribeRosterSelectionChoice;
 }
 
 interface AutomaticSelectionInput {
@@ -100,9 +109,20 @@ interface AbsentAutomaticAdjustment {
   readonly amount: number;
 }
 
+interface AutomaticGroupAdjustment {
+  readonly kind: "group";
+  readonly parent: RosterSelection;
+  readonly group: MaterializedSelectionEntryGroup;
+  readonly path: readonly BattleScribeRosterSelectionChoice[];
+  readonly constraint: AutomaticConstraint;
+  readonly constraintType: "min" | "max";
+  readonly amount: number;
+}
+
 type AutomaticSelectionAdjustment =
   | SelectedAutomaticAdjustment
-  | AbsentAutomaticAdjustment;
+  | AbsentAutomaticAdjustment
+  | AutomaticGroupAdjustment;
 
 interface AutomaticSelectionScan {
   readonly adjustments: readonly AutomaticSelectionAdjustment[];
@@ -114,24 +134,52 @@ interface AbsentAutomaticCandidate {
   readonly path: readonly BattleScribeRosterSelectionChoice[];
 }
 
+interface AutomaticGroupCandidate {
+  readonly group: MaterializedSelectionEntryGroup;
+  readonly path: readonly BattleScribeRosterSelectionChoice[];
+}
+
+interface AutomaticGroupChildState {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly occurrences: readonly RosterSelection[];
+  readonly minimum: number;
+  readonly maximum: number;
+}
+
+interface AutomaticGroupChildInspection {
+  readonly states: readonly AutomaticGroupChildState[];
+  readonly active: boolean;
+  readonly completeness: "complete" | "incomplete";
+  readonly diagnostics: readonly Diagnostic[];
+}
+
+interface AutomaticGroupMutation {
+  readonly kind: "increase" | "decrease";
+  readonly state: AutomaticGroupChildState;
+  readonly amount: number;
+}
+
 const maxAutomaticReconciliationPasses = 10;
 
 /**
- * Reconciles the supported ordinary-entry branches of New Recruit's automatic
- * constraint handler after one successful selection edit.
+ * Reconciles the supported ordinary-entry and selection-entry-group branches
+ * of New Recruit's automatic constraint handler after one successful edit.
  *
  * The deployed 35.66 runtime clamps an ordinary selector's aggregate amount
- * whenever an `automatic: true` min or max is violated. Its group and sub-unit
- * branches use different algorithms, so this function leaves those untouched.
- * The pinned corpus has 54 modifier-driven true owners: 49 ordinary entries,
- * five groups, and no unit-typed sub-units. Twelve minima start at zero;
- * eleven ordinary owners have no entry-link wrappers anywhere in the corpus.
+ * whenever an `automatic: true` min or max is violated. Groups distribute a
+ * deficit in stable source order and trim an excess in reverse order, respecting
+ * each visible child's effective max/min. Unit-typed sub-units still use a
+ * distinct unsupported branch. The pinned corpus has 54 modifier-driven true
+ * owners: 49 ordinary entries, five direct-child groups, and no unit-typed
+ * sub-units. Twelve minima start at zero; eleven ordinary owners have no
+ * entry-link wrappers anywhere in the corpus and the group owner has three.
  *
  * Reusing the full Checks report here is not viable: ten passes over a pinned
  * 41-selection Guardian roster measured 30,215.7 ms. Evaluating the two
  * selected Scourge bounds directly measured 407.4 ms for ten passes, while ten
  * complete edits with no absent candidate measured 1.2 ms. This scan therefore
- * visits only selected automatic choices and absent automatic-minimum children.
+ * visits only selected automatic choices, groups carrying automatic bounds,
+ * and absent automatic-minimum children.
  */
 export function reconcileLocalRosterAutomaticConstraints<
   Session extends AutomaticReconciliationSession,
@@ -204,9 +252,19 @@ function scanAutomaticSelectionAdjustments<
   const selected = scanSelectedAutomaticAdjustments(session);
   // Settle selected quantities first. An automatic maximum can remove a parent
   // subtree, so absent children must be discovered from the resulting tree.
-  return selected.adjustments.length > 0
-    ? selected
-    : scanAbsentAutomaticAdjustments(session, options);
+  if (selected.adjustments.length > 0) return selected;
+
+  const groups = scanAutomaticGroupAdjustments(session);
+  const diagnostics = [...selected.diagnostics, ...groups.diagnostics];
+  if (groups.adjustments.length > 0) {
+    return { adjustments: groups.adjustments, diagnostics };
+  }
+
+  const absent = scanAbsentAutomaticAdjustments(session, options);
+  return {
+    adjustments: absent.adjustments,
+    diagnostics: [...diagnostics, ...absent.diagnostics],
+  };
 }
 
 function scanSelectedAutomaticAdjustments<
@@ -220,19 +278,9 @@ function scanSelectedAutomaticAdjustments<
       isEnabledAutomaticConstraint,
     );
     if (constraints.length === 0) continue;
-    if (selector.choice.kind === "selectionEntryGroup") {
-      diagnostics.push(
-        ...constraints.map((constraint) =>
-          automaticConstraintDiagnostic(
-            constraint,
-            "WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_RECONCILIATION_UNSUPPORTED",
-            "Automatic reconciliation for a selected entry group is not supported.",
-            { selectorKey: selector.key },
-          ),
-        ),
-      );
-      continue;
-    }
+    // Selection-entry groups are transparent in durable rosters and are
+    // scanned from each selected parent's materialized children below.
+    if (selector.choice.kind === "selectionEntryGroup") continue;
     if (selector.choice.type === "unit") {
       diagnostics.push(
         ...constraints.map((constraint) =>
@@ -303,6 +351,133 @@ function scanSelectedAutomaticAdjustments<
     }
   }
 
+  return { adjustments, diagnostics };
+}
+
+function scanAutomaticGroupAdjustments<
+  Session extends AutomaticReconciliationSession,
+>(session: Session): AutomaticSelectionScan {
+  const adjustments: AutomaticGroupAdjustment[] = [];
+  const diagnostics: Diagnostic[] = [];
+  let probeSequence = 0;
+
+  const visitSelections = (selections: readonly RosterSelection[]): void => {
+    for (const parent of selections) {
+      const parentChoice = session.selectionChoices.get(parent.id);
+      if (parentChoice !== undefined) {
+        for (const candidate of automaticGroupCandidates(parentChoice)) {
+          const constraints = candidate.group.constraints.filter(
+            isEnabledAutomaticConstraint,
+          );
+          if (constraints.length === 0) continue;
+
+          const visibility = evaluateRosterSelectionVisibilityPath(
+            session.roster,
+            session.catalogue.context,
+            parent,
+            candidate.path,
+          );
+          appendUniqueDiagnostics(diagnostics, visibility.diagnostics);
+          if (
+            !visibility.ok ||
+            visibility.value.completeness !== "complete" ||
+            visibility.value.status !== "visible"
+          ) {
+            continue;
+          }
+
+          if (directGroupChoices(candidate.group).length > 0) {
+            diagnostics.push(
+              ...constraints.map((constraint) =>
+                automaticConstraintDiagnostic(
+                  constraint,
+                  "WEB_ROSTER_AUTOMATIC_CONSTRAINT_NESTED_GROUP_UNSUPPORTED",
+                  "Automatic reconciliation for a group containing nested groups is not supported.",
+                  { parentId: parent.id, groupId: candidate.group.id },
+                ),
+              ),
+            );
+            continue;
+          }
+
+          // A temporary group occurrence gives conditions the same relative
+          // self/parent position as New Recruit's non-roster group object. It
+          // is used only to evaluate the effective limit and never escapes.
+          const probeId = unusedProbeSelectionId(
+            session.roster,
+            ++probeSequence,
+          );
+          const probed =
+            addRosterSelectionToSelectionFromCatalogueContext(
+              session.roster,
+              session.catalogue.context,
+              parent.id,
+              candidate.group,
+              { id: probeId },
+            );
+          appendUniqueDiagnostics(diagnostics, probed.diagnostics);
+          if (!probed.ok) continue;
+          const probe = findRosterSelection(probed.value.forces, probeId);
+          if (probe === undefined) continue;
+
+          const choices = groupEntryChoices(candidate.group);
+          const amount = rosterSelectionsAmount(
+            parent.selections.filter((selection) => {
+              const choice = session.selectionChoices.get(selection.id);
+              return choice !== undefined && choices.includes(choice);
+            }),
+          );
+          for (const constraint of constraints) {
+            const inspected =
+              inspectRosterSelectionConstraintWithSelectionConditions(
+                probed.value,
+                session.catalogue.context,
+                probe,
+                constraint,
+              );
+            appendUniqueDiagnostics(diagnostics, inspected.diagnostics);
+            if (
+              !inspected.ok ||
+              inspected.value.completeness !== "complete" ||
+              inspected.value.limit === undefined ||
+              !Number.isSafeInteger(inspected.value.limit) ||
+              inspected.value.limit < 0 ||
+              (inspected.value.constraintType !== "min" &&
+                inspected.value.constraintType !== "max")
+            ) {
+              continue;
+            }
+            const constraintType = inspected.value.constraintType;
+            const target = inspected.value.limit;
+            if (
+              (constraintType === "min" && amount < target) ||
+              (constraintType === "max" && amount > target)
+            ) {
+              adjustments.push({
+                kind: "group",
+                parent,
+                group: candidate.group,
+                path: candidate.path,
+                constraint,
+                constraintType,
+                amount: target,
+              });
+              // Min/max pairs can describe one quantity. Re-read both after
+              // the first violated bound has distributed its adjustment.
+              break;
+            }
+          }
+        }
+      }
+      visitSelections(parent.selections);
+    }
+  };
+
+  const visitForce = (force: RosterForce): void => {
+    visitSelections(force.selections);
+    for (const child of force.forces) visitForce(child);
+  };
+  for (const force of session.roster.forces) visitForce(force);
   return { adjustments, diagnostics };
 }
 
@@ -511,6 +686,50 @@ function absentAutomaticCandidates(
   return candidates;
 }
 
+function automaticGroupCandidates(
+  parent: BattleScribeRosterSelectionChoice,
+): readonly AutomaticGroupCandidate[] {
+  const candidates: AutomaticGroupCandidate[] = [];
+
+  const visit = (
+    container: BattleScribeRosterSelectionChoice,
+    path: readonly BattleScribeRosterSelectionChoice[],
+  ): void => {
+    for (const group of directGroupChoices(container)) {
+      const groupPath = [...path, group];
+      candidates.push({ group, path: groupPath });
+      visit(group, groupPath);
+    }
+  };
+
+  visit(parent, []);
+  return candidates;
+}
+
+function directGroupChoices(
+  container: BattleScribeRosterSelectionChoice,
+): readonly MaterializedSelectionEntryGroup[] {
+  return [
+    ...container.selectionEntryGroups,
+    ...container.entryLinks.filter(
+      (choice): choice is MaterializedSelectionEntryGroup =>
+        choice.kind === "selectionEntryGroup",
+    ),
+  ];
+}
+
+function groupEntryChoices(
+  group: MaterializedSelectionEntryGroup,
+): readonly BattleScribeRosterSelectionChoice[] {
+  return [
+    ...group.selectionEntries,
+    ...group.entryLinks.filter(
+      (choice): choice is BattleScribeRosterSelectionChoice =>
+        choice.kind === "selectionEntry",
+    ),
+  ];
+}
+
 function selectedAutomaticSelectors<
   Session extends AutomaticReconciliationSession,
 >(session: Session): readonly SelectedAutomaticSelector[] {
@@ -571,6 +790,15 @@ function applyAutomaticSelectionAdjustment<
   operations: AutomaticReconciliationOperations<Session>,
   options: LocalRosterAutomaticReconciliationOptions,
 ): Result<Session> {
+  if (adjustment.kind === "group") {
+    return applyAutomaticGroupAdjustment(
+      session,
+      adjustment,
+      operations,
+      options,
+    );
+  }
+
   if (adjustment.kind === "absent") {
     const createSelectionId = options.createSelectionId;
     if (createSelectionId === undefined) return success(session);
@@ -642,6 +870,366 @@ function applyAutomaticSelectionAdjustment<
     excess -= Math.min(excess, amount);
   }
   return success(working, diagnostics);
+}
+
+function applyAutomaticGroupAdjustment<
+  Session extends AutomaticReconciliationSession,
+>(
+  session: Session,
+  adjustment: AutomaticGroupAdjustment,
+  operations: AutomaticReconciliationOperations<Session>,
+  options: LocalRosterAutomaticReconciliationOptions,
+): Result<Session> {
+  const inspected = inspectAutomaticGroupChildren(session, adjustment);
+  const diagnostics = [...inspected.diagnostics];
+  if (
+    !inspected.active ||
+    inspected.completeness !== "complete"
+  ) {
+    return success(session, diagnostics);
+  }
+
+  const preferredChoice = options.preferredChoice;
+  const createSelectionId = options.createSelectionId;
+  const ordered = inspected.states
+    .map((state, index) => ({ state, index }))
+    .sort(
+      (left, right) =>
+        Number(right.state.choice === preferredChoice) -
+          Number(left.state.choice === preferredChoice) ||
+        left.index - right.index,
+    )
+    .map(({ state }) => state);
+  const current = rosterSelectionsAmount(
+    ordered.flatMap(({ occurrences }) => occurrences),
+  );
+  let remaining =
+    adjustment.constraintType === "min"
+      ? adjustment.amount - current
+      : current - adjustment.amount;
+  if (remaining <= 0) return success(session, diagnostics);
+
+  const mutations: AutomaticGroupMutation[] = [];
+  const candidates =
+    adjustment.constraintType === "min"
+      ? ordered
+      : [...ordered].reverse();
+  for (const state of candidates) {
+    if (remaining <= 0) break;
+    const amount = rosterSelectionsAmount(state.occurrences);
+    const available =
+      adjustment.constraintType === "min"
+        ? state.maximum - amount
+        : amount - state.minimum;
+    const changed = Math.min(remaining, Math.max(0, available));
+    if (changed <= 0) continue;
+    mutations.push({
+      kind:
+        adjustment.constraintType === "min" ? "increase" : "decrease",
+      state,
+      amount: changed,
+    });
+    remaining -= changed;
+  }
+
+  if (remaining > 0) {
+    diagnostics.push(
+      automaticConstraintDiagnostic(
+        adjustment.constraint,
+        "WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_BOUNDS_UNSATISFIABLE",
+        "Visible group entries cannot satisfy the current automatic group bound.",
+        {
+          parentId: adjustment.parent.id,
+          groupId: adjustment.group.id,
+          constraintType: adjustment.constraintType,
+          target: adjustment.amount,
+          remaining,
+        },
+      ),
+    );
+    return success(session, diagnostics);
+  }
+
+  const needsNewOccurrence = mutations.some(
+    ({ kind, state }) =>
+      kind === "increase" && state.occurrences.length === 0,
+  );
+  if (needsNewOccurrence && createSelectionId === undefined) {
+    diagnostics.push(
+      automaticConstraintDiagnostic(
+        adjustment.constraint,
+        "WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE",
+        "An automatic group needs a new choice, but this command supplied no occurrence-ID factory.",
+        {
+          parentId: adjustment.parent.id,
+          groupId: adjustment.group.id,
+          target: adjustment.amount,
+        },
+      ),
+    );
+    return success(session, diagnostics);
+  }
+
+  let working = session;
+  for (const mutation of mutations) {
+    if (mutation.kind === "increase") {
+      const occurrence = mutation.state.occurrences
+        .map(({ id }) => findRosterSelection(working.roster.forces, id))
+        .find(
+          (candidate): candidate is RosterSelection =>
+            candidate !== undefined,
+        );
+      const changed =
+        occurrence === undefined
+          ? operations.addChild(
+              working,
+              adjustment.parent.id,
+              mutation.state.choice,
+              {
+                selectionId: createSelectionId!(),
+                createSelectionId: createSelectionId!,
+                amount: mutation.amount,
+              },
+            )
+          : operations.setAmount(
+              working,
+              occurrence.id,
+              rosterSelectionAmount(occurrence) + mutation.amount,
+            );
+      appendUniqueDiagnostics(diagnostics, changed.diagnostics);
+      if (!changed.ok) return failure(diagnostics);
+      working = changed.value;
+      continue;
+    }
+
+    let toRemove = mutation.amount;
+    for (const original of [...mutation.state.occurrences].reverse()) {
+      if (toRemove <= 0) break;
+      const occurrence = findRosterSelection(
+        working.roster.forces,
+        original.id,
+      );
+      if (occurrence === undefined) continue;
+      const amount = rosterSelectionAmount(occurrence);
+      const changed =
+        amount <= toRemove
+          ? operations.removeSelection(working, occurrence.id)
+          : operations.setAmount(
+              working,
+              occurrence.id,
+              amount - toRemove,
+            );
+      appendUniqueDiagnostics(diagnostics, changed.diagnostics);
+      if (!changed.ok) return failure(diagnostics);
+      working = changed.value;
+      toRemove -= Math.min(amount, toRemove);
+    }
+  }
+  return success(working, diagnostics);
+}
+
+function inspectAutomaticGroupChildren<
+  Session extends AutomaticReconciliationSession,
+>(
+  session: Session,
+  adjustment: AutomaticGroupAdjustment,
+): AutomaticGroupChildInspection {
+  const diagnostics: Diagnostic[] = [];
+  const parent = findRosterSelection(
+    session.roster.forces,
+    adjustment.parent.id,
+  );
+  const parentChoice =
+    parent === undefined
+      ? undefined
+      : session.selectionChoices.get(parent.id);
+  if (
+    parent === undefined ||
+    parentChoice === undefined ||
+    !automaticGroupCandidates(parentChoice).some(
+      ({ group }) => group === adjustment.group,
+    )
+  ) {
+    return {
+      states: [],
+      active: false,
+      completeness: "complete",
+      diagnostics,
+    };
+  }
+
+  const groupVisibility = evaluateRosterSelectionVisibilityPath(
+    session.roster,
+    session.catalogue.context,
+    parent,
+    adjustment.path,
+  );
+  appendUniqueDiagnostics(diagnostics, groupVisibility.diagnostics);
+  if (
+    !groupVisibility.ok ||
+    groupVisibility.value.completeness !== "complete"
+  ) {
+    return {
+      states: [],
+      active: false,
+      completeness: "incomplete",
+      diagnostics,
+    };
+  }
+  if (groupVisibility.value.status !== "visible") {
+    return {
+      states: [],
+      active: false,
+      completeness: "complete",
+      diagnostics,
+    };
+  }
+
+  const states: AutomaticGroupChildState[] = [];
+  let incomplete = false;
+  let probeSequence = 0;
+  for (const choice of groupEntryChoices(adjustment.group)) {
+    const visibility = evaluateRosterSelectionVisibilityPath(
+      session.roster,
+      session.catalogue.context,
+      parent,
+      [...adjustment.path, choice],
+    );
+    appendUniqueDiagnostics(diagnostics, visibility.diagnostics);
+    if (
+      !visibility.ok ||
+      visibility.value.completeness !== "complete"
+    ) {
+      incomplete = true;
+      continue;
+    }
+    if (visibility.value.status !== "visible") continue;
+    if (choice.kind === "selectionEntry" && choice.type === "unit") {
+      diagnostics.push(
+        automaticConstraintDiagnostic(
+          adjustment.constraint,
+          "WEB_ROSTER_AUTOMATIC_CONSTRAINT_SUBUNIT_RECONCILIATION_UNSUPPORTED",
+          "Automatic group reconciliation cannot change a unit-typed sub-unit.",
+          {
+            parentId: parent.id,
+            groupId: adjustment.group.id,
+            choiceId: choice.id,
+          },
+        ),
+      );
+      incomplete = true;
+      continue;
+    }
+
+    const occurrences = parent.selections.filter(
+      (selection) => session.selectionChoices.get(selection.id) === choice,
+    );
+    const constraints = choice.constraints.filter(
+      isPotentialParentSelectionBound,
+    );
+    let anchor = occurrences[0];
+    let probedRoster = session.roster;
+    if (anchor === undefined && constraints.length > 0) {
+      const probeId = unusedProbeSelectionId(
+        session.roster,
+        ++probeSequence,
+      );
+      const probed = addRosterSelectionToSelectionFromCatalogueContext(
+        session.roster,
+        session.catalogue.context,
+        parent.id,
+        choice,
+        { id: probeId },
+      );
+      appendUniqueDiagnostics(diagnostics, probed.diagnostics);
+      if (!probed.ok) {
+        incomplete = true;
+        continue;
+      }
+      probedRoster = probed.value;
+      anchor = findRosterSelection(probed.value.forces, probeId);
+      if (anchor === undefined) {
+        incomplete = true;
+        continue;
+      }
+    }
+
+    let minimum = 0;
+    let maximum = Number.POSITIVE_INFINITY;
+    for (const constraint of constraints) {
+      if (anchor === undefined) {
+        incomplete = true;
+        continue;
+      }
+      const inspected =
+        inspectRosterSelectionConstraintWithSelectionConditions(
+          probedRoster,
+          session.catalogue.context,
+          anchor,
+          constraint,
+        );
+      appendUniqueDiagnostics(diagnostics, inspected.diagnostics);
+      if (
+        !inspected.ok ||
+        inspected.value.completeness !== "complete" ||
+        inspected.value.limit === undefined ||
+        !Number.isSafeInteger(inspected.value.limit) ||
+        inspected.value.limit < 0 ||
+        (inspected.value.constraintType !== "min" &&
+          inspected.value.constraintType !== "max")
+      ) {
+        incomplete = true;
+        continue;
+      }
+      if (inspected.value.constraintType === "min") {
+        minimum = Math.max(minimum, inspected.value.limit);
+      } else {
+        maximum = Math.min(maximum, inspected.value.limit);
+      }
+    }
+    if (minimum > maximum) {
+      diagnostics.push(
+        automaticConstraintDiagnostic(
+          constraints[0] ?? adjustment.constraint,
+          "WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_CHILD_BOUNDS_CONFLICT",
+          "A visible group entry has an effective minimum above its maximum.",
+          {
+            parentId: parent.id,
+            groupId: adjustment.group.id,
+            choiceId: choice.id,
+            minimum,
+            maximum,
+          },
+        ),
+      );
+      incomplete = true;
+      continue;
+    }
+    states.push({ choice, occurrences, minimum, maximum });
+  }
+
+  return {
+    states,
+    active: true,
+    completeness: incomplete ? "incomplete" : "complete",
+    diagnostics,
+  };
+}
+
+function isPotentialParentSelectionBound(
+  constraint: AutomaticConstraint,
+): boolean {
+  if (
+    constraint.field === "selections" &&
+    constraint.scope === "parent"
+  ) {
+    return true;
+  }
+  return (
+    (constraint.type === "min" || constraint.type === "max") &&
+    (constraint.field === undefined || constraint.field === "selections") &&
+    (constraint.scope === undefined || constraint.scope === "parent")
+  );
 }
 
 function isEnabledAutomaticConstraint(

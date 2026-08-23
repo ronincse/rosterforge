@@ -107,6 +107,91 @@
           name="Units" targetId="initialization-category-units"
           primary="true" />
       </categoryLinks>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="automatic-source-group"
+          name="Automatic Source Group">
+          <selectionEntries>
+            <selectionEntry id="automatic-source-first"
+              name="Automatic Source First" type="upgrade">
+              <constraints>
+                <constraint id="automatic-source-first-max" type="max"
+                  field="selections" scope="parent" value="1"
+                  shared="true" />
+              </constraints>
+            </selectionEntry>
+            <selectionEntry id="automatic-source-second"
+              name="Automatic Source Second" type="upgrade">
+              <constraints>
+                <constraint id="automatic-source-second-max" type="max"
+                  field="selections" scope="parent" value="1"
+                  shared="true" />
+              </constraints>
+            </selectionEntry>
+          </selectionEntries>
+          <constraints>
+            <constraint id="automatic-source-group-min" type="min"
+              field="selections" scope="parent" value="0"
+              shared="true" automatic="true" />
+            <constraint id="automatic-source-group-max" type="max"
+              field="selections" scope="parent" value="1"
+              shared="true" automatic="true" />
+          </constraints>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" value="2"
+                  field="automatic-source-group-min" />
+                <modifier type="set" value="2"
+                  field="automatic-source-group-max" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" value="1" field="selections"
+                  scope="parent" childId="automatic-activation-trigger"
+                  shared="true" includeChildSelections="false" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntryGroup>
+        <selectionEntryGroup id="automatic-preferred-group"
+          name="Automatic Preferred Group">
+          <selectionEntries>
+            <selectionEntry id="automatic-preferred-first"
+              name="Automatic Preferred First" type="upgrade">
+              <constraints>
+                <constraint id="automatic-preferred-first-max" type="max"
+                  field="selections" scope="parent" value="2"
+                  shared="true" />
+              </constraints>
+            </selectionEntry>
+            <selectionEntry id="automatic-preferred-second"
+              name="Automatic Preferred Second" type="upgrade">
+              <constraints>
+                <constraint id="automatic-preferred-second-max" type="max"
+                  field="selections" scope="parent" value="2"
+                  shared="true" />
+              </constraints>
+            </selectionEntry>
+          </selectionEntries>
+          <constraints>
+            <constraint id="automatic-preferred-group-min" type="min"
+              field="selections" scope="parent" value="0"
+              shared="true" automatic="true" />
+            <constraint id="automatic-preferred-group-max" type="max"
+              field="selections" scope="parent" value="2"
+              shared="true" automatic="true" />
+          </constraints>
+          <modifiers>
+            <modifier type="set" value="2"
+              field="automatic-preferred-group-min">
+              <conditions>
+                <condition type="atLeast" value="1" field="selections"
+                  scope="parent" childId="automatic-preferred-second"
+                  shared="true" includeChildSelections="false" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
       <selectionEntries>
         <selectionEntry id="automatic-default-model"
           name="Automatic Default Model" type="model">

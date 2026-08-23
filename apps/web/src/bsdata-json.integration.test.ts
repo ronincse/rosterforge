@@ -230,6 +230,58 @@ describe.skipIf(realDataDirectory === undefined)(
         });
 
         expect(
+          modifierDrivenAutomaticGroupRows(
+            result.value.documents.map(({ projection }) => projection),
+          ),
+        ).toEqual([
+          {
+            filename: "T'au Empire.json",
+            id: "82dc-f84f-1b88-b8fd",
+            name: "Ranged Weapons",
+            children: 22,
+            nestedGroups: 0,
+            baseMinimum: null,
+            baseMaximum: 1,
+          },
+          {
+            filename: "Library - Tyranids.json",
+            id: "93f9-6099-8613-801c",
+            name: "Ranged Weapons",
+            children: 21,
+            nestedGroups: 0,
+            baseMinimum: null,
+            baseMaximum: 1,
+          },
+          {
+            filename: "Chaos - World Eaters.json",
+            id: "972c-1a7a-a57a-aa0c",
+            name: "Dishonoured",
+            children: 2,
+            nestedGroups: 0,
+            baseMinimum: 1,
+            baseMaximum: 1,
+          },
+          {
+            filename: "Library - Tyranids.json",
+            id: "9c71-7661-3b6b-a27c",
+            name: "Specialisms",
+            children: 6,
+            nestedGroups: 0,
+            baseMinimum: 0,
+            baseMaximum: 1,
+          },
+          {
+            filename: "T'au Empire.json",
+            id: "aee2-c887-105a-ea1b",
+            name: "Krootox Riders",
+            children: 2,
+            nestedGroups: 0,
+            baseMinimum: null,
+            baseMaximum: 3,
+          },
+        ]);
+
+        expect(
           profileOwnedCharacteristicModifierSummary(
             result.value.documents.map(({ projection }) => projection),
           ),
@@ -2092,6 +2144,105 @@ describe.skipIf(realDataDirectory === undefined)(
       120_000,
     );
     it(
+      "fills the pinned GSC Specialisms group from a base-zero minimum",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Genestealer Cults.json",
+          "Library - Tyranids.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-gsc-automatic-group",
+              importedAt: "2026-08-22T20:30:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Xenos - Genestealer Cults",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        const root =
+          catalogue === undefined
+            ? undefined
+            : localRosterRootChoices(catalogue).find(
+                ({ materialized }) =>
+                  materialized.definitionId ===
+                  "527c-d3c6-c620-c7c6",
+              );
+        if (
+          catalogue === undefined ||
+          forceDefinition === undefined ||
+          root === undefined
+        ) {
+          throw new Error("Expected the pinned GSC Crucible context.");
+        }
+
+        let generatedId = 0;
+        const createSelectionId = () =>
+          selectionOccurrenceId(
+            "real-gsc-automatic-group-" + ++generatedId,
+          );
+        const created = createLocalRosterSession(
+          catalogue,
+          forceDefinition,
+          {
+            rosterId: rosterId("real-gsc-automatic-group-roster"),
+            forceId: forceOccurrenceId(
+              "real-gsc-automatic-group-force",
+            ),
+            name: "GSC Automatic Group Integration",
+          },
+        );
+        if (!created.ok) throw new Error("Expected GSC roster session.");
+        const withRoot = addLocalRosterRootSelection(
+          created.value,
+          root,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-gsc-node-organism",
+            ),
+            createSelectionId,
+          },
+        );
+        expect(withRoot.ok).toBe(true);
+        if (!withRoot.ok) return;
+
+        const node = withRoot.value.roster.forces[0]?.selections.find(
+          ({ id }) => id === "real-gsc-node-organism",
+        );
+        const specialisms = node?.selections.flatMap((selection) => {
+          const choice = localRosterSelectionChoice(
+            withRoot.value,
+            selection.id,
+          );
+          return choice?.definitionId === "0afb-d2ae-1373-773e"
+            ? [{ selection, choice }]
+            : [];
+        });
+        expect(specialisms).toHaveLength(1);
+        expect(specialisms?.[0]?.selection).toMatchObject({ amount: 1 });
+        expect(specialisms?.[0]?.choice.name).toBe("Burrowing Claws");
+        expect(
+          [...withRoot.value.selectionChoices.values()].some(
+            ({ kind }) => kind === "selectionEntryGroup",
+          ),
+        ).toBe(false);
+        expect(created.value.roster.forces[0]?.selections).toEqual([]);
+      },
+      120_000,
+    );
+    it(
       "expands Guardian Defenders from unconditional real-data defaults",
       async () => {
         if (realDataDirectory === undefined) {
@@ -2677,6 +2828,110 @@ describe.skipIf(realDataDirectory === undefined)(
   },
 );
 
+function modifierDrivenAutomaticGroupRows(
+  projections: readonly BattleScribeProjection[],
+): readonly {
+  readonly filename: string;
+  readonly id: string;
+  readonly name: string;
+  readonly children: number;
+  readonly nestedGroups: number;
+  readonly baseMinimum: number | null;
+  readonly baseMaximum: number | null;
+}[] {
+  const rows: {
+    filename: string;
+    id: string;
+    name: string;
+    children: number;
+    nestedGroups: number;
+    baseMinimum: number | null;
+    baseMaximum: number | null;
+  }[] = [];
+
+  const modifierGroupTargetsField = (
+    group: ModifierGroupProjection,
+    field: string,
+  ): boolean =>
+    group.modifiers.some((modifier) => modifier.field === field) ||
+    group.modifierGroups.some((child) =>
+      modifierGroupTargetsField(child, field),
+    );
+  const addGroup = (
+    group: SelectionContainerProjection["selectionEntryGroups"][number],
+  ): void => {
+    const automatic = group.constraints.filter(
+      ({ node }) =>
+        node.attributes["automatic"] === "true" ||
+        node.attributes["automatic"] === "1",
+    );
+    const modifierDriven = automatic.some(
+      ({ id }) =>
+        id !== undefined &&
+        (group.modifiers.some(({ field }) => field === id) ||
+          group.modifierGroups.some((modifierGroup) =>
+            modifierGroupTargetsField(modifierGroup, id),
+          )),
+    );
+    if (
+      modifierDriven &&
+      group.id !== undefined &&
+      group.name !== undefined
+    ) {
+      const minima = automatic.flatMap(({ type, value }) =>
+        type === "min" && value !== undefined ? [value] : [],
+      );
+      const maxima = automatic.flatMap(({ type, value }) =>
+        type === "max" && value !== undefined ? [value] : [],
+      );
+      rows.push({
+        filename: group.source.filename,
+        id: group.id,
+        name: group.name,
+        children:
+          group.selectionEntries.length +
+          group.entryLinks.filter(
+            ({ type }) => type === "selectionEntry",
+          ).length,
+        nestedGroups:
+          group.selectionEntryGroups.length +
+          group.entryLinks.filter(
+            ({ type }) => type === "selectionEntryGroup",
+          ).length,
+        baseMinimum:
+          minima.length === 0 ? null : Math.max(...minima),
+        baseMaximum:
+          maxima.length === 0 ? null : Math.min(...maxima),
+      });
+    }
+  };
+  const visit = (container: SelectionContainerProjection): void => {
+    for (const group of container.selectionEntryGroups) {
+      addGroup(group);
+      visit(group);
+    }
+    for (const entry of container.selectionEntries) visit(entry);
+    for (const link of container.entryLinks) visit(link);
+  };
+
+  for (const projection of projections) {
+    for (const entry of [
+      ...projection.selectionEntries,
+      ...projection.sharedSelectionEntries,
+    ]) {
+      visit(entry);
+    }
+    for (const group of [
+      ...projection.selectionEntryGroups,
+      ...projection.sharedSelectionEntryGroups,
+    ]) {
+      addGroup(group);
+      visit(group);
+    }
+    for (const link of projection.entryLinks) visit(link);
+  }
+  return rows.sort((left, right) => left.id.localeCompare(right.id));
+}
 function projectedModifiers(
   projections: readonly BattleScribeProjection[],
 ): readonly ModifierProjection[] {

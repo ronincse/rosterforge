@@ -1232,24 +1232,43 @@ The web session can additionally emit:
 ```text
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_RECONCILIATION_STALLED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_RECONCILIATION_LIMIT
-WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_RECONCILIATION_UNSUPPORTED
+WEB_ROSTER_AUTOMATIC_CONSTRAINT_NESTED_GROUP_UNSUPPORTED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_SUBUNIT_RECONCILIATION_UNSUPPORTED
+WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_BOUNDS_UNSATISFIABLE
+WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_CHILD_BOUNDS_CONFLICT
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE
 ```
 
 Each is a compatibility warning located at the projected constraint's source
-and path. Group and sub-unit diagnostics preserve an automatic shape whose
-distinct New Recruit algorithm is not implemented.
+and path.
 
-`WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED` is
-defensive: it means a selected occurrence found during a scan disappeared
-before its queued adjustment ran.
-`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED` means a selected or absent candidate's effective selector counts an occurrence belonging to another exact materialized choice; RosterForge does not guess which wrapper to add or mutate.
-`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE` means the
-candidate became required but the initiating command supplied no occurrence-ID
-factory. Its details retain the parent ID, choice ID, and required amount.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_NESTED_GROUP_UNSUPPORTED` means an enabled
+automatic group contains another direct or linked group. The five
+modifier-driven group owners in the pinned corpus contain none, so the
+unmeasured recursive distribution branch is withheld.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SUBUNIT_RECONCILIATION_UNSUPPORTED` means
+the repair would need New Recruit's separate unit-typed sub-unit algorithm.
+
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_BOUNDS_UNSATISFIABLE` means the
+complete visible child maxima cannot absorb a group deficit, or the complete
+child minima prevent removing its excess. No partial distribution is returned.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_CHILD_BOUNDS_CONFLICT` means one
+visible child has a complete effective minimum above its effective maximum; the
+whole group repair is withheld rather than choosing one bound.
+
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED` is defensive:
+it means a selected occurrence found during a scan disappeared before its
+queued adjustment ran.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED` means a
+selected or absent ordinary candidate's effective selector counts an occurrence
+belonging to another exact materialized choice; RosterForge does not guess
+which wrapper to add or mutate.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE` means an ordinary
+candidate or group child became required but the initiating command supplied no
+occurrence-ID factory. Details identify the parent and required amount, plus
+
 
 These warnings preserve the initiating user edit while withholding only the
 unsupported repair. Stalled and pass-limit diagnostics likewise stop

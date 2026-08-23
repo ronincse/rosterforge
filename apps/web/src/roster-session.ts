@@ -895,8 +895,8 @@ export function localRosterSelectionCount(session: LocalRosterSession): number {
 }
 
 /**
- * Adds and initializes one root, then reconciles supported ordinary-entry
- * automatic bounds and newly required choices as one immutable action.
+ * Adds and initializes one root, then reconciles supported ordinary-entry and
+ * group automatic bounds and newly required choices as one immutable action.
  */
 export function addLocalRosterRootSelection(
   session: LocalRosterSession,
@@ -905,7 +905,7 @@ export function addLocalRosterRootSelection(
 ): Result<LocalRosterSession> {
   return reconcileEditedSession(
     addLocalRosterRootSelectionUnreconciled(session, choice, input),
-    input,
+    { ...input, preferredChoice: choice.materialized },
   );
 }
 
@@ -1070,8 +1070,8 @@ export function localRosterSelectionChoice(
 }
 
 /**
- * Adds and initializes one child, then reconciles supported ordinary-entry
- * automatic bounds and newly required choices as one immutable action.
+ * Adds and initializes one child, then reconciles supported ordinary-entry and
+ * group automatic bounds and newly required choices as one immutable action.
  */
 export function addLocalRosterChildSelection(
   session: LocalRosterSession,
@@ -1086,7 +1086,7 @@ export function addLocalRosterChildSelection(
       choice,
       input,
     ),
-    input,
+    { ...input, preferredChoice: choice },
   );
 }
 
@@ -1121,7 +1121,7 @@ function addLocalRosterChildSelectionUnreconciled(
 
 /**
  * Chooses one concrete group member, performing a max-one replacement plus
- * supported ordinary automatic bounds and activations as one immutable action.
+ * supported ordinary and group automatic repair as one immutable action.
  */
 export function chooseLocalRosterChildGroupEntry(
   session: LocalRosterSession,
@@ -1211,23 +1211,30 @@ export function chooseLocalRosterChildGroupEntry(
   );
   diagnostics.push(...added.diagnostics);
   return added.ok
-    ? reconcileEditedSession(success(added.value, diagnostics), input)
+    ? reconcileEditedSession(
+        success(added.value, diagnostics),
+        { ...input, preferredChoice: choice },
+      )
     : failure(diagnostics);
 }
 
 /**
- * Removes one subtree, then reconciles supported ordinary automatic bounds.
- * Supplying an ID factory lets a different absent choice become selected in
- * the same immutable action when the removal makes it newly required.
+ * Removes one subtree, then reconciles supported ordinary and group automatic
+ * bounds. Supplying an ID factory lets a different absent choice become
+ * selected in the same immutable action when the removal makes it required.
  */
 export function removeLocalRosterSelection(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,
   options: LocalRosterAutomaticReconciliationOptions = {},
 ): Result<LocalRosterSession> {
+  const preferredChoice = localRosterSelectionChoice(session, selectionId);
   return reconcileEditedSession(
     removeLocalRosterSelectionUnreconciled(session, selectionId),
-    options,
+    {
+      ...options,
+      ...(preferredChoice === undefined ? {} : { preferredChoice }),
+    },
   );
 }
 
@@ -1271,9 +1278,9 @@ export function setLocalRosterSelectionName(
 }
 
 /**
- * Changes one quantity, then reconciles supported ordinary automatic bounds.
- * The returned session contains every clamp or activation so history and
- * autosave see one action.
+ * Changes one quantity, then reconciles supported ordinary and group automatic
+ * bounds. The returned session contains every repair so history and autosave
+ * see one action.
  */
 export function setLocalRosterSelectionAmount(
   session: LocalRosterSession,
@@ -1281,13 +1288,17 @@ export function setLocalRosterSelectionAmount(
   amount: number | undefined,
   options: LocalRosterAutomaticReconciliationOptions = {},
 ): Result<LocalRosterSession> {
+  const preferredChoice = localRosterSelectionChoice(session, selectionId);
   return reconcileEditedSession(
     setLocalRosterSelectionAmountUnreconciled(
       session,
       selectionId,
       amount,
     ),
-    options,
+    {
+      ...options,
+      ...(preferredChoice === undefined ? {} : { preferredChoice }),
+    },
   );
 }
 

@@ -512,36 +512,54 @@ roster. A complete violated minimum or maximum clamps that aggregate: minima
 increase the first occurrence, while maxima reduce or remove later occurrences
 first.
 
-Once selected amounts settle, the same bounded operation scans absent direct
-children and transparent-group descendants carrying an automatic minimum. It
-checks the candidate's visibility, adds the candidate only to a throwaway roster
-snapshot, and evaluates its condition-aware effective minimum there. The
-catalogue context, typed projections, generic nodes, and imported bytes remain
-shared. A complete positive deficit becomes one real occurrence with that
-quantity, using the same caller-provided occurrence-ID factory as an explicit
-add. The probe ID and probe roster never enter the returned session.
+Selected ordinary quantities settle before transparent groups. For each visible
+group carrying an enabled automatic bound, the web boundary inserts a group
+occurrence only into a throwaway roster snapshot. That occurrence gives
+condition evaluation the group's logical `self` and `parent` position without
+changing the durable roster shape. The condition-aware inspector supplies the
+effective group min/max; the actual group amount is the aggregate of exact
+direct child choices beneath the real parent.
 
-Every clamp or activation remains part of the initiating immutable command, so
-history and autosave see one action. Reconciliation runs for at most ten passes
-and settles selected adjustments before scanning absent choices. A command with
-no occurrence-ID factory preserves the user's edit and emits a source-located
-compatibility warning instead of inventing identity.
+A group deficit is distributed across visible children in stable materialized
+source order up to each child's complete effective maximum. An excess is
+removed in reverse order down to each child's complete effective minimum. The
+exact choice changed by the initiating command is considered first for filling
+and, after reversal, first for trimming. An absent child uses the caller's
+occurrence-ID factory. Child bounds that need an occurrence are evaluated with
+the same throwaway-probe technique; none of the probe IDs or group occurrences
+enters the returned session.
+
+Once groups settle, the operation scans absent ordinary direct children and
+transparent-group descendants carrying an automatic minimum. It checks
+visibility, adds the candidate only to a throwaway roster snapshot, and
+evaluates its condition-aware effective minimum there. The catalogue context,
+typed projections, generic nodes, and imported bytes remain shared. A complete
+positive deficit becomes one real occurrence at that quantity.
+
+Every clamp, group distribution, or activation remains part of the initiating
+immutable command, so history and autosave see one action. Reconciliation runs
+for at most ten passes. A command with no occurrence-ID factory preserves the
+user's edit and emits a source-located compatibility warning instead of
+inventing identity. Ten no-op amount-command reconciliations on the pinned
+41-selection Guardian roster measured 1.3 ms total after the group scan was
+added, compared with 1.2 ms before it.
 
 The pinned corpus has twelve modifier-driven automatic minima whose base is
-zero: eleven ordinary entries and one selection-entry group. None of the eleven
-ordinary owner IDs is referenced by an `entryLink` in the 46-document corpus; ten
-hidden choices become visible under the same trigger that raises their minimum,
-and the remaining T'au choice is already visible. If a future absent candidate's
-effective selector also counts another exact materialized choice, reconciliation
-withholds that activation and diagnoses the shared-selector boundary.
+zero: eleven ordinary entries and the Tyranid Specialisms group. None of the
+eleven ordinary owner IDs is referenced by an `entryLink`; Specialisms has three
+materialized group wrappers. All five modifier-driven group owners have only
+direct model or upgrade children and no nested groups. The pinned Genestealer
+Cults path raises Specialisms from zero to one and selects its first visible
+child, Burrowing Claws, without retaining the temporary group occurrence.
 
-Selection-entry groups and unit-typed child selections remain outside this slice
-because New Recruit uses distinct algorithms for those shapes. Unsupported or
-incomplete visibility or constraint evaluation remains source-located and does
-not produce a guessed quantity. Lexical `false`, `0`, an absent value, and
-unknown values do not request reconciliation. Initialization still exposes no
-partial session when a generated ID collides or another builder add fails, and
-each selected occurrence remains limited to 4,096 planned descendants.
+Automatic groups containing nested groups and unit-typed sub-unit children
+remain outside this slice. Unsupported or incomplete visibility, group limits,
+or child bounds remain source-located and do not produce a guessed quantity.
+An unsatisfiable combination of visible child bounds is diagnosed without a
+partial repair. Lexical `false`, `0`, an absent value, and unknown values do not
+request reconciliation. Initialization still exposes no partial session when a
+generated ID collides or another builder add fails, and each selected occurrence
+
 
 `inspectRosterSelectionChildChoices` provides the evaluation-side read-only
 view of direct entries and transparent groups. It retains order, exposes only
