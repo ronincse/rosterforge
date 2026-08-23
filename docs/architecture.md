@@ -1319,6 +1319,14 @@ increments and decrements scale their operand by the count, while repeated
 condition query, observed amount, repetition count, provenance, and structured
 diagnostics.
 
+The pinned 11th-edition corpus contains one exact matched-play use of this
+boundary among 2,826 repeats: the Army Roster's `increment max pts 1` repeats
+for each `Points limit` amount in roster-recursive scope. One occurrence with
+amount 1,750 therefore changes the effective force limit from 0 to 1,750 in
+constant time. Constructing that occurrence is a separate initialization
+concern: its conditional `defaultAmount` modifiers and quantifiable minimum are
+not repeat semantics.
+
 Percentage repeats, malformed values, multiple repeats on one modifier,
 modifier-group repeats, generic behavioral extensions, and any query the
 condition evaluator cannot resolve remain incomplete. The evaluator does not

@@ -532,9 +532,23 @@ and the manual override not to be. A pinned test builds that roster and confirms
 the effective limit moves from 0 to 1000, which is what New Recruit displays as
 "150 / 1000 pts".
 
-The remaining points-limit path is the `Override points limit?` entry, which
-uses an `increment` carrying `repeats`. Repeat shapes stay unsupported, so an
-overridden limit is reported incomplete rather than guessed.
+The manual `Override points limit?` path is also complete at the evaluation
+boundary. Of the corpus's 2,826 repeats, exactly one is the Army Roster
+constraint modifier: `increment max pts 1`, repeated once for every one
+`Points limit` selection amount in roster-recursive scope. The public New
+Recruit wiki renders the same operation. A pinned test keeps one Points limit
+occurrence, changes its amount from 1,250 to 1,750, and proves the effective
+limit and exact repeat report both become 1,750 without expanding evaluator
+iterations or roster nodes.
+
+Input initialization remains a separate gap. The Points limit child is the
+corpus's only entry with `step="250"`; it has `min selections=500`, no static
+`defaultAmount`, and three conditionally applicable `set defaultAmount`
+modifiers for 1,000, 2,000, and 3,000. New Recruit computes one quantifiable
+occurrence from the effective default and minimum. RosterForge does not yet
+evaluate those default modifiers, and its generic minimum initializer treats
+500 as occurrence multiplicity. The repeat evaluator is complete once one
+amounted occurrence exists, but the browser's automatic override setup is not.
 
 ## Draft Storage Cost
 

@@ -59,6 +59,7 @@ import {
   localRosterSelectionChoice,
   localRosterSelectionCount,
   restoreLocalRosterSession,
+  setLocalRosterSelectionAmount,
   type LocalRosterSession,
 } from "./roster-session.js";
 
@@ -1403,6 +1404,174 @@ describe.skipIf(realDataDirectory === undefined)(
         const raised = pointsLimit(current.value);
         expect(raised.base).toBe(0);
         expect(raised.effective).toBe(1000);
+      },
+      120_000,
+    );
+
+    it(
+      "derives the pinned manual points override from its repeat amount",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Chaos - Death Guard.json",
+          "Chaos - Chaos Daemons Library.json",
+          "Chaos - Chaos Knights Library.json",
+          "Library - Astartes Heresy Legends.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-points-override",
+              importedAt: "2026-08-22T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+        const created = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("real-override-roster"),
+          forceId: forceOccurrenceId("real-override-force"),
+          name: "Points Override Roster",
+        });
+        if (!created.ok) throw new Error("Expected roster session.");
+
+        const battleSize = localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.name === "Battle Size",
+        );
+        if (battleSize === undefined) {
+          throw new Error("Expected the Battle Size root choice.");
+        }
+        const withBattleSize = addLocalRosterRootSelection(
+          created.value,
+          battleSize,
+          { selectionId: selectionOccurrenceId("override-battle-size") },
+        );
+        if (!withBattleSize.ok) throw new Error("Expected Battle Size.");
+        const override = localRosterChildChoices(
+          withBattleSize.value,
+          selectionOccurrenceId("override-battle-size"),
+        ).find(({ id }) => id === "c6ea-562c-984f-6c25");
+        if (override === undefined) {
+          throw new Error("Expected the points-limit override choice.");
+        }
+        const withOverride = addLocalRosterChildSelection(
+          withBattleSize.value,
+          selectionOccurrenceId("override-battle-size"),
+          override,
+          { selectionId: selectionOccurrenceId("override-choice") },
+        );
+        if (!withOverride.ok) throw new Error("Expected the override choice.");
+        const amountChoice = localRosterChildChoices(
+          withOverride.value,
+          selectionOccurrenceId("override-choice"),
+        ).find(({ id }) => id === "83ac-f5e5-d3da-5441");
+        if (amountChoice === undefined) {
+          throw new Error("Expected the points-limit amount choice.");
+        }
+        const withAmount = addLocalRosterChildSelection(
+          withOverride.value,
+          selectionOccurrenceId("override-choice"),
+          amountChoice,
+          {
+            selectionId: selectionOccurrenceId("override-amount"),
+            amount: 1_250,
+          },
+        );
+        if (!withAmount.ok) throw new Error("Expected the override amount.");
+        const edited = setLocalRosterSelectionAmount(
+          withAmount.value,
+          selectionOccurrenceId("override-amount"),
+          1_750,
+        );
+        if (!edited.ok) throw new Error("Expected the edited override amount.");
+
+        const inspected = inspectRosterForceConstraintsInRoster(
+          edited.value.roster,
+          edited.value.catalogue.context,
+          { inspectionScope: "conditions" },
+        );
+        if (!inspected.ok) throw new Error("Expected a force report.");
+        const points = inspected.value.forces
+          .flatMap(({ constraints }) => constraints)
+          .find(
+            ({ constraint }) =>
+              constraint.node.attributes["id"] ===
+              "a00c-6979-992f-046b",
+          );
+
+        // New Recruit's public wiki renders this exact source operation as
+        // "increment max pts 1" repeated for every Points limit selection.
+        // The occurrence amount therefore changes the limit directly; it must
+        // not be expanded into 1,750 evaluator iterations or roster nodes.
+        if (points === undefined) {
+          throw new Error("Expected the points-limit force constraint.");
+        }
+        expect({
+          baseLimit: points.baseLimit,
+          limit: points.limit,
+          completeness: points.completeness,
+        }).toEqual({
+          baseLimit: 0,
+          limit: 1_750,
+          completeness: "complete",
+        });
+        expect(points.repeatReports).toMatchObject([
+          {
+            status: "exact",
+            completeness: "complete",
+            observed: 1_750,
+            repetitions: 1_750,
+            repeat: {
+              value: 1,
+              repeats: 1,
+              field: "selections",
+              scope: "roster",
+              childId: "83ac-f5e5-d3da-5441",
+              shared: true,
+              roundUp: false,
+              includeChildSelections: true,
+              includeChildForces: true,
+            },
+          },
+        ]);
+        expect(points.modifierSequence?.steps).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: "applied",
+              kind: "increment",
+              input: 0,
+              operand: 1,
+              repetitions: 1_750,
+              output: 1_750,
+            }),
+          ]),
+        );
+        expect(inspected.diagnostics).toEqual([]);
+        expect(
+          edited.value.roster.forces[0]?.selections
+            .find(({ id }) => id === "override-battle-size")
+            ?.selections.find(({ id }) => id === "override-choice")
+            ?.selections,
+        ).toMatchObject([{ id: "override-amount", amount: 1_750 }]);
+        expect(withAmount.value.roster).not.toBe(edited.value.roster);
       },
       120_000,
     );

@@ -615,8 +615,18 @@ repeat elements have no inferred combination rule. Repeats attached to a
 modifier-group container remain applicability metadata only because their
 effect on the whole child sequence is not established. This implementation is
 sufficient for the pinned 11th-edition game system's standard points-limit
-increment, including its valid zero-repeat case, but is not a general repeat or
-legality engine.
+increment, including both its valid zero-repeat case and a pinned nonzero case
+where one Points limit occurrence with amount 1,750 produces 1,750 repetitions
+and an effective 1,750-point maximum. It is not a general repeat or legality
+engine.
+
+That proof does not imply default-amount initialization. The Points limit
+source has no static `defaultAmount`; three conditional `set defaultAmount`
+modifiers select 1,000, 2,000, or 3,000 from the battle size, and its sole
+`step="250"` is an editing/validation increment. New Recruit creates one
+quantifiable occurrence at the maximum of its minimum and effective default.
+RosterForge still treats the base minimum as occurrence multiplicity and does
+not execute the default modifiers while constructing the child.
 
 ## Selection Constraints
 
