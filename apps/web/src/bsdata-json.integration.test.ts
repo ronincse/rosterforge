@@ -1294,6 +1294,73 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "keeps an allied library's configuration out of another faction's force",
+      async () => {
+        // 90 of the 109 catalogue links in the corpus set importRootEntries, so
+        // pulling an allied library's roots in is normal and right - it is how
+        // Imperial Knights become available to a Space Marine army. What is not
+        // right is initialising their configuration: `Code Chivalric` carries
+        // min 1 in force scope and a `set hidden` gated on the primary
+        // catalogue being Knights.
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory),
+          {
+            import: {
+              batchId: "real-bsdata-json-allied-config",
+              importedAt: "2026-08-23T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const initialRoots = (catalogueName: string) => {
+          const catalogue = result.value.catalogues.find(
+            ({ name }) => name === catalogueName,
+          );
+          const forceDefinition = catalogue?.context.forces.definitions.find(
+            ({ source }) => source.name === "Army Roster",
+          );
+          if (catalogue === undefined || forceDefinition === undefined) {
+            throw new Error(`Expected ${catalogueName} Army Roster.`);
+          }
+          let identifier = 0;
+          const created = createLocalRosterSession(catalogue, forceDefinition, {
+            rosterId: rosterId("allied-roster"),
+            forceId: forceOccurrenceId("allied-force"),
+            name: "Allied Roster",
+            createSelectionId: () =>
+              selectionOccurrenceId(`allied-${++identifier}`),
+          });
+          if (!created.ok) throw new Error("Expected roster session.");
+          return (created.value.roster.forces[0]?.selections ?? [])
+            .map(({ name }) => name)
+            .sort();
+        };
+
+        // Knights configuration belongs on a Knights force and nowhere else.
+        expect(
+          initialRoots("Imperium - Imperial Knights"),
+        ).toContain("Code Chivalric");
+        for (const faction of [
+          "Imperium - Adeptus Astartes - Dark Angels",
+          "Imperium - Astra Militarum",
+          "Chaos - Death Guard",
+        ]) {
+          expect(initialRoots(faction)).toEqual([
+            "Battle Size",
+            "Detachment",
+            "Force Disposition",
+          ]);
+        }
+      },
+      120_000,
+    );
+
+    it(
       "offers a detachment's enhancements once that detachment is chosen",
       async () => {
         // External QA found every enhancement permanently hidden. The gate is an

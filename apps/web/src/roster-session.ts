@@ -16,6 +16,7 @@ import {
   evaluateRosterSelectionAnnotation,
   evaluateRosterSelectionName,
   evaluateRosterSelectionCategories,
+  evaluateRosterSelectionVisibility,
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
@@ -259,9 +260,36 @@ export function createLocalRosterSession(
   if (input.createSelectionId === undefined) {
     return success(session, diagnostics);
   }
-  const planned = planEmptySingleForceRootInitialization(
-    catalogue.context.roots.roots,
-  );
+  // Only roots that would actually be offered are created.
+  //
+  // A catalogue link with `importRootEntries` pulls an allied library's roots
+  // in, and 90 of the 109 links in the pinned corpus do exactly that — it is
+  // how Imperial Knights become available to a Space Marine army, so the
+  // linking is right. What is not right is *initialising* their configuration:
+  // an empty Dark Angels roster came up holding `Code Chivalric`, which is
+  // Knights configuration carrying `min 1` in force scope and a `set hidden`
+  // gated on the primary catalogue being Knights. It is required *if* it
+  // applies, and on a Dark Angels force it does not.
+  const force = withForce.value.forces[0];
+  const visibleRoots = catalogue.context.roots.roots.filter((root) => {
+    if (root.materialized.kind === "unresolvedEntryLink" || force === undefined) {
+      return true;
+    }
+    const visibility = evaluateRosterSelectionVisibility(
+      withForce.value,
+      catalogue.context,
+      force,
+      root.materialized,
+    );
+    // Deliberately silent. This filter only ever *removes* a root it is certain
+    // is hidden; anything it cannot answer is created exactly as it was before
+    // the filter existed, so there is no new uncertainty to report. Most
+    // identity conditions do not accept a force owner, so reporting here would
+    // add dozens of diagnostics per roster that describe nothing the user can
+    // act on — and an unreadable issue list is its own defect.
+    return !visibility.ok || visibility.value.status !== "hidden";
+  });
+  const planned = planEmptySingleForceRootInitialization(visibleRoots);
   diagnostics.push(...planned.diagnostics);
   if (!planned.ok) {
     return failure(diagnostics);

@@ -356,13 +356,22 @@ export function evaluateRosterCondition<
       scope === "upgrade") &&
     condition.childId !== undefined &&
     unsupportedAttributes(condition).length === 0;
+  /**
+   * "Does the primary catalogue contain X" is a question about the catalogue,
+   * not about whoever asked. It is answerable for a force owner, and for a root
+   * entry being considered before anything is selected — which is exactly when
+   * it matters: `Code Chivalric` is Imperial Knights configuration that hides
+   * unless the primary catalogue is Knights, and it was being initialised into
+   * Dark Angels armies because the question could not be answered.
+   */
+  const catalogueIdentityShape =
+    (condition.field === "selections" || condition.field === "forces") &&
+    scope === "primary-catalogue";
   const canCollectCatalogueIdentity =
     catalogueMatches &&
-    !forceOwner &&
-    selectionOwnerLocations.length === 1 &&
+    (!forceOwner ? selectionOwnerLocations.length === 1 : true) &&
     identityComparison !== undefined &&
-    (condition.field === "selections" || condition.field === "forces") &&
-    scope === "primary-catalogue" &&
+    catalogueIdentityShape &&
     condition.childId !== undefined &&
     unsupportedAttributes(condition).length === 0;
   const selectionOwnerLocation = selectionOwnerLocations[0];
@@ -939,10 +948,16 @@ function diagnoseConditionShape(
       ),
     );
   }
+  // A primary-catalogue identity question is answerable whoever asked, so it is
+  // never a shape problem; see `canCollectCatalogueIdentity`.
+  const catalogueIdentityShape =
+    (condition.field === "selections" || condition.field === "forces") &&
+    scope === "primary-catalogue";
   if (
     identityComparison !== undefined &&
+    !catalogueIdentityShape &&
     (forceOwner ||
-      ((condition.field !== "selections" ||
+      (condition.field !== "selections" ||
         (scope !== "force" &&
           scope !== "self" &&
           scope !== "parent" &&
@@ -951,9 +966,7 @@ function diagnoseConditionShape(
           scope !== "unit" &&
           scope !== "model" &&
           scope !== "model-or-unit" &&
-          scope !== "upgrade")) &&
-        !((condition.field === "selections" || condition.field === "forces") &&
-          scope === "primary-catalogue")))
+          scope !== "upgrade")))
   ) {
     diagnostics.push(
       shapeDiagnostic(

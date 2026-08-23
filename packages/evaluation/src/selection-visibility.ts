@@ -7,10 +7,9 @@ import {
   type ValidationCompleteness,
 } from "@rosterforge/foundation";
 
-import type {
-  Roster,
-  RosterSelection,
-} from "@rosterforge/roster-model";
+import type { Roster } from "@rosterforge/roster-model";
+
+import type { RosterConditionOwner } from "./conditions.js";
 
 import {
   evaluateRosterModifierApplicability,
@@ -36,7 +35,7 @@ export type RosterSelectionVisibilityStatus =
 export interface RosterSelectionVisibilityReport {
   readonly roster: Roster;
   readonly context: BattleScribeCatalogueContext;
-  readonly owner: RosterSelection;
+  readonly owner: RosterConditionOwner;
   readonly choice: EvaluationSelectionChoice;
   readonly status: RosterSelectionVisibilityStatus;
   readonly hidden?: boolean;
@@ -52,7 +51,7 @@ export interface RosterSelectionVisibilityReport {
 export interface RosterSelectionVisibilityPathReport {
   readonly roster: Roster;
   readonly context: BattleScribeCatalogueContext;
-  readonly owner: RosterSelection;
+  readonly owner: RosterConditionOwner;
   readonly choices: readonly EvaluationSelectionChoice[];
   readonly status: RosterSelectionVisibilityStatus;
   readonly completeness: ValidationCompleteness;
@@ -62,7 +61,7 @@ export interface RosterSelectionVisibilityPathReport {
 export function evaluateRosterSelectionVisibility(
   roster: Roster,
   context: BattleScribeCatalogueContext,
-  owner: RosterSelection,
+  owner: RosterConditionOwner,
   choice: EvaluationSelectionChoice,
 ): Result<RosterSelectionVisibilityReport> {
   const diagnostics: Diagnostic[] = [];
@@ -109,8 +108,9 @@ export function evaluateRosterSelectionVisibility(
       {
         effectiveCategories: effectiveRosterCategories(roster, context),
         // The modifier belongs to `choice`, which is not in the roster: it is
-        // being asked about as a prospective child of `owner`.
-        prospectiveChild: true,
+        // being asked about as a prospective child of `owner`. A force owner
+        // means a root, which has no ancestor selections to stand in.
+        prospectiveChild: !("forces" in owner),
       },
     );
     diagnostics.push(...applicability.diagnostics);
@@ -138,7 +138,7 @@ export function evaluateRosterSelectionVisibility(
       group,
       {
         effectiveCategories: effectiveRosterCategories(roster, context),
-        prospectiveChild: true,
+        prospectiveChild: !("forces" in owner),
       },
     );
     diagnostics.push(...evaluated.diagnostics);
@@ -228,7 +228,7 @@ export function evaluateRosterSelectionVisibility(
 export function evaluateRosterSelectionVisibilityPath(
   roster: Roster,
   context: BattleScribeCatalogueContext,
-  owner: RosterSelection,
+  owner: RosterConditionOwner,
   choices: readonly EvaluationSelectionChoice[],
 ): Result<RosterSelectionVisibilityPathReport> {
   const diagnostics: Diagnostic[] = [];
