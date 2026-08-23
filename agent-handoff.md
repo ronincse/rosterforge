@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **485 passed, 13 skipped (498)**.
+  `git diff --check` all pass. `pnpm test` is **486 passed, 14 skipped (500)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **498 passed**, and the whole suite now runs in about 10 s rather than 83 s;
+  **500 passed**, and the whole suite now runs in about 11 s rather than 83 s;
   without the variable the 13 corpus tests are skipped.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
@@ -281,7 +281,8 @@ invisible to the whole test suite.
 | Reports re-evaluated on unrelated re-renders | Done | `RosterOverview` called costs and validation unmemoised in its body; an autosave state change paid a full re-evaluation |
 | History steps re-evaluated a known roster | Done | undo/redo restore a session the history already held; both reports now cached per session. Undo 308 → 73 ms |
 | Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
-| **Unfillable required wargear group** | **Next** | a correctness blocker: the list cannot reach a valid state. Now cheap to explore, since edits are fast |
+| Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
+| **Force Disposition shows no entries** | **Next** | Dark Angels `Force Disposition` still reports nothing selectable with all 46 files loaded, while Death Guard resolves it. Not the nested-group shape — needs its own look |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -5681,3 +5682,84 @@ justifies it.
 Plague Champion has a `Wargear` group requiring 2 of 2 with no resolvable
 entries, so that list can never reach a valid structural state — and it is now
 cheap to explore interactively.
+
+## Completed Assignment — Nested Group Bounds, 2026-08-23
+
+Baseline `136ae74`; resulting implementation commit `6015f4f`.
+
+The correctness blocker found by driving the app. It was neither unfillable nor
+a data defect, and I nearly recorded it as both.
+
+### Three readings, two of them wrong
+
+1. **"No resolvable entries — a RosterForge gap."** What the UI said, and what
+   the roadmap recorded.
+2. **"An empty group requiring 2 — a defect in the community data."** What the
+   first look at the JSON suggested: `selectionEntries: []`, `entryLinks: []`,
+   `constraints: min 2, max 2`. The group ID appears exactly once in all 46
+   files, so nothing could ever populate it. I was ready to file this against
+   BSData.
+3. **The truth.** Dumping every key rather than the two I expected showed
+   `selectionEntryGroups: ["Plague knives options", "Boltgun options"]`. The
+   group is not empty. It holds *groups*, and its bound counts what is chosen
+   beneath it.
+
+The lesson is narrow and worth keeping: **printing the fields you expect will
+confirm the theory you already have.** Two of the three keys I checked were
+empty, which was all the evidence I thought I needed.
+
+### The rule, and the corpus evidence for it
+
+Of **4,301** selection-entry groups in the pinned corpus, **85** contain only
+nested groups and **10** of those carry a bound of their own, across 8
+catalogues. Every one reads as a total over its descendants:
+
+| Owner | Group | Bound | Nested |
+|---|---|---|---|
+| Plague Champion | Wargear | 2 of 2 | two 1-of-1 groups |
+| Wolf Scout Pack Leader | Loadout | 2 of 2 | three groups, maxima summing to 4 |
+| Oathsworn Campaigns | A Noble Undertaking | max 1 | five unbounded groups |
+| Logistics Points | Assigning Logistics | 4 of 4 | four 1-of-1 groups |
+
+The last two settle it. A bound of 2 over sub-groups permitting 4, and a bound
+of 1 over groups with no bounds at all, are meaningless unless the parent counts
+totals.
+
+### What changed
+
+`RosterSelectionChoiceGroupInspection` gains `countedChoices` — every entry
+beneath the group, nested groups included — and the structural bound counts
+membership against that instead of `choices`.
+
+`choices` deliberately stays direct. The nested groups are inspected and
+rendered in their own right, so folding their entries into the parent would
+offer every option twice.
+
+### Proven end to end
+
+Before: `Wargear selected=0 min=2 max=2 violated`, with no way for the user to
+change it. After: `selected=1` with the default boltgun, and `selected=2
+satisfied` once a plague knives option is chosen. **A Death Guard list can now
+reach a valid structural state.**
+
+Guarded twice, both verified by breaking the fix and watching them fail:
+
+- `nested-group-bound.cat`, a synthetic fixture mirroring the 2-of-2-over-two-
+  1-of-1s shape, asserting `countedChoices` holds the nested entries while
+  `choices` stays empty.
+- A pinned corpus test that builds the real Plague Marines squad, checks the
+  bound reads 1 of 2, chooses a knives option, and checks it closes.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **486 passed, 14 skipped (500 total)**.
+- Pinned corpus — **500 passed**.
+- `docs/compatibility.md` gained a "Nested Group Bounds" section.
+
+### Next recommended boundary
+
+**Dark Angels `Force Disposition`.** It still reports nothing selectable with
+all 46 files loaded, while the Death Guard one resolves. It is *not* the nested
+group shape — that was checked — so it needs its own look, and it blocks a Dark
+Angels list the same way this blocked a Death Guard one.
