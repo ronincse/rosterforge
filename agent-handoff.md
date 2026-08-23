@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-23 (stepped default amounts)
+## Current Status — 2026-08-23 (evaluation performance)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,17 +39,18 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **481 passed, 13 skipped (494)**.
+  `git diff --check` all pass. `pnpm test` is **483 passed, 13 skipped (496)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **494 passed**; without it the 13 corpus tests are skipped.
-- **Active area.** **Evaluation performance**, and nothing else until it is
-  fixed. Measured 2026-08-23 against a GW-exported Dark Angels list: supported
-  validation takes 3.8 s at one unit and 127 s at six, and the workspace runs it
-  on every edit. A real army cannot be built in the browser. The format-coverage
-  sections (A, B, D, E) are complete and were never measuring this.
+  **496 passed**, and the whole suite now runs in about 10 s rather than 83 s;
+  without the variable the 13 corpus tests are skipped.
+- **Active area.** Product usability, measured against real lists. The
+  evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
+  from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
+  browser with edits of 107–409 ms. What remains is smaller — see the roadmap's
+  section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -185,8 +186,6 @@ points limit works end to end and is now pinned.
 | Comma-delimited `defaultAmount` | Open | 7 of 96 corpus defaults; New Recruit initializes multiple sub-unit instances, which this product does not model |
 | Grouped `defaultAmount` modifier ordering | Open | 1 corpus instance; withheld rather than guessed. Smallest remaining real gap |
 | Collapsing ordinary occurrences into one amounted node | Deferred | nested child costs belong to each occurrence and are not multiplied by an ancestor amount, so changing representation first could undercount wargear |
-| **Evaluation cost makes a real army unusable** | **Next** | measured 2026-08-23 against a GW-exported Dark Angels list. Supported validation takes **3.8 s at one unit and 127 s at six**; cost evaluation goes 74 ms to 5.2 s over the same range. The workspace runs both on every edit, so the browser locks up. This blocks everything else |
-| Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -263,13 +262,35 @@ bounded pass if someone is already deep in them: `evaluation/characteristics.ts`
 (1,964 lines, 8 of 24 exports documented) and `apps/web/src/roster-session.ts`
 (1,583 lines, 3 of 41). Neither should be taken ahead of feature work.
 
+### F. Product usability — *active area*
+
+Added 2026-08-23. Sections A–E were written outward from the BattleScribe data
+format, and by that measure they are complete. None of them was ever asking
+whether a person can build a list they would take to a game. Every row here was
+found by **driving the app against a real army**, and the first one had been
+invisible to the whole test suite.
+
+| Item | Status | Note |
+|---|---|---|
+| Costs match a GW-exported list | Done | 13 of 16 Dark Angels units exact; the other 3 are a model-count default and two cases of the pinned community data disagreeing with GW, both confirmed in the source JSON |
+| Evaluation cost makes a real army unusable | Done | the whole-catalogue choice index is now cached per context. Validation at six units 127 s → 26 ms; a fifteen-unit army builds in the browser at 107–409 ms per edit |
+| **Per-edit cost still grows with roster size** | **Next** | 107 ms at one unit to 409 ms at fifteen. Usable, not yet good. `rosterSelectionLocations` and the roster-session choice index are rebuilt per call in the same shape the fixed one was |
+| Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
+| Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
+| Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
+| Behaviour on a phone | Open | never driven below desktop width |
+| A budget test that runs in CI | Open | the new identity guard catches this regression; nothing catches a different one |
+
 ### Open questions needing the owner
 
-**What is the next milestone?** As of 2026-08-23 the roadmap has no `Next`.
-Sections A, B, D, and E are complete; C is low priority by an earlier owner
-decision; everything still listed as Open or Blocked is a deliberate hold with
-its reason recorded. A model picking this up has nothing to take without
-choosing a direction, and choosing one is not its call.
+**Superseded, later on 2026-08-23.** The roadmap does have a `Next` again:
+section F, added after driving the app against a real Games Workshop list. The
+question below was asked because sections A–E were complete, and the answer
+turned out to be that those sections were measuring the wrong thing. Section F
+is what a person needs in order to build a list; take from there.
+
+The rest of this section still stands, and is worth re-reading once section F
+is short:
 
 Worth putting in front of the owner, roughly in order of how much corpus
 evidence backs them:
@@ -5351,3 +5372,101 @@ thoroughness rather than as a signal.
    exceeds a budget per edit. Without one this regresses silently, exactly as it
    did here.
 3. The unfillable wargear group, once edits are usable enough to explore it.
+
+## Completed Assignment — Evaluation Performance, 2026-08-23
+
+Baseline `e604ab3`; resulting implementation commit `b056e3f`.
+
+The blocker the Dark Angels list exposed. **Validating a six-unit roster took
+127 seconds; it now takes 26 milliseconds.**
+
+### The defect
+
+`indexEvaluationChoices` walks every root the catalogue materializes and every
+descendant of each. Eight modules ask for it, several per selection and per
+field, and it was rebuilt on every call. Nothing about the caller's roster
+changes the result.
+
+Instrumented against a Dark Angels roster holding **one** unit: a single
+`inspectLocalRosterStructuralStatus` rebuilt the index **23 times** and visited
+**2,844,203 nodes**.
+
+### How it was found
+
+Profiling, not guessing. Splitting validation into halves put 35 s of a 41 s
+call in `inspectLocalRosterStructuralStatus`, and `node --cpu-prof` put 22.7% of
+all samples in `visit :: selection-context.js` with another 8.1% in
+`rosterDefinitionKeyForSource` — the index build and the key construction inside
+it. The call count came from temporarily instrumenting the built `dist`, which
+is quicker than threading a counter through the source and leaves nothing
+behind.
+
+### The fix
+
+A `WeakMap<BattleScribeCatalogueContext, EvaluationChoiceIndex>`. The context is
+an immutable projection and the index is a pure function of it, so a cached one
+cannot go stale. `WeakMap` rather than `Map` so a discarded context — a
+different catalogue selected, a batch re-imported — takes its index with it
+instead of pinning the whole materialized tree for the session.
+
+Checked before caching: `EvaluationChoiceIndex` is a `ReadonlyMap` and nothing
+outside the builder does more than `.get`, so sharing one instance is safe.
+
+### Measured, at six units
+
+| | Before | After |
+|---|---|---|
+| Structural inspection | 35,078 ms | **79 ms** |
+| Constraint inspection | 6,589 ms | **79 ms** |
+| Supported validation | 127,332 ms | **26 ms** |
+| Cost evaluation | 5,152 ms | **8 ms** |
+
+The full fifteen-unit list validates in **60 ms**, and growth is now linear in
+selection count. In the browser that same army builds with edits of
+**107–409 ms**; before this, adding five characters locked the tab so hard that
+`document.querySelectorAll("*")` timed out.
+
+**Points are unchanged.** All sixteen units evaluate exactly as before, which
+was re-checked against the GW export rather than assumed — a cache that changed
+an answer would be worse than the slowness.
+
+### The signal nobody read
+
+The pinned corpus suite dropped from **83 s to 10 s**. That number was visible
+on every run for weeks and was read as thoroughness. A suite that slow *because
+of a defect* looks exactly like a suite that slow because it is careful.
+
+### The guard
+
+`selection-context.test.ts` asserts the same context returns the same index
+object. Identity, not wall clock: a timing budget on a synthetic fixture small
+enough to run everywhere would have to be so loose it would never fail, and
+would be flaky when it did. Removing the cache fails it immediately, which was
+verified by removing it.
+
+One trap worth recording: the first draft asserted `expect(indexA).not.toBe(indexB)`
+on two real indexes, and a *failing* run spent **21 seconds** serialising the
+materialized tree for the diff. Compare these as booleans and sizes.
+
+### What is left
+
+Per-edit cost still grows with roster size — 107 ms at one unit to 409 ms at
+fifteen. Usable, not yet good. `rosterSelectionLocations` and the roster-session
+choice index are rebuilt per call in the same shape the fixed one was, and are
+the obvious next candidates. That is now section F's `Next`, not a blocker.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **483 passed, 13 skipped (496 total)**, two added.
+- Pinned corpus — **496 passed**, in 10 s rather than 83 s.
+- The Dark Angels list rebuilt in the browser end to end after the change.
+
+### Next recommended boundary
+
+1. **Per-edit cost.** Profile again at fifteen units and look for the same
+   rebuild-per-call shape in `rosterSelectionLocations` and
+   `indexSelectionChoices`.
+2. **Unfillable required wargear group** — now explorable, since edits are cheap.
+3. **A budget test that runs in CI.** The identity guard catches this specific
+   regression; nothing yet catches a different one.
