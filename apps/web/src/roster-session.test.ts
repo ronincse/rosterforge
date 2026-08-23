@@ -765,6 +765,321 @@ describe("createLocalRosterSession", () => {
     ).toBe(1);
   });
 
+  it("activates absent ordinary entries for automatic true minima", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+        {
+          filename: "selection-initialization.cat",
+          bytes: fixtureBytes("selection-initialization.cat"),
+        },
+      ],
+      {
+        import: {
+          batchId: "roster-automatic-activation",
+          importedAt: "2026-08-22T20:00:00.000Z",
+        },
+      },
+    );
+    if (!prepared.ok) {
+      throw new Error("Expected automatic activation fixture.");
+    }
+    const catalogue = prepared.value.catalogues.find(
+      ({ id }) => id === "selection-initialization",
+    );
+    const force = catalogue?.context.forces.definitions.find(
+      ({ source }) => source.id === "initialization-force",
+    );
+    const root = catalogue === undefined
+      ? undefined
+      : localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            materialized.id === "automatic-reconciliation-unit",
+        );
+    if (
+      catalogue === undefined ||
+      force === undefined ||
+      root === undefined
+    ) {
+      throw new Error("Expected automatic activation choices.");
+    }
+
+    const created = createLocalRosterSession(catalogue, force, {
+      rosterId: rosterId("roster-automatic-activation"),
+      forceId: forceOccurrenceId("force-automatic-activation"),
+      name: "Automatic activation",
+    });
+    if (!created.ok) throw new Error("Expected roster creation.");
+    const withoutFactory = addLocalRosterRootSelection(
+      created.value,
+      root,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-activation-no-factory-root",
+        ),
+      },
+    );
+    expect(withoutFactory.ok).toBe(true);
+    if (!withoutFactory.ok) return;
+    const unavailable = withoutFactory.diagnostics.find(
+      ({ code }) =>
+        code ===
+        "WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE",
+    );
+    expect(unavailable).toMatchObject({
+      severity: "warning",
+      impacts: ["compatibility"],
+      location: {
+        source: expect.objectContaining({
+          filename: "selection-initialization.cat",
+        }),
+        path: expect.any(Array),
+      },
+      details: {
+        parentId: "automatic-activation-no-factory-root",
+        choiceId: "automatic-default-model",
+        amount: 4,
+      },
+    });
+    expect(unavailable?.location?.path).not.toHaveLength(0);
+    expect(
+      withoutFactory.value.roster.forces[0]?.selections[0]?.selections,
+    ).toEqual([]);
+
+    let generatedId = 0;
+    const createSelectionId = () =>
+      selectionOccurrenceId(
+        "automatic-generated-" + ++generatedId,
+      );
+    const withRoot = addLocalRosterRootSelection(created.value, root, {
+      selectionId: selectionOccurrenceId("automatic-activation-root"),
+      createSelectionId,
+    });
+    expect(withRoot.ok).toBe(true);
+    if (!withRoot.ok) return;
+    expect(
+      withRoot.value.roster.forces[0]?.selections[0]?.selections.find(
+        (selection) =>
+          localRosterSelectionChoice(
+            withRoot.value,
+            selection.id,
+          )?.id === "automatic-default-model",
+      ),
+    ).toMatchObject({ amount: 4 });
+
+    const trigger = localRosterChildChoices(
+      withRoot.value,
+      selectionOccurrenceId("automatic-activation-root"),
+    ).find(({ id }) => id === "automatic-activation-trigger");
+    if (trigger === undefined) {
+      throw new Error("Expected the automatic activation trigger.");
+    }
+    const withTrigger = addLocalRosterChildSelection(
+      withRoot.value,
+      selectionOccurrenceId("automatic-activation-root"),
+      trigger,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-activation-trigger-occurrence",
+        ),
+        createSelectionId,
+      },
+    );
+    expect(withTrigger.ok).toBe(true);
+    if (!withTrigger.ok) return;
+    expect(withTrigger.diagnostics).toEqual([]);
+    const activated = withTrigger.value.roster.forces[0]
+      ?.selections[0]?.selections.find(
+        (selection) =>
+          localRosterSelectionChoice(
+            withTrigger.value,
+            selection.id,
+          )?.id === "automatic-activated-upgrade",
+      );
+    expect(activated).toMatchObject({ amount: 1 });
+    expect(
+      withTrigger.value.roster.forces[0]?.selections[0]?.selections.some(
+        ({ id }) => id.startsWith("__rosterforge_automatic_probe_"),
+      ),
+    ).toBe(false);
+    expect(
+      withRoot.value.roster.forces[0]?.selections[0]?.selections.some(
+        (selection) =>
+          localRosterSelectionChoice(
+            withRoot.value,
+            selection.id,
+          )?.id === "automatic-activated-upgrade",
+      ),
+    ).toBe(false);
+
+    const withoutTrigger = removeLocalRosterSelection(
+      withTrigger.value,
+      selectionOccurrenceId(
+        "automatic-activation-trigger-occurrence",
+      ),
+      { createSelectionId },
+    );
+    expect(withoutTrigger.ok).toBe(true);
+    if (!withoutTrigger.ok) return;
+    expect(
+      withoutTrigger.value.roster.forces[0]?.selections[0]?.selections.some(
+        (selection) =>
+          localRosterSelectionChoice(
+            withoutTrigger.value,
+            selection.id,
+          )?.id === "automatic-activated-upgrade",
+      ),
+    ).toBe(false);
+
+    const reactivated = addLocalRosterChildSelection(
+      withoutTrigger.value,
+      selectionOccurrenceId("automatic-activation-root"),
+      trigger,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-activation-second-trigger",
+        ),
+        createSelectionId,
+      },
+    );
+    expect(reactivated.ok).toBe(true);
+    if (!reactivated.ok) return;
+    expect(
+      reactivated.value.roster.forces[0]?.selections[0]?.selections.some(
+        (selection) =>
+          localRosterSelectionChoice(
+            reactivated.value,
+            selection.id,
+          )?.id === "automatic-activated-upgrade",
+      ),
+    ).toBe(true);
+  });
+  it("withholds absent automatic activation across shared wrappers", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+        {
+          filename: "selection-initialization.cat",
+          bytes: fixtureBytes("selection-initialization.cat"),
+        },
+      ],
+      {
+        import: {
+          batchId: "roster-automatic-shared",
+          importedAt: "2026-08-22T20:10:00.000Z",
+        },
+      },
+    );
+    if (!prepared.ok) throw new Error("Expected fixture preparation.");
+    const catalogue = prepared.value.catalogues.find(
+      ({ id }) => id === "selection-initialization",
+    );
+    const force = catalogue?.context.forces.definitions.find(
+      ({ source }) => source.id === "initialization-force",
+    );
+    const root = catalogue === undefined
+      ? undefined
+      : localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            materialized.id === "automatic-reconciliation-unit",
+        );
+    if (
+      catalogue === undefined ||
+      force === undefined ||
+      root === undefined
+    ) {
+      throw new Error("Expected shared automatic choices.");
+    }
+
+    const created = createLocalRosterSession(catalogue, force, {
+      rosterId: rosterId("roster-automatic-shared"),
+      forceId: forceOccurrenceId("force-automatic-shared"),
+      name: "Shared automatic",
+    });
+    if (!created.ok) throw new Error("Expected roster creation.");
+    let generatedId = 0;
+    const createSelectionId = () =>
+      selectionOccurrenceId("shared-generated-" + ++generatedId);
+    const withRoot = addLocalRosterRootSelection(created.value, root, {
+      selectionId: selectionOccurrenceId("automatic-shared-root"),
+      createSelectionId,
+    });
+    if (!withRoot.ok) throw new Error("Expected automatic root selection.");
+
+    const choices = localRosterChildChoices(
+      withRoot.value,
+      selectionOccurrenceId("automatic-shared-root"),
+    );
+    const first = choices.find(
+      ({ id }) => id === "automatic-shared-first-link",
+    );
+    const trigger = choices.find(
+      ({ id }) => id === "automatic-shared-trigger",
+    );
+    if (first === undefined || trigger === undefined) {
+      throw new Error("Expected shared wrapper and trigger choices.");
+    }
+
+    const withFirst = addLocalRosterChildSelection(
+      withRoot.value,
+      selectionOccurrenceId("automatic-shared-root"),
+      first,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-shared-first-occurrence",
+        ),
+        createSelectionId,
+      },
+    );
+    if (!withFirst.ok) throw new Error("Expected first shared wrapper.");
+    const withTrigger = addLocalRosterChildSelection(
+      withFirst.value,
+      selectionOccurrenceId("automatic-shared-root"),
+      trigger,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-shared-trigger-occurrence",
+        ),
+        createSelectionId,
+      },
+    );
+    expect(withTrigger.ok).toBe(true);
+    if (!withTrigger.ok) return;
+
+    expect(withTrigger.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED",
+        severity: "warning",
+        impacts: ["compatibility"],
+        location: {
+          source: expect.objectContaining({
+            filename: "selection-initialization.cat",
+          }),
+          path: expect.any(Array),
+        },
+        details: {
+          parentId: "automatic-shared-root",
+          choiceId: "automatic-shared-second-link",
+          foreignSelectionIds: [
+            "automatic-shared-first-occurrence",
+          ],
+        },
+      }),
+    );
+    const sharedOccurrences =
+      withTrigger.value.roster.forces[0]?.selections[0]?.selections.filter(
+        (selection) =>
+          localRosterSelectionChoice(
+            withTrigger.value,
+            selection.id,
+          )?.definitionId === "automatic-shared-choice",
+      ) ?? [];
+    expect(sharedOccurrences).toHaveLength(1);
+    expect(sharedOccurrences[0]?.id).toBe(
+      "automatic-shared-first-occurrence",
+    );
+  });
+
   it("restores exact materialized choices from structural definition keys", async () => {
     const prepared = await prepareLocalCatalogueLibrary(
       [

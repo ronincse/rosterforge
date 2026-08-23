@@ -661,10 +661,12 @@ Consequences worth knowing:
   supported initialization minima remain distinct occurrences
 - Conditional or grouped automatic-root requirements and implicit choices for
   groups whose default is absent or `none`
-- Automatic activation of currently absent ordinary choices, automatic
-  selection-entry-group reconciliation, and New Recruit's distinct automatic
-  sub-unit algorithms. Selected ordinary entries are already clamped after
-  root/child add, child-group replacement, removal, and amount edits
+- Automatic selection-entry-group reconciliation and New Recruit's distinct
+  automatic sub-unit algorithms. Selected and absent ordinary entries are
+  reconciled after root/child add, child-group replacement, removal, and amount
+  edits
+- Automatic activation when a shared selector already counts another exact
+  materialized wrapper; that ambiguity remains diagnosed rather than guessed
 - `.ros`/`.rosz` ingestion, projection, import, and interchange export;
   browser print/save-PDF is presentation output only
 - Grouped-modifier costs, broader cost-limit behavior, aggregate general-
@@ -913,15 +915,32 @@ violated entry, selection group, or sub-unit to the current min/max.
 
 Of the 88 true corpus constraints, 74 are modifier-controlled across 54 owners:
 49 ordinary entries, five selection-entry groups, and no unit-typed sub-units.
-RosterForge now implements the selected ordinary-entry branch. A successful
-root/child add, child-group replacement, removal, or amount edit scans only
-currently selected exact choices, evaluates their automatic bounds with
-selection conditions, and clamps a complete violation in the same immutable
-session result. The pinned Drukhari case changes four default Scourges to three
-when its alternate model is selected. Automatic creation of an absent choice
-and the group/sub-unit algorithms remain deferred. Modifier-controlled,
-child-inclusive, malformed, or otherwise unsupported initialization bounds
-remain incomplete independently of `automatic`.
+Twelve modifier-driven minima start at zero: eleven ordinary entries and one
+group. None of those eleven ordinary owner IDs is targeted by an `entryLink`
+anywhere in the pinned 46-document corpus. Ten are hidden and become visible
+under the same trigger that raises the minimum; the T'au Pulse carbine is
+already visible.
+
+RosterForge implements both selected and absent ordinary-entry branches. A
+successful root/child add, child-group replacement, removal, or amount edit
+first clamps complete selected violations under their exact parent. It then
+walks visible absent direct and transparent-group choices, evaluates an
+ephemeral occurrence against the condition-aware effective minimum, and adds
+one real occurrence for a complete positive deficit. The caller supplies its
+occurrence ID; internal probe IDs never enter the session.
+
+The pinned Drukhari case changes four default Scourges to three when its
+alternate model is selected. The pinned Necron case selects Pantheon of Woe
+(`1707-57c5-676e-90d9`) and activates Singularity Matrix
+(`e402-fe4a-b246-540e`) at exactly one beneath the already-selected
+Deceiver, while leaving the prior session unchanged.
+
+Selection-entry-group and sub-unit algorithms remain deferred. A missing
+occurrence-ID factory and an absent selector that already counts another exact
+materialized wrapper are source-located compatibility warnings, not guessed
+edits. Modifier-controlled, child-inclusive, malformed, or otherwise
+unsupported initialization bounds remain incomplete independently of
+`automatic`.
 
 The Army Roster force definition has one constraint with a native `message`
 property, also outside the 2.03 typed constraint surface. Its exact text remains

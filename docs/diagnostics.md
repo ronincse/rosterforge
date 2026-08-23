@@ -1235,18 +1235,27 @@ WEB_ROSTER_AUTOMATIC_CONSTRAINT_RECONCILIATION_LIMIT
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_RECONCILIATION_UNSUPPORTED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_SUBUNIT_RECONCILIATION_UNSUPPORTED
 WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED
+WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED
+WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE
 ```
 
 Each is a compatibility warning located at the projected constraint's source
-and path. Group and sub-unit diagnostics preserve a selected automatic shape
-whose distinct New Recruit algorithm is not implemented. The absent-choice
-diagnostic is defensive: it applies when an occurrence found during a scan has
-already disappeared through another adjustment in that pass. Choices absent
-before the scan are not discovered or activated yet. Stalled and pass-limit
-diagnostics stop reconciliation without rejecting the initiating user edit.
-Evaluator diagnostics remain in order and an incomplete or unresolved bound is
-never coerced into an amount. None of these warnings establishes aggregate
-legality.
+and path. Group and sub-unit diagnostics preserve an automatic shape whose
+distinct New Recruit algorithm is not implemented.
+
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED` is
+defensive: it means a selected occurrence found during a scan disappeared
+before its queued adjustment ran.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED` means a selected or absent candidate's effective selector counts an occurrence belonging to another exact materialized choice; RosterForge does not guess which wrapper to add or mutate.
+`WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE` means the
+candidate became required but the initiating command supplied no occurrence-ID
+factory. Its details retain the parent ID, choice ID, and required amount.
+
+These warnings preserve the initiating user edit while withholding only the
+unsupported repair. Stalled and pass-limit diagnostics likewise stop
+reconciliation without rejecting that edit. Evaluator diagnostics remain in
+order, and an incomplete visibility path or unresolved bound is never coerced
+into an amount. None of these warnings establishes aggregate legality.
 
 The empty-single-force root planner can additionally emit:
 

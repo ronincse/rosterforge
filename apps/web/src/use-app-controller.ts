@@ -354,7 +354,10 @@ export function useRosterForgeAppController({
 
   function removeSelection(id: SelectionOccurrenceId) {
     if (rosterSession === undefined) return;
-    const result = removeLocalRosterSelection(rosterSession, id);
+    const result = removeLocalRosterSelection(rosterSession, id, {
+      createSelectionId: () =>
+        selectionOccurrenceId(createEntityId("selection")),
+    });
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);
   }
@@ -407,6 +410,10 @@ export function useRosterForgeAppController({
       rosterSession,
       selectionId,
       amount,
+      {
+        createSelectionId: () =>
+          selectionOccurrenceId(createEntityId("selection")),
+      },
     );
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);

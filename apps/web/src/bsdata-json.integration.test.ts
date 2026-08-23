@@ -1940,6 +1940,158 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "activates pinned C'tan wargear when its detachment is selected",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Necrons.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-necron-automatic",
+              importedAt: "2026-08-22T20:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Xenos - Necrons",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        const roots =
+          catalogue === undefined ? [] : localRosterRootChoices(catalogue);
+        const detachment = roots.find(
+          ({ materialized }) => materialized.name === "Detachment",
+        );
+        const deceiver = roots.find(
+          ({ materialized }) =>
+            materialized.name === "C'tan Shard of the Deceiver",
+        );
+        if (
+          catalogue === undefined ||
+          forceDefinition === undefined ||
+          detachment === undefined ||
+          deceiver === undefined
+        ) {
+          throw new Error("Expected the pinned Necron automatic context.");
+        }
+
+        let generatedId = 0;
+        const createSelectionId = () =>
+          selectionOccurrenceId(
+            "real-necron-automatic-" + ++generatedId,
+          );
+        const created = createLocalRosterSession(
+          catalogue,
+          forceDefinition,
+          {
+            rosterId: rosterId("real-necron-automatic-roster"),
+            forceId: forceOccurrenceId(
+              "real-necron-automatic-force",
+            ),
+            name: "Necron Automatic Integration",
+          },
+        );
+        if (!created.ok) throw new Error("Expected Necron roster session.");
+        const withDeceiver = addLocalRosterRootSelection(
+          created.value,
+          deceiver,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-necron-deceiver",
+            ),
+            createSelectionId,
+          },
+        );
+        if (!withDeceiver.ok) {
+          throw new Error("Expected the Deceiver root.");
+        }
+        expect(
+          withDeceiver.value.roster.forces[0]?.selections[0]?.selections
+            .some(
+              (selection) =>
+                localRosterSelectionChoice(
+                  withDeceiver.value,
+                  selection.id,
+                )?.definitionId === "e402-fe4a-b246-540e",
+            ),
+        ).toBe(false);
+
+        const withDetachment = addLocalRosterRootSelection(
+          withDeceiver.value,
+          detachment,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-necron-detachment",
+            ),
+            createSelectionId,
+          },
+        );
+        if (!withDetachment.ok) {
+          throw new Error("Expected the Detachment root.");
+        }
+        const pantheon = selectionChoiceByDefinitionId(
+          detachment.materialized,
+          "1707-57c5-676e-90d9",
+        );
+        if (pantheon === undefined) {
+          throw new Error("Expected the Pantheon of Woe choice.");
+        }
+        const withPantheon = addLocalRosterChildSelection(
+          withDetachment.value,
+          selectionOccurrenceId("real-necron-detachment"),
+          pantheon,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-necron-pantheon",
+            ),
+            createSelectionId,
+          },
+        );
+        expect(withPantheon.ok).toBe(true);
+        if (!withPantheon.ok) return;
+        expect(withPantheon.diagnostics).toEqual([]);
+        const automatic = withPantheon.value.roster.forces[0]
+          ?.selections.find(
+            ({ id }) => id === "real-necron-deceiver",
+          )?.selections.find(
+            (selection) =>
+              localRosterSelectionChoice(
+                withPantheon.value,
+                selection.id,
+              )?.definitionId === "e402-fe4a-b246-540e",
+          );
+        expect(automatic).toMatchObject({ amount: 1 });
+        expect(
+          localRosterSelectionChoice(
+            withPantheon.value,
+            automatic!.id,
+          )?.name,
+        ).toBe("Singularity Matrix");
+        expect(
+          withDetachment.value.roster.forces[0]?.selections.find(
+            ({ id }) => id === "real-necron-deceiver",
+          )?.selections.some(
+            (selection) =>
+              localRosterSelectionChoice(
+                withDetachment.value,
+                selection.id,
+              )?.definitionId === "e402-fe4a-b246-540e",
+          ),
+        ).toBe(false);
+      },
+      120_000,
+    );
+    it(
       "expands Guardian Defenders from unconditional real-data defaults",
       async () => {
         if (realDataDirectory === undefined) {

@@ -504,25 +504,44 @@ minima seed descendants whether that generic value
 is absent, `false`, or `true`.
 
 After a successful root add, child add, child-group replacement, removal, or
-amount edit, `apps/web` reconciles selected ordinary entries whose generic
-constraint node has lexical `automatic` equal to `true` or `1`. Each pass uses
-the condition-aware selection-constraint inspector against the current
-immutable roster. A complete violated minimum or maximum clamps the exact
-materialized choice's aggregate amount under one parent: minima increase the
-first occurrence, while maxima reduce or remove later occurrences first. The
-final repaired session is returned as the same user action, so history and
-autosave do not observe internal clamps as separate edits. Reconciliation runs
-for at most ten passes.
+amount edit, `apps/web` reconciles ordinary entries whose generic constraint node
+has lexical `automatic` equal to `true` or `1`. It first groups selected
+occurrences by exact materialized choice and direct parent, then uses the
+condition-aware selection-constraint inspector against the current immutable
+roster. A complete violated minimum or maximum clamps that aggregate: minima
+increase the first occurrence, while maxima reduce or remove later occurrences
+first.
 
-Currently absent choices, selection-entry groups, and unit-typed child
-selections remain outside this slice because New Recruit uses distinct
-algorithms for those shapes. Unsupported or incomplete evaluation remains
-source-located and does not produce a guessed amount. Lexical `false`, `0`, an
-absent value, and unknown values do not request reconciliation. The operation
-constructs one new immutable session only after every planned child add
-succeeds, so a duplicate generated ID or other builder failure exposes no
-partial session. Each selected occurrence is limited to 4,096 automatically
-planned descendants.
+Once selected amounts settle, the same bounded operation scans absent direct
+children and transparent-group descendants carrying an automatic minimum. It
+checks the candidate's visibility, adds the candidate only to a throwaway roster
+snapshot, and evaluates its condition-aware effective minimum there. The
+catalogue context, typed projections, generic nodes, and imported bytes remain
+shared. A complete positive deficit becomes one real occurrence with that
+quantity, using the same caller-provided occurrence-ID factory as an explicit
+add. The probe ID and probe roster never enter the returned session.
+
+Every clamp or activation remains part of the initiating immutable command, so
+history and autosave see one action. Reconciliation runs for at most ten passes
+and settles selected adjustments before scanning absent choices. A command with
+no occurrence-ID factory preserves the user's edit and emits a source-located
+compatibility warning instead of inventing identity.
+
+The pinned corpus has twelve modifier-driven automatic minima whose base is
+zero: eleven ordinary entries and one selection-entry group. None of the eleven
+ordinary owner IDs is referenced by an `entryLink` in the 46-document corpus; ten
+hidden choices become visible under the same trigger that raises their minimum,
+and the remaining T'au choice is already visible. If a future absent candidate's
+effective selector also counts another exact materialized choice, reconciliation
+withholds that activation and diagnoses the shared-selector boundary.
+
+Selection-entry groups and unit-typed child selections remain outside this slice
+because New Recruit uses distinct algorithms for those shapes. Unsupported or
+incomplete visibility or constraint evaluation remains source-located and does
+not produce a guessed quantity. Lexical `false`, `0`, an absent value, and
+unknown values do not request reconciliation. Initialization still exposes no
+partial session when a generated ID collides or another builder add fails, and
+each selected occurrence remains limited to 4,096 planned descendants.
 
 `inspectRosterSelectionChildChoices` provides the evaluation-side read-only
 view of direct entries and transparent groups. It retains order, exposes only

@@ -152,7 +152,57 @@
               shared="true" automatic="false" />
           </constraints>
         </selectionEntry>
+        <selectionEntry id="automatic-activation-trigger"
+          name="Automatic Activation Trigger" type="upgrade">
+          <constraints>
+            <constraint id="automatic-activation-trigger-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+        </selectionEntry>
+        <selectionEntry id="automatic-activated-upgrade"
+          name="Automatically Activated Upgrade" type="upgrade"
+          hidden="true">
+          <constraints>
+            <constraint id="automatic-activated-min" type="min"
+              field="selections" scope="parent" value="0"
+              shared="true" automatic="true" />
+            <constraint id="automatic-activated-max" type="max"
+              field="selections" scope="parent" value="0"
+              shared="true" automatic="true" />
+          </constraints>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="set" value="false" field="hidden" />
+                <modifier type="set" value="1"
+                  field="automatic-activated-min" />
+                <modifier type="set" value="1"
+                  field="automatic-activated-max" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" value="1" field="selections"
+                  scope="unit" childId="automatic-activation-trigger"
+                  shared="true" includeChildSelections="true" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntry>
+        <selectionEntry id="automatic-shared-trigger"
+          name="Automatic Shared Trigger" type="upgrade">
+          <constraints>
+            <constraint id="automatic-shared-trigger-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+        </selectionEntry>
       </selectionEntries>
+      <entryLinks>
+        <entryLink id="automatic-shared-first-link"
+          name="Automatic Shared First"
+          targetId="automatic-shared-choice" type="selectionEntry" />
+        <entryLink id="automatic-shared-second-link"
+          name="Automatic Shared Second"
+          targetId="automatic-shared-choice" type="selectionEntry" />
+      </entryLinks>
     </selectionEntry>
     <selectionEntry id="disabled-automatic-root"
       name="Disabled Automatic Root" type="upgrade">
@@ -172,4 +222,26 @@
       </modifiers>
     </selectionEntry>
   </selectionEntries>
+  <sharedSelectionEntries>
+    <selectionEntry id="automatic-shared-choice"
+      name="Automatic Shared Choice" type="upgrade">
+      <constraints>
+        <constraint id="automatic-shared-min" type="min"
+          field="selections" scope="parent" value="0"
+          shared="true" automatic="true" />
+      </constraints>
+      <modifierGroups>
+        <modifierGroup type="and">
+          <modifiers>
+            <modifier type="set" value="1" field="automatic-shared-min" />
+          </modifiers>
+          <conditions>
+            <condition type="atLeast" value="1" field="selections"
+              scope="unit" childId="automatic-shared-trigger"
+              shared="true" includeChildSelections="true" />
+          </conditions>
+        </modifierGroup>
+      </modifierGroups>
+    </selectionEntry>
+  </sharedSelectionEntries>
 </catalogue>

@@ -20,7 +20,6 @@ import {
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
   inspectRosterSelectionChildChoices,
-  inspectRosterSelectionConstraintWithSelectionConditions,
   inspectRosterForceConstraintsInRoster,
   inspectRosterSelectionConstraintsInRoster,
   planEmptySingleForceRootInitialization,
@@ -76,7 +75,13 @@ import {
   type SelectionOccurrenceId,
 } from "@rosterforge/roster-model";
 
+import {
+  reconcileLocalRosterAutomaticConstraints,
+  type LocalRosterAutomaticReconciliationOptions,
+} from "./automatic-reconciliation.js";
 import type { LocalCatalogueChoice } from "./catalogue-library.js";
+
+export type { LocalRosterAutomaticReconciliationOptions };
 
 export interface CreateLocalRosterSessionInput {
   readonly rosterId: RosterId;
@@ -890,8 +895,8 @@ export function localRosterSelectionCount(session: LocalRosterSession): number {
 }
 
 /**
- * Adds and initializes one root, then reconciles supported selected-entry
- * constraints carrying New Recruit's `automatic: true` extension.
+ * Adds and initializes one root, then reconciles supported ordinary-entry
+ * automatic bounds and newly required choices as one immutable action.
  */
 export function addLocalRosterRootSelection(
   session: LocalRosterSession,
@@ -900,6 +905,7 @@ export function addLocalRosterRootSelection(
 ): Result<LocalRosterSession> {
   return reconcileEditedSession(
     addLocalRosterRootSelectionUnreconciled(session, choice, input),
+    input,
   );
 }
 
@@ -1064,8 +1070,8 @@ export function localRosterSelectionChoice(
 }
 
 /**
- * Adds and initializes one child, then reconciles supported selected-entry
- * automatic constraints across the resulting immutable roster.
+ * Adds and initializes one child, then reconciles supported ordinary-entry
+ * automatic bounds and newly required choices as one immutable action.
  */
 export function addLocalRosterChildSelection(
   session: LocalRosterSession,
@@ -1080,6 +1086,7 @@ export function addLocalRosterChildSelection(
       choice,
       input,
     ),
+    input,
   );
 }
 
@@ -1113,8 +1120,8 @@ function addLocalRosterChildSelectionUnreconciled(
 }
 
 /**
- * Chooses one concrete group member, performing a max-one replacement and all
- * supported automatic clamps as one immutable session action.
+ * Chooses one concrete group member, performing a max-one replacement plus
+ * supported ordinary automatic bounds and activations as one immutable action.
  */
 export function chooseLocalRosterChildGroupEntry(
   session: LocalRosterSession,
@@ -1204,21 +1211,23 @@ export function chooseLocalRosterChildGroupEntry(
   );
   diagnostics.push(...added.diagnostics);
   return added.ok
-    ? reconcileEditedSession(success(added.value, diagnostics))
+    ? reconcileEditedSession(success(added.value, diagnostics), input)
     : failure(diagnostics);
 }
 
 /**
- * Removes one subtree, then repairs selected ordinary entries whose automatic
- * minima or maxima became violated. A removed last instance stays absent until
- * the separate absent-choice activation behavior is implemented.
+ * Removes one subtree, then reconciles supported ordinary automatic bounds.
+ * Supplying an ID factory lets a different absent choice become selected in
+ * the same immutable action when the removal makes it newly required.
  */
 export function removeLocalRosterSelection(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,
+  options: LocalRosterAutomaticReconciliationOptions = {},
 ): Result<LocalRosterSession> {
   return reconcileEditedSession(
     removeLocalRosterSelectionUnreconciled(session, selectionId),
+    options,
   );
 }
 
@@ -1262,13 +1271,15 @@ export function setLocalRosterSelectionName(
 }
 
 /**
- * Changes one quantity, then clamps supported selected ordinary entries. The
- * returned session contains both edits so history and autosave see one action.
+ * Changes one quantity, then reconciles supported ordinary automatic bounds.
+ * The returned session contains every clamp or activation so history and
+ * autosave see one action.
  */
 export function setLocalRosterSelectionAmount(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,
   amount: number | undefined,
+  options: LocalRosterAutomaticReconciliationOptions = {},
 ): Result<LocalRosterSession> {
   return reconcileEditedSession(
     setLocalRosterSelectionAmountUnreconciled(
@@ -1276,6 +1287,7 @@ export function setLocalRosterSelectionAmount(
       selectionId,
       amount,
     ),
+    options,
   );
 }
 
@@ -1299,324 +1311,22 @@ function setLocalRosterSelectionAmountUnreconciled(
   );
 }
 
-type LocalRosterSelectionConstraint =
-  BattleScribeRosterSelectionChoice["constraints"][number];
+const localRosterAutomaticOperations = {
+  addChild: addLocalRosterChildSelectionUnreconciled,
+  removeSelection: removeLocalRosterSelectionUnreconciled,
+  setAmount: setLocalRosterSelectionAmountUnreconciled,
+};
 
-interface SelectedAutomaticSelector {
-  readonly key: string;
-  readonly choice: BattleScribeRosterSelectionChoice;
-  readonly occurrences: readonly RosterSelection[];
-}
-
-interface AutomaticSelectionAdjustment {
-  readonly selector: SelectedAutomaticSelector;
-  readonly constraint: LocalRosterSelectionConstraint;
-  readonly amount: number;
-}
-
-interface AutomaticSelectionScan {
-  readonly adjustments: readonly AutomaticSelectionAdjustment[];
-  readonly diagnostics: readonly Diagnostic[];
-}
-
-const maxAutomaticReconciliationPasses = 10;
-
-/**
- * Reconciles the ordinary-entry branch of New Recruit's automatic constraint
- * handler after a selection edit.
- *
- * The deployed 35.66 runtime clamps an ordinary selector's aggregate amount
- * whenever an `automatic: true` min or max is violated. Its group and sub-unit
- * branches use different algorithms, so this function leaves those untouched.
- * The pinned corpus has 54 modifier-driven true owners: 49 ordinary entries,
- * five groups, and no unit-typed sub-units.
- *
- * Reusing the full Checks report here is not viable: ten passes over a pinned
- * 41-selection Guardian roster measured 30,215.7 ms. Evaluating the two
- * selected Scourge bounds directly measured 407.4 ms for ten passes. This scan
- * therefore visits only currently selected choices with the extension.
- */
 function reconcileEditedSession(
   edited: Result<LocalRosterSession>,
+  options: LocalRosterAutomaticReconciliationOptions = {},
 ): Result<LocalRosterSession> {
-  if (!edited.ok) return edited;
-
-  let session = edited.value;
-  const diagnostics = [...edited.diagnostics];
-  for (let pass = 0; pass < maxAutomaticReconciliationPasses; pass += 1) {
-    const scanned = scanAutomaticSelectionAdjustments(session);
-    appendUniqueDiagnostics(diagnostics, scanned.diagnostics);
-    if (scanned.adjustments.length === 0) {
-      return success(session, diagnostics);
-    }
-
-    let changed = false;
-    for (const adjustment of scanned.adjustments) {
-      const applied = applyAutomaticSelectionAdjustment(session, adjustment);
-      appendUniqueDiagnostics(diagnostics, applied.diagnostics);
-      if (!applied.ok) return failure(diagnostics);
-      changed ||= applied.value.roster !== session.roster;
-      session = applied.value;
-    }
-    if (!changed) {
-      appendUniqueDiagnostics(diagnostics, [
-        automaticConstraintDiagnostic(
-          scanned.adjustments[0]!.constraint,
-          "WEB_ROSTER_AUTOMATIC_CONSTRAINT_RECONCILIATION_STALLED",
-          "An automatic constraint remained violated, but its selected entry amount could not be changed.",
-          { selectorKey: scanned.adjustments[0]!.selector.key },
-        ),
-      ]);
-      return success(session, diagnostics);
-    }
-  }
-
-  const remaining = scanAutomaticSelectionAdjustments(session);
-  appendUniqueDiagnostics(diagnostics, remaining.diagnostics);
-  if (remaining.adjustments.length > 0) {
-    appendUniqueDiagnostics(diagnostics, [
-      automaticConstraintDiagnostic(
-        remaining.adjustments[0]!.constraint,
-        "WEB_ROSTER_AUTOMATIC_CONSTRAINT_RECONCILIATION_LIMIT",
-        "Automatic constraint reconciliation did not settle within its pass limit.",
-        {
-          selectorKey: remaining.adjustments[0]!.selector.key,
-          maxPasses: maxAutomaticReconciliationPasses,
-        },
-      ),
-    ]);
-  }
-  return success(session, diagnostics);
+  return reconcileLocalRosterAutomaticConstraints(
+    edited,
+    localRosterAutomaticOperations,
+    options,
+  );
 }
-
-function scanAutomaticSelectionAdjustments(
-  session: LocalRosterSession,
-): AutomaticSelectionScan {
-  const adjustments: AutomaticSelectionAdjustment[] = [];
-  const diagnostics: Diagnostic[] = [];
-
-  for (const selector of selectedAutomaticSelectors(session)) {
-    const constraints = selector.choice.constraints.filter(
-      isEnabledAutomaticConstraint,
-    );
-    if (constraints.length === 0) continue;
-    if (selector.choice.kind === "selectionEntryGroup") {
-      diagnostics.push(
-        ...constraints.map((constraint) =>
-          automaticConstraintDiagnostic(
-            constraint,
-            "WEB_ROSTER_AUTOMATIC_CONSTRAINT_GROUP_RECONCILIATION_UNSUPPORTED",
-            "Automatic reconciliation for a selected entry group is not supported.",
-            { selectorKey: selector.key },
-          ),
-        ),
-      );
-      continue;
-    }
-    if (selector.choice.type === "unit") {
-      diagnostics.push(
-        ...constraints.map((constraint) =>
-          automaticConstraintDiagnostic(
-            constraint,
-            "WEB_ROSTER_AUTOMATIC_CONSTRAINT_SUBUNIT_RECONCILIATION_UNSUPPORTED",
-            "Automatic reconciliation for a selected sub-unit is not supported.",
-            { selectorKey: selector.key },
-          ),
-        ),
-      );
-      continue;
-    }
-
-    const owner = selector.occurrences[0]!;
-    const amount = rosterSelectionsAmount(selector.occurrences);
-    for (const constraint of constraints) {
-      const inspected =
-        inspectRosterSelectionConstraintWithSelectionConditions(
-          session.roster,
-          session.catalogue.context,
-          owner,
-          constraint,
-        );
-      appendUniqueDiagnostics(diagnostics, inspected.diagnostics);
-      if (
-        !inspected.ok ||
-        inspected.value.completeness !== "complete" ||
-        inspected.value.status !== "violated" ||
-        inspected.value.limit === undefined
-      ) {
-        continue;
-      }
-      const target = inspected.value.limit;
-      const needsClamp =
-        (inspected.value.constraintType === "min" && amount < target) ||
-        (inspected.value.constraintType === "max" && amount > target);
-      if (needsClamp && target >= 0 && Number.isFinite(target)) {
-        adjustments.push({ selector, constraint, amount: target });
-        // A min and max pair can describe the same exact quantity. Once one
-        // violated bound has selected the target, re-evaluate the pair after
-        // applying it instead of acting on another report from stale state.
-        break;
-      }
-    }
-  }
-
-  return { adjustments, diagnostics };
-}
-
-function selectedAutomaticSelectors(
-  session: LocalRosterSession,
-): readonly SelectedAutomaticSelector[] {
-  const selectors: SelectedAutomaticSelector[] = [];
-
-  const visitSelections = (
-    parentKey: string,
-    selections: readonly RosterSelection[],
-  ): void => {
-    const byChoice = new Map<
-      BattleScribeRosterSelectionChoice,
-      RosterSelection[]
-    >();
-    for (const selection of selections) {
-      const choice = session.selectionChoices.get(selection.id);
-      if (choice !== undefined) {
-        const occurrences = byChoice.get(choice);
-        if (occurrences === undefined) {
-          byChoice.set(choice, [selection]);
-        } else {
-          occurrences.push(selection);
-        }
-      }
-    }
-    for (const [choice, occurrences] of byChoice) {
-      if (!choice.constraints.some(isEnabledAutomaticConstraint)) continue;
-      selectors.push({
-        key: [
-          parentKey,
-          choice.occurrence.source.sourceId,
-          ...choice.occurrence.path,
-        ].join("|"),
-        choice,
-        occurrences,
-      });
-    }
-    for (const selection of selections) {
-      visitSelections(
-        "selection:" + selection.id,
-        selection.selections,
-      );
-    }
-  };
-
-  const visitForce = (force: RosterForce): void => {
-    visitSelections("force:" + force.id, force.selections);
-    for (const child of force.forces) visitForce(child);
-  };
-  for (const force of session.roster.forces) visitForce(force);
-  return selectors;
-}
-
-function applyAutomaticSelectionAdjustment(
-  session: LocalRosterSession,
-  adjustment: AutomaticSelectionAdjustment,
-): Result<LocalRosterSession> {
-  const liveOccurrences = adjustment.selector.occurrences
-    .map(({ id }) => findRosterSelection(session.roster.forces, id))
-    .filter(
-      (occurrence): occurrence is RosterSelection =>
-        occurrence !== undefined,
-    );
-  const currentAmount = rosterSelectionsAmount(liveOccurrences);
-  if (currentAmount === adjustment.amount) return success(session);
-  if (liveOccurrences.length === 0) {
-    return success(
-      session,
-      [
-        automaticConstraintDiagnostic(
-          adjustment.constraint,
-          "WEB_ROSTER_AUTOMATIC_CONSTRAINT_ABSENT_CHOICE_UNSUPPORTED",
-          "Automatic reconciliation cannot activate a choice with no selected occurrence.",
-          { selectorKey: adjustment.selector.key, target: adjustment.amount },
-        ),
-      ],
-    );
-  }
-
-  if (currentAmount < adjustment.amount) {
-    const occurrence = liveOccurrences[0]!;
-    return setLocalRosterSelectionAmountUnreconciled(
-      session,
-      occurrence.id,
-      rosterSelectionAmount(occurrence) +
-        adjustment.amount -
-        currentAmount,
-    );
-  }
-
-  let working = session;
-  let excess = currentAmount - adjustment.amount;
-  const diagnostics: Diagnostic[] = [];
-  for (const occurrence of [...liveOccurrences].reverse()) {
-    if (excess <= 0) break;
-    const amount = rosterSelectionAmount(occurrence);
-    const changed =
-      amount <= excess
-        ? removeLocalRosterSelectionUnreconciled(working, occurrence.id)
-        : setLocalRosterSelectionAmountUnreconciled(
-            working,
-            occurrence.id,
-            amount - excess,
-          );
-    diagnostics.push(...changed.diagnostics);
-    if (!changed.ok) return failure(diagnostics);
-    working = changed.value;
-    excess -= Math.min(excess, amount);
-  }
-  return success(working, diagnostics);
-}
-
-function isEnabledAutomaticConstraint(
-  constraint: LocalRosterSelectionConstraint,
-): boolean {
-  const value = constraint.node.attributes["automatic"];
-  return value === "true" || value === "1";
-}
-
-function appendUniqueDiagnostics(
-  target: Diagnostic[],
-  incoming: readonly Diagnostic[],
-): void {
-  for (const diagnostic of incoming) {
-    const duplicate = target.some(
-      (candidate) =>
-        candidate.code === diagnostic.code &&
-        candidate.location?.source.sourceId ===
-          diagnostic.location?.source.sourceId &&
-        candidate.location?.path?.join("|") ===
-          diagnostic.location?.path?.join("|"),
-    );
-    if (!duplicate) target.push(diagnostic);
-  }
-}
-
-function automaticConstraintDiagnostic(
-  constraint: LocalRosterSelectionConstraint,
-  code: string,
-  message: string,
-  details: Readonly<Record<string, unknown>>,
-): Diagnostic {
-  return {
-    code,
-    message,
-    severity: "warning",
-    impacts: ["compatibility"],
-    location: {
-      source: constraint.source,
-      path: constraint.path,
-    },
-    details,
-  };
-}
-
 function isResolvedRootChoice(
   root: MaterializedVisibleRoot,
 ): root is LocalRosterRootChoice {

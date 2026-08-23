@@ -755,7 +755,7 @@ deduplicated while retaining the first visible root and highest required
 quantity. Optional roots with max-only constraints are not inspected as
 requirements.
 
-### Selected automatic constraint reconciliation
+### Post-edit automatic constraint reconciliation
 
 The local web session consumes lexical `automatic="true"` and
 `automatic="1"` from the retained generic constraint node only after a
@@ -763,22 +763,48 @@ successful selection edit. It groups current roster occurrences by the exact
 materialized choice object and direct parent, using each occurrence's effective
 quantity (`amount ?? 1`) as the selector aggregate. A complete violated
 selection-condition minimum raises the first occurrence. A complete violated
-maximum reduces or removes occurrences from the end. The returned
-`LocalRosterSession` is still immutable, and reconciliation plus the initiating
-command is one history/autosave action.
+maximum reduces or removes occurrences from the end.
 
-This is a bounded integration operation, not stored evaluation state. It makes
-at most ten passes and re-evaluates after each clamp. On the pinned 41-selection
-Guardian roster, ten full Checks inspections measured 30,215.7 ms, while ten
-targeted inspections of the selected Scourge min/max pair measured 407.4 ms.
-The edit path therefore scans selected automatic choices and invokes the
-single-constraint evaluator instead of constructing the whole roster report.
+After selected quantities settle, the operation enumerates currently absent
+ordinary child choices from direct entries and transparent groups in
+materialized order. A candidate must have a visible, complete visibility path.
+The session then adds it to an ephemeral immutable roster snapshot and invokes
+the ordinary condition-aware constraint inspector on that probe. Catalogue
+projections, generic source nodes, and imported bytes remain shared by
+reference; the probe occurrence and its temporary choice-map entry are never
+returned.
 
-Lexical `false`, `0`, absent, and unknown values do not request a repair.
-Currently absent choices cannot be discovered by this selected-choice
-scan. Selection-entry groups and unit-typed child selections require different
-New Recruit algorithms and remain untouched. An incomplete evaluation keeps
-its source-located diagnostics and never supplies a guessed quantity.
+A complete positive minimum deficit creates one real occurrence with the
+deficit as its amount. Its occurrence ID comes from
+`LocalRosterAutomaticReconciliationOptions.createSelectionId`, the same
+factory browser commands use for explicit additions. Without a factory, the
+initiating edit remains successful but activation is withheld with a
+source-located compatibility diagnostic. The initiating edit and every
+supported clamp or activation appear in one returned immutable session, so
+history and autosave record one action and earlier sessions remain unchanged.
+
+This remains a bounded integration operation, not stored evaluation state. It
+makes at most ten passes, settling selected adjustments before each absent scan.
+On the pinned 41-selection Guardian roster, ten full Checks inspections measured
+30,215.7 ms, ten targeted inspections of the selected Scourge min/max pair
+measured 407.4 ms, and ten complete amount-command reconciliations with no
+reachable absent candidate measured 1.2 ms in total. The edit path therefore
+uses targeted constraint and visibility operations rather than constructing the
+whole roster report.
+
+The pinned corpus contains twelve modifier-driven true minima with base zero:
+eleven ordinary entries and one selection-entry group. None of the eleven
+ordinary owner IDs has an `entryLink` reference in the 46 documents. Ten hidden
+owners are revealed by the condition that raises their minimum; the T'au Pulse
+carbine is already visible. If an effective absent selector also counts a
+different exact materialized choice, the operation reports the shared-selector
+boundary instead of guessing which wrapper to add or mutate.
+
+Lexical `false`, `0`, absent, and unknown values do not request repair.
+Selection-entry groups and unit-typed child selections retain their distinct
+New Recruit algorithms and remain untouched. Incomplete visibility or
+constraint evaluation keeps its source-located diagnostics and never supplies a
+guessed quantity.
 
 ## Force Constraints
 
