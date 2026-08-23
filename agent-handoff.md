@@ -49,9 +49,10 @@ diagnostic codes.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
   from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
-  browser with edits of **71–270 ms**. What is left is **one full re-evaluation
-  of the roster per edit** — not rendering, which was measured and ruled out.
-  Making that cheaper needs incremental evaluation. See the roadmap's section F.
+  browser with edits **median ~92 ms**, and undo/redo at 73–104 ms. What is left
+  is one full re-evaluation per *new* edit — not rendering, which was measured
+  and ruled out. Cheaper still needs incremental evaluation, which is no longer
+  urgent. See the roadmap's section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -278,8 +279,9 @@ invisible to the whole test suite.
 | Per-edit evaluation cost | Done | the roster walk and per-choice identity IDs are cached too. Validation at fifteen units 68.8 → 49.7 ms |
 | Collapsed panels built anyway | Done | 181 of 214 `<details>` were closed and rebuilt every edit; DOM for a fifteen-unit army 17,505 → 5,700 nodes |
 | Reports re-evaluated on unrelated re-renders | Done | `RosterOverview` called costs and validation unmemoised in its body; an autosave state change paid a full re-evaluation |
-| **Per-edit evaluation is whole-roster** | **Next** | ~250 ms at fifteen units. Every edit re-evaluates everything; a subtree re-render is 3 ms, so this is not rendering. Needs **incremental evaluation** — re-evaluate what the edit could have affected, not the army |
-| Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
+| History steps re-evaluated a known roster | Done | undo/redo restore a session the history already held; both reports now cached per session. Undo 308 → 73 ms |
+| Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
+| **Unfillable required wargear group** | **Next** | a correctness blocker: the list cannot reach a valid state. Now cheap to explore, since edits are fast |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -5627,3 +5629,55 @@ Two smaller things would help first and are much cheaper:
    improve the felt experience without touching evaluator architecture.
 2. **Incremental evaluation** — the real fix, and a research checkpoint.
 3. **Unfillable required wargear group** — still open, still cheap to explore.
+
+## Completed Assignment — History Step Cost, 2026-08-23
+
+Baseline `0804214`; resulting implementation commit — see `git log`.
+
+The first of the two cheap wins the previous entry listed. Undo and redo restore
+a session object the history already held, so the roster they display was
+evaluated once already. Both whole-roster reports are pure functions of the
+session's roster and catalogue context, and a session is immutable, so caching
+them per session cannot show a stale answer.
+
+| | Before | After |
+|---|---|---|
+| Undo | 308 ms | **73–86 ms** |
+| Redo | — | **95–104 ms** |
+| Edits | 71–270 ms | 58–270 ms, **median ~92 ms** |
+
+What remains on a history step is the workspace re-render, which is consistent
+with the 3 ms measured for a single subtree.
+
+### Why the other cheap win was not taken
+
+The previous entry also suggested moving evaluation into a transition so the
+click never blocks. At a median of 92 ms that is no longer worth its cost. It
+would mean showing a **stale points total** for a moment after each edit, and
+this product's whole contract is that it does not report something misleading —
+`valid` + `incomplete` exists precisely so a partial answer is never dressed up
+as a complete one. A lagging total would need to be visibly marked as
+updating, which is a design decision rather than a performance one, and it can
+wait until per-edit cost is actually a complaint.
+
+### Where performance now stands
+
+From 127 seconds to validate six units, at the start of the day, to a median
+92 ms edit and 73 ms undo on a full fifteen-unit army. The remaining
+whole-roster re-evaluation per new edit is recorded as Open rather than Next:
+incremental evaluation is a real architectural change and nothing currently
+justifies it.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **485 passed, 13 skipped (498 total)**.
+- Pinned corpus — **498 passed**.
+- Measured in the browser on the Dark Angels army; points still 1,545.
+
+### Next recommended boundary
+
+**The unfillable wargear group.** It is a correctness blocker — the Death Guard
+Plague Champion has a `Wargear` group requiring 2 of 2 with no resolvable
+entries, so that list can never reach a valid structural state — and it is now
+cheap to explore interactively.
