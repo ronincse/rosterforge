@@ -200,7 +200,34 @@ export function resolveEvaluationSelection(
   };
 }
 
+/**
+ * One walk per roster, for as long as that roster object lives.
+ *
+ * Every caller wants the same flattened view of an immutable tree, and seven
+ * modules ask for it — several inside loops. Measured 2026-08-23 on a 143
+ * selection Dark Angels army: **2,763 calls in a single structural
+ * inspection**, each re-walking all 143 selections.
+ *
+ * Rosters are immutable and every command returns a new one, so a cached walk
+ * cannot describe a stale tree: a changed roster is a different key. That is
+ * the same property the unsaved-change indicator relies on.
+ */
+const rosterLocations = new WeakMap<
+  Roster,
+  readonly RosterSelectionLocation[]
+>();
+
 export function rosterSelectionLocations(
+  roster: Roster,
+): readonly RosterSelectionLocation[] {
+  const cached = rosterLocations.get(roster);
+  if (cached !== undefined) return cached;
+  const walked = walkRosterSelectionLocations(roster);
+  rosterLocations.set(roster, walked);
+  return walked;
+}
+
+function walkRosterSelectionLocations(
   roster: Roster,
 ): readonly RosterSelectionLocation[] {
   const locations: RosterSelectionLocation[] = [];
@@ -483,7 +510,35 @@ export function evaluationSelectionsInForces(
   );
 }
 
+/**
+ * Identity IDs per choice, keyed by which of the two forms was asked for.
+ *
+ * A choice is materialized catalogue data and never changes, so this is a pure
+ * function of `(choice, shared)` — but it allocates four arrays and a Set every
+ * call, and a single structural inspection of a 143 selection army made
+ * **28,780** of them. Garbage collection was 17% of the profile.
+ */
+const choiceIdentityIds = new WeakMap<
+  EvaluationSelectionChoice,
+  { shared?: readonly ObjectId[]; own?: readonly ObjectId[] }
+>();
+
 function selectionChoiceIdentityIds(
+  choice: EvaluationSelectionChoice,
+  shared: boolean,
+): readonly ObjectId[] {
+  const cached = choiceIdentityIds.get(choice);
+  const hit = shared ? cached?.shared : cached?.own;
+  if (hit !== undefined) return hit;
+  const built = buildSelectionChoiceIdentityIds(choice, shared);
+  const entry = cached ?? {};
+  if (shared) entry.shared = built;
+  else entry.own = built;
+  if (cached === undefined) choiceIdentityIds.set(choice, entry);
+  return built;
+}
+
+function buildSelectionChoiceIdentityIds(
   choice: EvaluationSelectionChoice,
   shared: boolean,
 ): readonly ObjectId[] {

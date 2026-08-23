@@ -10,9 +10,19 @@ import {
   sourceId,
   type SourceFileProvenance,
 } from "@rosterforge/foundation";
+import {
+  forceOccurrenceId,
+  rosterDefinitionKey,
+  rosterId,
+  selectionOccurrenceId,
+  type Roster,
+} from "@rosterforge/roster-model";
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
-import { indexEvaluationChoices } from "./selection-context.js";
+import {
+  indexEvaluationChoices,
+  rosterSelectionLocations,
+} from "./selection-context.js";
 
 describe("evaluation choice index", () => {
   /**
@@ -57,6 +67,79 @@ describe("evaluation choice index", () => {
     );
   });
 });
+
+describe("roster selection locations", () => {
+  /**
+   * The second half of the same defect.
+   *
+   * Seven modules flatten the roster this way, several inside loops. Measured
+   * 2026-08-23 on a 143-selection Dark Angels army: **2,763 walks in a single
+   * structural inspection**, each visiting every selection.
+   *
+   * Rosters are immutable and every command returns a new one, so a cached walk
+   * cannot describe a stale tree — an edited roster is a different key.
+   */
+  it("walks a roster once and reuses the result", () => {
+    const roster = fixtureRoster();
+
+    expect(rosterSelectionLocations(roster)).toBe(
+      rosterSelectionLocations(roster),
+    );
+  });
+
+  it("walks an edited roster separately", () => {
+    const roster = fixtureRoster();
+    const edited: Roster = { ...roster, name: "Edited" };
+
+    const first = rosterSelectionLocations(roster);
+    const second = rosterSelectionLocations(edited);
+
+    // Booleans, not the arrays: a location holds the occurrence and all of its
+    // ancestors, so a failing deep comparison prints the whole tree.
+    expect(first === second).toBe(false);
+    expect(second.length).toBe(first.length);
+  });
+});
+
+function fixtureRoster(): Roster {
+  return {
+    id: rosterId("locations"),
+    name: "Locations",
+    catalogue: {
+      kind: "catalogue",
+      key: rosterDefinitionKey("fixture:catalogue"),
+    },
+    forces: [
+      {
+        id: forceOccurrenceId("force-1"),
+        definition: {
+          kind: "forceEntry",
+          key: rosterDefinitionKey("fixture:force"),
+        },
+        forces: [],
+        selections: [
+          {
+            id: selectionOccurrenceId("parent"),
+            definition: {
+              kind: "selectionEntry",
+              key: rosterDefinitionKey("fixture:parent"),
+            },
+            selections: [
+              {
+                id: selectionOccurrenceId("child"),
+                definition: {
+                  kind: "selectionEntry",
+                  key: rosterDefinitionKey("fixture:child"),
+                },
+                selections: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
 
 function fixtureContext(): BattleScribeCatalogueContext {
   const graph = resolveBattleScribeDataGraph([
