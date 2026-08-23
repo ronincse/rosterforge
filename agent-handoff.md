@@ -292,7 +292,8 @@ invisible to the whole test suite.
 | Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
-| **NOTICE text offered as an addable unit** | **Next** | the catalogue's deprecation notice is a selectable root. Small, and the browser is the first thing a user sees |
+| NOTICE text offered as an addable unit | Blocked | it *is* a visibility problem and filtering roots by visibility fixes it — but the same filter hides 72 `[Legends]` units per faction whose `Show Legends` toggle is unreachable. Needs the row below first |
+| **`Show/Hide Options` is unreachable** | **Next** | a game-system configuration group holding `Show Legends`. Not among the root choices, so 72 hidden units per faction have no toggle. Unblocks the row above |
 | `skipIfPresent` on modifiers | Open | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -6142,3 +6143,66 @@ pin fails when the filter is bypassed — verified by bypassing it.
 **The `NOTICE` deprecation string offered as an addable unit.** Small, and the
 catalogue browser is the first thing a user sees. After that, `skipIfPresent`
 remains the largest display gap at 359 modifiers.
+
+## Research Note — The NOTICE Root Is Not A Small Fix, 2026-08-23
+
+No code change. Investigated the QA finding that the catalogue's deprecation
+notice is offered as an addable unit, expecting a filter and finding a
+dependency.
+
+### The notice is a visibility problem, not a naming one
+
+One entry, in `Imperium - Agents of the Imperium`, reached from other catalogues
+through `importRootEntries`. It is `hidden: false` statically, but carries
+`set hidden -> true` when the parent has at least one selection of any kind. As
+a root its parent is the force, and a force always has configuration slots, so
+**it correctly evaluates as hidden**. A name-based filter would have been a hack
+for something the data already answers.
+
+So the fix is to filter root choices by visibility, exactly as roster creation
+now does. That was written and measured before being abandoned, for the reason
+below.
+
+### Why it is blocked
+
+Filtering roots by visibility hides more than the notice:
+
+| Catalogue | Roots | Would hide |
+|---|---|---|
+| Chaos - Death Guard | 137 | **72** |
+| Imperium - Agents of the Imperium | 113 | **74** |
+
+Every one of them is a `[Legends]` unit, hidden by
+`set hidden -> true` when the roster holds fewer than one `Show Legends`
+(`9ed-cbf4-bfe5-90bf`). **That is correct BattleScribe behaviour** — Legends
+units are meant to be hidden until the toggle is on.
+
+The problem is the toggle. `Show Legends` is a shared entry in the game system,
+linked under a group named **`Show/Hide Options`**, and that group is **not among
+the root choices**. Selecting it is impossible today, and a scan of every
+configuration slot on a fresh Death Guard roster does not find it.
+
+So shipping the filter alone would remove 72 units per faction **with no way to
+bring them back** — trading a cosmetic bug for a functional regression. It was
+not shipped.
+
+### The order this needs
+
+1. **Make `Show/Hide Options` reachable.** Find out why a game-system
+   configuration group is absent from `context.roots.roots` while catalogue
+   roots are present. That is a roots-composition question, not a UI one.
+2. **Then filter root choices by visibility.** It fixes the notice, gives
+   correct Legends behaviour, and needs no special cases.
+
+Doing (2) without (1) is the trap this note exists to record.
+
+### Checks run
+
+No source changed; the working tree is clean. Verified only that the corpus
+suite still passes at **17 tests** after the investigation.
+
+### Next recommended boundary
+
+`Show/Hide Options`, as above. If that turns out to be deep, `skipIfPresent`
+(359 modifiers, the largest display gap) is the better use of a checkpoint than
+forcing the notice fix through.
