@@ -4,6 +4,7 @@ import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import {
   acquirePinnedGitHubBattleScribeFile,
+  inspectGitHubRepositoryUpdate,
   downloadPinnedGitHubFile,
   githubRawFileUrl,
   listPinnedGitHubRepositoryFiles,
@@ -239,6 +240,71 @@ function createPinnedSource(): PinnedGitHubRepository {
   }
   return pinned.value;
 }
+
+describe("upstream repository freshness", () => {
+  const source = { owner: "BSData", repository: "wh40k-11e" };
+
+  it("reports when the repository was last pushed to", async () => {
+    const fetcher = vi.fn(async () =>
+      jsonResponse({
+        pushed_at: "2026-08-23T09:47:50Z",
+        default_branch: "main",
+        // Real payloads carry far more; only these two are read.
+        stargazers_count: 412,
+      }),
+    ) as unknown as RepositoryFetch;
+
+    const status = await inspectGitHubRepositoryUpdate(source, {
+      fetch: fetcher,
+    });
+
+    expect(status).toEqual({
+      ok: true,
+      value: {
+        owner: "BSData",
+        repository: "wh40k-11e",
+        lastUpdatedAt: "2026-08-23T09:47:50Z",
+        defaultBranch: "main",
+      },
+      diagnostics: [],
+    });
+    // One request. Asking per file would exhaust an unauthenticated hourly
+    // allowance on a single catalogue.
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails without throwing when the network is unavailable", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }) as unknown as RepositoryFetch;
+
+    const status = await inspectGitHubRepositoryUpdate(source, {
+      fetch: fetcher,
+    });
+
+    // The caller falls back to saying the data may be out of date, so this must
+    // be a diagnostic rather than an exception.
+    expect(status.ok).toBe(false);
+    expect(status.diagnostics).toEqual([
+      expect.objectContaining({ code: "REPOSITORY_GITHUB_REQUEST_FAILED" }),
+    ]);
+  });
+
+  it("refuses metadata with no usable update time", async () => {
+    const fetcher = vi.fn(async () =>
+      jsonResponse({ default_branch: "main" }),
+    ) as unknown as RepositoryFetch;
+
+    const status = await inspectGitHubRepositoryUpdate(source, {
+      fetch: fetcher,
+    });
+
+    expect(status.ok).toBe(false);
+    expect(status.diagnostics).toEqual([
+      expect.objectContaining({ code: "REPOSITORY_GITHUB_UPDATE_INVALID" }),
+    ]);
+  });
+});
 
 function jsonResponse(value: unknown): Response {
   const body = JSON.stringify(value);

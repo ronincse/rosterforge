@@ -268,6 +268,83 @@ export async function ingestDownloadedPinnedGitHubFile(
   return ingested;
 }
 
+/**
+ * When the upstream repository last changed, without downloading any of it.
+ *
+ * This answers a freshness question, not an identity one: it says when
+ * `owner/repository` was last pushed to, which a caller can compare against
+ * when the user imported. It deliberately does **not** claim the user's files
+ * came from that push — locally chosen files may be older, newer, or from
+ * somewhere else entirely.
+ *
+ * One request. Asking per file would be exact but costs a request each, and
+ * GitHub allows 60 an hour unauthenticated — 46 catalogue files would exhaust
+ * that in a single check.
+ */
+export interface GitHubRepositoryUpdateStatus {
+  readonly owner: string;
+  readonly repository: string;
+  /** ISO-8601, from the repository's most recent push. */
+  readonly lastUpdatedAt: string;
+  readonly defaultBranch?: string;
+}
+
+export function githubRepositoryUrl(source: {
+  readonly owner: string;
+  readonly repository: string;
+}): string {
+  return `https://api.github.com/repos/${encodeURIComponent(source.owner)}/${encodeURIComponent(source.repository)}`;
+}
+
+export async function inspectGitHubRepositoryUpdate(
+  source: { readonly owner: string; readonly repository: string },
+  options: { readonly fetch?: RepositoryFetch; readonly signal?: AbortSignal } = {},
+): Promise<Result<GitHubRepositoryUpdateStatus>> {
+  const fetcher = options.fetch ?? globalThis.fetch;
+  const url = githubRepositoryUrl(source);
+  const response = await fetchResponse(fetcher, url, options.signal);
+  if (!response.ok) return response;
+
+  let payload: unknown;
+  try {
+    payload = await response.value.json();
+  } catch (error: unknown) {
+    return failure([
+      repositoryDiagnostic(
+        "REPOSITORY_GITHUB_UPDATE_INVALID",
+        "The GitHub repository metadata could not be read.",
+        ["import"],
+        { cause: errorMessage(error), url },
+      ),
+    ]);
+  }
+
+  const record =
+    typeof payload === "object" && payload !== null
+      ? (payload as Record<string, unknown>)
+      : undefined;
+  // `pushed_at` is the last push to any branch, which is the closest thing to
+  // "when did this data last change" without walking commits.
+  const pushedAt = record?.["pushed_at"];
+  if (typeof pushedAt !== "string" || !Number.isFinite(Date.parse(pushedAt))) {
+    return failure([
+      repositoryDiagnostic(
+        "REPOSITORY_GITHUB_UPDATE_INVALID",
+        "The GitHub repository metadata did not carry a usable update time.",
+        ["import"],
+        { url },
+      ),
+    ]);
+  }
+  const defaultBranch = record?.["default_branch"];
+  return success({
+    owner: source.owner,
+    repository: source.repository,
+    lastUpdatedAt: pushedAt,
+    ...(typeof defaultBranch === "string" ? { defaultBranch } : {}),
+  });
+}
+
 export function githubRawFileUrl(
   source: PinnedGitHubRepository,
   path: string,

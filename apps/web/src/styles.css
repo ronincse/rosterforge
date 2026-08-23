@@ -2767,3 +2767,25 @@ footer {
   display: flex;
   gap: 0.5rem;
 }
+
+/* How current the loaded catalogue data is. Stale is worth noticing without
+   being alarming: points drift between releases and a note is enough. */
+.catalogue-data-freshness {
+  max-width: 690px;
+  margin: 10px 0 4px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.catalogue-data-freshness[data-freshness="stale"],
+.catalogue-data-freshness[data-freshness="unknown"] {
+  padding: 8px 10px;
+  border-left: 3px solid var(--warning, #b8860b);
+  background: rgba(184, 134, 11, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+.catalogue-data-freshness strong {
+  color: var(--text);
+}
