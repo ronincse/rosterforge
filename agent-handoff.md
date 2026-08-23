@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (absent automatic activation)
+## Current Status — 2026-08-22 (automatic group reconciliation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,19 +39,20 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **473 passed, 11 skipped (484)**.
+  `git diff --check` all pass. `pnpm test` is **474 passed, 12 skipped (486)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **484 passed**; without it the 11 corpus tests are skipped.
+  **486 passed**; without it the 12 corpus tests are skipped.
 - **Active area.** Legality and initialization semantics (roadmap section B).
-  Every observed profile-name modifier now executes and section A has no
-  remaining corpus-backed display gap. Editing durability is complete.
+  Automatic ordinary entries and all five measured direct-child groups now
+  reconcile. The next corpus-backed gap is the Override points limit repeat.
 - **Comments.** The automatic helper records the deployed-runtime branch,
-  54-owner split, twelve base-zero cases, three measured hot-path alternatives,
-  shared-wrapper refusal, and ephemeral-probe lifetime. Changed commands
-  document atomic history and autosave behavior.
+  54-owner split, five-group shape, source/reverse ordering, direct-edit
+  priority, temporary group and child probe lifetimes, child-bound guards, and
+  the measured hot-path cost. Changed commands document atomic history and
+  autosave behavior.
 
 ### Picking up from here
 
@@ -71,16 +72,24 @@ evict least-recently-used re-downloadable entries and never touch saved drafts.
 
 Initial creation semantics for the New Recruit `automatic` extension are
 settled: ordinary minima initialize whether the property is absent, `false`, or
-`true`. Live reconciliation now handles both selected and absent ordinary
-entries after count/query or effective-limit changes caused by roster edits.
-The pinned Necron path activates Singularity Matrix when Pantheon of Woe makes
-it required, without leaking its ephemeral probe or mutating the prior session.
+`true`. Live reconciliation now handles selected and absent ordinary entries
+and direct-child selection-entry groups after count/query or effective-limit
+changes caused by roster edits.
 
-The current **Next is automatic selection-entry-group reconciliation** in
-section B. New Recruit dispatches groups through a distinct algorithm. Inventory
-all five modifier-driven group owners and pin the one base-zero group before
-changing commands. Unit-typed sub-unit repair has no pinned modifier-driven
-owner and remains low priority.
+All five modifier-driven group owners in the pinned corpus have only direct
+model or upgrade children. Group deficits fill visible choices in source order
+up to child maxima; excess trims reverse order down to child minima; and the
+exact edited group child gets runtime priority. Effective group limits use an
+ephemeral group occurrence so relative `self` and `parent` conditions stay
+correct, but durable rosters remain transparent. The pinned GSC path selects
+Burrowing Claws when Specialisms moves from zero to one.
+
+The current **Next is the `Override points limit?` repeat** in section B.
+Inventory that exact root and its repeat shape, compare New Recruit, and extend
+the smallest repeat-evaluation boundary needed for the points-limit modifier.
+Do not generalize all 2,826 corpus repeats from one configuration rule. Nested
+automatic groups and unit-typed automatic sub-units remain low priority because
+none of the five modifier-driven pinned groups uses either shape.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
@@ -160,11 +169,11 @@ points limit works end to end and is now pinned.
 | `automatic: true` selected ordinary reconciliation | Done | exact choice and parent; add/remove/amount/group-replacement edits; targeted condition-aware bounds; exact Drukhari Scourges transition pinned |
 | `automatic: true` absent ordinary activation | Done | 11 base-zero ordinary owners; visible complete minima activate with caller IDs; exact Necron transition pinned |
 | `automatic: true` shared-wrapper identity | Low priority | zero entry-link references to the 11 pinned absent owners; cross-wrapper mutation stays diagnosed |
-| `automatic: true` selection-entry groups | Next | five modifier-driven true owners, including the twelfth base-zero owner; New Recruit has a distinct algorithm |
+| `automatic: true` selection-entry groups | Done | all five modifier-driven owners have direct model/upgrade children; source-order fill, reverse trim, edited-choice priority; exact GSC Specialisms transition pinned |
 | `automatic: true` unit-typed sub-units | Low priority | New Recruit has distinct algorithms; zero pinned modifier-driven owners |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
-| `Override points limit?` | Open | uses `increment` with `repeats`; repeat shapes stay unsupported |
+| `Override points limit?` | Next | uses `increment` with `repeats`; inventory and pin this exact configuration before widening repeat execution |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -4860,3 +4869,112 @@ zero modifier-driven owners. Cross-wrapper automatic mutation also remains low
 priority and diagnosed: none of the eleven supported absent owners is linked.
 No catalogue resolution, cost calculation, general validation enforcement,
 persistence, or UI behavior changed.
+
+## Completed Assignment — Automatic Selection-Entry-Group Reconciliation, 2026-08-22
+
+Baseline `38cf4f6`; resulting implementation commit `70b1036`
+(`feat: reconcile automatic selection groups`).
+
+### Runtime behavior settled first
+
+The deployed New Recruit 35.66 group branch was read before implementation. It
+fills a violated minimum across visible group children in stable interaction
+priority/source order up to each child's effective maximum. It trims a violated
+maximum in the reverse of that order down to each child's effective minimum.
+The exact interacted choice has highest priority, so it is considered first for
+a fill and first after reversal for a trim.
+
+A selection-entry group is transparent in RosterForge's durable roster. Adding
+a permanent group occurrence was rejected. Extracting only modifier-limit
+evaluation into a new public evaluator API was also rejected after verifying
+that `roster-builder` can add a group to a throwaway roster: the temporary
+occurrence gives `self`, `parent`, typed, and ID-valued conditions the right
+relative anchor while reusing the complete condition-aware inspector. It never
+enters the returned session or choice map.
+
+### Exact corpus inventory
+
+At pinned wh40k-11e commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, typed-projection traversal
+derives exactly five modifier-driven automatic group owners:
+
+- World Eaters Dishonoured `972c-1a7a-a57a-aa0c`: two model children,
+  base min/max 1.
+- Tyranid Specialisms `9c71-7661-3b6b-a27c`: six upgrade children,
+  base min 0/max 1.
+- Tyranid Ranged Weapons `93f9-6099-8613-801c`: 21 upgrade children,
+  base max 1.
+- T'au Krootox Riders `aee2-c887-105a-ea1b`: two model children,
+  base max 3.
+- T'au Ranged Weapons `82dc-f84f-1b88-b8fd`: 22 upgrade children,
+  base max 1.
+
+All five have zero nested direct or linked groups. Resolving all child entry
+links finds only model or upgrade targets and zero unit-typed sub-units.
+Specialisms is the sole base-zero group minimum and is reached through three
+Crucible organism wrappers.
+
+### Implementation
+
+The bounded command reconciler now settles selected ordinary quantities, then
+visible automatic groups, then absent ordinary choices. A throwaway group
+occurrence supplies the effective group limit. The durable parent continues to
+hold its group children directly.
+
+For each violated direct-child group, complete child visibility and effective
+parent-scoped min/max bounds are inspected. Deficits fill stable source order
+and excess trims reverse order. Root, child, group-choice, removal, and amount
+commands pass the exact edited materialized choice so a direct group edit gets
+New Recruit's priority. Missing child occurrences use the caller's existing ID
+factory. Every change stays in the initiating immutable action.
+
+Nested groups, unit-typed group children, conflicting child bounds, and
+unsatisfiable visible-child capacity are source-located compatibility warnings
+and produce no partial guessed repair. A missing ID factory preserves the
+initiating edit and reports the parent/group/target. Generic nodes, projections,
+provenance, and imported bytes remain shared by reference.
+
+Ten complete no-op amount-command reconciliations on the pinned 41-selection
+Guardian roster measured **1.3 ms total**, compared with **1.2 ms** before the
+group scan.
+
+### Tests and failure proof
+
+The fictional catalogue now has one group whose external trigger raises min/max
+from 0/1 to 2/2 and a second group whose selected child raises its minimum.
+The focused test proves source-order fill, reverse-order trim, direct-choice
+priority, effective child maxima, caller-generated identity, source-located
+missing-ID reporting, absence of durable probe/group occurrences, and unchanged
+prior sessions.
+
+The full-corpus test pins all five owner IDs, filenames, names, direct child
+counts, zero nested groups, and base bounds. The exact GSC integration adds Node
+Organism [Crucible] and proves Specialisms selects Burrowing Claws
+`0afb-d2ae-1373-773e` at amount one while no selection-entry-group occurrence
+survives.
+
+Disabling the group scan made the focused test fail on the first expected
+source-order children. The implementation was restored and the test passed.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and
+  `git diff --check` — pass.
+- Normal `pnpm test` — **474 passed, 12 skipped (486 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — complete
+  suite **486 passed**, including 12 corpus tests.
+- Build retains only the existing Vite large-chunk warning.
+
+### Remaining boundary
+
+Take the **Override points limit?** configuration next. It uses an
+`increment` modifier with `repeats`; inventory that exact projected shape,
+measure its applicability and New Recruit result, and implement only the
+smallest reusable repeat-evaluation behavior the evidence supports. Do not
+generalize the 2,826 corpus repeats from one root configuration.
+
+Automatic distribution through nested groups and automatic unit-typed
+sub-units remain low priority because the five modifier-driven pinned groups
+exercise neither. Shared-wrapper absent ordinary activation also remains
+diagnosed and low priority. No catalogue resolution, cost calculation,
+persistence, interchange, or UI behavior changed.
