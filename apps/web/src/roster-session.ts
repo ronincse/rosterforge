@@ -533,13 +533,35 @@ export function inspectLocalRosterRootChoices(
   );
 }
 
+/**
+ * The two whole-roster reports, cached per session.
+ *
+ * Both walk every selection, and both are pure functions of the session's
+ * roster and catalogue context. A session is immutable — a command returns a
+ * new one for any real change — so a cached report cannot describe a stale
+ * roster.
+ *
+ * The case this is for is **undo and redo**. The history holds the session
+ * objects themselves, so stepping back restores one that was already evaluated:
+ * measured 2026-08-23, undo on a fifteen-unit Dark Angels army cost 308 ms of
+ * re-evaluating a roster whose answers were already known.
+ */
+const localRosterCostReports = new WeakMap<
+  LocalRosterSession,
+  Result<RosterSelectionConditionCostReport>
+>();
+
 export function evaluateLocalRosterCosts(
   session: LocalRosterSession,
 ): Result<RosterSelectionConditionCostReport> {
-  return evaluateRosterCostsWithSelectionConditions(
+  const cached = localRosterCostReports.get(session);
+  if (cached !== undefined) return cached;
+  const evaluated = evaluateRosterCostsWithSelectionConditions(
     session.roster,
     session.catalogue.context,
   );
+  localRosterCostReports.set(session, evaluated);
+  return evaluated;
 }
 
 export function inspectLocalRosterConstraints(
@@ -858,7 +880,23 @@ export function inspectLocalRosterStructuralStatus(
   );
 }
 
+const localRosterValidations = new WeakMap<
+  LocalRosterSession,
+  Result<LocalRosterSupportedValidationInspection>
+>();
+
+/** Cached per session; see `localRosterCostReports` for why. */
 export function inspectLocalRosterSupportedValidation(
+  session: LocalRosterSession,
+): Result<LocalRosterSupportedValidationInspection> {
+  const cached = localRosterValidations.get(session);
+  if (cached !== undefined) return cached;
+  const inspected = inspectSupportedValidation(session);
+  localRosterValidations.set(session, inspected);
+  return inspected;
+}
+
+function inspectSupportedValidation(
   session: LocalRosterSession,
 ): Result<LocalRosterSupportedValidationInspection> {
   const structural = inspectLocalRosterStructuralStatus(session);
