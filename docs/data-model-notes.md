@@ -510,13 +510,16 @@ supporting BattleScribe category and `unit`/`model`/`upgrade` filters.
 
 Supported numeric conditions query `field="selections"` in `self`, `parent`,
 `root-entry`, `unit`, `model`, `model-or-unit`, `upgrade`, `force`, `roster`,
-or a supported object-ID scope. Selection-owned `self`
-includes the exact owner occurrence. `root-entry` uses the top-level selection
-containing the owner. `upgrade` uses the nearest owner-or-ancestor occurrence
-that resolves consistently to selection-entry type `upgrade`. Descendants are
-included recursively only when `includeChildSelections` is explicitly true.
-Other child selections and child forces are likewise included only when their
-corresponding flags are explicitly true. Candidate order follows roster order,
+or a supported object-ID scope. Selection-owned `self` includes the exact owner
+occurrence. `root-entry` uses the top-level selection containing the owner.
+`upgrade` uses the nearest owner-or-ancestor occurrence that resolves
+consistently to selection-entry type `upgrade`. A supported object-ID scope
+names the nearest matching owner-or-ancestor container; false or absent
+`includeChildSelections` queries its direct children, while explicit true
+includes all descendants. The pinned split is 214 direct-only and 830 recursive
+conditions. Other child selections and child forces are included only when
+their corresponding flags are explicitly true. Candidate order follows roster
+order,
 and each matching occurrence contributes its effective amount instead of an
 unconditional one. The six numeric comparisons use finite operands and preserve zero. Percentage
 operands are unsupported.
@@ -620,13 +623,14 @@ where one Points limit occurrence with amount 1,750 produces 1,750 repetitions
 and an effective 1,750-point maximum. It is not a general repeat or legality
 engine.
 
-That proof does not imply default-amount initialization. The Points limit
-source has no static `defaultAmount`; three conditional `set defaultAmount`
-modifiers select 1,000, 2,000, or 3,000 from the battle size, and its sole
-`step="250"` is an editing/validation increment. New Recruit creates one
-quantifiable occurrence at the maximum of its minimum and effective default.
-RosterForge still treats the base minimum as occurrence multiplicity and does
-not execute the default modifiers while constructing the child.
+The same Points limit path now has default-amount initialization. Its source has
+no static `defaultAmount`; three conditional `set defaultAmount` modifiers
+select 1,000, 2,000, or 3,000 from the battle size, and its sole `step="250"` is
+an editing hint rather than a stored field. The planner represents the minimum
+as one planned occurrence with an explicit amount. The web command evaluates
+the modifiers on a temporary prospective child at the real parent, then creates
+one durable occurrence at the maximum of the minimum and effective default.
+The repeat evaluator consumes that occurrence amount without expansion.
 
 ## Selection Constraints
 
@@ -708,11 +712,19 @@ and aggregate legality remain outside this boundary.
 
 `planRosterSelectionInitialization` is a deterministic, read-only projection
 from one exact materialized selection choice to a tree of planned descendant
-occurrences. It accepts only non-negative safe-integer `min` and `max` constraints
-with `field="selections"` and `scope="parent"`. The supported minimum of a direct
-selection entry becomes its planned quantity; nested plans repeat with each
-occurrence. Repetition remains a set of independent roster occurrences rather
-than a quantity property.
+occurrences. It accepts only non-negative safe-integer `min` and `max`
+constraints with `field="selections"` and `scope="parent"`. The supported
+minimum of an ordinary direct selection entry becomes its planned quantity;
+nested plans repeat with each occurrence. Repetition remains a set of
+independent roster occurrences rather than a quantity property.
+
+A selection entry with a finite positive lexical `step` is the narrow exception:
+the plan carries one durable occurrence plus an explicit amount equal to the
+greater of the supported minimum and one finite non-negative static default.
+It retains the minimum separately for condition-aware command initialization.
+Comma-delimited defaults and invalid numeric values make that branch incomplete
+with source-located diagnostics. The planner has no roster context and therefore
+does not itself apply conditional defaults.
 
 The New Recruit `automatic` constraint extension remains on the generic node,
 outside the BattleScribe 2.03 typed constraint projection. It is inert for
@@ -738,10 +750,11 @@ than the inert `automatic` extension, conflicting bounds, and unsupported
 parent-bound shapes are likewise never
 coerced into quantities.
 
-Plans expose exact materialized choices, ordered additions, quantities, nested
-plans, pending group choices, an expanded descendant count, and independent
-completeness. They do not inspect current roster occurrences, enforce
-constraints, evaluate conditions or modifiers, or mutate a roster. Expanded
+Plans expose exact materialized choices, ordered additions, quantities, optional
+stepped amounts and minimums, nested plans, pending group choices, a durable
+node count, and independent completeness. They do not inspect current roster
+occurrences, enforce constraints, evaluate conditions or modifiers, or mutate a
+roster. Expanded
 plans above 4,096 descendants are replaced by an empty, incomplete plan with a
 resource-limit diagnostic.
 
@@ -1459,7 +1472,10 @@ selection objects while retaining an equal source-scoped definition reference.
 An occurrence amount may then be set or cleared through the session wrapper;
 the choice map and source wrapper remain identical, and history records the new
 immutable session. The browser displays lexical source `defaultAmount` and
-numeric `step` hints but deliberately begins an absent roster amount at one.
+numeric `step` hints. Ordinary manual additions begin with absent amount, which
+means one; supported
+stepped descendant initialization can instead create one occurrence with an
+explicit condition-aware amount.
 
 The browser groups these same wrappers by the first explicitly primary category
 link that resolves to exactly one composed category definition. Category

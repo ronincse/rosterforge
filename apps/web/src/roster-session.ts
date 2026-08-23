@@ -20,6 +20,7 @@ import {
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
   inspectRosterSelectionChildChoices,
+  inspectRosterSelectionDefaultAmount,
   inspectRosterForceConstraintsInRoster,
   inspectRosterSelectionConstraintsInRoster,
   planEmptySingleForceRootInitialization,
@@ -64,6 +65,7 @@ import {
   rosterDefinitionKeyForSource,
   rosterSelectionAmount,
   rosterSelectionsAmount,
+  selectionOccurrenceId,
   setRosterSelectionAmount,
   setRosterSelectionName,
   type ForceOccurrenceId,
@@ -1372,6 +1374,7 @@ function initializeAddedSelection(
     roster,
     selectionChoices,
     diagnostics: allDiagnostics,
+    probeSequence: 0,
   };
   const initialized = applySelectionInitialization(
     state,
@@ -1400,6 +1403,7 @@ interface MutableSelectionInitialization {
     BattleScribeRosterSelectionChoice
   >;
   readonly diagnostics: Diagnostic[];
+  probeSequence: number;
 }
 
 function applySelectionInitialization(
@@ -1411,13 +1415,27 @@ function applySelectionInitialization(
 ): boolean {
   for (const addition of plan.additions) {
     for (let index = 0; index < addition.quantity; index += 1) {
+      const amount = effectiveInitializationAmount(
+        state,
+        session,
+        parentId,
+        addition,
+      );
+      if (amount === false) return false;
+      if (amount === 0) continue;
+
       const selectionId = createSelectionId();
       const added = addRosterSelectionToSelectionFromCatalogueContext(
         state.roster,
         session.catalogue.context,
         parentId,
         addition.choice,
-        { id: selectionId },
+        {
+          id: selectionId,
+          ...(amount === undefined || amount === 1
+            ? {}
+            : { amount }),
+        },
       );
       state.diagnostics.push(...added.diagnostics);
       if (!added.ok) {
@@ -1437,6 +1455,93 @@ function applySelectionInitialization(
     }
   }
   return true;
+}
+
+function effectiveInitializationAmount(
+  state: MutableSelectionInitialization,
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+  addition: RosterSelectionInitializationPlan["additions"][number],
+): number | undefined | false {
+  if (
+    addition.amount === undefined ||
+    addition.choice.kind !== "selectionEntry" ||
+    !selectionTargetsDefaultAmount(addition.choice)
+  ) {
+    return addition.amount;
+  }
+
+  let probeId: SelectionOccurrenceId;
+  do {
+    state.probeSequence += 1;
+    probeId = selectionOccurrenceId(
+      `__rosterforge-initialization-probe-${state.probeSequence}`,
+    );
+  } while (findRosterSelection(state.roster.forces, probeId) !== undefined);
+
+  // Modifier conditions need the prospective entry at its real parent. The
+  // throwaway immutable roster supplies that anchor without consuming a caller
+  // ID or leaking a probe occurrence into the durable session or choice map.
+  // This costs one extra immutable add and lookup only for a stepped entry with
+  // a defaultAmount modifier; the pinned 46-file corpus has exactly one such
+  // entry, so ordinary initialization never pays for the probe.
+  const probe = addRosterSelectionToSelectionFromCatalogueContext(
+    state.roster,
+    session.catalogue.context,
+    parentId,
+    addition.choice,
+    {
+      id: probeId,
+      ...(addition.amount === 0 ? {} : { amount: addition.amount }),
+    },
+  );
+  state.diagnostics.push(...probe.diagnostics);
+  if (!probe.ok) return false;
+  const owner = findRosterSelection(probe.value.forces, probeId);
+  if (owner === undefined) return false;
+
+  const inspected = inspectRosterSelectionDefaultAmount(
+    probe.value,
+    session.catalogue.context,
+    owner,
+    addition.choice,
+  );
+  state.diagnostics.push(...inspected.diagnostics);
+  if (
+    !inspected.ok ||
+    inspected.value.completeness !== "complete" ||
+    inspected.value.amount === undefined
+  ) {
+    return addition.amount;
+  }
+  return Math.max(
+    addition.minimumAmount ?? 0,
+    inspected.value.amount,
+  );
+}
+
+function selectionTargetsDefaultAmount(
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  return (
+    choice.modifiers.some(
+      ({ field }) => field === "defaultAmount",
+    ) ||
+    choice.modifierGroups.some((group) =>
+      modifierGroupTargetsDefaultAmount(group),
+    )
+  );
+}
+
+function modifierGroupTargetsDefaultAmount(
+  group: BattleScribeRosterSelectionChoice["modifierGroups"][number],
+): boolean {
+  return (
+    group.modifiers.some(
+      ({ field }) => field === "defaultAmount",
+    ) ||
+    group.modifierGroups.some(modifierGroupTargetsDefaultAmount)
+  );
 }
 
 function isResolvedSelectionChoice(

@@ -84,6 +84,68 @@ describe("roster selection conditions", () => {
     ]);
   });
 
+  it("counts direct children inside an ID-valued containing scope", () => {
+    const context = catalogueContext(
+      ["projection.gst", "cost-evaluation.cat"],
+      "cost-evaluation",
+    );
+    let roster = addRootSelection(
+      emptyRoster(context),
+      choice(context, "beef-cafe"),
+      "identity-root",
+    );
+    const addChild = (
+      parentId: string,
+      choiceId: string,
+      selectionId: string,
+    ): void => {
+      roster = successful(
+        addRosterSelectionToSelection(
+          roster,
+          selectionOccurrenceId(parentId),
+          {
+            id: selectionOccurrenceId(selectionId),
+            definition: selectionReference(
+              choice(context, choiceId),
+            ),
+          },
+        ),
+      );
+    };
+    addChild("identity-root", "id-model-a", "identity-model-a");
+    addChild("identity-root", "id-model-b", "identity-model-b");
+    addChild("identity-model-a", "id-player", "identity-owner");
+    const owner =
+      roster.forces[0]?.selections[0]?.selections[0]?.selections[0];
+    if (owner === undefined) {
+      throw new Error("Expected the identity-scope condition owner.");
+    }
+
+    const evaluated = successful(
+      evaluateRosterCondition(
+        roster,
+        context,
+        owner,
+        syntheticCondition({
+          scope: "beef-cafe",
+          childId: objectId("id-model-b"),
+          includeChildSelections: false,
+          shared: true,
+        }),
+      ),
+    );
+
+    expect(evaluated).toMatchObject({
+      status: "satisfied",
+      completeness: "complete",
+      observed: 1,
+      matching: [{ id: "identity-model-b" }],
+      candidates: [
+        { occurrence: { id: "identity-model-a" }, status: "different" },
+        { occurrence: { id: "identity-model-b" }, status: "match" },
+      ],
+    });
+  });
   it("uses selection amounts for selection-count conditions", () => {
     const context = catalogueContext(
       ["projection.gst", "cost-evaluation.cat"],

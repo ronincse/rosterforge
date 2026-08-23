@@ -806,7 +806,10 @@ or ambiguously typed. The evaluator does not skip that occurrence and search
 farther upward.
 
 ID-valued selection-count scopes are resolved only within the selected
-catalogue's reachable graph. `EVALUATION_CONDITION_SCOPE_TARGET_NOT_FOUND`
+catalogue's reachable graph. The nearest matching owner-or-ancestor occurrence
+is the named container: false or absent `includeChildSelections` queries direct
+children, while explicit true recursively includes descendants.
+`EVALUATION_CONDITION_SCOPE_TARGET_NOT_FOUND`
 points to `@scope` when no target is reachable.
 `EVALUATION_CONDITION_SCOPE_TARGET_KIND_UNSUPPORTED` points there when any
 target is not a selection entry, selection-entry group, entry link, or category
@@ -839,8 +842,9 @@ Selection-owned numeric selection-count conditions support `self`, `parent`,
 `root-entry`, `unit`, `model`, `model-or-unit`, `upgrade`, `force`, and
 `roster`, plus reachable selection-entry, selection-entry-group, entry-link,
 and category-entry ID scopes. Root-entry begins with the containing top-level
-selection; a typed or ID-valued scope begins with the nearest matching
-owner-or-ancestor occurrence.
+selection; a typed scope begins with the nearest matching owner-or-ancestor
+occurrence, while an ID-valued scope begins with that occurrence's child
+collection.
 Reachable cost-type fields reuse those selection scopes and identity filters,
 but produce an exact observation only from unmodified, well-formed projected
 base costs.
@@ -1190,13 +1194,18 @@ EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED
 EVALUATION_INITIALIZATION_CONSTRAINT_BOUNDS_CONFLICT
 EVALUATION_INITIALIZATION_DEFAULT_UNAVAILABLE
 EVALUATION_INITIALIZATION_DEFAULT_AMBIGUOUS
+EVALUATION_INITIALIZATION_STEP_INVALID
+EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_INVALID
+EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_MULTIPLE_UNSUPPORTED
 EVALUATION_INITIALIZATION_RESOURCE_LIMIT
 ```
 
 Unsupported and modifier-controlled bound diagnostics point to the projected
 constraint. Conflicting bounds and resource limits point to the materialized
-choice occurrence. Default diagnostics point to the group's
-`@defaultSelectionEntryId` and retain the requested ID and match count.
+choice occurrence. Group-default diagnostics point to
+`@defaultSelectionEntryId` and retain the requested ID and match count. Invalid
+stepped values point to `@step` or `@defaultAmount`; comma-delimited defaults are
+preserved in details and mark the branch incomplete instead of being coerced.
 Malformed, percentage, child-inclusive, unknown-extension, or non-integer
 parent-selection bounds are never converted into automatic quantities. The
 generic `automatic` property is an explicit exception: New Recruit does not
@@ -1216,6 +1225,23 @@ Read-only direct-child and transparent-group inspection reuses the
 unsupported-bound, modifier-controlled, and conflicting-bound diagnostics
 above. The browser labels such bounds incomplete and does not convert them into
 required counts or hard edit limits.
+
+Condition-aware stepped defaults can additionally emit:
+
+```text
+EVALUATION_SELECTION_DEFAULT_AMOUNT_INVALID
+EVALUATION_SELECTION_DEFAULT_AMOUNT_MULTIPLE_UNSUPPORTED
+EVALUATION_SELECTION_DEFAULT_AMOUNT_MODIFIER_GROUP_UNSUPPORTED
+EVALUATION_SELECTION_DEFAULT_AMOUNT_RESULT_INVALID
+```
+
+Invalid and comma-delimited base defaults point to `@defaultAmount`. Grouped
+behavior points to the first targeting modifier group; an invalid evaluated
+result points to the selected entry occurrence. Shared condition and numeric
+modifier diagnostics remain in evaluation order. Any incomplete report retains
+the planner's static minimum/default amount rather than committing a guessed
+dynamic value. The prospective probe is immutable and never enters the returned
+session or consumes a generated occurrence ID.
 
 `EVALUATION_INITIALIZATION_RESOURCE_LIMIT` suppresses the entire automatic
 descendant set for that selected occurrence; the default limit is 4,096.

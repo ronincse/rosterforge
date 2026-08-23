@@ -213,6 +213,86 @@ describe("createLocalRosterSession", () => {
     expect(localRosterSelectionCount(removed.value)).toBe(1);
   });
 
+  it("initializes a stepped conditional default as one amounted child", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+        {
+          filename: "stepped-default-initialization.cat",
+          bytes: fixtureBytes("stepped-default-initialization.cat"),
+        },
+      ],
+      {
+        import: {
+          batchId: "stepped-default-initialization",
+          importedAt: "2026-08-22T00:00:00.000Z",
+        },
+      },
+    );
+    if (!prepared.ok) throw new Error("Expected fixture catalogue.");
+    const catalogue = prepared.value.catalogues.find(
+      ({ id }) => id === "stepped-default-initialization",
+    );
+    const force = catalogue?.context.forces.definitions.find(
+      ({ source }) => source.id === "stepped-default-force",
+    );
+    const root = catalogue === undefined
+      ? undefined
+      : localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            materialized.id === "stepped-default-root",
+        );
+    if (
+      catalogue === undefined ||
+      force === undefined ||
+      root === undefined
+    ) {
+      throw new Error("Expected the stepped initialization choices.");
+    }
+    const created = createLocalRosterSession(catalogue, force, {
+      rosterId: rosterId("stepped-default-roster"),
+      forceId: forceOccurrenceId("stepped-default-force"),
+      name: "Stepped Default Roster",
+    });
+    if (!created.ok) throw new Error("Expected roster session.");
+    let nextId = 0;
+
+    const initialized = addLocalRosterRootSelection(
+      created.value,
+      root,
+      {
+        selectionId: selectionOccurrenceId("stepped-default-root"),
+        createSelectionId: () =>
+          selectionOccurrenceId(`stepped-default-child-${++nextId}`),
+      },
+    );
+
+    expect(initialized.ok).toBe(true);
+    if (!initialized.ok) return;
+    expect(initialized.diagnostics).toEqual([]);
+    expect(nextId).toBe(2);
+    expect(localRosterSelectionCount(initialized.value)).toBe(1_002);
+    expect(initialized.value.selectionChoices.size).toBe(3);
+    expect(
+      initialized.value.roster.forces[0]?.selections[0]?.selections,
+    ).toMatchObject([
+      {
+        id: "stepped-default-child-1",
+        name: "Default Trigger",
+      },
+      {
+        id: "stepped-default-child-2",
+        name: "Stepped Amount",
+        amount: 1000,
+      },
+    ]);
+    expect(created.value.roster.forces[0]?.selections).toEqual([]);
+    expect(
+      [...initialized.value.selectionChoices.keys()].some((id) =>
+        id.startsWith("__rosterforge-initialization-probe-"),
+      ),
+    ).toBe(false);
+  });
   it("atomically expands supported minimum children and explicit defaults", async () => {
     const prepared = await prepareLocalCatalogueLibrary(
       [

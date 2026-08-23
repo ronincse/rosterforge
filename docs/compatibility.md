@@ -67,8 +67,11 @@
   at supported maxima, including restoration guidance after a required
   initialized occurrence is removed
 - Read-only conservative initialization plans for unconditional non-negative
-  integer parent-selection minima, repeated entry occurrences, transparent
-  selection-entry-group containers, and exact direct group defaults
+  integer parent-selection minima, repeated ordinary occurrences, one amounted
+  occurrence for a positive finite stepped entry, transparent selection-entry
+  groups, and exact direct group defaults
+- Condition-aware direct `defaultAmount` modifiers for a prospective stepped
+  child at its real parent, including the pinned Incursion Points limit at 1,000
 - Empty-single-force initialization plans for visible entry roots with simple
   force- or roster-scoped minima and supported unconditional numeric bound
   modifiers
@@ -272,8 +275,9 @@
 - Provisional modifier reports that preserve unsupported steps and make
   completeness incomplete instead of silently applying or discarding them
 - Read-only selection-count condition reports for self, parent, root-entry,
-  nearest unit/model/upgrade, nearest model-or-unit, force, and roster scopes,
-  including child-selection and child-force traversal flags
+  nearest unit/model/upgrade, nearest model-or-unit, force, roster, and reachable
+  object-ID scopes, including direct-child versus recursive child-selection and
+  child-force traversal flags
 - Force-owned selection-count conditions in force scope, retaining the exact
   force owner and honoring explicit child-selection and child-force traversal
 - Shared force-definition count conditions in roster scope, with explicit
@@ -541,14 +545,27 @@ occurrence, changes its amount from 1,250 to 1,750, and proves the effective
 limit and exact repeat report both become 1,750 without expanding evaluator
 iterations or roster nodes.
 
-Input initialization remains a separate gap. The Points limit child is the
-corpus's only entry with `step="250"`; it has `min selections=500`, no static
-`defaultAmount`, and three conditionally applicable `set defaultAmount`
-modifiers for 1,000, 2,000, and 3,000. New Recruit computes one quantifiable
-occurrence from the effective default and minimum. RosterForge does not yet
-evaluate those default modifiers, and its generic minimum initializer treats
-500 as occurrence multiplicity. The repeat evaluator is complete once one
-amounted occurrence exists, but the browser's automatic override setup is not.
+Input initialization now covers the complete pinned Points limit path. The child
+is the corpus's only entry with `step="250"`; it has `min selections=500`, no
+static `defaultAmount`, and three conditionally applicable `set defaultAmount`
+modifiers for 1,000, 2,000, and 3,000. The planner requests one amounted
+occurrence. The web command evaluates the direct modifiers against a temporary
+prospective child at its real parent, creates exactly one durable child at the
+greater of the minimum and effective default, and leaves the amount editable.
+A pinned Incursion test initializes 1,000 automatically and proves an edit to
+1,750 still drives the exact repeat and force limit.
+
+This is deliberately not general quantifiable-entry initialization. At the
+pinned commit, 96 source `defaultAmount` properties contain 89 single numbers
+and seven comma-delimited sub-unit defaults; eight modifiers target that field,
+seven directly and one through a modifier group. Only the sole stepped entry
+uses the new command path. Ordinary entries still use occurrence multiplicity,
+comma-delimited defaults remain unsupported, and grouped default-modifier
+ordering remains incomplete. Collapsing ordinary occurrences into one amounted
+node is deferred because nested child costs currently belong to each occurrence
+and are not multiplied by an ancestor amount; changing representation first
+could undercount wargear. Invalid or unsupported stepped values remain
+source-located and fall back conservatively instead of inventing a default.
 
 ## Draft Storage Cost
 
@@ -1372,10 +1389,12 @@ evaluation.
 All 1,044 observed ID-valued condition scopes query numeric selection counts.
 Their targets resolve to 1,028 selection entries, ten selection-entry groups,
 and six entry links, so the nearest effective owner-or-ancestor interpretation
-supports their scope shape. Category-entry scope IDs are supported by the same
-identity model and covered synthetically. Missing targets and IDs that resolve
-to force entries or other object kinds remain incomplete instead of producing
-an exact zero count.
+supports their scope shape. The named occurrence is a container: the 214
+conditions with absent or false `includeChildSelections` inspect its direct
+children, while the 830 explicit-true conditions include all descendants.
+Category-entry scope IDs are supported by the same identity model and covered
+synthetically. Missing targets and IDs that resolve to force entries or other
+object kinds remain incomplete instead of producing an exact zero count.
 
 The pinned game system contains 301 constraints. Common compatible shapes use
 `type="min"` or `type="max"`, `field="selections"`, and parent, force, or roster

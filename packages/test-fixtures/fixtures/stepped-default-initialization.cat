@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="stepped-default-initialization" name="Stepped Default Initialization"
+  revision="1" battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="stepped-default-category" name="Units" />
+  </categoryEntries>
+  <forceEntries>
+    <forceEntry id="stepped-default-force" name="Stepped Default Force" />
+  </forceEntries>
+  <selectionEntries>
+    <selectionEntry id="stepped-default-root" name="Stepped Default Root"
+      type="unit">
+      <categoryLinks>
+        <categoryLink id="stepped-default-root-category" name="Units"
+          targetId="stepped-default-category" primary="true" />
+      </categoryLinks>
+      <selectionEntries>
+        <selectionEntry id="stepped-default-trigger"
+          name="Default Trigger" type="upgrade">
+          <constraints>
+            <constraint id="stepped-default-trigger-min" type="min"
+              field="selections" scope="parent" value="1" />
+            <constraint id="stepped-default-trigger-max" type="max"
+              field="selections" scope="parent" value="1" />
+          </constraints>
+        </selectionEntry>
+        <selectionEntry id="stepped-default-amount"
+          name="Stepped Amount" type="upgrade" step="250">
+          <modifiers>
+            <modifier type="set" field="defaultAmount" value="1000">
+              <conditions>
+                <condition type="atLeast" value="1" field="selections"
+                  scope="parent" childId="stepped-default-trigger"
+                  shared="true" includeChildSelections="false" />
+              </conditions>
+            </modifier>
+          </modifiers>
+          <constraints>
+            <constraint id="stepped-default-amount-min" type="min"
+              field="selections" scope="parent" value="500" />
+            <constraint id="stepped-default-amount-max" type="max"
+              field="selections" scope="parent" value="3000" />
+          </constraints>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>

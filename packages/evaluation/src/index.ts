@@ -25,8 +25,8 @@
  * - *Where do they land?* `affects.ts` parses the selector,
  *   `affects-routing.ts` walks it. That file is the best-documented one in
  *   the package and a fair sample of the house style.
- * - *What can be chosen next?* `initialization.ts` and
- *   `selection-visibility.ts`.
+ * - *What can be chosen next?* `initialization.ts`,
+ *   `selection-default-amount.ts`, and `selection-visibility.ts`.
  *
  * `docs/compatibility.md` is the exhaustive record of which BattleScribe
  * behaviour this package executes and which it withholds.
@@ -46,6 +46,7 @@ export * from "./modifier-applicability.js";
 export * from "./modifier-groups.js";
 export * from "./modifiers.js";
 export * from "./repeats.js";
+export * from "./selection-default-amount.js";
 export * from "./selection-visibility.js";
 export * from "./structural-status.js";
 export * from "./validation.js";

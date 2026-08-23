@@ -75,7 +75,19 @@ export interface RosterSelectionInitializationPendingChoice {
 
 export interface RosterSelectionInitializationAddition {
   readonly choice: EvaluationSelectionChoice;
+  /** Number of durable occurrence nodes to create. */
   readonly quantity: number;
+  /**
+   * Explicit amount for each occurrence. The planner currently emits this only
+   * for a selection entry with a valid positive `step`; ordinary entries keep
+   * their established occurrence-multiplicity representation.
+   */
+  readonly amount?: number;
+  /**
+   * Static minimum retained separately so a live conditional default can fall
+   * below its source default without violating the required floor.
+   */
+  readonly minimumAmount?: number;
   readonly initialization: RosterSelectionInitializationPlan;
 }
 
@@ -125,6 +137,8 @@ export interface RosterSelectionChoiceGroupsInspection {
 interface MutableInitializationAddition {
   readonly choice: EvaluationSelectionChoice;
   quantity: number;
+  amount?: number;
+  minimumAmount?: number;
   readonly initialization: RosterSelectionInitializationPlan;
 }
 
@@ -137,6 +151,12 @@ interface SelectionBounds {
   readonly supported: boolean;
   readonly minimum: number;
   readonly maximum: number;
+}
+
+interface SteppedSelectionInitialization {
+  readonly amount: number;
+  readonly minimumAmount: number;
+  readonly hasDefaultAmountModifiers: boolean;
 }
 
 interface InitializationState {
@@ -491,11 +511,39 @@ function planContainer(
       continue;
     }
     const bounds = selectionBounds(child, [...carriers, child], state);
-    if (!bounds.supported || bounds.minimum === 0) {
+    if (!bounds.supported) {
       continue;
     }
     if (bounds.minimum > bounds.maximum) {
       diagnoseConflictingBounds(child, bounds, state);
+      continue;
+    }
+
+    const stepped = steppedSelectionInitialization(child, bounds, state);
+    if (stepped === null) {
+      continue;
+    }
+    if (stepped !== undefined) {
+      if (
+        stepped.amount > 0 ||
+        stepped.hasDefaultAmountModifiers
+      ) {
+        addPlannedSelection(
+          planned.additions,
+          child,
+          1,
+          carriers,
+          state,
+          maxPlannedSelections,
+          {
+            amount: stepped.amount,
+            minimumAmount: stepped.minimumAmount,
+          },
+        );
+      }
+      continue;
+    }
+    if (bounds.minimum === 0) {
       continue;
     }
     addPlannedSelection(
@@ -510,6 +558,84 @@ function planContainer(
   return planned;
 }
 
+function steppedSelectionInitialization(
+  choice: EvaluationSelectionChoice,
+  bounds: SelectionBounds,
+  state: InitializationState,
+): SteppedSelectionInitialization | null | undefined {
+  if (choice.kind !== "selectionEntry" || choice.step === undefined) {
+    return undefined;
+  }
+
+  const step = Number(choice.step);
+  if (
+    choice.step.trim() === "" ||
+    !Number.isFinite(step) ||
+    step <= 0
+  ) {
+    markIncomplete(state);
+    state.diagnostics.push(
+      initializationDiagnostic(
+        choice,
+        "EVALUATION_INITIALIZATION_STEP_INVALID",
+        "A stepped selection requires a finite positive step before its minimum can initialize one amounted occurrence.",
+        "step",
+        { value: choice.step },
+      ),
+    );
+    return null;
+  }
+
+  const sourceDefault = staticSteppedDefaultAmount(choice, state);
+  if (sourceDefault === undefined) return null;
+  return {
+    amount: Math.max(bounds.minimum, sourceDefault),
+    minimumAmount: bounds.minimum,
+    hasDefaultAmountModifiers:
+      choice.modifiers.some(
+        ({ field }) => field === "defaultAmount",
+      ) ||
+      choice.modifierGroups.some((group) =>
+        modifierGroupTargetsField(group, "defaultAmount"),
+      ),
+  };
+}
+
+function staticSteppedDefaultAmount(
+  choice: EvaluationSelectionChoice,
+  state: InitializationState,
+): number | undefined {
+  const raw = choice.defaultAmount;
+  if (raw === undefined || raw.trim() === "") return 0;
+  if (raw.includes(",")) {
+    markIncomplete(state);
+    state.diagnostics.push(
+      initializationDiagnostic(
+        choice,
+        "EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_MULTIPLE_UNSUPPORTED",
+        "Comma-delimited defaults require unsupported sub-unit instance initialization.",
+        "defaultAmount",
+        { value: raw },
+      ),
+    );
+    return undefined;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    markIncomplete(state);
+    state.diagnostics.push(
+      initializationDiagnostic(
+        choice,
+        "EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_INVALID",
+        "A stepped selection default must be a finite non-negative number.",
+        "defaultAmount",
+        { value: raw },
+      ),
+    );
+    return undefined;
+  }
+  return parsed;
+}
 function collectChoiceGroups(
   container: MaterializedSelectionContainer,
   carriers: readonly EvaluationSelectionChoice[],
@@ -672,9 +798,13 @@ function planGroup(
     });
     return planned;
   }
+  const existingDefault = planned.additions.find(
+    ({ choice }) => choice === defaultChoice,
+  );
   const alreadyPlanned =
-    planned.additions.find(({ choice }) => choice === defaultChoice)
-      ?.quantity ?? 0;
+    existingDefault === undefined
+      ? 0
+      : existingDefault.quantity * (existingDefault.amount ?? 1);
   const available = Math.max(0, defaultBounds.maximum - alreadyPlanned);
   const defaultQuantity = Math.min(remaining, available);
   if (defaultQuantity > 0) {
@@ -705,15 +835,25 @@ function addPlannedSelection(
   ancestors: readonly EvaluationSelectionChoice[],
   state: InitializationState,
   maxPlannedSelections: number,
+  options: {
+    readonly amount?: number;
+    readonly minimumAmount?: number;
+  } = {},
 ): void {
   const existing = additions.find((addition) => addition.choice === choice);
   if (existing !== undefined) {
-    existing.quantity += quantity;
+    mergeInitializationAmount(existing, {
+      choice,
+      quantity,
+      ...options,
+      initialization: existing.initialization,
+    });
     return;
   }
   additions.push({
     choice,
     quantity,
+    ...options,
     initialization: planChoice(
       choice,
       ancestors,
@@ -721,6 +861,27 @@ function addPlannedSelection(
       maxPlannedSelections,
     ),
   });
+}
+
+function mergeInitializationAmount(
+  target: MutableInitializationAddition,
+  source: MutableInitializationAddition,
+): void {
+  if (target.amount === undefined && source.amount === undefined) {
+    target.quantity += source.quantity;
+    return;
+  }
+
+  // A stepped entry represents aggregate selections in one selector node.
+  // If another planning path reaches the same choice, combine its contribution
+  // as amount rather than creating duplicate quantifiable occurrences.
+  target.amount =
+    (target.amount ?? target.quantity) +
+    (source.amount ?? source.quantity);
+  target.minimumAmount =
+    (target.minimumAmount ?? 0) +
+    (source.minimumAmount ?? 0);
+  target.quantity = 1;
 }
 
 function selectionBounds(
@@ -1228,7 +1389,7 @@ function mergePlannedContainer(
     if (existing === undefined) {
       target.additions.push(addition);
     } else {
-      existing.quantity += addition.quantity;
+      mergeInitializationAmount(existing, addition);
     }
   }
   target.pendingChoices.push(...source.pendingChoices);
@@ -1237,7 +1398,11 @@ function mergePlannedContainer(
 function totalDirectSelections(
   additions: readonly MutableInitializationAddition[],
 ): number {
-  return additions.reduce((total, addition) => total + addition.quantity, 0);
+  return additions.reduce(
+    (total, addition) =>
+      total + addition.quantity * (addition.amount ?? 1),
+    0,
+  );
 }
 
 function countPlannedSelections(

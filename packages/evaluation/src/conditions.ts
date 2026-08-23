@@ -32,7 +32,6 @@ import {
   expectedCatalogueKey,
   evaluationSelectionIdentityCandidate,
   evaluationSelectionScope,
-  evaluationSelectionTree,
   evaluationSelectionsInForces,
   indexEvaluationChoices,
   rosterMatchesCatalogueContext,
@@ -428,9 +427,13 @@ export function evaluateRosterCondition<
     : idScopeTarget !== undefined
       ? relativeScope.occurrence === undefined
         ? []
-        : evaluationSelectionTree(
-            relativeScope.occurrence,
+        : evaluationSelectionScope(
+            roster,
+            selectionOwnerLocation as RosterSelectionLocation,
+            "identity",
             condition.includeChildSelections === true,
+            false,
+            relativeScope.occurrence,
           )
       : evaluationSelectionScope(
           roster,

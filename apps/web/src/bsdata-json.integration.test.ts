@@ -23,6 +23,7 @@ import {
   evaluateRosterSelectionCategories,
   indexEffectiveRosterCategories,
   inspectRosterForceConstraintsInRoster,
+  inspectRosterSelectionDefaultAmount,
   modifierTargetedCategoryIds,
   parseBattleScribeAffectsSelector,
 } from "@rosterforge/evaluation";
@@ -1465,40 +1466,185 @@ describe.skipIf(realDataDirectory === undefined)(
           { selectionId: selectionOccurrenceId("override-battle-size") },
         );
         if (!withBattleSize.ok) throw new Error("Expected Battle Size.");
-        const override = localRosterChildChoices(
+        const inspectedSizes = inspectLocalRosterChildChoices(
           withBattleSize.value,
+          selectionOccurrenceId("override-battle-size"),
+        );
+        if (!inspectedSizes.ok) {
+          throw new Error("Expected the Battle Size choices.");
+        }
+        const sizeGroup = inspectedSizes.value.groups.find(
+          ({ group }) => group.name === "Battle Size",
+        );
+        const incursion = sizeGroup?.choices.find(
+          ({ id }) => id === "d62d-db22-4893-4bc0",
+        );
+        if (sizeGroup === undefined || incursion === undefined) {
+          throw new Error("Expected the Incursion group choice.");
+        }
+        const withIncursion = chooseLocalRosterChildGroupEntry(
+          withBattleSize.value,
+          selectionOccurrenceId("override-battle-size"),
+          sizeGroup.group,
+          incursion,
+          { selectionId: selectionOccurrenceId("override-incursion") },
+        );
+        if (!withIncursion.ok) throw new Error("Expected Incursion.");
+        const override = localRosterChildChoices(
+          withIncursion.value,
           selectionOccurrenceId("override-battle-size"),
         ).find(({ id }) => id === "c6ea-562c-984f-6c25");
         if (override === undefined) {
           throw new Error("Expected the points-limit override choice.");
         }
-        const withOverride = addLocalRosterChildSelection(
-          withBattleSize.value,
+        let initializedChildren = 0;
+        const withAmount = addLocalRosterChildSelection(
+          withIncursion.value,
           selectionOccurrenceId("override-battle-size"),
           override,
-          { selectionId: selectionOccurrenceId("override-choice") },
-        );
-        if (!withOverride.ok) throw new Error("Expected the override choice.");
-        const amountChoice = localRosterChildChoices(
-          withOverride.value,
-          selectionOccurrenceId("override-choice"),
-        ).find(({ id }) => id === "83ac-f5e5-d3da-5441");
-        if (amountChoice === undefined) {
-          throw new Error("Expected the points-limit amount choice.");
-        }
-        const withAmount = addLocalRosterChildSelection(
-          withOverride.value,
-          selectionOccurrenceId("override-choice"),
-          amountChoice,
           {
-            selectionId: selectionOccurrenceId("override-amount"),
-            amount: 1_250,
+            selectionId: selectionOccurrenceId("override-choice"),
+            createSelectionId: () => {
+              initializedChildren += 1;
+              return selectionOccurrenceId(
+                `override-initialized-${initializedChildren}`,
+              );
+            },
           },
         );
         if (!withAmount.ok) throw new Error("Expected the override amount.");
+        expect(initializedChildren).toBe(1);
+        const initializedAmount =
+          withAmount.value.roster.forces[0]?.selections
+            .find(({ id }) => id === "override-battle-size")
+            ?.selections.find(({ id }) => id === "override-choice")
+            ?.selections[0];
+        const initializedChoice = localRosterSelectionChoice(
+          withAmount.value,
+          selectionOccurrenceId("override-initialized-1"),
+        );
+        if (
+          initializedAmount === undefined ||
+          initializedChoice === undefined ||
+          initializedChoice.kind !== "selectionEntry"
+        ) {
+          throw new Error("Expected the initialized Points limit.");
+        }
+        const defaultAmount = inspectRosterSelectionDefaultAmount(
+          withAmount.value.roster,
+          withAmount.value.catalogue.context,
+          initializedAmount,
+          initializedChoice,
+        );
+        if (!defaultAmount.ok) {
+          throw new Error("Expected the default-amount report.");
+        }
+        expect({
+          amount: defaultAmount.value.amount,
+          completeness: defaultAmount.value.completeness,
+          applicability: defaultAmount.value.modifierApplicability.map(
+            ({ status }) => status,
+          ),
+          conditions: defaultAmount.value.modifierApplicability.map(
+            (report) =>
+              report.conditions.map((condition) => ({
+                status: condition.status,
+                observed: condition.observed,
+                scope: condition.scope,
+                matching: condition.matching.map((candidate) =>
+                  "id" in candidate ? candidate.id : undefined,
+                ),
+              })),
+          ),
+          candidates:
+            defaultAmount.value.modifierApplicability[0]?.conditions[0]
+              ?.candidates.map((candidate) => ({
+                occurrenceId:
+                  "id" in candidate.occurrence
+                    ? candidate.occurrence.id
+                    : undefined,
+                status: candidate.status,
+                effectiveIds: candidate.effectiveIds,
+              })),
+          tree: withAmount.value.roster.forces[0]?.selections
+            .find(({ id }) => id === "override-battle-size")
+            ?.selections.map((selection) => ({
+              id: selection.id,
+              name: selection.name,
+              choiceId: localRosterSelectionChoice(
+                withAmount.value,
+                selection.id,
+              )?.id,
+              definitionId: localRosterSelectionChoice(
+                withAmount.value,
+                selection.id,
+              )?.definitionId,
+            })),
+          diagnostics: defaultAmount.diagnostics.map(({ code }) => code),
+        }).toEqual({
+          amount: 1_000,
+          completeness: "complete",
+          applicability: [
+            "applicable",
+            "notApplicable",
+            "notApplicable",
+          ],
+          conditions: [
+            [
+              expect.objectContaining({
+                status: "satisfied",
+                observed: 1,
+              }),
+            ],
+            [expect.objectContaining({ status: "unsatisfied" })],
+            [expect.objectContaining({ status: "unsatisfied" })],
+          ],
+          candidates: [
+            {
+              occurrenceId: "override-incursion",
+              status: "match",
+              effectiveIds: expect.arrayContaining([
+                "d62d-db22-4893-4bc0",
+              ]),
+            },
+            {
+              occurrenceId: "override-choice",
+              status: "different",
+              effectiveIds: expect.arrayContaining([
+                "c6ea-562c-984f-6c25",
+              ]),
+            },
+          ],
+          tree: [
+            {
+              id: "override-incursion",
+              name: "1. Incursion (1000 Point limit)",
+              choiceId: "d62d-db22-4893-4bc0",
+              definitionId: "d62d-db22-4893-4bc0",
+            },
+            {
+              id: "override-choice",
+              name: "Override points limit?",
+              choiceId: "c6ea-562c-984f-6c25",
+              definitionId: "c6ea-562c-984f-6c25",
+            },
+          ],
+          diagnostics: [],
+        });
+        expect(
+          withAmount.value.roster.forces[0]?.selections
+            .find(({ id }) => id === "override-battle-size")
+            ?.selections.find(({ id }) => id === "override-choice")
+            ?.selections,
+        ).toMatchObject([
+          {
+            id: "override-initialized-1",
+            amount: 1_000,
+          },
+        ]);
         const edited = setLocalRosterSelectionAmount(
           withAmount.value,
-          selectionOccurrenceId("override-amount"),
+          selectionOccurrenceId("override-initialized-1"),
           1_750,
         );
         if (!edited.ok) throw new Error("Expected the edited override amount.");
@@ -1570,7 +1716,7 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ id }) => id === "override-battle-size")
             ?.selections.find(({ id }) => id === "override-choice")
             ?.selections,
-        ).toMatchObject([{ id: "override-amount", amount: 1_750 }]);
+        ).toMatchObject([{ id: "override-initialized-1", amount: 1_750 }]);
         expect(withAmount.value.roster).not.toBe(edited.value.roster);
       },
       120_000,

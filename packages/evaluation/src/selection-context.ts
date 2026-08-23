@@ -394,12 +394,23 @@ export function evaluationSelectionScope(
   if (scope === "root-entry") {
     return selectionsInTree([owner.root], includeChildSelections);
   }
+  if (scope === "identity") {
+    // An ID-valued scope names the containing entry whose child collection is
+    // queried. False means direct children; true widens to all descendants.
+    // Counting the container itself made all 214 direct-only ID-scoped
+    // conditions in the pinned 46-file corpus inert.
+    return typedScope === undefined
+      ? []
+      : selectionsInTree(
+          typedScope.selections,
+          includeChildSelections,
+        );
+  }
   if (
     scope === "unit" ||
     scope === "model" ||
     scope === "model-or-unit" ||
-    scope === "upgrade" ||
-    scope === "identity"
+    scope === "upgrade"
   ) {
     return typedScope === undefined
       ? []

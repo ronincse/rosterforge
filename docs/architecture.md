@@ -492,16 +492,29 @@ is specifically inert for this initial bound inspection.
 
 When an add caller supplies a descendant-ID factory, the session asks
 `evaluation` for a read-only initialization plan before applying its safe
-additions through the ordinary `roster-builder` child command. Required direct
-entries become repeated occurrences. Selection-entry groups are transparent
-containers: their already-required children count first, and a remaining
-minimum uses the exact direct entry named by `defaultSelectionEntryId`.
-`defaultSelectionEntryId="none"` and an absent default remain pending user
-choices. Modifier-controlled, malformed, percentage, unknown-extension, or
-otherwise unsupported bounds are not guessed. The observed New Recruit
-`automatic` constraint property does not alter initial creation: supported
-minima seed descendants whether that generic value
-is absent, `false`, or `true`.
+additions through the ordinary `roster-builder` child command. Required ordinary
+entries become repeated occurrences. A selection entry with a finite positive
+`step` instead plans one occurrence whose amount is the greater of its supported
+minimum and one finite non-negative static `defaultAmount`; the minimum is
+retained separately. Selection-entry groups are transparent containers: their
+already-required children count first, and a remaining minimum uses the exact
+direct entry named by `defaultSelectionEntryId`. `defaultSelectionEntryId="none"`
+and an absent default remain pending user choices.
+
+At the web command boundary, a stepped planned entry with `defaultAmount`
+modifiers is first added to a throwaway immutable roster at its real parent.
+`inspectRosterSelectionDefaultAmount` evaluates direct numeric modifiers against
+that prospective occurrence. A complete result initializes the one durable
+occurrence at no less than its minimum; an incomplete result retains the static
+planned amount and its diagnostics. The probe does not consume a caller ID or
+enter the durable roster or choice map. The pinned 46-file corpus has exactly
+one stepped entry, `Points limit`, so ordinary initialization does not pay for
+this additional add and lookup.
+
+Modifier-controlled, malformed, percentage, unknown-extension, or otherwise
+unsupported bounds are not guessed. The observed New Recruit `automatic`
+constraint property does not alter initial creation: supported minima seed
+descendants whether that generic value is absent, `false`, or `true`.
 
 After a successful root add, child add, child-group replacement, removal, or
 amount edit, `apps/web` reconciles ordinary entries whose generic constraint node
@@ -749,8 +762,10 @@ are ordinary history commits.
 
 `setLocalRosterSelectionAmount` delegates to the model's positive-finite amount
 guard and retains the exact materialized choice map. The editor uses a numeric
-source `step` as an input hint and displays lexical `defaultAmount`, but does
-not initialize or validate the roster amount from either value. Amount changes
+source `step` as an input hint and displays lexical `defaultAmount`. Supported
+stepped descendant initialization can seed one explicit amount from the source
+minimum and a complete direct default-modifier result, but later edits are not
+snapped to the step or validated against the source default. Amount changes
 participate in history and recompute costs and supported count bounds.
 
 This is structural setup plus limited structural-bound status, not force
@@ -1148,9 +1163,14 @@ The implemented numeric query surface is selection count
 top-level selection containing the owner. Each typed scope starts with the
 nearest owner-or-ancestor occurrence whose resolved selection-entry type
 matches the requested type; `model-or-unit` accepts either and an ambiguous
-nearest scope remains unresolved. `includeChildSelections` recursively
-includes nested selections and `includeChildForces` recursively includes child
-forces only when explicitly true and the scope contains forces. The supported
+nearest scope remains unresolved. A reachable object-ID scope names the nearest
+owner-or-ancestor occurrence of that entry; its candidate set is the named
+occurrence's direct children, widened to all descendants only when
+`includeChildSelections` is true. This distinction covers 214 direct-only and
+830 recursive ID-valued conditions in the pinned corpus. Other scopes use
+`includeChildSelections` to recursively include nested selections and
+`includeChildForces` to recursively include child forces only when explicitly
+true and the scope contains forces. The supported
 comparisons are `atLeast`, `atMost`, `greaterThan`, `lessThan`, `equalTo`, and
 `notEqualTo`, using finite numeric values. Explicit false flags and zero
 thresholds retain their normal meaning.
@@ -1323,15 +1343,17 @@ The pinned 11th-edition corpus contains one exact matched-play use of this
 boundary among 2,826 repeats: the Army Roster's `increment max pts 1` repeats
 for each `Points limit` amount in roster-recursive scope. One occurrence with
 amount 1,750 therefore changes the effective force limit from 0 to 1,750 in
-constant time. Constructing that occurrence is a separate initialization
-concern: its conditional `defaultAmount` modifiers and quantifiable minimum are
-not repeat semantics.
+constant time. Constructing that occurrence remains a separate initialization
+concern. The stepped initialization and web command boundary now create one
+Points limit occurrence at the greater of its minimum and its condition-aware
+1,000, 2,000, or 3,000 default; the repeat evaluator then consumes that amount.
 
 Percentage repeats, malformed values, multiple repeats on one modifier,
 modifier-group repeats, generic behavioral extensions, and any query the
-condition evaluator cannot resolve remain incomplete. The evaluator does not
-expand repeated operations into arrays, mutate source data, apply dynamic
-`defaultAmount` modifiers, or imply complete legality.
+condition evaluator cannot resolve remain incomplete. The repeat evaluator does
+not expand operations into arrays, mutate source data, or itself initialize
+`defaultAmount`; it consumes the immutable occurrence produced by the command
+boundary and does not imply complete legality.
 
 ## Category Membership Boundary
 

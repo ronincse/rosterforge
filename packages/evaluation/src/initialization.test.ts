@@ -460,6 +460,130 @@ describe("roster selection initialization", () => {
       ],
     });
   });
+  it("plans one amounted occurrence for a stepped selection minimum", () => {
+    const graph = resolveBattleScribeDataGraph([
+      parseFixture("projection.gst"),
+      parseFixture("stepped-default-initialization.cat"),
+    ]);
+    if (!graph.ok) throw new Error("Expected fixture graph.");
+    const contexts = composeBattleScribeCatalogueContexts(graph.value);
+    if (!contexts.ok) throw new Error("Expected fixture contexts.");
+    const context = contexts.value.catalogues.find(
+      ({ document }) =>
+        document.metadata.id === "stepped-default-initialization",
+    );
+    const root = context?.roots.roots.find(
+      ({ materialized }) =>
+        materialized.kind !== "unresolvedEntryLink" &&
+        materialized.id === "stepped-default-root",
+    );
+    if (
+      root === undefined ||
+      root.materialized.kind === "unresolvedEntryLink"
+    ) {
+      throw new Error("Expected the stepped fixture root.");
+    }
+
+    const planned = planRosterSelectionInitialization(root.materialized);
+
+    expect(planned.ok).toBe(true);
+    if (!planned.ok) return;
+    expect(planned.diagnostics).toEqual([]);
+    expect(planned.value).toMatchObject({
+      completeness: "complete",
+      plannedSelectionCount: 2,
+      additions: [
+        {
+          choice: {
+            id: "stepped-default-trigger",
+            name: "Default Trigger",
+          },
+          quantity: 1,
+        },
+        {
+          choice: {
+            id: "stepped-default-amount",
+            name: "Stepped Amount",
+            step: "250",
+          },
+          quantity: 1,
+          amount: 500,
+          minimumAmount: 500,
+        },
+      ],
+    });
+  });
+
+  it("diagnoses invalid stepped initialization values at their source", () => {
+    const graph = resolveBattleScribeDataGraph([
+      parseFixture("projection.gst"),
+      parseFixture("stepped-default-initialization.cat"),
+    ]);
+    if (!graph.ok) throw new Error("Expected fixture graph.");
+    const contexts = composeBattleScribeCatalogueContexts(graph.value);
+    if (!contexts.ok) throw new Error("Expected fixture contexts.");
+    const context = contexts.value.catalogues.find(
+      ({ document }) =>
+        document.metadata.id === "stepped-default-initialization",
+    );
+    const root = context?.roots.roots.find(
+      ({ materialized }) =>
+        materialized.kind !== "unresolvedEntryLink" &&
+        materialized.id === "stepped-default-root",
+    );
+    if (
+      root === undefined ||
+      root.materialized.kind === "unresolvedEntryLink"
+    ) {
+      throw new Error("Expected the stepped fixture root.");
+    }
+    const stepped = root.materialized.selectionEntries.find(
+      ({ id }) => id === "stepped-default-amount",
+    );
+    if (stepped === undefined) {
+      throw new Error("Expected the stepped fixture child.");
+    }
+
+    const invalidStep = planRosterSelectionInitialization({
+      ...root.materialized,
+      selectionEntries: [{ ...stepped, step: "not-a-number" }],
+    });
+    const multipleDefaults = planRosterSelectionInitialization({
+      ...root.materialized,
+      selectionEntries: [
+        {
+          ...stepped,
+          defaultAmount: "1,1",
+        },
+      ],
+    });
+
+    expect(invalidStep.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "EVALUATION_INITIALIZATION_STEP_INVALID",
+        location: expect.objectContaining({
+          path: [...stepped.occurrence.path, "@step"],
+        }),
+        details: { value: "not-a-number" },
+      }),
+    ]);
+    expect(multipleDefaults.diagnostics).toEqual([
+      expect.objectContaining({
+        code:
+          "EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_MULTIPLE_UNSUPPORTED",
+        location: expect.objectContaining({
+          path: [...stepped.occurrence.path, "@defaultAmount"],
+        }),
+        details: { value: "1,1" },
+      }),
+    ]);
+    expect(invalidStep.ok && multipleDefaults.ok).toBe(true);
+    if (!invalidStep.ok || !multipleDefaults.ok) return;
+    expect(invalidStep.value.completeness).toBe("incomplete");
+    expect(multipleDefaults.value.completeness).toBe("incomplete");
+    expect(invalidStep.value.additions).toEqual([]);
+    expect(multipleDefaults.value.additions).toEqual([]);
+  });
 });
 
 function parseFixture(filename: string) {
