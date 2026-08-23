@@ -39,18 +39,19 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **483 passed, 13 skipped (496)**.
+  `git diff --check` all pass. `pnpm test` is **485 passed, 13 skipped (498)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **496 passed**, and the whole suite now runs in about 10 s rather than 83 s;
+  **498 passed**, and the whole suite now runs in about 10 s rather than 83 s;
   without the variable the 13 corpus tests are skipped.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
   from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
-  browser with edits of 107–409 ms. What remains is smaller — see the roadmap's
-  section F.
+  browser with edits of 69–361 ms. Evaluation is now roughly 50 ms of that, so
+  what is left of per-edit cost is **React rendering, not this evaluator**. See
+  the roadmap's section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -274,7 +275,8 @@ invisible to the whole test suite.
 |---|---|---|
 | Costs match a GW-exported list | Done | 13 of 16 Dark Angels units exact; the other 3 are a model-count default and two cases of the pinned community data disagreeing with GW, both confirmed in the source JSON |
 | Evaluation cost makes a real army unusable | Done | the whole-catalogue choice index is now cached per context. Validation at six units 127 s → 26 ms; a fifteen-unit army builds in the browser at 107–409 ms per edit |
-| **Per-edit cost still grows with roster size** | **Next** | 107 ms at one unit to 409 ms at fifteen. Usable, not yet good. `rosterSelectionLocations` and the roster-session choice index are rebuilt per call in the same shape the fixed one was |
+| Per-edit evaluation cost | Done | the roster walk and per-choice identity IDs are cached too. Validation at fifteen units 68.8 → 49.7 ms |
+| **Per-edit render cost** | **Next** | 69–361 ms per edit in the browser, of which evaluation is now only ~50 ms. The rest is React re-rendering the workspace. A different problem: memoised components and list virtualisation, not caching |
 | Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
@@ -5470,3 +5472,83 @@ the obvious next candidates. That is now section F's `Next`, not a blocker.
 2. **Unfillable required wargear group** — now explorable, since edits are cheap.
 3. **A budget test that runs in CI.** The identity guard catches this specific
    regression; nothing yet catches a different one.
+
+## Completed Assignment — Per-Edit Evaluation Cost, 2026-08-23
+
+Baseline `cb998e6`; resulting implementation commit `9902109`.
+
+The second layer of the defect the Dark Angels list exposed, and the point at
+which the bottleneck stops being this package.
+
+### Two more of the same shape
+
+Profiling the structural inspection at fifteen units put 10.4% of samples in
+`evaluationSelectionIdentityCandidate` and another 17.7% in garbage collection.
+Counting the calls, per **single** structural pass over a 143-selection army:
+
+| Function | Calls per pass | What each does |
+|---|---|---|
+| `rosterSelectionLocations` | **2,763** | re-walks all 143 selections |
+| `selectionChoiceIdentityIds` | **28,780** | allocates four arrays and a `Set` |
+
+Both are pure functions of immutable data, both now `WeakMap`-cached. A roster
+is immutable and every command returns a new one, so a cached walk cannot
+describe a stale tree — an edited roster is a different key, which is exactly
+the property the unsaved-change indicator already depends on.
+
+### Measured, at fifteen units
+
+| | Before | After |
+|---|---|---|
+| Structural inspection | 56.7 ms | **35.3 ms** |
+| Constraint inspection | 24.0 ms | **18.5 ms** |
+| Supported validation | 68.8 ms | **49.7 ms** |
+
+Points unchanged: the Dark Angels list still totals 1,545 with the same
+per-unit figures, re-checked rather than assumed.
+
+### The finding that matters more than the numbers
+
+In the browser the same army now builds at **69–361 ms per edit**, against
+107–409 before. That is a much smaller gain than the headless numbers suggest,
+and the reason is the useful part: **evaluation is only about 50 ms of that 361.
+The rest is React re-rendering the workspace.**
+
+So per-edit cost has stopped being an evaluation problem. Continuing to cache
+inside `evaluation` would now be optimising the wrong half. Section F's `Next`
+is the render path — memoised components, and probably virtualising the
+catalogue browser, which renders 294 add-buttons for Dark Angels.
+
+### Where the evaluator still spends its time
+
+For whoever does come back to it, from the clean profile after this change
+(100 structural passes, import excluded):
+
+- `evaluationSelectionIdentityCandidate` — 10.4%. Still the largest. Memoising
+  it needs a composite key over six arguments, which is why it was left.
+- `evaluateRosterCondition` — 4.3%
+- `rosterDefinitionKeyForSource` — 4.1%, a `JSON.stringify` per call
+- `selectionsInTree` — 3.5%, another repeated tree walk
+- Garbage collection — 13.1%, down from 17.7%
+
+### What is guarded, and what is not
+
+The roster walk is guarded by identity in `selection-context.test.ts`, verified
+by removing the cache and watching it fail. The identity-ID cache is internal
+and is **not** guarded: exporting it purely to assert on it would widen the
+package's surface for a test, and the roster-walk guard already fails if the
+caching pattern is removed wholesale. Recorded here rather than left implicit.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **485 passed, 13 skipped (498 total)**, two added.
+- Pinned corpus — **498 passed** in 10.6 s.
+- The Dark Angels army rebuilt in the browser end to end, 1,545 pts.
+
+### Next recommended boundary
+
+1. **Per-edit render cost** — section F. Profile the React commit, not the
+   evaluator. The catalogue browser renders 294 add-buttons.
+2. **Unfillable required wargear group** — now cheap to explore.
+3. **Warn when community data disagrees with GW points** — two known cases.
