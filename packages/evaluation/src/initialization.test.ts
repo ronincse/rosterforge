@@ -16,6 +16,63 @@ import {
   planRosterSelectionInitialization,
 } from "./initialization.js";
 
+describe("nested selection entry groups", () => {
+  /**
+   * A group may hold other groups instead of entries and still bound what is
+   * chosen beneath it. Ten groups in the pinned corpus are this shape,
+   * including the Death Guard Plague Champion's `Wargear` — 2 of 2 over two
+   * 1-of-1 groups. Before this was handled the parent counted nothing, so it
+   * read as permanently violated and the roster could never become valid.
+   *
+   * `choices` stays direct so a caller does not offer every option twice;
+   * `countedChoices` is what the bound counts.
+   */
+  it("counts nested entries towards the parent bound but does not offer them", () => {
+    const graph = resolveBattleScribeDataGraph([
+      parseFixture("projection.gst"),
+      parseFixture("nested-group-bound.cat"),
+    ]);
+    if (!graph.ok) throw new Error("Expected fixture graph.");
+    const contexts = composeBattleScribeCatalogueContexts(graph.value);
+    if (!contexts.ok) throw new Error("Expected fixture contexts.");
+    const context = contexts.value.catalogues.find(
+      ({ document }) => document.metadata.id === "nested-group-bound",
+    );
+    const root = context?.roots.roots.find(
+      ({ materialized }) =>
+        materialized.kind !== "unresolvedEntryLink" &&
+        materialized.id === "nested-unit",
+    );
+    if (root === undefined || root.materialized.kind === "unresolvedEntryLink") {
+      throw new Error("Expected nested unit root.");
+    }
+
+    const inspected = inspectRosterSelectionChoiceGroups(root.materialized);
+
+    expect(inspected.ok).toBe(true);
+    if (!inspected.ok) return;
+    const wargear = inspected.value.groups.find(
+      ({ group }) => group.id === "nested-wargear",
+    );
+    expect(wargear?.minimum).toBe(2);
+    expect(wargear?.maximum).toBe(2);
+    // Nothing to offer directly: its options live in the two nested groups,
+    // which are inspected in their own right.
+    expect(wargear?.choices).toEqual([]);
+    expect(
+      wargear?.countedChoices.map(({ name }) => name).sort(),
+    ).toEqual(["Blade", "Hammer", "Pistol", "Rifle"]);
+
+    const melee = inspected.value.groups.find(
+      ({ group }) => group.id === "nested-melee",
+    );
+    expect(melee?.choices.map(({ name }) => name)).toEqual([
+      "Blade",
+      "Hammer",
+    ]);
+  });
+});
+
 describe("roster selection initialization", () => {
   it("initializes minima regardless of the automatic extension value", () => {
     const graph = resolveBattleScribeDataGraph([

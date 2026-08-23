@@ -489,9 +489,11 @@ function groupBoundReport(
     readonly resolution: EvaluationSelectionResolution | undefined;
   }[],
 ): RosterStructuralGroupBoundReport {
+  // A group whose children are groups still bounds what is chosen beneath it,
+  // so membership counts nested entries as well as its own.
   const membership = childMembership(
     children,
-    (choice) => inspection.choices.includes(choice),
+    (choice) => inspection.countedChoices.includes(choice),
   );
   return {
     kind: "group",

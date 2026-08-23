@@ -132,6 +132,8 @@
 - Read-only aggregate structural status for supported visible-root,
   direct-entry, and transparent-group selection bounds in the browser's
   single-force roster shape, with independent validity and completeness
+- Group bounds that count selections made in nested groups, so a group holding
+  other groups bounds what is chosen beneath it; see "Nested Group Bounds"
 - Parent-contextual descendant resolution, known-versus-possible selected
   counts, and conservative unresolved states that avoid false violations from
   missing or ambiguous roster references
@@ -592,6 +594,35 @@ Consequences worth knowing:
 Two further bounds remain on autosave, independent of the split: the debounce is
 five seconds rather than shorter, and the recovery slot skips its write whenever
 an active draft is already being kept current.
+
+## Nested Group Bounds
+
+A selection-entry group may hold other groups instead of entries, and its own
+`min`/`max` then counts everything chosen beneath it rather than nothing.
+
+Measured against the pinned corpus: of **4,301** selection-entry groups, **85**
+contain only nested groups, and **10** of those carry a bound of their own,
+across 8 catalogues. Every one of the 10 reads as a total over its descendants:
+
+- Death Guard **Plague Champion / Wargear** — 2 of 2 over a 1-of-1 "Plague
+  knives options" and a 1-of-1 "Boltgun options"; the sums match exactly.
+- Space Wolves **Wolf Scout Pack Leader / Loadout** — 2 across three weapon
+  groups whose maxima sum to 4.
+- Space Marines **Oathsworn Campaigns / A Noble Undertaking** — at most 1
+  across five unbounded campaign groups.
+
+The last two are meaningless under any other reading: a bound of 2 over
+sub-groups permitting 4, and a bound of 1 over groups with no bounds at all,
+only make sense as totals.
+
+Counting only a group's direct entries left these permanently at zero selected.
+For the Plague Champion that meant a 2-of-2 requirement that no user action
+could satisfy, so a Death Guard list could never reach a valid structural
+state. It is now satisfied by filling both nested groups, which is pinned.
+
+What a group *offers* stays separate from what it *counts*: the nested groups
+are inspected and rendered in their own right, so folding their entries into the
+parent's options would present every choice twice.
 
 ## Draft Storage Reporting
 

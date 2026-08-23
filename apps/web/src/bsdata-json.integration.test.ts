@@ -1294,6 +1294,123 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "satisfies a nested wargear group on the pinned Plague Champion",
+      async () => {
+        // The Death Guard Plague Champion has a `Wargear` group of 2 of 2 whose
+        // children are two 1-of-1 groups rather than entries. Counting only
+        // direct entries left it permanently at 0 of 2, so a Death Guard list
+        // could never reach a valid structural state. Ten groups in the corpus
+        // are this shape.
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Chaos - Death Guard.json",
+          "Chaos - Chaos Daemons Library.json",
+          "Chaos - Chaos Knights Library.json",
+          "Library - Astartes Heresy Legends.json",
+          "Library - Titans.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-nested-wargear",
+              importedAt: "2026-08-23T00:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Chaos - Death Guard",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions.find(
+          ({ source }) => source.name === "Army Roster",
+        );
+        if (catalogue === undefined || forceDefinition === undefined) {
+          throw new Error("Expected the Army Roster force definition.");
+        }
+        let identifier = 0;
+        const nextId = () =>
+          selectionOccurrenceId(`nested-wargear-${++identifier}`);
+        const created = createLocalRosterSession(catalogue, forceDefinition, {
+          rosterId: rosterId("nested-wargear-roster"),
+          forceId: forceOccurrenceId("nested-wargear-force"),
+          name: "Nested Wargear Roster",
+          createSelectionId: nextId,
+        });
+        if (!created.ok) throw new Error("Expected roster session.");
+
+        const marines = localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.name === "Plague Marines",
+        );
+        if (marines === undefined) throw new Error("Expected Plague Marines.");
+        const added = addLocalRosterRootSelection(created.value, marines, {
+          selectionId: nextId(),
+          createSelectionId: nextId,
+        });
+        if (!added.ok) throw new Error("Expected the squad to be added.");
+
+        const wargearBound = (session: LocalRosterSession) => {
+          const status = inspectLocalRosterStructuralStatus(session);
+          if (!status.ok) throw new Error("Expected structural status.");
+          return status.value.bounds.find(
+            (bound) =>
+              bound.kind === "group" && bound.group.name === "Wargear",
+          );
+        };
+
+        // The default loadout fills the Boltgun group, and that now counts.
+        expect(wargearBound(added.value)).toMatchObject({
+          minimum: 2,
+          maximum: 2,
+          selectedCount: 1,
+          status: "violated",
+        });
+
+        const champion = findRealSelection(
+          added.value.roster.forces[0]?.selections ?? [],
+          "Plague Champion",
+        );
+        if (champion === undefined) throw new Error("Expected the champion.");
+        const children = inspectLocalRosterChildChoices(
+          added.value,
+          champion.id,
+        );
+        if (!children.ok) throw new Error("Expected child choices.");
+        const knives = children.value.groups.find(({ group }) =>
+          (group.name ?? "").startsWith("Plague knives"),
+        );
+        const option = knives?.choices[0];
+        if (knives === undefined || option === undefined) {
+          throw new Error("Expected a plague knives option.");
+        }
+        const chosen = chooseLocalRosterChildGroupEntry(
+          added.value,
+          champion.id,
+          knives.group,
+          option,
+          { selectionId: nextId(), createSelectionId: nextId },
+        );
+        if (!chosen.ok) throw new Error("Expected the option to be chosen.");
+
+        // Both nested groups filled, so the parent closes: the list can reach a
+        // valid state, which before this it could not.
+        expect(wargearBound(chosen.value)).toMatchObject({
+          selectedCount: 2,
+          status: "satisfied",
+        });
+      },
+      120_000,
+    );
+
+    it(
       "raises the pinned points limit when a battle size is chosen",
       async () => {
         if (realDataDirectory === undefined) {
@@ -3766,6 +3883,18 @@ function findProjectedCondition(
       const nested = fromGroup(group);
       if (nested !== undefined) return nested;
     }
+  }
+  return undefined;
+}
+
+function findRealSelection(
+  selections: readonly RosterSelection[],
+  name: string,
+): RosterSelection | undefined {
+  for (const selection of selections) {
+    if (selection.name === name) return selection;
+    const nested = findRealSelection(selection.selections, name);
+    if (nested !== undefined) return nested;
   }
   return undefined;
 }

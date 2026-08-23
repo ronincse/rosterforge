@@ -101,7 +101,25 @@ export interface RosterSelectionInitializationPlan {
 
 export interface RosterSelectionChoiceGroupInspection {
   readonly group: MaterializedSelectionEntryGroup;
+  /** What this group offers directly. What a caller renders as its options. */
   readonly choices: readonly EvaluationSelectionChoice[];
+  /**
+   * What counts towards this group's own bound, nested groups included.
+   *
+   * A group may hold other groups rather than entries, and its bound then
+   * counts everything chosen beneath it. Measured across the pinned corpus:
+   * of 4,301 selection-entry groups, 85 contain only nested groups and 10 of
+   * those carry a bound of their own. Every one of the 10 reads as a total
+   * over its descendants — the Death Guard Plague Champion's `Wargear` is 2 of
+   * 2 over two 1-of-1 groups, and a Wolf Scout Pack Leader's `Loadout` is 2
+   * across three weapon groups whose maxima sum to 4. Several are meaningless
+   * under any other reading.
+   *
+   * Separate from `choices` because the nested groups are inspected and
+   * rendered in their own right; folding them in here would offer every option
+   * twice.
+   */
+  readonly countedChoices: readonly EvaluationSelectionChoice[];
   readonly minimum?: number;
   readonly maximum?: number;
   readonly completeness: ValidationCompleteness;
@@ -664,6 +682,7 @@ function collectChoiceGroups(
     groups.push({
       group,
       choices: directEntryChoices(group),
+      countedChoices: nestedEntryChoices(group),
       ...(bounds.supported
         ? {
             minimum: bounds.minimum,
@@ -1358,6 +1377,22 @@ function isResolvedVisibleRoot(
   root: MaterializedVisibleRoot,
 ): root is EmptySingleForceRootInitializationChoice {
   return root.materialized.kind !== "unresolvedEntryLink";
+}
+
+/**
+ * Every entry beneath a container, including through nested groups.
+ *
+ * Used for counting a group's bound, never for offering options: see
+ * `RosterSelectionChoiceGroupInspection.countedChoices`.
+ */
+function nestedEntryChoices(
+  container: MaterializedSelectionContainer,
+): readonly EvaluationSelectionChoice[] {
+  const collected = [...directEntryChoices(container)];
+  for (const group of container.selectionEntryGroups) {
+    collected.push(...nestedEntryChoices(group));
+  }
+  return collected;
 }
 
 function directEntryChoices(

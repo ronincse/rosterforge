@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A selection-entry group whose children are other groups, carrying a bound of
+  its own. The pinned corpus has ten of these; the Death Guard Plague
+  Champion's "Wargear" is 2 of 2 over two 1-of-1 groups, which this mirrors.
+-->
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="nested-group-bound" name="Nested Group Bound" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="nested-category-units" name="Units" />
+  </categoryEntries>
+  <forceEntries>
+    <forceEntry id="nested-force" name="Nested Force" />
+  </forceEntries>
+  <selectionEntries>
+    <selectionEntry id="nested-unit" name="Nested Unit" type="unit">
+      <categoryLinks>
+        <categoryLink id="nested-unit-category" name="Units"
+          targetId="nested-category-units" primary="true" />
+      </categoryLinks>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="nested-wargear" name="Wargear">
+          <constraints>
+            <constraint id="nested-wargear-min" type="min" field="selections"
+              scope="parent" value="2" />
+            <constraint id="nested-wargear-max" type="max" field="selections"
+              scope="parent" value="2" />
+          </constraints>
+          <selectionEntryGroups>
+            <selectionEntryGroup id="nested-melee" name="Melee options">
+              <constraints>
+                <constraint id="nested-melee-min" type="min"
+                  field="selections" scope="parent" value="1" />
+                <constraint id="nested-melee-max" type="max"
+                  field="selections" scope="parent" value="1" />
+              </constraints>
+              <selectionEntries>
+                <selectionEntry id="nested-blade" name="Blade" type="upgrade" />
+                <selectionEntry id="nested-hammer" name="Hammer"
+                  type="upgrade" />
+              </selectionEntries>
+            </selectionEntryGroup>
+            <selectionEntryGroup id="nested-ranged" name="Ranged options">
+              <constraints>
+                <constraint id="nested-ranged-min" type="min"
+                  field="selections" scope="parent" value="1" />
+                <constraint id="nested-ranged-max" type="max"
+                  field="selections" scope="parent" value="1" />
+              </constraints>
+              <selectionEntries>
+                <selectionEntry id="nested-pistol" name="Pistol"
+                  type="upgrade" />
+                <selectionEntry id="nested-rifle" name="Rifle"
+                  type="upgrade" />
+              </selectionEntries>
+            </selectionEntryGroup>
+          </selectionEntryGroups>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+    </selectionEntry>
+  </selectionEntries>
+</catalogue>
