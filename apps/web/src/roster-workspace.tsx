@@ -129,9 +129,19 @@ export function RosterOverview({
     (total, { choices }) => total + choices.length,
     0,
   );
-  const costResult = evaluateLocalRosterCosts(session);
-  const supportedValidation =
-    inspectLocalRosterSupportedValidation(session);
+  // Both walk the whole roster, and this component re-renders for reasons that
+  // have nothing to do with the roster — an autosave moving the draft action
+  // from saving back to idle is enough. Unmemoised, a fifteen-unit army paid a
+  // full re-evaluation for each of those. Keyed on the session because a
+  // command returns a new one for any real change and the same one otherwise.
+  const costResult = useMemo(
+    () => evaluateLocalRosterCosts(session),
+    [session],
+  );
+  const supportedValidation = useMemo(
+    () => inspectLocalRosterSupportedValidation(session),
+    [session],
+  );
   const attentionSelectionIds =
     supportedValidation.ok
       ? supportedValidationSelectionIds(
@@ -1401,20 +1411,25 @@ function RosterSelectionItem({
               {formatCount(selection.selections.length, "selection")}
             </span>
           </summary>
-          <ul>
-            {selection.selections.map((child) => (
-              <RosterSelectionItem
-                key={child.id}
-                session={session}
-                selection={child}
-                attentionSelectionIds={attentionSelectionIds}
-                onAddChild={onAddChild}
-                onRename={onRename}
-                onSetAmount={onSetAmount}
-                onRemove={onRemove}
-              />
-            ))}
-          </ul>
+          {/* Same reason as the details panel: a collapsed list is still
+              built, and a squad of five models starts collapsed. Rendering it
+              only while open keeps a closed squad off the render path. */}
+          {childrenOpen && (
+            <ul>
+              {selection.selections.map((child) => (
+                <RosterSelectionItem
+                  key={child.id}
+                  session={session}
+                  selection={child}
+                  attentionSelectionIds={attentionSelectionIds}
+                  onAddChild={onAddChild}
+                  onRename={onRename}
+                  onSetAmount={onSetAmount}
+                  onRemove={onRemove}
+                />
+              ))}
+            </ul>
+          )}
         </details>
       )}
     </li>
@@ -1525,17 +1540,30 @@ function RosterSelectionDetails({
     amount: number | undefined,
   ) => void;
 }) {
+  // A closed `<details>` still builds its contents; the browser only hides
+  // them. On a fifteen-unit Dark Angels army 181 of 214 were closed, and React
+  // rebuilt every one of them on every edit. Nothing below is computed or
+  // rendered until the panel is open, and it is unmounted again when closed —
+  // keeping the tree small is the entire point.
+  const [opened, setOpened] = useState(false);
   const characteristics = useMemo(
-    () => inspectLocalRosterSelectionCharacteristics(session, selection.id),
-    [session, selection.id],
+    () =>
+      opened
+        ? inspectLocalRosterSelectionCharacteristics(session, selection.id)
+        : undefined,
+    [opened, session, selection.id],
   );
   const categories = useMemo(
-    () => inspectLocalRosterSelectionCategories(session, selection.id),
-    [session, selection.id],
+    () =>
+      opened
+        ? inspectLocalRosterSelectionCategories(session, selection.id)
+        : undefined,
+    [opened, session, selection.id],
   );
-  const reports = characteristics.ok
-    ? characteristics.value.byProfile
-    : undefined;
+  const reports =
+    characteristics?.ok === true
+      ? characteristics.value.byProfile
+      : undefined;
   const rules: readonly SelectionRuleDetail[] = [
     ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
     ...choice.materializedInfoLinks
@@ -1556,8 +1584,17 @@ function RosterSelectionDetails({
     ...choice.materializedInfoLinks.filter(isMaterializedInfoGroup),
   ];
   return (
-    <details className="selection-details">
-      <summary>
+    <details className="selection-details" open={opened}>
+      {/* Open state is controlled rather than left to the native toggle: jsdom
+          does not implement `<details>` toggling at all, so a lazily rendered
+          panel would be permanently shut under test while working in a
+          browser. Controlling it makes both behave the same. */}
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          setOpened((current) => !current);
+        }}
+      >
         <span>Selection details</span>
         <small>
           {formatCount(profiles.length, "profile")},{" "}
@@ -1566,6 +1603,8 @@ function RosterSelectionDetails({
         </small>
       </summary>
 
+      {opened && (
+        <>
       <dl className="selection-definition-details">
         <Detail
           label="Definition"
@@ -1596,7 +1635,7 @@ function RosterSelectionDetails({
         onSetAmount={onSetAmount}
       />
 
-      {categories.ok && (
+      {categories?.ok === true && (
         <SelectionKeywords inspection={categories.value} />
       )}
 
@@ -1657,6 +1696,8 @@ function RosterSelectionDetails({
             ))}
           </ul>
         </section>
+      )}
+        </>
       )}
     </details>
   );
