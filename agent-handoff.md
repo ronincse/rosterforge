@@ -185,6 +185,7 @@ points limit works end to end and is now pinned.
 | Comma-delimited `defaultAmount` | Open | 7 of 96 corpus defaults; New Recruit initializes multiple sub-unit instances, which this product does not model |
 | Grouped `defaultAmount` modifier ordering | Open | 1 corpus instance; withheld rather than guessed. Smallest remaining real gap |
 | Collapsing ordinary occurrences into one amounted node | Deferred | nested child costs belong to each occurrence and are not multiplied by an ancestor amount, so changing representation first could undercount wargear |
+| **Unfillable required wargear group** | **Next** | found by driving the app, 2026-08-23. Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list can never be structurally valid. Reproduces with all 46 corpus files loaded, so it is not a missing dependency |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -5204,3 +5205,59 @@ is needed anyway, in order of corpus support:
    the product does not have.
 3. **Collapsing ordinary occurrences** — largest, and blocked behind the cost
    representation question above. Read that reason before attempting it.
+
+## Research Note — Driving The App, 2026-08-23
+
+No code change. Stone asked whether RosterForge can build a real 40k list yet.
+The roadmap said sections A, B, D, and E were complete, which measures coverage
+of the BattleScribe format — not whether the product works. So I ran it.
+
+### Method
+
+`pnpm dev`, plus a throwaway static server for the pinned corpus so the page
+could fetch the 46 JSON files and hand them to the real file input. Everything
+below went through the actual UI.
+
+### It builds a list
+
+Imported all 46 files (64.4 MB, 36 roster catalogues), selected Chaos - Death
+Guard, created an Army Roster, chose the Virulent Vectorium detachment, Strike
+Force (2000), and Take and Hold, then added units. Points accumulated, the
+points limit applied on choosing a battle size, and adding Plague Marines
+auto-populated a Plague Champion plus four marines with default loadouts —
+boltgun, plague knives — with special-weapon swaps offered. Undo, redo, save
+draft, and print are all present and wired.
+
+That is a working roster builder, not a parser with a UI bolted on.
+
+### One genuine blocker, and one thing that was my mistake
+
+**The blocker.** The Plague Champion has a `Wargear` group requiring 2 of 2
+that reports **"No resolved entries are available in this group."** There is
+nothing to pick, so the roster cannot reach a valid structural state. It is now
+a roadmap row.
+
+**The near-miss.** `Force Disposition` showed the same message and I nearly
+recorded it as the same defect. It was not: with only the game system and Death
+Guard loaded it had no resolvable entries, and with all 46 files it offers
+"Take and Hold". That one was a missing dependency — mine, not the app's. The
+Wargear group survives the same test, which is what makes it real.
+
+Same lesson as the corpus work: two identical symptoms, different causes, and
+the only way to tell was to change one variable.
+
+### What this does not tell us
+
+- Whether the points are *right*. They accumulate and the limit binds, but I
+  did not check a single unit's cost against the codex. Worth a pinned test
+  against a known list.
+- Anything about a phone. The layout was driven at desktop width only.
+- Whether a finished list is usable at a table. Print exists; nobody has taken
+  its output to a game.
+
+### Why the roadmap said "complete"
+
+Because it was written outward from the data format, and by that measure it was
+telling the truth. "Can Stone build a list he would actually take to a game" was
+never one of its rows. That gap is the thing worth fixing about the roadmap, not
+just about the code.
