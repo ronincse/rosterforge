@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **493 passed, 16 skipped (509)**.
+  `git diff --check` all pass. `pnpm test` is **493 passed, 17 skipped (510)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **509 passed**; without the variable the 16 corpus tests are skipped.
+  **510 passed**; without the variable the 17 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -291,9 +291,9 @@ invisible to the whole test suite.
 | Surface how current the loaded data is | Done | import date against BSData's last upstream push, one request; falls back to a plain "may be out of date" note when GitHub is unreachable |
 | Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
-| **Allied config auto-inserts into a force** | **Next** | QA-confirmed: an empty Dark Angels roster initialises `Code Chivalric`, which is Imperial Knights configuration reached through an `importRoot` link |
+| Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
+| **NOTICE text offered as an addable unit** | **Next** | the catalogue's deprecation notice is a selectable root. Small, and the browser is the first thing a user sees |
 | `skipIfPresent` on modifiers | Open | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
-| NOTICE text offered as an addable unit | Open | the catalogue's deprecation notice is a selectable root; filter it out of the browser |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
@@ -6076,3 +6076,69 @@ Army Roster starts with `Code Chivalric`, `Deed`, and `Quality` — Imperial
 Knights configuration reached through an `importRoot` entry link. It inflates
 the roster and puts foreign options in the browser. Measure how many catalogues
 link a library this way before choosing a rule.
+
+## Completed Assignment — Allied Configuration, 2026-08-23
+
+Baseline `ed18973`; resulting implementation commit `91a7167`.
+
+The second real bug from the QA pass. An empty Dark Angels roster came up
+holding `Code Chivalric`, `Deed` and `Quality` — Imperial Knights configuration.
+
+### The linking is not the bug
+
+**90 of the 109 catalogue links in the corpus set `importRootEntries`.** Pulling
+an allied library's roots in is the normal case and it is correct: it is how
+Imperial Knights become available to a Space Marine army. A rule that stopped
+that would break allied detachments everywhere.
+
+The bug is **initialisation**. It planned from every root carrying a minimum and
+never consulted visibility. `Code Chivalric` has `min 1` in force scope and a
+`set hidden` gated on the primary catalogue being Knights: required *if it
+applies*, and on a Dark Angels force it does not.
+
+### Two supporting changes
+
+- **Visibility accepts a force owner.** A root hangs from the force, not from a
+  selection, so there was no owner to evaluate it against. `RosterConditionOwner`
+  already allowed a force; visibility did not. It also now only treats a choice
+  as a prospective *child selection* when the owner is one, so the ancestor
+  correction from the previous entry does not misfire on roots.
+- **A `primary-catalogue` identity condition is answerable whoever asked.** It
+  is a question about the catalogue, not about the owner, and it was being
+  refused outright for a force owner. That is the exact condition `Code
+  Chivalric` hides behind.
+
+### The filter is deliberately silent
+
+It only ever *removes* a root it is certain is hidden. Anything it cannot answer
+is created exactly as before, so there is no new uncertainty to report.
+
+That mattered in practice: reporting from here added **37 diagnostics** to a
+single Aeldari roster creation, almost all `EVALUATION_CONDITION_OWNER_KIND_UNSUPPORTED`
+from identity conditions that do not accept a force owner. None of them
+described anything a user could act on, and QA had already called the issue list
+unreadable. A diagnostic that explains nothing is a defect of its own.
+
+### Verified across factions
+
+| Catalogue | Initial configuration |
+|---|---|
+| Imperium - Imperial Knights | Detachment, Battle Size, Force Disposition, **Code Chivalric** |
+| Dark Angels | Battle Size, Detachment, Force Disposition |
+| Astra Militarum | Battle Size, Detachment, Force Disposition |
+| Death Guard | Battle Size, Detachment, Force Disposition |
+
+Knights keeps its own configuration; nobody else inherits it. Pinned, and the
+pin fails when the filter is bypassed — verified by bypassing it.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **493 passed, 17 skipped (510 total)**.
+- Pinned corpus — **510 passed**.
+
+### Next recommended boundary
+
+**The `NOTICE` deprecation string offered as an addable unit.** Small, and the
+catalogue browser is the first thing a user sees. After that, `skipIfPresent`
+remains the largest display gap at 359 modifiers.
