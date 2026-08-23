@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (manual points override evaluation)
+## Current Status — 2026-08-23 (stepped default amounts)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,17 +39,17 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **474 passed, 13 skipped (487)**.
+  `git diff --check` all pass. `pnpm test` is **481 passed, 13 skipped (494)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **487 passed**; without it the 13 corpus tests are skipped.
-- **Active area.** Legality and initialization semantics (roadmap section B).
-  Automatic ordinary entries and all five measured direct-child groups
-  reconcile, and the manual points override evaluates exactly. The next
-  corpus-backed gap is conditional `defaultAmount` and quantifiable entry
-  initialization.
+  **494 passed**; without it the 13 corpus tests are skipped.
+- **Active area.** None. Sections A, B, D, and E are complete, C is low
+  priority by owner decision, and **nothing in the roadmap is `Next`**. The
+  remaining rows are deliberate holds — zero corpus instances, unreachable
+  paths, or blocked by design. Choosing the next milestone is an owner
+  question; see "Open questions needing the owner" below.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -181,7 +181,10 @@ points limit works end to end and is now pinned.
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
 | `Override points limit?` | Done | the existing exact repeat evaluator handles one amount occurrence; pinned at 1,750 |
-| Conditional `defaultAmount` / quantifiable initialization | Next | `Points limit` is the sole `step` entry; create one amounted occurrence, not 500 rows |
+| Conditional `defaultAmount` / stepped initialization | Done | direct condition-aware modifiers at the prospective parent; one amounted occurrence at max(minimum, effective default); pinned Incursion 1,000 then edited to 1,750 |
+| Comma-delimited `defaultAmount` | Open | 7 of 96 corpus defaults; New Recruit initializes multiple sub-unit instances, which this product does not model |
+| Grouped `defaultAmount` modifier ordering | Open | 1 corpus instance; withheld rather than guessed. Smallest remaining real gap |
+| Collapsing ordinary occurrences into one amounted node | Deferred | nested child costs belong to each occurrence and are not multiplied by an ancestor amount, so changing representation first could undercount wargear |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -260,11 +263,30 @@ bounded pass if someone is already deep in them: `evaluation/characteristics.ts`
 
 ### Open questions needing the owner
 
-**None.** Every rule the evaluator executes now rests on either a corpus
-measurement or a direct New Recruit observation, not on inference.
+**What is the next milestone?** As of 2026-08-23 the roadmap has no `Next`.
+Sections A, B, D, and E are complete; C is low priority by an earlier owner
+decision; everything still listed as Open or Blocked is a deliberate hold with
+its reason recorded. A model picking this up has nothing to take without
+choosing a direction, and choosing one is not its call.
 
-The last inferred one — the arithmetic sign convention — was confirmed by
-experiment on 2026-08-20. See the arithmetic entry for the observation.
+Worth putting in front of the owner, roughly in order of how much corpus
+evidence backs them:
+
+- **Grouped `defaultAmount` ordering** — one instance; needs its semantics
+  pinned by the wiki or an observation before anything is written.
+- **Comma-delimited `defaultAmount`** — seven instances, but it needs sub-unit
+  modelling the product does not have. A real feature, not a gap-fill.
+- **`.ros`/`.rosz` interchange** — already Low priority by the 2026-08-20
+  decision. Revisit only if bringing a list in from another tool is actually
+  wanted.
+- **Something not on this list.** The roadmap was written from the data format
+  outward. What the product still lacks as a *product* — for matched play, on a
+  phone at a table — has never been the organising question.
+
+On semantics, no question is outstanding: every rule the evaluator executes
+rests on a corpus measurement or a direct New Recruit observation, not on
+inference. The last inferred one — the arithmetic sign convention — was
+confirmed by experiment on 2026-08-20.
 
 
 ## How To Update This Document
@@ -5065,3 +5087,120 @@ occurrence at its effective default or minimum, then prove the Incursion and
 manual-override paths against the pin. Do not reinterpret the other seven
 `defaultAmount` targets or comma-delimited defaults without measuring their
 entry types and New Recruit branches first.
+
+## Completed Assignment — Stepped Default Amounts, 2026-08-23
+
+Baseline `ae86af4`; resulting implementation commit `e6abd44`.
+
+**Written by a later session than the one that wrote the code.** The
+implementing session committed `e6abd44` and then ran out of usage before it
+could write this entry, update the status block, or push. The commit itself was
+complete: 16 files, tests, and updates to `architecture`, `compatibility`,
+`diagnostics`, and `data-model-notes`.
+
+What that means for this entry: the reasoning below is **transcribed** from
+`docs/compatibility.md` and the module comments *inside that commit*, not
+reconstructed. What I did myself was verify it — see "Verification by a second
+pair of eyes". Where the implementing session's usual failure-proof note would
+go, I have said what I could and could not confirm rather than assume it.
+
+### What it does
+
+`packages/evaluation/src/selection-default-amount.ts` evaluates
+condition-aware **direct** numeric modifiers targeting a selected entry's
+`defaultAmount`, against a temporary prospective child at its real parent. The
+web command then creates exactly one durable child at the greater of the minimum
+and the effective default, and leaves the amount editable.
+
+The initialization planner has no roster context, so this supplies the
+condition-aware half at the command boundary without mutating projections,
+generic source nodes, or roster occurrences.
+
+### Exact corpus figures
+
+At the pinned commit `54c189f4fd01878351fab05586d3b38d9c7f6ddc`:
+
+| | |
+|---|---|
+| Source `defaultAmount` properties | **96** |
+| — single numbers | 89 |
+| — comma-delimited sub-unit defaults | 7 |
+| Modifiers targeting `defaultAmount` | **8** |
+| — direct | 7 |
+| — through a modifier group | 1 |
+| Entries carrying `step` | **1** (`Points limit`, `step="250"`) |
+
+`Points limit` has `min selections=500`, no static `defaultAmount`, and three
+conditionally applicable `set defaultAmount` modifiers for 1,000, 2,000, and
+3,000. A pinned Incursion test initializes 1,000 automatically and proves an
+edit to 1,750 still drives the exact repeat and force limit.
+
+### What it deliberately is not
+
+Not general quantifiable-entry initialization. Only the sole stepped entry uses
+the new command path. Three things stay unsupported, each for a stated reason:
+
+- **Comma-delimited defaults** (7 instances). New Recruit uses them to
+  initialize multiple sub-unit instances, which RosterForge does not model.
+- **Grouped default-amount modifiers** (1 instance). Withheld until their
+  ordering is pinned, rather than guessed.
+- **Collapsing ordinary occurrences into one amounted node.** Deferred, and the
+  reason is worth keeping: nested child costs currently belong to each
+  occurrence and are not multiplied by an ancestor amount, so changing the
+  representation first could **undercount wargear**. Ordinary entries still use
+  occurrence multiplicity.
+
+Invalid or unsupported stepped values stay source-located and fall back
+conservatively instead of inventing a default. New diagnostics:
+`EVALUATION_INITIALIZATION_STEP_INVALID`,
+`EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_INVALID`,
+`EVALUATION_INITIALIZATION_DEFAULT_AMOUNT_MULTIPLE_UNSUPPORTED`, and
+`EVALUATION_SELECTION_DEFAULT_AMOUNT_MODIFIER_GROUP_UNSUPPORTED`.
+
+### Verification by a second pair of eyes
+
+Everything below I ran myself against `e6abd44`, before pushing someone else's
+commit:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **481 passed, 13 skipped (494 total)**.
+- Pinned corpus with `ROSTERFORGE_BSDATA_JSON_DIR=E:/GitHub/wh40k-11e` —
+  **494 passed (48 files)**.
+- **The new tests have teeth.** I replaced the `defaultAmount` modifier filter
+  with an empty list, which makes the evaluator ignore every conditional
+  default. Three tests failed across `selection-default-amount.test.ts` and
+  `roster-session.test.ts`. Restored, 19 passed. Worth doing before publishing
+  work you did not write.
+
+I did **not** verify the deployed New Recruit observation the compatibility doc
+cites, nor re-derive the corpus counts. Both are the implementing session's, and
+both are consistent with the entry before this one.
+
+### This closes the last actionable roadmap item
+
+With this marked Done, nothing in the roadmap is `Next`. What remains is
+deliberate:
+
+- `multiply`/`divide`/`modulo` — zero corpus instances; a speculative rule is
+  explicitly unwanted.
+- Withheld routing vs withheld steps — no corpus modifier reaches the path.
+- Category filter naming a non-immune category — Blocked by design.
+- Sections C and D's remainder — low priority or deferred by owner decision.
+
+The three unsupported shapes above are now rows in section B so they are not
+lost, but none is obviously the next thing to do. **Choosing the next milestone
+is an owner question**, and it is recorded under "Open questions needing the
+owner" rather than guessed at here.
+
+### Next recommended boundary
+
+Ask Stone what the next milestone is before starting one. If a technical answer
+is needed anyway, in order of corpus support:
+
+1. **Grouped default-amount modifier ordering** — one instance, the smallest
+   remaining real gap, and needs its semantics pinned first (wiki or an
+   observation, not inference).
+2. **Comma-delimited defaults** — seven instances, but needs sub-unit modelling
+   the product does not have.
+3. **Collapsing ordinary occurrences** — largest, and blocked behind the cost
+   representation question above. Read that reason before attempting it.
