@@ -264,6 +264,7 @@ describe("createLocalRosterSession", () => {
         name: "Units",
         choices: [
           "Initialization Unit",
+          "Automatic Reconciliation Unit",
           "Duplicate Initialization Unit",
         ],
       },
@@ -586,6 +587,182 @@ describe("createLocalRosterSession", () => {
       selected: [],
       completeness: "complete",
     });
+  });
+
+  it("clamps selected ordinary entries for automatic true constraints", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+        {
+          filename: "selection-initialization.cat",
+          bytes: fixtureBytes("selection-initialization.cat"),
+        },
+      ],
+      {
+        import: {
+          batchId: "roster-automatic-reconciliation",
+          importedAt: "2026-08-22T19:00:00.000Z",
+        },
+      },
+    );
+    if (!prepared.ok) {
+      throw new Error("Expected automatic reconciliation fixture.");
+    }
+    const catalogue = prepared.value.catalogues.find(
+      ({ id }) => id === "selection-initialization",
+    );
+    const force = catalogue?.context.forces.definitions.find(
+      ({ source }) => source.id === "initialization-force",
+    );
+    const root = catalogue === undefined
+      ? undefined
+      : localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            materialized.id === "automatic-reconciliation-unit",
+        );
+    if (
+      catalogue === undefined ||
+      force === undefined ||
+      root === undefined
+    ) {
+      throw new Error("Expected automatic reconciliation choices.");
+    }
+
+    const created = createLocalRosterSession(catalogue, force, {
+      rosterId: rosterId("roster-automatic-reconciliation"),
+      forceId: forceOccurrenceId("force-automatic-reconciliation"),
+      name: "Automatic reconciliation",
+    });
+    if (!created.ok) throw new Error("Expected roster creation.");
+    const withRoot = addLocalRosterRootSelection(created.value, root, {
+      selectionId: selectionOccurrenceId("automatic-reconciliation-root"),
+    });
+    if (!withRoot.ok) throw new Error("Expected reconciliation root.");
+
+    const choices = localRosterChildChoices(
+      withRoot.value,
+      selectionOccurrenceId("automatic-reconciliation-root"),
+    );
+    const automatic = choices.find(
+      ({ id }) => id === "automatic-default-model",
+    );
+    const alternate = choices.find(
+      ({ id }) => id === "automatic-alternate-model",
+    );
+    const manual = choices.find(({ id }) => id === "manual-default-model");
+    if (
+      automatic === undefined ||
+      alternate === undefined ||
+      manual === undefined
+    ) {
+      throw new Error("Expected reconciliation child choices.");
+    }
+
+    const withAutomatic = addLocalRosterChildSelection(
+      withRoot.value,
+      selectionOccurrenceId("automatic-reconciliation-root"),
+      automatic,
+      {
+        selectionId: selectionOccurrenceId("automatic-default-occurrence"),
+        amount: 1,
+      },
+    );
+    expect(withAutomatic.ok).toBe(true);
+    if (!withAutomatic.ok) return;
+    expect(withAutomatic.diagnostics).toEqual([]);
+    expect(
+      withAutomatic.value.roster.forces[0]?.selections[0]?.selections[0],
+    ).toMatchObject({
+      id: "automatic-default-occurrence",
+      amount: 4,
+    });
+
+    const withDuplicate = addLocalRosterChildSelection(
+      withAutomatic.value,
+      selectionOccurrenceId("automatic-reconciliation-root"),
+      automatic,
+      {
+        selectionId: selectionOccurrenceId(
+          "automatic-duplicate-occurrence",
+        ),
+      },
+    );
+    expect(withDuplicate.ok).toBe(true);
+    if (!withDuplicate.ok) return;
+    expect(
+      withDuplicate.value.roster.forces[0]?.selections[0]?.selections.map(
+        ({ id, amount }) => ({ id, amount }),
+      ),
+    ).toEqual([
+      { id: "automatic-default-occurrence", amount: 4 },
+    ]);
+    expect(
+      withDuplicate.value.selectionChoices.has(
+        selectionOccurrenceId("automatic-duplicate-occurrence"),
+      ),
+    ).toBe(false);
+
+    const withAlternate = addLocalRosterChildSelection(
+      withDuplicate.value,
+      selectionOccurrenceId("automatic-reconciliation-root"),
+      alternate,
+      {
+        selectionId: selectionOccurrenceId("automatic-alternate-occurrence"),
+      },
+    );
+    expect(withAlternate.ok).toBe(true);
+    if (!withAlternate.ok) return;
+    expect(withAlternate.diagnostics).toEqual([]);
+    expect(
+      withAlternate.value.roster.forces[0]?.selections[0]?.selections[0],
+    ).toMatchObject({
+      id: "automatic-default-occurrence",
+      amount: 3,
+    });
+    expect(
+      withAutomatic.value.roster.forces[0]?.selections[0]?.selections[0]
+        ?.amount,
+    ).toBe(4);
+
+    const inflated = setLocalRosterSelectionAmount(
+      withAlternate.value,
+      selectionOccurrenceId("automatic-default-occurrence"),
+      9,
+    );
+    expect(inflated.ok).toBe(true);
+    if (!inflated.ok) return;
+    expect(
+      inflated.value.roster.forces[0]?.selections[0]?.selections[0]?.amount,
+    ).toBe(3);
+
+    const withoutAlternate = removeLocalRosterSelection(
+      inflated.value,
+      selectionOccurrenceId("automatic-alternate-occurrence"),
+    );
+    expect(withoutAlternate.ok).toBe(true);
+    if (!withoutAlternate.ok) return;
+    expect(withoutAlternate.diagnostics).toEqual([]);
+    expect(
+      withoutAlternate.value.roster.forces[0]?.selections[0]?.selections[0]
+        ?.amount,
+    ).toBe(4);
+
+    const withManual = addLocalRosterChildSelection(
+      withoutAlternate.value,
+      selectionOccurrenceId("automatic-reconciliation-root"),
+      manual,
+      {
+        selectionId: selectionOccurrenceId("manual-default-occurrence"),
+        amount: 1,
+      },
+    );
+    expect(withManual.ok).toBe(true);
+    if (!withManual.ok) return;
+    expect(
+      withManual.value.roster.forces[0]?.selections[0]?.selections.find(
+        ({ id }) => id === "manual-default-occurrence",
+      )?.amount,
+    ).toBe(1);
   });
 
   it("restores exact materialized choices from structural definition keys", async () => {

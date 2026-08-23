@@ -1811,6 +1811,135 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
+      "reconciles a pinned Scourge amount when an alternate model is selected",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const requiredFilenames = new Set([
+          "Warhammer 40,000.json",
+          "Aeldari - Drukhari.json",
+          "Aeldari - Aeldari Library.json",
+          "Unaligned Forces.json",
+        ]);
+        const result = await prepareLocalCatalogueLibrary(
+          realJsonFiles(realDataDirectory).filter(({ filename }) =>
+            requiredFilenames.has(filename),
+          ),
+          {
+            import: {
+              batchId: "real-bsdata-json-drukhari-automatic",
+              importedAt: "2026-08-22T19:00:00.000Z",
+            },
+          },
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        const catalogue = result.value.catalogues.find(
+          ({ name }) => name === "Xenos - Drukhari",
+        );
+        const forceDefinition = catalogue?.context.forces.definitions[0];
+        const root = catalogue === undefined
+          ? undefined
+          : localRosterRootChoices(catalogue).find(
+              ({ materialized }) =>
+                materialized.name === "Scourges with Shardcarbines",
+            );
+        if (
+          catalogue === undefined ||
+          forceDefinition === undefined ||
+          root === undefined
+        ) {
+          throw new Error("Expected the pinned Drukhari Scourges context.");
+        }
+
+        const created = createLocalRosterSession(
+          catalogue,
+          forceDefinition,
+          {
+            rosterId: rosterId("real-drukhari-automatic-roster"),
+            forceId: forceOccurrenceId("real-drukhari-automatic-force"),
+            name: "Drukhari Automatic Integration",
+          },
+        );
+        if (!created.ok) throw new Error("Expected Drukhari roster session.");
+        const withRoot = addLocalRosterRootSelection(
+          created.value,
+          root,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-drukhari-scourges",
+            ),
+          },
+        );
+        if (!withRoot.ok) throw new Error("Expected Scourges root.");
+
+        const defaultScourge = selectionChoiceByDefinitionId(
+          root.materialized,
+          "6e9b-38a8-e240-7a50",
+        );
+        const specialScourge = selectionChoiceByDefinitionId(
+          root.materialized,
+          "313f-6619-806f-c4c7",
+        );
+        if (defaultScourge === undefined || specialScourge === undefined) {
+          throw new Error("Expected both pinned Scourge model choices.");
+        }
+        expect(
+          defaultScourge.constraints.map(
+            ({ node }) => node.attributes.automatic,
+          ),
+        ).toEqual(["true", "true"]);
+
+        const withDefault = addLocalRosterChildSelection(
+          withRoot.value,
+          selectionOccurrenceId("real-drukhari-scourges"),
+          defaultScourge,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-drukhari-default-scourge",
+            ),
+            amount: 1,
+          },
+        );
+        expect(withDefault.ok).toBe(true);
+        if (!withDefault.ok) return;
+        expect(withDefault.diagnostics).toEqual([]);
+        expect(
+          withDefault.value.roster.forces[0]?.selections[0]?.selections[0]
+            ?.amount,
+        ).toBe(4);
+
+        const withSpecial = addLocalRosterChildSelection(
+          withDefault.value,
+          selectionOccurrenceId("real-drukhari-scourges"),
+          specialScourge,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-drukhari-special-scourge",
+            ),
+          },
+        );
+        expect(withSpecial.ok).toBe(true);
+        if (!withSpecial.ok) return;
+        expect(withSpecial.diagnostics).toEqual([]);
+        expect(
+          withSpecial.value.roster.forces[0]?.selections[0]?.selections.map(
+            ({ id, amount }) => ({ id, amount: amount ?? 1 }),
+          ),
+        ).toEqual([
+          { id: "real-drukhari-default-scourge", amount: 3 },
+          { id: "real-drukhari-special-scourge", amount: 1 },
+        ]);
+        expect(
+          withDefault.value.roster.forces[0]?.selections[0]?.selections[0]
+            ?.amount,
+        ).toBe(4);
+      },
+      120_000,
+    );
+
+    it(
       "expands Guardian Defenders from unconditional real-data defaults",
       async () => {
         if (realDataDirectory === undefined) {

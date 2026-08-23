@@ -288,11 +288,12 @@
   `max 4 Players per <Troupe>`. Resolved through the same identity walk
   conditions use. A scope that is not ID-shaped, such as an unrecognised word,
   stays unsupported rather than being resolved against nothing
-- The `automatic` constraint attribute treated as not changing what a bound
-  means. All 109 corpus instances carry an already-supported shape, and
-  `automatic="false"` sits on squad sizes such as Khorne Berzerker `min 5` and
-  Recon Troopers `min 9`, which are plainly enforced. Whether it governs
-  auto-filling a roster is unverified and not consumed.
+- The generic New Recruit `automatic` constraint attribute retained without
+  changing what a bound means. Initial supported minima apply whether it is
+  absent, `false`, or `true`. After selection edits, lexical `true` or
+  `1` requests condition-aware min/max clamping for a currently selected
+  ordinary entry under its exact parent; lexical `false`, `0`, absent,
+  and unknown values remain observable and do not request that repair
 - Selection-constraint scopes `unit`, `model`, `model-or-unit`, `upgrade`, and
   `root-entry`, resolved through the same nearest-typed-ancestor walk conditions
   use, so a constraint and a condition written with the same scope agree; an
@@ -660,8 +661,10 @@ Consequences worth knowing:
   supported initialization minima remain distinct occurrences
 - Conditional or grouped automatic-root requirements and implicit choices for
   groups whose default is absent or `none`
-- Post-edit automatic-constraint reconciliation: New Recruit clamps entries,
-  groups, and sub-units after a bound carrying `automatic: true` changes
+- Automatic activation of currently absent ordinary choices, automatic
+  selection-entry-group reconciliation, and New Recruit's distinct automatic
+  sub-unit algorithms. Selected ordinary entries are already clamped after
+  root/child add, child-group replacement, removal, and amount edits
 - `.ros`/`.rosz` ingestion, projection, import, and interchange export;
   browser print/save-PDF is presentation output only
 - Grouped-modifier costs, broader cost-limit behavior, aggregate general-
@@ -902,11 +905,21 @@ constraint surface. The generic JSON/XML node retains each value: 88 are `true`,
 selection bounds and one is a self-scoped custom-field maximum.
 
 New Recruit 35.66 settles two different behaviors. Its initial-selection path
-reads ordinary minima without consulting `automatic`, so RosterForge now does
+reads ordinary minima without consulting `automatic`, so RosterForge does
 the same for otherwise supported bounds whether the value is absent, `false`, or
-`true`. Its later constraint-change handler runs only for `automatic: true` and
-clamps entries, selection groups, and sub-units to the changed min/max. That
-post-edit reconciliation remains unsupported. Modifier-controlled,
+`true`. Its later handler subscribes to both selection-query changes and
+effective-limit changes, enqueues work only for `automatic: true`, and clamps a
+violated entry, selection group, or sub-unit to the current min/max.
+
+Of the 88 true corpus constraints, 74 are modifier-controlled across 54 owners:
+49 ordinary entries, five selection-entry groups, and no unit-typed sub-units.
+RosterForge now implements the selected ordinary-entry branch. A successful
+root/child add, child-group replacement, removal, or amount edit scans only
+currently selected exact choices, evaluates their automatic bounds with
+selection conditions, and clamps a complete violation in the same immutable
+session result. The pinned Drukhari case changes four default Scourges to three
+when its alternate model is selected. Automatic creation of an absent choice
+and the group/sub-unit algorithms remain deferred. Modifier-controlled,
 child-inclusive, malformed, or otherwise unsupported initialization bounds
 remain incomplete independently of `automatic`.
 

@@ -707,9 +707,8 @@ than a quantity property.
 The New Recruit `automatic` constraint extension remains on the generic node,
 outside the BattleScribe 2.03 typed constraint projection. It is inert for
 this plan: supported minima are read whether the property is absent, `false`, or
-`true`. The shipped New Recruit 35.66 runtime follows the same initial path and
-tests `true` only in a later bound-change handler. RosterForge does not yet model
-that post-edit clamping behavior.
+`true`. The shipped New Recruit 35.66 runtime follows the same initial path;
+post-edit reconciliation is a separate web-session operation described below.
 
 Selection-entry groups are choice containers in this plan, not planned roster
 occurrences. Supported required child entries are counted first. If the group
@@ -755,6 +754,31 @@ bounds remain incomplete and unselected. Equal shared identities are
 deduplicated while retaining the first visible root and highest required
 quantity. Optional roots with max-only constraints are not inspected as
 requirements.
+
+### Selected automatic constraint reconciliation
+
+The local web session consumes lexical `automatic="true"` and
+`automatic="1"` from the retained generic constraint node only after a
+successful selection edit. It groups current roster occurrences by the exact
+materialized choice object and direct parent, using each occurrence's effective
+quantity (`amount ?? 1`) as the selector aggregate. A complete violated
+selection-condition minimum raises the first occurrence. A complete violated
+maximum reduces or removes occurrences from the end. The returned
+`LocalRosterSession` is still immutable, and reconciliation plus the initiating
+command is one history/autosave action.
+
+This is a bounded integration operation, not stored evaluation state. It makes
+at most ten passes and re-evaluates after each clamp. On the pinned 41-selection
+Guardian roster, ten full Checks inspections measured 30,215.7 ms, while ten
+targeted inspections of the selected Scourge min/max pair measured 407.4 ms.
+The edit path therefore scans selected automatic choices and invokes the
+single-constraint evaluator instead of constructing the whole roster report.
+
+Lexical `false`, `0`, absent, and unknown values do not request a repair.
+Currently absent choices cannot be discovered by this selected-choice
+scan. Selection-entry groups and unit-typed child selections require different
+New Recruit algorithms and remain untouched. An incomplete evaluation keeps
+its source-located diagnostics and never supplies a guessed quantity.
 
 ## Force Constraints
 

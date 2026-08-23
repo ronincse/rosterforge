@@ -500,14 +500,29 @@ minimum uses the exact direct entry named by `defaultSelectionEntryId`.
 choices. Modifier-controlled, malformed, percentage, unknown-extension, or
 otherwise unsupported bounds are not guessed. The observed New Recruit
 `automatic` constraint property does not alter initial creation: supported
-minima seed descendants whether that generic value is absent, `false`, or `true`.
-New Recruit uses `true` only in a separate later constraint-change handler that
-clamps entries, groups, and sub-units; RosterForge does not yet perform that
-post-edit reconciliation. The operation constructs one
-new immutable session only after every planned child add succeeds, so a
-duplicate generated ID or other builder failure exposes no partial session.
-Each selected occurrence is limited to 4,096 automatically planned
-descendants.
+minima seed descendants whether that generic value
+is absent, `false`, or `true`.
+
+After a successful root add, child add, child-group replacement, removal, or
+amount edit, `apps/web` reconciles selected ordinary entries whose generic
+constraint node has lexical `automatic` equal to `true` or `1`. Each pass uses
+the condition-aware selection-constraint inspector against the current
+immutable roster. A complete violated minimum or maximum clamps the exact
+materialized choice's aggregate amount under one parent: minima increase the
+first occurrence, while maxima reduce or remove later occurrences first. The
+final repaired session is returned as the same user action, so history and
+autosave do not observe internal clamps as separate edits. Reconciliation runs
+for at most ten passes.
+
+Currently absent choices, selection-entry groups, and unit-typed child
+selections remain outside this slice because New Recruit uses distinct
+algorithms for those shapes. Unsupported or incomplete evaluation remains
+source-located and does not produce a guessed amount. Lexical `false`, `0`, an
+absent value, and unknown values do not request reconciliation. The operation
+constructs one new immutable session only after every planned child add
+succeeds, so a duplicate generated ID or other builder failure exposes no
+partial session. Each selected occurrence is limited to 4,096 automatically
+planned descendants.
 
 `inspectRosterSelectionChildChoices` provides the evaluation-side read-only
 view of direct entries and transparent groups. It retains order, exposes only

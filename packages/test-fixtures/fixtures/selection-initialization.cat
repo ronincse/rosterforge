@@ -100,6 +100,60 @@
           includeChildSelections="true" includeChildForces="true" />
       </constraints>
     </selectionEntry>
+    <selectionEntry id="automatic-reconciliation-unit"
+      name="Automatic Reconciliation Unit" type="unit">
+      <categoryLinks>
+        <categoryLink id="automatic-reconciliation-unit-category"
+          name="Units" targetId="initialization-category-units"
+          primary="true" />
+      </categoryLinks>
+      <selectionEntries>
+        <selectionEntry id="automatic-default-model"
+          name="Automatic Default Model" type="model">
+          <constraints>
+            <constraint id="automatic-default-min" type="min"
+              field="selections" scope="parent" value="4"
+              shared="true" automatic="true" />
+            <constraint id="automatic-default-max" type="max"
+              field="selections" scope="parent" value="4"
+              shared="true" automatic="true" />
+          </constraints>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <modifiers>
+                <modifier type="decrement" value="1"
+                  field="automatic-default-min" />
+                <modifier type="decrement" value="1"
+                  field="automatic-default-max" />
+              </modifiers>
+              <conditions>
+                <condition type="atLeast" value="1" field="selections"
+                  scope="parent" childId="automatic-alternate-model"
+                  shared="true" includeChildSelections="false" />
+              </conditions>
+            </modifierGroup>
+          </modifierGroups>
+        </selectionEntry>
+        <selectionEntry id="automatic-alternate-model"
+          name="Automatic Alternate Model" type="model">
+          <constraints>
+            <constraint id="automatic-alternate-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+        </selectionEntry>
+        <selectionEntry id="manual-default-model"
+          name="Manual Default Model" type="model">
+          <constraints>
+            <constraint id="manual-default-min" type="min"
+              field="selections" scope="parent" value="2"
+              shared="true" automatic="false" />
+            <constraint id="manual-default-max" type="max"
+              field="selections" scope="parent" value="2"
+              shared="true" automatic="false" />
+          </constraints>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
     <selectionEntry id="disabled-automatic-root"
       name="Disabled Automatic Root" type="upgrade">
       <categoryLinks>

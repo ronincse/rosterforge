@@ -409,6 +409,19 @@ describe("roster selection initialization", () => {
         {
           root: {
             materialized: {
+              name: "Automatic Reconciliation Unit",
+            },
+          },
+          identity: {
+            kind: "occurrence",
+            id: "automatic-reconciliation-unit",
+          },
+          minimum: 0,
+          completeness: "complete",
+        },
+        {
+          root: {
+            materialized: {
               name: "Disabled Automatic Root",
             },
           },
