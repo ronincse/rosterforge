@@ -40,7 +40,7 @@ export interface RemoteCatalogueSourceDefinition {
 export const defaultRemoteCatalogueSources: readonly RemoteCatalogueSourceDefinition[] =
   [
     {
-      id: "bsdata-wh40k-11e-54c189f",
+      id: "bsdata-wh40k-11e-04c62fc",
       title: "Warhammer 40,000 11th Edition",
       gameSystem: "Warhammer 40,000",
       description:
@@ -48,9 +48,11 @@ export const defaultRemoteCatalogueSources: readonly RemoteCatalogueSourceDefini
       repository: {
         owner: "BSData",
         repository: "wh40k-11e",
-        revision: "54c189f4fd01878351fab05586d3b38d9c7f6ddc",
+        revision: "04c62fcd041b3808c39d5c46fd677c704027b979",
       },
-      estimatedIndexBytes: 65_641_889,
+      // Measured from the pinned revision's JSON files. Keep this moving with
+      // the revision: it is what the browse warning quotes before downloading.
+      estimatedIndexBytes: 69_647_926,
     },
   ];
 
