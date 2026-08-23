@@ -49,9 +49,9 @@ diagnostic codes.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
   from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
-  browser with edits of 69–361 ms. Evaluation is now roughly 50 ms of that, so
-  what is left of per-edit cost is **React rendering, not this evaluator**. See
-  the roadmap's section F.
+  browser with edits of **71–270 ms**. What is left is **one full re-evaluation
+  of the roster per edit** — not rendering, which was measured and ruled out.
+  Making that cheaper needs incremental evaluation. See the roadmap's section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -276,7 +276,9 @@ invisible to the whole test suite.
 | Costs match a GW-exported list | Done | 13 of 16 Dark Angels units exact; the other 3 are a model-count default and two cases of the pinned community data disagreeing with GW, both confirmed in the source JSON |
 | Evaluation cost makes a real army unusable | Done | the whole-catalogue choice index is now cached per context. Validation at six units 127 s → 26 ms; a fifteen-unit army builds in the browser at 107–409 ms per edit |
 | Per-edit evaluation cost | Done | the roster walk and per-choice identity IDs are cached too. Validation at fifteen units 68.8 → 49.7 ms |
-| **Per-edit render cost** | **Next** | 69–361 ms per edit in the browser, of which evaluation is now only ~50 ms. The rest is React re-rendering the workspace. A different problem: memoised components and list virtualisation, not caching |
+| Collapsed panels built anyway | Done | 181 of 214 `<details>` were closed and rebuilt every edit; DOM for a fifteen-unit army 17,505 → 5,700 nodes |
+| Reports re-evaluated on unrelated re-renders | Done | `RosterOverview` called costs and validation unmemoised in its body; an autosave state change paid a full re-evaluation |
+| **Per-edit evaluation is whole-roster** | **Next** | ~250 ms at fifteen units. Every edit re-evaluates everything; a subtree re-render is 3 ms, so this is not rendering. Needs **incremental evaluation** — re-evaluate what the edit could have affected, not the army |
 | Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
@@ -5552,3 +5554,76 @@ caching pattern is removed wholesale. Recorded here rather than left implicit.
    evaluator. The catalogue browser renders 294 add-buttons.
 2. **Unfillable required wargear group** — now cheap to explore.
 3. **Warn when community data disagrees with GW points** — two known cases.
+
+## Completed Assignment — Render Path, And A Correction, 2026-08-23
+
+Baseline `d1bb2c9`; resulting implementation commit `6282796`.
+
+### The correction first
+
+The previous entry concluded that per-edit cost was "dominated by React
+rendering, not this evaluator". **That was wrong**, and this checkpoint is
+mostly the story of finding out.
+
+Cutting the workspace DOM by two thirds barely moved edit time. The measurement
+that settled it: **toggling a details panel re-renders in 3 ms**, while adding a
+unit is a single **341 ms long task** — and **undo, which adds nothing at all,
+costs about the same**. Rendering is cheap. The cost is that every edit
+re-evaluates the entire roster.
+
+I had inferred "it must be rendering" from the gap between headless evaluation
+(~120 ms) and browser edits (~360 ms), without measuring rendering directly.
+The gap is mostly that browser JS is slower than Node on this work, not that
+rendering fills it.
+
+### What was still worth doing
+
+Three real defects, found while chasing the wrong theory:
+
+- **A closed `<details>` still builds its contents.** The browser only hides
+  them. On a fifteen-unit Dark Angels army **181 of 214 were closed**, and React
+  rebuilt every one on every edit. The per-selection details panel and collapsed
+  child lists now render only while open: **17,505 DOM nodes → 5,700**.
+- **`RosterOverview` called `evaluateLocalRosterCosts` and
+  `inspectLocalRosterSupportedValidation` unmemoised in its body.** That
+  component re-renders for reasons unrelated to the roster — an autosave moving
+  the draft action from `saving` back to `idle` is enough — and each of those
+  paid a full re-evaluation of the army. Both are now keyed on the session.
+- **`<details>` open state is now controlled explicitly.** jsdom does not
+  implement `<details>` toggling at all, so a lazily rendered panel would have
+  been permanently shut under test while working fine in a browser. The existing
+  UI tests were reaching content that happened to be mounted regardless; they
+  now genuinely exercise the toggle.
+
+Edit tail on the same army: **~379 ms → ~258 ms**. Points unchanged at 1,545.
+
+### What per-edit cost actually needs
+
+Incremental evaluation. Today an edit anywhere re-evaluates every selection,
+because a modifier anywhere can in principle affect anything. Making that cheap
+means establishing what an edit *can* have affected and re-evaluating only
+that — an architectural change, not another cache, and worth its own research
+checkpoint rather than being bolted on.
+
+Two smaller things would help first and are much cheaper:
+
+- **Do not block the click.** Move the evaluation into a transition so the
+  roster updates immediately and the reports catch up. 250 ms of work that does
+  not freeze the button is a different experience from 250 ms that does.
+- **Undo and redo restore a roster that was already evaluated.** Caching the
+  top-level reports by roster identity would make stepping through history
+  free. The roster objects are the same ones, so the keys already exist.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **485 passed, 13 skipped (498 total)**, unchanged.
+- Pinned corpus — **498 passed**.
+- The Dark Angels army rebuilt in the browser, 5,700 DOM nodes, edits 71–270 ms.
+
+### Next recommended boundary
+
+1. **Non-blocking evaluation**, then **cached history steps** — both small, both
+   improve the felt experience without touching evaluator architecture.
+2. **Incremental evaluation** — the real fix, and a research checkpoint.
+3. **Unfillable required wargear group** — still open, still cheap to explore.
