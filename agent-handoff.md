@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **486 passed, 14 skipped (500)**.
+  `git diff --check` all pass. `pnpm test` is **486 passed, 15 skipped (501)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **500 passed**, and the whole suite now runs in about 11 s rather than 83 s;
+  **501 passed**, and the whole suite now runs in about 14 s rather than 83 s;
   without the variable the 13 corpus tests are skipped.
 - **Active area.** Product usability, measured against real lists. The
   evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
@@ -282,7 +282,8 @@ invisible to the whole test suite.
 | History steps re-evaluated a known roster | Done | undo/redo restore a session the history already held; both reports now cached per session. Undo 308 → 73 ms |
 | Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
 | Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
-| **Force Disposition shows no entries** | **Next** | Dark Angels `Force Disposition` still reports nothing selectable with all 46 files loaded, while Death Guard resolves it. Not the nested-group shape — needs its own look |
+| Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
+| **Warn when community data disagrees with GW points** | **Next** | two known cases in the pinned corpus; a list legal here can be wrong at a table, and nothing says so |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -5763,3 +5764,64 @@ Guarded twice, both verified by breaking the fix and watching them fail:
 all 46 files loaded, while the Death Guard one resolves. It is *not* the nested
 group shape — that was checked — so it needs its own look, and it blocks a Dark
 Angels list the same way this blocked a Death Guard one.
+
+## Completed Assignment — Force Disposition Is Not A Defect, 2026-08-23
+
+Baseline `3505b7d`; resulting implementation commit — see `git log`.
+
+### The third one
+
+Dark Angels `Force Disposition` reported "No resolved entries are available in
+this group", the same words as the wargear blocker. The roadmap listed it as the
+next correctness defect. It is **not a defect**.
+
+The group is conditional on the detachment. Checked in both factions:
+
+| Catalogue | Before a detachment | After |
+|---|---|---|
+| Dark Angels | nothing | **Priority Assets** |
+| Death Guard | nothing | **Reconnaissance** |
+
+Priority Assets is exactly what Stone's Games Workshop export lists. My earlier
+reading came from inspecting the slot *before* choosing a detachment in one
+faction and *after* in the other, and concluding the catalogues differed.
+
+That is three times in one day that "no resolvable entries" had a different
+cause: a missing dependency, a nested-group bound, and now an order of
+operations. The symptom is nearly useless as a diagnosis.
+
+### What was worth changing
+
+The message. "No resolved entries are available in this group" describes a
+broken catalogue; "nothing yet, because of a choice you have not made" describes
+a roster. A child choice group now carries `hiddenChoiceCount`, and the
+workspace says which case it is.
+
+This is the same principle as the validity/completeness contract: do not report
+something in a way that implies more than is known.
+
+### Pinned
+
+The corpus suite now builds a Dark Angels roster, asserts the slot offers
+nothing while its entries are hidden, chooses the Inner Circle Task Force, and
+asserts it then offers exactly `Priority Assets`. Pinned specifically so this is
+not investigated a third time.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **486 passed, 15 skipped (501 total)**.
+- Pinned corpus — **501 passed**.
+
+### Next recommended boundary
+
+**Warn when the pinned data disagrees with Games Workshop.** The corpus says
+Lion El'Jonson is 285 and the Lieutenant with Combi-weapon 85; GW Data Version
+v925 says 265 and 95. A list that looks legal here can be twenty points wrong at
+a table, and nothing tells the user. That is now the largest honesty gap in the
+product, and this project's whole contract is about not being misleading.
+
+Needs an owner decision on *how*: the app cannot know GW's numbers, so the
+options are surfacing the data revision, letting a user record a correction, or
+simply stating that points come from community data. Worth asking rather than
+guessing.
