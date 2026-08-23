@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-22 (automatic group reconciliation)
+## Current Status — 2026-08-22 (manual points override evaluation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,15 +39,17 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **474 passed, 12 skipped (486)**.
+  `git diff --check` all pass. `pnpm test` is **474 passed, 13 skipped (487)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **486 passed**; without it the 12 corpus tests are skipped.
+  **487 passed**; without it the 13 corpus tests are skipped.
 - **Active area.** Legality and initialization semantics (roadmap section B).
-  Automatic ordinary entries and all five measured direct-child groups now
-  reconcile. The next corpus-backed gap is the Override points limit repeat.
+  Automatic ordinary entries and all five measured direct-child groups
+  reconcile, and the manual points override evaluates exactly. The next
+  corpus-backed gap is conditional `defaultAmount` and quantifiable entry
+  initialization.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -84,12 +86,17 @@ ephemeral group occurrence so relative `self` and `parent` conditions stay
 correct, but durable rosters remain transparent. The pinned GSC path selects
 Burrowing Claws when Specialisms moves from zero to one.
 
-The current **Next is the `Override points limit?` repeat** in section B.
-Inventory that exact root and its repeat shape, compare New Recruit, and extend
-the smallest repeat-evaluation boundary needed for the points-limit modifier.
-Do not generalize all 2,826 corpus repeats from one configuration rule. Nested
-automatic groups and unit-typed automatic sub-units remain low priority because
-none of the five modifier-driven pinned groups uses either shape.
+The current **Next is conditional `defaultAmount` and quantifiable entry
+initialization** in section B. The `Points limit` child is the corpus's only
+entry with `step="250"`: it has minimum selections 500, no static default, and
+three conditional `set defaultAmount` modifiers for 1,000, 2,000, and 3,000.
+New Recruit computes one amounted occurrence from the effective default and
+minimum. RosterForge's generic initializer currently treats the minimum as
+occurrence multiplicity. Preserve the already-complete repeat evaluator and
+settle construction at the initialization/command boundary instead.
+
+Nested automatic groups and unit-typed automatic sub-units remain low priority
+because none of the five modifier-driven pinned groups uses either shape.
 
 Origin-wide storage headroom was researched and deferred:
 `navigator.storage.estimate()` is approximate, can report an artificial
@@ -173,7 +180,8 @@ points limit works end to end and is now pinned.
 | `automatic: true` unit-typed sub-units | Low priority | New Recruit has distinct algorithms; zero pinned modifier-driven owners |
 | ID-valued constraint scopes | Done | 116 corpus constraints naming a containing **entry**, not a category; no category index needed |
 | Sections C–E | Measured | interchange remains low priority; acquisition and editing durability are complete; remaining source features are deferred |
-| `Override points limit?` | Next | uses `increment` with `repeats`; inventory and pin this exact configuration before widening repeat execution |
+| `Override points limit?` | Done | the existing exact repeat evaluator handles one amount occurrence; pinned at 1,750 |
+| Conditional `defaultAmount` / quantifiable initialization | Next | `Points limit` is the sole `step` entry; create one amounted occurrence, not 500 rows |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -258,8 +266,6 @@ measurement or a direct New Recruit observation, not on inference.
 The last inferred one — the arithmetic sign convention — was confirmed by
 experiment on 2026-08-20. See the arithmetic entry for the observation.
 
-Open and deliberately not chased: what an embedded ID means when it names a
-selection entry rather than a category. One corpus instance.
 
 ## How To Update This Document
 
@@ -4978,3 +4984,84 @@ sub-units remain low priority because the five modifier-driven pinned groups
 exercise neither. Shared-wrapper absent ordinary activation also remains
 diagnosed and low priority. No catalogue resolution, cost calculation,
 persistence, interchange, or UI behavior changed.
+
+## Completed Assignment — Manual Points Override Evaluation, 2026-08-22
+
+Baseline `cdfc155`; resulting implementation commit `6e6417a`
+(`test: pin manual points override`).
+
+### Existing boundary was already sufficient
+
+The roadmap said the `Override points limit?` repeat was unsupported. That
+conclusion was stale. The existing exact-count repeat evaluator already handles
+the complete real shape: it queries the selection amount once, computes the
+repetition count arithmetically, and scales the increment without expanding
+iterations or roster nodes. No evaluator production code changed.
+
+Generalizing all repeats was rejected because one configuration construct does
+not establish semantics for the remaining corpus shapes. Folding conditional
+`defaultAmount` into repeat evaluation was also rejected: constructing the
+amounted child and consuming its amount are separate boundaries.
+
+### Exact corpus and New Recruit evidence
+
+At pinned wh40k-11e commit
+`54c189f4fd01878351fab05586d3b38d9c7f6ddc`, the 46 files contain
+2,826 repeats. Exactly one modifier targets force constraint
+`a00c-6979-992f-046b`: Army Roster modifier `increment` with value 1,
+repeated once per selection of `Points limit`
+(`83ac-f5e5-d3da-5441`) in roster-recursive scope. Its flags are
+`shared=true`, `roundUp=false`, `includeChildSelections=true`, and
+`includeChildForces=true`.
+
+The public New Recruit wiki renders the same source operation as
+`increment max pts 1`, repeated for every one Points limit selection in the
+roster recursively. Deployed New Recruit 35.66, build
+`420bf6f1-2795-4c15-b21e-b789f9459b24`, applies source
+`defaultAmount` modifiers before initializing one quantifiable occurrence at
+the maximum of the effective default and minimum.
+
+Corpus-wide there are eight `defaultAmount` modifier targets. Points limit is
+the sole entry with `step="250"`; it has minimum selections 500, no static
+default, and three conditionally applicable sets to 1,000, 2,000, or 3,000.
+That initialization behavior remains the next boundary.
+
+### Regression and failure proof
+
+The optional pinned integration test builds a Death Guard Army Roster, adds
+Battle Size and the override, creates one Points limit occurrence at 1,250,
+edits its amount to 1,750, and proves the effective maximum, observed repeat
+amount, repetition count, and applied increment all become exactly 1,750. It
+also proves the prior roster is immutable and the durable tree still has only
+one amounted child.
+
+For the negative control, repeat calculation was temporarily forced to zero.
+The new test failed with both the effective limit and repetitions receiving zero
+instead of 1,750. The evaluator was restored byte-for-byte and the focused test
+passed. Assertions intentionally compare compact semantic fields so a failure
+does not dump the provenance-heavy report.
+
+### Documentation and verification
+
+`docs/architecture.md`, `docs/compatibility.md`, and
+`docs/data-model-notes.md` now separate complete repeat consumption from
+incomplete default-amount initialization. No diagnostic, generic projection,
+source-byte, provenance, catalogue-resolution, cost, persistence, or UI
+boundary changed.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and
+  `git diff --check` — pass.
+- Normal `pnpm test` — **474 passed, 13 skipped (487 total)**.
+- Pinned corpus `54c189f4fd01878351fab05586d3b38d9c7f6ddc` — complete
+  suite **487 passed**, including 13 corpus tests.
+- Build retains only the existing Vite large-chunk warning.
+
+### Remaining boundary
+
+Take **conditional `defaultAmount` and quantifiable initialization** next.
+Preserve the evaluator's constant-time repeat behavior. Determine the smallest
+immutable initialization/command representation that creates one Points limit
+occurrence at its effective default or minimum, then prove the Incursion and
+manual-override paths against the pin. Do not reinterpret the other seven
+`defaultAmount` targets or comma-delimited defaults without measuring their
+entry types and New Recruit branches first.
