@@ -102,7 +102,41 @@ export function rosterMatchesCatalogueContext(
   return roster.catalogue.key === expectedCatalogueKey(context);
 }
 
+/**
+ * One built index per catalogue context, for as long as the context lives.
+ *
+ * Building it walks every root the catalogue materializes and every descendant
+ * of each, which is the single most expensive thing this package does. Nothing
+ * about a caller's roster changes the result, but eight modules ask for it, and
+ * several ask per selection and per field.
+ *
+ * Measured 2026-08-23 against a Dark Angels roster holding **one** unit: a
+ * single `inspectLocalRosterStructuralStatus` rebuilt this **23 times** and
+ * visited **2.84 million** nodes doing it. That is the whole reason a six-unit
+ * roster took two minutes to validate.
+ *
+ * A `BattleScribeCatalogueContext` is an immutable projection and this index is
+ * a pure function of it, so a cached one cannot go stale. `WeakMap` rather than
+ * `Map` so a context that is discarded — a different catalogue selected, a
+ * batch re-imported — takes its index with it instead of pinning the whole
+ * materialized tree forever.
+ */
+const evaluationChoiceIndexes = new WeakMap<
+  BattleScribeCatalogueContext,
+  EvaluationChoiceIndex
+>();
+
 export function indexEvaluationChoices(
+  context: BattleScribeCatalogueContext,
+): EvaluationChoiceIndex {
+  const cached = evaluationChoiceIndexes.get(context);
+  if (cached !== undefined) return cached;
+  const built = buildEvaluationChoiceIndex(context);
+  evaluationChoiceIndexes.set(context, built);
+  return built;
+}
+
+function buildEvaluationChoiceIndex(
   context: BattleScribeCatalogueContext,
 ): EvaluationChoiceIndex {
   const byKey = new Map<
