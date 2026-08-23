@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **486 passed, 15 skipped (501)**.
+  `git diff --check` all pass. `pnpm test` is **492 passed, 15 skipped (507)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **501 passed**; without the variable the 15 corpus tests are skipped.
+  **507 passed**; without the variable the 15 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -288,7 +288,10 @@ invisible to the whole test suite.
 | Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
 | Warn when community data disagrees with GW points | Measured | **both known cases vanished when the corpus was updated** — the data was simply stale and RosterForge read it faithfully. The gap is *freshness*, not correctness |
-| **Surface how current the loaded data is** | **Next** | owner-requested: identify the game system and files, then report when they last changed upstream via the BSData GitHub repository, falling back to a plain "may be out of date" note when offline |
+| Surface how current the loaded data is | Done | import date against BSData's last upstream push, one request; falls back to a plain "may be out of date" note when GitHub is unreachable |
+| **`skipIfPresent` on modifiers** | **Next** | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
+| Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
+| Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
 | Constraint `value="-1"` | Open | 48 corpus constraints, 43 `max` and 5 `min`. Almost certainly "no limit", but withheld rather than guessed |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
@@ -5922,3 +5925,63 @@ system and files in play, then report when they last changed upstream in
 <https://github.com/BSData>, falling back to a plain "this data may be out of
 date" note when the app cannot reach GitHub. The owner also wants direct loading
 from that repository eventually; that is a larger feature and can wait.
+
+## Completed Assignment — Catalogue Data Freshness, 2026-08-23
+
+Baseline `46f8115`; resulting implementation commit `7b6ea64`.
+
+Owner-requested, and the direct answer to the honesty gap the Dark Angels list
+opened. Updating the corpus silently corrected two units this app had been
+reporting twenty points out, and nothing in the interface suggested the data
+might be behind.
+
+### What it says
+
+The catalogue library panel now reports when the batch was imported next to when
+`BSData/wh40k-11e` last changed upstream:
+
+> Imported Aug 23, 2026, 3:13 PM. BSData/wh40k-11e was last updated Aug 23,
+> 2026, 4:47 AM, so this import is current.
+
+When upstream is newer it says **newer catalogue data is available**, and notes
+that points can change between releases. Both states are marked in the DOM
+(`data-freshness`) and styled as a notice rather than an alarm.
+
+### When it cannot tell
+
+The fallback Stone asked for. Offline, rate-limited, and blocked are
+indistinguishable from the browser and the honest sentence is the same either
+way: the data comes from the community BSData project and **may be out of
+date**, because RosterForge could not reach GitHub to check. It never implies
+the data is current.
+
+### Two deliberate limits
+
+- **Repository-wide, not per file.** One request reading `pushed_at`. Per-file
+  times would be exact but cost a request each, and 46 catalogue files would
+  exhaust an unauthenticated hourly allowance of 60 in a single check. Recorded
+  as a roadmap row rather than pretended away.
+- **It does not claim provenance.** It reports when the upstream repository last
+  changed, not that the loaded files came from it. Files chosen from disk may be
+  older, newer, or from somewhere else. Saying more than that would be the exact
+  kind of confident-but-wrong statement this project keeps avoiding.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **492 passed, 15 skipped (507 total)**, six added: three in
+  `pinned-github.test.ts` for the request, the network failure, and metadata
+  with no usable time; three in `catalogue-library-panel.test.tsx` for the
+  current, stale, and unreachable messages.
+- Pinned corpus — **507 passed**.
+- Verified against the **live GitHub API** in the browser, which reported the
+  import as current against a repository last pushed to that morning — matching
+  the commit timestamp in Stone's local clone.
+
+### Next recommended boundary
+
+**`skipIfPresent`.** 359 modifiers across 20 files, and it currently withholds
+printed values — the pinned Manreaper's Keywords are blank because of it. The
+values are the appended keyword strings themselves, which reads as
+deduplication, but that is inference: pin it against the New Recruit wiki or an
+observation before writing a rule. This is now the largest display gap.
