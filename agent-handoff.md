@@ -45,11 +45,11 @@ diagnostic codes.
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
   **494 passed**; without it the 13 corpus tests are skipped.
-- **Active area.** None. Sections A, B, D, and E are complete, C is low
-  priority by owner decision, and **nothing in the roadmap is `Next`**. The
-  remaining rows are deliberate holds — zero corpus instances, unreachable
-  paths, or blocked by design. Choosing the next milestone is an owner
-  question; see "Open questions needing the owner" below.
+- **Active area.** **Evaluation performance**, and nothing else until it is
+  fixed. Measured 2026-08-23 against a GW-exported Dark Angels list: supported
+  validation takes 3.8 s at one unit and 127 s at six, and the workspace runs it
+  on every edit. A real army cannot be built in the browser. The format-coverage
+  sections (A, B, D, E) are complete and were never measuring this.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -185,7 +185,8 @@ points limit works end to end and is now pinned.
 | Comma-delimited `defaultAmount` | Open | 7 of 96 corpus defaults; New Recruit initializes multiple sub-unit instances, which this product does not model |
 | Grouped `defaultAmount` modifier ordering | Open | 1 corpus instance; withheld rather than guessed. Smallest remaining real gap |
 | Collapsing ordinary occurrences into one amounted node | Deferred | nested child costs belong to each occurrence and are not multiplied by an ancestor amount, so changing representation first could undercount wargear |
-| **Unfillable required wargear group** | **Next** | found by driving the app, 2026-08-23. Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list can never be structurally valid. Reproduces with all 46 corpus files loaded, so it is not a missing dependency |
+| **Evaluation cost makes a real army unusable** | **Next** | measured 2026-08-23 against a GW-exported Dark Angels list. Supported validation takes **3.8 s at one unit and 127 s at six**; cost evaluation goes 74 ms to 5.2 s over the same range. The workspace runs both on every edit, so the browser locks up. This blocks everything else |
+| Unfillable required wargear group | Open | Death Guard Plague Champion has a `Wargear` group needing 2 of 2 with *no resolvable entries*, so the list cannot reach a valid state. Reproduces with all 46 corpus files, so it is not a missing dependency. Dark Angels `Force Disposition` shows the same symptom |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
 ### C. Roster interchange
@@ -5261,3 +5262,92 @@ Because it was written outward from the data format, and by that measure it was
 telling the truth. "Can Stone build a list he would actually take to a game" was
 never one of its rows. That gap is the thing worth fixing about the roadmap, not
 just about the code.
+
+## Research Note — The Dark Angels List, 2026-08-23
+
+No code change. Stone supplied a **1,900-point Dark Angels list exported from
+Games Workshop's own army builder** (App v2.4.0, Data Version v925) as an
+oracle, and asked what testing against it would uncover. It uncovered the
+biggest defect found in this project so far, and cleared the cost evaluator of
+suspicion at the same time.
+
+### Costs are right. All sixteen units.
+
+Built the list headlessly against the pinned corpus, adding each unit to a Dark
+Angels Army Roster and comparing the points delta with GW's figure.
+
+Thirteen matched exactly: Azrael 140, Judiciar 55, Librarian in Terminator
+Armour 75, Assault Intercessor Squad 75, Intercessor Squad 80, Ballistus
+Dreadnought 150, Bladeguard Veteran Squad 80, Deathwing Knights 240, Eradicator
+Squad 90, Outrider Squad 70, Scout Squad 65, Sternguard Veteran Squad 100,
+Terminator Squad 160.
+
+The three that did not match are **not evaluator defects**, and checking that
+mattered more than the headline number:
+
+| Unit | GW | RosterForge | Why |
+|---|---|---|---|
+| Inner Circle Companions | 160 | 80 | I added the 3-model default; the list has 6. The data says 80 for three |
+| Lion El'Jonson | 265 | 285 | **The corpus says 285.** Community data disagrees with GW |
+| Lieutenant with Combi-weapon | 95 | 85 | **The corpus says 85.** Same |
+
+Both discrepancies were confirmed by reading the source JSON directly, not by
+trusting the app. So: **the pinned BSData commit is out of step with GW Data
+Version v925 on at least two Dark Angels units.** RosterForge reported the data
+it was given, faithfully. Worth knowing before anyone files a costing bug — and
+worth telling a user, since a list that is legal here could be 20 points wrong
+at a tournament.
+
+A fourth apparent failure, `Lion El’Jonson` "NOT FOUND", was my own bug: the GW
+export uses U+2019 and the catalogue uses U+0027. Any future import or
+list-matching feature needs Unicode normalisation, and that is now known cheaply
+rather than during an import checkpoint.
+
+### The blocker: evaluation does not scale
+
+Driving the app in a browser, adding the first five characters locked the tab.
+`document.querySelectorAll("*")` timed out at 30 s while trivial JS returned
+instantly — a blocked main thread, not slow layout. Measured headlessly:
+
+| Units | Selections | `evaluateLocalRosterCosts` | `inspectLocalRosterSupportedValidation` |
+|---|---|---|---|
+| 1 | 9 | 74 ms | **3.8 s** |
+| 2 | 12 | 65 ms | **41 s** |
+| 3 | 15 | 65 ms | **77 s** |
+| 4 | 18 | 68 ms | **113 s** |
+| 5 | 34 | 4,526 ms | **118 s** |
+| 6 | 39 | 5,152 ms | **127 s** |
+
+The workspace runs both on **every edit**. At four units an edit costs roughly
+two minutes. The sixteen-unit list this note is named after cannot be built in
+the UI at all — I only completed it headlessly by never calling validation.
+
+Note the shape. Validation is already 3.8 s at *one* unit, and roughly ten times
+worse by two. Cost evaluation stays flat until squads with children arrive at
+unit five, then jumps seventy-fold. Neither looks like a constant factor;
+both look like repeated whole-catalogue work per selection. `affects-routing.ts`
+and `selection-context.ts` rebuild indexes per call, and
+`restoreLocalRosterSession` was already measured at a flat 19 ms of
+whole-catalogue indexing per call for exactly that reason — the same shape,
+found again somewhere hotter.
+
+### Why nothing caught this
+
+Every existing measurement was of a **write**, never of an **evaluation**. The
+draft-byte and undo-history checkpoints both asked "what does one store write
+cost?" and got good answers. Nobody asked what one *edit* costs, and the test
+suite builds rosters of four to ninety-nine selections without ever timing the
+evaluators. The pinned corpus suite takes 83 s for 48 files and that was read as
+thoroughness rather than as a signal.
+
+### Recommended next boundary
+
+1. **Profile and fix evaluation scaling.** Nothing else in the product matters
+   until an edit is cheap. Start by timing `inspectLocalRosterSupportedValidation`
+   against selection count, then look for per-selection whole-catalogue index
+   rebuilds — the shared-context fix in `restoreLocalRosterSessions` is the
+   pattern that already worked once.
+2. **Add a performance gate.** A test that fails when a representative roster
+   exceeds a budget per edit. Without one this regresses silently, exactly as it
+   did here.
+3. The unfillable wargear group, once edits are usable enough to explore it.
