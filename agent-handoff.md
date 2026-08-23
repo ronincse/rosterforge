@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **492 passed, 15 skipped (507)**.
+  `git diff --check` all pass. `pnpm test` is **493 passed, 16 skipped (509)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **507 passed**; without the variable the 15 corpus tests are skipped.
+  **509 passed**; without the variable the 16 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -289,7 +289,11 @@ invisible to the whole test suite.
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
 | Warn when community data disagrees with GW points | Measured | **both known cases vanished when the corpus was updated** — the data was simply stale and RosterForge read it faithfully. The gap is *freshness*, not correctness |
 | Surface how current the loaded data is | Done | import date against BSData's last upstream push, one request; falls back to a plain "may be out of date" note when GitHub is unreachable |
-| **`skipIfPresent` on modifiers** | **Next** | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
+| Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
+| Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
+| **Allied config auto-inserts into a force** | **Next** | QA-confirmed: an empty Dark Angels roster initialises `Code Chivalric`, which is Imperial Knights configuration reached through an `importRoot` link |
+| `skipIfPresent` on modifiers | Open | 359 modifiers across 20 files; unsupported, and it withholds printed values. Needs its semantics pinned by the wiki or an observation first |
+| NOTICE text offered as an addable unit | Open | the catalogue's deprecation notice is a selectable root; filter it out of the browser |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
@@ -5985,3 +5989,90 @@ printed values — the pinned Manreaper's Keywords are blank because of it. The
 values are the appended keyword strings themselves, which reads as
 deduplication, but that is inference: pin it against the New Recruit wiki or an
 observation before writing a rule. This is now the largest display gap.
+
+## Completed Assignment — Ancestor Scope For Prospective Children, 2026-08-23
+
+Baseline `c523777`; resulting implementation commit `2422bdc`.
+
+Stone had an external model do a QA pass and build real lists. It found four
+genuine bugs, one wrong diagnosis, and one repeat of a trap this project has
+now fallen into three times. This entry is the worst of the real ones.
+
+### The bug
+
+**Every detachment enhancement was permanently hidden**, which blocks the whole
+enhancement game.
+
+Visibility is asked about entries that are *not in the roster yet* — "would this
+enhancement be offered on this character" — so the nearest thing that exists,
+the parent, is passed as the condition owner. That silently shifts every
+relative scope up one link. `ancestor` is where it shows: an enhancement's
+ancestors include its bearer, but the bearer's own ancestors do not, and a
+top-level character has none at all.
+
+So the gate resolved against an **empty chain**, every `notInstanceOf` faction
+condition fired, and nothing was ever offered. The corpus has **2,635**
+ancestor-scoped conditions — the fourth most common scope — and 2,633 of them
+are `instanceOf`/`notInstanceOf` on `selections`, exactly this shape. A reading
+that makes a whole population inert is usually the wrong reading, and this is
+the third time that heuristic has paid.
+
+### The fix, and its deliberate narrowness
+
+Conditions take a `prospectiveChild` option, forwarded from visibility through
+modifier and modifier-group applicability. When set, `ancestor` includes the
+owner.
+
+**Only `ancestor` is corrected.** `self` and `parent` carry the same off-by-one
+in principle, but nothing measured shows them misbehaving, and widening a fix
+past its evidence is how a fix becomes a regression.
+
+### Proof it still gates
+
+The risk with "make the hidden thing visible" is making everything visible. On a
+Death Guard Lord of Contagion:
+
+| Detachment | Enhancements offered |
+|---|---|
+| Virulent Vectorium | **4** — Daemon Weapon of Nurgle, Furnace of Plagues, Revolting Regeneration, Arch Contaminator |
+| Shamblerot Vectorium | **2** — different ones |
+| Flyblown Host | 0 |
+| *(none chosen)* | **0** |
+
+Four per detachment is the 10th/11th edition pattern, and 22 of the 26 stay
+hidden. Pinned in the corpus suite; a unit guard on the scope resolver fails
+when the owner is dropped again, verified by dropping it.
+
+### The QA pass, assessed
+
+Worth recording what was and was not real, because the ratio matters:
+
+- **True.** Enhancements hidden (this entry). Allied `importRoot` config
+  auto-inserting — an empty Dark Angels roster initialises `Code Chivalric`,
+  which is Imperial Knights configuration. The `NOTICE` deprecation string
+  offered as an addable unit. And the browse pin still on the old revision,
+  which was **my miss** during the re-pin: the app's own source was never
+  updated, so Browse would have fetched the revision that was twenty points
+  wrong while the freshness banner said "current". Fixed in `c523777`.
+- **False.** "Extra models on Inner Circle Companions charged full unit cost."
+  Measured: 3 models 80 pts, 4/5/6 models 160 pts — exactly the catalogue's
+  `set 160` when `selections > 3`, and exactly GW's 160 for six. The reported
+  +240 is what adding the *unit* three more times costs, not models.
+- **Misdiagnosed, again.** "Force Disposition inconsistent between factions."
+  It is gated on the **detachment**, not battle size, in every faction checked.
+  That is the third time a "no options available" symptom has had a different
+  cause here, and the second time it was an order-of-operations trap.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **493 passed, 16 skipped (509 total)**.
+- Pinned corpus — **509 passed**.
+
+### Next recommended boundary
+
+**Allied `importRoot` configuration initialising into a force.** A Dark Angels
+Army Roster starts with `Code Chivalric`, `Deed`, and `Quality` — Imperial
+Knights configuration reached through an `importRoot` entry link. It inflates
+the roster and puts foreign options in the browser. Measure how many catalogues
+link a library this way before choosing a rule.
