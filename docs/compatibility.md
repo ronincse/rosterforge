@@ -178,7 +178,10 @@
   unresolved display-name/annotation notices remain available inside Selection
   details without becoming a banner on every occurrence
 - Persistent Roster, Add units, and Checks workspace navigation with live
-  counts, a two-pane desktop builder, and ordered full-width mobile fallback
+  counts, a two-pane desktop builder, and a browser-verified full-width mobile
+  fallback. At 390 px and the 320 px supported minimum, repository diagnostics
+  and the real-roster workspace remain inside the viewport; sticky navigation
+  leaves its targets visible below the bar
 - Focused active-roster layout that uses the full library shell and restores
   the unchanged catalogue batch summary when roster setup is cleared
 - Library-marked catalogues retained for composition and diagnostics but

@@ -21,6 +21,13 @@
   box-sizing: border-box;
 }
 
+/* Workspace links share the document scroller with the sticky roster nav.
+   Reserve its measured height plus breathing room for every fragment target;
+   otherwise the requested heading lands underneath the nav at phone width. */
+html {
+  scroll-padding-top: 84px;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -2232,7 +2239,9 @@ h1 {
 
 .diagnostic-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 9px;
+  min-width: 0;
   width: 100%;
   max-width: 680px;
   margin-top: 18px;
@@ -2241,7 +2250,7 @@ h1 {
 
 .diagnostic-list li {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 10px;
   padding: 11px;
@@ -2266,6 +2275,7 @@ h1 {
 }
 
 .diagnostic-list strong {
+  overflow-wrap: anywhere;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.68rem;
 }
@@ -2736,7 +2746,9 @@ footer {
   .remote-source-card,
   .remote-catalogue-picker,
   .remote-source-progress {
-    grid-template-columns: 1fr;
+    /* A plain 1fr track keeps the min-content width of long repository
+       diagnostic codes. minmax(0, 1fr) lets the phone column stay contained. */
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .remote-source-card > button,
