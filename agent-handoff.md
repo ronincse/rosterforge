@@ -7472,3 +7472,78 @@ publication occurred.
 to combine the prominent supported costs and known-problem count while
 preserving the independent completeness signal. Keep configuration separation
 and top-level unit-card restructuring for their following checkpoints.
+
+## Completed Assignment — Codex-To-Claude Lead Transfer, 2026-08-24
+
+Baseline `e7c872509e02e8eb766a6f857dea09ec2d984f1f`; resulting workflow and
+transfer-state commit `0c7d793` (`docs: define Claude lead transfer`). This was
+a documentation-only ownership checkpoint requested after the workspace
+presentation model was completed, committed, pushed, and confirmed by CI.
+
+### Transfer state
+
+Codex is the outgoing active lead and Claude is the incoming active lead. At the
+start of this checkpoint, `HEAD` and `origin/main` both equalled the baseline,
+divergence was `0 0`, the checkout was clean, and `git worktree list` contained
+only `E:/GitHub/rosterforge`. No delegated writer or product checkpoint is in
+flight. The last published product CI was run
+[`32775259189`](https://github.com/ronincse/rosterforge/actions/runs/32775259189),
+which completed successfully for that exact baseline.
+
+Claude should repeat the `AGENTS.md` session-start checks against the final
+published `origin/main` before changing files. Once those checks agree, Claude
+owns the primary checkout, ordinary implementation, architectural decisions,
+delegate selection, integration, validation, handoff, commits, push, and CI
+confirmation. This is a lead transfer, not a Claude Code delegation brief, so
+the specialist's read-only default does not apply.
+
+The roadmap intentionally did not move. Its single **Next** row remains the
+compact points-and-problems player header. That checkpoint should consume
+`apps/web/src/roster-workspace-model.ts`, combine supported headline costs with
+the known-problem count, preserve validity and completeness as independent
+signals, and remove remaining evaluator-oriented framing. Do not fold the later
+configuration split, collapsible costed unit cards, or shop/editor mode into
+that checkpoint. Use Reference Behavior QA only if a decision actually depends
+on New Recruit behavior.
+
+### Durable workflow correction
+
+`docs/agent-workflow.md` now states when a formal lead transfer becomes active
+and what its record must contain: exact baseline and remote relationship,
+worktree and writer state, validation and CI evidence, incoming and outgoing
+leads, the one Next boundary, and explicit exclusions. It also requires the
+incoming lead to stop and reconcile any dirty checkout, remote mismatch,
+concurrent writer, named-lead mismatch, or roadmap contradiction before
+implementation.
+
+Changing the model-role table or `AGENTS.md` was rejected because both already
+say that Claude may become lead only through a formal handoff and that the
+active lead receives the complete checkpoint authority. Architecture,
+compatibility, and diagnostics documentation also remain unchanged because no
+product boundary, behavior, or diagnostic moved.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **501 passed, 18 skipped (519 total)** across 53 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files,
+  clean and intentionally three commits behind its moving `origin/main` —
+  **519 passed** across 53 test files.
+- Production build succeeded with only the existing large-chunk warning.
+
+No delegation or Reference Behavior QA was needed. The work was a small,
+repository-local documentation correction, and no behavioral discrepancy was
+classified.
+
+### What this did not do
+
+No application code, test, dependency, build configuration, product behavior,
+architecture boundary, compatibility claim, diagnostic, corpus data, or New
+Recruit state changed. No product checkpoint, pull request, deployment, or
+external publication began.
+
+### Next recommended boundary
+
+**The compact points-and-problems player header**, unchanged. Keep it close and
+independently reviewable, then complete the normal handoff, push, and CI cycle.
