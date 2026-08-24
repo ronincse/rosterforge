@@ -7475,10 +7475,11 @@ and top-level unit-card restructuring for their following checkpoints.
 
 ## Completed Assignment — Codex-To-Claude Lead Transfer, 2026-08-24
 
-Baseline `e7c872509e02e8eb766a6f857dea09ec2d984f1f`; resulting workflow and
-transfer-state commit `0c7d793` (`docs: define Claude lead transfer`). This was
-a documentation-only ownership checkpoint requested after the workspace
-presentation model was completed, committed, pushed, and confirmed by CI.
+Baseline `e7c872509e02e8eb766a6f857dea09ec2d984f1f`; resulting workflow commit
+`0c7d793` (`docs: define Claude lead transfer`) and transfer-record commit
+`d74e07d` (`docs: record Claude lead handoff`). This was a documentation-only
+ownership checkpoint requested after the workspace presentation model was
+completed, committed, pushed, and confirmed by CI.
 
 ### Transfer state
 
@@ -7489,6 +7490,13 @@ only `E:/GitHub/rosterforge`. No delegated writer or product checkpoint is in
 flight. The last published product CI was run
 [`32775259189`](https://github.com/ronincse/rosterforge/actions/runs/32775259189),
 which completed successfully for that exact baseline.
+
+Git transport credentials successfully pushed the transfer commits. Separately,
+`gh auth status` reported that the stored `ronincse` GitHub CLI token is invalid;
+the unauthenticated run listing then exhausted its public API limit. The final
+Actions result was verified from the public run page instead. Claude should
+reauthenticate `gh` before depending on authenticated GitHub-native CLI work;
+this does not block ordinary fetch or push with the working Git credentials.
 
 Claude should repeat the `AGENTS.md` session-start checks against the final
 published `origin/main` before changing files. Once those checks agree, Claude
@@ -7531,6 +7539,9 @@ product boundary, behavior, or diagnostic moved.
   clean and intentionally three commits behind its moving `origin/main` —
   **519 passed** across 53 test files.
 - Production build succeeded with only the existing large-chunk warning.
+- Published transfer-record CI run
+  [`32776711570`](https://github.com/ronincse/rosterforge/actions/runs/32776711570)
+  completed successfully for `d74e07d`.
 
 No delegation or Reference Behavior QA was needed. The work was a small,
 repository-local documentation correction, and no behavioral discrepancy was
