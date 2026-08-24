@@ -7122,3 +7122,80 @@ roster, modify New Recruit state, or begin any other roadmap item.
 **A deterministic CI performance budget**, as one close checkpoint. Guard one
 existing measured hot path without beginning whole-roster incremental
 evaluation or expanding into a general benchmark framework.
+
+## Completed Assignment — Usability Roadmap Residual Audit, 2026-08-24
+
+Baseline `49a8dc970520cb7ec7a164cda8853a674ee47d2b`; resulting roadmap commit
+`c5f8891` (`docs: restore usability roadmap residuals`). This was a
+documentation-only checkpoint requested after comparing the original Grok
+usability review with the current application and roadmap.
+
+### What changed
+
+Section F no longer uses one broad `Usability findings from the QA pass — Done`
+row to represent both delivered cleanup and the larger review. It now records
+the first cleanup as the bounded baseline it actually delivered and restores
+explicit rows for:
+
+- the compact points-and-problems header and remaining evaluator chrome;
+- a tested workspace presentation model;
+- configuration-versus-army separation;
+- collapsible top-level units with live per-unit costs;
+- shop/editor modes and focus of newly added units;
+- legality-aware model-count controls;
+- player-facing validation messages, which are already Done;
+- flattened common loadouts and a dedicated Warlord control;
+- the low-priority nested-group and unit-typed automatic shapes; and
+- a print-output usability pass, separately from the completed phone-width pass.
+
+The Current Status and Picking up sections now say that the first presentation
+checkpoint was a subset, not closure of the broader audit. The deterministic CI
+performance budget remains `Next`; restoring lost roadmap visibility did not
+silently reprioritise the already-approved checkpoint.
+
+### Decisions and rejected alternatives
+
+Adding only the wholly unimplemented items was rejected because it would still
+lose the unfinished halves of partially delivered outcomes such as the player
+header, top-level collapse/per-unit costs, model controls, and print. Reopening
+the completed presentation cleanup as a whole was also rejected: its exact
+delivered behavior remains true and tested. Each residual therefore states the
+existing baseline and the outcome still missing.
+
+The roadmap vocabulary has no `Partial` status. Residual outcomes are `Open`
+with their completed slice in the note; the two automatic shapes remain `Low
+priority` because the pinned corpus still has no modifier-driven group using
+them. Phone behavior and player-facing validation remain `Done`.
+
+No architecture or compatibility document changed because no product behavior,
+package boundary, or support claim changed. Reference Behavior QA was not
+invoked: this checkpoint classified repository tracking against implemented
+code and recorded evidence, not a New Recruit behavioral discrepancy. The edit
+stayed with the active lead because a one-file roadmap correction offered no
+concrete delegation advantage.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **497 passed, 18 skipped (515 total)** across 51 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, clean and
+  intentionally three commits behind its moving `origin/main` — **515 passed**
+  across 51 test files.
+- Production build succeeded with only the existing large-chunk warning.
+- Pre-checkpoint remote refresh — baseline `HEAD` and `origin/main` both
+  `49a8dc970520cb7ec7a164cda8853a674ee47d2b`, divergence `0 0`, with only the
+  primary worktree.
+
+### What this did not do
+
+No application code, test, dependency, build configuration, architecture
+boundary, compatibility claim, diagnostic, corpus data, product behavior, or
+roadmap priority changed. None of the restored product residuals began. No New
+Recruit scenario, pull request, deployment, or external publication occurred.
+
+### Next recommended boundary
+
+**A deterministic CI performance budget**, unchanged. Keep it one close
+checkpoint; the restored usability rows are now visible for later selection
+without expanding this checkpoint into implementation.
