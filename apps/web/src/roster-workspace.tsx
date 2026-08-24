@@ -11,12 +11,10 @@ import {
   isUnboundedConstraintValue,
   type RosterForceConstraintReport,
   type RosterProfileCharacteristicReport,
-  type RosterSelectionConditionCostReport,
   type RosterSelectionConstraintReport,
   type RosterSelectionConstraintStatus,
   type RosterStructuralBoundReport,
   type RosterStructuralBoundStatus,
-  type SupportedRosterValidationFinding,
 } from "@rosterforge/evaluation";
 import type { Diagnostic } from "@rosterforge/foundation";
 import {
@@ -39,7 +37,6 @@ import {
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
   localRosterSelectionChoice,
-  localRosterSelectionCount,
   type LocalRosterChildChoiceGroup,
   type LocalRosterCategoryInspection,
   type LocalRosterConstraintInspection,
@@ -50,6 +47,12 @@ import {
   type LocalRosterRootChoiceState,
   type LocalRosterSession,
 } from "./roster-session.js";
+import {
+  createRosterWorkspaceViewModel,
+  type RosterWorkspaceCostSummary,
+  type RosterWorkspaceSelection,
+  type RosterWorkspaceValidationSummary,
+} from "./roster-workspace-model.js";
 import {
   createRosterPrintViewModel,
   type RosterPrintViewModel,
@@ -104,14 +107,25 @@ export function RosterOverview({
   readonly hasSavedDraft: boolean;
   readonly unsavedChanges: boolean;
 }) {
-  const force = session.roster.forces[0];
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
   const [printBlocked, setPrintBlocked] = useState(false);
-  const rootChoiceInspection = inspectLocalRosterRootChoices(session);
-  const rootChoiceGroups = rootChoiceInspection.ok
-    ? rootChoiceInspection.value.groups
-    : [];
+  // One memoized projection keeps every reader-facing rule on the same
+  // immutable session snapshot. Layout components consume this model; the raw
+  // reports remain attached for the existing detailed inspectors and print
+  // export until their later presentation checkpoints.
+  const workspace = useMemo(
+    () =>
+      createRosterWorkspaceViewModel(session, {
+        rootChoices: inspectLocalRosterRootChoices(session),
+        costs: evaluateLocalRosterCosts(session),
+        validation: inspectLocalRosterSupportedValidation(session),
+      }),
+    [session],
+  );
+  const force = workspace.primaryForce;
+  const rootChoiceInspection = workspace.reports.rootChoices;
+  const rootChoiceGroups = workspace.rootChoices.groups;
   const normalizedRootFilter = rootFilter.trim().toLowerCase();
   const filteredRootChoiceGroups =
     normalizedRootFilter === ""
@@ -130,30 +144,10 @@ export function RosterOverview({
     (total, { choices }) => total + choices.length,
     0,
   );
-  // Both walk the whole roster, and this component re-renders for reasons that
-  // have nothing to do with the roster — an autosave moving the draft action
-  // from saving back to idle is enough. Unmemoised, a fifteen-unit army paid a
-  // full re-evaluation for each of those. Keyed on the session because a
-  // command returns a new one for any real change and the same one otherwise.
-  const costResult = useMemo(
-    () => evaluateLocalRosterCosts(session),
-    [session],
-  );
-  const supportedValidation = useMemo(
-    () => inspectLocalRosterSupportedValidation(session),
-    [session],
-  );
-  const attentionSelectionIds =
-    supportedValidation.ok
-      ? supportedValidationSelectionIds(
-          supportedValidation.value.status.findings,
-        )
-      : new Set<string>();
-  const validationIssueCount = supportedValidation.ok
-    ? supportedValidation.value.status.statusCounts.violated
-    : 0;
-  const topLevelSelectionCount =
-    force === undefined ? 0 : rosterSelectionsAmount(force.selections);
+  const costResult = workspace.reports.costs;
+  const supportedValidation = workspace.reports.validation;
+  const validationIssueCount = workspace.validation.issueCount;
+  const topLevelSelectionCount = workspace.topLevelSelectionCount;
   return (
     <div className="roster-overview">
       <p className="eyebrow">Roster workspace</p>
@@ -163,11 +157,11 @@ export function RosterOverview({
       <div className="roster-metrics">
         <SummaryMetric
           label="Forces"
-          value={String(session.roster.forces.length)}
+          value={String(workspace.forceCount)}
         />
         <SummaryMetric
           label="Selections"
-          value={String(localRosterSelectionCount(session))}
+          value={String(workspace.selectionCount)}
         />
       </div>
 
@@ -224,8 +218,8 @@ export function RosterOverview({
         </p>
       )}
 
-      <RosterSupportedValidationRibbon result={supportedValidation} />
-      <RosterCostSummary result={costResult} />
+      <RosterSupportedValidationRibbon summary={workspace.validation} />
+      <RosterCostSummary summary={workspace.costs} />
 
       <nav
         className="roster-workspace-nav"
@@ -305,12 +299,11 @@ export function RosterOverview({
           ) : (
             <div className="roster-selection-list">
               <ul>
-                {force.selections.map((selection) => (
+                {workspace.selections.ordered.map((selection) => (
                   <RosterSelectionItem
-                    key={selection.id}
+                    key={selection.occurrence.id}
                     session={session}
-                    selection={selection}
-                    attentionSelectionIds={attentionSelectionIds}
+                    selectionModel={selection}
                     onAddChild={onAddChildSelection}
                     onRename={onRenameSelection}
                     onSetAmount={onSetSelectionAmount}
@@ -368,7 +361,7 @@ export function RosterOverview({
                   open={
                     normalizedRootFilter !== "" ||
                     index === 0 ||
-                    group.name === "Configuration"
+                    group.section === "configuration"
                   }
                 >
                   <summary>
@@ -453,13 +446,11 @@ export function RosterOverview({
 }
 
 function RosterSupportedValidationRibbon({
-  result,
+  summary,
 }: {
-  readonly result: ReturnType<
-    typeof inspectLocalRosterSupportedValidation
-  >;
+  readonly summary: RosterWorkspaceValidationSummary;
 }) {
-  if (!result.ok) {
+  if (!summary.available) {
     return (
       <section
         className="supported-validation-ribbon"
@@ -475,22 +466,15 @@ function RosterSupportedValidationRibbon({
           The supported checks could not be composed. Editing remains
           available.
         </p>
-        <DiagnosticList diagnostics={result.diagnostics} />
+        <DiagnosticList diagnostics={summary.diagnostics} />
       </section>
     );
   }
 
-  const report = result.value.status;
-  const structuralViolations = report.findings.filter(
-    ({ kind, status }) => kind === "structural" && status === "violated",
-  ).length;
-  const constraintViolations = report.findings.filter(
-    ({ kind, status }) => kind !== "structural" && status === "violated",
-  ).length;
   return (
     <section
       className="supported-validation-ribbon"
-      data-validity={report.validity}
+      data-validity={summary.validity}
       aria-labelledby="supported-validation-heading"
     >
       <div className="supported-validation-heading">
@@ -503,17 +487,17 @@ function RosterSupportedValidationRibbon({
         <div className="validation-badges">
           <span
             className="validity-badge"
-            data-validity={report.validity}
+            data-validity={summary.validity}
           >
-            {report.validity === "valid"
+            {summary.validity === "valid"
               ? "No known violations"
               : "Known violations"}
           </span>
           <span
             className="completeness-badge"
-            data-completeness={report.completeness}
+            data-completeness={summary.completeness}
           >
-            {report.completeness === "complete"
+            {summary.completeness === "complete"
               ? "Complete supported view"
               : "Incomplete supported view"}
           </span>
@@ -527,17 +511,17 @@ function RosterSupportedValidationRibbon({
         <ConstraintStatus
           label="Satisfied"
           status="satisfied"
-          value={report.statusCounts.satisfied}
+          value={summary.statusCounts.satisfied}
         />
         <ConstraintStatus
           label="Violated"
           status="violated"
-          value={report.statusCounts.violated}
+          value={summary.statusCounts.violated}
         />
         <ConstraintStatus
           label="Unresolved"
           status="unresolved"
-          value={report.statusCounts.unresolved}
+          value={summary.statusCounts.unresolved}
         />
       </ul>
 
@@ -547,12 +531,15 @@ function RosterSupportedValidationRibbon({
       >
         <a href="#roster-structural-status-heading">
           {formatCount(
-            structuralViolations,
+            summary.structuralViolationCount,
             "structural violation",
           )}
         </a>
         <a href="#roster-constraint-heading">
-          {formatCount(constraintViolations, "constraint violation")}
+          {formatCount(
+            summary.constraintViolationCount,
+            "constraint violation",
+          )}
         </a>
       </nav>
 
@@ -1171,11 +1158,11 @@ function constraintObservation(item: ConstraintSummaryItem): string {
 }
 
 function RosterCostSummary({
-  result,
+  summary,
 }: {
-  readonly result: ReturnType<typeof evaluateLocalRosterCosts>;
+  readonly summary: RosterWorkspaceCostSummary;
 }) {
-  if (!result.ok) {
+  if (!summary.available) {
     return (
       <section className="cost-summary" aria-labelledby="roster-cost-heading">
         <div className="cost-summary-heading">
@@ -1188,23 +1175,15 @@ function RosterCostSummary({
           The supported cost report could not be produced. Roster structure is
           unchanged.
         </p>
-        <DiagnosticList diagnostics={result.diagnostics} />
+        <DiagnosticList diagnostics={summary.diagnostics} />
       </section>
     );
   }
 
-  const report = result.value;
-  // Community catalogues attach many campaign bookkeeping fields to every
-  // unit. A matched-play roster therefore produced a wall of zeroes beside its
-  // points total. Keep those source totals available without promoting fields
-  // that currently contribute nothing to the headline, and without inventing a
-  // game-mode filter that would drop evaluator data.
-  const activeTotals = report.totals.filter(({ value }) => value !== 0);
-  const zeroTotals = report.totals.filter(({ value }) => value === 0);
-  const excluded = excludedCostCount(report);
-  const unresolved = report.selections.filter(
-    ({ status }) => status !== "resolved",
-  ).length;
+  const activeTotals = summary.activeTotals;
+  const zeroTotals = summary.zeroTotals;
+  const excluded = summary.excludedCount;
+  const unresolved = summary.unresolvedSelectionCount;
   return (
     <section className="cost-summary" aria-labelledby="roster-cost-heading">
       <div className="cost-summary-heading">
@@ -1214,9 +1193,9 @@ function RosterCostSummary({
         </div>
         <span
           className="completeness-badge"
-          data-completeness={report.completeness}
+          data-completeness={summary.completeness}
         >
-          {report.completeness === "complete"
+          {summary.completeness === "complete"
             ? "Complete supported view"
             : "Incomplete supported view"}
         </span>
@@ -1224,7 +1203,7 @@ function RosterCostSummary({
 
       {activeTotals.length === 0 ? (
         <p className="empty-costs">
-          {report.totals.length === 0
+          {activeTotals.length + zeroTotals.length === 0
             ? "No supported numeric costs yet."
             : "No non-zero supported costs yet."}
         </p>
@@ -1233,7 +1212,7 @@ function RosterCostSummary({
           {activeTotals.map((total) => (
             <li key={total.typeId}>
               <strong>{formatNumber(total.value)}</strong>
-              <span>{total.costType.name ?? total.typeId}</span>
+              <span>{total.name}</span>
             </li>
           ))}
         </ul>
@@ -1253,24 +1232,26 @@ function RosterCostSummary({
           </summary>
           <ul className="zero-cost-list">
             {zeroTotals.map((total) => (
-              <li key={total.typeId}>{total.costType.name ?? total.typeId}</li>
+              <li key={total.typeId}>{total.name}</li>
             ))}
           </ul>
         </details>
       )}
 
       <p className="cost-boundary">
-        {report.completeness === "complete"
+        {summary.completeness === "complete"
           ? "All applicable behavior supported by this evaluation scope is reflected in these totals."
           : "These totals exclude unresolved data or behavior outside the supported evaluation scope."}
       </p>
 
-      {(excluded > 0 || unresolved > 0 || result.diagnostics.length > 0) && (
+      {(excluded > 0 ||
+        unresolved > 0 ||
+        summary.diagnostics.length > 0) && (
         <details className="cost-details">
           <summary>
             Cost report details
             <span>
-              {formatCount(result.diagnostics.length, "diagnostic")}
+              {formatCount(summary.diagnostics.length, "diagnostic")}
             </span>
           </summary>
           <dl>
@@ -1278,37 +1259,26 @@ function RosterCostSummary({
             <Detail label="Unresolved selections" value={String(unresolved)} />
             <Detail
               label="Diagnostics"
-              value={String(result.diagnostics.length)}
+              value={String(summary.diagnostics.length)}
             />
           </dl>
-          <DiagnosticList diagnostics={result.diagnostics} />
+          <DiagnosticList diagnostics={summary.diagnostics} />
         </details>
       )}
     </section>
   );
 }
 
-function excludedCostCount(report: RosterSelectionConditionCostReport): number {
-  return report.selections.reduce(
-    (total, selection) =>
-      total +
-      selection.costs.filter(({ status }) => status === "excluded").length,
-    0,
-  );
-}
-
 function RosterSelectionItem({
   session,
-  selection,
-  attentionSelectionIds,
+  selectionModel,
   onAddChild,
   onRename,
   onSetAmount,
   onRemove,
 }: {
   readonly session: LocalRosterSession;
-  readonly selection: RosterSelection;
-  readonly attentionSelectionIds: ReadonlySet<string>;
+  readonly selectionModel: RosterWorkspaceSelection;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1324,6 +1294,7 @@ function RosterSelectionItem({
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
 }) {
+  const selection = selectionModel.occurrence;
   const childChoices = inspectLocalRosterChildChoices(
     session,
     selection.id,
@@ -1354,8 +1325,8 @@ function RosterSelectionItem({
       : `${displayName} (${annotationValue})`;
   const annotationIncomplete =
     !annotation.ok || annotation.value.completeness === "incomplete";
-  const childrenContainAttention = selection.selections.some((child) =>
-    selectionSubtreeHasAttention(child, attentionSelectionIds),
+  const childrenContainAttention = selectionModel.selections.some(
+    ({ containsAttention }) => containsAttention,
   );
   // Small subtrees stay open so a couple of models are reachable. Larger ones
   // open only when a descendant has a known violation — unresolved bounds stay
@@ -1490,12 +1461,11 @@ function RosterSelectionItem({
               only while open keeps a closed squad off the render path. */}
           {childrenOpen && (
             <ul>
-              {selection.selections.map((child) => (
+              {selectionModel.selections.map((child) => (
                 <RosterSelectionItem
-                  key={child.id}
+                  key={child.occurrence.id}
                   session={session}
-                  selection={child}
-                  attentionSelectionIds={attentionSelectionIds}
+                  selectionModel={child}
                   onAddChild={onAddChild}
                   onRename={onRename}
                   onSetAmount={onSetAmount}
@@ -2354,39 +2324,6 @@ function selectionAnchor(selectionId: SelectionOccurrenceId): string {
 
 function forceAnchor(forceId: string): string {
   return stableDomAnchor("roster-force", forceId);
-}
-
-function supportedValidationSelectionIds(
-  findings: readonly SupportedRosterValidationFinding[],
-): ReadonlySet<string> {
-  const selectionIds = new Set<string>();
-  for (const finding of findings) {
-    // Unresolved behavior remains visible in the checks, but it is not an
-    // actionable violation and should not expand a whole model subtree while
-    // the user is trying to configure the roster.
-    if (finding.status !== "violated") continue;
-    if (finding.kind === "selectionConstraint") {
-      selectionIds.add(finding.report.owner.id);
-    } else if (
-      finding.kind === "structural" &&
-      finding.report.kind !== "root"
-    ) {
-      selectionIds.add(finding.report.owner.id);
-    }
-  }
-  return selectionIds;
-}
-
-function selectionSubtreeHasAttention(
-  selection: RosterSelection,
-  attentionSelectionIds: ReadonlySet<string>,
-): boolean {
-  return (
-    attentionSelectionIds.has(selection.id) ||
-    selection.selections.some((child) =>
-      selectionSubtreeHasAttention(child, attentionSelectionIds),
-    )
-  );
 }
 
 function stableDomAnchor(prefix: string, value: string): string {

@@ -474,6 +474,20 @@ summary stay above the builder, while detailed structural and constraint
 reports follow it. Anchor navigation and pane state are UI concerns only and
 never enter the immutable session, history, or draft.
 
+`createRosterWorkspaceViewModel` is the pure presentation boundary over one
+immutable session and its root-choice, cost, and supported-validation reports.
+The React workspace creates it once per session snapshot and keeps the three
+source reports attached by reference so downstream detail cards and print
+export reuse that snapshot. The model centralises non-zero headline
+versus zero-value detail costs, actionable violated-selection attention, exact
+`Configuration` category classification, recursive per-top-level-selection
+cost totals, and optional active-selection ancestry. Unknown or uncategorized
+roots stay in the army section instead of being guessed away. Failed reports
+remain explicit unavailable states, and selected occurrences remain present.
+This projection does not evaluate, mutate, filter, legalize, or persist the
+roster; it prepares shared input for later layout checkpoints without changing
+the current workspace presentation.
+
 The local library retains every composed catalogue context. The roster setup
 surface derives an ordered `selectableCatalogues` subset by excluding projected
 `library=true` documents; those library contexts continue to participate in
