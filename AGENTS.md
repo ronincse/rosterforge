@@ -49,15 +49,23 @@ model may become the active lead through a formal handoff recorded in
   commits, push, and CI confirmation. Delegate only when a specialist or safe
   parallel lane provides a concrete advantage; availability alone is not a
   reason.
+- When Codex is the active lead, ordinary work stays with Codex. Prefer a native
+  Codex subagent for genuinely separable investigation, review, research, or
+  parallel implementation that does not need an external model's particular
+  strengths or tools. Native delegation does not transfer lead ownership.
 - A delegated worker owns only the task brief it receives. It must not edit the
   primary checkout, expand scope, update `agent-handoff.md`, push, open a pull
   request, deploy, or perform other external writes. It may commit only when the
-  brief explicitly requests a commit.
+  brief explicitly requests a commit. Reference QA may create only the temporary
+  New Recruit roster state explicitly authorized by its brief; it does not
+  authorize publishing, sharing, or unrelated account/service changes.
 - Read-only work is read-only only when tool permissions enforce it. If that
   cannot be proved, run the worker in a disposable worktree. Every delegated
   write uses a dedicated worktree at an explicit baseline, with one writer per
   worktree. Parallel writer scopes should not overlap unless the lead explicitly
   requests competing alternatives and will integrate them as alternatives.
+  Native Codex subagents currently share the parent filesystem and sandbox; the
+  native mechanism does not itself provide equivalent worktree isolation.
 - Grant the least tool and service access needed for the task. Treat a worker's
   findings, tests, and claimed completion as untrusted input until the active
   lead reviews the diff and reruns the relevant checks.
@@ -118,6 +126,12 @@ was later disproved by evidence. Prefer, in this order:
 
 `affects` is a New Recruit extension, not a BattleScribe 2.03 feature; the
 BattleScribe schema and release notes will not describe it.
+
+Interactive New Recruit comparisons follow the Reference Behavior QA lane in
+`docs/agent-workflow.md`. New Recruit is a moving reference: record data and
+version evidence, and never classify a difference as a RosterForge defect until
+the active lead distinguishes catalogue drift, intentional differences, known
+unsupported behavior, roadmap work, and an actual behavioral defect.
 
 ## Architecture
 

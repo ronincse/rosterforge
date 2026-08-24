@@ -12,6 +12,13 @@ perform ordinary development itself. A capable model can become the active lead
 only through a formal handoff recorded in `agent-handoff.md`; receiving a
 delegated task never makes a worker the lead.
 
+When Codex leads, native Codex subagents are the preferred first delegation
+lane for cleanly separable work that does not require a particular external
+model or tool. This preserves Codex as the primary implementer: routine work
+stays in the lead thread, while a bounded investigation, review, research lane,
+or non-overlapping implementation can run independently when that has a stated
+benefit.
+
 The active lead owns all of the following:
 
 - establishing the clean baseline and reading repository instructions;
@@ -33,13 +40,28 @@ dedicated worktree, but the lead still decides whether and how to integrate it.
 | Agent | Best use | Default authority |
 | --- | --- | --- |
 | Codex | Lead development, normal implementation, integration, final review, validation, handoff, and publishing | Active lead and primary writer |
+| Native Codex subagent | Cleanly separable investigation, review, research, tests, or parallel implementation that needs no external-model advantage | Bounded child of the Codex lead; shared sandbox/filesystem unless the lead supplies a worktree |
 | Claude Code | Deep repository analysis, architecture review, difficult debugging, edge cases, and substantial code review | Read-only specialist unless given a dedicated writer worktree; may become lead only by formal handoff |
-| Antigravity (`agy`) | Large-context analysis, independent debugging hypotheses, plan review, and second opinions; this is the installed replacement for the deprecated Gemini CLI | Plan-mode specialist in a disposable worktree; may become lead only by formal handoff |
+| Antigravity (`agy`) | New Recruit reference-behavior QA when browser-capable, plus large-context analysis, independent debugging hypotheses, plan review, and second opinions; this replaces the deprecated Gemini CLI | Isolated specialist; never writes RosterForge during reference QA; may become lead only by formal handoff |
 | Grok Build | Well-scoped implementation, non-overlapping parallel work, overflow capacity, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
 | GitHub Copilot CLI | GitHub-native work involving repository state, Actions, issues, or pull requests | Read-only/local repository access by default; GitHub writes require explicit task authority |
 
 These are affinities, not quotas. Use a specialist only when it improves
 coverage, speed, independence, or access to a tool the lead actually needs.
+
+The default decision path is:
+
+| Work | Preferred starting lane |
+| --- | --- |
+| Ordinary development | Codex lead |
+| Normal separable investigation or implementation | Native Codex subagent |
+| Deep independent repository or architecture review | Claude Code |
+| New Recruit behavioral/reference QA | Browser-capable Antigravity session |
+| Bounded overflow implementation | Grok Build in a dedicated worktree |
+| GitHub or Actions work | GitHub Copilot CLI with narrow GitHub permissions |
+
+Start elsewhere when the actual task, available tools, permissions, or model
+strengths justify it. This table never requires delegation.
 
 Good reasons to delegate include:
 
@@ -69,6 +91,7 @@ Every delegated task starts with a written brief. Fill in every field; write
 ```text
 Objective:
 Concrete benefit of delegation:
+Chosen agent/lane and why:
 Repository and absolute worktree path:
 Baseline commit:
 Role: read-only analyst | reviewer | writer
@@ -89,6 +112,12 @@ Name exact expected outputs and verification. For an implementation, identify
 the intended files or package boundary; for analysis, require evidence with
 paths and line numbers. Tell the worker to stop instead of improvising when the
 scope, permissions, or baseline no longer match.
+
+For Reference Behavior QA, the brief also names its targeted or broader cadence,
+the pinned corpus commit, game system, faction/catalogue and relevant entry IDs,
+the exact roster scenario, the browser environment, authorized external reads,
+and the evidence format. The report contract below carries the complete result
+fields.
 
 ### Scope And Stop Conditions
 
@@ -124,6 +153,14 @@ same worktree concurrently. Parallel write scopes should not overlap unless the
 lead deliberately requests competing alternatives and will review them as
 alternatives rather than combine them blindly. The primary checkout belongs to
 the active lead.
+
+Native Codex subagents in the current app environment share the lead's
+filesystem, current repository, sandbox policy, and available tools. A native
+task brief can forbid writes, but that wording is expected conduct rather than
+filesystem enforcement when the parent sandbox is writable. Use a verified
+read-only parent/custom-agent sandbox or a disposable worktree whenever the
+existing read-only rule requires enforcement. Native writers always follow the
+same explicit-baseline, one-writer-per-worktree procedure as external writers.
 
 Create a worktree from an explicit, verified baseline:
 
@@ -167,6 +204,32 @@ git -C $repo branch -D codex/delegate-example
 
 Do not use `git clean`, reset the primary checkout, or delete a branch before
 the lead has inspected it.
+
+## Native Codex Subagents
+
+Current Codex releases enable subagent workflows by default, and applicable
+`AGENTS.md` instructions can request them. The current desktop environment lets
+the lead spawn a bounded child, inspect or steer it, wait for its result, and
+receive its final summary in the lead thread. It exposes four concurrent slots
+in total, including the lead. Recheck the active tool surface instead of treating
+that concurrency value as permanent. The official behavior is documented in
+[OpenAI's Codex subagent documentation](https://developers.openai.com/codex/subagents).
+
+No project `.codex/config.toml` or custom-agent file is needed for this workflow.
+Use a native subagent only when its task can be described with the ordinary task
+brief above and can proceed independently while the lead does useful work. The
+lead should say whether it will wait for all results, what output to return, and
+whether any follow-up is allowed. Avoid nested or excessive spawning merely to
+fill available slots: every child performs its own model and tool work, consumes
+additional tokens, and adds coordination and review cost.
+
+This environment does **not** automatically create a branch or worktree for a
+native child. The 2026-08-24 verification child inherited the writable parent
+sandbox and shared checkout, honored a read-only brief, and returned its findings
+without changing files. That proves spawn and result collection, not mutation
+prevention. For any possible write, the lead creates the dedicated worktree
+first, gives its absolute path and exact baseline in the brief, checks that no
+other writer uses it, and reviews the full diff before integration.
 
 ## Current Headless CLI Templates
 
@@ -240,6 +303,165 @@ agy --new-project `
 `--new-project` is important for disposable worktrees: without it, the
 2026-08-24 smoke followed a previously saved project path instead of the
 process working directory.
+
+## Reference Behavior QA
+
+Reference Behavior QA compares the same bounded army-building scenario in
+[New Recruit](https://www.newrecruit.eu/app/) and RosterForge. Its goal is
+observable behavioral compatibility where RosterForge intends to support the
+same semantics. It is not permission to copy New Recruit's visual design,
+source code, data structures, or internal architecture.
+
+Antigravity is the preferred delegated specialist because an independent model
+and a browser-capable session are useful for reference observation. It gathers
+and structures evidence; the active lead decides what the evidence means and
+whether code, compatibility documentation, or the roadmap should change.
+
+### Capability Gate And Isolation
+
+Start every reference task by proving that the selected Antigravity environment
+has an interactive, JavaScript-capable browser and can capture the required
+evidence. The authenticated headless `agy` 1.1.19 session checked on 2026-08-24
+does **not**: it exposed only static HTTP retrieval (`read_url_content`), with no
+browser/navigation tool, imported plugin, or MCP server. Static HTML retrieval
+cannot establish interactive New Recruit behavior.
+
+Use one of these paths:
+
+1. Run the brief in a browser-enabled Antigravity client/session and record that
+   capability in the report.
+2. Have the active lead capture the scenario with an authorized browser tool,
+   then give the resulting steps, screenshots, and observations to Antigravity
+   for independent analysis.
+3. If neither is available, stop and report the capability gap. Do not infer the
+   behavior from static page text or claim a comparison occurred.
+
+Antigravity must not modify RosterForge source during reference QA. Give it a
+disposable worktree at the exact RosterForge baseline even when it needs only
+repository reads. Prefer an unsigned-in or disposable New Recruit browser
+profile. A brief may authorize only the temporary New Recruit roster state
+needed for the named scenario; it does not authorize publishing, sharing,
+account-setting changes, unrelated browsing, or durable external writes.
+
+### Comparison Protocol
+
+1. Freeze the RosterForge side: record the exact application commit, pinned
+   BSData corpus commit, imported game-system/catalogue files, and relevant IDs.
+2. Record the New Recruit side: test date and timezone, game system, faction or
+   catalogue, visible data/source version when exposed, relevant entry IDs or
+   stable URLs, and client/browser context.
+3. Write exact reproduction steps before comparing results. Use the same force,
+   detachment, units, amounts, wargear, enhancements, and other choices where
+   the two data versions make that possible.
+4. Perform and capture the New Recruit scenario, then perform the equivalent
+   RosterForge scenario. Keep observable facts separate from interpretation.
+5. Compare the behaviors below that are relevant to the scenario. Mark omitted
+   dimensions as not applicable rather than silently skipping them.
+6. Record evidence and a preliminary classification. The active lead validates
+   the evidence and assigns the final disposition.
+
+Observable comparison dimensions include:
+
+- available selections and hidden or conditional choices;
+- force setup, detachments, and points limits;
+- default and automatic selections;
+- unit amounts and squad-size behavior;
+- wargear choices, replacements, and mutual exclusion;
+- enhancement availability and eligibility;
+- Warlord selection;
+- costs and cost changes;
+- validation and minimum/maximum constraint failures;
+- occurrence hierarchy and parent/child placement;
+- effective display names and annotations;
+- warnings, diagnostics, and incompleteness presented to the user;
+- add, remove, replace, amount-edit, and other roster-building interactions;
+- any other observable semantic needed by the named scenario.
+
+Use this report shape:
+
+```text
+Reference Behavior QA report
+Cadence: targeted parity QA | broader parity pass
+Test date, time, and timezone:
+Observer and browser-capable environment:
+RosterForge commit:
+RosterForge pinned corpus commit:
+Game system and version:
+Faction/catalogue and version:
+Relevant files, entries, and IDs:
+New Recruit source/data/client version if exposed:
+New Recruit URLs or stable references:
+Authorized temporary New Recruit state:
+Scenario objective:
+Exact reproduction steps:
+Observed New Recruit behavior:
+Expected RosterForge behavior if data-comparable:
+Observed RosterForge behavior:
+Comparison dimensions exercised/not applicable:
+Screenshots, exports, logs, or other evidence:
+Known RosterForge completeness/unsupported reports:
+Data comparability: exact | different | unknown
+Behavior result: match | mismatch | inconclusive | not-applicable
+Preliminary disposition:
+Uncertainties and follow-up needed:
+Confirmation that RosterForge source was not modified:
+```
+
+### Data-Version Safety And Classification
+
+New Recruit is a moving reference; RosterForge deliberately tests a pinned
+BSData revision. Classify data comparability independently from behavior:
+
+- **exact** — evidence establishes equivalent relevant catalogue data;
+- **different** — a relevant source/version/entry difference is identified;
+- **unknown** — equivalence cannot be established from exposed evidence.
+
+Then classify the observable result as `match`, `mismatch`, `inconclusive`, or
+`not-applicable`. Only `exact + mismatch` is a candidate RosterForge behavioral
+defect, and even that remains preliminary until the active lead reproduces and
+classifies it. `different` or `unknown` comparisons may reveal useful drift but
+must not be reported as product bugs.
+
+The preliminary disposition is one of:
+
+- candidate RosterForge behavioral defect;
+- intentional product difference;
+- unsupported behavior already tracked in compatibility or the roadmap;
+- new roadmap candidate;
+- underlying catalogue/data-version difference;
+- needs further investigation.
+
+The active lead owns the final disposition and decides whether to change code,
+tests, compatibility/diagnostics documentation, or roadmap state.
+
+### Cadence And Golden Roster Scenarios
+
+**Targeted parity QA** follows a meaningful list-building feature or correctness
+change when a direct New Recruit comparison would provide useful evidence. It
+is also appropriate for disputed semantics. It is not required for every
+routine code, documentation, refactor, or tooling change.
+
+**Broader parity passes** periodically exercise a small representative set of
+end-to-end army-building scenarios. Re-establish data comparability on every
+run; a previously matching scenario does not pin New Recruit's current data.
+
+Grow a reusable set of evidence-backed **golden roster scenarios** over time.
+Initial candidates include:
+
+- basic matched-play roster creation and points limits;
+- squad-size changes;
+- wargear replacement;
+- enhancement eligibility;
+- Warlord selection;
+- maximum and minimum constraint violations;
+- automatic children;
+- hidden and conditional choices;
+- modifier-driven values.
+
+For now, a golden scenario is a documented input, procedure, expected
+observations, version metadata, and evidence bundle. Do not build an automation
+framework until repeated manual use demonstrates stable inputs and worthwhile
+maintenance cost.
 
 ### Grok Build: read-only review
 
@@ -317,6 +539,13 @@ A writer returns:
 - confirmation that it did not push, edit the shared handoff, or perform
   external writes.
 
+A Reference Behavior QA specialist returns the completed report shape above,
+including evidence locations, both classification axes, a preliminary
+disposition, and all comparability uncertainty. It confirms that it did not
+modify RosterForge source and identifies any explicitly authorized temporary
+New Recruit state. The report never presents its preliminary disposition as the
+active lead's final classification.
+
 ## Lead Review And Integration
 
 The active lead never accepts delegated work by summary alone. Before
@@ -375,6 +604,13 @@ specific approval required by `AGENTS.md`.
 Keep this section current when CLI behavior materially changes. A smoke test is
 disposable evidence, not permission to broaden an agent's role.
 
+- **Native Codex subagent:** the lead spawned one bounded documentation reviewer
+  at baseline `9d4d8feb7a33e258cee22c0224fbf51c4506b5a0`, received its final result
+  in the lead thread, and verified that it changed no files. The child shared the
+  writable parent sandbox, filesystem, and checkout; its read-only behavior was
+  prompt compliance, not enforced isolation. The current environment exposed
+  four total concurrency slots including the lead. No project Codex
+  configuration was required.
 - **Claude Code 2.1.240:** after the provider's reported quota reset, an
   authenticated smoke with only `Read,Grep,Glob` available returned
   `CLAUDE_CONTEXT_OK`. It followed `CLAUDE.md`'s import of `AGENTS.md`, correctly
@@ -388,6 +624,11 @@ disposable evidence, not permission to broaden an agent's role.
   the first probe followed an older saved checkout path. The worktree stayed
   clean. The CLI retained its ordinary user-level conversation/project metadata
   under `.gemini/antigravity-cli`; it created no repository configuration file.
+  A separate reference-QA probe returned `BROWSER_QA_UNAVAILABLE`: headless
+  `agy` exposed static HTTP retrieval but no interactive browser/navigation
+  tool, imported plugin, or MCP server. Browser interaction therefore requires
+  another browser-capable Antigravity client or evidence supplied by an
+  authorized lead browser tool.
 - **Grok Build 1.0.5:** an authenticated plan-mode smoke returned
   `GROK_REPO_OK`, used the positional `--single` prompt form, and correctly
   reported the `roster-builder` restrictions. The primary checkout gained no
