@@ -34,6 +34,14 @@ Codex-specific.
 - Treat `AGENTS.md` and the package boundaries as authoritative when a handoff
   note is stale or ambiguous. Preserve existing user or model changes; never
   reset, clean, or rewrite history to obtain a preferred baseline.
+- A lead can vanish mid-checkpoint — quota exhaustion, a session or tool
+  failure, lost context — without publishing a transfer. When the owner appoints
+  you in that situation, treat the repository as mid-checkpoint: record the full
+  state before touching it, preserve every uncommitted change as evidence of
+  what the last lead was doing, finish the checkpoint already in progress rather
+  than starting the roadmap's next one, and ask the owner instead of guessing or
+  discarding. `docs/agent-workflow.md` "Interrupted Lead Takeover" is the
+  procedure.
 - For changes justified by pinned real data, extend the optional gitignored
   corpus integration test and verify the configured repository revision. Never
   commit third-party game data or silently measure a moving branch.
@@ -49,10 +57,15 @@ model may become the active lead through a formal handoff recorded in
   commits, push, and CI confirmation. Delegate only when a specialist or safe
   parallel lane provides a concrete advantage; availability alone is not a
   reason.
-- When Codex is the active lead, ordinary work stays with Codex. Prefer a native
-  Codex subagent for genuinely separable investigation, review, research, or
-  parallel implementation that does not need an external model's particular
-  strengths or tools. Native delegation does not transfer lead ownership.
+- Ordinary work stays with whoever currently leads. Prefer that lead's **own**
+  native subagent mechanism for genuinely separable investigation, review,
+  research, or parallel implementation that does not need another model's
+  particular strengths or tools, and only where that mechanism's capabilities
+  have actually been verified for the task. Native delegation does not transfer
+  lead ownership. Route independent review, hard debugging, and second opinions
+  to the capable non-lead frontier model: Claude when Codex leads, the Codex CLI
+  when Claude leads and Codex quota is available. Affinities are advice, not
+  mandatory routing; `docs/agent-workflow.md` holds the full table.
 - A delegated worker owns only the task brief it receives. It must not edit the
   primary checkout, expand scope, update `agent-handoff.md`, push, open a pull
   request, deploy, or perform other external writes. It may commit only when the
@@ -64,8 +77,16 @@ model may become the active lead through a formal handoff recorded in
   write uses a dedicated worktree at an explicit baseline, with one writer per
   worktree. Parallel writer scopes should not overlap unless the lead explicitly
   requests competing alternatives and will integrate them as alternatives.
-  Native Codex subagents currently share the parent filesystem and sandbox; the
-  native mechanism does not itself provide equivalent worktree isolation.
+  Native subagents — Codex's and Claude's alike — share the parent filesystem
+  and checkout; neither mechanism provides worktree isolation on its own, and a
+  subagent type labelled "read-only" is not read-only if it still holds a shell.
+  A native child that might write gets a dedicated worktree like any other
+  writer.
+- **Native subagents do not necessarily inherit these instructions.** A native
+  Claude subagent in the current desktop app starts without `CLAUDE.md` or
+  `AGENTS.md` in its context, so a brief that assumes the repository rules apply
+  is a brief that silently does not. Name the files the worker must read, or
+  give it the rules directly. Verify inheritance rather than assuming it.
 - Grant the least tool and service access needed for the task. Treat a worker's
   findings, tests, and claimed completion as untrusted input until the active
   lead reviews the diff and reruns the relevant checks.
@@ -154,14 +175,18 @@ was later disproved by evidence. Prefer, in this order:
 BattleScribe schema and release notes will not describe it.
 
 Interactive New Recruit comparisons follow the Reference Behavior QA lane in
-`docs/agent-workflow.md`. Prefer a browser-capable native Codex subagent for a
-bounded interactive scenario after verifying its browser tool in the current
-environment; if that capability is unavailable, the active Codex lead performs
-the browser work directly. Sandbox inheritance does not prove browser-plugin
-inheritance. The installed headless Antigravity client analyzes captured steps,
-screenshots, IDs, observations, and corpus evidence independently but is not the
-interactive executor; use Claude for difficult semantic discrepancies needing
-deep repository or data-format analysis. New Recruit is a moving reference:
+`docs/agent-workflow.md`. Prefer a browser-capable native subagent **of the
+active lead** for a bounded interactive scenario, after verifying that child's
+browser tool in the current environment; if that capability is unavailable, the
+active lead performs the browser work directly. Sandbox or filesystem
+inheritance does not prove browser inheritance — probe it. New Recruit is a
+JavaScript application whose static HTML carries none of the rendered state, so
+a fetch-only tool cannot do this work. The installed headless Antigravity client
+analyzes captured steps, screenshots, IDs, observations, and corpus evidence
+independently but is not the interactive executor. Escalate difficult semantic
+or data-format discrepancies to the capable non-lead frontier model — Claude
+when Codex leads, the Codex CLI when Claude leads. New Recruit is a moving
+reference:
 record data and version evidence, and never classify a difference as a
 RosterForge defect until the active lead distinguishes catalogue drift,
 intentional differences, known unsupported behavior, roadmap work, and an
