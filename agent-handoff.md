@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (player header shipped)
+## Current Status — 2026-08-24 (lead-neutral workflow)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -64,27 +64,33 @@ diagnostic codes.
   Windows keyring, the same authentication-store dependency already recorded
   for Copilot. Do not reauthenticate on the strength of the old note; run
   `gh auth status` in your own environment first.
-- **Agent workflow.** `AGENTS.md` now distinguishes a formal lead handoff from
+- **Agent workflow.** `AGENTS.md` distinguishes a formal lead handoff from
   bounded delegated work; Codex is the preferred default lead, not the only
-  model allowed to own a checkpoint. `docs/agent-workflow.md` records the
-  least-privilege task brief, worktree, review, integration, cleanup, handoff,
-  push, and CI procedures for native Codex subagents, Claude, Antigravity, Grok,
-  and Copilot. Native subagents are the preferred separable lane when Codex
-  leads. A browser-capable native Codex subagent is the preferred executor for
-  bounded New Recruit Reference Behavior QA after a current capability probe;
-  the active Codex lead is the direct fallback and final classifier.
-  Antigravity independently analyzes captured QA evidence while its installed
-  headless client lacks browser actuation, and Claude handles difficult semantic
-  discrepancies needing deep repository or data-format analysis. Native
-  spawning, lead and child Browser actuation, all four external read paths, one
-  disposable Grok writer, and Antigravity's headless browser limitation were
-  exercised. **The Codex CLI is now a documented delegated specialist** for the
-  case where the lead is not Codex — plan review, hard debugging, code review,
-  bounded analysis, and a second opinion — under `--sandbox read-only`, with the
-  explicit warning that it shares the Codex lead's quota and that read-only
-  bounds mutation but not command execution. All four external lanes were
-  re-verified from a Claude session on 2026-08-24; the Copilot template was
-  corrected because `copilot.cmd` silently truncated multi-line prompts.
+  model allowed to own a checkpoint. Routing is now **lead-neutral**: the active
+  lead implements, that lead's own native subagents are the first parallel lane
+  where their capabilities are verified, and the capable non-lead frontier model
+  reviews — Claude when Codex leads, the Codex CLI when Claude leads and its
+  quota allows. Two transfer modes exist: the planned **Formal Lead Transfer**,
+  and an **Interrupted Lead Takeover** for a lead that vanishes mid-checkpoint
+  without publishing one, which preserves the dirty tree as evidence and
+  finishes the checkpoint already in progress.
+  `docs/agent-workflow.md` holds the least-privilege task brief, worktree,
+  review, integration, cleanup, handoff, push, and CI procedures for native
+  subagents of either lead, the Codex CLI, Claude Code, Antigravity, Grok, and
+  Copilot. Bounded New Recruit Reference Behavior QA goes to a verified
+  browser-capable native subagent of the active lead, with that lead as the
+  direct fallback and final classifier; **both lanes are verified for Codex and
+  for Claude**. Antigravity independently analyzes captured QA evidence and can
+  never be the executor, because New Recruit's static HTML carries none of its
+  rendered state. Native spawning for both leads, lead and child browser
+  actuation for both, all four external read paths, and one disposable Grok
+  writer were exercised. The Codex CLI is a documented delegated specialist
+  under `--sandbox read-only`, sharing the Codex lead's quota, and read-only
+  there bounds mutation but not command execution. A native Claude child does
+  **not** inherit `CLAUDE.md`/`AGENTS.md` and holds a shell despite its
+  read-only role label, so its brief must name the rules and any possible write
+  needs a worktree. The Copilot template was corrected because `copilot.cmd`
+  silently truncated multi-line prompts.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **503 passed, 18 skipped (521)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -7960,3 +7966,149 @@ into `configuration` or `army` and exposes `selections.configuration` and
 `selections.army`; the selected-roster tree still renders `selections.ordered`
 as one undivided list. That checkpoint should consume the existing split rather
 than re-deriving it, and should not fold in collapsible costed unit cards.
+
+## Completed Assignment — Lead-Neutral Workflow, 2026-08-24
+
+Baseline `7a1010a8645542e231dc89acd51be1cc87527fb5`; resulting workflow commit
+`919787c` (`docs: make lead ownership and delegation model-neutral`) and this
+handoff commit. A bounded governance checkpoint requested by the owner after
+exercising Claude as the active lead exposed several places where the workflow
+still assumed Codex. No application code changed, and no product checkpoint
+began.
+
+### 1. Two transfer modes instead of one
+
+The existing **Formal Lead Transfer** is unchanged and remains correct for a
+planned handover. What it could not cover is the failure mode this whole
+workflow exists to survive: it requires the outgoing lead to stop cleanly,
+document, commit, push, and confirm CI — which is exactly what a lead that has
+just run out of quota, lost its session, or lost its context cannot do.
+
+`docs/agent-workflow.md` now adds **Interrupted Lead Takeover**. The owner
+appoints a lead directly; that appointment is the authority, because no transfer
+record exists. The incoming lead treats the repository as mid-checkpoint,
+records `git status`, the complete tracked and untracked diff, the
+`HEAD`/`origin/main` relationship, commits, branches, worktrees, stash, and any
+delegated writer state **before** touching anything, then reconstructs what the
+previous lead was doing and finishes that checkpoint rather than starting the
+roadmap's next one.
+
+The rule that matters most is the destructive one: never reset, clean, check out
+over, stash away, or force-push to manufacture a tidy baseline. An unexplained
+dirty tree is the only surviving record of an interrupted lead's intent, so
+discarding it destroys the very thing recovery depends on. Genuine ambiguity or
+any needed destructive action goes to the owner instead. The takeover and its
+reconstructed baseline are recorded here before the checkpoint is published, and
+must distinguish what was verified from what was inferred.
+
+### 2. The decision model is now written for "the active lead"
+
+The role and decision tables described ordinary development and native subagent
+work from Codex's seat. They now read: ordinary development to the active lead;
+cleanly separable work to that lead's **own** native subagent mechanism, where
+verified; independent frontier-model review to the capable non-lead model;
+bounded reference QA to a verified browser-capable native subagent of the active
+lead, with the lead as fallback; captured-evidence analysis to Antigravity;
+bounded overflow to Grok; GitHub/Actions to Copilot.
+
+Model-specific guidance sits beneath that general rule rather than replacing it.
+When Codex leads, Codex implements, Codex children are the first parallel lane,
+and Claude reviews. When Claude leads, Claude implements, Claude children are
+the first parallel lane where verified, and the Codex CLI reviews when its quota
+is available. Affinities stay advisory. No worktree, least-privilege, review, or
+validation requirement was weakened; the native-subagent rows gained
+restrictions rather than losing them.
+
+### 3. Native Claude subagents — verified, not assumed
+
+Two read-only probes were spawned from this Claude Code Desktop session with the
+`Agent` tool at `Explore` type. Both ran in the background, returned their
+result to the lead thread, and changed no file; the checkout was clean after
+each.
+
+| Property | Result |
+| --- | --- |
+| Spawn / return | `Agent` tool with `subagent_type`; result arrives as a task notification in the lead thread, and is **not** shown to the user |
+| Filesystem | The lead's own checkout and working directory; no branch, worktree, or copy |
+| Repository instructions | **Not inherited** — neither `CLAUDE.md` nor `AGENTS.md` was in the child's starting context |
+| Read-only enforcement | **None from the agent type.** `Explore` lacks `Write`/`Edit` but holds `Bash` *and* `PowerShell` |
+| Sandbox | Shell tools expose `dangerouslyDisableSandbox`, so commands are sandboxed by default; the actual boundary is **unknown** and was deliberately not probed |
+| Nesting | **None** — the child has no `Agent`/`Task` tool |
+| Browser | `mcp__Claude_Browser__*` loaded directly in the child, and working |
+| Concurrency | No numeric limit visible from either side. **Unknown** |
+
+Two of those change how a brief must be written, and both are recorded in the
+runbook. **Repository rules must be named in the brief**, because a native
+Claude child told to "follow `AGENTS.md`" has never read it — this differs from
+the `claude --print` CLI delegate, which *does* receive the rules through
+`CLAUDE.md`'s import, so the two Claude lanes are not equivalent. And
+**`Explore` is a read-only role, not a read-only permission set**: under the
+existing rule that read-only counts only when tool permissions enforce it, a
+native Claude child is never proven read-only, so anything that might write gets
+a disposable worktree and the lead checks status afterwards regardless.
+
+Sandbox enforcement was left unknown on purpose. Establishing it means
+attempting a write, and this was a read-only checkpoint.
+
+### 4. Claude-side browser Reference QA — verified at both levels
+
+The Claude lead navigated `https://www.newrecruit.eu/app/`, followed its
+client-side route to `/app/MySystems`, read the rendered `My Games` list
+including `Warhammer 40,000 11th Edition — last update: 9 hours ago`, and
+executed in-page JavaScript. A native Claude subagent independently did the
+same. Nothing was clicked, signed into, published, or persisted.
+
+**A native Claude subagent can therefore perform interactive Reference Behavior
+QA in this environment**, so the preferred/fallback order now holds for a Claude
+lead exactly as it did for a Codex lead. The Codex path is retained, not
+replaced.
+
+The lead independently confirmed the JavaScript requirement rather than
+accepting the delegate's claim: `curl` of `/app/MySystems` returns a
+**3,238-byte** Nuxt shell whose body is an empty `__nuxt` div, and grepping it
+for `My Games`, `last update`, and `Update All` returns **zero** matches while
+all three are in the live DOM. This is now written into the capability gate,
+because it is the durable reason Antigravity's static `read_url_content` can
+never be an executor.
+
+### 5. Environment limitations found
+
+- **Screenshots fail while the Browser pane is hidden**, for lead and child
+  alike: a screenshot returns "the Browser pane is not displayed, so the page is
+  not compositing frames". Reference QA evidence must plan on rendered text,
+  accessibility trees, and in-page JavaScript reads; an image needs the owner to
+  open the pane.
+- **The in-app browser profile is not disposable.** It already held five
+  installed New Recruit game systems with update timestamps. Record pre-existing
+  state rather than assuming a clean profile.
+- **Native Claude children cannot nest**, so a parallel fan-out is one level
+  deep and the lead coordinates it.
+- **A child's report is untrusted input.** The capability probe returned output
+  the harness flagged as instruction-shaped and neutralized before it reached
+  the lead — the mechanism working as intended, and a reminder that a delegate's
+  report is data to verify.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **503 passed, 18 skipped (521 total)** across 53 test files,
+  unchanged: this checkpoint touched no code and no test.
+- Only `AGENTS.md` and `docs/agent-workflow.md` changed.
+- Every capability claim added to the documentation is labelled as officially
+  documented, empirically verified here on 2026-08-24, or unknown.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, corpus, or New Recruit state changed. No orchestration script, hook,
+framework, or permissive global configuration was added. No sandbox boundary was
+probed by attempting a write. Configuration separation — the roadmap's **Next**
+— did not begin, and the roadmap table is unchanged because no product work
+moved.
+
+### Next recommended boundary
+
+**Separate configuration from army units**, still the roadmap's single **Next**
+and untouched by this checkpoint. The presentation model already exposes
+`selections.configuration` and `selections.army`; the selected-roster tree still
+renders `selections.ordered` as one undivided list.
