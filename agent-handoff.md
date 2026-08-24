@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **494 passed, 18 skipped (512)**.
+  `git diff --check` all pass. `pnpm test` is **495 passed, 18 skipped (513)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **512 passed**; without the variable the 18 corpus tests are skipped.
+  **513 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -93,48 +93,30 @@ ephemeral group occurrence so relative `self` and `parent` conditions stay
 correct, but durable rosters remain transparent. The pinned GSC path selects
 Burrowing Claws when Specialisms moves from zero to one.
 
-The current **Next is constraint `value="-1"`**, in section F. Conditional
-`defaultAmount` and stepped initialization, which this paragraph named as Next
-until 2026-08-24, are **Done** — section B records them, and the reasoning is in
-the completed entry below.
+Constraint `value="-1"` is **Done** as of 2026-08-24. It is BattleScribe's "no
+constraint" sentinel — `max="-1"` admits any count, `min="-1"` demands none —
+settled by observation on the New Recruit wiki, which omits such a constraint
+from an entry's rendered list entirely. It was the single widest real-data gap
+left: **34 of 36 pinned catalogues raised a `-1` complaint on an empty roster**,
+before a single unit was added. That is now zero. The detail is in the completed
+entry at the end of this file.
 
-Measured against the pinned corpus on 2026-08-24, before any code was written,
-so the next session starts from numbers rather than from the guess this row
-carried for a week:
+The current **Next is the usability findings from the QA pass**, in section F.
+They are the last group of things standing between this and a tool someone
+would actually build a list in, and none of them is a correctness bug: issue-list
+volume, internal IDs shown to the reader, Crusade cost fields appearing on a
+matched-play roster, Warlord selection, child-model wargear discoverability,
+squad-size editing depth, and display-name banners. Take them as **one
+presentation pass** rather than singly — they overlap in the same components,
+and fixing them one at a time means touching the same files seven times.
 
-- **48 constraints hold `value="-1"`** — 43 `max`, 5 `min` — across 22 files and
-  46 distinct constraint IDs.
-- They sit on **category entries (20)**, **selection entry groups (23, counting
-  shared)** and **selection entries (5)**. So the `skipIfPresent` method of
-  opening the entry's own New Recruit wiki page works directly for only five of
-  the forty-eight. For a group, open the owning unit and read the group's
-  printed limit; for a category entry, the force-organisation display is the
-  place it shows up.
-- **Every one of the 48 is targeted by some modifier's `field`.** `-1` is never
-  an authored *final* value in this corpus — it is the resting state of a
-  constraint that a modifier computes. 71 of those modifiers are conditional
-  `set`s (writing 1, 0, 3, 250, 500, 750, 1,000 or 1,500) and 4 are
-  unconditional `increment`s.
-- **For 42 of the 46 IDs, every targeting modifier is conditional**, so `-1` is
-  the value that actually stands whenever the condition is false. This is a
-  live path, not a theoretical one.
-- **22 of the maxes share an owner with a `min` of 1 or more.** Read literally,
-  `min 1 > max -1` cannot be satisfied. The Chaos Daemons `Detachment` group is
-  exactly this shape, so a literal reading makes every Daemons roster invalid
-  and no detachment selectable. That is the strongest internal argument for "no
-  limit" — but it is still inference. Confirm by observation before writing the
-  rule, the way `skipIfPresent` was confirmed on 2026-08-24.
-- **Two constraint IDs are duplicated inside their own file**:
-  `a5cc-f61b-de81-c804` on both `Abhorrent` and `Knight Tyrant`
-  (Chaos Knights Library), and `4d8f-6e09-606e-788e` on both
-  `Faction: Drukhari` and `Faction: Astra Militarum` (Warhammer 40,000). A
-  modifier naming one of those is ambiguous about which constraint it means.
-  Upstream authoring quirk rather than a parsing bug, but decide deliberately
-  what to do with it rather than discovering it mid-implementation.
-
-The cheapest starting point is the Chaos Daemons `Detachment` group,
-`5b57-21bd-d921-37f4`: `min 1` and `max -1` on the same owner, with a single
-`set` modifier writing 1 into that max.
+Note what changes about the work at this point. Sections A–E were settled
+against the data format, where the corpus and the wiki can prove an answer
+right. These are judgement calls about what a person needs to see, and neither
+source can settle them. Where a decision is genuinely about taste rather than
+correctness, put it in front of the owner instead of guessing — he plays
+matched-play 40k and treats New Recruit as the reference for how this should
+behave.
 
 Nested automatic groups and unit-typed automatic sub-units remain low priority
 because none of the five modifier-driven pinned groups uses either shape.
@@ -328,10 +310,10 @@ invisible to the whole test suite.
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
-| Usability findings from the QA pass | Open | the survivors of the external QA pass, none of them correctness: issue-list volume, internal IDs shown to the reader, Crusade cost fields on a matched-play roster, Warlord selection, child-model wargear discoverability, squad-size editing depth, and display-name banners. Presentation work, best taken as one pass rather than singly |
+| **Usability findings from the QA pass** | **Next** | the survivors of the external QA pass, none of them correctness: issue-list volume, internal IDs shown to the reader, Crusade cost fields on a matched-play roster, Warlord selection, child-model wargear discoverability, squad-size editing depth, and display-name banners. Presentation work, best taken as one pass rather than singly. Unlike sections A–E these are judgement calls no corpus measurement can settle — ask the owner where taste decides |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
-| **Constraint `value="-1"`** | **Next** | 48 corpus constraints, 43 `max` and 5 `min`, across 22 files. Measured 2026-08-24: **all 48 are targets of a modifier**, and for 42 of the 46 distinct IDs every targeting modifier is *conditional*, so `-1` is what stands when the condition is false. 22 maxes sit beside a `min` of 1+, which a literal reading makes unsatisfiable. Owners are mostly groups and category entries, not selection entries — see "Picking up from here" for the full measurement and the starting entry |
+| Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -6419,7 +6401,10 @@ Find a `max="-1"` entry, read what the wiki says its limit is, then write the
 rule. If it is "no limit" and RosterForge currently treats it as a literal `-1`,
 any entry carrying one is reporting a bound that cannot be satisfied.
 
-> **Corrected 2026-08-24.** "The corpus entry ID is the URL" holds for only
+> **Corrected 2026-08-24, twice.** First, RosterForge did *not* treat `-1` as a
+> literal bound. It withheld — unresolved, incomplete, with a diagnostic — so
+> the cost was degraded completeness, not a bound nobody could satisfy. Second,
+> "the corpus entry ID is the URL" holds for only
 > **5 of the 48**. The rest sit on selection entry groups (23) and category
 > entries (20), which have no wiki page of their own — open the owning unit for
 > a group, and the force-organisation display for a category entry. The
@@ -6485,3 +6470,145 @@ Re-run rather than quoted, to confirm the status block is true at handoff:
 
 Unchanged: **constraint `value="-1"`**, with the measurements above as the
 starting point instead of a first day of counting.
+
+## Completed Assignment — Constraint `value="-1"`, 2026-08-24
+
+Baseline `6b22af6`. The roadmap's Next, taken immediately after the handoff
+readiness pass that measured it.
+
+### What it means, and how that was settled
+
+`value="-1"` is BattleScribe's **"no constraint" sentinel**. `max="-1"` admits
+any count; `min="-1"` demands none. It is the *absence* of a bound, not a bound
+of minus one.
+
+Observed, not inferred — read on the New Recruit wiki through the browser pane,
+the same method that settled `skipIfPresent`:
+
+- **Vindicare Assassin's Micromelta Round** (`bcba-352d-f7f2-84ba`). The corpus
+  gives it two constraints, `max 1` and `min -1`. The wiki prints exactly one
+  line: `max: 1`. The `-1` is not rendered at all.
+- **Imperial Knights' Allocated Chivalric Points** (`e7fb-9519-7cd7-9c10`). The
+  corpus gives it a single constraint, `max -1`. The wiki prints **no constraint
+  section whatsoever**, only the conditional modifier `set max 6 / ancestor is
+  Armiger`.
+
+The second is the decisive one: a lone `-1` produces no rendered bound, so the
+sentinel is omission rather than a number.
+
+There was also strong internal evidence — 22 of the 43 maxes sit beside a `min`
+of 1 or more, so a literal reading makes `min 1 > max -1` unsatisfiable and, for
+the Chaos Daemons `Detachment` group, would make every Daemons roster invalid
+with no detachment selectable. That argument was deliberately **not** treated as
+sufficient. It is inference from internal consistency, and this project settles
+semantics by observation. It agreed with the observation, which is worth
+recording, but it did not do the settling.
+
+### What the previous behaviour actually was
+
+Worth correcting a claim this document carried for a week: the roadmap said an
+entry carrying `-1` "advertises a bound no roster can satisfy". **It did not.**
+RosterForge withheld — `status: unresolved`, `completeness: incomplete`, plus a
+`VALUE_NEGATIVE_UNSUPPORTED` diagnostic. The cost was degraded completeness and
+a stream of diagnostics, not false invalidity. The withholding was working as
+designed; it was simply withholding something now known.
+
+### Measured impact
+
+The static count understated this badly. 48 constraints sounds marginal; the
+observable effect was not. Creating an **empty roster** in each pinned
+catalogue, before adding a single unit:
+
+- **Before: 34 of 36 catalogues raised a constraint-unsupported diagnostic
+  citing `-1`.** Every faction except two.
+- **After: 0.**
+
+Measured by A/B on the built bundle — the sentinel was disabled, rebuilt, and
+re-measured, rather than assuming the baseline.
+
+### What changed
+
+- `packages/evaluation/src/constraints.ts` — owns `UNBOUNDED_CONSTRAINT_VALUE`
+  and `isUnboundedConstraintValue`, exported for the other modules.
+- `packages/evaluation/src/force-constraints.ts` — the same treatment; category
+  entries own 20 of the 48 and are evaluated here.
+- `packages/evaluation/src/initialization.ts` — the sentinel contributes its
+  **fold identity**: `0` for a minimum, positive infinity for a maximum.
+  Initialization folds minima with `Math.max` and maxima with `Math.min`, so
+  passing the literal `-1` into `Math.min` would clamp every maximum to -1 and
+  the initializer would create nothing.
+- `apps/web/src/roster-workspace.tsx` — the constraint summary printed
+  `limit -1` at the reader. It now prints `no limit`.
+- `apps/web/src/automatic-reconciliation.ts` — an unbounded bound no longer
+  marks reconciliation incomplete; it is known, not unknown, and contributes
+  its fold identity.
+
+### The decision worth knowing about
+
+**The sentinel is decided from the authored value, never the computed one.**
+
+The first implementation short-circuited inside the shared `constraintStatus`
+predicate, on any limit equal to -1. That broke an existing test, correctly: a
+constraint with base `0` and a `decrement 1` modifier produces an effective -1,
+and that is arithmetic underflow, not an authoring sentinel. Treating the two
+alike would have silently converted an unexplained computation into "unbounded".
+
+The fix moved the decision to the call sites, where the base value is known:
+
+- base `-1`, nothing applied → unbounded, satisfied, complete;
+- base `-1`, a modifier applies → the modifier's real limit, evaluated normally;
+- base `0`, arithmetic goes negative → unchanged, still withholds.
+
+Only exactly `-1` is the sentinel. `-2` still raises
+`VALUE_NEGATIVE_UNSUPPORTED`, because nothing was observed about it and the
+corpus contains none.
+
+### Tests
+
+- `packages/test-fixtures/fixtures/constraint-links.cat` — added
+  `constraint-unbounded-parent`, a `max="-1"` with a conditional `set 1`. This
+  is the corpus's dominant shape: all 48 instances are modifier targets, and for
+  42 of the 46 distinct IDs every targeting modifier is conditional.
+- `packages/evaluation/src/constraints.test.ts` — one test covering both
+  halves: with the condition false the sentinel stands (satisfied, complete, no
+  diagnostic); with it true the modifier writes a real max of 1 and two
+  selections **violate** it. The second half is what stops a naive "-1 disables
+  the bound forever" implementation from passing.
+- The malformed-value test now uses `-2`, pinning the *edge* of the rule rather
+  than the rule, plus a new assertion that `-1` is clean and satisfied.
+- Sabotage-verified: disabling the sentinel fails both.
+- `apps/web/src/bsdata-json.integration.test.ts` — the Aeldari initialization
+  case previously asserted `INITIALIZATION_CONSTRAINT_UNSUPPORTED` citing -1.
+  It now asserts `INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED`: the value is
+  understood, and what remains is the older, separate rule that a bound whose
+  value a modifier computes cannot drive automatic initialization. Three
+  assertions in that test moved for the same reason.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **495 passed, 18 skipped (513 total)**.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` — **513 passed**.
+- Dev server smoke-checked in the browser: loads clean, no console errors.
+
+### What this did not do
+
+- **The `no limit` display string has no test.** Exercising it needs a `-1`
+  constraint in `projection.cat`, which many unrelated UI assertions read, and
+  destabilising a shared fixture late in a checkpoint was the worse trade. The
+  guard is a single ternary over a tested helper, and its failure mode is
+  reverting to the old text. Worth covering with a dedicated fixture next time
+  that file is touched.
+- Nothing was written for negatives other than `-1`.
+- The two duplicated constraint IDs found during the readiness pass
+  (`a5cc-f61b-de81-c804`, `4d8f-6e09-606e-788e`) were **left alone**. A modifier
+  naming one is ambiguous about which constraint it targets. It did not block
+  this work and inventing a disambiguation rule without observing what New
+  Recruit does would repeat the mistake this entry corrects.
+
+### Next recommended boundary
+
+**The usability findings from the QA pass**, as one presentation pass — see
+section F. Note the change in character: sections A–E could be settled against
+the corpus and the wiki, and these cannot. They are judgement calls about what a
+person needs to see. Where taste decides rather than correctness, ask the owner.

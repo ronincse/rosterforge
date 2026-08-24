@@ -1069,9 +1069,19 @@ incomplete. Inspection success and per-constraint status never set roster
 validity or claim aggregate legality.
 
 `EVALUATION_CONSTRAINT_VALUE_NEGATIVE_UNSUPPORTED` and its force-constraint
-equivalent retain the exact negative value and point to `@value`. Pinned `-1`
-limits are not clamped or treated as disabled or unbounded; no sentinel
-semantics are inferred from the lexical value.
+equivalent retain the exact negative value and point to `@value`.
+
+**Changed 2026-08-24.** These diagnostics no longer fire for `-1`, which is
+BattleScribe's "no constraint" sentinel: `max="-1"` admits any count and
+`min="-1"` demands none. The rule was settled by observation, not inferred —
+New Recruit's wiki omits a `-1` constraint from an entry's rendered constraint
+list entirely. Any *other* negative value still raises these diagnostics and
+still withholds, because nothing has been observed about it and the pinned
+corpus contains none.
+
+The effective-value variants keep firing for a negative a modifier *computed*
+from a non-sentinel base, which is arithmetic underflow rather than an
+authoring sentinel. Only an unmodified `-1` base is read as unbounded.
 
 `EVALUATION_CONSTRAINT_SELECTION_AMOUNT_INVALID` is the constraint equivalent
 of the condition amount diagnostic. It identifies generated roster state in

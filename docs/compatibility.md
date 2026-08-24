@@ -66,10 +66,11 @@
 - Live direct-entry selected/required counts and disabled browser add controls
   at supported maxima, including restoration guidance after a required
   initialized occurrence is removed
-- Read-only conservative initialization plans for unconditional non-negative
-  integer parent-selection minima, repeated ordinary occurrences, one amounted
-  occurrence for a positive finite stepped entry, transparent selection-entry
-  groups, and exact direct group defaults
+- Read-only conservative initialization plans for unconditional integer
+  parent-selection minima that are non-negative or the `-1` no-constraint
+  sentinel, repeated ordinary occurrences, one amounted occurrence for a
+  positive finite stepped entry, transparent selection-entry groups, and exact
+  direct group defaults
 - Condition-aware direct `defaultAmount` modifiers for a prospective stepped
   child at its real parent, including the pinned Incursion Points limit at 1,000
 - Empty-single-force initialization plans for visible entry roots with simple
@@ -306,6 +307,20 @@
   unresolvable typed scope withholds the count rather than widening it
 - Read-only non-negative `min`/`max` selection-constraint reports for self,
   parent, force, and roster scopes, with bounded counts and no validity state
+- `value="-1"` as BattleScribe's **"no constraint" sentinel**: `max="-1"` admits
+  any count and `min="-1"` demands none, so the bound is reported satisfied and
+  costs no completeness. Settled by observation, not inference — New Recruit's
+  wiki omits such a constraint from an entry's rendered constraint list
+  entirely: the Vindicare Assassin's Micromelta Round carries `max 1` and
+  `min -1` and the page prints only `max: 1`, while the Imperial Knights'
+  Allocated Chivalric Points carries a lone `max -1` and prints no constraint
+  section at all. It is a *resting* value, not a disabled one: all 48 pinned
+  instances are targeted by a modifier, and where one applies its real limit is
+  used normally. Any other negative stays unsupported, and a negative a
+  modifier *computes* from a non-sentinel base is still underflow rather than a
+  sentinel. Applies equally to selection constraints, force constraints, and
+  automatic initialization, where the sentinel contributes its fold's identity
+  (`0` for a minimum, unbounded for a maximum)
 - Ordered per-selection constraint collections retaining every projected child
   report without computing aggregate status or legality
 - Roster-wide depth-first selection-constraint inspection with deterministic
