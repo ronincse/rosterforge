@@ -42,8 +42,12 @@ diagnostic codes.
   bounded delegated work; Codex is the preferred default lead, not the only
   model allowed to own a checkpoint. `docs/agent-workflow.md` records the
   least-privilege task brief, worktree, review, integration, cleanup, handoff,
-  push, and CI procedures for Claude, Antigravity, Grok, and Copilot. All four
-  read-only headless paths and one disposable Grok writer path were exercised.
+  push, and CI procedures for native Codex subagents, Claude, Antigravity, Grok,
+  and Copilot. Native subagents are the preferred separable lane when Codex
+  leads; Antigravity owns the independent New Recruit Reference Behavior QA
+  affinity when a browser-capable session is available. Native spawning, all
+  four external read paths, one disposable Grok writer, and Antigravity's
+  headless browser limitation were exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **495 passed, 18 skipped (513)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -151,8 +155,8 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The 2026-08-24 delegated-agent workflow checkpoint changed no product behavior,
-so no roadmap row moved. The first phone-width QA pass remains **Next**.
+The 2026-08-24 agent-workflow checkpoints changed no product behavior, so no
+roadmap row moved. The first phone-width QA pass remains **Next**.
 
 ### A. Display-fidelity modifiers
 
@@ -6821,3 +6825,108 @@ worktree isolation whenever enforcement is uncertain.
 **Behaviour on a phone**, unchanged from the product-usability checkpoint.
 Drive a real roster through add, configure, amount, and checks at a phone
 viewport before changing responsive density, ordering, or disclosure depth.
+
+## Completed Assignment — Native Subagents And Reference Behavior QA, 2026-08-24
+
+Baseline `9d4d8feb7a33e258cee22c0224fbf51c4506b5a0`; resulting workflow commit
+`a5bbdd0` (`docs: add subagent and reference QA lanes`). This follow-up changed
+only repository workflow documentation.
+
+### What changed
+
+- `AGENTS.md` now makes native Codex subagents the preferred delegation lane for
+  genuinely separable investigation, review, research, or parallel
+  implementation when Codex leads and no external model/tool advantage is
+  needed. Routine implementation remains with the lead, and native delegation
+  never transfers checkpoint ownership.
+- The rules explicitly record the verified isolation boundary: native children
+  share the parent's repository filesystem and sandbox and receive no automatic
+  branch or worktree. Any possible writer therefore uses the existing explicit-
+  baseline, one-writer-per-worktree procedure.
+- `docs/agent-workflow.md` now includes native Codex subagents in the role matrix
+  and six-way affinity decision path, plus the current spawn/result, concurrency,
+  shared-workspace, token-cost, and review constraints. No project Codex config
+  or custom agent was added because the current mechanism is already enabled.
+- A new Reference Behavior QA lane compares bounded army-building scenarios in
+  New Recruit and RosterForge without treating New Recruit's visuals or internal
+  architecture as a product specification. Antigravity is the preferred
+  independent specialist when a JavaScript-capable browser session is actually
+  available; the active lead retains final classification and all code/roadmap
+  decisions.
+- The QA protocol records exact application and pinned-corpus commits, date and
+  timezone, system/catalogue/version and entry IDs, browser/client state,
+  reproduction steps, both observed behaviors, screenshots/evidence, known
+  incompleteness, and authorized temporary New Recruit state. It independently
+  classifies data comparability (`exact`, `different`, `unknown`) and behavior
+  (`match`, `mismatch`, `inconclusive`, `not-applicable`). Only `exact +
+  mismatch` can become a candidate product defect, and the lead still decides.
+- Targeted parity QA is optional after meaningful list-building/correctness
+  changes or disputed semantics. Broader periodic passes exercise a small set of
+  versioned golden roster scenarios. The scenarios are documentation/evidence
+  bundles for now; no automation framework was created.
+
+### Decisions and rejected alternatives
+
+Native subagents sit between ordinary lead work and external specialists. Using
+an external model for every separable task was rejected because native children
+have lower orchestration friction when no model/tool distinction is needed.
+Automatically spawning them was also rejected: every child consumes additional
+model/tool work, shares the lead's coordination budget, and still needs review.
+
+The current native mechanism was not described as isolated. A bounded child
+honored a read-only prompt, but it retained write-capable tools in the parent's
+workspace-write sandbox. Task wording proves conduct, not inability to mutate;
+the existing worktree rules remain the containment mechanism for writers and
+for any read-only task whose permissions cannot be enforced.
+
+New Recruit observations were separated from pinned corpus evidence. Treating
+every visible difference as a RosterForge bug was rejected because current New
+Recruit data can differ from the repository's pinned BSData revision. The QA
+report therefore carries comparability and behavior as independent axes before
+assigning a preliminary disposition.
+
+### Capability verification
+
+- Official OpenAI documentation confirms that current Codex releases enable
+  subagent workflows by default, can trigger them from direct or applicable
+  project instructions, collect their results in the lead thread, and inherit
+  the parent sandbox/permission mode.
+- This Codex desktop session exposed four concurrent slots including the lead.
+  Codex spawned one bounded child at the exact baseline above, passed a read-only
+  scope and output contract, received its independent result, and verified that
+  it changed no file. The child confirmed the shared-checkout/worktree limitation.
+- Antigravity 1.1.19 remained authenticated. `agy agent` listed no custom agent,
+  `agy mcp list` reported no configured server, and `agy plugin list` reported no
+  imported plugin. A plan/sandbox probe returned `BROWSER_QA_UNAVAILABLE`: the
+  headless CLI exposes static `read_url_content` retrieval, not an interactive,
+  JavaScript-capable browser/navigation tool.
+- Reference QA must therefore use a browser-capable Antigravity client/session
+  or browser evidence captured by an authorized lead tool and handed to
+  Antigravity for independent analysis. If neither exists, the delegate stops;
+  static HTML is not reported as observed app behavior.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **495 passed, 18 skipped (513 total)** across 50 test files.
+- Production build — successful with only the existing large-chunk warning.
+- Pinned corpus — not rerun because no application, data-format, evaluation, or
+  compatibility behavior changed; the normal suite reports its 18 corpus tests
+  as skipped without the local environment variable.
+- Pre-commit remote refresh — local `HEAD` and `origin/main` both remained
+  `9d4d8feb7a33e258cee22c0224fbf51c4506b5a0` with divergence `0 0`.
+
+### What this did not do
+
+No RosterForge application code, dependency, build configuration, architecture,
+compatibility claim, diagnostic, or product-roadmap status changed. No New
+Recruit comparison scenario was run; this checkpoint defined the protocol and
+verified the available browser capability only. No external-agent smoke was
+repeated unless its changed role required verification. No product-development
+or phone-width work began.
+
+### Next recommended boundary
+
+**Behaviour on a phone**, still unchanged. Drive a real roster through add,
+configure, amount, and checks at a phone viewport before changing responsive
+density, ordering, or disclosure depth.
