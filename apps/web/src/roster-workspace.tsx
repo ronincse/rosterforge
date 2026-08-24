@@ -150,8 +150,7 @@ export function RosterOverview({
         )
       : new Set<string>();
   const validationIssueCount = supportedValidation.ok
-    ? supportedValidation.value.status.statusCounts.violated +
-      supportedValidation.value.status.statusCounts.unresolved
+    ? supportedValidation.value.status.statusCounts.violated
     : 0;
   const topLevelSelectionCount =
     force === undefined ? 0 : rosterSelectionsAmount(force.selections);
@@ -258,12 +257,12 @@ export function RosterOverview({
           href="#roster-checks-heading"
           aria-label={`Checks, ${formatCount(
             validationIssueCount,
-            "issue",
+            "known violation",
           )}`}
         >
           <span>Checks</span>
           <strong>{validationIssueCount}</strong>
-          <small>known or unresolved</small>
+          <small>known violations</small>
         </a>
       </nav>
 
@@ -285,13 +284,15 @@ export function RosterOverview({
             </span>
           </div>
 
+          {/* Occurrence IDs stay on data attributes for anchors and tests.
+              They are not shown to the reader. */}
           <div
             className="force-card"
             id={force === undefined ? undefined : forceAnchor(force.id)}
+            data-force-id={force?.id}
           >
             <span className="force-kicker">Starting force</span>
             <strong>{forceDefinitionLabel(session.forceDefinition)}</strong>
-            <span>{force?.id}</span>
           </div>
 
           {force === undefined || force.selections.length === 0 ? (
@@ -480,9 +481,12 @@ function RosterSupportedValidationRibbon({
   }
 
   const report = result.value.status;
-  const constraintFindings =
-    report.findingCounts.selectionConstraints +
-    report.findingCounts.forceConstraints;
+  const structuralViolations = report.findings.filter(
+    ({ kind, status }) => kind === "structural" && status === "violated",
+  ).length;
+  const constraintViolations = report.findings.filter(
+    ({ kind, status }) => kind !== "structural" && status === "violated",
+  ).length;
   return (
     <section
       className="supported-validation-ribbon"
@@ -543,12 +547,12 @@ function RosterSupportedValidationRibbon({
       >
         <a href="#roster-structural-status-heading">
           {formatCount(
-            report.findingCounts.structural,
-            "structural issue",
+            structuralViolations,
+            "structural violation",
           )}
         </a>
         <a href="#roster-constraint-heading">
-          {formatCount(constraintFindings, "constraint issue")}
+          {formatCount(constraintViolations, "constraint violation")}
         </a>
       </nav>
 
@@ -596,8 +600,11 @@ function RosterStructuralStatus({
   const satisfied = countStructuralStatus(report.bounds, "satisfied");
   const violated = countStructuralStatus(report.bounds, "violated");
   const unresolved = countStructuralStatus(report.bounds, "unresolved");
-  const attentionBounds = report.bounds.filter(
-    ({ status }) => status !== "satisfied",
+  const violatedBounds = report.bounds.filter(
+    ({ status }) => status === "violated",
+  );
+  const unresolvedBounds = report.bounds.filter(
+    ({ status }) => status === "unresolved",
   );
   const satisfiedBounds = report.bounds.filter(
     ({ status }) => status === "satisfied",
@@ -661,15 +668,21 @@ function RosterStructuralStatus({
         </p>
       ) : (
         <>
-          {attentionBounds.length === 0 ? (
+          {violatedBounds.length === 0 ? (
             <p className="empty-constraints">
-              All supported structural requirements are currently satisfied.
+              No supported structural requirement is known to be violated.
             </p>
           ) : (
             <StructuralBoundDetails
-              title="Requirements needing attention"
-              bounds={attentionBounds}
+              title="Structural violations"
+              bounds={violatedBounds}
               open
+            />
+          )}
+          {unresolvedBounds.length > 0 && (
+            <StructuralBoundDetails
+              title="Unresolved structural bounds"
+              bounds={unresolvedBounds}
             />
           )}
           {satisfiedBounds.length > 0 && (
@@ -889,8 +902,11 @@ function RosterConstraintSummary({
   const satisfied = countConstraintStatus(items, "satisfied");
   const violated = countConstraintStatus(items, "violated");
   const unresolved = countConstraintStatus(items, "unresolved");
-  const attentionItems = items.filter(
-    ({ status }) => status !== "satisfied",
+  const violatedItems = items.filter(
+    ({ status }) => status === "violated",
+  );
+  const unresolvedItems = items.filter(
+    ({ status }) => status === "unresolved",
   );
   const satisfiedItems = items.filter(
     ({ status }) => status === "satisfied",
@@ -932,15 +948,21 @@ function RosterConstraintSummary({
         </p>
       ) : (
         <>
-          {attentionItems.length === 0 ? (
+          {violatedItems.length === 0 ? (
             <p className="empty-constraints">
-              All inspected constraint bounds are currently satisfied.
+              No inspected constraint bound is known to be violated.
             </p>
           ) : (
             <ConstraintItemDetails
-              title="Constraint issues needing attention"
-              items={attentionItems}
+              title="Constraint violations"
+              items={violatedItems}
               open
+            />
+          )}
+          {unresolvedItems.length > 0 && (
+            <ConstraintItemDetails
+              title="Unresolved constraint bounds"
+              items={unresolvedItems}
             />
           )}
           {satisfiedItems.length > 0 && (
@@ -1172,6 +1194,13 @@ function RosterCostSummary({
   }
 
   const report = result.value;
+  // Community catalogues attach many campaign bookkeeping fields to every
+  // unit. A matched-play roster therefore produced a wall of zeroes beside its
+  // points total. Keep those source totals available without promoting fields
+  // that currently contribute nothing to the headline, and without inventing a
+  // game-mode filter that would drop evaluator data.
+  const activeTotals = report.totals.filter(({ value }) => value !== 0);
+  const zeroTotals = report.totals.filter(({ value }) => value === 0);
   const excluded = excludedCostCount(report);
   const unresolved = report.selections.filter(
     ({ status }) => status !== "resolved",
@@ -1193,17 +1222,41 @@ function RosterCostSummary({
         </span>
       </div>
 
-      {report.totals.length === 0 ? (
-        <p className="empty-costs">No supported numeric costs yet.</p>
+      {activeTotals.length === 0 ? (
+        <p className="empty-costs">
+          {report.totals.length === 0
+            ? "No supported numeric costs yet."
+            : "No non-zero supported costs yet."}
+        </p>
       ) : (
         <ul className="cost-total-list">
-          {report.totals.map((total) => (
+          {activeTotals.map((total) => (
             <li key={total.typeId}>
               <strong>{formatNumber(total.value)}</strong>
               <span>{total.costType.name ?? total.typeId}</span>
             </li>
           ))}
         </ul>
+      )}
+
+      {zeroTotals.length > 0 && (
+        <details
+          className="cost-details zero-cost-details"
+          aria-label={`Zero-value source cost fields ${formatCount(
+            zeroTotals.length,
+            "field",
+          )}`}
+        >
+          <summary>
+            Zero-value source cost fields
+            <span>{formatCount(zeroTotals.length, "field")}</span>
+          </summary>
+          <ul className="zero-cost-list">
+            {zeroTotals.map((total) => (
+              <li key={total.typeId}>{total.costType.name ?? total.typeId}</li>
+            ))}
+          </ul>
+        </details>
       )}
 
       <p className="cost-boundary">
@@ -1304,6 +1357,9 @@ function RosterSelectionItem({
   const childrenContainAttention = selection.selections.some((child) =>
     selectionSubtreeHasAttention(child, attentionSelectionIds),
   );
+  // Small subtrees stay open so a couple of models are reachable. Larger ones
+  // open only when a descendant has a known violation — unresolved bounds stay
+  // in the checks, they do not expand the tree.
   const [childrenOpen, setChildrenOpen] = useState(
     () =>
       selection.selections.length <= 2 || childrenContainAttention,
@@ -1315,30 +1371,23 @@ function RosterSelectionItem({
     <li
       className="roster-selection-item"
       id={selectionAnchor(selection.id)}
+      data-occurrence-id={selection.id}
+      data-display-completeness={
+        nameIncomplete || annotationIncomplete ? "incomplete" : "complete"
+      }
     >
       <div className="selection-occurrence">
         <span>
           <strong>{annotatedName}</strong>
-          <small>{selection.id}</small>
         </span>
         <button
           type="button"
-          aria-label={`Remove ${name} ${selection.id}`}
+          aria-label={`Remove ${name}`}
           onClick={() => onRemove(selection.id)}
         >
           Remove
         </button>
       </div>
-      {nameIncomplete && (
-        <p className="selection-annotation-completeness">
-          Display name unresolved for this selection.
-        </p>
-      )}
-      {annotationIncomplete && (
-        <p className="selection-annotation-completeness">
-          Display annotation unresolved for this selection.
-        </p>
-      )}
       {childChoices.ok && childChoices.value.direct.length > 0 && (
         <div className="child-choice-list">
           {childChoices.value.direct.map((direct) => {
@@ -1357,7 +1406,7 @@ function RosterSelectionItem({
               >
                 <button
                   type="button"
-                  aria-label={`Add ${choiceName} to ${name} ${selection.id}`}
+                  aria-label={`Add ${choiceName} to ${name}`}
                   disabled={
                     finiteMaximum !== undefined &&
                     rosterSelectionsAmount(direct.selected) >= finiteMaximum
@@ -1391,6 +1440,18 @@ function RosterSelectionItem({
       {!childChoices.ok && (
         <DiagnosticList diagnostics={childChoices.diagnostics} />
       )}
+      {/* Squad size lives on the model entry. Keep the amount editor here,
+          not inside Selection details, so it is reachable without opening the
+          datasheet. */}
+      {choice?.kind === "selectionEntry" && choice.type === "model" && (
+        <SelectionAmountEditor
+          selection={selection}
+          defaultAmount={choice.defaultAmount}
+          step={choice.step}
+          onSetAmount={onSetAmount}
+          label="Models in this squad"
+        />
+      )}
       {choice !== undefined && (
         <RosterSelectionDetails
           session={session}
@@ -1398,22 +1459,28 @@ function RosterSelectionItem({
           selection={selection}
           onRename={onRename}
           onSetAmount={onSetAmount}
+          displayNameIncomplete={nameIncomplete || annotationIncomplete}
         />
       )}
       {selection.selections.length > 0 && (
         <details
           className="selection-children"
           open={childrenOpen}
-          aria-label={`Selected child occurrences ${formatCount(
+          aria-label={`Models, wargear, Warlord and options ${formatCount(
             selection.selections.length,
             "selection",
           )}`}
-          onToggle={(event) =>
-            setChildrenOpen(event.currentTarget.open)
-          }
         >
-          <summary>
-            Selected children
+          {/* Same controlled summary as Selection details: jsdom does not
+              toggle `<details>`, so a native click would set `open` without
+              rendering the lazy children. */}
+          <summary
+            onClick={(event) => {
+              event.preventDefault();
+              setChildrenOpen((current) => !current);
+            }}
+          >
+            Configure models, wargear &amp; options
             <span>
               {formatCount(selection.selections.length, "selection")}
             </span>
@@ -1474,7 +1541,7 @@ function RosterSelectionChoiceGroup({
   return (
     <fieldset
       className="child-choice-group"
-      aria-label={`${name} choices for ${parentName} ${parent.id}`}
+      aria-label={`${name} choices for ${parentName}`}
       data-completeness={group.completeness}
     >
       <legend>{name}</legend>
@@ -1543,6 +1610,7 @@ function RosterSelectionDetails({
   selection,
   onRename,
   onSetAmount,
+  displayNameIncomplete,
 }: {
   readonly session: LocalRosterSession;
   readonly choice: BattleScribeRosterSelectionChoice;
@@ -1555,6 +1623,7 @@ function RosterSelectionDetails({
     id: SelectionOccurrenceId,
     amount: number | undefined,
   ) => void;
+  readonly displayNameIncomplete: boolean;
 }) {
   // A closed `<details>` still builds its contents; the browser only hides
   // them. On a fifteen-unit Dark Angels army 181 of 214 were closed, and React
@@ -1621,98 +1690,109 @@ function RosterSelectionDetails({
 
       {opened && (
         <>
-      <dl className="selection-definition-details">
-        <Detail
-          label="Definition"
-          value={
-            choice.kind === "selectionEntry"
-              ? choice.type ?? "Selection entry"
-              : "Selection group"
-          }
-        />
-        <Detail label="Source" value={choice.definition.source.filename} />
-        <Detail
-          label="Hidden"
-          value={
-            choice.hidden === undefined ? "Not specified" : String(choice.hidden)
-          }
-        />
-      </dl>
+          {/* Keep unresolved display-name warnings, but not as a banner on
+              every occurrence. Completeness of the name report is unchanged. */}
+          {displayNameIncomplete && (
+            <p className="selection-annotation-completeness">
+              Some display naming is unresolved for this selection.
+            </p>
+          )}
+          <dl className="selection-definition-details">
+            <Detail
+              label="Definition"
+              value={
+                choice.kind === "selectionEntry"
+                  ? (choice.type ?? "Selection entry")
+                  : "Selection group"
+              }
+            />
+            <Detail label="Source" value={choice.definition.source.filename} />
+            <Detail
+              label="Hidden"
+              value={
+                choice.hidden === undefined
+                  ? "Not specified"
+                  : String(choice.hidden)
+              }
+            />
+          </dl>
 
-      <SelectionNameEditor
-        selection={selection}
-        definitionName={choice.name}
-        onRename={onRename}
-      />
-      <SelectionAmountEditor
-        selection={selection}
-        defaultAmount={choice.defaultAmount}
-        step={choice.step}
-        onSetAmount={onSetAmount}
-      />
+          <SelectionNameEditor
+            selection={selection}
+            definitionName={choice.name}
+            onRename={onRename}
+          />
+          {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
+            <SelectionAmountEditor
+              selection={selection}
+              defaultAmount={choice.defaultAmount}
+              step={choice.step}
+              onSetAmount={onSetAmount}
+            />
+          )}
 
-      {categories?.ok === true && (
-        <SelectionKeywords inspection={categories.value} />
-      )}
+          {categories?.ok === true && (
+            <SelectionKeywords inspection={categories.value} />
+          )}
 
-      {profiles.length > 0 && (
-        <section className="selection-info-section">
-          <h4>Profiles</h4>
-          <div className="selection-profile-list">
-            {profiles.map((profile, index) => (
-              <SelectionProfile
-                key={selectionProfileKey(profile, index)}
-                profile={profile}
-                report={reports?.get(profile.value)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+          {profiles.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Profiles</h4>
+              <div className="selection-profile-list">
+                {profiles.map((profile, index) => (
+                  <SelectionProfile
+                    key={selectionProfileKey(profile, index)}
+                    profile={profile}
+                    report={reports?.get(profile.value)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {rules.length > 0 && (
-        <section className="selection-info-section">
-          <h4>Rules</h4>
-          <div className="selection-rule-list">
-            {rules.map((rule, index) => (
-              <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
-            ))}
-          </div>
-        </section>
-      )}
+          {rules.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Rules</h4>
+              <div className="selection-rule-list">
+                {rules.map((rule, index) => (
+                  <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {infoGroups.length > 0 && (
-        <section className="selection-info-section">
-          <h4>Info groups</h4>
-          <div className="selection-info-group-list">
-            {infoGroups.map((infoGroup, index) => (
-              <SelectionInfoGroup
-                key={selectionInfoGroupKey(infoGroup, index)}
-                infoGroup={infoGroup}
-                reports={reports}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+          {infoGroups.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Info groups</h4>
+              <div className="selection-info-group-list">
+                {infoGroups.map((infoGroup, index) => (
+                  <SelectionInfoGroup
+                    key={selectionInfoGroupKey(infoGroup, index)}
+                    infoGroup={infoGroup}
+                    reports={reports}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {unresolved.length > 0 && (
-        <section className="selection-info-section unresolved-info-links">
-          <h4>Unresolved info links</h4>
-          <ul>
-            {unresolved.map((infoLink, index) => (
-              <li key={unresolvedInfoLinkKey(infoLink, index)}>
-                <strong>
-                  {infoLink.link.name ??
-                    infoLink.link.targetId ??
-                    "Unnamed info link"}
-                </strong>
-                <span>{infoLink.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          {unresolved.length > 0 && (
+            <section className="selection-info-section unresolved-info-links">
+              <h4>Unresolved info links</h4>
+              <ul>
+                {unresolved.map((infoLink, index) => (
+                  <li key={unresolvedInfoLinkKey(infoLink, index)}>
+                    <strong>
+                      {infoLink.link.name ??
+                        infoLink.link.targetId ??
+                        "Unnamed info link"}
+                    </strong>
+                    <span>{infoLink.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
     </details>
@@ -1773,6 +1853,7 @@ function SelectionAmountEditor({
   defaultAmount,
   step,
   onSetAmount,
+  label = "Amount",
 }: {
   readonly selection: RosterSelection;
   readonly defaultAmount: string | undefined;
@@ -1781,6 +1862,7 @@ function SelectionAmountEditor({
     id: SelectionOccurrenceId,
     amount: number | undefined,
   ) => void;
+  readonly label?: string;
 }) {
   const id = useId();
   const effectiveAmount = selection.amount ?? 1;
@@ -1798,7 +1880,7 @@ function SelectionAmountEditor({
         if (canSave) onSetAmount(selection.id, parsed);
       }}
     >
-      <label htmlFor={id}>Amount</label>
+      <label htmlFor={id}>{label}</label>
       <div>
         <input
           id={id}
@@ -2279,6 +2361,10 @@ function supportedValidationSelectionIds(
 ): ReadonlySet<string> {
   const selectionIds = new Set<string>();
   for (const finding of findings) {
+    // Unresolved behavior remains visible in the checks, but it is not an
+    // actionable violation and should not expand a whole model subtree while
+    // the user is trying to configure the roster.
+    if (finding.status !== "violated") continue;
     if (finding.kind === "selectionConstraint") {
       selectionIds.add(finding.report.owner.id);
     } else if (

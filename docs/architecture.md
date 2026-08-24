@@ -640,9 +640,13 @@ Recursive occurrence rendering places selected children in a disclosure.
 Collections of more than two children start collapsed, preventing automatic
 initialization from expanding dozens of model and wargear cards at once.
 Smaller collections remain open. Disclosure state is ephemeral React state and
-is not stored in roster history or drafts. When a supported-validation finding
-belongs to a descendant selection, every collapsed ancestor disclosure opens
-so the stable issue link reaches visible content.
+is not stored in roster history or drafts. The disclosure names models,
+wargear, and options rather than exposing the tree as an implementation detail,
+and model quantities stay beside the model occurrence instead of inside its
+datasheet disclosure. When a known supported-validation violation belongs to a
+descendant selection, every collapsed ancestor disclosure opens so the stable
+issue link reaches visible content. An unresolved bound stays in its own
+collapsed checks disclosure and does not expand the roster tree.
 
 `removeLocalRosterSelection` delegates occurrence removal to `roster-model`.
 The selected occurrence subtree is removed by branded ID while sibling
@@ -653,9 +657,12 @@ session also removes every deleted subtree ID from its materialized-choice map.
 `evaluateRosterCostsWithSelectionConditions`. The workspace renders ordered
 supported totals, recursive selection count, excluded/unresolved summary
 counts, existing evaluation diagnostics, and the report's independent
-completeness. An incomplete report is labeled incomplete and its provisional
-totals are never presented as authoritative BattleScribe parity. No evaluated
-value is written into roster state or used to permit or reject an edit.
+completeness. Non-zero totals form the headline; zero-value source fields such
+as Crusade bookkeeping remain present in a collapsed disclosure rather than
+being discarded or promoted beside matched-play points. An incomplete report
+is labeled incomplete and its provisional totals are never presented as
+authoritative BattleScribe parity. No evaluated value is written into roster
+state or used to permit or reject an edit.
 
 `inspectLocalRosterConstraints` delegates the same snapshot first to the
 roster-wide selection collection in `selectionConditions` scope and then to
@@ -1691,7 +1698,11 @@ The base is supplied by the caller rather than read from the choice, because an
 occurrence may carry a user rename. The browser passes the name currently
 displayed, so a rename and a catalogue modifier **compose** instead of
 competing: rename a unit and its Crusade rank still follows it. Commands and
-accessible labels keep using the un-refined name.
+accessible labels keep using the un-refined name. Generated occurrence IDs are
+retained for anchors but omitted from reader-facing cards and accessible action
+labels. An unresolved selection name or annotation falls back to the source
+display and records its notice inside Selection details rather than repeating a
+banner on the roster tree.
 
 The corpus's 7,673 `name` modifiers are overwhelmingly Crusade rank suffixes —
 `(Battle-ready)`, `(Blooded)`, `(Battle-hardened)`, `(Heroic)`, `(Legendary)`,

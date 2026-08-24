@@ -1009,14 +1009,6 @@ h1 {
   font-size: 1.15rem;
 }
 
-.force-card > span:last-child {
-  overflow: hidden;
-  color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.62rem;
-  text-overflow: ellipsis;
-}
-
 .secondary-action {
   width: 100%;
   color: var(--forest);
@@ -1266,6 +1258,24 @@ h1 {
   color: var(--muted);
   font-weight: 600;
   text-transform: none;
+}
+
+.zero-cost-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zero-cost-list li {
+  padding: 4px 7px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid #d5d9d4;
+  border-radius: 999px;
+  font-size: 0.58rem;
 }
 
 .cost-details dl {
@@ -1678,16 +1688,6 @@ h1 {
 .selection-occurrence strong {
   display: block;
   font-size: 0.76rem;
-}
-
-.selection-occurrence small {
-  display: block;
-  overflow: hidden;
-  margin-top: 3px;
-  color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.58rem;
-  text-overflow: ellipsis;
 }
 
 .selection-occurrence > button {

@@ -126,7 +126,8 @@
 - Read-only roster cost totals from the selection-condition evaluation scope,
   with amount-scaled totals, per-unit values, ordered cost types, explicit
   complete/incomplete labeling, excluded and unresolved counts, and retained
-  evaluation diagnostics
+  evaluation diagnostics; non-zero totals form the headline while zero-value
+  source fields remain available in a collapsed disclosure
 - Read-only roster-wide selection-condition and force-condition constraint
   collections, with independent bound statuses, explicit completeness, ordered
   details, and no aggregate legality or edit guards
@@ -141,9 +142,9 @@
 - Browser structural-status badges and ordered bound details that recompute
   after edits and history changes without becoming command guards or a
   full-legality claim
-- Issue-first structural presentation with owner names, stable links to the
-  relevant selected occurrence or root editor, collapsed satisfied bounds,
-  and separately retained diagnostics
+- Violation-first structural presentation with owner names, stable links to the
+  relevant selected occurrence or root editor, unresolved and satisfied bounds
+  in separate collapsed disclosures, and separately retained diagnostics
 - Relevance-scoped structural completeness: unsupported dynamic bounds on a
   proven inactive root remain in one catalogue-level diagnostic but do not
   make the roster report incomplete until the root is selected
@@ -160,15 +161,22 @@
   composer preserves its three source reports by reference and does not
   re-evaluate them or guard roster commands
 - Compact browser supported-validation ribbon with separate validity and
-  completeness badges, combined status counts, per-domain issue links, and
-  retained structural and constraint detail cards
-- Issue-first constraint presentation with stable links to exact selection
-  occurrences or the owning force, collapsed satisfied bounds, and separately
-  retained diagnostics; unsupported constraint shapes remain incomplete and
-  diagnostic without inflating actionable issue counts
+  completeness badges, combined status counts, per-domain known-violation
+  links, and retained structural and constraint detail cards
+- Violation-first constraint presentation with stable links to exact selection
+  occurrences or the owning force, unresolved and satisfied bounds in separate
+  collapsed disclosures, and separately retained diagnostics; unsupported
+  constraint shapes remain incomplete and diagnostic without inflating
+  actionable issue counts
 - Collapsible recursive selection-child collections, with large initialized
-  subtrees closed by default and validation-owned ancestor paths opened
-  automatically
+  subtrees closed by default, a reader-facing models/wargear/options label, and
+  known-violation ancestor paths opened automatically; unresolved bounds do not
+  expand the roster tree
+- Reader-facing occurrence cards omit generated force and selection IDs while
+  retaining stable anchors for validation links. Model quantities are editable
+  beside the model occurrence instead of behind its datasheet disclosure, and
+  unresolved display-name/annotation notices remain available inside Selection
+  details without becoming a banner on every occurrence
 - Persistent Roster, Add units, and Checks workspace navigation with live
   counts, a two-pane desktop builder, and ordered full-width mobile fallback
 - Focused active-roster layout that uses the full library shell and restores

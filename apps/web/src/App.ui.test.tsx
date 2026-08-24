@@ -49,6 +49,11 @@ const gameSystemBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
   battleScribeVersion="2.03">
   <costTypes>
     <costType id="cost-points" name="Points" defaultCostLimit="-1" />
+    <costType
+      id="cost-experience"
+      name="Crusade: Experience"
+      defaultCostLimit="-1"
+    />
   </costTypes>
   <profileTypes>
     <profileType id="profile-type-unit" name="Unit">
@@ -128,6 +133,14 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
       </modifiers>
       <costs>
         <cost name="Points" typeId="cost-points" value="80" />
+        <!-- A campaign bookkeeping field that evaluates to zero. The
+             workspace must keep it in the cost report without promoting it
+             beside matched-play points. -->
+        <cost
+          name="Crusade: Experience"
+          typeId="cost-experience"
+          value="0"
+        />
       </costs>
       <constraints>
         <constraint
@@ -199,6 +212,9 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
             <cost name="Points" typeId="cost-points" value="10" />
           </costs>
           <modifiers>
+            <!-- Unsupported display-name behavior keeps the source name but
+                 makes its completeness warning a details-level concern. -->
+            <modifier type="multiply" field="name" value="2" />
             <modifier type="append" field="annotation"
               value="Master-crafted" join=", " />
           </modifiers>
@@ -735,7 +751,8 @@ describe("App local catalogue flow", () => {
       screen.getByRole("region", { name: "Roster workspace" }),
     ).toBeTruthy();
     expect(screen.getAllByText("Patrol Detachment")).toHaveLength(2);
-    expect(screen.getByText("force-ui")).toBeTruthy();
+    expect(rosterForce("force-ui")).toBeTruthy();
+    expect(screen.queryByText("force-ui")).toBeNull();
     const workspaceNavigation = screen.getByRole("navigation", {
       name: "Roster workspace navigation",
     });
@@ -766,7 +783,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(
       within(supportedValidation).getByRole("link", {
-        name: "0 constraint issues",
+        name: "0 constraint violations",
       }),
     ).toBeTruthy();
     expect(
@@ -777,18 +794,23 @@ describe("App local catalogue flow", () => {
     ).toBe("0Violated");
     expect(
       within(supportedValidation).getByRole("link", {
-        name: "0 structural issues",
+        name: "0 structural violations",
       }),
     ).toHaveProperty("hash", "#roster-structural-status-heading");
     expect(
       within(supportedValidation).getByRole("link", {
-        name: "0 constraint issues",
+        name: "0 constraint violations",
       }),
     ).toHaveProperty("hash", "#roster-constraint-heading");
     const costs = screen.getByRole("region", { name: "Roster costs" });
     expect(
       within(costs).getByText("No supported numeric costs yet."),
     ).toBeTruthy();
+    expect(
+      within(costs).queryByRole("group", {
+        name: /Zero-value source cost fields/u,
+      }),
+    ).toBeNull();
     expect(within(costs).getByText("Complete supported view")).toBeTruthy();
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
@@ -851,9 +873,21 @@ describe("App local catalogue flow", () => {
       name: "Add Infantry Squad",
     });
     fireEvent.click(addInfantry);
-    expect(await screen.findByText("selection-ui-1")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-1")).toBeTruthy();
+    });
+    expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
+    expect(within(costs).getByText("80")).toBeTruthy();
+    expect(within(costs).getByText("Points")).toBeTruthy();
+    const zeroCosts = within(costs).getByRole("group", {
+      name: "Zero-value source cost fields 1 field",
+    });
+    expect(zeroCosts.hasAttribute("open")).toBe(false);
+    expect(
+      within(zeroCosts).getByText("Crusade: Experience"),
+    ).toBeTruthy();
     expect(undo).toHaveProperty("disabled", false);
     expect(redo).toHaveProperty("disabled", true);
     const selectionDetails =
@@ -947,7 +981,7 @@ describe("App local catalogue flow", () => {
     );
 
     fireEvent.click(addInfantry);
-    expect(screen.getByText("selection-ui-2")).toBeTruthy();
+    expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
@@ -968,7 +1002,7 @@ describe("App local catalogue flow", () => {
       within(constraints).getAllByText("Observed 2, limit 1"),
     ).toHaveLength(2);
     const constraintAttention = within(constraints).getByRole("group", {
-      name: "Constraint issues needing attention 2 bounds",
+      name: "Constraint violations 2 bounds",
     });
     const constraintReviewLinks = within(
       constraintAttention,
@@ -988,10 +1022,12 @@ describe("App local catalogue flow", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Add Special Weapon to Veterans selection-ui-1",
+        name: "Add Special Weapon to Veterans",
       }),
     );
-    expect(await screen.findByText("selection-ui-3")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-3")).toBeTruthy();
+    });
     expect(screen.getByText("Special Weapon (Master-crafted)")).toBeTruthy();
     expect(within(costs).getByText("170")).toBeTruthy();
     expect(
@@ -1001,13 +1037,23 @@ describe("App local catalogue flow", () => {
     // The weapon's own datasheet says 4; the squad's `affects` selector routes a
     // set to it. The panel has to name the declarer, or the reader cannot tell
     // why the printed value and the displayed value disagree.
-    const weapon = screen.getByText("selection-ui-3").closest("li");
+    const weapon = rosterSelection("selection-ui-3");
     expect(weapon).toBeTruthy();
     const weaponNode = within(weapon as HTMLElement);
     expect(
       weaponNode.getByText("Special Weapon (Master-crafted)"),
     ).toBeTruthy();
+    expect(
+      weaponNode.queryByText(
+        "Some display naming is unresolved for this selection.",
+      ),
+    ).toBeNull();
     fireEvent.click(weaponNode.getByText("Selection details"));
+    expect(
+      weaponNode.getByText(
+        "Some display naming is unresolved for this selection.",
+      ),
+    ).toBeTruthy();
     expect(
       weaponNode.getByText("Special Weapon profile (Veteran Issue)"),
     ).toBeTruthy();
@@ -1024,12 +1070,12 @@ describe("App local catalogue flow", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Remove Veterans selection-ui-1",
+        name: "Remove Veterans",
       }),
     );
-    expect(screen.queryByText("selection-ui-1")).toBeNull();
-    expect(screen.queryByText("selection-ui-3")).toBeNull();
-    expect(screen.getByText("selection-ui-2")).toBeTruthy();
+    expect(rosterSelection("selection-ui-1")).toBeNull();
+    expect(rosterSelection("selection-ui-3")).toBeNull();
+    expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
@@ -1045,7 +1091,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(
       within(constraints).queryByRole("group", {
-        name: /Constraint issues needing attention/u,
+        name: /Constraint violations/u,
       }),
     ).toBeNull();
     expect(
@@ -1055,8 +1101,8 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
 
     fireEvent.click(undo);
-    expect(screen.getByText("selection-ui-1")).toBeTruthy();
-    expect(screen.getByText("selection-ui-3")).toBeTruthy();
+    expect(rosterSelection("selection-ui-1")).toBeTruthy();
+    expect(rosterSelection("selection-ui-3")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
@@ -1064,9 +1110,9 @@ describe("App local catalogue flow", () => {
     expect(redo).toHaveProperty("disabled", false);
 
     fireEvent.click(redo);
-    expect(screen.queryByText("selection-ui-1")).toBeNull();
-    expect(screen.queryByText("selection-ui-3")).toBeNull();
-    expect(screen.getByText("selection-ui-2")).toBeTruthy();
+    expect(rosterSelection("selection-ui-1")).toBeNull();
+    expect(rosterSelection("selection-ui-3")).toBeNull();
+    expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(within(costs).getByText("80")).toBeTruthy();
 
     fireEvent.click(changeRosterSetup);
@@ -1142,7 +1188,7 @@ describe("App local catalogue flow", () => {
       constraintStatusText(structuralStatus, "Violated"),
     ).toBe("1Violated");
     const missingDoctrine = within(structuralStatus).getByRole("group", {
-      name: "Requirements needing attention 1 bound",
+      name: "Structural violations 1 bound",
     });
     const reviewDoctrine = within(missingDoctrine).getByRole("link", {
       name: "Review selection",
@@ -1155,7 +1201,7 @@ describe("App local catalogue flow", () => {
         : document.getElementById(doctrineTarget.slice(1)),
     ).toBeTruthy();
     let doctrine = screen.getByRole("group", {
-      name: "Squad Doctrine choices for Infantry Squad selection-ui-group-1",
+      name: "Squad Doctrine choices for Infantry Squad",
     });
     expect(
       within(doctrine).getByText("0 selected; 1 still required"),
@@ -1166,9 +1212,11 @@ describe("App local catalogue flow", () => {
       }),
     );
 
-    expect(await screen.findByText("selection-ui-group-2")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-group-2")).toBeTruthy();
+    });
     doctrine = screen.getByRole("group", {
-      name: "Squad Doctrine choices for Infantry Squad selection-ui-group-1",
+      name: "Squad Doctrine choices for Infantry Squad",
     });
     expect(
       within(doctrine).getByRole("button", {
@@ -1189,12 +1237,12 @@ describe("App local catalogue flow", () => {
     ).toBe("0Violated");
     expect(
       within(structuralStatus).getByText(
-        "All supported structural requirements are currently satisfied.",
+        "No supported structural requirement is known to be violated.",
       ),
     ).toBeTruthy();
     expect(
       within(structuralStatus).queryByRole("group", {
-        name: /Requirements needing attention/u,
+        name: /Structural violations/u,
       }),
     ).toBeNull();
     fireEvent.click(
@@ -1203,10 +1251,12 @@ describe("App local catalogue flow", () => {
       }),
     );
 
-    expect(await screen.findByText("selection-ui-group-3")).toBeTruthy();
-    expect(screen.queryByText("selection-ui-group-2")).toBeNull();
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-group-3")).toBeTruthy();
+    });
+    expect(rosterSelection("selection-ui-group-2")).toBeNull();
     doctrine = screen.getByRole("group", {
-      name: "Squad Doctrine choices for Infantry Squad selection-ui-group-1",
+      name: "Squad Doctrine choices for Infantry Squad",
     });
     expect(
       within(doctrine).getByRole("button", {
@@ -1268,13 +1318,18 @@ describe("App local catalogue flow", () => {
       name: "Selected roster",
     });
     const initializedChildren = within(selectedRoster).getByRole("group", {
-      name: "Selected child occurrences 3 selections",
+      name: "Models, wargear, Warlord and options 3 selections",
     });
     expect(initializedChildren.hasAttribute("open")).toBe(false);
     fireEvent.click(
-      within(initializedChildren).getByText("3 selections"),
+      within(initializedChildren).getByText(
+        "Configure models, wargear & options",
+      ),
     );
     expect(initializedChildren.hasAttribute("open")).toBe(true);
+    expect(
+      within(initializedChildren).getAllByLabelText("Models in this squad"),
+    ).toHaveLength(2);
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1298,17 +1353,21 @@ describe("App local catalogue flow", () => {
     expect(
       constraintStatusText(structuralStatus, "Violated"),
     ).toBe("1Violated");
-    const initialAttention = within(structuralStatus).getByRole("group", {
-      name: "Requirements needing attention 2 bounds",
+    const initialViolations = within(structuralStatus).getByRole("group", {
+      name: "Structural violations 1 bound",
     });
-    expect(within(initialAttention).getByText("Modified Child")).toBeTruthy();
-    expect(within(initialAttention).getByText("Manual Group")).toBeTruthy();
-    expect(within(initialAttention).queryByText("Required Model")).toBeNull();
-    const reviewSelectionLinks = within(initialAttention).getAllByRole(
+    expect(within(initialViolations).getByText("Manual Group")).toBeTruthy();
+    expect(within(initialViolations).queryByText("Modified Child")).toBeNull();
+    const unresolvedBounds = within(structuralStatus).getByRole("group", {
+      name: "Unresolved structural bounds 1 bound",
+    });
+    expect(unresolvedBounds.hasAttribute("open")).toBe(false);
+    expect(within(unresolvedBounds).getByText("Modified Child")).toBeTruthy();
+    const reviewSelectionLinks = within(initialViolations).getAllByRole(
       "link",
       { name: "Review selection" },
     );
-    expect(reviewSelectionLinks).toHaveLength(2);
+    expect(reviewSelectionLinks).toHaveLength(1);
     const firstSelectionTarget =
       reviewSelectionLinks[0]?.getAttribute("href");
     expect(
@@ -1345,20 +1404,20 @@ describe("App local catalogue flow", () => {
       }),
     ).toHaveProperty("disabled", false);
     const addRequiredModel = await screen.findByRole("button", {
-      name: "Add Required Model to Initialization Unit selection-ui-bound-1",
+      name: "Add Required Model to Initialization Unit",
     });
     expect(addRequiredModel).toHaveProperty("disabled", true);
     expect(
       screen.getByText("2 selected; requirement met"),
     ).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", {
-        name: "Remove Required Model selection-ui-bound-2",
-      }),
+      screen.getAllByRole("button", {
+        name: "Remove Required Model",
+      })[0]!,
     );
 
-    expect(screen.queryByText("selection-ui-bound-2")).toBeNull();
-    expect(screen.queryByText("selection-ui-bound-3")).toBeNull();
+    expect(rosterSelection("selection-ui-bound-2")).toBeNull();
+    expect(rosterSelection("selection-ui-bound-3")).toBeNull();
     expect(addRequiredModel).toHaveProperty("disabled", false);
     expect(
       screen.getByText("1 selected; 1 still required"),
@@ -1368,13 +1427,15 @@ describe("App local catalogue flow", () => {
     ).toBe("2Violated");
     expect(
       within(structuralStatus).getByRole("group", {
-        name: "Requirements needing attention 3 bounds",
+        name: "Structural violations 2 bounds",
       }),
     ).toBeTruthy();
     fireEvent.click(addRequiredModel);
 
-    expect(await screen.findByText("selection-ui-bound-7")).toBeTruthy();
-    expect(await screen.findByText("selection-ui-bound-8")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-bound-7")).toBeTruthy();
+      expect(rosterSelection("selection-ui-bound-8")).toBeTruthy();
+    });
     expect(addRequiredModel).toHaveProperty("disabled", true);
     expect(
       screen.getByText("2 selected; requirement met"),
@@ -1384,7 +1445,7 @@ describe("App local catalogue flow", () => {
     ).toBe("1Violated");
     expect(
       within(structuralStatus).getByRole("group", {
-        name: "Requirements needing attention 2 bounds",
+        name: "Structural violations 1 bound",
       }),
     ).toBeTruthy();
   });
@@ -1476,7 +1537,9 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
     );
-    await screen.findByText("selection-quota");
+    await waitFor(() => {
+      expect(rosterSelection("selection-quota")).toBeTruthy();
+    });
 
     // The first save is allowed through, so a draft becomes active.
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
@@ -1539,7 +1602,9 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
     );
-    expect(await screen.findByText("selection-draft-ui")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-draft-ui")).toBeTruthy();
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Print / Save PDF" }));
     expect(printRoster).toHaveBeenCalledOnce();
@@ -1639,7 +1704,9 @@ describe("App local catalogue flow", () => {
     expect(
       await screen.findByRole("heading", { name: "Saved Patrol" }),
     ).toBeTruthy();
-    expect(await screen.findByText("selection-draft-ui")).toBeTruthy();
+    await waitFor(() => {
+      expect(rosterSelection("selection-draft-ui")).toBeTruthy();
+    });
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),
     ).toBeTruthy();
@@ -1673,6 +1740,18 @@ function constraintStatusText(
     name: /statuses$/u,
   });
   return within(statuses).getByText(label).parentElement?.textContent ?? null;
+}
+
+function rosterForce(occurrenceId: string): HTMLElement | null {
+  return document.querySelector<HTMLElement>(
+    `[data-force-id="${occurrenceId}"]`,
+  );
+}
+
+function rosterSelection(occurrenceId: string): HTMLElement | null {
+  return document.querySelector<HTMLElement>(
+    `[data-occurrence-id="${occurrenceId}"]`,
+  );
 }
 
 function browserFile(
