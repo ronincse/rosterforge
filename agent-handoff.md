@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (Claude lead active; lanes re-verified)
+## Current Status — 2026-08-24 (player header shipped)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -86,12 +86,12 @@ diagnostic codes.
   re-verified from a Claude session on 2026-08-24; the Copilot template was
   corrected because `copilot.cmd` silently truncated multi-line prompts.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **501 passed, 18 skipped (519)**.
+  `git diff --check` all pass. `pnpm test` is **503 passed, 18 skipped (521)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **519 passed**; without the variable the 18 corpus tests are skipped.
+  **521 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -107,8 +107,11 @@ diagnostic codes.
   indexed choice resolutions must stay at or below 20,000. The live workspace
   now consumes one tested immutable presentation model for costs, violation
   attention, configuration classification, recursive unit totals, and optional
-  active-selection ancestry. The compact points-and-problems player header is
-  the next bounded boundary.
+  active-selection ancestry. That model now also backs one `Roster summary`
+  player header, which replaced the separate cost and validation cards: totals
+  and the known-problem count lead, and validity and completeness survive as
+  independent badges. Separating configuration from army units is the next
+  bounded boundary, and the presentation model already classifies both.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -392,8 +395,9 @@ QA before classifying or implementing the discrepancy.
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
 | Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
-| Compact points-and-problems player header; remove remaining evaluator chrome | **Next** | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
-| Separate configuration from army units | Open | the add browser groups `Configuration` separately, but added configuration and units still share one selected-roster tree |
+| Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
+| Separate configuration from army units | **Next** | the add browser groups `Configuration` separately and the presentation model already classifies every root and selection into `configuration` or `army`; the selected-roster tree still renders one undivided list that consumes neither |
+| Headline cost against its points limit | Open | found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
 | Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
 | Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
@@ -407,16 +411,15 @@ QA before classifying or implementing the discrepancy.
 | Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
 
-With the CI budget complete, take the open presentation work in this order:
+The tested presentation model and the player header are both complete. Take the
+remaining presentation work in this order:
 
-1. tested workspace presentation model;
-2. compact points-and-problems header;
-3. configuration separated from army units;
-4. collapsible top-level units with per-unit costs;
-5. shop/editor modes with newly-added-unit focus;
-6. legality-aware model-count controls;
-7. common-loadout flattening and dedicated Warlord controls; and
-8. print-output usability.
+1. configuration separated from army units;
+2. collapsible top-level units with per-unit costs;
+3. shop/editor modes with newly-added-unit focus;
+4. legality-aware model-count controls;
+5. common-loadout flattening and dedicated Warlord controls; and
+6. print-output usability.
 
 The presentation model intentionally comes before the visible restructuring so
 those checkpoints share one tested projection instead of encoding the same
@@ -7828,3 +7831,132 @@ not begin.
 consume `apps/web/src/roster-workspace-model.ts`, combine supported headline
 costs with the known-problem count, keep validity and completeness independent,
 and drop remaining evaluator-oriented framing.
+
+## Completed Assignment — Compact Player Header, 2026-08-24
+
+Baseline `875dc26e8dfc151c4e160c988940c95e8ea3ce01`; resulting implementation
+commit `5f5db22` (`feat: combine roster costs and checks into one player
+header`) and this handoff commit. The roadmap's **Next**, taken by the Claude
+lead after the transfer.
+
+### What changed
+
+The workspace's two report cards are gone, replaced by one `Roster summary`
+header that consumes `apps/web/src/roster-workspace-model.ts`. It carries the
+roster identity, the supported cost totals, and the known-problem count, in that
+order, because those are the two figures a player acts on.
+
+Removed with them: the `Read-only evaluation` and `Supported validation`
+eyebrows, the `Roster costs` and `Supported roster validation` headings, the
+`Forces`/`Selections` metric pair, and the satisfied/violated/unresolved status
+triple. That triple was not lost — the structural and constraint sections below
+already render their own counts, which is where a reader who wants them is
+going anyway.
+
+Nothing else was dropped. Zero-value source cost fields keep their own closed
+disclosure, and excluded costs, unresolved selections, both diagnostic lists,
+and a per-report completeness sentence moved into a sibling `Report details`
+disclosure. The two violation links now appear only when the count is non-zero,
+so a clean roster stops reporting its own zeroes.
+
+### The completeness fold, and why the model owns it
+
+One header cannot carry the two completeness badges the two cards did. The fold
+lives in the presentation model as `header.completeness` and
+`header.incomplete`, not in the component, because it is exactly the kind of
+reader-facing rule the model was built to centralise.
+
+It is deliberately conservative: `complete` only when **both** reports are
+available *and* complete. An unavailable report counts as incomplete, because a
+report that could not be composed has established completeness no more than one
+that returned `incomplete`, and `AGENTS.md` forbids reporting incomplete
+validation as complete. `header.incomplete` names each report that fell short so
+the disclosure can say which. Root-choice completeness is excluded: it describes
+the add-units browser, not the header.
+
+Validity and completeness remain independent badges. A roster with no known
+violations is not thereby a roster whose supported view is complete, and the
+pinned Death Guard roster is exactly that case.
+
+### Decisions and rejected alternatives
+
+**A points-versus-limit figure was rejected as out of scope.** A matched-play
+header ideally reads `1180 / 2000 pts`, and the limit exists — the force
+constraint report already carries it. Surfacing it means plumbing force
+constraints into the presentation model, which is a different boundary and
+overlaps the open legality-aware controls row. It is recorded as a new roadmap
+candidate rather than smuggled in here.
+
+**Naming the headline cost type was rejected.** The header renders whatever
+non-zero cost types the catalogue defines rather than looking for `pts`. The
+pinned Death Guard roster happens to render `120 pts`; a catalogue with two
+active cost types gets two figures, and neither is guessed to be the important
+one.
+
+**A bare `<header>` element was rejected** after checking what it maps to.
+Nested inside the workspace `<section>`, `<header>` carries no ARIA role at all,
+so neither assistive technology nor a role query could reach the headline
+figures. It is a `<section aria-label="Roster summary">`.
+
+**Nesting the zero-cost list inside the report disclosure was rejected.** It put
+a browsing affordance two clicks deep behind an unrelated heading, and broke the
+existing closed-by-default assertion. They are siblings.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **503 passed, 18 skipped (521 total)** across 53 test
+  files, up two model tests and one style contract.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files —
+  **521 passed** across 53 test files.
+- Production build succeeded with only the existing large-chunk warning.
+- The change is net **-39 lines** across seven files: the header and its styles
+  are smaller than the two cards they replace.
+
+Browser verification against real data, not only jsdom. The pinned BSData
+repository was indexed in the app (46 files) and `Chaos - Death Guard` loaded at
+revision 10. An empty roster showed `0 costs so far`, `2 known problems`,
+`KNOWN VIOLATIONS`, `INCOMPLETE SUPPORTED VIEW`, and a `2 structural violations`
+link with **no** `0 constraint violations` counterpart. Adding a Lord of
+Contagion moved it to `120 pts`, `3 known problems`, and both violation links.
+Every header and nav anchor resolved to an existing element, and the console
+reported no errors.
+
+Layout was measured rather than eyeballed, since a fixed grid track floor is the
+exact defect the phone-width checkpoint fixed:
+
+| Viewport | `document.scrollWidth` | Figures | Overflowing elements |
+|---|---|---|---|
+| 1265 px | 1265 | side by side, 539 px | 0 |
+| 390 px | 390 | stacked, 266 px | 0 |
+| 320 px | 320 | stacked, 196 px | 0 |
+
+`styles.test.ts` now pins the `minmax(min(140px, 100%), 1fr)` and `min-width: 0`
+that make that true.
+
+One test expectation was written wrong and corrected by the run rather than
+argued with: the cost fixture's costs are complete while its checks are not, so
+the model test asserts `incomplete: ["checks"]` and documents that the fold must
+name only the half that failed. A fourth test forces a real validation report's
+completeness up to prove `complete` is reachable at all, guarding against a
+vacuously always-incomplete fold.
+
+### What this did not do
+
+No evaluator, session, persistence, or roster-model code changed; the projection
+still does not evaluate, mutate, filter, legalize, or persist. No behavior
+boundary moved, so `docs/compatibility.md` and `docs/diagnostics.md` are
+untouched. Configuration separation, collapsible costed unit cards, shop/editor
+modes, and print-output usability did not begin. No Reference Behavior QA ran:
+this checkpoint makes no claim about New Recruit behavior, only about which of
+RosterForge's own numbers lead. No pull request, deployment, or external
+publication occurred.
+
+### Next recommended boundary
+
+**Separate configuration from army units**, the roadmap's new **Next**. The
+presentation model already classifies every root and every top-level selection
+into `configuration` or `army` and exposes `selections.configuration` and
+`selections.army`; the selected-roster tree still renders `selections.ordered`
+as one undivided list. That checkpoint should consume the existing split rather
+than re-deriving it, and should not fold in collapsible costed unit cards.
