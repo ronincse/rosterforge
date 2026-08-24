@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (usability roadmap sequenced)
+## Current Status — 2026-08-24 (evaluation work budget guarded)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -54,12 +54,12 @@ diagnostic codes.
   disposable Grok writer, and Antigravity's headless browser limitation were
   exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **497 passed, 18 skipped (515)**.
+  `git diff --check` all pass. `pnpm test` is **498 passed, 18 skipped (516)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **515 passed**; without the variable the 18 corpus tests are skipped.
+  **516 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -70,9 +70,10 @@ diagnostic codes.
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
   and sticky workspace links leave their targets visible. The broader Grok
   usability audit has now been reconciled into explicit completed and residual
-  rows in section F instead of one over-broad `Done` row. The next bounded
-  boundary remains the CI performance budget; the tested workspace presentation
-  model begins the explicit post-budget usability sequence recorded there.
+  rows in section F instead of one over-broad `Done` row. A synthetic
+  135-selection workspace pass now has a timing-free CI work budget: its 19,275
+  indexed choice resolutions must stay at or below 20,000. The tested workspace
+  presentation model is the next bounded boundary.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -135,7 +136,7 @@ wargear, model amount, and supported checks. Repository diagnostics had made the
 document 431 px wide, and fragment links landed headings under the 47 px sticky
 nav. Shrinkable grid tracks and an 84 px document scroll offset now keep the
 same live roster inside both 390 px and the 320 px supported minimum. The next
-bounded item is a performance budget that runs in CI; see section F.
+bounded item is a tested workspace presentation model; see section F.
 
 Nested automatic groups and unit-typed automatic sub-units remain low priority
 because none of the five modifier-driven pinned groups uses either shape.
@@ -168,12 +169,13 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The first phone-width QA pass is complete. The CI performance budget is the new
-**Next** because it is the smallest independent guard remaining in the active
-product-usability area; whole-roster incremental evaluation stays Open and is
-not part of that checkpoint. After the guard, take the restored usability rows
-in the dependency order stated in section F rather than treating table position
-or raw status as priority.
+The first phone-width QA pass and deterministic CI performance budget are
+complete. The tested workspace presentation model is the new **Next** because
+the larger layout changes need one shared, tested projection of costs,
+validation priority, configuration classification, and active selection state.
+Whole-roster incremental evaluation stays Open and is not part of that
+checkpoint. Take the restored usability rows in the dependency order stated in
+section F rather than treating table position or raw status as priority.
 
 ### A. Display-fidelity modifiers
 
@@ -334,7 +336,7 @@ QA before classifying or implementing the discrepancy.
 | Reports re-evaluated on unrelated re-renders | Done | `RosterOverview` called costs and validation unmemoised in its body; an autosave state change paid a full re-evaluation |
 | History steps re-evaluated a known roster | Done | undo/redo restore a session the history already held; both reports now cached per session. Undo 308 → 73 ms |
 | Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
-| A budget test that runs in CI | **Next** | the new identity guard catches this regression; nothing catches a different one; keep the checkpoint to one deterministic budget guard, not a wall-clock benchmark framework |
+| A budget test that runs in CI | Done | a synthetic 135-selection costs/structural/selection/force report pass makes 19,275 indexed choice resolutions against a 20,000 ceiling; a duplicated full pass fails at 20,070 without relying on wall time |
 | Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
 | Community-data mismatch diagnosis | Done | both known GW discrepancies vanished when the corpus was updated: RosterForge had read stale source data faithfully. The actionable product gap was freshness, not a point-by-point GW comparison the app has no source for |
@@ -345,7 +347,7 @@ QA before classifying or implementing the discrepancy.
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
-| Tested workspace presentation model | Open | the workspace still derives presentation directly from the live session and reports; only print has a formal immutable view model. Introduce a tested workspace projection before making the larger layout changes below |
+| Tested workspace presentation model | **Next** | the workspace still derives presentation directly from the live session and reports; only print has a formal immutable view model. Introduce a tested workspace projection before making the larger layout changes below |
 | Compact points-and-problems player header; remove remaining evaluator chrome | Open | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
 | Separate configuration from army units | Open | the add browser groups `Configuration` separately, but added configuration and units still share one selected-roster tree |
 | Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
@@ -361,7 +363,7 @@ QA before classifying or implementing the discrepancy.
 | Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
 
-After the CI budget, take the open presentation work in this order:
+With the CI budget complete, take the open presentation work in this order:
 
 1. tested workspace presentation model;
 2. compact points-and-problems header;
@@ -7293,3 +7295,74 @@ request, deployment, or external publication occurred.
 **A deterministic CI performance budget**, unchanged. Keep it one close guard
 over an existing measured hot path; do not begin the presentation model or
 whole-roster incremental evaluation in the same checkpoint.
+
+## Completed Assignment — Deterministic Evaluation Work Budget, 2026-08-24
+
+Baseline `ca7d0a8c0336f62df0b980be1243a0e1d49ca69c`; resulting implementation
+commit `3a67697` (`test: add deterministic evaluation work budget`). This was
+the approved close checkpoint after the phone-width pass and usability-roadmap
+sequencing.
+
+### What changed
+
+`packages/evaluation/src/performance-budget.test.ts` now builds a fully
+synthetic roster with fifteen root units and eight nested choices per unit: 135
+selection occurrences, close to the 143-selection Dark Angels roster that
+exposed the original performance defect. It executes the same four report
+families used by the live workspace after an edit: selection-conditioned costs,
+structural status, selection constraints, and force constraints.
+
+The test observes the already-internal catalogue choice index and budgets
+indexed resolution requests rather than elapsed milliseconds. The representative
+pass makes exactly **19,275** indexed choice lookups and must remain at or below
+**20,000**. The existing identity tests still protect reuse of the catalogue
+index and flattened roster locations; this new guard catches excessive work
+even when those cache identities survive.
+
+### Decisions and rejected alternatives
+
+A wall-clock benchmark was rejected because shared CI runner load would require
+either a flaky threshold or enough tolerance to miss the regression. Exporting
+instrumentation from `@rosterforge/evaluation` was also rejected: the test lives
+inside the evaluation package and observes its internal map without widening the
+production API.
+
+The guard covers one complete workspace report pass instead of introducing a
+general benchmark framework or beginning incremental evaluation. Its fixed
+725-lookup headroom is deliberate. A sabotage run duplicated all four reports;
+the count rose to **20,070** and the test failed, proving the ceiling catches a
+meaningful extra-work regression. The duplicate calls were then reverted and
+the focused suite returned green at the 19,275 baseline.
+
+No Reference Behavior QA or delegation was needed: this checkpoint protects a
+locally measured implementation cost and makes no New Recruit behavior claim.
+The active lead kept the one-test change local because parallel work offered no
+clear advantage.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **498 passed, 18 skipped (516 total)** across 52 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, clean and
+  intentionally three commits behind its moving `origin/main` — **516 passed**
+  across 52 test files; all 46 JSON documents remained external and gitignored.
+- Production build succeeded with only the existing large-chunk warning.
+- Pre-checkpoint remote refresh — baseline `HEAD` and `origin/main` both
+  `ca7d0a8c0336f62df0b980be1243a0e1d49ca69c`, divergence `0 0`, with only the
+  primary worktree.
+
+### What this did not do
+
+No production application or evaluator code, dependency, build configuration,
+architecture boundary, compatibility claim, diagnostic, corpus data, or New
+Recruit state changed. Whole-roster incremental evaluation did not begin, and
+none of the restored presentation outcomes began. No pull request, deployment,
+or external publication occurred.
+
+### Next recommended boundary
+
+**A tested workspace presentation model.** Keep it one close checkpoint: define
+and test the immutable projection that later header, configuration split,
+costed-unit, and shop/editor work will consume without beginning those visible
+restructures yet.
