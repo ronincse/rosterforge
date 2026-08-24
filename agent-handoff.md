@@ -93,14 +93,48 @@ ephemeral group occurrence so relative `self` and `parent` conditions stay
 correct, but durable rosters remain transparent. The pinned GSC path selects
 Burrowing Claws when Specialisms moves from zero to one.
 
-The current **Next is conditional `defaultAmount` and quantifiable entry
-initialization** in section B. The `Points limit` child is the corpus's only
-entry with `step="250"`: it has minimum selections 500, no static default, and
-three conditional `set defaultAmount` modifiers for 1,000, 2,000, and 3,000.
-New Recruit computes one amounted occurrence from the effective default and
-minimum. RosterForge's generic initializer currently treats the minimum as
-occurrence multiplicity. Preserve the already-complete repeat evaluator and
-settle construction at the initialization/command boundary instead.
+The current **Next is constraint `value="-1"`**, in section F. Conditional
+`defaultAmount` and stepped initialization, which this paragraph named as Next
+until 2026-08-24, are **Done** — section B records them, and the reasoning is in
+the completed entry below.
+
+Measured against the pinned corpus on 2026-08-24, before any code was written,
+so the next session starts from numbers rather than from the guess this row
+carried for a week:
+
+- **48 constraints hold `value="-1"`** — 43 `max`, 5 `min` — across 22 files and
+  46 distinct constraint IDs.
+- They sit on **category entries (20)**, **selection entry groups (23, counting
+  shared)** and **selection entries (5)**. So the `skipIfPresent` method of
+  opening the entry's own New Recruit wiki page works directly for only five of
+  the forty-eight. For a group, open the owning unit and read the group's
+  printed limit; for a category entry, the force-organisation display is the
+  place it shows up.
+- **Every one of the 48 is targeted by some modifier's `field`.** `-1` is never
+  an authored *final* value in this corpus — it is the resting state of a
+  constraint that a modifier computes. 71 of those modifiers are conditional
+  `set`s (writing 1, 0, 3, 250, 500, 750, 1,000 or 1,500) and 4 are
+  unconditional `increment`s.
+- **For 42 of the 46 IDs, every targeting modifier is conditional**, so `-1` is
+  the value that actually stands whenever the condition is false. This is a
+  live path, not a theoretical one.
+- **22 of the maxes share an owner with a `min` of 1 or more.** Read literally,
+  `min 1 > max -1` cannot be satisfied. The Chaos Daemons `Detachment` group is
+  exactly this shape, so a literal reading makes every Daemons roster invalid
+  and no detachment selectable. That is the strongest internal argument for "no
+  limit" — but it is still inference. Confirm by observation before writing the
+  rule, the way `skipIfPresent` was confirmed on 2026-08-24.
+- **Two constraint IDs are duplicated inside their own file**:
+  `a5cc-f61b-de81-c804` on both `Abhorrent` and `Knight Tyrant`
+  (Chaos Knights Library), and `4d8f-6e09-606e-788e` on both
+  `Faction: Drukhari` and `Faction: Astra Militarum` (Warhammer 40,000). A
+  modifier naming one of those is ambiguous about which constraint it means.
+  Upstream authoring quirk rather than a parsing bug, but decide deliberately
+  what to do with it rather than discovering it mid-implementation.
+
+The cheapest starting point is the Chaos Daemons `Detachment` group,
+`5b57-21bd-d921-37f4`: `min 1` and `max -1` on the same owner, with a single
+`set` modifier writing 1 into that max.
 
 Nested automatic groups and unit-typed automatic sub-units remain low priority
 because none of the five modifier-driven pinned groups uses either shape.
@@ -297,7 +331,7 @@ invisible to the whole test suite.
 | Usability findings from the QA pass | Open | the survivors of the external QA pass, none of them correctness: issue-list volume, internal IDs shown to the reader, Crusade cost fields on a matched-play roster, Warlord selection, child-model wargear discoverability, squad-size editing depth, and display-name banners. Presentation work, best taken as one pass rather than singly |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
-| **Constraint `value="-1"`** | **Next** | 48 corpus constraints, 43 `max` and 5 `min`. Almost certainly "no limit", but withheld rather than guessed. Settle it the way `skipIfPresent` was settled — the New Recruit wiki renders constraints, and the entry ID in the corpus is the URL |
+| **Constraint `value="-1"`** | **Next** | 48 corpus constraints, 43 `max` and 5 `min`, across 22 files. Measured 2026-08-24: **all 48 are targets of a modifier**, and for 42 of the 46 distinct IDs every targeting modifier is *conditional*, so `-1` is what stands when the condition is false. 22 maxes sit beside a `min` of 1+, which a literal reading makes unsatisfiable. Owners are mostly groups and category entries, not selection entries — see "Picking up from here" for the full measurement and the starting entry |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -6384,3 +6418,70 @@ wiki renders constraints in the same prose, and the corpus entry ID is the URL.
 Find a `max="-1"` entry, read what the wiki says its limit is, then write the
 rule. If it is "no limit" and RosterForge currently treats it as a literal `-1`,
 any entry carrying one is reporting a bound that cannot be satisfied.
+
+> **Corrected 2026-08-24.** "The corpus entry ID is the URL" holds for only
+> **5 of the 48**. The rest sit on selection entry groups (23) and category
+> entries (20), which have no wiki page of their own — open the owning unit for
+> a group, and the force-organisation display for a category entry. The
+> measurement in "Picking up from here" supersedes the counts in this
+> paragraph, and adds the finding that changes the shape of the work: all 48
+> are targets of a modifier, so `-1` is a resting value rather than an authored
+> final one.
+
+
+## Handoff Readiness Pass — 2026-08-24
+
+Not a code checkpoint. No source file changed; `agent-handoff.md` is the only
+edit. Recorded because it produced corpus measurements that later sessions
+should not have to re-derive, and because it corrects a stale instruction that
+would have sent the next reader at finished work.
+
+### What was wrong
+
+"Picking up from here" still named **conditional `defaultAmount` and
+quantifiable entry initialization** as the current Next. Section B had recorded
+that same item as **Done** since the checkpoint that finished it. Because "Read
+This First" sends a new session to Current Status *before* the roadmap table,
+the stale paragraph was the first thing a fresh reader would act on. Rewritten
+to point at constraint `value="-1"`, and to say explicitly that the old item is
+done, so the next reader is not left reconciling two answers.
+
+### Measurements taken (pinned corpus `04c62fcd`)
+
+All figures in the rewritten "Picking up from here" and the section F row come
+from a direct pass over the 46 pinned JSON files, not from memory:
+
+- 48 constraints with `value="-1"`; 43 `max`, 5 `min`; 22 files; 46 distinct
+  constraint IDs, two of which are duplicated inside their own file.
+- Owners: 20 category entries, 12 selection entry groups, 11 shared selection
+  entry groups, 5 selection entries.
+- 75 modifiers target those constraint IDs — 71 conditional `set`, 4
+  unconditional `increment`. **All 48 constraints are targeted.**
+- 42 of the 46 IDs are targeted only by conditional modifiers, so `-1` stands
+  whenever those conditions are false.
+- 22 of the maxes share an owner with a `min` of 1 or more, which a literal
+  reading of `-1` makes unsatisfiable.
+
+The last point is strong evidence for "no limit" but was deliberately **not**
+written into the roadmap as settled. It is inference from internal consistency,
+and this project's rule is that semantics come from observation. The next
+session should confirm it before implementing.
+
+### Checks run
+
+Re-run rather than quoted, to confirm the status block is true at handoff:
+
+- `pnpm lint`, `pnpm typecheck` — clean.
+- `pnpm test` — **494 passed, 18 skipped (512 total)**.
+- `pnpm test` with `ROSTERFORGE_BSDATA_JSON_DIR` — **512 passed (50 files)**.
+- `pnpm build` — succeeds; only Vite's existing large-chunk warning.
+- `git diff --check` — clean.
+- Pinned corpus verified at `04c62fcd041b3808c39d5c46fd677c704027b979`,
+  46 JSON files, clean working tree.
+- No `TODO`/`FIXME`/`HACK` markers and no stray `console.log` in non-test
+  source.
+
+### Next recommended boundary
+
+Unchanged: **constraint `value="-1"`**, with the measurements above as the
+starting point instead of a first day of counting.
