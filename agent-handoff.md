@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (lead-neutral workflow)
+## Current Status — 2026-08-24 (configuration split shipped)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -53,10 +53,11 @@ diagnostic codes.
   equal to `origin/main`, divergence `0 0`, only the primary worktree, no stash,
   no concurrent writer, and a roadmap `Next` matching the transfer record. The
   transfer itself was taken at product baseline
-  `e7c872509e02e8eb766a6f857dea09ec2d984f1f`. The last product checkpoint is now
-  the player header, whose application commit is `5f5db22` and whose checkpoint
-  completed at `7a1010a`; the two workflow checkpoints after it changed no
-  application code. Returning the lead to Codex uses the same procedure.
+  `e7c872509e02e8eb766a6f857dea09ec2d984f1f`, which is a historical fact about
+  the transfer and not a current pointer. For where the product stands now, read
+  the roadmap and the newest completed entry rather than any commit named in
+  this bullet — that is what they are for, and a second moving pointer here only
+  goes stale. Returning the lead to Codex uses the same procedure.
 - **GitHub CLI.** `gh` 2.97.0 is **working and authenticated** from a Claude
   Code session: `gh auth status` shows the `ronincse` keyring token with
   `gist, read:org, repo, workflow`, `gh api rate_limit` returned 4,994 of 5,000
@@ -121,8 +122,11 @@ diagnostic codes.
   active-selection ancestry. That model now also backs one `Roster summary`
   player header, which replaced the separate cost and validation cards: totals
   and the known-problem count lead, and validity and completeness survive as
-  independent badges. Separating configuration from army units is the next
-  bounded boundary, and the presentation model already classifies both.
+  independent badges. The selected-roster tree now consumes the model's
+  classification too, rendering `Configuration` and `Army units` as separate
+  titled sections. Collapsible top-level unit cards with per-unit costs are the
+  next bounded boundary, and the projection already carries the recursive
+  totals they need.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -407,9 +411,9 @@ QA before classifying or implementing the discrepancy.
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
 | Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
-| Separate configuration from army units | **Next** | the add browser groups `Configuration` separately and the presentation model already classifies every root and selection into `configuration` or `army`; the selected-roster tree still renders one undivided list that consumes neither |
+| Separate configuration from army units | Done | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
+| Collapsible top-level army units with per-unit costs | **Next** | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace. The projection already carries recursive per-selection totals |
 | Headline cost against its points limit | Open | found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
-| Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
 | Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
@@ -422,15 +426,14 @@ QA before classifying or implementing the discrepancy.
 | Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
 
-The tested presentation model and the player header are both complete. Take the
-remaining presentation work in this order:
+The tested presentation model, the player header, and the configuration split
+are complete. Take the remaining presentation work in this order:
 
-1. configuration separated from army units;
-2. collapsible top-level units with per-unit costs;
-3. shop/editor modes with newly-added-unit focus;
-4. legality-aware model-count controls;
-5. common-loadout flattening and dedicated Warlord controls; and
-6. print-output usability.
+1. collapsible top-level units with per-unit costs;
+2. shop/editor modes with newly-added-unit focus;
+3. legality-aware model-count controls;
+4. common-loadout flattening and dedicated Warlord controls; and
+5. print-output usability.
 
 The presentation model intentionally comes before the visible restructuring so
 those checkpoints share one tested projection instead of encoding the same
@@ -8117,3 +8120,105 @@ moved.
 and untouched by this checkpoint. The presentation model already exposes
 `selections.configuration` and `selections.army`; the selected-roster tree still
 renders `selections.ordered` as one undivided list.
+
+## Completed Assignment — Configuration Split, 2026-08-24
+
+Baseline `57d2463690a5a72fb538ba3936157e487bd0df79`; resulting implementation
+commit `7dadf96` (`feat: separate configuration from army units in the roster
+tree`) and this handoff commit. The roadmap's **Next**, taken immediately after
+a two-line stale-wording correction to this file.
+
+### What changed
+
+The selected-roster tree rendered `selections.ordered` as one undivided list
+even though the presentation model had classified every top-level selection as
+`configuration` or `army` since the projection checkpoint. It now renders two
+titled sections — **Configuration** first, then **Army units** — each a labelled
+region with its own count.
+
+Configuration leads because it is what a player sets before the army:
+detachment, battle size, force disposition. Within a section, source order is
+preserved, because `configuration` and `army` are order-preserving filters of
+`ordered` rather than re-sorted lists.
+
+A section with no entries renders **nothing at all**. A roster with no
+configuration shows its army units directly rather than an empty heading above
+them. The add browser already exposes both groups for discovery, and a missing
+*required* configuration surfaces as a known problem in the checks — a better
+place for that signal than a permanently empty section in the tree.
+
+`RosterSelectionSection` groups what the model already classified. It does not
+decide membership, and its comment says so, because that decision belongs to the
+projection and would rot if a component started duplicating it.
+
+### The counting decision
+
+The pane heading says "N top-level selections" using `rosterSelectionsAmount`,
+which sums occurrence **amounts**, not nodes: a unit taken twice counts as two.
+Labelling the new sections with `array.length` would have been a different
+measure, and the two would visibly disagree the moment anyone took a second of
+anything.
+
+So the model gained `configurationAmount` and `armyAmount`, summed the same way,
+with the invariant that they add to `topLevelSelectionCount`. That invariant is
+asserted in the model test and was confirmed in the live app: 3 + 1 against a
+pane heading of `4 top-level selections`. The cost is two extra top-level-sized
+arrays per session, negligible beside the recursive per-selection walk that
+already runs there, and it buys one consistent answer to "how much is in this
+roster" instead of two.
+
+### Decisions and rejected alternatives
+
+**Collapsible sections were rejected.** `<details>` around each group would have
+pre-empted the next roadmap row, which is collapsible top-level *unit cards*
+with per-unit costs. Plain headed groups keep this checkpoint to the split
+itself and leave that decision where it belongs.
+
+**Always rendering both headings was rejected.** Symmetry would have been
+tidier, but an empty `Configuration` heading on every unconfigured roster is
+exactly the developer-facing chrome the previous checkpoint removed, and the
+validation checks already carry the actionable signal.
+
+**Re-deriving the split in the component was rejected** — the projection exists
+so that presentation rules live in one tested place. The component consumes
+`selections.configuration` and `selections.army` directly.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **503 passed, 18 skipped (521 total)** across 53 test
+  files. Two existing tests gained assertions rather than new files being added.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files —
+  **521 passed** across 53 test files.
+- Production build succeeded with only the existing large-chunk warning.
+
+Verified in the browser against real data, because the synthetic UI fixture has
+no `Configuration` root and therefore cannot exercise the interesting half. A
+pinned `Chaos - Death Guard` roster auto-initialized three configuration
+entries, which rendered as **Configuration — 3 selections** (Detachment, Battle
+Size, Force Disposition) with **no** empty army section. Adding a Lord of
+Contagion produced **Army units — 1 selection** beside it, and 3 + 1 matched the
+pane's `4 top-level selections`. At the 320 px supported minimum,
+`document.scrollWidth` stayed at 320 with zero overflowing elements and both
+sections at 201 px. No console errors.
+
+The synthetic UI test asserts the other half deliberately: that catalogue has no
+configuration root, so it proves an empty section renders nothing rather than an
+empty heading.
+
+### What this did not do
+
+No evaluator, session, persistence, or roster-model code changed; the projection
+still does not evaluate, mutate, filter, legalize, or persist. No behavior
+boundary moved, so `docs/compatibility.md` and `docs/diagnostics.md` are
+untouched. Sections are not collapsible, unit cards show no per-unit cost, and
+no shop/editor mode was introduced. No Reference Behavior QA ran: this makes no
+claim about New Recruit behavior, only about how RosterForge groups what it
+already classified.
+
+### Next recommended boundary
+
+**Collapsible top-level army units with per-unit costs**, the roadmap's new
+**Next**. The projection already carries recursive per-selection cost totals, so
+that checkpoint should read them rather than compute anything, and should keep
+the section grouping introduced here rather than reworking it.
