@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (workspace presentation model established)
+## Current Status — 2026-08-24 (Claude lead transfer prepared)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,6 +38,15 @@ diagnostic codes.
   checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
+- **Active lead.** Claude is the incoming active lead; Codex is the outgoing
+  lead for this documentation-only transfer. The last product checkpoint is
+  `e7c872509e02e8eb766a6f857dea09ec2d984f1f`, with no later application change.
+  Claude owns the primary checkout after the transfer commit is pushed and CI
+  is green. At preparation time `HEAD` equalled `origin/main`, divergence was
+  `0 0`, the checkout was clean, only the primary worktree existed, and no
+  delegated writer was active. `docs/agent-workflow.md` "Formal Lead Transfer"
+  is the durable transfer contract; the newest entry at this file's end is the
+  exact pickup record.
 - **Agent workflow.** `AGENTS.md` now distinguishes a formal lead handoff from
   bounded delegated work; Codex is the preferred default lead, not the only
   model allowed to own a checkpoint. `docs/agent-workflow.md` records the

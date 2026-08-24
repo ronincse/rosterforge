@@ -35,6 +35,35 @@ shared handoff, write in the primary checkout, push, open pull requests, deploy,
 or write to external services. A brief may authorize a local commit in its
 dedicated worktree, but the lead still decides whether and how to integrate it.
 
+## Formal Lead Transfer
+
+A lead transfer is an ownership change, not a delegated task. The outgoing lead
+keeps ownership until the transfer record has been committed to the primary
+branch, pushed, and confirmed by CI. The incoming model then owns the primary
+checkout and all active-lead responsibilities until another formal transfer is
+recorded.
+
+Before publishing a transfer, the outgoing lead:
+
+1. stops at a bounded checkpoint and leaves no partially accepted product
+   change or concurrent writer;
+2. fetches the remote and records the branch, exact product baseline, local and
+   remote relationship, worktree state, latest validation counts, and CI result;
+3. names the outgoing and incoming leads in `agent-handoff.md` and states the
+   one **Next** roadmap boundary, important exclusions, and any unresolved or
+   external state the incoming lead must know about; and
+4. runs the normal gates, commits the workflow/handoff change separately,
+   pushes it, and confirms CI.
+
+At pickup, the incoming lead repeats the ordinary session-start checks in
+`AGENTS.md`. It must stop and reconcile rather than begin implementation when
+the checkout is dirty, `HEAD` differs from the published remote, another writer
+is active, the transfer names a different incoming lead, or the roadmap and
+transfer record disagree. Role affinities below remain advice after a transfer;
+the incoming lead receives the complete lead authority and obligations rather
+than the narrower default authority of a delegated specialist. Returning the
+lead to Codex uses the same procedure.
+
 ## Role Guidance
 
 | Agent | Best use | Default authority |
