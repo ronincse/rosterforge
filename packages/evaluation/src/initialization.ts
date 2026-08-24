@@ -18,6 +18,7 @@ import type {
 
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 import { evaluateNumericModifierSequence } from "./modifiers.js";
+import { isUnboundedConstraintValue } from "./constraints.js";
 
 export interface RosterSelectionInitializationOptions {
   readonly maxPlannedSelections?: number;
@@ -953,7 +954,10 @@ function selectionBounds(
       }
       continue;
     }
-    minimum = Math.max(minimum, constraint.value ?? 0);
+    minimum = Math.max(
+      minimum,
+      unboundedBoundIdentity(constraint.value ?? 0, "min"),
+    );
   }
   if (minimum > 0 || options.requireMaximum === true) {
     for (const constraint of constraints.filter(
@@ -985,7 +989,10 @@ function selectionBounds(
         );
         continue;
       }
-      maximum = Math.min(maximum, constraint.value ?? maximum);
+      maximum = Math.min(
+        maximum,
+        unboundedBoundIdentity(constraint.value ?? maximum, "max"),
+      );
     }
   }
   return { supported, minimum, maximum };
@@ -1024,10 +1031,10 @@ function rootSelectionBounds(
       false,
     );
     if (effective === undefined) {
-      supported &&= baseValue === 0;
+      supported &&= unboundedBoundIdentity(baseValue, "min") === 0;
       continue;
     }
-    minimum = Math.max(minimum, effective);
+    minimum = Math.max(minimum, unboundedBoundIdentity(effective, "min"));
   }
   if (minimum > 0 || options.requireMaximum === true) {
     for (const constraint of constraints.filter(
@@ -1049,7 +1056,10 @@ function rootSelectionBounds(
         supported = false;
         continue;
       }
-      maximum = Math.min(maximum, effective);
+      maximum = Math.min(
+        maximum,
+        unboundedBoundIdentity(effective, "max"),
+      );
     }
   }
   return { supported, minimum, maximum };
@@ -1190,7 +1200,7 @@ function unsupportedRootBoundProperties(
   if (
     constraint.value === undefined ||
     !Number.isSafeInteger(constraint.value) ||
-    constraint.value < 0
+    (constraint.value < 0 && !isUnboundedConstraintValue(constraint.value))
   ) {
     unsupported.push("value");
   }
@@ -1257,6 +1267,26 @@ function diagnoseRootConflictingBounds(
   );
 }
 
+/**
+ * What an unbounded constraint contributes when bounds are folded together.
+ *
+ * `-1` means "no bound" — see `UNBOUNDED_CONSTRAINT_VALUE` in
+ * `constraints.ts`. Initialization folds minima with `Math.max` and maxima
+ * with `Math.min`, so the sentinel has to arrive as the *identity* of its
+ * fold: `0` for a minimum, positive infinity for a maximum. Passing the
+ * literal `-1` into `Math.min` would clamp every maximum to -1, and the
+ * initializer would then create nothing at all.
+ */
+function unboundedBoundIdentity(
+  value: number,
+  type: "min" | "max",
+): number {
+  if (!isUnboundedConstraintValue(value)) {
+    return value;
+  }
+  return type === "min" ? 0 : Number.POSITIVE_INFINITY;
+}
+
 function isPotentialParentSelectionBound(
   constraint: EvaluationSelectionChoice["constraints"][number],
 ): boolean {
@@ -1289,7 +1319,7 @@ function unsupportedBoundProperties(
   if (
     constraint.value === undefined ||
     !Number.isSafeInteger(constraint.value) ||
-    constraint.value < 0
+    (constraint.value < 0 && !isUnboundedConstraintValue(constraint.value))
   ) {
     unsupported.push("value");
   }

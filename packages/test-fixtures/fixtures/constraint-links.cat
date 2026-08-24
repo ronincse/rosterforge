@@ -18,6 +18,15 @@
           scope="parent" value="1" shared="true" />
         <constraint id="constraint-negative-effective" type="min" field="selections"
           scope="self" value="0" shared="true" />
+        <!--
+          The corpus's dominant shape for `value="-1"`: an unbounded resting
+          limit that a conditional modifier replaces with a real one. All 48
+          pinned instances are targeted by a modifier, and for 42 of them every
+          such modifier is conditional, so the sentinel is what stands most of
+          the time.
+        -->
+        <constraint id="constraint-unbounded-parent" type="max" field="selections"
+          scope="parent" value="-1" shared="true" />
       </constraints>
       <modifiers>
         <modifier type="set" field="constraint-modified-parent" value="2" />
@@ -28,6 +37,12 @@
           </conditions>
         </modifier>
         <modifier type="decrement" field="constraint-negative-effective" value="1" />
+        <modifier type="set" field="constraint-unbounded-parent" value="1">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="parent"
+              childId="shared-constrained" value="2" shared="true" />
+          </conditions>
+        </modifier>
       </modifiers>
       <modifierGroups>
         <modifierGroup type="and" comment="Grouped selection limit">

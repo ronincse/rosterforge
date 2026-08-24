@@ -52,6 +52,35 @@ import {
 } from "./repeats.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 
+/**
+ * BattleScribe's "no constraint" sentinel.
+ *
+ * A constraint authored `value="-1"` is not a bound of minus one; it is the
+ * *absence* of a bound. Settled by observation on 2026-08-24 rather than
+ * inferred, the way `skipIfPresent` was: New Recruit's wiki omits such a
+ * constraint from an entry's rendered constraint list entirely. The Vindicare
+ * Assassin's Micromelta Round carries `max 1` and `min -1`, and the page
+ * prints only `max: 1`. The Imperial Knights' Allocated Chivalric Points
+ * carries a single `max -1`, and the page prints no constraint section at all.
+ *
+ * It is the *resting* value of a constraint that a modifier computes later.
+ * All 48 instances in the pinned corpus are the target of some modifier's
+ * `field`, and for 42 of the 46 distinct constraint IDs every targeting
+ * modifier is conditional — so this is the value that actually stands whenever
+ * those conditions are false, not a rare authoring artefact.
+ *
+ * Only exactly `-1` is the sentinel. Any other negative stays unsupported and
+ * keeps withholding: nothing was observed about it, and the corpus has none.
+ */
+export const UNBOUNDED_CONSTRAINT_VALUE = -1;
+
+/** True when a constraint limit means "no bound" rather than a number. */
+export function isUnboundedConstraintValue(
+  value: number | undefined,
+): boolean {
+  return value === UNBOUNDED_CONSTRAINT_VALUE;
+}
+
 export type RosterSelectionConstraintType = "min" | "max";
 export type RosterSelectionConstraintStatus =
   | "satisfied"
@@ -571,7 +600,17 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
           location: { source: groupSource.source, path: groupSource.path },
         });
       }
-      if (effectiveLimit !== undefined && effectiveLimit < 0) {
+      // An unmodified sentinel stays a sentinel: the base was "no bound" and
+      // nothing applied, so there is nothing to report. A negative *computed*
+      // from a real base is still unexplained and still withholds.
+      const effectiveIsUntouchedSentinel =
+        isUnboundedConstraintValue(effectiveLimit) &&
+        isUnboundedConstraintValue(limit);
+      if (
+        effectiveLimit !== undefined &&
+        effectiveLimit < 0 &&
+        !effectiveIsUntouchedSentinel
+      ) {
         diagnostics.push(
           constraintDiagnostic(
             constraint,
@@ -597,7 +636,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     constraint.field === "selections" &&
     scope !== undefined &&
     limit !== undefined &&
-    limit >= 0 &&
+    (limit >= 0 || isUnboundedConstraintValue(limit)) &&
     constraint.percentValue !== true &&
     attributes.length === 0;
   // A typed scope counts inside the nearest containing entry of that type, so
@@ -689,12 +728,23 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     );
   }
 
-  const baseStatus =
-    canCollect && constraintType !== undefined && limit !== undefined
+  // `-1` is "no bound", so the constraint cannot be violated whatever the count
+  // is. Decided from the **authored** value, not the computed one: a -1 that
+  // arithmetic produced from a real base is underflow, not a sentinel, and
+  // still withholds. Counting above is deliberately left switched on, because
+  // a modifier may replace the sentinel with a real limit.
+  const baseIsUnbounded = isUnboundedConstraintValue(limit);
+  const effectiveIsUnbounded =
+    baseIsUnbounded && isUnboundedConstraintValue(effectiveLimit);
+
+  const baseStatus = baseIsUnbounded
+    ? "satisfied"
+    : canCollect && constraintType !== undefined && limit !== undefined
       ? constraintStatus(constraintType, minimum, maximum, limit)
       : "unresolved";
-  const effectiveStatus =
-    canCollect &&
+  const effectiveStatus = effectiveIsUnbounded
+    ? "satisfied"
+    : canCollect &&
     constraintType !== undefined &&
     effectiveLimit !== undefined &&
     effectiveLimit >= 0 &&
@@ -844,7 +894,9 @@ function diagnoseConstraintShape(
     );
   } else if (limit === undefined) {
     diagnostics.push(shapeDiagnostic(constraint, "VALUE_INVALID", "value"));
-  } else if (limit < 0) {
+  } else if (limit < 0 && !isUnboundedConstraintValue(limit)) {
+    // `-1` is the "no bound" sentinel and is handled; a different negative is
+    // still unexplained, so it keeps withholding rather than guessing.
     diagnostics.push(
       shapeDiagnostic(constraint, "VALUE_NEGATIVE_UNSUPPORTED", "value"),
     );

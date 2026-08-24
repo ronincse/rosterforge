@@ -8,6 +8,7 @@ import type {
 } from "@rosterforge/data-graph";
 import {
   isActionableSupportedConstraintReport,
+  isUnboundedConstraintValue,
   type RosterForceConstraintReport,
   type RosterProfileCharacteristicReport,
   type RosterSelectionConditionCostReport,
@@ -1131,8 +1132,14 @@ function constraintStatusLabel(
 }
 
 function constraintObservation(item: ConstraintSummaryItem): string {
+  // `-1` is the "no bound" sentinel, not a limit of minus one. Printing the
+  // raw number would tell the reader they had exceeded a negative allowance.
   const limit =
-    item.limit === undefined ? "unknown limit" : `limit ${formatNumber(item.limit)}`;
+    item.limit === undefined
+      ? "unknown limit"
+      : isUnboundedConstraintValue(item.limit)
+        ? "no limit"
+        : `limit ${formatNumber(item.limit)}`;
   if (item.observed !== undefined) {
     return `Observed ${formatNumber(item.observed)}, ${limit}`;
   }

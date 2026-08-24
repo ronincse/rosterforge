@@ -3121,16 +3121,32 @@ describe.skipIf(realDataDirectory === undefined)(
           },
         );
         if (!created.ok) throw new Error("Expected Aeldari roster session.");
-        // The Aeldari `Detachments` group carries `max="-1"`. The corpus has 48
-        // negative-valued constraints and RosterForge withholds rather than
-        // guessing whether -1 means unlimited, so this path is incomplete by
-        // design. See the roadmap's section B.
+        // The Aeldari `Detachments` group carries `max="-1"`.
+        //
+        // Until 2026-08-24 that value was itself unsupported, and this
+        // assertion pinned the resulting `CONSTRAINT_UNSUPPORTED`. `-1` is now
+        // known to mean "no bound" — observed on New Recruit's wiki, which
+        // omits such a constraint from an entry's rendered list entirely — so
+        // the value is no longer the complaint.
+        //
+        // What remains is the *pre-existing* rule that a bound targeted by a
+        // modifier cannot drive automatic initialization. That rule is not
+        // specific to -1 and is deliberately unchanged; the diagnostic left
+        // behind is narrower and more accurate than the one it replaced.
         expect(created.diagnostics).toEqual([
           expect.objectContaining({
-            code: "EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED",
-            details: expect.objectContaining({ value: -1 }),
+            code: "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
           }),
         ]);
+        // Nothing objects to the value itself any more.
+        expect(
+          created.diagnostics.filter(({ details }) =>
+            Object.is(
+              (details as { readonly value?: unknown } | undefined)?.value,
+              -1,
+            ),
+          ),
+        ).toEqual([]);
         expect(
           created.value.roster.forces[0]?.selections.map(
             ({ name }) => name,
@@ -3384,10 +3400,11 @@ describe.skipIf(realDataDirectory === undefined)(
               .filter((diagnostic) => diagnostic.code === code).length,
           ]),
         );
-        // The Aeldari `Detachments` group carries `max="-1"`, which is withheld
-        // rather than guessed at; see the roadmap's section B.
+        // The Aeldari `Detachments` group carries `max="-1"`. The value is
+        // understood since 2026-08-24; what is still withheld is a bound whose
+        // value a modifier computes, which is a separate and older rule.
         expect(selectedChoiceDiagnosticSummary).toEqual({
-          EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED: 1,
+          EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
         });
         const targetedScopeDiagnostics = selectedChoiceInspections
           .flatMap(({ diagnostics }) => diagnostics)
@@ -3580,7 +3597,7 @@ describe.skipIf(realDataDirectory === undefined)(
           expect(diagnosticCodeCounts(
             supported.value.structuralDiagnostics,
           )).toEqual({
-            EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED: 1,
+            EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
           });

@@ -37,7 +37,10 @@ import {
   type RosterSelectionConditionCostReport,
   type RosterSelectionCostEvaluation,
 } from "./costs.js";
-import type { RosterSelectionConstraintSource } from "./constraints.js";
+import {
+  isUnboundedConstraintValue,
+  type RosterSelectionConstraintSource,
+} from "./constraints.js";
 import {
   evaluateNumericModifierSequence,
   type NumericModifierSequenceReport,
@@ -574,7 +577,16 @@ function inspectForceConstraint<
         location: { source: groupSource.source, path: groupSource.path },
       });
     }
-    if (effectiveLimit !== undefined && effectiveLimit < 0) {
+    // An unmodified sentinel is still "no bound"; a negative computed from a
+    // real base remains unexplained and keeps withholding.
+    const effectiveIsUntouchedSentinel =
+      isUnboundedConstraintValue(effectiveLimit) &&
+      isUnboundedConstraintValue(limit);
+    if (
+      effectiveLimit !== undefined &&
+      effectiveLimit < 0 &&
+      !effectiveIsUntouchedSentinel
+    ) {
       diagnostics.push(
         forceConstraintDiagnostic(
           constraint,
@@ -598,7 +610,7 @@ function inspectForceConstraint<
     constraint.scope === "roster" &&
     constraint.shared === true &&
     limit !== undefined &&
-    limit >= 0 &&
+    (limit >= 0 || isUnboundedConstraintValue(limit)) &&
     constraint.percentValue !== true &&
     attributes.length === 0;
   const occurrences = canCollectForces
@@ -648,7 +660,7 @@ function inspectForceConstraint<
     constraintType !== undefined &&
     constraint.shared === true &&
     limit !== undefined &&
-    limit >= 0 &&
+    (limit >= 0 || isUnboundedConstraintValue(limit)) &&
     constraint.percentValue !== true &&
     attributes.length === 0;
   const costEvaluation = canInspectCost
@@ -707,12 +719,23 @@ function inspectForceConstraint<
       : Number.POSITIVE_INFINITY;
   const canCollect = canCollectForces || canCollectCost;
 
-  const baseStatus =
-    canCollect && constraintType !== undefined && limit !== undefined
+  // `-1` is "no bound", so the constraint cannot be violated whatever the count
+  // is. Decided from the **authored** value, not the computed one: a -1 that
+  // arithmetic produced from a real base is underflow, not a sentinel, and
+  // still withholds. Counting above is deliberately left switched on, because
+  // a modifier may replace the sentinel with a real limit.
+  const baseIsUnbounded = isUnboundedConstraintValue(limit);
+  const effectiveIsUnbounded =
+    baseIsUnbounded && isUnboundedConstraintValue(effectiveLimit);
+
+  const baseStatus = baseIsUnbounded
+    ? "satisfied"
+    : canCollect && constraintType !== undefined && limit !== undefined
       ? constraintStatus(constraintType, minimum, maximum, limit)
       : "unresolved";
-  const effectiveStatus =
-    canCollect &&
+  const effectiveStatus = effectiveIsUnbounded
+    ? "satisfied"
+    : canCollect &&
     constraintType !== undefined &&
     effectiveLimit !== undefined &&
     effectiveLimit >= 0 &&
@@ -864,7 +887,9 @@ function diagnoseConstraintShape(
     );
   } else if (limit === undefined) {
     diagnostics.push(shapeDiagnostic(constraint, "VALUE_INVALID", "value"));
-  } else if (limit < 0) {
+  } else if (limit < 0 && !isUnboundedConstraintValue(limit)) {
+    // See `UNBOUNDED_CONSTRAINT_VALUE` in `constraints.ts`: `-1` means "no
+    // bound", and any other negative is still unexplained.
     diagnostics.push(
       shapeDiagnostic(constraint, "VALUE_NEGATIVE_UNSUPPORTED", "value"),
     );

@@ -13,6 +13,7 @@ import type {
 import {
   evaluateRosterSelectionVisibilityPath,
   inspectRosterSelectionConstraintWithSelectionConditions,
+  isUnboundedConstraintValue,
 } from "@rosterforge/evaluation";
 import {
   failure,
@@ -1174,17 +1175,31 @@ function inspectAutomaticGroupChildren<
         inspected.value.completeness !== "complete" ||
         inspected.value.limit === undefined ||
         !Number.isSafeInteger(inspected.value.limit) ||
-        inspected.value.limit < 0 ||
+        (inspected.value.limit < 0 &&
+          !isUnboundedConstraintValue(inspected.value.limit)) ||
         (inspected.value.constraintType !== "min" &&
           inspected.value.constraintType !== "max")
       ) {
         incomplete = true;
         continue;
       }
+      // An unbounded bound is known, not unknown: it simply does not narrow
+      // the range, so it contributes its fold's identity rather than making
+      // the whole reconciliation give up.
       if (inspected.value.constraintType === "min") {
-        minimum = Math.max(minimum, inspected.value.limit);
+        minimum = Math.max(
+          minimum,
+          isUnboundedConstraintValue(inspected.value.limit)
+            ? 0
+            : inspected.value.limit,
+        );
       } else {
-        maximum = Math.min(maximum, inspected.value.limit);
+        maximum = Math.min(
+          maximum,
+          isUnboundedConstraintValue(inspected.value.limit)
+            ? Number.POSITIVE_INFINITY
+            : inspected.value.limit,
+        );
       }
     }
     if (minimum > maximum) {

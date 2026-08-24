@@ -698,6 +698,101 @@ describe("roster selection constraints", () => {
     });
   });
 
+  /**
+   * The shape that made this worth implementing.
+   *
+   * `value="-1"` is not a bound of minus one, it is the absence of a bound.
+   * Settled by observation on 2026-08-24: New Recruit's wiki omits such a
+   * constraint from an entry's rendered list entirely — the Vindicare
+   * Assassin's Micromelta Round carries `max 1` and `min -1` and the page
+   * prints only `max: 1`, and the Imperial Knights' Allocated Chivalric Points
+   * carries a lone `max -1` and prints no constraint section at all.
+   *
+   * Both halves matter. The sentinel must not be read as a bound below zero,
+   * which would report every selection as violating its own maximum; and it
+   * must not swallow the real limit a modifier writes over it.
+   */
+  it("treats an unbounded limit as no bound until a modifier sets one", () => {
+    const context = catalogueContext(
+      ["projection.gst", "constraint-links.cat"],
+      "constraint-links",
+    );
+    const first = choice(context, "constraint-link-one");
+    const second = choice(context, "constraint-link-two");
+    const constraint = first.constraints.find(
+      (candidate) => candidate.id === "constraint-unbounded-parent",
+    );
+    expect(constraint).toBeDefined();
+    if (constraint === undefined) {
+      return;
+    }
+
+    const single = addRootSelection(
+      emptyRoster(context),
+      first,
+      "selection-link-one",
+    );
+    const singleOwner = single.forces[0]?.selections[0];
+    expect(singleOwner).toBeDefined();
+    if (singleOwner === undefined) {
+      return;
+    }
+
+    const unbounded = inspectRosterSelectionConstraintWithSelectionConditions(
+      single,
+      context,
+      singleOwner,
+      constraint,
+    );
+
+    expect(unbounded.ok).toBe(true);
+    if (!unbounded.ok) {
+      return;
+    }
+    // The condition is unsatisfied, so the sentinel is what stands. It costs
+    // nothing: no diagnostic, and completeness stays complete.
+    expect(unbounded.diagnostics).toEqual([]);
+    expect(unbounded.value).toMatchObject({
+      baseLimit: -1,
+      limit: -1,
+      baseStatus: "satisfied",
+      status: "satisfied",
+      completeness: "complete",
+    });
+
+    const pair = addRootSelection(
+      addRootSelection(emptyRoster(context), first, "selection-link-one"),
+      second,
+      "selection-link-two",
+    );
+    const pairOwner = pair.forces[0]?.selections[0];
+    expect(pairOwner).toBeDefined();
+    if (pairOwner === undefined) {
+      return;
+    }
+
+    const bounded = inspectRosterSelectionConstraintWithSelectionConditions(
+      pair,
+      context,
+      pairOwner,
+      constraint,
+    );
+
+    expect(bounded.ok).toBe(true);
+    if (!bounded.ok) {
+      return;
+    }
+    // Now the modifier applies and writes a real maximum of 1 over the
+    // sentinel. Two selections exceed it, so the constraint is violated —
+    // proving the sentinel does not permanently disable the bound.
+    expect(bounded.value).toMatchObject({
+      baseLimit: -1,
+      limit: 1,
+      status: "violated",
+      completeness: "complete",
+    });
+  });
+
   it("applies nested grouped constraint modifiers with inherited conditions", () => {
     const context = catalogueContext(
       ["projection.gst", "constraint-links.cat"],
@@ -1216,11 +1311,14 @@ describe("roster selection constraints", () => {
       "EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED",
     ]);
 
+    // `-1` is the "no bound" sentinel and is supported; a *different* negative
+    // is still unexplained, so it must keep withholding. This pins the edge of
+    // the rule rather than the rule itself.
     const negativeResult = inspectRosterSelectionConstraint(
       roster,
       context,
       owner,
-      constraint(parent, { value: -1 }),
+      constraint(parent, { value: -2 }),
     );
     expect(negativeResult.ok).toBe(true);
     if (!negativeResult.ok) {
@@ -1231,6 +1329,25 @@ describe("roster selection constraints", () => {
         code: "EVALUATION_CONSTRAINT_VALUE_NEGATIVE_UNSUPPORTED",
       }),
     ]);
+
+    const unboundedResult = inspectRosterSelectionConstraint(
+      roster,
+      context,
+      owner,
+      constraint(parent, { value: -1 }),
+    );
+    expect(unboundedResult.ok).toBe(true);
+    if (!unboundedResult.ok) {
+      return;
+    }
+    // Settled by observation on 2026-08-24: New Recruit's wiki omits a `-1`
+    // constraint from an entry's rendered constraint list entirely, so it is
+    // the absence of a bound and cannot be violated or cost completeness.
+    expect(unboundedResult.diagnostics).toEqual([]);
+    expect(unboundedResult.value).toMatchObject({
+      status: "satisfied",
+      completeness: "complete",
+    });
   });
 });
 
