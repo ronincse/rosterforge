@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (collapsible costed unit cards)
+## Current Status — 2026-08-24 (list-first direction recorded)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -125,8 +125,10 @@ diagnostic codes.
   independent badges. The selected-roster tree now consumes the model's
   classification too, rendering `Configuration` and `Army units` as separate
   titled sections, and army cards now collapse behind their name while showing
-  the projection's recursive per-unit cost. Shop/editor modes with
-  newly-added-unit focus is the next bounded boundary.
+  the projection's recursive per-unit cost. **The owner has since flagged that
+  the army list is still not the product's primary surface**, measured against
+  New Recruit; section F carries the evidence and an open sequencing question
+  that should be settled before the next presentation checkpoint is chosen.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -419,6 +421,7 @@ QA before classifying or implementing the discrepancy.
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
+| The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** There the list *is* the page: route `/app/Lists/<id>`, document title is the list name, the body is organised by battlefield role (`Configuration`, `Epic Hero`, `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`, `Dedicated Transport`, `Fortification`, three `Allies:` groups), category headings carry counts against limits inline (`Character (0/1)`), violations are attached in place — the `Character` heading carried an error icon titled `• Roster requires 1 selections more of Character` — and the only chrome is a thin bar of list name, Export, Report Issue, List Options. RosterForge instead splits the screen between a selected-roster pane and an add browser, then follows it with Checks, structural status, and constraint bounds as co-equal sections, so the list competes with its own reports. This is an information-architecture finding about *emphasis*, **not** permission to copy New Recruit's visual design, markup, or code. It probably reframes several rows below rather than sitting beside them; see the ordering note |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -433,6 +436,17 @@ collapsible costed unit cards are complete. Take the rest in this order:
 2. legality-aware model-count controls;
 3. common-loadout flattening and dedicated Warlord controls; and
 4. print-output usability.
+
+**That order is now in question, and the owner should settle it.** The new row
+"the army list is not the product's primary surface" is not a fifth item on
+this list; it is a claim that the workspace's whole shape is wrong, and rows 1
+and 2 are partly answers to it. Shop/editor modes and legality-aware amount
+controls both make sense inside a list-first layout and might be designed
+differently once that layout exists. Decide whether to take the list-first
+restructure first — probably split into bounded checkpoints such as
+battlefield-role grouping, then in-place violations, then demoting the report
+sections — or to continue in the order above and reshape afterwards. Do not
+silently reorder these rows without recording the decision.
 
 The presentation model intentionally comes before the visible restructuring so
 those checkpoints share one tested projection instead of encoding the same
@@ -8333,3 +8347,98 @@ not focus the unit just added. The projection already exposes
 every node, which is
 what a focus mode needs; that checkpoint should consume it rather than add
 another mechanism, and should test the interaction at desktop and phone widths.
+
+## Completed Assignment — List-First Product Direction Recorded, 2026-08-24
+
+Baseline `d5f38514ad198e3ec3362b93e190bd27d65c740b`; resulting commit recorded
+below. A documentation-only checkpoint capturing an owner observation that would
+otherwise have been lost between sessions. No code changed and no product
+checkpoint began.
+
+### Why this is a checkpoint and not a note
+
+The owner observed that New Recruit makes the army list far more central than
+RosterForge does, and that the product will not be usable until it is more about
+the list. They explicitly said it does not have to be done yet — which is
+exactly the condition under which a finding disappears. `AGENTS.md` requires
+discovered work to reach the roadmap rather than live in prose, so it is a
+roadmap row with its evidence attached.
+
+### What was observed in New Recruit
+
+A temporary local Death Guard `Army Roster` list was created in the app on
+2026-08-24 to see the list editor, and **deleted afterwards**; the app reported
+`1 lists deleted!` and the Lists view returned to the empty state it started in.
+The session was signed out throughout — the page itself said "You are using New
+Recruit without an Account" — so nothing synced and no account state changed.
+
+- The list **is** the page: route `/app/Lists/<id>`, and the document title
+  becomes the list name.
+- The body is organised by **battlefield role**: `Configuration`, `Epic Hero`,
+  `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`,
+  `Dedicated Transport`, `Fortification`, and three `Allies:` groups.
+- Category headings carry **counts against limits inline** — `Character (0/1)`.
+- **Violations are attached in place.** The `Character` heading carried an error
+  icon whose title was `• Roster requires 1 selections more of Character`. There
+  is no separate checks report collecting them.
+- Chrome is a thin top bar: list name, `Export`, `Report Issue`, `List Options`.
+- No cost report, validation report, or diagnostics pane competes with the list
+  for the page.
+
+### How RosterForge differs today
+
+The workspace splits the screen between a selected-roster pane and an add
+browser, and follows it with `Checks and diagnostics`, structural status, and
+constraint bounds as co-equal full-width sections. Validation is *collected*
+into those sections and linked back to occurrences rather than shown where it
+happened. Top-level selections group into `Configuration` and `Army units`, not
+by battlefield role.
+
+Each of those was a defensible local decision. Together they mean the list
+shares the page with its own reports instead of being the page.
+
+### The boundary this does not cross
+
+This records **what is emphasized** — an information-architecture observation.
+It is not permission to copy New Recruit's visual design, markup, data
+structures, or code, and the Reference Behavior QA section's prohibition is
+unchanged. No behavioral claim is made: nothing here is a compatibility finding,
+a defect, or a data-comparability result, so `docs/compatibility.md` is
+untouched and the exact/different/unknown and match/mismatch classifications do
+not apply.
+
+### The sequencing question left open for the owner
+
+The new row is not a fifth item after the four remaining presentation rows. It
+is a claim that the workspace's shape is wrong, and two of those rows are partly
+answers to it: shop/editor modes and legality-aware amount controls would both
+be designed differently inside a list-first layout.
+
+The roadmap now says so and asks the owner to choose between taking the
+list-first restructure first — plausibly split into bounded checkpoints such as
+battlefield-role grouping, then in-place violations, then demoting the report
+sections — or continuing in the current order and reshaping afterwards. It also
+forbids silently reordering those rows without recording the decision. This lead
+deliberately did **not** make that call: it is a product-direction decision with
+several checkpoints of consequence.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test files,
+  unchanged; this checkpoint touched no code and no test.
+- Only `agent-handoff.md` changed.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, or corpus state changed. No restructuring began, and the roadmap's
+current **Next** was not reassigned. The only external state touched was the
+temporary New Recruit list described above, which was removed.
+
+### Next recommended boundary
+
+**Ask the owner to settle the sequencing question above**, then take whichever
+row that answer selects. If the answer is "continue as ordered", the **Next**
+remains shop/editor modes with newly-added-unit focus, consuming the
+projection's existing `activeSelectionId` ancestry.
