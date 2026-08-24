@@ -90,6 +90,32 @@ you do not need to ask.
 - **If someone else's unpushed commits are sitting on the branch**, verify them
   against the same gates before pushing them along with yours, and say in your
   report whose work you published.
+- **Sign every commit with the model that wrote it.** Git records the owner's
+  account as author whatever model did the work, so a trailer is the only thing
+  in `git log` that tells one model's checkpoint from another's. End every
+  commit message with a blank line and a `Co-Authored-By:` trailer naming your
+  model:
+
+  - `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`
+  - `Co-Authored-By: Codex <noreply@openai.com>`
+  - `Co-Authored-By: Grok Build <noreply@x.ai>`
+  - `Co-Authored-By: GitHub Copilot <noreply@github.com>`
+  - `Co-Authored-By: Antigravity <noreply@google.com>`
+
+  Name the specific model when you know it, the way `Claude Opus 5` does. The
+  point is to tell two checkpoints apart a month later, not to record a vendor.
+  These addresses are this repository's convention and are deliberately
+  unroutable; if your CLI emits its own trailer by default, keep that form and
+  record it here rather than maintaining two spellings of the same agent.
+
+  When you integrate a delegated worker's commit, keep its trailer and add
+  yours beneath it, so the log shows both who wrote the change and who
+  published it.
+
+  **Absence stopped being meaningful on 2026-08-24.** Earlier commits carry a
+  trailer only when Claude wrote them, because Claude's tooling added one and
+  nothing asked it of anyone else. An unmarked historical commit therefore tells
+  you only that Claude did not make it. Do not rewrite history to backfill one.
 
 Still ask first:
 

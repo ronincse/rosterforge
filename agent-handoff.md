@@ -38,6 +38,14 @@ diagnostic codes.
   checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
+- **Commit attribution.** Every commit must now end with a `Co-Authored-By:`
+  trailer naming the model that wrote it; `AGENTS.md` "Publishing" holds the
+  exact strings. Git authors every commit as the owner's account, so this
+  trailer is the only thing in `git log` that separates one model's checkpoint
+  from another's. Before this rule, 134 of 197 commits carried a trailer and all
+  134 said `Claude Opus 5`, because Claude's tooling added one unprompted and
+  nothing asked it of anyone else. An unmarked commit older than 2026-08-24
+  therefore means only "not Claude". History was not rewritten.
 - **Active lead.** **Claude is the active lead.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -7728,3 +7736,95 @@ roadmap's single **Next**. It should consume
 the known-problem count, keep validity and completeness independent, and drop
 remaining evaluator-oriented framing. Do not fold the configuration split,
 collapsible costed unit cards, or shop/editor mode into it.
+
+## Completed Assignment — Commit Attribution Convention, 2026-08-24
+
+Baseline `813ee922ae43434252e0b947259f38d01ee2426f`; resulting commit recorded
+below. A bounded governance change made at the owner's request, immediately
+after the delegation-verification checkpoint. No product work began.
+
+### The problem, measured
+
+Git authors every commit in this repository as
+`Stone Edwards <stone.edwards@gmail.com>`, whichever model did the work. In a
+repository whose organising premise is that work moves between models, `git log`
+could not answer "who wrote this checkpoint".
+
+The history was measured rather than assumed, and the first reading was wrong.
+An initial `git log -3` sample suggested no commit had ever carried a trailer;
+the full survey found the opposite. Of 197 commits, **134 carry a
+`Co-Authored-By:` trailer and 63 carry none**. Exactly one trailer value has
+ever appeared: `Claude Opus 5 <noreply@anthropic.com>`. The 63 unmarked commits
+are the three initial 2026-06-15 commits plus the Codex sessions, including all
+21 commits made on 2026-08-24 before this checkpoint.
+
+So attribution already existed, but only for one model, only by accident of
+Claude's tooling adding it unprompted, and readable only as *absence* — which
+cannot distinguish Codex from Grok from a Claude session that dropped it.
+Nothing in `AGENTS.md`, `docs/agent-workflow.md`, or `README.md` mentioned
+commit messages, trailers, or attribution at all.
+
+### What changed
+
+`AGENTS.md` "Publishing" now requires every commit to end with a
+`Co-Authored-By:` trailer naming the model that wrote it, and lists the exact
+string for each of the five agents. `docs/agent-workflow.md` carries the same
+requirement at the two points where it tells an agent to commit: the checkpoint
+sequence, and the delegated writer's output contract, where the trailer lets the
+lead see whose work it is integrating.
+
+Two rules make the change safe to inherit. A lead integrating a delegate's
+commit keeps the delegate's trailer and adds its own, so the log shows both the
+writer and the publisher. And absence is explicitly declared meaningless from
+2026-08-24 onward, with the historical reading — "unmarked means not Claude" —
+written down so it is not lost.
+
+### Decisions and rejected alternatives
+
+**Rewriting history to backfill trailers was rejected**, and the prohibition
+written into the rule. It would require a force-push over 197 commits, which
+`AGENTS.md` already reserves for the owner, and it would fabricate attribution
+for commits whose author can only be inferred.
+
+**A commit hook or CI check was rejected for now.** The repository has no commit
+tooling at all — no hooks, no husky, no commitlint — and CI checks only lint,
+typecheck, test, build, and whitespace. Adding enforcement machinery for a
+one-line convention costs more than it protects, and a rule every agent reads at
+session start is the cheaper mechanism. If trailers turn out to be dropped in
+practice, a `git log` audit will show it and enforcement can be reconsidered
+against evidence.
+
+**A custom trailer token such as `Agent:` was rejected** in favour of
+`Co-Authored-By:`, which 134 existing commits already use, which `git
+interpret-trailers` and GitHub both understand, and which needs no explanation
+to a human reader.
+
+The addresses are repository convention and deliberately unroutable. Where a CLI
+already emits its own default trailer, the rule says to keep that form and
+record it rather than maintain two spellings of one agent — the exact strings
+for Codex, Grok, Copilot, and Antigravity have not yet been observed in the
+wild, only defined here, and should be corrected on first contact.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **501 passed, 18 skipped (519 total)** across 53 test
+  files. Documentation-only change; no test covers it.
+- The survey above is reproducible with
+  `git log --format='%H%x09%(trailers:only,valueonly,separator=%x2C)'`.
+
+### What this did not do
+
+No application code, test, dependency, build configuration, product behavior,
+architecture boundary, compatibility claim, diagnostic, corpus data, or New
+Recruit state changed. No history was rewritten and no commit was amended. No
+enforcement tooling was added. The compact points-and-problems player header did
+not begin.
+
+### Next recommended boundary
+
+**The compact points-and-problems player header**, still the roadmap's single
+**Next** and now twice deferred by owner-requested governance work. It should
+consume `apps/web/src/roster-workspace-model.ts`, combine supported headline
+costs with the known-problem count, keep validity and completeness independent,
+and drop remaining evaluator-oriented framing.

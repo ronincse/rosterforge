@@ -671,7 +671,9 @@ An analyst or reviewer returns:
 A writer returns:
 
 - the baseline, worktree, branch, and exact files changed;
-- a diff summary and any local commit ID explicitly requested;
+- a diff summary and any local commit ID explicitly requested, each such commit
+  carrying the worker's own `Co-Authored-By:` trailer so the lead can see whose
+  work it is integrating;
 - exact tests run with pass, fail, and skip counts;
 - known gaps, unsupported behavior, and any deviation from the brief;
 - confirmation that it did not push, edit the shared handoff, or perform
@@ -713,8 +715,9 @@ integrated, the active lead follows the ordinary checkpoint sequence:
 
 1. Run focused validation and then all repository gates from the primary
    checkout. Capture exact test, skip, corpus, and build results.
-2. Commit the bounded implementation or workflow change. Do not include
-   disposable smoke-test files or worker branches.
+2. Commit the bounded implementation or workflow change, ending the message with
+   the `Co-Authored-By:` trailer for your model that `AGENTS.md` "Publishing"
+   requires. Do not include disposable smoke-test files or worker branches.
 3. Follow `agent-handoff.md`'s "How To Update This Document": append a completed
    assignment with baseline and resulting commits, update Current Status, and
    keep the feature-completion roadmap truthful. Update architecture,
