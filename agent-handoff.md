@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (configuration split shipped)
+## Current Status — 2026-08-24 (collapsible costed unit cards)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -98,12 +98,12 @@ diagnostic codes.
   needs a worktree. The Copilot template was corrected because `copilot.cmd`
   silently truncated multi-line prompts.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **503 passed, 18 skipped (521)**.
+  `git diff --check` all pass. `pnpm test` is **504 passed, 18 skipped (522)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **521 passed**; without the variable the 18 corpus tests are skipped.
+  **522 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -124,9 +124,9 @@ diagnostic codes.
   and the known-problem count lead, and validity and completeness survive as
   independent badges. The selected-roster tree now consumes the model's
   classification too, rendering `Configuration` and `Army units` as separate
-  titled sections. Collapsible top-level unit cards with per-unit costs are the
-  next bounded boundary, and the projection already carries the recursive
-  totals they need.
+  titled sections, and army cards now collapse behind their name while showing
+  the projection's recursive per-unit cost. Shop/editor modes with
+  newly-added-unit focus is the next bounded boundary.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -412,9 +412,9 @@ QA before classifying or implementing the discrepancy.
 | Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
-| Collapsible top-level army units with per-unit costs | **Next** | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace. The projection already carries recursive per-selection totals |
+| Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
+| Shop/editor modes and newly-added-unit focus | **Next** | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
 | Headline cost against its points limit | Open | found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
-| Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
@@ -426,14 +426,13 @@ QA before classifying or implementing the discrepancy.
 | Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
 
-The tested presentation model, the player header, and the configuration split
-are complete. Take the remaining presentation work in this order:
+The presentation model, the player header, the configuration split, and
+collapsible costed unit cards are complete. Take the rest in this order:
 
-1. collapsible top-level units with per-unit costs;
-2. shop/editor modes with newly-added-unit focus;
-3. legality-aware model-count controls;
-4. common-loadout flattening and dedicated Warlord controls; and
-5. print-output usability.
+1. shop/editor modes with newly-added-unit focus;
+2. legality-aware model-count controls;
+3. common-loadout flattening and dedicated Warlord controls; and
+4. print-output usability.
 
 The presentation model intentionally comes before the visible restructuring so
 those checkpoints share one tested projection instead of encoding the same
@@ -8222,3 +8221,115 @@ already classified.
 **Next**. The projection already carries recursive per-selection cost totals, so
 that checkpoint should read them rather than compute anything, and should keep
 the section grouping introduced here rather than reworking it.
+
+## Completed Assignment — Collapsible Costed Unit Cards, 2026-08-24
+
+Baseline `f5b13107c950c5b2bf6cc9df5942cc29d389802d`; resulting implementation
+commit `4ecfd68` (`feat: collapse army unit cards and show their per-unit
+cost`) and this handoff commit. The roadmap's **Next**, taken directly after the
+configuration split.
+
+### What changed
+
+Top-level army cards are now collapsible, and every top-level card shows the
+recursive cost the projection had already folded for it.
+
+The **unit name is the disclosure control** — a full-width button, not a
+separate chevron — so the hit target is the width of the card. That mattered
+more than it sounds; see the phone-width note below.
+
+A collapsible card **renders its body only while open**. Child choices, the
+amount editor, Selection details, and the whole child subtree stay off the
+render path, the same laziness the nested children list already used. Measured
+on a real roster: one collapsed unit keeps **45 DOM nodes** off the page
+(385 → 430 when a single Lord of Contagion was expanded).
+
+`SelectionCostTotals` reads `RosterWorkspaceSelection.costs`, which already
+includes descendants, so a squad's figure carries its wargear. It computes
+nothing. Zero and unavailable totals render nothing, so a matched-play list does
+not grow a `0 Crusade: Experience` beside every unit — the header's disclosure
+remains where the full source cost picture lives.
+
+### Decisions and rejected alternatives
+
+**Collapsed by default, with one exception.** A card opens itself when it holds
+a known violation, reusing the exact attention rule the children list already
+had. A problem hidden behind a disclosure is worse than a longer page.
+Unresolved bounds stay in the checks and do not expand anything. Defaulting to
+*open* was rejected: it would have preserved current behavior and added nothing,
+and the roadmap row exists precisely because a fifteen-unit army is unusable
+fully expanded.
+
+**Configuration cards do not collapse.** The row asked for collapsible *army*
+units, and burying the detachment, battle-size, and force-disposition pickers
+behind a click would hide the first thing a player has to set. The section
+component passes `collapsible` per section, so the rule is one prop rather than
+a condition scattered through the card.
+
+**Newly-added-unit focus was deliberately not built.** It is the next roadmap
+row, and adding it here would have merged two checkpoints.
+
+### A phone-width defect found and fixed in the same pass
+
+The first implementation shared the occurrence row between the name, the cost,
+and Remove. At the 320 px supported minimum that left the disclosure control —
+the thing you have to tap — **78 px wide and two lines tall**, about a third of
+the card. At 390 px it was still only 148 px.
+
+A `max-width: 560px` rule now gives the name the full row and drops the cost and
+Remove onto their own line beneath it. The control went to **175 px at 320 px**
+and 245 px at 390 px, with `document.scrollWidth` still equal to the viewport
+and zero overflowing elements at both sizes. Desktop is unchanged: at 1265 px
+the name and actions remain side by side in a 500 px pane. `styles.test.ts` pins
+both the stacking rule and the full-width control.
+
+This is the second time a card grid has been measured rather than eyeballed and
+the measurement changed the design. It is worth keeping the habit.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test
+  files: one new style contract, plus collapse assertions added to the existing
+  workspace flow test.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files —
+  **522 passed** across 53 test files.
+- Production build succeeded with only the existing large-chunk warning.
+
+Verified in the browser on a pinned `Chaos - Death Guard` roster:
+
+| Card | Toggle | Default | Cost | Body rendered |
+|---|---|---|---|---|
+| Detachment / Battle Size / Force Disposition | none | expanded | none (all zero) | yes |
+| Plague Marines | yes | **expanded** — holds a known violation | `90 pts` | yes |
+| Lord of Contagion | yes | **collapsed** | `120 pts` | **no** |
+
+Clicking the Lord of Contagion control flipped `aria-expanded` to `true`,
+rendered the body, and its `aria-controls` resolved to that body's id. No
+console errors from the change.
+
+One note on how the synthetic tests behave, because it confused the first
+reading: the UI fixture's Infantry Squad carries a known violation, so it
+auto-opens. That is why the pre-existing tests that click into its datasheet
+still passed unchanged after cards became collapsible. The new assertions pin
+that rule explicitly rather than leaving it as a coincidence, and drive the
+toggle both ways.
+
+### What this did not do
+
+No evaluator, session, persistence, or roster-model code changed. The projection
+was not modified at all this checkpoint — the recursive totals it already
+carried were simply read. No behavior boundary moved, so
+`docs/compatibility.md` and `docs/diagnostics.md` are untouched. No shop/editor
+mode, no newly-added-unit focus, no legality-aware amount controls. No Reference
+Behavior QA ran: this makes no claim about New Recruit behavior.
+
+### Next recommended boundary
+
+**Shop/editor modes and newly-added-unit focus**, the roadmap's new **Next**.
+The two-pane layout still has no explicit browsing-versus-editing state and does
+not focus the unit just added. The projection already exposes
+`activeSelectionId` with `active` and `containsActiveSelection` ancestry on
+every node, which is
+what a focus mode needs; that checkpoint should consume it rather than add
+another mechanism, and should test the interaction at desktop and phone widths.
