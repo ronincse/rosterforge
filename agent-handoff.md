@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (Claude lead transfer prepared)
+## Current Status — 2026-08-24 (Claude lead active; lanes re-verified)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,15 +38,19 @@ diagnostic codes.
   checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
-- **Active lead.** Claude is the incoming active lead; Codex is the outgoing
-  lead for this documentation-only transfer. The last product checkpoint is
+- **Active lead.** **Claude is the active lead.** The Codex-to-Claude transfer
+  published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
+  `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
+  `ad2934166b726314ad55ae2db3f95ae4db655b59` and agreed: clean checkout, `HEAD`
+  equal to `origin/main`, divergence `0 0`, only the primary worktree, no stash,
+  no concurrent writer, and a roadmap `Next` matching the transfer record. The
+  last product checkpoint remains
   `e7c872509e02e8eb766a6f857dea09ec2d984f1f`, with no later application change.
-  Claude owns the primary checkout after the transfer commit is pushed and CI
-  is green. At preparation time `HEAD` equalled `origin/main`, divergence was
-  `0 0`, the checkout was clean, only the primary worktree existed, and no
-  delegated writer was active. `docs/agent-workflow.md` "Formal Lead Transfer"
-  is the durable transfer contract; the newest entry at this file's end is the
-  exact pickup record.
+  Returning the lead to Codex uses the same procedure.
+- **GitHub CLI.** `gh` still holds an invalid `ronincse` token, recorded by the
+  outgoing lead and not repaired here. Ordinary `git` fetch and push work; CI
+  confirmation and Copilot's GitHub-native lane need the token fixed, and an
+  unauthenticated fallback exhausts the public API limit quickly.
 - **Agent workflow.** `AGENTS.md` now distinguishes a formal lead handoff from
   bounded delegated work; Codex is the preferred default lead, not the only
   model allowed to own a checkpoint. `docs/agent-workflow.md` records the
@@ -61,7 +65,13 @@ diagnostic codes.
   discrepancies needing deep repository or data-format analysis. Native
   spawning, lead and child Browser actuation, all four external read paths, one
   disposable Grok writer, and Antigravity's headless browser limitation were
-  exercised.
+  exercised. **The Codex CLI is now a documented delegated specialist** for the
+  case where the lead is not Codex — plan review, hard debugging, code review,
+  bounded analysis, and a second opinion — under `--sandbox read-only`, with the
+  explicit warning that it shares the Codex lead's quota and that read-only
+  bounds mutation but not command execution. All four external lanes were
+  re-verified from a Claude session on 2026-08-24; the Copilot template was
+  corrected because `copilot.cmd` silently truncated multi-line prompts.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **501 passed, 18 skipped (519)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -255,6 +265,7 @@ points limit works end to end and is now pinned.
 | Conditional `defaultAmount` / stepped initialization | Done | direct condition-aware modifiers at the prospective parent; one amounted occurrence at max(minimum, effective default); pinned Incursion 1,000 then edited to 1,750 |
 | Comma-delimited `defaultAmount` | Open | 7 of 96 corpus defaults; New Recruit initializes multiple sub-unit instances, which this product does not model |
 | Grouped `defaultAmount` modifier ordering | Open | 1 corpus instance; withheld rather than guessed. Smallest remaining real gap |
+| Permissive `defaultAmount` numeric parsing | Open | `Number(raw)` at `packages/evaluation/src/selection-default-amount.ts:188` accepts `0x10`, `0b10`, `0o10`, and `1e3`, so a malformed source value initializes silently and reports *complete* instead of raising `EVALUATION_SELECTION_DEFAULT_AMOUNT_INVALID`; the comma case immediately above is already guarded. Raised by a delegated Codex review on 2026-08-24 and **not corpus-measured** — count such values across the 46 pinned documents before deciding it is real, and weigh it against `AGENTS.md`'s untrusted-imported-bytes rule |
 | Collapsing ordinary occurrences into one amounted node | Deferred | nested child costs belong to each occurrence and are not multiplied by an ancestor amount, so changing representation first could undercount wargear |
 | Grouped-modifier costs, broader cost behavior | Deferred | |
 
@@ -7558,3 +7569,128 @@ external publication began.
 
 **The compact points-and-problems player header**, unchanged. Keep it close and
 independently reviewable, then complete the normal handoff, push, and CI cycle.
+
+## Completed Assignment — Claude-Lead Delegation Verification, 2026-08-24
+
+Baseline `ad2934166b726314ad55ae2db3f95ae4db655b59`; resulting workflow commit
+`b99a7cd` (`docs: add Codex delegation lane and fix Copilot template`) and this
+handoff commit. This was the first checkpoint taken by Claude as active lead,
+immediately after the Codex-to-Claude transfer recorded in the entry above. It
+is a workflow/documentation checkpoint only; the product roadmap's **Next** was
+deliberately not started.
+
+### Why this checkpoint at all
+
+The transfer left an untested assumption: `docs/agent-workflow.md` was written
+from a Codex lead's seat. Every lane it documents is either Codex itself, a
+native Codex child, or an external CLI invoked *by Codex*. Nothing described how
+a non-Codex lead reaches Codex, and nothing had been executed from a Claude
+session. Rather than assume the runbook transferred, all four external lanes
+were run from Claude Code with a bounded read-only prompt and a unique sentinel.
+Two of the four documented shapes turned out to be wrong or missing.
+
+### What changed
+
+- **Codex is now a documented delegated specialist** when the lead is not Codex:
+  a Role Guidance row, a decision-path row, and a
+  `### OpenAI Codex: bounded read-only analysis` template using
+  `codex exec --sandbox read-only -C <repo> --ephemeral`. The runbook previously
+  described Codex only as lead or as a native child of a Codex lead.
+- **The Copilot template was broken as written and is fixed.** It paired a
+  multi-line PowerShell here-string with `copilot.cmd`. `cmd.exe` cannot carry a
+  newline inside an argument, so only the **first line** of the prompt reached
+  the model, silently and with no error. Two runs were lost to this: a prompt
+  beginning "Read AGENTS.md first" made Copilot read the file and then ask what
+  was wanted, and one beginning "Answer this question now" made it reply that it
+  could not see a question. The identical prompt through `copilot.ps1` answered
+  correctly, so the template now invokes the `.ps1` shim.
+- **`--sandbox read-only` is documented as *not* preventing command execution.**
+  The Codex delegate ran `node -e "console.log(Number('0x10'))"` through pwsh,
+  unprompted, to settle a question it had raised itself. The isolation section
+  now says the mode bounds mutation but not execution, which matters because the
+  runbook's own rule is that a tool label is never sufficient evidence.
+- **The resolved-executable table gained `codex`** at
+  `C:\Users\stone\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe`, plus a
+  warning that `Get-ChildItem` returns nothing for that directory on this host
+  while `cmd /c dir /s /b` lists it. That trap cost real time: an empty listing
+  reads exactly like "Codex is not installed". `copilot` in the same table now
+  points at `copilot.ps1`.
+- **The Operational Verification Record gained the rehearsal**, including the
+  `gh` token state inherited from the transfer.
+
+### Decisions and rejected alternatives
+
+Codex was given the *delegate's* read-only default rather than a writer role.
+Its strengths here are review, debugging, and second opinions; a Claude lead
+reviewing its own plan is the case where model diversity actually pays. Granting
+it a writer worktree by default was rejected as authority nobody had asked for.
+
+The shared-quota warning was written into the role table rather than left as
+folklore. Codex delegation spends the same OpenAI allowance a Codex lead spends,
+so it is explicitly *not* a workaround when Codex has hit its limit.
+
+Changing `AGENTS.md` was rejected: it already says a capable model may become
+lead by formal handoff and that the lead selects delegates. Only the operational
+runbook lacked the Codex-as-delegate shape.
+
+Antigravity's smoke used the documented disposable worktree at the exact
+baseline, created and removed with the runbook's guarded path check, because its
+permissions cannot be proven read-only. Running it against the primary checkout
+would have been faster and was rejected: the checkout is the lead's, and at the
+time it held work that had not yet been committed.
+
+### Verification
+
+- All four lanes returned a correct, cited answer with its sentinel:
+  Antigravity 1.1.19, Grok Build 1.0.5 ($0.0148, `grok-4.6-build`),
+  GitHub Copilot CLI 1.0.80 (only via `copilot.ps1`), and codex-cli 0.149.1.
+- `codex login status` reported `Logged in using ChatGPT`. This is the only
+  **non-mutating** authentication check any of the five CLIs offers; `agy`,
+  `grok`, and `copilot` expose only `login`/`logout`, which mutate stored
+  credentials, so their authentication is provable only by a successful run.
+- Both *edited* command blocks were then re-executed verbatim as written in the
+  runbook, the Copilot one with a genuinely multi-line here-string, and both
+  returned their sentinel.
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **501 passed, 18 skipped (519 total)** across 53 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files,
+  clean and gitignored — **519 passed** across 53 test files.
+- Production build succeeded with only the existing large-chunk warning.
+- The primary checkout ended byte-identical to its baseline after the smoke
+  tests, before any edit: clean status, `HEAD` equal to `origin/main`, only
+  `main`, only the primary worktree, no stash. The `agy` worktree and its
+  `claude/lead-rehearsal` branch were removed.
+
+### A finding this produced, deliberately not acted on
+
+The Codex smoke reviewed `packages/evaluation/src/selection-default-amount.ts`
+and reported that `Number(raw)` at line 188 accepts `0x10`, `0b10`, `0o10`, and
+`1e3`, so a malformed source value initializes silently and reports *complete*
+rather than raising `EVALUATION_SELECTION_DEFAULT_AMOUNT_INVALID`. The line was
+read and the claim holds against the code; the comma case immediately above is
+already guarded, so the gap is narrow.
+
+It is **not** recorded as a defect and `docs/compatibility.md` was not touched,
+because no corpus measurement was taken: whether any of the 46 pinned documents
+contains such a value is unknown, and this repository's own rule is to measure
+the corpus before deciding what a construct means. It is now a roadmap row in
+section B so the next lead can measure it rather than rediscover it.
+
+### What this did not do
+
+No application code, test, dependency, build configuration, product behavior,
+architecture boundary, compatibility claim, diagnostic, corpus data, or New
+Recruit state changed. The compact points-and-problems player header did not
+begin. No Reference Behavior QA ran, and no New Recruit behavior is claimed. The
+`gh` token was not repaired. No pull request, deployment, or external
+publication occurred.
+
+### Next recommended boundary
+
+**The compact points-and-problems player header**, unchanged and still the
+roadmap's single **Next**. It should consume
+`apps/web/src/roster-workspace-model.ts`, combine supported headline costs with
+the known-problem count, keep validity and completeness independent, and drop
+remaining evaluator-oriented framing. Do not fold the configuration split,
+collapsible costed unit cards, or shop/editor mode into it.
