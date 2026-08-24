@@ -68,8 +68,10 @@ diagnostic codes.
 - **Active area.** Product usability, measured against real lists. The first
   phone-width pass is complete: a real Death Guard add/configure/amount/check
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
-  and sticky workspace links leave their targets visible. The next bounded
-  boundary is the CI performance budget in section F.
+  and sticky workspace links leave their targets visible. The broader Grok
+  usability audit has now been reconciled into explicit completed and residual
+  rows in section F instead of one over-broad `Done` row. The next bounded
+  boundary remains the CI performance budget.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -114,13 +116,17 @@ left: **34 of 36 pinned catalogues raised a `-1` complaint on an empty roster**,
 before a single unit was added. That is now zero. The detail is in the completed
 entry at the end of this file.
 
-The QA-pass presentation findings are **Done** as one checkpoint. The UI now
+The first QA presentation cleanup is **Done**, but it was a bounded subset of
+the broader Grok usability audit rather than closure of that audit. The UI now
 separates known violations from unresolved coverage instead of making both look
 actionable; it keeps zero-value source costs available without promoting them
 beside points; it hides generated occurrence IDs while retaining anchors; and
 it brings model quantities and selected model/wargear configuration out of the
 datasheet depth. Display-name/annotation incompleteness remains observable in
-Selection details rather than repeating a banner on every occurrence.
+Selection details rather than repeating a banner on every occurrence. The
+remaining header, presentation-model, configuration, unit-cost, editing-mode,
+amount-control, loadout/Warlord, automatic-shape, and print-output outcomes are
+tracked separately in section F.
 
 **Behaviour on a phone is Done.** At 390 x 844, a pinned Death Guard roster was
 configured through detachment, battle size, force disposition, Plague Marine
@@ -309,6 +315,13 @@ whether a person can build a list they would take to a game. Every row here was
 found by **driving the app against a real army**, and the first one had been
 invisible to the whole test suite.
 
+The 2026-08-24 roadmap audit restored the unresolved outcomes from Grok's
+broader usability review. The completed presentation cleanup below is the
+baseline it actually delivered, not an umbrella closure for the residual rows
+that follow. Keep each residual bounded and independently reviewable; where a
+presentation decision depends on New Recruit behavior, use Reference Behavior
+QA before classifying or implementing the discrepancy.
+
 | Item | Status | Note |
 |---|---|---|
 | Costs match a GW-exported list | Done | 13 of 16 Dark Angels units exact; the other 3 are a model-count default and two cases of the pinned community data disagreeing with GW, both confirmed in the source JSON |
@@ -327,7 +340,17 @@ invisible to the whole test suite.
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
-| **Usability findings from the QA pass** | **Done** | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices |
+| First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
+| Compact points-and-problems player header; remove remaining evaluator chrome | Open | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
+| Tested workspace presentation model | Open | the workspace still derives presentation directly from the live session and reports; only print has a formal immutable view model. Introduce a tested workspace projection before making the larger layout changes below |
+| Separate configuration from army units | Open | the add browser groups `Configuration` separately, but added configuration and units still share one selected-roster tree |
+| Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
+| Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
+| Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
+| Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
+| Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
+| Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
+| Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
