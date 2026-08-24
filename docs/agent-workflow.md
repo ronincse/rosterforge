@@ -805,8 +805,12 @@ disposable evidence, not permission to broaden an agent's role.
   - The primary checkout ended byte-identical to its baseline: clean status,
     `HEAD` equal to `origin/main`, only `main`, only the primary worktree, no
     stash, and `git diff --check` clean.
-  - **`gh` is not usable for authenticated GitHub work.** The outgoing Codex
-    lead recorded that the stored `ronincse` token is invalid and that the
-    unauthenticated fallback exhausted its public API limit. Ordinary `git`
-    fetch and push are unaffected, but Copilot's GitHub-native lane and
-    `gh run watch` need the token repaired first.
+  - **`gh` works from a Claude session, and an auth failure in one sandbox is
+    not evidence about the credential.** The outgoing Codex lead recorded the
+    stored `ronincse` token as invalid. From Claude Code, `gh` 2.97.0 is
+    authenticated (keyring token, scopes `gist, read:org, repo, workflow`),
+    `gh api rate_limit` returned 4,994 of 5,000, and `gh run watch` confirmed
+    CI. The likely cause of the earlier failure is the Codex sandbox being
+    unable to read the Windows keyring — the same authentication-store
+    dependency recorded for Copilot above. Re-check auth from your own
+    environment before acting on an inherited claim that it is broken.

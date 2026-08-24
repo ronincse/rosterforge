@@ -47,10 +47,15 @@ diagnostic codes.
   last product checkpoint remains
   `e7c872509e02e8eb766a6f857dea09ec2d984f1f`, with no later application change.
   Returning the lead to Codex uses the same procedure.
-- **GitHub CLI.** `gh` still holds an invalid `ronincse` token, recorded by the
-  outgoing lead and not repaired here. Ordinary `git` fetch and push work; CI
-  confirmation and Copilot's GitHub-native lane need the token fixed, and an
-  unauthenticated fallback exhausts the public API limit quickly.
+- **GitHub CLI.** `gh` 2.97.0 is **working and authenticated** from a Claude
+  Code session: `gh auth status` shows the `ronincse` keyring token with
+  `gist, read:org, repo, workflow`, `gh api rate_limit` returned 4,994 of 5,000
+  remaining, and `gh run watch` confirmed this checkpoint's CI. The outgoing
+  lead's "invalid token" note is superseded — the credential is fine, and the
+  failure was almost certainly the Codex sandbox being unable to read the
+  Windows keyring, the same authentication-store dependency already recorded
+  for Copilot. Do not reauthenticate on the strength of the old note; run
+  `gh auth status` in your own environment first.
 - **Agent workflow.** `AGENTS.md` now distinguishes a formal lead handoff from
   bounded delegated work; Codex is the preferred default lead, not the only
   model allowed to own a checkpoint. `docs/agent-workflow.md` records the
@@ -7502,6 +7507,10 @@ flight. The last published product CI was run
 [`32775259189`](https://github.com/ronincse/rosterforge/actions/runs/32775259189),
 which completed successfully for that exact baseline.
 
+**This paragraph's conclusion was superseded on 2026-08-24**; see "Claude-Lead
+Delegation Verification" at the end of this file. The token is not invalid. It
+is valid, and the failure below was environment-specific.
+
 Git transport credentials successfully pushed the transfer commits. Separately,
 `gh auth status` reported that the stored `ronincse` GitHub CLI token is invalid;
 the unauthenticated run listing then exhausted its public API limit. The final
@@ -7661,6 +7670,30 @@ time it held work that had not yet been committed.
   tests, before any edit: clean status, `HEAD` equal to `origin/main`, only
   `main`, only the primary worktree, no stash. The `agy` worktree and its
   `claude/lead-rehearsal` branch were removed.
+- Published CI run
+  [`32778054967`](https://github.com/ronincse/rosterforge/actions/runs/32778054967)
+  completed successfully for `48d4942`, with Lint, Typecheck, Test, Build, and
+  Check whitespace all green. A follow-up commit corrects the `gh` note below
+  and carries its own run.
+
+### A correction to the transfer entry above
+
+The transfer entry recorded that the stored `ronincse` GitHub CLI token is
+invalid and told the incoming lead to reauthenticate. **That is wrong, and its
+paragraph is now marked superseded.** From this Claude Code session `gh` 2.97.0
+is fully authenticated: `gh auth status` shows the keyring token with
+`gist, read:org, repo, workflow`, `gh api rate_limit` returned 4,994 of 5,000
+core requests remaining, and `gh run list`/`gh run watch` both worked, which is
+how this checkpoint's CI was confirmed.
+
+The credential was never the problem. The most likely cause is that the Codex
+sandbox could not reach the Windows keyring holding it — the same
+authentication-store dependency this runbook already records for Copilot. That
+was not reproduced from here, so it stays a probable cause rather than a
+measured one. The durable lesson is narrower and worth keeping: an auth failure
+observed inside one agent's sandbox is evidence about that sandbox, not about
+the credential, and it should be re-checked from the new environment before the
+next lead acts on it.
 
 ### A finding this produced, deliberately not acted on
 
@@ -7682,8 +7715,9 @@ section B so the next lead can measure it rather than rediscover it.
 No application code, test, dependency, build configuration, product behavior,
 architecture boundary, compatibility claim, diagnostic, corpus data, or New
 Recruit state changed. The compact points-and-problems player header did not
-begin. No Reference Behavior QA ran, and no New Recruit behavior is claimed. The
-`gh` token was not repaired. No pull request, deployment, or external
+begin. No Reference Behavior QA ran, and no New Recruit behavior is claimed. No
+credential was changed: `gh` needed no repair, and the earlier note claiming it
+did was corrected rather than acted on. No pull request, deployment, or external
 publication occurred.
 
 ### Next recommended boundary
