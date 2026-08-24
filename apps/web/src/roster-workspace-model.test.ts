@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { failure } from "@rosterforge/foundation";
+import { failure, success } from "@rosterforge/foundation";
 import {
   forceOccurrenceId,
   rosterId,
@@ -48,6 +48,14 @@ describe("roster workspace presentation model", () => {
       },
     });
     expect(model.reports).toBe(reports);
+    // This fixture's costs are complete while its checks are not, so the fold
+    // has to name only the report that actually fell short rather than blaming
+    // both for one incomplete half.
+    expect(model.costs.available && model.costs.completeness).toBe("complete");
+    expect(model.header).toEqual({
+      completeness: "incomplete",
+      incomplete: ["checks"],
+    });
     expect(model.selections.configuration).toEqual([]);
     expect(model.selections.army).toHaveLength(1);
 
@@ -166,6 +174,36 @@ describe("roster workspace presentation model", () => {
     });
     expect(model.selections.ordered).toHaveLength(1);
     expect(model.selections.ordered[0]?.costs.available).toBe(false);
+    // A report that could not be composed has established completeness no more
+    // than one that reported `incomplete`. Both must fold to `incomplete`.
+    expect(model.header).toEqual({
+      completeness: "incomplete",
+      incomplete: ["costs", "checks"],
+    });
+  });
+
+  it("reports a complete header only when every presented report is complete", async () => {
+    // The guard against a vacuously always-incomplete fold. Every other case
+    // here is incomplete for a real reason, so one case has to prove `complete`
+    // is reachable at all. The validation report is a real one with only its
+    // completeness raised, rather than a fabricated shape.
+    const session = await costedSession();
+    const reports = workspaceReports(session);
+    if (!reports.validation.ok) {
+      throw new Error("Expected a composed validation report.");
+    }
+    const model = createRosterWorkspaceViewModel(session, {
+      ...reports,
+      validation: success({
+        ...reports.validation.value,
+        status: {
+          ...reports.validation.value.status,
+          completeness: "complete" as const,
+        },
+      }),
+    });
+
+    expect(model.header).toEqual({ completeness: "complete", incomplete: [] });
   });
 });
 

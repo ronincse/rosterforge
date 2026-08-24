@@ -96,6 +96,26 @@ export type RosterWorkspaceValidationSummary =
       readonly diagnostics: readonly Diagnostic[];
     };
 
+export type RosterWorkspaceHeaderReport = "costs" | "checks";
+
+/**
+ * Combined completeness of the two reports the player header presents.
+ *
+ * The header carries one badge where the separate cost and validation cards
+ * each carried their own, so the fold has to be conservative. A report that is
+ * *unavailable* has established completeness no more than one that reported
+ * `incomplete`, and calling either `complete` is exactly what `AGENTS.md`
+ * forbids. `incomplete` therefore names every report that fell short, and
+ * `completeness` is `complete` only when that list is empty.
+ *
+ * Root choices are deliberately excluded: their completeness describes the
+ * add-units browser, not the two numbers a player reads above the list.
+ */
+export interface RosterWorkspaceHeaderSummary {
+  readonly completeness: ValidationCompleteness;
+  readonly incomplete: readonly RosterWorkspaceHeaderReport[];
+}
+
 export type RosterWorkspaceRootChoices =
   | {
       readonly available: false;
@@ -146,6 +166,7 @@ export interface RosterWorkspaceViewModel {
   readonly activeSelectionId?: SelectionOccurrenceId;
   readonly costs: RosterWorkspaceCostSummary;
   readonly validation: RosterWorkspaceValidationSummary;
+  readonly header: RosterWorkspaceHeaderSummary;
   readonly rootChoices: RosterWorkspaceRootChoices;
   readonly selections: {
     readonly ordered: readonly RosterWorkspaceSelection[];
@@ -161,9 +182,10 @@ export interface RosterWorkspaceViewModel {
  * The projection does not evaluate, mutate, filter, or legalize the roster. It
  * preserves report and occurrence identity, and derives only stable UI policy:
  * active versus zero headline costs, actionable violation attention,
- * configuration versus army roots, recursive unit totals, and optional active
- * selection ancestry. Callers can therefore change layout without duplicating
- * those rules or accidentally composing reports from different sessions.
+ * configuration versus army roots, recursive unit totals, the conservative
+ * header completeness fold, and optional active selection ancestry. Callers can
+ * therefore change layout without duplicating those rules or accidentally
+ * composing reports from different sessions.
  *
  * This allocates one presentation node and one small cost accumulator per
  * selection. Descendant costs are folded into each ancestor so later unit cards
@@ -210,6 +232,7 @@ export function createRosterWorkspaceViewModel(
     ...(activeSelectionId === undefined ? {} : { activeSelectionId }),
     costs,
     validation,
+    header: workspaceHeaderSummary(costs, validation),
     rootChoices: workspaceRootChoices(reports.rootChoices),
     selections: {
       ordered,
@@ -286,6 +309,23 @@ function workspaceValidationSummary(
     ).length,
     attentionSelectionIds: supportedValidationSelectionIds(report.findings),
     diagnostics: result.diagnostics,
+  };
+}
+
+function workspaceHeaderSummary(
+  costs: RosterWorkspaceCostSummary,
+  validation: RosterWorkspaceValidationSummary,
+): RosterWorkspaceHeaderSummary {
+  const incomplete: RosterWorkspaceHeaderReport[] = [];
+  if (!costs.available || costs.completeness === "incomplete") {
+    incomplete.push("costs");
+  }
+  if (!validation.available || validation.completeness === "incomplete") {
+    incomplete.push("checks");
+  }
+  return {
+    completeness: incomplete.length === 0 ? "complete" : "incomplete",
+    incomplete,
   };
 }
 

@@ -469,10 +469,11 @@ selected roster and catalogue browser occupy separate side-by-side panes; on
 narrow viewports they return to document order as full-width sections. While a
 roster is active, this focused workspace occupies the full library shell and
 the catalogue batch summary is hidden. Clearing roster setup restores that
-summary without changing the imported library. Costs and supported-validation
-summary stay above the builder, while detailed structural and constraint
-reports follow it. Anchor navigation and pane state are UI concerns only and
-never enter the immutable session, history, or draft.
+summary without changing the imported library. One player header stays above
+the builder, carrying the roster identity, its supported cost totals, and its
+known-problem count; detailed structural and constraint reports follow it.
+Anchor navigation and pane state are UI concerns only and never enter the
+immutable session, history, or draft.
 
 `createRosterWorkspaceViewModel` is the pure presentation boundary over one
 immutable session and its root-choice, cost, and supported-validation reports.
@@ -485,8 +486,17 @@ cost totals, and optional active-selection ancestry. Unknown or uncategorized
 roots stay in the army section instead of being guessed away. Failed reports
 remain explicit unavailable states, and selected occurrences remain present.
 This projection does not evaluate, mutate, filter, legalize, or persist the
-roster; it prepares shared input for later layout checkpoints without changing
-the current workspace presentation.
+roster.
+
+The model also owns the header's completeness fold. The player header shows one
+completeness badge where the separate cost and validation cards each carried
+their own, so `header.completeness` is `complete` only when **both** reports are
+available and complete, and `header.incomplete` names each one that fell short.
+An unavailable report counts as incomplete: it has established completeness no
+more than a report that returned `incomplete`, and treating it as complete is
+the failure the validation rules forbid. Root-choice completeness is excluded
+because it describes the add-units browser rather than the header. Validity and
+completeness remain independent signals throughout.
 
 The local library retains every composed catalogue context. The roster setup
 surface derives an ordered `selectableCatalogues` subset by excluding projected

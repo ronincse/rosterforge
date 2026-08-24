@@ -775,43 +775,36 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getByText("No selections added yet"),
     ).toBeTruthy();
-    const supportedValidation = screen.getByRole("region", {
-      name: "Supported roster validation",
-    });
+    // One player header now carries what the separate cost and validation
+    // cards used to. Validity and completeness stay independent signals.
+    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
+    expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
     expect(
-      within(supportedValidation).getByText("No known violations"),
+      within(playerHeader).getByText("Complete supported view"),
     ).toBeTruthy();
     expect(
-      within(supportedValidation).getByRole("link", {
-        name: "0 constraint violations",
+      within(playerHeader).getByRole("link", {
+        name: "Checks, 0 known problems",
       }),
-    ).toBeTruthy();
+    ).toHaveProperty("hash", "#roster-checks-heading");
+    expect(within(playerHeader).getByText("costs so far")).toBeTruthy();
+    // A clean roster stops reporting its own zeroes: the violation links and
+    // the report disclosure appear only when they point at something.
     expect(
-      within(supportedValidation).getByText("Complete supported view"),
-    ).toBeTruthy();
-    expect(
-      constraintStatusText(supportedValidation, "Violated"),
-    ).toBe("0Violated");
-    expect(
-      within(supportedValidation).getByRole("link", {
-        name: "0 structural violations",
+      within(playerHeader).queryByRole("link", {
+        name: /structural violation/u,
       }),
-    ).toHaveProperty("hash", "#roster-structural-status-heading");
+    ).toBeNull();
     expect(
-      within(supportedValidation).getByRole("link", {
-        name: "0 constraint violations",
+      within(playerHeader).queryByRole("link", {
+        name: /constraint violation/u,
       }),
-    ).toHaveProperty("hash", "#roster-constraint-heading");
-    const costs = screen.getByRole("region", { name: "Roster costs" });
+    ).toBeNull();
     expect(
-      within(costs).getByText("No supported numeric costs yet."),
-    ).toBeTruthy();
-    expect(
-      within(costs).queryByRole("group", {
+      within(playerHeader).queryByRole("group", {
         name: /Zero-value source cost fields/u,
       }),
     ).toBeNull();
-    expect(within(costs).getByText("Complete supported view")).toBeTruthy();
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -879,9 +872,9 @@ describe("App local catalogue flow", () => {
     expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
-    expect(within(costs).getByText("80")).toBeTruthy();
-    expect(within(costs).getByText("Points")).toBeTruthy();
-    const zeroCosts = within(costs).getByRole("group", {
+    expect(within(playerHeader).getByText("80")).toBeTruthy();
+    expect(within(playerHeader).getByText("Points")).toBeTruthy();
+    const zeroCosts = within(playerHeader).getByRole("group", {
       name: "Zero-value source cost fields 1 field",
     });
     expect(zeroCosts.hasAttribute("open")).toBe(false);
@@ -970,7 +963,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       within(selectedRoster).getByRole("button", { name: "Set amount" }),
     );
-    expect(within(costs).getByText("160")).toBeTruthy();
+    expect(within(playerHeader).getByText("160")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
         name: "Roster, 2 top-level selections",
@@ -990,8 +983,8 @@ describe("App local catalogue flow", () => {
         name: "Roster, 2 top-level selections",
       }),
     ).toBeTruthy();
-    expect(within(costs).getByText("160")).toBeTruthy();
-    expect(within(costs).getByText("Points")).toBeTruthy();
+    expect(within(playerHeader).getByText("160")).toBeTruthy();
+    expect(within(playerHeader).getByText("Points")).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
     ).toBe("1Satisfied");
@@ -1017,7 +1010,7 @@ describe("App local catalogue flow", () => {
       ).toBeTruthy();
     }
     expect(
-      within(supportedValidation).getByText("Known violations"),
+      within(playerHeader).getByText("Known violations"),
     ).toBeTruthy();
 
     fireEvent.click(
@@ -1029,7 +1022,7 @@ describe("App local catalogue flow", () => {
       expect(rosterSelection("selection-ui-3")).toBeTruthy();
     });
     expect(screen.getByText("Special Weapon (Master-crafted)")).toBeTruthy();
-    expect(within(costs).getByText("170")).toBeTruthy();
+    expect(within(playerHeader).getByText("170")).toBeTruthy();
     expect(
       screen.getAllByRole("button", { name: /Add Special Weapon/u }),
     ).toHaveLength(2);
@@ -1079,7 +1072,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
-    expect(within(costs).getByText("80")).toBeTruthy();
+    expect(within(playerHeader).getByText("80")).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
     ).toBe("2Satisfied");
@@ -1087,7 +1080,7 @@ describe("App local catalogue flow", () => {
       constraintStatusText(constraints, "Violated"),
     ).toBe("0Violated");
     expect(
-      within(supportedValidation).getByText("Known violations"),
+      within(playerHeader).getByText("Known violations"),
     ).toBeTruthy();
     expect(
       within(constraints).queryByRole("group", {
@@ -1106,14 +1099,14 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
-    expect(within(costs).getByText("170")).toBeTruthy();
+    expect(within(playerHeader).getByText("170")).toBeTruthy();
     expect(redo).toHaveProperty("disabled", false);
 
     fireEvent.click(redo);
     expect(rosterSelection("selection-ui-1")).toBeNull();
     expect(rosterSelection("selection-ui-3")).toBeNull();
     expect(rosterSelection("selection-ui-2")).toBeTruthy();
-    expect(within(costs).getByText("80")).toBeTruthy();
+    expect(within(playerHeader).getByText("80")).toBeTruthy();
 
     fireEvent.click(changeRosterSetup);
     expect(
@@ -1172,15 +1165,22 @@ describe("App local catalogue flow", () => {
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
-    const supportedValidation = screen.getByRole("region", {
-      name: "Supported roster validation",
-    });
+    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
+    expect(within(playerHeader).getByText("Known violations")).toBeTruthy();
     expect(
-      within(supportedValidation).getByText("Known violations"),
+      within(playerHeader).getByText("Complete supported view"),
     ).toBeTruthy();
     expect(
-      within(supportedValidation).getByText("Complete supported view"),
+      within(playerHeader).getByRole("link", {
+        name: "Checks, 1 known problem",
+      }),
     ).toBeTruthy();
+    // The structural link earns its place now that it points at a violation.
+    expect(
+      within(playerHeader).getByRole("link", {
+        name: "1 structural violation",
+      }),
+    ).toHaveProperty("hash", "#roster-structural-status-heading");
     expect(
       within(structuralStatus).getByText("Known violations"),
     ).toBeTruthy();
@@ -1230,7 +1230,7 @@ describe("App local catalogue flow", () => {
       within(structuralStatus).getByText("No known violations"),
     ).toBeTruthy();
     expect(
-      within(supportedValidation).getByText("No known violations"),
+      within(playerHeader).getByText("No known violations"),
     ).toBeTruthy();
     expect(
       constraintStatusText(structuralStatus, "Violated"),
@@ -1333,16 +1333,12 @@ describe("App local catalogue flow", () => {
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
-    const supportedValidation = screen.getByRole("region", {
-      name: "Supported roster validation",
-    });
+    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
+    expect(within(playerHeader).getByText("Known violations")).toBeTruthy();
+    // The header folds both reports into one badge, and does so
+    // conservatively: an incomplete check makes the whole view incomplete.
     expect(
-      within(supportedValidation).getByText("Known violations"),
-    ).toBeTruthy();
-    expect(
-      within(supportedValidation).getByText(
-        "Incomplete supported view",
-      ),
+      within(playerHeader).getByText("Incomplete supported view"),
     ).toBeTruthy();
     expect(
       within(structuralStatus).getByText("Known violations"),

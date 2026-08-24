@@ -819,18 +819,6 @@ h1 {
   line-height: 1.5;
 }
 
-.roster-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  margin: 28px 0;
-  border: 1px solid #d0d4cb;
-  border-radius: 3px;
-}
-
-.roster-metrics .summary-metric + .summary-metric {
-  border-left: 1px solid #d0d4cb;
-}
-
 .history-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1027,10 +1015,10 @@ h1 {
   background: rgba(255, 255, 255, 0.45);
 }
 
-.cost-summary {
+.roster-player-header {
   display: grid;
   gap: 14px;
-  margin-top: 30px;
+  margin: 0 0 24px;
   padding: 20px;
   background: #eef1eb;
   border: 1px solid #c9cfc8;
@@ -1038,18 +1026,78 @@ h1 {
   border-radius: 3px;
 }
 
-.cost-summary-heading {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
+.roster-player-header[data-validity="invalid"] {
+  background: #f3e8e4;
+  border-color: #d5aaa2;
+  border-top-color: #9a4a3f;
 }
 
-.cost-summary h3 {
+.player-header-identity h2 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* The 320 px supported minimum is the constraint here: `minmax(min(140px,
+   100%), 1fr)` lets a figure fall to the container width instead of forcing a
+   140 px track and widening the document, which is the defect the phone-width
+   checkpoint fixed elsewhere. */
+.player-header-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 8px;
+}
+
+.player-header-figure {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid #d1d6d0;
+  text-decoration: none;
+}
+
+.player-header-figure strong,
+.player-header-figure span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.player-header-figure strong {
+  color: var(--forest);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.player-header-figure span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.player-header-figure[data-figure="empty"] strong,
+.player-header-figure[data-figure="unavailable"] strong {
+  color: var(--muted);
+}
+
+.player-header-problems[data-problems="present"] {
+  background: #f7e9e5;
+  border-color: #c98d85;
+}
+
+.player-header-problems[data-problems="present"] strong {
+  color: #8a3e35;
+}
+
+.player-header-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .completeness-badge {
@@ -1097,159 +1145,31 @@ h1 {
   border-color: #c98d85;
 }
 
-.supported-validation-ribbon {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px 20px;
-  margin-top: 30px;
-  padding: 16px 18px;
-  background: #e9eee9;
-  border: 1px solid #bdc9bf;
-  border-left: 4px solid var(--forest);
-  border-radius: 3px;
-}
-
-.supported-validation-ribbon[data-validity="invalid"] {
-  background: #f3e8e4;
-  border-color: #d5aaa2;
-  border-left-color: #9a4a3f;
-}
-
-.supported-validation-heading {
-  display: flex;
-  grid-column: 1 / -1;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.supported-validation-ribbon h3 {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-
-.validation-ribbon-statuses {
+.player-header-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.validation-ribbon-statuses li {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 6px 9px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(91, 106, 95, 0.3);
-  border-radius: 2px;
-}
-
-.validation-ribbon-statuses strong {
-  color: var(--forest);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.validation-ribbon-statuses li[data-status="violated"] strong {
-  color: #8a3e35;
-}
-
-.validation-ribbon-statuses li[data-status="unresolved"] strong {
-  color: #7b5a24;
-}
-
-.validation-ribbon-statuses span,
-.validation-ribbon-links,
-.validation-ribbon-boundary,
-.supported-validation-ribbon > p {
-  color: var(--muted);
-  font-size: 0.66rem;
-  line-height: 1.45;
-}
-
-.validation-ribbon-links {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
   gap: 12px;
 }
 
-.validation-ribbon-links a {
-  color: var(--forest);
+.player-header-links a {
+  color: #8a3e35;
+  font-size: 0.66rem;
   font-weight: 800;
 }
 
-.validation-ribbon-boundary,
-.supported-validation-ribbon > p {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-
-.supported-validation-ribbon + .cost-summary {
-  margin-top: 14px;
-}
-
-.cost-total-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cost-total-list li {
-  min-width: 0;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid #d1d6d0;
-}
-
-.cost-total-list strong,
-.cost-total-list span {
-  display: block;
-  overflow-wrap: anywhere;
-}
-
-.cost-total-list strong {
-  color: var(--forest);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.45rem;
-  font-weight: 500;
-}
-
-.cost-total-list span {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 0.64rem;
-  font-weight: 800;
-}
-
-.empty-costs,
-.cost-boundary {
+.player-header-boundary,
+.player-header-incomplete {
   margin: 0;
   color: var(--muted);
   font-size: 0.7rem;
   line-height: 1.5;
 }
 
-.empty-costs {
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px dashed #c3cac3;
-}
-
-.cost-details {
+.player-header-details {
   border-top: 1px solid #d0d6cf;
 }
 
-.cost-details summary {
+.player-header-details summary {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1261,7 +1181,7 @@ h1 {
   text-transform: uppercase;
 }
 
-.cost-details summary span {
+.player-header-details summary span {
   color: var(--muted);
   font-weight: 600;
   text-transform: none;
@@ -1285,27 +1205,23 @@ h1 {
   font-size: 0.58rem;
 }
 
-.cost-details dl {
+.player-header-details dl {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
   margin: 12px 0 0;
 }
 
-.cost-details dl > div {
+.player-header-details dl > div {
   padding: 8px;
   border: 1px solid #d5d9d4;
 }
 
-.cost-details dl > div + div {
-  border-left: 0;
-}
-
-.cost-details dt {
+.player-header-details dt {
   color: var(--muted);
   font-size: 0.58rem;
 }
 
-.cost-details dd {
+.player-header-details dd {
   margin: 3px 0 0;
   font-size: 0.8rem;
   font-weight: 800;
@@ -2413,10 +2329,6 @@ footer {
     text-align: left;
   }
 
-  .cost-summary-heading {
-    display: grid;
-  }
-
   .constraint-summary-heading {
     display: grid;
   }
@@ -2426,18 +2338,6 @@ footer {
   }
 
   .validation-badges {
-    justify-content: flex-start;
-  }
-
-  .supported-validation-ribbon {
-    grid-template-columns: 1fr;
-  }
-
-  .supported-validation-heading {
-    display: grid;
-  }
-
-  .validation-ribbon-links {
     justify-content: flex-start;
   }
 
@@ -2460,15 +2360,6 @@ footer {
 
   .builder-pane-heading > span {
     padding-top: 0;
-  }
-
-  .cost-details dl {
-    grid-template-columns: 1fr;
-  }
-
-  .cost-details dl > div + div {
-    border-top: 0;
-    border-left: 1px solid #d5d9d4;
   }
 
   .constraint-details > ul > li {

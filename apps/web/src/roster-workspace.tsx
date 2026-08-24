@@ -49,15 +49,13 @@ import {
 } from "./roster-session.js";
 import {
   createRosterWorkspaceViewModel,
-  type RosterWorkspaceCostSummary,
   type RosterWorkspaceSelection,
-  type RosterWorkspaceValidationSummary,
+  type RosterWorkspaceViewModel,
 } from "./roster-workspace-model.js";
 import {
   createRosterPrintViewModel,
   type RosterPrintViewModel,
 } from "./roster-print.js";
-import { SummaryMetric } from "./summary-metric.js";
 import { formatCount, formatNumber } from "./ui-format.js";
 
 export function RosterOverview({
@@ -150,20 +148,7 @@ export function RosterOverview({
   const topLevelSelectionCount = workspace.topLevelSelectionCount;
   return (
     <div className="roster-overview">
-      <p className="eyebrow">Roster workspace</p>
-      <h2>{session.roster.name}</h2>
-      <p className="catalogue-subtitle">{session.catalogue.name}</p>
-
-      <div className="roster-metrics">
-        <SummaryMetric
-          label="Forces"
-          value={String(workspace.forceCount)}
-        />
-        <SummaryMetric
-          label="Selections"
-          value={String(workspace.selectionCount)}
-        />
-      </div>
+      <RosterPlayerHeader workspace={workspace} />
 
       <div className="history-actions" aria-label="Roster actions">
         <button type="button" disabled={!canUndo} onClick={onUndo}>
@@ -217,9 +202,6 @@ export function RosterOverview({
           this local page and try again.
         </p>
       )}
-
-      <RosterSupportedValidationRibbon summary={workspace.validation} />
-      <RosterCostSummary summary={workspace.costs} />
 
       <nav
         className="roster-workspace-nav"
@@ -445,109 +427,213 @@ export function RosterOverview({
   );
 }
 
-function RosterSupportedValidationRibbon({
-  summary,
+/**
+ * The player-facing header: what the list is, what it costs, and what is wrong
+ * with it.
+ *
+ * This replaces the separate cost and validation cards. Those framed the same
+ * two numbers in the vocabulary of the thing that produced them — "Read-only
+ * evaluation", "Supported validation", a satisfied/violated/unresolved triple —
+ * rather than the vocabulary of the person reading them. A player acts on two
+ * figures, the cost totals and the number of known problems, so those lead.
+ *
+ * Nothing the cards carried is dropped. Zero-value source costs, excluded and
+ * unresolved counts, diagnostics, and the per-report completeness breakdown all
+ * move into the disclosure below, and the two violation links appear only when
+ * they point at something, so a clean roster stops reporting its own zeroes.
+ *
+ * Validity and completeness stay independent signals, as `AGENTS.md` requires:
+ * "no known violations" and "the supported view is complete" are different
+ * claims, and a roster can honestly be the first without being the second.
+ * The completeness shown here is the model's conservative fold across both
+ * reports; see `RosterWorkspaceHeaderSummary`.
+ */
+function RosterPlayerHeader({
+  workspace,
 }: {
-  readonly summary: RosterWorkspaceValidationSummary;
+  readonly workspace: RosterWorkspaceViewModel;
 }) {
-  if (!summary.available) {
-    return (
-      <section
-        className="supported-validation-ribbon"
-        aria-labelledby="supported-validation-heading"
-      >
-        <div>
-          <p className="eyebrow">Supported validation</p>
-          <h3 id="supported-validation-heading">
-            Roster check unavailable
-          </h3>
-        </div>
-        <p>
-          The supported checks could not be composed. Editing remains
-          available.
-        </p>
-        <DiagnosticList diagnostics={summary.diagnostics} />
-      </section>
-    );
-  }
-
+  const { costs, validation, header } = workspace;
+  const structuralViolations = validation.available
+    ? validation.structuralViolationCount
+    : 0;
+  const constraintViolations = validation.available
+    ? validation.constraintViolationCount
+    : 0;
+  const costDiagnostics = costs.diagnostics.length;
+  const validationDiagnostics = validation.diagnostics.length;
+  const zeroTotals = costs.zeroTotals;
+  // Two sibling disclosures rather than one nested pair. The zero-value cost
+  // fields are a browsing affordance a player may open on their own; burying
+  // them inside the report details would put them two clicks deep and behind an
+  // unrelated heading.
+  const hasReportDetails =
+    costs.excludedCount > 0 ||
+    costs.unresolvedSelectionCount > 0 ||
+    costDiagnostics > 0 ||
+    validationDiagnostics > 0 ||
+    header.incomplete.length > 0;
   return (
+    // A named landmark, not a bare <header>: nested inside the workspace
+    // section a <header> element carries no role at all, so neither assistive
+    // technology nor a role query could reach the roster's headline figures.
     <section
-      className="supported-validation-ribbon"
-      data-validity={summary.validity}
-      aria-labelledby="supported-validation-heading"
+      className="roster-player-header"
+      aria-label="Roster summary"
+      data-validity={validation.available ? validation.validity : undefined}
     >
-      <div className="supported-validation-heading">
-        <div>
-          <p className="eyebrow">Supported validation</p>
-          <h3 id="supported-validation-heading">
-            Supported roster validation
-          </h3>
-        </div>
-        <div className="validation-badges">
-          <span
-            className="validity-badge"
-            data-validity={summary.validity}
+      <div className="player-header-identity">
+        <h2>{workspace.name}</h2>
+        <p className="catalogue-subtitle">{workspace.catalogueName}</p>
+      </div>
+
+      <div className="player-header-figures">
+        {!costs.available ? (
+          <p className="player-header-figure" data-figure="unavailable">
+            <strong>&mdash;</strong>
+            <span>costs unavailable</span>
+          </p>
+        ) : costs.activeTotals.length === 0 ? (
+          <p className="player-header-figure" data-figure="empty">
+            <strong>0</strong>
+            <span>costs so far</span>
+          </p>
+        ) : (
+          costs.activeTotals.map((total) => (
+            <p className="player-header-figure" key={total.typeId}>
+              <strong>{formatNumber(total.value)}</strong>
+              <span>{total.name}</span>
+            </p>
+          ))
+        )}
+        {validation.available ? (
+          <a
+            className="player-header-figure player-header-problems"
+            href="#roster-checks-heading"
+            data-problems={validation.issueCount === 0 ? "none" : "present"}
+            aria-label={`Checks, ${formatCount(
+              validation.issueCount,
+              "known problem",
+            )}`}
           >
-            {summary.validity === "valid"
+            <strong>{validation.issueCount}</strong>
+            <span>
+              {validation.issueCount === 1
+                ? "known problem"
+                : "known problems"}
+            </span>
+          </a>
+        ) : (
+          <p className="player-header-figure" data-figure="unavailable">
+            <strong>&mdash;</strong>
+            <span>checks unavailable</span>
+          </p>
+        )}
+      </div>
+
+      <div className="player-header-signals">
+        {validation.available && (
+          <span className="validity-badge" data-validity={validation.validity}>
+            {validation.validity === "valid"
               ? "No known violations"
               : "Known violations"}
           </span>
-          <span
-            className="completeness-badge"
-            data-completeness={summary.completeness}
-          >
-            {summary.completeness === "complete"
-              ? "Complete supported view"
-              : "Incomplete supported view"}
-          </span>
-        </div>
+        )}
+        <span
+          className="completeness-badge"
+          data-completeness={header.completeness}
+        >
+          {header.completeness === "complete"
+            ? "Complete supported view"
+            : "Incomplete supported view"}
+        </span>
       </div>
 
-      <ul
-        className="validation-ribbon-statuses"
-        aria-label="Combined validation statuses"
-      >
-        <ConstraintStatus
-          label="Satisfied"
-          status="satisfied"
-          value={summary.statusCounts.satisfied}
-        />
-        <ConstraintStatus
-          label="Violated"
-          status="violated"
-          value={summary.statusCounts.violated}
-        />
-        <ConstraintStatus
-          label="Unresolved"
-          status="unresolved"
-          value={summary.statusCounts.unresolved}
-        />
-      </ul>
-
-      <nav
-        className="validation-ribbon-links"
-        aria-label="Supported validation details"
-      >
-        <a href="#roster-structural-status-heading">
-          {formatCount(
-            summary.structuralViolationCount,
-            "structural violation",
+      {(structuralViolations > 0 || constraintViolations > 0) && (
+        <nav className="player-header-links" aria-label="Known problems">
+          {structuralViolations > 0 && (
+            <a href="#roster-structural-status-heading">
+              {formatCount(structuralViolations, "structural violation")}
+            </a>
           )}
-        </a>
-        <a href="#roster-constraint-heading">
-          {formatCount(
-            summary.constraintViolationCount,
-            "constraint violation",
+          {constraintViolations > 0 && (
+            <a href="#roster-constraint-heading">
+              {formatCount(constraintViolations, "constraint violation")}
+            </a>
           )}
-        </a>
-      </nav>
+        </nav>
+      )}
 
-      <p className="validation-ribbon-boundary">
-        Covers the structural and constraint behavior currently supported by
-        RosterForge. It does not establish full BattleScribe legality or block
-        edits.
+      <p className="player-header-boundary">
+        Supported checks and costs only. This does not establish full
+        BattleScribe legality, and it never blocks an edit.
       </p>
+
+      {/* Community catalogues attach campaign bookkeeping fields to every
+          unit, so a matched-play list carries a wall of zeroes. They stay
+          reachable without standing beside the points. */}
+      {zeroTotals.length > 0 && (
+        <details
+          className="player-header-details"
+          aria-label={`Zero-value source cost fields ${formatCount(
+            zeroTotals.length,
+            "field",
+          )}`}
+        >
+          <summary>
+            Zero-value source cost fields
+            <span>{formatCount(zeroTotals.length, "field")}</span>
+          </summary>
+          <ul className="zero-cost-list">
+            {zeroTotals.map((total) => (
+              <li key={total.typeId}>{total.name}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {hasReportDetails && (
+        <details className="player-header-details">
+          <summary>
+            Report details
+            <span>
+              {formatCount(
+                costDiagnostics + validationDiagnostics,
+                "diagnostic",
+              )}
+            </span>
+          </summary>
+
+          {header.incomplete.length > 0 && (
+            <p className="player-header-incomplete">
+              {`Incomplete: ${header.incomplete
+                .map((report) =>
+                  report === "costs"
+                    ? costs.available
+                      ? "costs exclude unresolved data or unsupported behavior"
+                      : "the cost report could not be produced"
+                    : validation.available
+                      ? "checks exclude behavior outside the supported scope"
+                      : "the supported checks could not be composed",
+                )
+                .join("; ")}.`}
+            </p>
+          )}
+
+          <dl>
+            <Detail
+              label="Excluded costs"
+              value={String(costs.excludedCount)}
+            />
+            <Detail
+              label="Unresolved selections"
+              value={String(costs.unresolvedSelectionCount)}
+            />
+          </dl>
+          <DiagnosticList diagnostics={costs.diagnostics} />
+          <DiagnosticList diagnostics={validation.diagnostics} />
+        </details>
+      )}
     </section>
   );
 }
@@ -1155,118 +1241,6 @@ function constraintObservation(item: ConstraintSummaryItem): string {
   return `Possible ${formatNumber(item.minimum)} to ${formatNumber(
     item.maximum,
   )}, ${limit}`;
-}
-
-function RosterCostSummary({
-  summary,
-}: {
-  readonly summary: RosterWorkspaceCostSummary;
-}) {
-  if (!summary.available) {
-    return (
-      <section className="cost-summary" aria-labelledby="roster-cost-heading">
-        <div className="cost-summary-heading">
-          <div>
-            <p className="eyebrow">Read-only evaluation</p>
-            <h3 id="roster-cost-heading">Roster costs unavailable</h3>
-          </div>
-        </div>
-        <p className="cost-boundary">
-          The supported cost report could not be produced. Roster structure is
-          unchanged.
-        </p>
-        <DiagnosticList diagnostics={summary.diagnostics} />
-      </section>
-    );
-  }
-
-  const activeTotals = summary.activeTotals;
-  const zeroTotals = summary.zeroTotals;
-  const excluded = summary.excludedCount;
-  const unresolved = summary.unresolvedSelectionCount;
-  return (
-    <section className="cost-summary" aria-labelledby="roster-cost-heading">
-      <div className="cost-summary-heading">
-        <div>
-          <p className="eyebrow">Read-only evaluation</p>
-          <h3 id="roster-cost-heading">Roster costs</h3>
-        </div>
-        <span
-          className="completeness-badge"
-          data-completeness={summary.completeness}
-        >
-          {summary.completeness === "complete"
-            ? "Complete supported view"
-            : "Incomplete supported view"}
-        </span>
-      </div>
-
-      {activeTotals.length === 0 ? (
-        <p className="empty-costs">
-          {activeTotals.length + zeroTotals.length === 0
-            ? "No supported numeric costs yet."
-            : "No non-zero supported costs yet."}
-        </p>
-      ) : (
-        <ul className="cost-total-list">
-          {activeTotals.map((total) => (
-            <li key={total.typeId}>
-              <strong>{formatNumber(total.value)}</strong>
-              <span>{total.name}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {zeroTotals.length > 0 && (
-        <details
-          className="cost-details zero-cost-details"
-          aria-label={`Zero-value source cost fields ${formatCount(
-            zeroTotals.length,
-            "field",
-          )}`}
-        >
-          <summary>
-            Zero-value source cost fields
-            <span>{formatCount(zeroTotals.length, "field")}</span>
-          </summary>
-          <ul className="zero-cost-list">
-            {zeroTotals.map((total) => (
-              <li key={total.typeId}>{total.name}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <p className="cost-boundary">
-        {summary.completeness === "complete"
-          ? "All applicable behavior supported by this evaluation scope is reflected in these totals."
-          : "These totals exclude unresolved data or behavior outside the supported evaluation scope."}
-      </p>
-
-      {(excluded > 0 ||
-        unresolved > 0 ||
-        summary.diagnostics.length > 0) && (
-        <details className="cost-details">
-          <summary>
-            Cost report details
-            <span>
-              {formatCount(summary.diagnostics.length, "diagnostic")}
-            </span>
-          </summary>
-          <dl>
-            <Detail label="Excluded costs" value={String(excluded)} />
-            <Detail label="Unresolved selections" value={String(unresolved)} />
-            <Detail
-              label="Diagnostics"
-              value={String(summary.diagnostics.length)}
-            />
-          </dl>
-          <DiagnosticList diagnostics={summary.diagnostics} />
-        </details>
-      )}
-    </section>
-  );
 }
 
 function RosterSelectionItem({

@@ -25,4 +25,16 @@ describe("phone-width layout contracts", () => {
   it("leaves sticky-navigation space above fragment targets", () => {
     expect(styles).toContain("html {\n  scroll-padding-top: 84px;\n}");
   });
+
+  it("keeps the player header figures shrinkable to the supported minimum", () => {
+    // The phone-width defect was a fixed grid track floor holding the document
+    // wider than the viewport. The header's figure grid is that same shape, so
+    // pin the min() that lets a figure fall to the container width instead of
+    // demanding 140 px it may not have at 320 px.
+    expect(styles).toContain(
+      ".player-header-figures {\n  display: grid;\n" +
+        "  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));",
+    );
+    expect(styles).toContain(".player-header-figure {\n  min-width: 0;");
+  });
 });
