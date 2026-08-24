@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (evaluation work budget guarded)
+## Current Status — 2026-08-24 (workspace presentation model established)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -54,12 +54,12 @@ diagnostic codes.
   disposable Grok writer, and Antigravity's headless browser limitation were
   exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **498 passed, 18 skipped (516)**.
+  `git diff --check` all pass. `pnpm test` is **501 passed, 18 skipped (519)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **516 passed**; without the variable the 18 corpus tests are skipped.
+  **519 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -72,8 +72,11 @@ diagnostic codes.
   usability audit has now been reconciled into explicit completed and residual
   rows in section F instead of one over-broad `Done` row. A synthetic
   135-selection workspace pass now has a timing-free CI work budget: its 19,275
-  indexed choice resolutions must stay at or below 20,000. The tested workspace
-  presentation model is the next bounded boundary.
+  indexed choice resolutions must stay at or below 20,000. The live workspace
+  now consumes one tested immutable presentation model for costs, violation
+  attention, configuration classification, recursive unit totals, and optional
+  active-selection ancestry. The compact points-and-problems player header is
+  the next bounded boundary.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -126,9 +129,17 @@ beside points; it hides generated occurrence IDs while retaining anchors; and
 it brings model quantities and selected model/wargear configuration out of the
 datasheet depth. Display-name/annotation incompleteness remains observable in
 Selection details rather than repeating a banner on every occurrence. The
-remaining header, presentation-model, configuration, unit-cost, editing-mode,
+remaining header, configuration, unit-cost, editing-mode,
 amount-control, loadout/Warlord, automatic-shape, and print-output outcomes are
 tracked separately in section F.
+
+The **workspace presentation model is Done**. One pure web-layer projection now
+owns headline-versus-zero costs, actionable validation attention, exact
+Configuration-versus-army classification, recursive top-level selection costs,
+and optional active-selection ancestry. It preserves the immutable session,
+occurrences, and same-snapshot source reports by reference. The current layout
+is intentionally unchanged; the compact points-and-problems header is its first
+visible consumer checkpoint.
 
 **Behaviour on a phone is Done.** At 390 x 844, a pinned Death Guard roster was
 configured through detachment, battle size, force disposition, Plague Marine
@@ -169,13 +180,13 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The first phone-width QA pass and deterministic CI performance budget are
-complete. The tested workspace presentation model is the new **Next** because
-the larger layout changes need one shared, tested projection of costs,
-validation priority, configuration classification, and active selection state.
-Whole-roster incremental evaluation stays Open and is not part of that
-checkpoint. Take the restored usability rows in the dependency order stated in
-section F rather than treating table position or raw status as priority.
+The first phone-width QA pass, deterministic CI performance budget, and tested
+workspace presentation model are complete. The compact points-and-problems
+player header is the new **Next** and should consume that shared projection
+without folding the later configuration split or unit-card restructure into the
+same checkpoint. Whole-roster incremental evaluation stays Open. Take the
+restored usability rows in the dependency order stated in section F rather than
+treating table position or raw status as priority.
 
 ### A. Display-fidelity modifiers
 
@@ -347,8 +358,8 @@ QA before classifying or implementing the discrepancy.
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
-| Tested workspace presentation model | **Next** | the workspace still derives presentation directly from the live session and reports; only print has a formal immutable view model. Introduce a tested workspace projection before making the larger layout changes below |
-| Compact points-and-problems player header; remove remaining evaluator chrome | Open | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
+| Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
+| Compact points-and-problems player header; remove remaining evaluator chrome | **Next** | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
 | Separate configuration from army units | Open | the add browser groups `Configuration` separately, but added configuration and units still share one selected-roster tree |
 | Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
 | Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
@@ -7366,3 +7377,89 @@ or external publication occurred.
 and test the immutable projection that later header, configuration split,
 costed-unit, and shop/editor work will consume without beginning those visible
 restructures yet.
+
+## Completed Assignment — Workspace Presentation Model, 2026-08-24
+
+Baseline `9c3faa94c2f07a3eb8a1f10bbac06532a9806eac`; resulting implementation
+commit `a494d0e` (`feat: add workspace presentation model`). This was the next
+approved close product checkpoint after the deterministic evaluation budget.
+
+### What changed
+
+`apps/web/src/roster-workspace-model.ts` now projects one immutable local roster
+session plus its root-choice, cost, and supported-validation reports into a
+single reader-facing model. It centralises:
+
+- non-zero headline costs while retaining zero-value source fields;
+- supported validity/completeness counts and violated-selection attention;
+- exact `Configuration` root classification, with unknown and uncategorized
+  roots retained in the army section;
+- original-order selected roots split into configuration and army collections;
+- recursively aggregated included costs for every selected subtree; and
+- exact active-selection and ancestor state when a later editor supplies an
+  active occurrence ID.
+
+The model retains the source reports and roster occurrences by reference. A
+failed report becomes an explicit unavailable presentation state without
+dropping selected occurrences. It allocates one projection node and one small
+cost accumulator per selection; `RosterOverview` memoizes the complete model by
+immutable session so autosave and unrelated action-state renders do not repeat
+that roster-sized work.
+
+The existing workspace now consumes this model for metrics, costs, validation
+priority, root groups, recursive selection traversal, and subtree-attention
+opening. Structural and constraint detail cards plus print export reuse the
+attached same-snapshot reports. No text, layout, navigation, or interaction was
+redesigned in this checkpoint.
+
+### Tests and decisions
+
+Three new synthetic tests pin the contract. A Base Unit plus Child Upgrade
+projects **15 Points**, retains **0 Supply**, aggregates the child's 5 points
+into its top-level unit, and marks child-active ancestry. The initialization
+fixture keeps `Units` and `Uncategorized` in the army section while separating
+`Configuration`, and promotes a known Manual Group violation to attention. A
+third case proves unavailable reports remain explicit while the selected tree
+survives.
+
+Putting this model in `evaluation`, `roster-model`, or `roster-builder` was
+rejected because headline zero filtering, configuration grouping, attention,
+and active editor state are presentation policy. Leaving the derivations in
+React was also rejected: each upcoming layout checkpoint would otherwise
+repeat and potentially diverge on the same rules. Runtime freezing and a new
+state store were unnecessary; the source session and reports are already
+immutable snapshots, and readonly projection types preserve that contract.
+
+No Reference Behavior QA or delegation was needed. The checkpoint neither
+classifies a New Recruit discrepancy nor changes BattleScribe semantics, and
+the active lead retained the tightly coupled model/component/test edit because
+another writer offered no clear advantage.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **501 passed, 18 skipped (519 total)** across 53 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, clean and
+  intentionally three commits behind its moving `origin/main` — **519 passed**
+  across 53 test files; all 46 JSON documents remained external and gitignored.
+- Production build succeeded with only the existing large-chunk warning.
+- Pre-checkpoint remote refresh — baseline `HEAD` and `origin/main` both
+  `9c3faa94c2f07a3eb8a1f10bbac06532a9806eac`, divergence `0 0`, with only the
+  primary worktree.
+
+### What this did not do
+
+No evaluator, roster-model, builder, persistence, dependency, diagnostic,
+compatibility claim, corpus data, or New Recruit state changed. The compact
+header, selected-tree configuration split, collapsible costed unit cards,
+shop/editor modes, legal model controls, loadout/Warlord presentation, and
+print-output pass did not begin. No pull request, deployment, or external
+publication occurred.
+
+### Next recommended boundary
+
+**The compact points-and-problems player header.** Consume the workspace model
+to combine the prominent supported costs and known-problem count while
+preserving the independent completeness signal. Keep configuration separation
+and top-level unit-card restructuring for their following checkpoints.
