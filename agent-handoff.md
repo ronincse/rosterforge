@@ -52,9 +52,11 @@ diagnostic codes.
   `ad2934166b726314ad55ae2db3f95ae4db655b59` and agreed: clean checkout, `HEAD`
   equal to `origin/main`, divergence `0 0`, only the primary worktree, no stash,
   no concurrent writer, and a roadmap `Next` matching the transfer record. The
-  last product checkpoint remains
-  `e7c872509e02e8eb766a6f857dea09ec2d984f1f`, with no later application change.
-  Returning the lead to Codex uses the same procedure.
+  transfer itself was taken at product baseline
+  `e7c872509e02e8eb766a6f857dea09ec2d984f1f`. The last product checkpoint is now
+  the player header, whose application commit is `5f5db22` and whose checkpoint
+  completed at `7a1010a`; the two workflow checkpoints after it changed no
+  application code. Returning the lead to Codex uses the same procedure.
 - **GitHub CLI.** `gh` 2.97.0 is **working and authenticated** from a Claude
   Code session: `gh auth status` shows the `ronincse` keyring token with
   `gist, read:org, repo, workflow`, `gh api rate_limit` returned 4,994 of 5,000
@@ -80,9 +82,12 @@ diagnostic codes.
   Copilot. Bounded New Recruit Reference Behavior QA goes to a verified
   browser-capable native subagent of the active lead, with that lead as the
   direct fallback and final classifier; **both lanes are verified for Codex and
-  for Claude**. Antigravity independently analyzes captured QA evidence and can
-  never be the executor, because New Recruit's static HTML carries none of its
-  rendered state. Native spawning for both leads, lead and child browser
+  for Claude**. Antigravity independently analyzes captured QA evidence; the
+  installed headless `agy` 1.1.19 client verified on 2026-08-24 exposes only
+  static HTTP retrieval, which cannot reach New Recruit's rendered state, so it
+  is not an executor **at that version**. The lane stays capability-gated rather
+  than closed by policy: re-probe after an upgrade and record what it can
+  actually do. Native spawning for both leads, lead and child browser
   actuation for both, all four external read paths, and one disposable Grok
   writer were exercised. The Codex CLI is a documented delegated specialist
   under `--sandbox read-only`, sharing the Codex lead's quota, and read-only
