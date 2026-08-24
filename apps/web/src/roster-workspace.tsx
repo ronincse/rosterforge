@@ -50,6 +50,7 @@ import {
 import {
   createRosterWorkspaceViewModel,
   type RosterWorkspaceSelection,
+  type RosterWorkspaceSelectionCosts,
   type RosterWorkspaceViewModel,
 } from "./roster-workspace-model.js";
 import {
@@ -291,6 +292,7 @@ export function RosterOverview({
                 anchorId="roster-configuration-heading"
                 selections={workspace.selections.configuration}
                 amount={workspace.selections.configurationAmount}
+                collapsible={false}
                 session={session}
                 onAddChild={onAddChildSelection}
                 onRename={onRenameSelection}
@@ -302,6 +304,7 @@ export function RosterOverview({
                 anchorId="roster-army-heading"
                 selections={workspace.selections.army}
                 amount={workspace.selections.armyAmount}
+                collapsible
                 session={session}
                 onAddChild={onAddChildSelection}
                 onRename={onRenameSelection}
@@ -1274,6 +1277,7 @@ function RosterSelectionSection({
   anchorId,
   selections,
   amount,
+  collapsible,
   session,
   onAddChild,
   onRename,
@@ -1284,6 +1288,12 @@ function RosterSelectionSection({
   readonly anchorId: string;
   readonly selections: readonly RosterWorkspaceSelection[];
   readonly amount: number;
+  /**
+   * Army units collapse; configuration does not. Hiding the detachment,
+   * battle-size and force-disposition pickers behind a click would bury the
+   * first thing a player has to set.
+   */
+  readonly collapsible: boolean;
   readonly session: LocalRosterSession;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
@@ -1316,6 +1326,8 @@ function RosterSelectionSection({
             key={selection.occurrence.id}
             session={session}
             selectionModel={selection}
+            topLevel
+            collapsible={collapsible}
             onAddChild={onAddChild}
             onRename={onRename}
             onSetAmount={onSetAmount}
@@ -1330,6 +1342,8 @@ function RosterSelectionSection({
 function RosterSelectionItem({
   session,
   selectionModel,
+  topLevel = false,
+  collapsible = false,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1337,6 +1351,10 @@ function RosterSelectionItem({
 }: {
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
+  /** Shows the recursive cost the projection already computed for this node. */
+  readonly topLevel?: boolean;
+  /** Collapses everything below the occurrence row behind a disclosure. */
+  readonly collapsible?: boolean;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1396,6 +1414,19 @@ function RosterSelectionItem({
   useEffect(() => {
     if (childrenContainAttention) setChildrenOpen(true);
   }, [childrenContainAttention]);
+  const cardBodyId = useId();
+  // A collapsible unit starts closed so a fifteen-unit army is a scannable
+  // list of names and costs rather than fifteen open datasheets. The one
+  // exception is the same as the child rule above: a unit holding a known
+  // violation opens itself, because a problem nobody can see is worse than a
+  // longer page. Unresolved bounds stay in the checks and do not expand it.
+  const [cardOpen, setCardOpen] = useState(
+    () => !collapsible || selectionModel.containsAttention,
+  );
+  useEffect(() => {
+    if (collapsible && selectionModel.containsAttention) setCardOpen(true);
+  }, [collapsible, selectionModel.containsAttention]);
+  const bodyVisible = !collapsible || cardOpen;
   return (
     <li
       className="roster-selection-item"
@@ -1407,134 +1438,184 @@ function RosterSelectionItem({
     >
       <div className="selection-occurrence">
         <span>
-          <strong>{annotatedName}</strong>
+          {collapsible ? (
+            <button
+              type="button"
+              className="unit-card-toggle"
+              aria-expanded={cardOpen}
+              aria-controls={cardBodyId}
+              onClick={() => setCardOpen((current) => !current)}
+            >
+              <strong>{annotatedName}</strong>
+            </button>
+          ) : (
+            <strong>{annotatedName}</strong>
+          )}
         </span>
-        <button
-          type="button"
-          aria-label={`Remove ${name}`}
-          onClick={() => onRemove(selection.id)}
-        >
-          Remove
-        </button>
-      </div>
-      {childChoices.ok && childChoices.value.direct.length > 0 && (
-        <div className="child-choice-list">
-          {childChoices.value.direct.map((direct) => {
-            const choiceName = selectionChoiceLabel(direct.choice);
-            const status = directChoiceStatus(direct);
-            const finiteMaximum =
-              direct.maximum !== undefined &&
-              Number.isFinite(direct.maximum)
-                ? direct.maximum
-                : undefined;
-            return (
-              <span
-                className="direct-child-choice"
-                key={selectionChoiceKey(direct.choice)}
-                data-completeness={direct.completeness}
-              >
-                <button
-                  type="button"
-                  aria-label={`Add ${choiceName} to ${name}`}
-                  disabled={
-                    finiteMaximum !== undefined &&
-                    rosterSelectionsAmount(direct.selected) >= finiteMaximum
-                  }
-                  onClick={() =>
-                    onAddChild(selection.id, direct.choice)
-                  }
-                >
-                  Add {choiceName}
-                </button>
-                {status !== undefined && <small>{status}</small>}
-              </span>
-            );
-          })}
-        </div>
-      )}
-      {childChoices.ok && childChoices.value.groups.length > 0 && (
-        <div className="child-choice-groups">
-          {childChoices.value.groups.map((group) => (
-            <RosterSelectionChoiceGroup
-              key={selectionChoiceKey(group.group)}
-              session={session}
-              parent={selection}
-              parentName={name}
-              group={group}
-              onChoose={onAddChild}
-            />
-          ))}
-        </div>
-      )}
-      {!childChoices.ok && (
-        <DiagnosticList diagnostics={childChoices.diagnostics} />
-      )}
-      {/* Squad size lives on the model entry. Keep the amount editor here,
-          not inside Selection details, so it is reachable without opening the
-          datasheet. */}
-      {choice?.kind === "selectionEntry" && choice.type === "model" && (
-        <SelectionAmountEditor
-          selection={selection}
-          defaultAmount={choice.defaultAmount}
-          step={choice.step}
-          onSetAmount={onSetAmount}
-          label="Models in this squad"
-        />
-      )}
-      {choice !== undefined && (
-        <RosterSelectionDetails
-          session={session}
-          choice={choice}
-          selection={selection}
-          onRename={onRename}
-          onSetAmount={onSetAmount}
-          displayNameIncomplete={nameIncomplete || annotationIncomplete}
-        />
-      )}
-      {selection.selections.length > 0 && (
-        <details
-          className="selection-children"
-          open={childrenOpen}
-          aria-label={`Models, wargear, Warlord and options ${formatCount(
-            selection.selections.length,
-            "selection",
-          )}`}
-        >
-          {/* Same controlled summary as Selection details: jsdom does not
-              toggle `<details>`, so a native click would set `open` without
-              rendering the lazy children. */}
-          <summary
-            onClick={(event) => {
-              event.preventDefault();
-              setChildrenOpen((current) => !current);
-            }}
+        <div className="selection-occurrence-actions">
+          {topLevel && <SelectionCostTotals costs={selectionModel.costs} />}
+          <button
+            type="button"
+            aria-label={`Remove ${name}`}
+            onClick={() => onRemove(selection.id)}
           >
-            Configure models, wargear &amp; options
-            <span>
-              {formatCount(selection.selections.length, "selection")}
-            </span>
-          </summary>
-          {/* Same reason as the details panel: a collapsed list is still
-              built, and a squad of five models starts collapsed. Rendering it
-              only while open keeps a closed squad off the render path. */}
-          {childrenOpen && (
-            <ul>
-              {selectionModel.selections.map((child) => (
-                <RosterSelectionItem
-                  key={child.occurrence.id}
+            Remove
+          </button>
+        </div>
+      </div>
+      {/* Rendering the body only while open keeps a closed unit's child
+          choices, datasheet, and subtree off the render path entirely, the
+          same reason the children list below is lazy. */}
+      {bodyVisible && (
+        <div className="selection-card-body" id={cardBodyId}>
+          {childChoices.ok && childChoices.value.direct.length > 0 && (
+            <div className="child-choice-list">
+              {childChoices.value.direct.map((direct) => {
+                const choiceName = selectionChoiceLabel(direct.choice);
+                const status = directChoiceStatus(direct);
+                const finiteMaximum =
+                  direct.maximum !== undefined &&
+                  Number.isFinite(direct.maximum)
+                    ? direct.maximum
+                    : undefined;
+                return (
+                  <span
+                    className="direct-child-choice"
+                    key={selectionChoiceKey(direct.choice)}
+                    data-completeness={direct.completeness}
+                  >
+                    <button
+                      type="button"
+                      aria-label={`Add ${choiceName} to ${name}`}
+                      disabled={
+                        finiteMaximum !== undefined &&
+                        rosterSelectionsAmount(direct.selected) >= finiteMaximum
+                      }
+                      onClick={() =>
+                        onAddChild(selection.id, direct.choice)
+                      }
+                    >
+                      Add {choiceName}
+                    </button>
+                    {status !== undefined && <small>{status}</small>}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          {childChoices.ok && childChoices.value.groups.length > 0 && (
+            <div className="child-choice-groups">
+              {childChoices.value.groups.map((group) => (
+                <RosterSelectionChoiceGroup
+                  key={selectionChoiceKey(group.group)}
                   session={session}
-                  selectionModel={child}
-                  onAddChild={onAddChild}
-                  onRename={onRename}
-                  onSetAmount={onSetAmount}
-                  onRemove={onRemove}
+                  parent={selection}
+                  parentName={name}
+                  group={group}
+                  onChoose={onAddChild}
                 />
               ))}
-            </ul>
+            </div>
           )}
-        </details>
+          {!childChoices.ok && (
+            <DiagnosticList diagnostics={childChoices.diagnostics} />
+          )}
+          {/* Squad size lives on the model entry. Keep the amount editor here,
+              not inside Selection details, so it is reachable without opening the
+              datasheet. */}
+          {choice?.kind === "selectionEntry" && choice.type === "model" && (
+            <SelectionAmountEditor
+              selection={selection}
+              defaultAmount={choice.defaultAmount}
+              step={choice.step}
+              onSetAmount={onSetAmount}
+              label="Models in this squad"
+            />
+          )}
+          {choice !== undefined && (
+            <RosterSelectionDetails
+              session={session}
+              choice={choice}
+              selection={selection}
+              onRename={onRename}
+              onSetAmount={onSetAmount}
+              displayNameIncomplete={nameIncomplete || annotationIncomplete}
+            />
+          )}
+          {selection.selections.length > 0 && (
+            <details
+              className="selection-children"
+              open={childrenOpen}
+              aria-label={`Models, wargear, Warlord and options ${formatCount(
+                selection.selections.length,
+                "selection",
+              )}`}
+            >
+              {/* Same controlled summary as Selection details: jsdom does not
+                  toggle `<details>`, so a native click would set `open` without
+                  rendering the lazy children. */}
+              <summary
+                onClick={(event) => {
+                  event.preventDefault();
+                  setChildrenOpen((current) => !current);
+                }}
+              >
+                Configure models, wargear &amp; options
+                <span>
+                  {formatCount(selection.selections.length, "selection")}
+                </span>
+              </summary>
+              {/* Same reason as the details panel: a collapsed list is still
+                  built, and a squad of five models starts collapsed. Rendering it
+                  only while open keeps a closed squad off the render path. */}
+              {childrenOpen && (
+                <ul>
+                  {selectionModel.selections.map((child) => (
+                    <RosterSelectionItem
+                      key={child.occurrence.id}
+                      session={session}
+                      selectionModel={child}
+                      onAddChild={onAddChild}
+                      onRename={onRename}
+                      onSetAmount={onSetAmount}
+                      onRemove={onRemove}
+                    />
+                  ))}
+                </ul>
+              )}
+            </details>
+          )}
+        </div>
       )}
     </li>
+  );
+}
+
+/**
+ * The recursive cost the projection already folded for one selection.
+ *
+ * Reads `RosterWorkspaceSelection.costs`, which includes descendants, so a
+ * squad's total already carries its wargear. Zero and unavailable totals render
+ * nothing: a matched-play list should not grow a row of `0 Crusade: Experience`
+ * beside every unit, and the header's disclosure remains where the full source
+ * cost picture lives.
+ */
+function SelectionCostTotals({
+  costs,
+}: {
+  readonly costs: RosterWorkspaceSelectionCosts;
+}) {
+  if (!costs.available) return null;
+  const active = costs.totals.filter(({ value }) => value !== 0);
+  if (active.length === 0) return null;
+  return (
+    <span className="selection-cost-totals">
+      {active.map((total) => (
+        <span key={total.typeId}>
+          <strong>{formatNumber(total.value)}</strong> {total.name}
+        </span>
+      ))}
+    </span>
   );
 }
 

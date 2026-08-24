@@ -477,6 +477,16 @@ selected-roster tree renders top-level selections in two titled sections,
 classification rather than deciding membership itself. A section with no
 entries renders nothing, so a roster without configuration shows its army
 rather than an empty heading.
+
+Army unit cards are collapsible; configuration cards are not, because hiding
+the detachment, battle-size and force-disposition pickers would bury the first
+thing a player sets. A collapsible card starts closed and renders its body only
+while open, keeping a closed unit's child choices, datasheet, and subtree off
+the render path — the same laziness the nested children list already used. It
+opens itself when it holds a known violation, so a problem is never hidden
+behind a disclosure; unresolved bounds stay in the checks and do not expand it.
+The always-visible row carries the unit's recursive cost from the projection,
+so a collapsed army still shows what each unit is worth.
 Anchor navigation and pane state are UI concerns only and never enter the
 immutable session, history, or draft.
 

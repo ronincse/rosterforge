@@ -1648,7 +1648,13 @@ h1 {
   font-size: 0.76rem;
 }
 
-.selection-occurrence > button {
+.selection-occurrence-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selection-occurrence-actions > button {
   min-height: 30px;
   padding: 0 8px;
   color: #7b3e36;
@@ -1658,6 +1664,53 @@ h1 {
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 800;
+}
+
+/* The whole unit name is the disclosure control, so the hit target is the
+   width of the card rather than a separate chevron — the difference between
+   usable and not at 320 px. It reads as text, not as a button. */
+.unit-card-toggle {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.unit-card-toggle::before {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--muted);
+  content: "\25B8";
+  font-size: 0.6rem;
+}
+
+.unit-card-toggle[aria-expanded="true"]::before {
+  content: "\25BE";
+}
+
+.selection-cost-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.selection-cost-totals strong {
+  display: inline;
+  color: var(--forest);
+  font-size: 0.72rem;
+}
+
+.selection-card-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  min-width: 0;
 }
 
 .selection-annotation-completeness {
@@ -2296,6 +2349,18 @@ footer {
 }
 
 @media (max-width: 560px) {
+  /* The unit name is the disclosure control, and sharing its row with the cost
+     and Remove left it 78 px wide at the 320 px minimum — a two-line tap
+     target squeezed into a third of the card. Give the name the full width and
+     drop the actions onto their own row. */
+  .selection-occurrence {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .selection-occurrence-actions {
+    justify-content: space-between;
+  }
+
   .app-shell {
     width: min(100% - 24px, 1240px);
   }

@@ -37,4 +37,14 @@ describe("phone-width layout contracts", () => {
     );
     expect(styles).toContain(".player-header-figure {\n  min-width: 0;");
   });
+
+  it("gives the unit disclosure the full row on a phone", () => {
+    // Sharing its row with the cost and Remove button left the unit name — the
+    // disclosure control itself — 78 px wide at the 320 px minimum. Stacking
+    // the actions took it to 175 px. Pin the rule that does it.
+    expect(styles).toMatch(
+      /@media \(max-width: 560px\) \{[\s\S]*?\.selection-occurrence \{\n {4}grid-template-columns: minmax\(0, 1fr\);/u,
+    );
+    expect(styles).toContain(".unit-card-toggle {\n  display: block;\n  width: 100%;");
+  });
 });

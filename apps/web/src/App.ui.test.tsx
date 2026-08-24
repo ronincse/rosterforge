@@ -883,6 +883,34 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByRole("region", { name: "Configuration" }),
     ).toBeNull();
+
+    // The unit card carries its recursive cost in the always-visible row, so a
+    // collapsed army still shows what each unit is worth.
+    const unitCard = armySection.querySelector(".selection-cost-totals");
+    expect(unitCard?.textContent).toContain("80");
+    expect(unitCard?.textContent).toContain("Points");
+
+    // This squad holds a known violation, so it opens itself rather than
+    // hiding the problem behind a disclosure — the same attention rule the
+    // nested children list already used.
+    const unitToggle = within(armySection).getByRole("button", {
+      name: "Infantry Squad (Elite)",
+    });
+    expect(unitToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      armySection.querySelector(".selection-card-body"),
+    ).toBeTruthy();
+
+    // Collapsing takes the whole card body off the render path, not just out
+    // of view: a fifteen-unit army is a list of names and costs.
+    fireEvent.click(unitToggle);
+    expect(unitToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(armySection.querySelector(".selection-card-body")).toBeNull();
+    expect(
+      within(armySection).queryByText("Selection details"),
+    ).toBeNull();
+    fireEvent.click(unitToggle);
+    expect(unitToggle.getAttribute("aria-expanded")).toBe("true");
     expect(within(playerHeader).getByText("80")).toBeTruthy();
     expect(within(playerHeader).getByText("Points")).toBeTruthy();
     const zeroCosts = within(playerHeader).getByRole("group", {
