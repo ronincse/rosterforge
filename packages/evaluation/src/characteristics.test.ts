@@ -447,6 +447,36 @@ describe("roster profile characteristic display", () => {
     expect(report.completeness).toBe("complete");
   });
 
+  it("skips a guarded append when its guard is already present", () => {
+    const setup = characteristicSetup();
+
+    const report = successful(
+      evaluateRosterProfileCharacteristics(
+        setup.roster,
+        setup.context,
+        setup.owner,
+        profile(setup.ownerChoice, "profile-skip-if-present"),
+      ),
+    );
+
+    // Settled by observation on 2026-08-23. New Recruit renders the modifier
+    // as "append Keywords Sustained Hits 1 unless Sustained Hits in <target>",
+    // and the two strings differ: the guard is not the appended value.
+    expect(report.characteristics[0]).toMatchObject({
+      baseValue: "Lethal Hits, Sustained Hits 2",
+      // "Lethal Hits" is guarded and present, so it does not double. "Lance" is
+      // not present, so it lands. "Sustained Hits 1" is guarded on "Sustained
+      // Hits", which the base already carries as "Sustained Hits 2".
+      value: "Lethal Hits, Sustained Hits 2, Lance",
+    });
+    // A skipped append is an applied no-op, not a failure: an unapplied step
+    // would clear the whole characteristic.
+    expect(report.characteristics[0]?.steps.map(({ status }) => status)).toEqual(
+      ["applied", "applied", "applied"],
+    );
+    expect(report.completeness).toBe("complete");
+  });
+
   it("defaults an absent separator to a space, and joins onto an empty value", () => {
     const setup = characteristicSetup();
 

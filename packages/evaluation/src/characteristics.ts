@@ -1441,7 +1441,13 @@ function evaluateStep<
   }
   if (kind === "append") {
     const separator = appendSeparator(modifier);
-    if (modifier.value !== undefined) {
+    const guard = modifier.node.attributes["skipIfPresent"];
+    if (guard !== undefined && guard !== "" && input.includes(guard)) {
+      // The guard is already there, so the append is skipped and the value
+      // stands. An applied no-op rather than a failure, the same way a
+      // `replace` whose search term matches nothing passes through.
+      output = input;
+    } else if (modifier.value !== undefined) {
       // Appending onto an empty value emits no separator, the way any ordinary
       // join behaves. Confirmed against New Recruit on 2026-08-20: annotation
       // fields start empty, and a Manreaper carrying one displays
@@ -1978,6 +1984,29 @@ function unsupportedAttributes(
     "arg",
     "position",
   ]);
+  /**
+   * `skipIfPresent` guards an `append`: skip it when the guard string already
+   * occurs in the target value.
+   *
+   * Settled by observation on 2026-08-23, from New Recruit's own rendering of
+   * the modifier. A Death Guard Vector of Disease reads:
+   *
+   *   append Keywords Sustained Hits 1 unless Sustained Hits in
+   *   root-entry.self.entries.group.recursive.profiles.Melee Weapons
+   *
+   * Note the two strings differ. The guard is **not** the appended value — it
+   * appends "Sustained Hits 1" unless *any* "Sustained Hits" is already
+   * present, so a weapon with "Sustained Hits 2" is left alone. Three Death
+   * Guard modifiers rely on that, and an implementation that deduplicated the
+   * appended value would get every one of them wrong.
+   *
+   * 359 modifiers across 20 corpus files carry it. Until this was supported,
+   * each one made its step unapplied, which cleared the whole characteristic:
+   * the pinned Manreaper printed no Keywords at all.
+   */
+  if (modifier.type === "append") {
+    supported.add("skipIfPresent");
+  }
   // `join` is the separator `append` concatenates with, so it is part of that
   // operation rather than unrouted behavior. It stays unsupported on every
   // other operation, where it has no established meaning.

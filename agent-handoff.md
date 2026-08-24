@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-23 (evaluation performance)
+## Current Status — 2026-08-24 (product usability)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -39,12 +39,12 @@ diagnostic codes.
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **493 passed, 18 skipped (511)**.
+  `git diff --check` all pass. `pnpm test` is **494 passed, 18 skipped (512)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **511 passed**; without the variable the 18 corpus tests are skipped.
+  **512 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -67,9 +67,9 @@ diagnostic codes.
 
 The **characteristic operation surface is complete**: `set`, `append`,
 `increment`, `decrement`, `replace`, `floor`, and `ceil` all execute, with
-`position` placement, `affects` routing anchored at `scope`, and category
-filtering. `multiply`/`divide`/`modulo` are unsupported on purpose — the format
-defines them and the corpus uses none.
+`position` placement, `affects` routing anchored at `scope`, category filtering,
+and `skipIfPresent` guarding an append. `multiply`/`divide`/`modulo` are
+unsupported on purpose — the format defines them and the corpus uses none.
 
 Selection-level `annotation` is complete: direct and grouped modifiers execute,
 selections-terminus `affects` routes through a shared collector, and the
@@ -293,11 +293,11 @@ invisible to the whole test suite.
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
-| **`skipIfPresent` on modifiers** | **Next** | 359 modifiers across 20 files; unsupported, and it withholds printed values — the pinned Manreaper's Keywords are blank. Largest display gap. Pin the semantics against the wiki or an observation first |
+| `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
+| Usability findings from the QA pass | Open | the survivors of the external QA pass, none of them correctness: issue-list volume, internal IDs shown to the reader, Crusade cost fields on a matched-play roster, Warlord selection, child-model wargear discoverability, squad-size editing depth, and display-name banners. Presentation work, best taken as one pass rather than singly |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
-| `skipIfPresent` on modifiers | Open | **359 modifiers across 20 files**. Unsupported, and it now *withholds* printed values — the pinned Manreaper's Keywords went from resolved to blank. Largest single display gap |
-| Constraint `value="-1"` | Open | 48 corpus constraints, 43 `max` and 5 `min`. Almost certainly "no limit", but withheld rather than guessed |
+| **Constraint `value="-1"`** | **Next** | 48 corpus constraints, 43 `max` and 5 `min`. Almost certainly "no limit", but withheld rather than guessed. Settle it the way `skipIfPresent` was settled — the New Recruit wiki renders constraints, and the entry ID in the corpus is the URL |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
 | Behaviour on a phone | Open | never driven below desktop width |
@@ -6278,3 +6278,109 @@ pinned Manreaper's Keywords entirely. Largest remaining display gap. Its values
 are the appended keyword strings themselves, which reads as deduplication — but
 that is inference, so pin it against the New Recruit wiki or an observation
 before writing a rule.
+
+> **Corrected 2026-08-24.** "Its values are the appended keyword strings
+> themselves" is true of the sample that was in front of that entry, not of the
+> attribute. The Death Guard Vector of Disease appends `Sustained Hits 1` while
+> guarding on `Sustained Hits`. The deduplication reading was wrong; see the
+> entry below.
+
+
+## Completed Assignment — `skipIfPresent`, 2026-08-24
+
+Baseline `f09de47`; resulting implementation commit recorded below.
+
+### What this closes
+
+`skipIfPresent` was the largest remaining display gap: **359 modifiers across 20
+corpus files**, all of them `append`. Because an unsupported attribute leaves a
+step *unapplied*, and because only `set` discards the value it was handed, an
+unapplied append withheld the whole characteristic. The pinned Death Guard
+Manreaper's Keywords were **blank** — not "Lethal Hits missing", blank — and a
+corpus test existed only to document that degradation.
+
+### The semantics, observed rather than inferred
+
+The previous entry read the attribute as deduplication: its value is usually the
+same string being appended, so "append X unless X is already there". That is a
+plausible reading of the sample and it is **wrong**.
+
+New Recruit's wiki renders modifiers in prose, and every catalogue entry has a
+public URL whose ID is the same ID the corpus carries:
+`/wiki/wh40k-11e/warhammer-40%2C000-11th-edition/<catalogue>/<entry-id>/<slug>`.
+Two entries were read directly (through the browser — `WebFetch`'s summariser
+drops the profile tables):
+
+- **Lord of Contagion** `10a1-5896-98da-8c7c` —
+  `append Keywords Lance unless Lance in self.entries.group.recursive.profiles.Melee Weapons`
+- **Vector of Disease** `e29b-1c26-3345-3b95` —
+  `append Keywords Sustained Hits 1 unless Sustained Hits in root-entry.self.entries.group.recursive.profiles.Melee Weapons`
+
+The second settles it. The appended value is `Sustained Hits 1` and the guard is
+`Sustained Hits` — **different strings**. `skipIfPresent` is an independent
+guard, not a duplicate check. Three Death Guard modifiers depend on that
+difference: a weapon that already carries `Sustained Hits 2` must not also
+receive `Sustained Hits 1`, and a deduplication rule would have appended it.
+
+The rendered word is *unless*, and the target of "in" is the same target the
+append writes to. Nothing observed suggests the guard reads anywhere else.
+
+### The one design decision
+
+A skipped append is an **applied no-op**, not a refusal. The alternative —
+recording it unapplied — reuses existing machinery and is honest about "this
+modifier did not run", but it would blank the characteristic through the
+withholding rule above, which is exactly the bug being fixed. The precedent is
+already in the codebase: a `replace` whose search term matches nothing is
+recorded as applied, because the source *meant* nothing to change. Same here.
+
+`skipIfPresent` is added to the supported attribute set **only for `append`**.
+On any other operation it stays unsupported and still withholds, because nothing
+was observed about what it would mean there and the corpus has no instance.
+
+### Result on the pinned corpus
+
+The Manreaper's Keywords now read
+`Lethal Hits, Sustained Hits 1, Lance, Devastating Wounds` — resolved and
+`complete`, with no unapplied steps. `Sustained Hits 1` appears **once**. The
+corpus test that documented the blank was rewritten to assert restoration,
+including the single-occurrence count, so a future deduplication regression
+fails loudly.
+
+### Tests
+
+- `packages/evaluation/src/characteristics.test.ts` — a synthetic case covering
+  all three shapes at once on one profile: guard present and equal to the value
+  (skipped), guard absent (appended), and **guard present but different from the
+  value** (skipped). The third is the shape the corpus needs and the one a
+  deduplication implementation gets wrong.
+- Sabotage-verified: disabling the guard makes it fail.
+- `apps/web/src/bsdata-json.integration.test.ts` — the pinned Manreaper case,
+  inverted from documenting the degradation to asserting the restoration.
+
+The new fixture profile also required adding `profile-skip-if-present` to the
+render-order list in `apps/web/src/roster-session.test.ts`, which pins the whole
+fixture's profile order.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **494 passed, 18 skipped (512 total)**.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` — **512 passed**.
+
+### What this did not do
+
+Nothing was written for `skipIfPresent` on a non-`append` operation, and no
+guard scope other than "the value being appended to" was implemented. Both are
+absent from the corpus and unobserved; guessing either would repeat the mistake
+this entry corrects.
+
+### Next recommended boundary
+
+**Constraint `value="-1"`** — 48 corpus constraints, 43 `max` and 5 `min`. The
+standing reading is "no limit", but it has been withheld rather than guessed for
+the same reason `skipIfPresent` was. It is now cheap to settle: the New Recruit
+wiki renders constraints in the same prose, and the corpus entry ID is the URL.
+Find a `max="-1"` entry, read what the wiki says its limit is, then write the
+rule. If it is "no limit" and RosterForge currently treats it as a literal `-1`,
+any entry carrying one is reporting a bound that cannot be satisfied.

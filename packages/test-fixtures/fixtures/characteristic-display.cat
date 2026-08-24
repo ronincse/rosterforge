@@ -258,6 +258,34 @@
               join="" />
           </modifiers>
         </profile>
+        <!--
+          `skipIfPresent` guards an append: skip when the guard string is
+          already in the value. The guard is a *separate* string from the
+          appended value, which the third modifier below pins: it appends
+          "Sustained Hits 1" unless any "Sustained Hits" is present, so a
+          weapon already carrying "Sustained Hits 2" is left alone.
+        -->
+        <profile id="profile-skip-if-present" name="Skip If Present"
+          typeId="profile-type-unit" typeName="Unit">
+          <characteristics>
+            <characteristic name="Move"
+              typeId="characteristic-move">Lethal Hits, Sustained Hits 2</characteristic>
+            <characteristic name="Save"
+              typeId="characteristic-save">4+</characteristic>
+          </characteristics>
+          <modifiers>
+            <!-- Guard present: skipped, value unchanged. -->
+            <modifier type="append" field="characteristic-move"
+              value="Lethal Hits" join=", " skipIfPresent="Lethal Hits" />
+            <!-- Guard absent: appended. -->
+            <modifier type="append" field="characteristic-move"
+              value="Lance" join=", " skipIfPresent="Lance" />
+            <!-- Guard differs from the value, and is present: skipped. -->
+            <modifier type="append" field="characteristic-move"
+              value="Sustained Hits 1" join=", "
+              skipIfPresent="Sustained Hits" />
+          </modifiers>
+        </profile>
         <profile id="profile-append-empty" name="Append Empty"
           typeId="profile-type-unit" typeName="Unit">
           <characteristics>

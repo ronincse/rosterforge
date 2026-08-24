@@ -374,6 +374,13 @@
   empty, and chaining through successive appends; appends with no separator, an
   empty separator, or nothing to append onto stay preserved, diagnosed, and
   unapplied rather than producing a value the source does not mean
+- `skipIfPresent` on an `append`, a New Recruit extension: the append is skipped
+  when the named string is already in the value it would extend. The guard is a
+  **separate string from the appended value**, not a duplicate check — the Death
+  Guard Vector of Disease appends `Sustained Hits 1` unless `Sustained Hits` is
+  present, so a weapon already carrying `Sustained Hits 2` is left alone. A
+  skipped append is an applied no-op, the same way a `replace` whose search term
+  matches nothing is; treating it as a refusal would blank the characteristic
 - `join`, `arg`, and `position` treated as inert where the operation does not
   accept them, so copy-paste noise between modifiers does not withhold a step
 - Characteristic `replace` of the literal search term `arg` declares, deleting

@@ -1633,6 +1633,7 @@ describe("inspectLocalRosterSelectionCharacteristics", () => {
       "profile-arithmetic",
       "profile-arithmetic-refused",
       "profile-append",
+      "profile-skip-if-present",
       "profile-append-empty",
       "profile-extension-attributes",
       "profile-scoped",

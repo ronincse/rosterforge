@@ -2368,21 +2368,25 @@ describe.skipIf(realDataDirectory === undefined)(
           ),
         ).toMatchObject([{ status: "applied" }]);
 
-        // The printed value is nonetheless withheld, and this is a **known
-        // degradation** rather than the intended end state. At the 2026-08-23
-        // revision the Lord of Contagion carries two grouped appends with
-        // `skipIfPresent`, which this evaluator does not support; an unapplied
-        // step clears the value rather than printing a half-applied one. 359
-        // modifiers across 20 corpus files carry the attribute. See section A.
-        const withheld = keywords?.steps.filter(
-          (step) => step.status === "unapplied",
-        );
-        expect(withheld?.length).toBeGreaterThan(0);
-        expect(withheld).toMatchObject([
-          { grouped: true, issues: ["unsupportedAttributes"] },
-          { grouped: true, issues: ["unsupportedAttributes"] },
-        ]);
-        expect(keywords?.value ?? "").toBe("");
+        // The whole line resolves again. Before `skipIfPresent` was supported
+        // the Lord's two appends were unapplied, and an unapplied step clears
+        // the value, so this printed nothing at all.
+        expect(keywords?.completeness).toBe("complete");
+        for (const keyword of [
+          "Lethal Hits",
+          "Sustained Hits 1",
+          "Lance",
+          "Devastating Wounds",
+        ]) {
+          expect(keywords?.value ?? "").toContain(keyword);
+        }
+        // Guarded appends run once, not twice.
+        expect(
+          (keywords?.value ?? "").split("Sustained Hits 1").length - 1,
+        ).toBe(1);
+        expect(
+          keywords?.steps.filter((step) => step.status === "unapplied"),
+        ).toEqual([]);
 
         // Stone's screenshot shows this weapon's S raised by one. That modifier
         // is the only one targeting S, so unlike A -- which also carries an
