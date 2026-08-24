@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (product usability and agent workflow)
+## Current Status — 2026-08-24 (phone-width usability complete)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -54,23 +54,22 @@ diagnostic codes.
   disposable Grok writer, and Antigravity's headless browser limitation were
   exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **495 passed, 18 skipped (513)**.
+  `git diff --check` all pass. `pnpm test` is **497 passed, 18 skipped (515)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **513 passed**; without the variable the 18 corpus tests are skipped.
+  **515 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** Product usability, measured against real lists. The QA-pass
-  presentation checkpoint is complete: checks prioritize known violations,
-  occurrence IDs no longer leak into reader-facing cards, zero-value campaign
-  fields are collapsed, and model/wargear configuration, squad size, and
-  display-name notices are reachable at the right depth. The next boundary is
-  the first phone-width QA pass; see section F.
+- **Active area.** Product usability, measured against real lists. The first
+  phone-width pass is complete: a real Death Guard add/configure/amount/check
+  path fits 390 px and the 320 px supported minimum without horizontal overflow,
+  and sticky workspace links leave their targets visible. The next bounded
+  boundary is the CI performance budget in section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -123,11 +122,13 @@ it brings model quantities and selected model/wargear configuration out of the
 datasheet depth. Display-name/annotation incompleteness remains observable in
 Selection details rather than repeating a banner on every occurrence.
 
-The current **Next is behaviour on a phone**, in section F. The shell has a
-responsive fallback, but nobody has driven a real roster below desktop width.
-This is still presentation judgement rather than data semantics: test the
-actual add/configure/check path at phone width before deciding which density or
-ordering changes are needed.
+**Behaviour on a phone is Done.** At 390 x 844, a pinned Death Guard roster was
+configured through detachment, battle size, force disposition, Plague Marine
+wargear, model amount, and supported checks. Repository diagnostics had made the
+document 431 px wide, and fragment links landed headings under the 47 px sticky
+nav. Shrinkable grid tracks and an 84 px document scroll offset now keep the
+same live roster inside both 390 px and the 320 px supported minimum. The next
+bounded item is a performance budget that runs in CI; see section F.
 
 Nested automatic groups and unit-typed automatic sub-units remain low priority
 because none of the five modifier-driven pinned groups uses either shape.
@@ -160,9 +161,10 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The 2026-08-24 agent-workflow checkpoints and Reference Behavior QA lane
-correction changed no product behavior, so no roadmap row moved. The first
-phone-width QA pass remains **Next**.
+The first phone-width QA pass is complete. The CI performance budget is the new
+**Next** because it is the smallest independent guard remaining in the active
+product-usability area; whole-roster incremental evaluation stays Open and is
+not part of that checkpoint.
 
 ### A. Display-fidelity modifiers
 
@@ -331,8 +333,8 @@ invisible to the whole test suite.
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
-| Behaviour on a phone | **Next** | never driven below desktop width; exercise a real add/configure/check path before changing the responsive layout |
-| A budget test that runs in CI | Open | the new identity guard catches this regression; nothing catches a different one |
+| Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
+| A budget test that runs in CI | **Next** | the new identity guard catches this regression; nothing catches a different one; keep the checkpoint to one deterministic budget guard |
 
 ### Open questions needing the owner
 
@@ -7015,3 +7017,85 @@ capability only and did not construct or modify a New Recruit roster.
 **Behaviour on a phone**, unchanged. Drive a real roster through add,
 configure, amount, and checks at a phone viewport before changing responsive
 density, ordering, or disclosure depth.
+
+## Completed Assignment — Phone-Width Roster Usability, 2026-08-24
+
+Baseline `60edfb32fff07f719be612a47fb825a8be4605bd`; resulting implementation
+commit `6802773` (`fix: contain phone-width roster layout`). This was one bounded
+product-usability checkpoint.
+
+### Real-roster QA and findings
+
+Codex used the browser directly at a 390 x 844 viewport against the pinned
+BSData source at `04c62fcd041b3808c39d5c46fd677c704027b979`. The live scenario
+loaded Chaos - Death Guard revision 10 and its six dependencies, created an Army
+Roster, selected Virulent Vectorium, Incursion, and Take and Hold, added Plague
+Marines, selected a power fist for the champion, changed one Plague Marine model
+amount from 1 to 2, and followed the Checks workspace link. The supported view
+moved from two known structural violations after adding the unit to zero after
+the wargear and amount edits; 90 points and 3 Detachment Points remained visible.
+
+Two presentation defects were measured:
+
+- Long repository diagnostic codes expanded an implicit grid track. At a 390 px
+  viewport the document was 431 px wide, produced horizontal scrolling, and
+  clipped the three-column workspace navigation.
+- Roster, Add units, Checks, and validation-detail fragment links placed their
+  target at viewport `top: 0`, directly under the 47 px sticky workspace nav.
+
+This was RosterForge presentation QA, not a New Recruit semantic discrepancy,
+so Reference Behavior QA was not invoked and no parity classification was made.
+The lead kept implementation local; a delegate would have required a separate
+data/browser setup without a concrete analysis or review advantage for this
+small CSS fix.
+
+### What changed and why
+
+- Diagnostic lists now use explicit shrinkable grid tracks, their content track
+  uses `minmax(0, 1fr)`, and monospace diagnostic codes may wrap anywhere.
+- The remote-source single-column mobile grid also uses `minmax(0, 1fr)` rather
+  than `1fr`, whose automatic minimum retained the long code's min-content width.
+- The document reserves 84 px above fragment targets. After the change every
+  workspace and validation-detail target measured at `top: 84`, below the 47 px
+  sticky nav.
+- `apps/web/src/styles.test.ts` pins those layout declarations because jsdom
+  does not calculate viewport layout. `docs/compatibility.md` now records the
+  browser-verified mobile boundary.
+
+Hiding or truncating diagnostics was rejected because the exact code is useful
+support evidence. Clipping horizontal overflow at the document was rejected
+because it would conceal a layout defect rather than make controls fit. A wider
+responsive redesign was unnecessary: after correcting intrinsic sizing, the
+existing ordered one-column roster layout completed the real path without
+another density or disclosure change.
+
+### Verification
+
+- Post-fix browser measurement at 390 x 844: document width **375 px** within a
+  390 px viewport, horizontal offset **0**, and all three workspace targets at
+  **84 px** below the viewport top. Browser console: no warnings or errors.
+- Post-fix minimum-width measurement at 320 x 568: document width **320 px**,
+  horizontal offset **0**, and both validation-detail targets at **84 px**.
+- Focused `App.ui.test.tsx` plus `styles.test.ts` — **15 passed**.
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **497 passed, 18 skipped (515 total)** across 51 test
+  files; production build succeeded with only the existing large-chunk warning.
+- Pinned corpus checkout clean at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`; complete suite — **515 passed**
+  across 51 test files.
+- Pre-checkpoint remote refresh — baseline `HEAD` and `origin/main` both
+  `60edfb32fff07f719be612a47fb825a8be4605bd`, divergence `0 0`, with only the
+  primary worktree.
+
+### What this did not do
+
+No roster command, evaluation, validation, persistence, import, or BattleScribe
+semantic behavior changed. The checkpoint did not redesign desktop layout,
+change information density, add a device-specific navigation mode, save the QA
+roster, modify New Recruit state, or begin any other roadmap item.
+
+### Next recommended boundary
+
+**A deterministic CI performance budget**, as one close checkpoint. Guard one
+existing measured hot path without beginning whole-roster incremental
+evaluation or expanding into a general benchmark framework.
