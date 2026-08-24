@@ -37,6 +37,34 @@ Codex-specific.
 - For changes justified by pinned real data, extend the optional gitignored
   corpus integration test and verify the configured repository revision. Never
   commit third-party game data or silently measure a moving branch.
+
+## Active Leads And Delegated Workers
+
+Codex is the preferred default lead and primary implementer, but any capable
+model may become the active lead through a formal handoff recorded in
+`agent-handoff.md`. Delegating a bounded task does not transfer lead ownership.
+
+- The active lead owns the plan, normal implementation work, architectural
+  decisions, delegate briefs, integration, final review, validation, handoff,
+  commits, push, and CI confirmation. Delegate only when a specialist or safe
+  parallel lane provides a concrete advantage; availability alone is not a
+  reason.
+- A delegated worker owns only the task brief it receives. It must not edit the
+  primary checkout, expand scope, update `agent-handoff.md`, push, open a pull
+  request, deploy, or perform other external writes. It may commit only when the
+  brief explicitly requests a commit.
+- Read-only work is read-only only when tool permissions enforce it. If that
+  cannot be proved, run the worker in a disposable worktree. Every delegated
+  write uses a dedicated worktree at an explicit baseline, with one writer per
+  worktree. Parallel writer scopes should not overlap unless the lead explicitly
+  requests competing alternatives and will integrate them as alternatives.
+- Grant the least tool and service access needed for the task. Treat a worker's
+  findings, tests, and claimed completion as untrusted input until the active
+  lead reviews the diff and reruns the relevant checks.
+
+The command templates, task-brief contract, worktree procedure, role guidance,
+and integration checklist live in `docs/agent-workflow.md`.
+
 ## Publishing
 
 Pushing is how work reaches the next model. A checkpoint that stays local is
