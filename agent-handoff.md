@@ -7219,3 +7219,77 @@ Recruit scenario, pull request, deployment, or external publication occurred.
 **A deterministic CI performance budget**, unchanged. Keep it one close
 checkpoint; the restored usability rows are now visible for later selection
 without expanding this checkpoint into implementation.
+
+## Completed Assignment — Usability Roadmap Sequencing, 2026-08-24
+
+Baseline `ab54637c285a511dc7c502f6eae13cdc0fe4254e`; resulting roadmap commit
+`9d62150` (`docs: sequence the usability roadmap`). This was a second bounded
+documentation-only audit requested after the restored residuals exposed stale
+corpus claims and an unordered set of otherwise valid `Open` rows.
+
+### What changed
+
+- The Dark Angels cost row now records the current evidence: all sixteen unit
+  costs match the GW-exported list when Inner Circle Companions uses the list's
+  six models. The two former source-data discrepancies disappeared at the
+  current corpus pin.
+- The obsolete `Community data can disagree with GW points — Open` row was
+  removed. Its surviving diagnosis is `Done`: RosterForge had read stale data
+  faithfully, and the implemented product response is to surface source
+  freshness rather than claim a point-by-point GW comparison it cannot perform.
+- Per-file update dates moved from `Open` to `Deferred`; the shipped
+  repository-wide freshness signal avoids 46 GitHub requests, and no current
+  decision needs per-file precision.
+- Unicode-normalised name matching moved from `Open` to `Deferred` until
+  `.ros`, cross-tool import, or another real external-name consumer exists.
+- The deterministic CI budget remains `Next` and now sits beside the measured
+  performance work it protects. After it, section F explicitly sequences the
+  tested workspace presentation model, compact header, configuration split,
+  collapsible costed units, shop/editor focus, legal model controls,
+  loadout/Warlord presentation, and print usability.
+
+### Decisions and rejected alternatives
+
+Leaving the old GW rows as historical context was rejected because the roadmap
+is authoritative current work, while the append-only research entries already
+preserve the old 285/85 measurements. A future community-data mismatch remains
+possible, but RosterForge has no independent GW value source; keeping an `Open`
+comparison row would promise a capability with no defined input.
+
+The workspace presentation model comes before visible restructuring even though
+it changes fewer pixels. The following UI checkpoints otherwise risk deriving
+the same costs, validation priority, configuration classification, and active
+selection state independently in components. Whole-roster incremental
+evaluation stays `Open` but non-urgent, and the low-priority automatic shapes
+remain outside this sequence unless new evidence changes their rank.
+
+No Reference Behavior QA was needed: the corrected points facts come from the
+already-pinned corpus update and the sequencing is a project decision, not a
+New Recruit discrepancy classification. The active lead kept the one-file edit
+local because delegation offered no concrete advantage.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **497 passed, 18 skipped (515 total)** across 51 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, clean and
+  intentionally three commits behind its moving `origin/main` — **515 passed**
+  across 51 test files.
+- Production build succeeded with only the existing large-chunk warning.
+- Pre-checkpoint remote refresh — baseline `HEAD` and `origin/main` both
+  `ab54637c285a511dc7c502f6eae13cdc0fe4254e`, divergence `0 0`, with only the
+  primary worktree.
+
+### What this did not do
+
+No application code, test, dependency, build configuration, architecture
+boundary, compatibility claim, diagnostic, corpus data, product behavior, or
+New Recruit state changed. No restored product residual began, and no pull
+request, deployment, or external publication occurred.
+
+### Next recommended boundary
+
+**A deterministic CI performance budget**, unchanged. Keep it one close guard
+over an existing measured hot path; do not begin the presentation model or
+whole-roster incremental evaluation in the same checkpoint.
