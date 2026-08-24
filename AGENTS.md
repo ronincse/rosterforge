@@ -128,10 +128,18 @@ was later disproved by evidence. Prefer, in this order:
 BattleScribe schema and release notes will not describe it.
 
 Interactive New Recruit comparisons follow the Reference Behavior QA lane in
-`docs/agent-workflow.md`. New Recruit is a moving reference: record data and
-version evidence, and never classify a difference as a RosterForge defect until
-the active lead distinguishes catalogue drift, intentional differences, known
-unsupported behavior, roadmap work, and an actual behavioral defect.
+`docs/agent-workflow.md`. Prefer a browser-capable native Codex subagent for a
+bounded interactive scenario after verifying its browser tool in the current
+environment; if that capability is unavailable, the active Codex lead performs
+the browser work directly. Sandbox inheritance does not prove browser-plugin
+inheritance. The installed headless Antigravity client analyzes captured steps,
+screenshots, IDs, observations, and corpus evidence independently but is not the
+interactive executor; use Claude for difficult semantic discrepancies needing
+deep repository or data-format analysis. New Recruit is a moving reference:
+record data and version evidence, and never classify a difference as a
+RosterForge defect until the active lead distinguishes catalogue drift,
+intentional differences, known unsupported behavior, roadmap work, and an
+actual behavioral defect.
 
 ## Architecture
 

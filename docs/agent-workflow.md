@@ -39,10 +39,10 @@ dedicated worktree, but the lead still decides whether and how to integrate it.
 
 | Agent | Best use | Default authority |
 | --- | --- | --- |
-| Codex | Lead development, normal implementation, integration, final review, validation, handoff, and publishing | Active lead and primary writer |
-| Native Codex subagent | Cleanly separable investigation, review, research, tests, or parallel implementation that needs no external-model advantage | Bounded child of the Codex lead; shared sandbox/filesystem unless the lead supplies a worktree |
-| Claude Code | Deep repository analysis, architecture review, difficult debugging, edge cases, and substantial code review | Read-only specialist unless given a dedicated writer worktree; may become lead only by formal handoff |
-| Antigravity (`agy`) | New Recruit reference-behavior QA when browser-capable, plus large-context analysis, independent debugging hypotheses, plan review, and second opinions; this replaces the deprecated Gemini CLI | Isolated specialist; never writes RosterForge during reference QA; may become lead only by formal handoff |
+| Codex | Lead development, normal implementation, direct browser QA, integration, final review, validation, handoff, and publishing | Active lead and primary writer |
+| Native Codex subagent | Cleanly separable investigation, review, research, tests, parallel implementation, or bounded browser QA when the current child tool surface is verified | Bounded child of the Codex lead; shared sandbox/filesystem unless the lead supplies a worktree |
+| Claude Code | Deep repository and data-format analysis, architecture review, difficult semantic debugging, edge cases, and substantial code review | Read-only specialist unless given a dedicated writer worktree; may become lead only by formal handoff |
+| Antigravity (`agy`) | Independent analysis of captured Reference Behavior QA steps, screenshots, IDs, observations, and corpus evidence, plus large-context analysis, debugging hypotheses, plan review, and second opinions; this replaces the deprecated Gemini CLI | Isolated evidence analyst; never writes RosterForge during reference QA; may become lead only by formal handoff |
 | Grok Build | Well-scoped implementation, non-overlapping parallel work, overflow capacity, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
 | GitHub Copilot CLI | GitHub-native work involving repository state, Actions, issues, or pull requests | Read-only/local repository access by default; GitHub writes require explicit task authority |
 
@@ -55,8 +55,9 @@ The default decision path is:
 | --- | --- |
 | Ordinary development | Codex lead |
 | Normal separable investigation or implementation | Native Codex subagent |
-| Deep independent repository or architecture review | Claude Code |
-| New Recruit behavioral/reference QA | Browser-capable Antigravity session |
+| Deep independent repository, data-format, or semantic discrepancy analysis | Claude Code |
+| Bounded New Recruit behavioral/reference QA execution | Browser-capable native Codex subagent after a current capability probe; otherwise the Codex lead |
+| Independent analysis of captured Reference Behavior QA evidence | Antigravity |
 | Bounded overflow implementation | Grok Build in a dedicated worktree |
 | GitHub or Actions work | GitHub Copilot CLI with narrow GitHub permissions |
 
@@ -231,6 +232,16 @@ prevention. For any possible write, the lead creates the dedicated worktree
 first, gives its absolute path and exact baseline in the brief, checks that no
 other writer uses it, and reviews the full diff before integration.
 
+Browser capability is a separate gate. Do not infer that a child received the
+Browser skill or browser-use runtime merely because it inherited the parent's
+sandbox, filesystem, or ordinary repository tools. Probe the child's actual
+tool surface before assigning interactive QA. A read-only probe on 2026-08-24
+verified that a native child in the current desktop environment could initialize
+the Browser runtime, open New Recruit, and read the rendered `My Games` page. A
+browser-capable native child is therefore the preferred execution lane for a
+bounded parity scenario in this environment; the active Codex lead performs it
+directly whenever the child probe fails or delegation has no concrete benefit.
+
 ## Current Headless CLI Templates
 
 These command shapes were verified on Windows on 2026-08-24 with Claude Code
@@ -312,35 +323,60 @@ observable behavioral compatibility where RosterForge intends to support the
 same semantics. It is not permission to copy New Recruit's visual design,
 source code, data structures, or internal architecture.
 
-Antigravity is the preferred delegated specialist because an independent model
-and a browser-capable session are useful for reference observation. It gathers
-and structures evidence; the active lead decides what the evidence means and
-whether code, compatibility documentation, or the roadmap should change.
+Interactive execution belongs to a browser-capable Codex agent. Prefer a native
+Codex subagent for a bounded parity scenario after proving its Browser capability
+in the current environment; the active Codex lead may perform browser QA
+directly and is the fallback when the child capability is absent. Delegation is
+still selective: a trivial scenario does not need a child merely because one is
+available.
+
+Antigravity is the independent Reference QA evidence analyst. It reviews the
+captured steps, screenshots, IDs, observations, and pinned-corpus evidence and
+returns a second classification without acting as the interactive executor.
+The active lead validates both the captured behavior and the analysis, assigns
+the final disposition, and decides whether code, compatibility documentation,
+or the roadmap should change. Escalate difficult semantic discrepancies to
+Claude when they need deep repository or BattleScribe/New Recruit data-format
+analysis.
 
 ### Capability Gate And Isolation
 
-Start every reference task by proving that the selected Antigravity environment
-has an interactive, JavaScript-capable browser and can capture the required
-evidence. The authenticated headless `agy` 1.1.19 session checked on 2026-08-24
-does **not**: it exposed only static HTTP retrieval (`read_url_content`), with no
-browser/navigation tool, imported plugin, or MCP server. Static HTML retrieval
-cannot establish interactive New Recruit behavior.
+Start every delegated reference task by proving that the selected native Codex
+subagent has an interactive, JavaScript-capable Browser tool and can capture the
+required evidence. Do not treat shared sandbox or filesystem access as proof of
+plugin inheritance. The 2026-08-24 child probe in this desktop environment
+initialized the Browser runtime, navigated New Recruit to the rendered `My
+Games` page, and returned visible DOM evidence without changing repository or
+New Recruit state.
+
+The authenticated headless `agy` 1.1.19 client checked on 2026-08-24 does
+**not** provide browser actuation: it exposed only static HTTP retrieval
+(`read_url_content`), with no browser/navigation tool, imported plugin, or MCP
+server. Static HTML retrieval cannot establish interactive New Recruit behavior,
+so that client remains an evidence-analysis lane rather than an executor.
 
 Use one of these paths:
 
-1. Run the brief in a browser-enabled Antigravity client/session and record that
-   capability in the report.
-2. Have the active lead capture the scenario with an authorized browser tool,
-   then give the resulting steps, screenshots, and observations to Antigravity
-   for independent analysis.
-3. If neither is available, stop and report the capability gap. Do not infer the
-   behavior from static page text or claim a comparison occurred.
+1. Prefer a browser-capable native Codex subagent for a bounded parity scenario
+   and record the successful child capability probe in the report.
+2. If the child lacks browser access, have the active Codex lead capture the
+   scenario directly with an authorized browser tool.
+3. Give the captured steps, screenshots, IDs, observations, and relevant corpus
+   evidence to Antigravity when an independent evidence review provides a clear
+   benefit. Antigravity does not need browser actuation for this analysis.
+4. Escalate a difficult semantic discrepancy to Claude when resolving it needs
+   deep repository or data-format analysis.
+5. If no Codex browser-capable lane is available, stop and report the capability
+   gap. Do not infer behavior from static page text or claim a comparison ran.
 
-Antigravity must not modify RosterForge source during reference QA. Give it a
-disposable worktree at the exact RosterForge baseline even when it needs only
-repository reads. Prefer an unsigned-in or disposable New Recruit browser
-profile. A brief may authorize only the temporary New Recruit roster state
-needed for the named scenario; it does not authorize publishing, sharing,
+An interactive QA executor must not modify RosterForge source. Native subagents
+share the primary workspace unless the lead supplies a worktree, so the brief
+must explicitly forbid repository writes and the lead must verify status after
+the run. Antigravity also must not modify RosterForge source; give its evidence-
+analysis task a disposable worktree at the exact baseline whenever read-only
+permissions cannot be enforced. Prefer an unsigned-in or disposable New Recruit
+browser profile. A brief may authorize only the temporary New Recruit roster
+state needed for the named scenario; it does not authorize publishing, sharing,
 account-setting changes, unrelated browsing, or durable external writes.
 
 ### Comparison Protocol
@@ -383,7 +419,8 @@ Use this report shape:
 Reference Behavior QA report
 Cadence: targeted parity QA | broader parity pass
 Test date, time, and timezone:
-Observer and browser-capable environment:
+Interactive executor and browser-capable environment:
+Independent evidence analyst, if used:
 RosterForge commit:
 RosterForge pinned corpus commit:
 Game system and version:
@@ -610,7 +647,11 @@ disposable evidence, not permission to broaden an agent's role.
   writable parent sandbox, filesystem, and checkout; its read-only behavior was
   prompt compliance, not enforced isolation. The current environment exposed
   four total concurrency slots including the lead. No project Codex
-  configuration was required.
+  configuration was required. A separate read-only capability probe on
+  2026-08-24 independently found the Browser skill and browser-use runtime,
+  connected to Edge, navigated an agent-owned tab to New Recruit, and observed
+  the rendered `My Games` page at `/app/MySystems`, including `Warhammer 40,000
+  11th Edition`. It clicked or submitted nothing and left the repository clean.
 - **Claude Code 2.1.240:** after the provider's reported quota reset, an
   authenticated smoke with only `Read,Grep,Glob` available returned
   `CLAUDE_CONTEXT_OK`. It followed `CLAUDE.md`'s import of `AGENTS.md`, correctly
@@ -626,9 +667,9 @@ disposable evidence, not permission to broaden an agent's role.
   under `.gemini/antigravity-cli`; it created no repository configuration file.
   A separate reference-QA probe returned `BROWSER_QA_UNAVAILABLE`: headless
   `agy` exposed static HTTP retrieval but no interactive browser/navigation
-  tool, imported plugin, or MCP server. Browser interaction therefore requires
-  another browser-capable Antigravity client or evidence supplied by an
-  authorized lead browser tool.
+  tool, imported plugin, or MCP server. It therefore analyzes evidence captured
+  by a browser-capable Codex agent and is not described as the interactive
+  executor while that limitation remains.
 - **Grok Build 1.0.5:** an authenticated plan-mode smoke returned
   `GROK_REPO_OK`, used the positional `--single` prompt form, and correctly
   reported the `roster-builder` restrictions. The primary checkout gained no
