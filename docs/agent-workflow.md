@@ -70,6 +70,7 @@ lead to Codex uses the same procedure.
 | --- | --- | --- |
 | Codex | Lead development, normal implementation, direct browser QA, integration, final review, validation, handoff, and publishing | Active lead and primary writer |
 | Native Codex subagent | Cleanly separable investigation, review, research, tests, parallel implementation, or bounded browser QA when the current child tool surface is verified | Bounded child of the Codex lead; shared sandbox/filesystem unless the lead supplies a worktree |
+| Codex CLI (`codex exec`), when the lead is not Codex | Independent implementation-plan review, difficult debugging, code review, bounded repository analysis, and a second implementation opinion where model diversity helps | Read-only specialist under `--sandbox read-only`; any write needs a dedicated worktree and an explicit brief |
 | Claude Code | Deep repository and data-format analysis, architecture review, difficult semantic debugging, edge cases, and substantial code review | Read-only specialist unless given a dedicated writer worktree; may become lead only by formal handoff |
 | Antigravity (`agy`) | Independent analysis of captured Reference Behavior QA steps, screenshots, IDs, observations, and corpus evidence, plus large-context analysis, debugging hypotheses, plan review, and second opinions; this replaces the deprecated Gemini CLI | Isolated evidence analyst; never writes RosterForge during reference QA; may become lead only by formal handoff |
 | Grok Build | Well-scoped implementation, non-overlapping parallel work, overflow capacity, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
@@ -85,6 +86,7 @@ The default decision path is:
 | Ordinary development | Codex lead |
 | Normal separable investigation or implementation | Native Codex subagent |
 | Deep independent repository, data-format, or semantic discrepancy analysis | Claude Code |
+| Independent plan review, hard debugging, code review, or a second opinion when the lead is not Codex | Codex CLI in `--sandbox read-only` |
 | Bounded New Recruit behavioral/reference QA execution | Browser-capable native Codex subagent after a current capability probe; otherwise the Codex lead |
 | Independent analysis of captured Reference Behavior QA evidence | Antigravity |
 | Bounded overflow implementation | Grok Build in a dedicated worktree |
@@ -92,6 +94,14 @@ The default decision path is:
 
 Start elsewhere when the actual task, available tools, permissions, or model
 strengths justify it. This table never requires delegation.
+
+Delegating to the Codex CLI draws on the **same OpenAI/Codex allowance a Codex
+lead would consume**. If Codex has become unavailable because that quota is
+exhausted, delegating to it is not a way around the limit; treat it exactly as
+this runbook already treats a Claude session limit — a normal handoff or retry
+condition, not an authentication failure. Prefer it when model diversity is the
+point: a Claude lead reviewing its own plan is the case a second opinion is
+worth paying for.
 
 Good reasons to delegate include:
 
@@ -177,6 +187,14 @@ Tool labels such as "plan" or "read-only" are not enough by themselves. Treat a
 worker as read-only only when its allowed tool set cannot write files, run an
 unrestricted shell, or mutate external state. When that cannot be established,
 give it a disposable worktree even for analysis.
+
+A Codex `--sandbox read-only` delegate cannot write files, but it **can still
+execute shell commands**. The 2026-08-24 rehearsal watched one run
+`node -e "console.log(Number('0x10'))"` through pwsh, unprompted, to settle a
+parsing question it had raised itself. That mode bounds mutation, not execution
+or a command's own side effects, so it satisfies the first half of the rule
+above and not the second. Where execution itself must be prevented, constrain
+the tool set or use a disposable worktree.
 
 Every delegated writer gets its own worktree. Never let two agents write the
 same worktree concurrently. Parallel write scopes should not overlap unless the
@@ -274,11 +292,11 @@ directly whenever the child probe fails or delegation has no concrete benefit.
 ## Current Headless CLI Templates
 
 These command shapes were verified on Windows on 2026-08-24 with Claude Code
-2.1.240, Antigravity 1.1.19, Grok Build 1.0.5, and GitHub Copilot CLI 1.0.80.
-Recheck `<tool> --version` and `<tool> --help` after upgrades. In the Codex
-sandbox, `claude` and `agy` were installed but absent from the inherited `PATH`;
-resolve their absolute executables with `Get-Command` or the installed package
-location when necessary.
+2.1.240, Antigravity 1.1.19, Grok Build 1.0.5, GitHub Copilot CLI 1.0.80, and
+codex-cli 0.149.1. Recheck `<tool> --version` and `<tool> --help` after
+upgrades. Neither `claude`, `agy`, nor `codex` was on the inherited `PATH` from
+a Claude Code session; resolve their absolute executables with `Get-Command` or
+the installed package location when necessary.
 
 The current host paths are recorded for that fallback. Re-resolve them after an
 upgrade instead of assuming they are permanent:
@@ -288,7 +306,14 @@ upgrade instead of assuming they are permanent:
 | `claude` | `C:\Users\stone\AppData\Local\Microsoft\WinGet\Packages\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe\claude.exe` |
 | `agy` | `C:\Users\stone\AppData\Local\agy\bin\agy.exe` |
 | `grok` | `C:\Users\stone\.grok\bin\grok.exe` |
-| `copilot` | `C:\Users\stone\AppData\Roaming\npm\copilot.cmd` |
+| `copilot` | `C:\Users\stone\AppData\Roaming\npm\copilot.ps1` |
+| `codex` | `C:\Users\stone\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe` |
+
+`codex` needs one extra warning. On this host `Get-ChildItem` returns
+**nothing** for the Codex program directory while `cmd /c dir /s /b` lists both
+executables correctly. Do not conclude Codex is uninstalled from an empty
+`Get-ChildItem`: check with `cmd /c dir`, or just run the absolute path, which
+works regardless.
 
 ### Claude Code: constrained repository analysis
 
@@ -343,6 +368,43 @@ agy --new-project `
 `--new-project` is important for disposable worktrees: without it, the
 2026-08-24 smoke followed a previously saved project path instead of the
 process working directory.
+
+### OpenAI Codex: bounded read-only analysis
+
+Use this only when the active lead is **not** Codex. `codex exec` is the current
+supported non-interactive interface (`codex e` aliases it); `codex review` runs
+a non-interactive code review. Codex discovers the repository `AGENTS.md`
+normally, but keep the prompt explicit anyway, for the same configuration-drift
+reason the Claude template gives.
+
+```powershell
+$codex = "C:\Users\stone\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe"
+$task = @'
+This is a bounded, read-only repository analysis. Follow AGENTS.md normally. Do
+not modify any file, commit, push, update agent-handoff.md, or access external
+services. <insert the completed task brief>
+'@
+& $codex exec `
+  --sandbox read-only `
+  -C "E:\GitHub\rosterforge" `
+  --ephemeral `
+  --color never `
+  $task
+```
+
+`--ephemeral` persists no session file, which is what a smoke test or a one-shot
+analysis wants. `--json` emits JSONL and `-o <FILE>` writes only the final
+message when a caller needs to parse the result. Read the isolation note above
+before assuming `--sandbox read-only` prevents command execution — it does not.
+
+For a writing assignment, point `-C` at a dedicated worktree and use
+`--sandbox workspace-write`. Never `--dangerously-bypass-approvals-and-sandbox`.
+
+`codex login status` is the only **non-mutating** authentication check any of
+these five CLIs offers; it reported `Logged in using ChatGPT`. `agy`, `grok`,
+and `copilot` expose only `login`/`logout`, both of which mutate stored
+credentials, so their authentication is provable only by a successful
+authenticated run. Plan smoke tests accordingly.
 
 ## Reference Behavior QA
 
@@ -562,13 +624,23 @@ available set first; `--allow-all-tools` below approves only that reduced set.
 The safe local template disables built-in MCP servers and denies shell and write
 tools:
 
+Invoke the **`.ps1` shim**, not `copilot.cmd`. `copilot.cmd` routes the argument
+through `cmd.exe`, which cannot carry a newline inside an argument, so only the
+**first line** of a multi-line prompt ever reaches the model — silently, with no
+error. On 2026-08-24 that cost two wasted runs: a here-string prompt whose first
+line was "Read AGENTS.md first" made Copilot read the file and then ask what was
+wanted, and one whose first line was "Answer this question now" made it reply
+that it could not see a question. The same prompt through `copilot.ps1` answered
+correctly. Keep the prompt on one line if a `.cmd` invocation is unavoidable.
+
 ```powershell
+$copilot = "C:\Users\stone\AppData\Roaming\npm\copilot.ps1"
 $task = @'
 Read AGENTS.md first. Inspect the local CI workflow and repository state for the
 bounded question below. Do not mutate files, run shell commands, or access
 GitHub. <insert the completed task brief>
 '@
-copilot -C "E:\GitHub\rosterforge" `
+& $copilot -C "E:\GitHub\rosterforge" `
   --prompt $task `
   --silent `
   --no-ask-user `
@@ -715,3 +787,26 @@ disposable evidence, not permission to broaden an agent's role.
   38-byte `delegated-writer-smoke.txt` (one exact line plus newline). The primary
   checkout never contained the file. The writer and Antigravity worktrees and
   their local branches were then discarded without merging.
+- **Claude-lead delegation rehearsal, 2026-08-24:** the first exercise of all
+  four external lanes *from a Claude Code session* rather than from Codex, at
+  baseline `ad2934166b726314ad55ae2db3f95ae4db655b59`. Each smoke asked one
+  bounded question with a unique sentinel and required a citation.
+  - **OpenAI Codex CLI 0.149.1, as delegate:** `codex login status` reported
+    `Logged in using ChatGPT`. A `codex exec --sandbox read-only --ephemeral`
+    review of `packages/evaluation/src/selection-default-amount.ts` returned a
+    specific finding with file:line evidence and changed no file. It ran one
+    read-only shell command of its own accord; see the isolation note above.
+  - **GitHub Copilot CLI 1.0.80:** re-verified, but only after switching from
+    `copilot.cmd` to `copilot.ps1`. Two multi-line prompts through the `.cmd`
+    shim silently lost everything after their first line.
+  - **Antigravity 1.1.19 and Grok Build 1.0.5:** the documented command shapes
+    worked verbatim. Both cited the file they answered from. The `agy` worktree
+    was created at the exact baseline and removed with its branch afterward.
+  - The primary checkout ended byte-identical to its baseline: clean status,
+    `HEAD` equal to `origin/main`, only `main`, only the primary worktree, no
+    stash, and `git diff --check` clean.
+  - **`gh` is not usable for authenticated GitHub work.** The outgoing Codex
+    lead recorded that the stored `ronincse` token is invalid and that the
+    unauthenticated fallback exhausted its public API limit. Ordinary `git`
+    fetch and push are unaffected, but Copilot's GitHub-native lane and
+    `gh run watch` need the token repaired first.
