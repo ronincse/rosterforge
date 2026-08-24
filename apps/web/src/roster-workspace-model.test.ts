@@ -128,6 +128,18 @@ describe("roster workspace presentation model", () => {
     expect(
       projectedUnit?.selections.some(({ active }) => active),
     ).toBe(true);
+    // The two sections partition the ordered list, and their amounts use the
+    // same measure as the pane heading rather than counting nodes, so the two
+    // can never disagree about how much is in the roster.
+    expect([
+      ...model.selections.configuration,
+      ...model.selections.army,
+    ]).toHaveLength(model.selections.ordered.length);
+    expect(
+      model.selections.configurationAmount + model.selections.armyAmount,
+    ).toBe(model.topLevelSelectionCount);
+    expect(model.selections.configurationAmount).toBeGreaterThan(0);
+    expect(model.selections.armyAmount).toBeGreaterThan(0);
     expect(model.validation.available).toBe(true);
     if (model.validation.available) {
       expect(model.validation.validity).toBe("invalid");

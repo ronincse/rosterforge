@@ -149,6 +149,24 @@ export interface RosterWorkspaceSelection {
   readonly selections: readonly RosterWorkspaceSelection[];
 }
 
+/**
+ * Top-level selections, both as one ordered list and split into the two
+ * sections the workspace presents.
+ *
+ * `configuration` and `army` partition `ordered` and preserve its relative
+ * order, so a section renders source order without re-sorting. The two amounts
+ * are **summed occurrence amounts, not node counts** — the same measure as
+ * `topLevelSelectionCount`, which they add up to. Counting nodes instead would
+ * disagree with the pane heading whenever a unit is added more than once.
+ */
+export interface RosterWorkspaceSelections {
+  readonly ordered: readonly RosterWorkspaceSelection[];
+  readonly configuration: readonly RosterWorkspaceSelection[];
+  readonly army: readonly RosterWorkspaceSelection[];
+  readonly configurationAmount: number;
+  readonly armyAmount: number;
+}
+
 export interface RosterWorkspaceSourceReports {
   readonly rootChoices: Result<LocalRosterRootChoiceInspection>;
   readonly costs: Result<RosterSelectionConditionCostReport>;
@@ -168,11 +186,7 @@ export interface RosterWorkspaceViewModel {
   readonly validation: RosterWorkspaceValidationSummary;
   readonly header: RosterWorkspaceHeaderSummary;
   readonly rootChoices: RosterWorkspaceRootChoices;
-  readonly selections: {
-    readonly ordered: readonly RosterWorkspaceSelection[];
-    readonly configuration: readonly RosterWorkspaceSelection[];
-    readonly army: readonly RosterWorkspaceSelection[];
-  };
+  readonly selections: RosterWorkspaceSelections;
   readonly reports: RosterWorkspaceSourceReports;
 }
 
@@ -234,13 +248,7 @@ export function createRosterWorkspaceViewModel(
     validation,
     header: workspaceHeaderSummary(costs, validation),
     rootChoices: workspaceRootChoices(reports.rootChoices),
-    selections: {
-      ordered,
-      configuration: ordered.filter(
-        ({ section }) => section === "configuration",
-      ),
-      army: ordered.filter(({ section }) => section === "army"),
-    },
+    selections: workspaceSelections(ordered),
     reports,
   };
 }
@@ -309,6 +317,30 @@ function workspaceValidationSummary(
     ).length,
     attentionSelectionIds: supportedValidationSelectionIds(report.findings),
     diagnostics: result.diagnostics,
+  };
+}
+
+function workspaceSelections(
+  ordered: readonly RosterWorkspaceSelection[],
+): RosterWorkspaceSelections {
+  const configuration = ordered.filter(
+    ({ section }) => section === "configuration",
+  );
+  const army = ordered.filter(({ section }) => section === "army");
+  // Two extra top-level-sized arrays so both sections can be measured with the
+  // same amount summation the pane heading uses. Negligible beside the
+  // recursive per-selection walk above, and it keeps one measure of "how much
+  // is in this roster" rather than two that disagree.
+  return {
+    ordered,
+    configuration,
+    army,
+    configurationAmount: rosterSelectionsAmount(
+      configuration.map(({ occurrence }) => occurrence),
+    ),
+    armyAmount: rosterSelectionsAmount(
+      army.map(({ occurrence }) => occurrence),
+    ),
   };
 }
 

@@ -1504,6 +1504,41 @@ h1 {
   list-style: none;
 }
 
+.roster-selection-list {
+  display: grid;
+  gap: 18px;
+}
+
+.roster-selection-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roster-selection-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #d5d9d4;
+}
+
+.roster-selection-section-heading h4 {
+  margin: 0;
+  color: var(--forest);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.roster-selection-section-heading > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
 .root-choice {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

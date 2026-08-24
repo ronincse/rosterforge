@@ -872,6 +872,17 @@ describe("App local catalogue flow", () => {
     expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
+    // The tree groups top-level selections by the section the presentation
+    // model assigned. This catalogue has no Configuration root, so that
+    // section must not render an empty heading above the army.
+    const armySection = screen.getByRole("region", { name: "Army units" });
+    expect(
+      within(armySection).getByText("Infantry Squad (Elite)"),
+    ).toBeTruthy();
+    expect(within(armySection).getByText("1 selection")).toBeTruthy();
+    expect(
+      screen.queryByRole("region", { name: "Configuration" }),
+    ).toBeNull();
     expect(within(playerHeader).getByText("80")).toBeTruthy();
     expect(within(playerHeader).getByText("Points")).toBeTruthy();
     const zeroCosts = within(playerHeader).getByRole("group", {

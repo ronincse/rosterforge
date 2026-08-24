@@ -471,7 +471,12 @@ roster is active, this focused workspace occupies the full library shell and
 the catalogue batch summary is hidden. Clearing roster setup restores that
 summary without changing the imported library. One player header stays above
 the builder, carrying the roster identity, its supported cost totals, and its
-known-problem count; detailed structural and constraint reports follow it.
+known-problem count; detailed structural and constraint reports follow it. The
+selected-roster tree renders top-level selections in two titled sections,
+`Configuration` first and then `Army units`, consuming the projection's existing
+classification rather than deciding membership itself. A section with no
+entries renders nothing, so a roster without configuration shows its army
+rather than an empty heading.
 Anchor navigation and pane state are UI concerns only and never enter the
 immutable session, history, or draft.
 
@@ -487,6 +492,12 @@ roots stay in the army section instead of being guessed away. Failed reports
 remain explicit unavailable states, and selected occurrences remain present.
 This projection does not evaluate, mutate, filter, legalize, or persist the
 roster.
+
+`selections.configuration` and `selections.army` partition `selections.ordered`
+and preserve its relative order. Their `configurationAmount` and `armyAmount`
+are summed occurrence amounts rather than node counts — the same measure as
+`topLevelSelectionCount`, which they add to — so a section label and the pane
+heading cannot disagree when a unit is taken more than once.
 
 The model also owns the header's completeness fold. The player header shows one
 completeness badge where the separate cost and validation cards each carried

@@ -280,19 +280,34 @@ export function RosterOverview({
             </div>
           ) : (
             <div className="roster-selection-list">
-              <ul>
-                {workspace.selections.ordered.map((selection) => (
-                  <RosterSelectionItem
-                    key={selection.occurrence.id}
-                    session={session}
-                    selectionModel={selection}
-                    onAddChild={onAddChildSelection}
-                    onRename={onRenameSelection}
-                    onSetAmount={onSetSelectionAmount}
-                    onRemove={onRemoveSelection}
-                  />
-                ))}
-              </ul>
+              {/* Configuration leads because it is what a player sets before
+                  the army: detachment, battle size, force disposition. A
+                  section renders only when it holds something — the add
+                  browser already exposes both groups for discovery, and a
+                  missing required configuration surfaces as a known problem in
+                  the checks rather than as an empty heading here. */}
+              <RosterSelectionSection
+                heading="Configuration"
+                anchorId="roster-configuration-heading"
+                selections={workspace.selections.configuration}
+                amount={workspace.selections.configurationAmount}
+                session={session}
+                onAddChild={onAddChildSelection}
+                onRename={onRenameSelection}
+                onSetAmount={onSetSelectionAmount}
+                onRemove={onRemoveSelection}
+              />
+              <RosterSelectionSection
+                heading="Army units"
+                anchorId="roster-army-heading"
+                selections={workspace.selections.army}
+                amount={workspace.selections.armyAmount}
+                session={session}
+                onAddChild={onAddChildSelection}
+                onRename={onRenameSelection}
+                onSetAmount={onSetSelectionAmount}
+                onRemove={onRemoveSelection}
+              />
             </div>
           )}
         </section>
@@ -1241,6 +1256,75 @@ function constraintObservation(item: ConstraintSummaryItem): string {
   return `Possible ${formatNumber(item.minimum)} to ${formatNumber(
     item.maximum,
   )}, ${limit}`;
+}
+
+/**
+ * One titled group of top-level selections inside the selected-roster tree.
+ *
+ * Renders nothing at all when the section is empty, so a roster with no
+ * configuration shows an army list rather than an empty heading above it. The
+ * amount is the model's summed occurrence amount, matching the pane heading's
+ * measure rather than counting nodes.
+ *
+ * This groups what the presentation model already classified; it does not
+ * decide what belongs in which section, and must not start doing so.
+ */
+function RosterSelectionSection({
+  heading,
+  anchorId,
+  selections,
+  amount,
+  session,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+}: {
+  readonly heading: string;
+  readonly anchorId: string;
+  readonly selections: readonly RosterWorkspaceSelection[];
+  readonly amount: number;
+  readonly session: LocalRosterSession;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    group?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+}) {
+  if (selections.length === 0) return null;
+  return (
+    <section
+      className="roster-selection-section"
+      aria-labelledby={anchorId}
+    >
+      <div className="roster-selection-section-heading">
+        <h4 id={anchorId}>{heading}</h4>
+        <span>{formatCount(amount, "selection")}</span>
+      </div>
+      <ul>
+        {selections.map((selection) => (
+          <RosterSelectionItem
+            key={selection.occurrence.id}
+            session={session}
+            selectionModel={selection}
+            onAddChild={onAddChild}
+            onRename={onRename}
+            onSetAmount={onSetAmount}
+            onRemove={onRemove}
+          />
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function RosterSelectionItem({
