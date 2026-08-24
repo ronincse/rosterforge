@@ -6288,7 +6288,7 @@ before writing a rule.
 
 ## Completed Assignment — `skipIfPresent`, 2026-08-24
 
-Baseline `f09de47`; resulting implementation commit recorded below.
+Baseline `f09de47`; resulting implementation commit `ae7ed86`.
 
 ### What this closes
 
