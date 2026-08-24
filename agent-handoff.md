@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (phone-width usability complete)
+## Current Status — 2026-08-24 (usability roadmap sequenced)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -71,7 +71,8 @@ diagnostic codes.
   and sticky workspace links leave their targets visible. The broader Grok
   usability audit has now been reconciled into explicit completed and residual
   rows in section F instead of one over-broad `Done` row. The next bounded
-  boundary remains the CI performance budget.
+  boundary remains the CI performance budget; the tested workspace presentation
+  model begins the explicit post-budget usability sequence recorded there.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -170,7 +171,9 @@ owner reprioritises).
 The first phone-width QA pass is complete. The CI performance budget is the new
 **Next** because it is the smallest independent guard remaining in the active
 product-usability area; whole-roster incremental evaluation stays Open and is
-not part of that checkpoint.
+not part of that checkpoint. After the guard, take the restored usability rows
+in the dependency order stated in section F rather than treating table position
+or raw status as priority.
 
 ### A. Display-fidelity modifiers
 
@@ -324,16 +327,17 @@ QA before classifying or implementing the discrepancy.
 
 | Item | Status | Note |
 |---|---|---|
-| Costs match a GW-exported list | Done | 13 of 16 Dark Angels units exact; the other 3 are a model-count default and two cases of the pinned community data disagreeing with GW, both confirmed in the source JSON |
+| Costs match a GW-exported list | Done | all 16 Dark Angels unit costs match the GW list when the Inner Circle Companions occurrence is set to the list's six models; the two old source-data mismatches disappeared at the current corpus pin |
 | Evaluation cost makes a real army unusable | Done | the whole-catalogue choice index is now cached per context. Validation at six units 127 s → 26 ms; a fifteen-unit army builds in the browser at 107–409 ms per edit |
 | Per-edit evaluation cost | Done | the roster walk and per-choice identity IDs are cached too. Validation at fifteen units 68.8 → 49.7 ms |
 | Collapsed panels built anyway | Done | 181 of 214 `<details>` were closed and rebuilt every edit; DOM for a fifteen-unit army 17,505 → 5,700 nodes |
 | Reports re-evaluated on unrelated re-renders | Done | `RosterOverview` called costs and validation unmemoised in its body; an autosave state change paid a full re-evaluation |
 | History steps re-evaluated a known roster | Done | undo/redo restore a session the history already held; both reports now cached per session. Undo 308 → 73 ms |
 | Per-edit evaluation is whole-roster | Open | median ~92 ms at fifteen units, tail ~270 ms. Every *new* edit re-evaluates everything. Needs **incremental evaluation**; no longer urgent at this size |
+| A budget test that runs in CI | **Next** | the new identity guard catches this regression; nothing catches a different one; keep the checkpoint to one deterministic budget guard, not a wall-clock benchmark framework |
 | Unfillable required wargear group | Done | not unfillable and not a data defect: a group holding *nested groups* counted nothing towards its own bound. 10 corpus groups are this shape; the Plague Champion now closes at 2 of 2 |
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
-| Warn when community data disagrees with GW points | Measured | **both known cases vanished when the corpus was updated** — the data was simply stale and RosterForge read it faithfully. The gap is *freshness*, not correctness |
+| Community-data mismatch diagnosis | Done | both known GW discrepancies vanished when the corpus was updated: RosterForge had read stale source data faithfully. The actionable product gap was freshness, not a point-by-point GW comparison the app has no source for |
 | Surface how current the loaded data is | Done | import date against BSData's last upstream push, one request; falls back to a plain "may be out of date" note when GitHub is unreachable |
 | Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
@@ -341,8 +345,8 @@ QA before classifying or implementing the discrepancy.
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
-| Compact points-and-problems player header; remove remaining evaluator chrome | Open | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
 | Tested workspace presentation model | Open | the workspace still derives presentation directly from the live session and reports; only print has a formal immutable view model. Introduce a tested workspace projection before making the larger layout changes below |
+| Compact points-and-problems player header; remove remaining evaluator chrome | Open | points and known problems are prominent and generated IDs are hidden, but costs and checks remain separate technically framed reports rather than one compact player header; preserve the validity/completeness distinction while reducing developer-facing framing |
 | Separate configuration from army units | Open | the add browser groups `Configuration` separately, but added configuration and units still share one selected-roster tree |
 | Collapsible top-level army units with per-unit costs | Open | large child collections are lazy and collapsed, but top-level unit cards are not collapsible and do not show their evaluated per-unit cost in the live workspace |
 | Shop/editor modes and newly-added-unit focus | Open | the current two-pane/anchor layout has no explicit browsing-versus-editing state and does not focus the unit just added; test the interaction at desktop and phone widths |
@@ -351,13 +355,29 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
-| Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
+| Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
-| Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
-| Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
+| Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
-| A budget test that runs in CI | **Next** | the new identity guard catches this regression; nothing catches a different one; keep the checkpoint to one deterministic budget guard |
+
+After the CI budget, take the open presentation work in this order:
+
+1. tested workspace presentation model;
+2. compact points-and-problems header;
+3. configuration separated from army units;
+4. collapsible top-level units with per-unit costs;
+5. shop/editor modes with newly-added-unit focus;
+6. legality-aware model-count controls;
+7. common-loadout flattening and dedicated Warlord controls; and
+8. print-output usability.
+
+The presentation model intentionally comes before the visible restructuring so
+those checkpoints share one tested projection instead of encoding the same
+rules independently in components. Reference Behavior QA remains required when
+the loadout/Warlord work depends on New Recruit behavior. Do not interleave the
+low-priority automatic shapes, deferred acquisition/matching work, or
+whole-roster incremental evaluation unless new evidence changes their priority.
 
 ### Open questions needing the owner
 
