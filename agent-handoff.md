@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (product usability)
+## Current Status — 2026-08-24 (product usability and agent workflow)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -38,6 +38,12 @@ diagnostic codes.
   checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
   "Publishing" for what still requires the owner (force-push, history rewrites,
   pull requests). `git status -sb` should normally show no divergence.
+- **Agent workflow.** `AGENTS.md` now distinguishes a formal lead handoff from
+  bounded delegated work; Codex is the preferred default lead, not the only
+  model allowed to own a checkpoint. `docs/agent-workflow.md` records the
+  least-privilege task brief, worktree, review, integration, cleanup, handoff,
+  push, and CI procedures for Claude, Antigravity, Grok, and Copilot. All four
+  read-only headless paths and one disposable Grok writer path were exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **495 passed, 18 skipped (513)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -144,6 +150,9 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 **Blocked** (needs an answer recorded below), **Low priority** (in scope, but do
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
+
+The 2026-08-24 delegated-agent workflow checkpoint changed no product behavior,
+so no roadmap row moved. The first phone-width QA pass remains **Next**.
 
 ### A. Display-fidelity modifiers
 
@@ -6703,3 +6712,112 @@ F.
 and checks at a phone viewport. The current CSS claims a full-width fallback,
 but no real-list QA has verified density, control order, or disclosure depth at
 that width.
+
+## Completed Assignment — Durable Multi-Agent Workflow, 2026-08-24
+
+Baseline `6122d215f102f7b2414c0fe05d565b6abeb07851`; resulting workflow commit
+`7bbed36` (`docs: establish delegated agent workflow`). This was a repository
+workflow and configuration checkpoint only.
+
+### What changed
+
+- `AGENTS.md` now defines formal active-lead handoffs separately from bounded
+  delegation. Codex remains the preferred default lead and normal implementer,
+  while any capable model can take ownership through the existing
+  `agent-handoff.md` process.
+- Delegated workers receive explicit baselines, bounded scopes, least privilege,
+  and a dedicated worktree for any possible mutation. They do not write the
+  primary checkout, update this handoff, push, open pull requests, deploy, or
+  perform unrelated external writes.
+- `docs/agent-workflow.md` supplies the role matrix, good and bad delegation
+  criteria, complete task-brief contract, allowed-path and stop rules, worktree
+  creation and safe cleanup, delegate output contract, lead review and
+  integration procedure, checkpoint/push/CI sequence, current executable
+  locations, and tested headless command shapes.
+- Minimal `CLAUDE.md` imports canonical `AGENTS.md` through Claude Code's
+  supported `@AGENTS.md` mechanism. `.gitignore` now keeps
+  `CLAUDE.local.md` private alongside the existing Claude local-settings rule.
+- Antigravity received no guessed `GEMINI.md` or repository configuration. Its
+  installed CLI exposes no documented instruction-file switch, so delegated
+  invocations use a new isolated project/worktree and explicitly name the
+  repository context they must read.
+
+### Decisions and rejected alternatives
+
+The active lead remains a programmer rather than becoming an orchestration-only
+role. Delegation is justified by a concrete benefit — independent review,
+specialist reasoning, truly separable work, bounded overflow, or GitHub-native
+access — rather than by agent availability.
+
+Repository rules and supported per-invocation CLI controls were enough. A
+permissive `.codex/config.toml`, hooks, wrappers, a custom orchestrator, shared
+write defaults, and obsolete Gemini compatibility files were rejected because
+they would enlarge authority or duplicate canonical instructions without a
+demonstrated need.
+
+Read-only labels were not trusted without enforcement. Claude and Copilot used
+explicit read/search-only tool sets; Grok used plan mode with subagents and web
+disabled; Antigravity, whose CLI lacks the same fine-grained file-tool allowlist,
+ran in a disposable worktree. Potential writers always receive a worktree the
+lead creates first because Grok's headless `--worktree` flag does not create the
+required isolation.
+
+### External-agent verification
+
+- **Claude Code 2.1.240:** after its reported subscription reset, the restricted
+  `Read,Grep,Glob` smoke returned `CLAUDE_CONTEXT_OK`, followed `CLAUDE.md` into
+  `AGENTS.md`, distinguished handoff from delegation, and located the runbook.
+  No write, shell, browser, or persistent-session permission was available.
+- **Antigravity 1.1.19:** authenticated plan/sandbox mode in a disposable
+  worktree returned `AGY_REPO_OK` and correctly identified `roster-builder` as
+  the `data-graph`/`roster-model` boundary. The first probe exposed a stale saved
+  OneDrive project path; `--new-project --add-dir <worktree>` corrected it. No
+  repository file changed, although normal CLI project/conversation metadata
+  remains under the user's `.gemini/antigravity-cli` state.
+- **Grok Build 1.0.5:** a plan-mode smoke with subagents and web disabled
+  returned `GROK_REPO_OK` and reported the same architecture boundary. The
+  installed command uses positional `--single`, not `--prompt`, and warns that
+  the user's existing `privacy` configuration key is unrecognized.
+- **GitHub Copilot CLI 1.0.80:** with built-in MCP disabled, shell/write denied,
+  and only `view,grep,glob` available, returned `COPILOT_CI_OK` and correctly
+  summarized the local CI triggers and all required gates. It performed no
+  GitHub or filesystem mutation.
+
+The disposable writer test created two worktrees at the exact baseline above:
+one for Antigravity analysis and one for Grok writing. Grok created only an
+untracked 38-byte `delegated-writer-smoke.txt` containing the requested exact
+line plus newline. Codex inspected the status, diff, and bytes, confirmed the
+primary checkout never contained the file, and removed both worktrees and both
+local branches without merging. `git worktree list` then showed only `main`.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **495 passed, 18 skipped (513 total)** across 50 test files.
+- Production build — successful with only the existing large-chunk warning.
+- Pinned corpus — not rerun because no application, evaluator, data-format, or
+  compatibility behavior changed; the 18 gitignored corpus tests were the
+  explicitly reported skips in the normal suite.
+- Pre-commit remote refresh — local `HEAD` and `origin/main` both remained
+  `6122d215f102f7b2414c0fe05d565b6abeb07851` with divergence `0 0`.
+
+### What this did not do
+
+No RosterForge application code, architecture boundary, compatibility claim,
+diagnostic, dependency, build configuration, or product-roadmap status changed.
+No delegate committed, pushed, opened a pull request, deployed, or wrote to a
+GitHub service. No next feature or phone-width usability work began.
+
+Remaining operational caveats are local and explicit: managed Codex sessions
+may need the recorded absolute paths for Claude and Antigravity; Claude quota
+exhaustion requires a retry or formal handoff; Antigravity needs
+`--new-project` to avoid stale saved project context; and Grok's unrecognized
+user-level `privacy` key should not be mistaken for enforced permissions. The
+runbook therefore passes restrictive flags on every invocation and uses
+worktree isolation whenever enforcement is uncertain.
+
+### Next recommended boundary
+
+**Behaviour on a phone**, unchanged from the product-usability checkpoint.
+Drive a real roster through add, configure, amount, and checks at a phone
+viewport before changing responsive density, ordering, or disclosure depth.
