@@ -44,10 +44,15 @@ diagnostic codes.
   least-privilege task brief, worktree, review, integration, cleanup, handoff,
   push, and CI procedures for native Codex subagents, Claude, Antigravity, Grok,
   and Copilot. Native subagents are the preferred separable lane when Codex
-  leads; Antigravity owns the independent New Recruit Reference Behavior QA
-  affinity when a browser-capable session is available. Native spawning, all
-  four external read paths, one disposable Grok writer, and Antigravity's
-  headless browser limitation were exercised.
+  leads. A browser-capable native Codex subagent is the preferred executor for
+  bounded New Recruit Reference Behavior QA after a current capability probe;
+  the active Codex lead is the direct fallback and final classifier.
+  Antigravity independently analyzes captured QA evidence while its installed
+  headless client lacks browser actuation, and Claude handles difficult semantic
+  discrepancies needing deep repository or data-format analysis. Native
+  spawning, lead and child Browser actuation, all four external read paths, one
+  disposable Grok writer, and Antigravity's headless browser limitation were
+  exercised.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` all pass. `pnpm test` is **495 passed, 18 skipped (513)**.
   The production build retains only Vite's existing large-chunk warning.
@@ -155,8 +160,9 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The 2026-08-24 agent-workflow checkpoints changed no product behavior, so no
-roadmap row moved. The first phone-width QA pass remains **Next**.
+The 2026-08-24 agent-workflow checkpoints and Reference Behavior QA lane
+correction changed no product behavior, so no roadmap row moved. The first
+phone-width QA pass remains **Next**.
 
 ### A. Display-fidelity modifiers
 
@@ -6828,6 +6834,11 @@ viewport before changing responsive density, ordering, or disclosure depth.
 
 ## Completed Assignment — Native Subagents And Reference Behavior QA, 2026-08-24
 
+> Superseded in part by **Reference Behavior QA Execution Lane Correction,
+> 2026-08-24** below. Its Antigravity interactive-executor routing is obsolete;
+> the data-comparability and discrepancy-classification protocol remains
+> authoritative.
+
 Baseline `9d4d8feb7a33e258cee22c0224fbf51c4506b5a0`; resulting workflow commit
 `a5bbdd0` (`docs: add subagent and reference QA lanes`). This follow-up changed
 only repository workflow documentation.
@@ -6928,5 +6939,79 @@ or phone-width work began.
 ### Next recommended boundary
 
 **Behaviour on a phone**, still unchanged. Drive a real roster through add,
+configure, amount, and checks at a phone viewport before changing responsive
+density, ordering, or disclosure depth.
+
+## Completed Assignment — Reference Behavior QA Execution Lane Correction, 2026-08-24
+
+Baseline `9e3ad0fa9302185f5fe64c94ff4d3fb24d41e28c`; resulting workflow commit
+`fb758b0` (`docs: correct reference QA execution lane`). This checkpoint changed
+only repository workflow documentation and did not begin a product checkpoint.
+
+### What changed
+
+- `AGENTS.md` and `docs/agent-workflow.md` now assign interactive New Recruit and
+  RosterForge parity execution to a browser-capable Codex agent. A native Codex
+  subagent is the preferred lane for a bounded scenario after a current child
+  capability probe; the active Codex lead may run the scenario directly and is
+  the fallback when child browser access is absent.
+- The runbook no longer infers browser-plugin inheritance from sandbox,
+  filesystem, or repository-tool inheritance. Every environment must establish
+  the child's actual Browser skill and runtime before assigning interactive QA.
+- Antigravity remains an independent Reference QA evidence analyst. The
+  installed headless `agy` 1.1.19 client may review captured steps, screenshots,
+  IDs, observations, and pinned-corpus evidence, but is not described as the
+  interactive executor while it lacks browser actuation.
+- Claude remains the escalation lane for difficult semantic discrepancies that
+  need deep repository, BattleScribe, or New Recruit data-format analysis.
+- The comparison protocol is unchanged: data comparability remains `exact`,
+  `different`, or `unknown`; behavior remains `match`, `mismatch`,
+  `inconclusive`, or `not-applicable`; only `exact + mismatch` can be a candidate
+  RosterForge defect, subject to the active lead's final classification.
+
+### Capability verification and decisions
+
+The active Codex lead initialized the Browser runtime, opened an agent-owned Edge
+tab at New Recruit, and observed the rendered `My Games` page at
+`https://www.newrecruit.eu/app/MySystems`, including `Warhammer 40,000 11th
+Edition`. It clicked or submitted nothing and changed no New Recruit or
+repository state.
+
+A separate native Codex subagent then inspected its own tool surface rather than
+assuming the parent's capabilities. It found and fully read the Browser skill,
+found the required browser-use runtime, independently connected to Edge, opened
+New Recruit, and returned the same rendered title, route, and visible game-list
+evidence. `git status --short` remained empty after the probe.
+
+Making the child the unconditional executor was rejected because tool and plugin
+surfaces can change across environments. Treating Antigravity as a hypothetical
+browser executor was also rejected: the installed authenticated headless client
+was already verified to expose static HTTP retrieval but no interactive browser
+actuation. The capability-gated Codex-child lane preserves bounded parallelism
+without turning agent availability into a reason to delegate.
+
+### Checks run
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **495 passed, 18 skipped (513 total)** across 50 test files.
+- Production build — successful with only the existing large-chunk warning.
+- Pinned corpus — not rerun because no application, data-format, evaluation,
+  compatibility, or product behavior changed; the normal suite reports its 18
+  corpus tests as skipped without the local environment variable.
+- Pre-change remote refresh — baseline `HEAD` and `origin/main` both resolved to
+  `9e3ad0fa9302185f5fe64c94ff4d3fb24d41e28c` with divergence `0 0`; the primary
+  checkout was the only worktree.
+
+### What this did not do
+
+No application code, dependency, build configuration, architecture boundary,
+compatibility claim, diagnostic, corpus data, or product-roadmap status changed.
+No parity scenario, product checkpoint, phone-width work, pull request,
+deployment, or external publication began. The browser probes established tool
+capability only and did not construct or modify a New Recruit roster.
+
+### Next recommended boundary
+
+**Behaviour on a phone**, unchanged. Drive a real roster through add,
 configure, amount, and checks at a phone viewport before changing responsive
 density, ordering, or disclosure depth.
