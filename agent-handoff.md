@@ -50,13 +50,12 @@ diagnostic codes.
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** Product usability, measured against real lists. The
-  evaluation blocker found on 2026-08-23 is **fixed**: validating six units went
-  from 127 s to 26 ms, and a fifteen-unit Dark Angels army now builds in the
-  browser with edits **median ~92 ms**, and undo/redo at 73–104 ms. What is left
-  is one full re-evaluation per *new* edit — not rendering, which was measured
-  and ruled out. Cheaper still needs incremental evaluation, which is no longer
-  urgent. See the roadmap's section F.
+- **Active area.** Product usability, measured against real lists. The QA-pass
+  presentation checkpoint is complete: checks prioritize known violations,
+  occurrence IDs no longer leak into reader-facing cards, zero-value campaign
+  fields are collapsed, and model/wargear configuration, squad size, and
+  display-name notices are reachable at the right depth. The next boundary is
+  the first phone-width QA pass; see section F.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -101,22 +100,19 @@ left: **34 of 36 pinned catalogues raised a `-1` complaint on an empty roster**,
 before a single unit was added. That is now zero. The detail is in the completed
 entry at the end of this file.
 
-The current **Next is the usability findings from the QA pass**, in section F.
-They are the last group of things standing between this and a tool someone
-would actually build a list in, and none of them is a correctness bug: issue-list
-volume, internal IDs shown to the reader, Crusade cost fields appearing on a
-matched-play roster, Warlord selection, child-model wargear discoverability,
-squad-size editing depth, and display-name banners. Take them as **one
-presentation pass** rather than singly — they overlap in the same components,
-and fixing them one at a time means touching the same files seven times.
+The QA-pass presentation findings are **Done** as one checkpoint. The UI now
+separates known violations from unresolved coverage instead of making both look
+actionable; it keeps zero-value source costs available without promoting them
+beside points; it hides generated occurrence IDs while retaining anchors; and
+it brings model quantities and selected model/wargear configuration out of the
+datasheet depth. Display-name/annotation incompleteness remains observable in
+Selection details rather than repeating a banner on every occurrence.
 
-Note what changes about the work at this point. Sections A–E were settled
-against the data format, where the corpus and the wiki can prove an answer
-right. These are judgement calls about what a person needs to see, and neither
-source can settle them. Where a decision is genuinely about taste rather than
-correctness, put it in front of the owner instead of guessing — he plays
-matched-play 40k and treats New Recruit as the reference for how this should
-behave.
+The current **Next is behaviour on a phone**, in section F. The shell has a
+responsive fallback, but nobody has driven a real roster below desktop width.
+This is still presentation judgement rather than data semantics: test the
+actual add/configure/check path at phone width before deciding which density or
+ordering changes are needed.
 
 Nested automatic groups and unit-typed automatic sub-units remain low priority
 because none of the five modifier-driven pinned groups uses either shape.
@@ -310,13 +306,13 @@ invisible to the whole test suite.
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
 | NOTICE text offered as an addable unit | Done | roots the catalogue hides are no longer offered; `[Legends]` units hide until `Show Legends` is picked, as in BattleScribe |
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
-| **Usability findings from the QA pass** | **Next** | the survivors of the external QA pass, none of them correctness: issue-list volume, internal IDs shown to the reader, Crusade cost fields on a matched-play roster, Warlord selection, child-model wargear discoverability, squad-size editing depth, and display-name banners. Presentation work, best taken as one pass rather than singly. Unlike sections A–E these are judgement calls no corpus measurement can settle — ask the owner where taste decides |
+| **Usability findings from the QA pass** | **Done** | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices |
 | Per-file update times | Open | the freshness check is repository-wide. Per-file would be exact but costs a GitHub request each, and 46 files exhaust an unauthenticated hourly allowance |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
 | Community data can disagree with GW points | Open | pinned corpus says Lion El'Jonson 285 and Lieutenant with Combi-weapon 85; GW Data Version v925 says 265 and 95. Nothing warns the user, and a list legal here could be wrong at a table |
 | Unicode-normalised name matching | Open | GW exports use U+2019, catalogues use U+0027. Any list import or cross-tool matching needs normalising |
-| Behaviour on a phone | Open | never driven below desktop width |
+| Behaviour on a phone | **Next** | never driven below desktop width; exercise a real add/configure/check path before changing the responsive layout |
 | A budget test that runs in CI | Open | the new identity guard catches this regression; nothing catches a different one |
 
 ### Open questions needing the owner
@@ -6612,3 +6608,98 @@ corpus contains none.
 section F. Note the change in character: sections A–E could be settled against
 the corpus and the wiki, and these cannot. They are judgement calls about what a
 person needs to see. Where taste decides rather than correctness, ask the owner.
+
+## Completed Assignment — Product Usability Presentation Pass, 2026-08-24
+
+Baseline `45a5698`; resulting implementation commit `3b84a2f`
+(`feat: streamline roster usability`). The worktree already contained the
+bounded presentation pass when this session resumed; it was preserved, reviewed,
+finished, and verified rather than reset or rewritten.
+
+### What changed
+
+- The workspace navigation, validation ribbon, structural card, and constraint
+  card count and expand **known violations** as the actionable set. Unresolved
+  bounds remain visible in the completeness counts and in their own collapsed
+  disclosures; they no longer inflate the issue links or automatically expand
+  a roster subtree.
+- Generated force and selection occurrence IDs no longer appear in cards,
+  accessible action labels, or choice-group labels. Stable DOM anchors and
+  `data-*` attributes retain exact link and regression-test identity.
+- Non-zero costs remain the headline. Zero-value source cost fields are kept in
+  a collapsed disclosure, so matched-play points stay prominent without
+  inventing a game-mode filter or discarding campaign data.
+- Selected-child disclosures now say what they contain — models, wargear,
+  Warlord, and options — rather than exposing the generic tree shape. A model's
+  amount editor is adjacent to the occurrence as `Models in this squad`, not
+  behind Selection details.
+- Unresolved selection display-name or annotation behavior still falls back to
+  the source display and remains marked incomplete, but its reader-facing notice
+  moved into Selection details instead of becoming a banner on every card.
+
+### Decisions and rejected alternatives
+
+Validity and completeness remain independent. Treating an unresolved bound as
+an actionable violation was rejected because it made unsupported coverage look
+like a roster error; hiding unresolved bounds entirely was rejected for the
+same reason in reverse. The UI keeps both dimensions and changes only their
+presentation priority.
+
+Zero-value cost types are collapsed by evaluated value rather than by names such
+as `Crusade`. RosterForge has no game-mode model, and a name filter would both
+guess at semantics and silently drop source data. Non-zero campaign values still
+deserve attention and therefore remain in the headline.
+
+Occurrence IDs remain implementation identity. Retaining them in anchors avoids
+breaking exact issue navigation, but displaying them to disambiguate repeated
+units was rejected: occurrence order and names are the reader-facing identity,
+and the generated strings added noise to every control.
+
+### Tests and corpus measurements
+
+`apps/web/src/App.ui.test.tsx` keeps the existing 13-test end-to-end local
+catalogue flow and now pins all presentation decisions: generated IDs are absent
+from visible text but present as exact anchors, zero-value `Crusade: Experience`
+is collapsed while Points remains prominent, large initialized children toggle
+and expose two model amount editors, unresolved structural bounds are separate
+from the one known violation, and an unsupported selection-name operation shows
+its notice only after Selection details opens.
+
+At pinned corpus `04c62fcd041b3808c39d5c46fd677c704027b979`, the 46 JSON
+files contain **6,631** authored cost values named `Crusade: Experience` or
+`Crusade: Battle Honours`: **5,643 zero** and **988 non-zero**. The split is
+3,174 Experience and 3,457 Battle Honours values. This supports collapsing
+zeroes by current value while keeping the cost types in the report.
+
+### Checks run
+
+- Focused `apps/web/src/App.ui.test.tsx` — **13 passed**.
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **495 passed, 18 skipped (513 total)**.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` — **513 passed**
+  across 50 test files; corpus checkout clean, 46 JSON files.
+- Local Vite browser smoke test — loaded with no console warnings or errors;
+  the production build retains only the existing large-chunk warning.
+
+The headless Grok handoff completed the synthetic zero-cost fixture and its
+regression assertions before the pause. Two later read-only review attempts made
+no changes: one stalled after reading the large handoff history and the other
+hit Grok's own file-output error on the diff. Codex completed the focused review
+and all gates above.
+
+### What this did not do
+
+No evaluator, command, persistence, or legality behavior changed. Zero-value
+costs were not removed, unresolved findings were not reclassified, and generated
+IDs were not changed. Warlord remains ordinary catalogue-driven child selection
+behavior rather than a new product concept. Phone-width behavior, incremental
+evaluation, per-file freshness, community-vs-GW points warnings,
+Unicode-normalised matching, and a CI performance budget remain open in section
+F.
+
+### Next recommended boundary
+
+**Behaviour on a phone.** Drive a real roster through add, configure, amount,
+and checks at a phone viewport. The current CSS claims a full-width fallback,
+but no real-list QA has verified density, control order, or disclosure depth at
+that width.
