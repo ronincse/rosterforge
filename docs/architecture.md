@@ -472,10 +472,11 @@ the catalogue batch summary is hidden. Clearing roster setup restores that
 summary without changing the imported library. One player header stays above
 the builder, carrying the roster identity, its supported cost totals, and its
 known-problem count; detailed structural and constraint reports follow it. The
-selected-roster tree renders top-level selections in two titled sections,
-`Configuration` first and then `Army units`, consuming the projection's existing
-classification rather than deciding membership itself. A section with no
-entries renders nothing, so a roster without configuration shows its army
+selected-roster tree renders top-level selections in titled groups, one per
+battlefield role, consuming the projection's classification rather than
+deciding membership itself. `Configuration` leads; the rest follow catalogue
+category order so the list reads the same way every time. A role with no
+entries renders nothing, so a roster without configuration shows its units
 rather than an empty heading.
 
 Army unit cards are collapsible; configuration cards are not, because hiding
@@ -503,11 +504,21 @@ remain explicit unavailable states, and selected occurrences remain present.
 This projection does not evaluate, mutate, filter, legalize, or persist the
 roster.
 
-`selections.configuration` and `selections.army` partition `selections.ordered`
-and preserve its relative order. Their `configurationAmount` and `armyAmount`
-are summed occurrence amounts rather than node counts — the same measure as
-`topLevelSelectionCount`, which they add to — so a section label and the pane
-heading cannot disagree when a unit is taken more than once.
+`selections.groups` partitions `selections.ordered` by battlefield role and
+preserves its relative order inside each group. Each group's `amount` is a
+summed occurrence amount rather than a node count — the same measure as
+`topLevelSelectionCount`, which the groups add to — so a group label and the
+pane heading cannot disagree when a unit is taken more than once.
+
+A role is the selection's **effective primary category**, not its declared
+category link: BattleScribe's primary category is "the category in which that
+entry will be visible in Roster Editor", and a modifier can move an entry
+between roles. The evaluator withholds the effective primary whenever a
+`set-primary` or `unset-primary` operation applied, because those are not
+executed; such a selection is filed under `unassigned` with `known: false` and
+the group says the role is unestablished, rather than being guessed into a
+category it may not occupy. `topLevelRole` records what this costs on the
+per-edit path and the batched index that would replace it if that ever matters.
 
 The model also owns the header's completeness fold. The player header shows one
 completeness badge where the separate cost and validation cards each carried

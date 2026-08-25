@@ -28,6 +28,7 @@ import {
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
 
 import {
+  inspectLocalRosterSelectionCategories,
   localRosterRootChoiceGroups,
   localRosterSelectionCount,
   type LocalRosterRootChoiceInspection,
@@ -141,6 +142,8 @@ export interface RosterWorkspaceRootChoiceGroup {
 export interface RosterWorkspaceSelection {
   readonly occurrence: RosterSelection;
   readonly section: RosterWorkspaceSection;
+  /** Present on top-level selections only; nested children inherit nothing. */
+  readonly role?: RosterWorkspaceRole;
   readonly active: boolean;
   readonly containsActiveSelection: boolean;
   readonly attention: boolean;
@@ -150,21 +153,52 @@ export interface RosterWorkspaceSelection {
 }
 
 /**
- * Top-level selections, both as one ordered list and split into the two
- * sections the workspace presents.
+ * The battlefield role a top-level selection is filed under.
  *
- * `configuration` and `army` partition `ordered` and preserve its relative
- * order, so a section renders source order without re-sorting. The two amounts
- * are **summed occurrence amounts, not node counts** — the same measure as
- * `topLevelSelectionCount`, which they add up to. Counting nodes instead would
- * disagree with the pane heading whenever a unit is added more than once.
+ * BattleScribe's primary category *is* this concept: the BSData wiki calls it
+ * "the category in which that entry will be visible in Roster Editor",
+ * singular, and `packages/evaluation/src/categories.ts` records the corpus
+ * evidence behind that reading. Grouping therefore uses the **effective**
+ * primary rather than the declared category link, because a modifier can move
+ * an entry between roles.
+ *
+ * `known` is false when the evaluator withheld the effective primary — it does
+ * that whenever a `set-primary` or `unset-primary` operation applied, since
+ * those are not executed. Such a selection is filed under `unassigned` and says
+ * so, rather than being guessed into a role it may not occupy.
+ */
+export interface RosterWorkspaceRole {
+  /** A category id, or the literals `configuration` and `unassigned`. */
+  readonly key: string;
+  readonly name: string;
+  /** Catalogue order; configuration sorts first and unassigned last. */
+  readonly order: number;
+  readonly known: boolean;
+}
+
+/**
+ * One rendered group of top-level selections sharing a battlefield role.
+ *
+ * `amount` is a summed occurrence amount, not a node count — the same measure
+ * as `topLevelSelectionCount`, which all groups add up to. Counting nodes would
+ * disagree with the pane heading whenever a unit is taken more than once.
+ */
+export interface RosterWorkspaceSelectionGroup {
+  readonly role: RosterWorkspaceRole;
+  readonly selections: readonly RosterWorkspaceSelection[];
+  readonly amount: number;
+}
+
+/**
+ * Top-level selections, both as one ordered list and grouped by role.
+ *
+ * `groups` partitions `ordered` and preserves its relative order inside each
+ * group, so a group renders source order without re-sorting. Empty roles are
+ * absent rather than present-and-empty.
  */
 export interface RosterWorkspaceSelections {
   readonly ordered: readonly RosterWorkspaceSelection[];
-  readonly configuration: readonly RosterWorkspaceSelection[];
-  readonly army: readonly RosterWorkspaceSelection[];
-  readonly configurationAmount: number;
-  readonly armyAmount: number;
+  readonly groups: readonly RosterWorkspaceSelectionGroup[];
 }
 
 export interface RosterWorkspaceSourceReports {
@@ -223,15 +257,20 @@ export function createRosterWorkspaceViewModel(
         ]),
       )
     : undefined;
-  const ordered = (primaryForce?.selections ?? []).map((selection) =>
-    workspaceSelection(
-      selection,
-      rootSelectionSection(session, selection, sectionByChoice),
-      validation.attentionSelectionIds,
-      costEvaluationBySelection,
-      activeSelectionId,
-    ),
-  );
+  const categoryOrder = catalogueCategoryOrder(session);
+  const ordered = (primaryForce?.selections ?? []).map((selection) => {
+    const section = rootSelectionSection(session, selection, sectionByChoice);
+    return {
+      ...workspaceSelection(
+        selection,
+        section,
+        validation.attentionSelectionIds,
+        costEvaluationBySelection,
+        activeSelectionId,
+      ),
+      role: topLevelRole(session, selection, section, categoryOrder),
+    };
+  });
   return {
     rosterId: session.roster.id,
     name: session.roster.name,
@@ -320,28 +359,119 @@ function workspaceValidationSummary(
   };
 }
 
+const configurationRole: RosterWorkspaceRole = {
+  key: "configuration",
+  name: "Configuration",
+  order: -1,
+  known: true,
+};
+
+const unassignedRole: RosterWorkspaceRole = {
+  key: "unassigned",
+  name: "Other",
+  order: Number.MAX_SAFE_INTEGER,
+  known: false,
+};
+
+/**
+ * Catalogue definition order for every named category, used to sort roles.
+ *
+ * Built once per projection rather than per selection. Sorting by this rather
+ * than by name keeps an army list reading in the order the catalogue intends —
+ * characters before battleline before transports — instead of alphabetically.
+ */
+function catalogueCategoryOrder(
+  session: LocalRosterSession,
+): ReadonlyMap<string, number> {
+  const order = new Map<string, number>();
+  let index = 0;
+  for (const definition of session.catalogue.context.categories.definitions) {
+    const id = definition.source.id;
+    if (id !== undefined && !order.has(id)) order.set(id, index++);
+  }
+  return order;
+}
+
+/**
+ * Files one top-level selection under a battlefield role.
+ *
+ * Configuration roots keep their existing classification and lead the list;
+ * everything else is filed under its effective primary category. A selection
+ * whose primary the evaluator withheld, or which declares no primary at all,
+ * lands in `unassigned` rather than being guessed into a role.
+ *
+ * ## What this costs, because it is on the per-edit path
+ *
+ * One category evaluation per **top-level** selection; nested children are
+ * never inspected. The two expensive pieces are already memoized —
+ * `indexEvaluationChoices` by catalogue context and `rosterSelectionLocations`
+ * by roster identity — so neither is rebuilt here.
+ *
+ * What is *not* memoized is the per-call inbound-contribution scan, which walks
+ * every location in the roster once per evaluation, and the category-name map
+ * that `inspectLocalRosterSelectionCategories` rebuilds over every catalogue
+ * definition. The added work is therefore roughly
+ * `topLevel × (allSelections + categoryDefinitions)` — about 4,900 iterations
+ * for a fifteen-unit Death Guard roster at 190 categories. Small today, but
+ * superlinear in roster size, which is the exact shape that has caused
+ * regressions here before.
+ *
+ * If it ever matters, the fix is a batched primary-category index built once
+ * per roster beside `effectiveRosterCategories`, which is already whole-roster
+ * and memoized. Do not reach for per-call caching instead.
+ */
+function topLevelRole(
+  session: LocalRosterSession,
+  selection: RosterSelection,
+  section: RosterWorkspaceSection,
+  categoryOrder: ReadonlyMap<string, number>,
+): RosterWorkspaceRole {
+  if (section === "configuration") return configurationRole;
+  const inspection = inspectLocalRosterSelectionCategories(
+    session,
+    selection.id,
+  );
+  if (!inspection.ok) return unassignedRole;
+  // `primaryCategories` is absent exactly when a set-primary or unset-primary
+  // operation applied, because those are not executed. Absent means unknown,
+  // never "no primary".
+  if (inspection.value.report.primaryCategories === undefined) {
+    return unassignedRole;
+  }
+  const primary = inspection.value.categories?.find(({ primary }) => primary);
+  if (primary === undefined) return { ...unassignedRole, known: true };
+  return {
+    key: primary.id,
+    name: primary.name,
+    order: categoryOrder.get(primary.id) ?? Number.MAX_SAFE_INTEGER - 1,
+    known: true,
+  };
+}
+
 function workspaceSelections(
   ordered: readonly RosterWorkspaceSelection[],
 ): RosterWorkspaceSelections {
-  const configuration = ordered.filter(
-    ({ section }) => section === "configuration",
-  );
-  const army = ordered.filter(({ section }) => section === "army");
-  // Two extra top-level-sized arrays so both sections can be measured with the
-  // same amount summation the pane heading uses. Negligible beside the
-  // recursive per-selection walk above, and it keeps one measure of "how much
-  // is in this roster" rather than two that disagree.
-  return {
-    ordered,
-    configuration,
-    army,
-    configurationAmount: rosterSelectionsAmount(
-      configuration.map(({ occurrence }) => occurrence),
+  const byKey = new Map<string, RosterWorkspaceSelection[]>();
+  const roles = new Map<string, RosterWorkspaceRole>();
+  for (const selection of ordered) {
+    const role = selection.role ?? unassignedRole;
+    roles.set(role.key, role);
+    const bucket = byKey.get(role.key);
+    if (bucket === undefined) byKey.set(role.key, [selection]);
+    else bucket.push(selection);
+  }
+  const groups = [...byKey.entries()].map(([key, selections]) => ({
+    role: roles.get(key) ?? unassignedRole,
+    selections,
+    amount: rosterSelectionsAmount(
+      selections.map(({ occurrence }) => occurrence),
     ),
-    armyAmount: rosterSelectionsAmount(
-      army.map(({ occurrence }) => occurrence),
-    ),
-  };
+  }));
+  // Insertion order would be roster order, which puts whichever unit was added
+  // first at the top. Sort by catalogue order so the list reads the same way
+  // every time; ties keep insertion order because sort is stable.
+  groups.sort((left, right) => left.role.order - right.role.order);
+  return { ordered, groups };
 }
 
 function workspaceHeaderSummary(

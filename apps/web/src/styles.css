@@ -1539,6 +1539,13 @@ h1 {
   font-size: 0.64rem;
 }
 
+.roster-selection-section-note {
+  margin: 0;
+  color: #7d641f;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
 .root-choice {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

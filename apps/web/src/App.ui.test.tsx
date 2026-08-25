@@ -872,10 +872,13 @@ describe("App local catalogue flow", () => {
     expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
-    // The tree groups top-level selections by the section the presentation
-    // model assigned. This catalogue has no Configuration root, so that
-    // section must not render an empty heading above the army.
-    const armySection = screen.getByRole("region", { name: "Army units" });
+    // The tree groups top-level selections by battlefield role. This squad's
+    // only category link carries primary="false", so it genuinely declares no
+    // primary and is filed under "Other" rather than being guessed into
+    // Infantry — the category it merely belongs to. The fixture has no
+    // Configuration root either, and an empty role renders no heading at all.
+    const armySection = screen.getByRole("region", { name: "Other" });
+    expect(screen.queryByRole("region", { name: "Infantry" })).toBeNull();
     expect(
       within(armySection).getByText("Infantry Squad (Elite)"),
     ).toBeTruthy();

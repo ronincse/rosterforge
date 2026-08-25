@@ -281,36 +281,29 @@ export function RosterOverview({
             </div>
           ) : (
             <div className="roster-selection-list">
-              {/* Configuration leads because it is what a player sets before
-                  the army: detachment, battle size, force disposition. A
-                  section renders only when it holds something — the add
-                  browser already exposes both groups for discovery, and a
-                  missing required configuration surfaces as a known problem in
-                  the checks rather than as an empty heading here. */}
-              <RosterSelectionSection
-                heading="Configuration"
-                anchorId="roster-configuration-heading"
-                selections={workspace.selections.configuration}
-                amount={workspace.selections.configurationAmount}
-                collapsible={false}
-                session={session}
-                onAddChild={onAddChildSelection}
-                onRename={onRenameSelection}
-                onSetAmount={onSetSelectionAmount}
-                onRemove={onRemoveSelection}
-              />
-              <RosterSelectionSection
-                heading="Army units"
-                anchorId="roster-army-heading"
-                selections={workspace.selections.army}
-                amount={workspace.selections.armyAmount}
-                collapsible
-                session={session}
-                onAddChild={onAddChildSelection}
-                onRename={onRenameSelection}
-                onSetAmount={onSetSelectionAmount}
-                onRemove={onRemoveSelection}
-              />
+              {/* One group per battlefield role, in catalogue order, so the
+                  tree reads like an army list rather than a flat tree.
+                  Configuration leads because it is what a player sets before
+                  the army. A group renders only when it holds something: the
+                  add browser exposes every role for discovery, and a missing
+                  required one surfaces as a known problem in the checks rather
+                  than as an empty heading here. */}
+              {workspace.selections.groups.map((group) => (
+                <RosterSelectionSection
+                  key={group.role.key}
+                  heading={group.role.name}
+                  anchorId={stableDomAnchor("roster-role", group.role.key)}
+                  roleKnown={group.role.known}
+                  selections={group.selections}
+                  amount={group.amount}
+                  collapsible={group.role.key !== "configuration"}
+                  session={session}
+                  onAddChild={onAddChildSelection}
+                  onRename={onRenameSelection}
+                  onSetAmount={onSetSelectionAmount}
+                  onRemove={onRemoveSelection}
+                />
+              ))}
             </div>
           )}
         </section>
@@ -1275,6 +1268,7 @@ function constraintObservation(item: ConstraintSummaryItem): string {
 function RosterSelectionSection({
   heading,
   anchorId,
+  roleKnown,
   selections,
   amount,
   collapsible,
@@ -1286,6 +1280,12 @@ function RosterSelectionSection({
 }: {
   readonly heading: string;
   readonly anchorId: string;
+  /**
+   * False when the evaluator withheld these selections' effective primary
+   * category, so the group says the role is unestablished instead of implying
+   * the units genuinely have none.
+   */
+  readonly roleKnown: boolean;
   readonly selections: readonly RosterWorkspaceSelection[];
   readonly amount: number;
   /**
@@ -1320,6 +1320,12 @@ function RosterSelectionSection({
         <h4 id={anchorId}>{heading}</h4>
         <span>{formatCount(amount, "selection")}</span>
       </div>
+      {!roleKnown && (
+        <p className="roster-selection-section-note">
+          A category modifier moves these between roles, and that operation is
+          not supported yet, so their battlefield role is not established here.
+        </p>
+      )}
       <ul>
         {selections.map((selection) => (
           <RosterSelectionItem

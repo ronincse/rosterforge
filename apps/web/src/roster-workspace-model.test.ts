@@ -56,10 +56,14 @@ describe("roster workspace presentation model", () => {
       completeness: "incomplete",
       incomplete: ["checks"],
     });
-    expect(model.selections.configuration).toEqual([]);
-    expect(model.selections.army).toHaveLength(1);
+    // No configuration root in this fixture, so no configuration group: an
+    // empty role is absent rather than present-and-empty.
+    expect(
+      model.selections.groups.some(({ role }) => role.key === "configuration"),
+    ).toBe(false);
+    expect(model.selections.groups).toHaveLength(1);
 
-    const root = model.selections.army[0];
+    const root = model.selections.groups[0]?.selections[0];
     const child = root?.selections[0];
     expect(root?.occurrence).toBe(
       session.roster.forces[0]?.selections[0],
@@ -111,14 +115,26 @@ describe("roster workspace presentation model", () => {
       { name: "Configuration", section: "configuration" },
       { name: "Uncategorized", section: "army" },
     ]);
+    // Configuration always leads; every other group is a battlefield role
+    // taken from the selection's effective primary category.
+    const groups = model.selections.groups;
+    expect(groups[0]?.role).toMatchObject({
+      key: "configuration",
+      name: "Configuration",
+      known: true,
+    });
     expect(
-      model.selections.configuration.map(({ occurrence }) => occurrence.name),
+      groups[0]?.selections.map(({ occurrence }) => occurrence.name),
     ).toEqual(["Disabled Automatic Root"]);
     expect(
-      model.selections.army.map(({ occurrence }) => occurrence.name),
+      groups
+        .slice(1)
+        .flatMap(({ selections }) =>
+          selections.map(({ occurrence }) => occurrence.name),
+        ),
     ).toEqual(["Initialization Unit"]);
 
-    const projectedUnit = model.selections.army[0];
+    const projectedUnit = groups[1]?.selections[0];
     expect(projectedUnit).toMatchObject({
       active: false,
       containsActiveSelection: true,
@@ -128,18 +144,19 @@ describe("roster workspace presentation model", () => {
     expect(
       projectedUnit?.selections.some(({ active }) => active),
     ).toBe(true);
-    // The two sections partition the ordered list, and their amounts use the
-    // same measure as the pane heading rather than counting nodes, so the two
-    // can never disagree about how much is in the roster.
-    expect([
-      ...model.selections.configuration,
-      ...model.selections.army,
-    ]).toHaveLength(model.selections.ordered.length);
+
+    // The groups partition the ordered list, their amounts use the same
+    // measure as the pane heading rather than counting nodes, and they are
+    // sorted by catalogue order so the list reads the same way every time.
     expect(
-      model.selections.configurationAmount + model.selections.armyAmount,
+      groups.flatMap(({ selections }) => selections),
+    ).toHaveLength(model.selections.ordered.length);
+    expect(
+      groups.reduce((total, { amount }) => total + amount, 0),
     ).toBe(model.topLevelSelectionCount);
-    expect(model.selections.configurationAmount).toBeGreaterThan(0);
-    expect(model.selections.armyAmount).toBeGreaterThan(0);
+    expect(
+      groups.map(({ role }) => role.order),
+    ).toEqual([...groups.map(({ role }) => role.order)].sort((a, b) => a - b));
     expect(model.validation.available).toBe(true);
     if (model.validation.available) {
       expect(model.validation.validity).toBe("invalid");
