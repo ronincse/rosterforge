@@ -1,5 +1,6 @@
 import type {
   BattleScribeCatalogueContext,
+  MaterializedVisibleRoot,
 } from "@rosterforge/data-graph";
 
 import {
@@ -36,7 +37,9 @@ import {
   type EvaluationSelectionResolution,
 } from "./selection-context.js";
 import {
+  evaluateRosterSelectionVisibility,
   evaluateRosterSelectionVisibilityPath,
+  type RosterSelectionVisibilityStatus,
 } from "./selection-visibility.js";
 
 export type RosterStructuralBoundStatus =
@@ -171,7 +174,17 @@ export function inspectEmptySingleForceRosterStructuralStatus(
   }
   let inactiveIncompleteRoots = 0;
   let inactiveDiagnosticCount = 0;
+  let unresolvedVisibilityRoots = 0;
   for (const root of context.roots.roots) {
+    // Root bounds are filtered by visibility below, after the report exists.
+    // A Dark Angels roster used to report `Code Chivalric` — an Imperial
+    // Knights configuration entry reaching the closure through a
+    // `catalogueLink` with `importRootEntries` — as `Selected 0, minimum 1,
+    // maximum 1`, violated and impossible to satisfy. The entry is statically
+    // `hidden="false"` and only becomes hidden once the force is known, so
+    // nothing static excluded it. The add browser already applied the dynamic
+    // rule and offered 110 of that catalogue's 292 roots; only this enumeration
+    // did not, which is why the two disagreed.
     const rootInspection = inspectEmptySingleForceRootChoices([root]);
     if (!rootInspection.ok) {
       state.incomplete = true;
@@ -186,7 +199,17 @@ export function inspectEmptySingleForceRosterStructuralStatus(
       resolutions,
       catalogueMatches,
     );
+    const visibility = rootVisibilityStatus(roster, context, force, root);
+    // Hidden and unselected: the player cannot add it, so its minimum cannot be
+    // a real requirement. A hidden root that *is* selected keeps its bounds —
+    // otherwise two occurrences of a now-hidden `max="1"` root would quietly
+    // stop being a violation, which is this same bug pointing the other way.
+    if (visibility === "hidden" && report.selectedCount === 0) continue;
     if (isRelevantRootBound(inspection, report)) {
+      // Only a bound actually being reported can be uncertain. A root with no
+      // relevant bound is not applicable whatever its visibility, so counting
+      // it here would make almost every roster incomplete for no reason.
+      if (visibility === "unresolved") unresolvedVisibilityRoots += 1;
       state.diagnostics.push(...rootInspection.diagnostics);
       if (rootInspection.value.completeness === "incomplete") {
         state.incomplete = true;
@@ -210,6 +233,21 @@ export function inspectEmptySingleForceRosterStructuralStatus(
           roots: inactiveIncompleteRoots,
           suppressedDiagnostics: inactiveDiagnosticCount,
         },
+      ),
+    );
+  }
+  if (unresolvedVisibilityRoots > 0) {
+    // Their bounds are kept, so nothing is silently dropped, but whether those
+    // bounds apply was never established — and an inapplicable root bound is
+    // exactly what produced a permanent false violation before. Reporting the
+    // status as complete here would claim a check that did not happen.
+    markIncomplete(
+      state,
+      structuralDiagnostic(
+        context,
+        "EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED",
+        "Some root choices have unresolved visibility, so whether their bounds apply to this force is unknown; the bounds are still reported.",
+        { roots: unresolvedVisibilityRoots },
       ),
     );
   }
@@ -653,6 +691,35 @@ function isRelevantBound(bound: {
     (bound.maximum !== undefined &&
       bound.maximum !== Number.POSITIVE_INFINITY)
   );
+}
+
+/**
+ * Whether a catalogue root is visible, hidden, or undecidable for this force.
+ *
+ * The caller acts on `hidden` only for a root with no selected occurrence. A
+ * hidden root that is already in the roster keeps its bounds, because a
+ * `max="1"` root that becomes hidden while two occurrences exist is still a
+ * real violation, and suppressing it would be the same defect inverted.
+ *
+ * `unresolved` never suppresses anything; it drives completeness instead. The
+ * question this predicate answers is exactly the one the add browser asks when
+ * deciding what to offer, and when the two disagreed a roster reported a
+ * violation for an entry it never offered.
+ */
+function rootVisibilityStatus(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  force: RosterForce,
+  root: MaterializedVisibleRoot,
+): RosterSelectionVisibilityStatus {
+  if (root.materialized.kind === "unresolvedEntryLink") return "unresolved";
+  const visibility = evaluateRosterSelectionVisibility(
+    roster,
+    context,
+    force,
+    root.materialized,
+  );
+  return visibility.ok ? visibility.value.status : "unresolved";
 }
 
 function isRelevantRootBound(

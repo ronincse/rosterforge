@@ -494,6 +494,19 @@ describe("empty single-force roster structural status", () => {
     });
     expect(inspected.value.completeness).toBe("complete");
     expect(inspected.diagnostics).toEqual([]);
+
+    // The regression this checkpoint fixed. `Hidden Required Root` carries a
+    // force-scoped minimum of 1 and hides itself once the force holds
+    // anything, which is the shape an allied library contributes through a
+    // `catalogueLink` with `importRootEntries`. Before the fix its bound was
+    // enumerated anyway and reported violated, so a correct roster could never
+    // be valid and the offending entry was never offered.
+    expect(
+      inspected.value.bounds
+        .filter(({ kind }) => kind === "root")
+        .map((bound) => boundName(bound)),
+    ).not.toContain("Hidden Required Root");
+    expect(inspected.value.validity).toBe("invalid");
   });
 });
 

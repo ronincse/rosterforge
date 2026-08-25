@@ -226,6 +226,11 @@
   import attempts, with source-located diagnostics for blocked targets
 - Composed visible-root materialization retaining visibility origin,
   occurrence, definition, source document, and definition document separately
+- Root selection bounds honouring *dynamic* visibility for the current force,
+  so a root the catalogue hides and the player was never offered contributes no
+  requirement; a hidden root that is already selected keeps its bounds, and a
+  reported bound whose root visibility cannot be decided leaves structural
+  status incomplete rather than claiming the check ran
 - Shared immutable materialized roots for repeated catalogue paths, with
   independent per-catalogue budgets under one aggregate call cap
 - Per-catalogue force-definition composition for matching game-system and

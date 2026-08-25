@@ -1366,6 +1366,7 @@ EVALUATION_STRUCTURAL_STATUS_CATALOGUE_MISMATCH
 EVALUATION_STRUCTURAL_STATUS_CHOICE_INDEX_PARTIAL
 EVALUATION_STRUCTURAL_STATUS_SELECTION_UNRESOLVED
 EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED
+EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED
 ```
 
 These status-level diagnostics point to the selected catalogue root because a
@@ -1380,6 +1381,22 @@ details retain the number of affected roots and suppressed source diagnostics.
 The summary does not make roster structural completeness incomplete. Selecting
 one of those roots restores its original source-located bound diagnostic,
 unresolved actionable finding, and incomplete state.
+
+A root bound is skipped when the root is *certainly hidden for this force and
+not selected*: the player cannot add it, so its minimum cannot be a real
+requirement. Before this rule, a Dark Angels roster reported a permanently
+violated `Code Chivalric` — an Imperial Knights entry reaching the closure
+through a `catalogueLink` with `importRootEntries` — that it never offered. A
+hidden root that *is* selected keeps its bounds, so two occurrences of a
+now-hidden `max="1"` root remain a violation.
+
+When a reported root bound belongs to a root whose visibility cannot be decided,
+one catalogue-level `EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED`
+diagnostic records how many roots were affected and structural completeness
+becomes **incomplete**. The bounds themselves are still reported; only the claim
+to have checked whether they apply is withdrawn. Roots with no relevant bound
+are not counted, because their visibility cannot change any reported outcome.
+One root in the pinned corpus is affected.
 
 Structural status also emits each exact diagnostic only once per code, source
 location, and details object. Repeated roster occurrences that inspect the same

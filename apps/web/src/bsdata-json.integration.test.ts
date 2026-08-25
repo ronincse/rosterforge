@@ -3600,6 +3600,13 @@ describe.skipIf(realDataDirectory === undefined)(
             EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
+            // Added when root bounds began respecting visibility. Exactly one
+            // root in this real catalogue carries a relevant bound whose
+            // visibility cannot be decided, so whether that bound applies is
+            // unknown and the status says so instead of reporting it as
+            // checked. The bound itself is still reported; only the claim of
+            // completeness changed.
+            EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED: 1,
           });
           expect(
             supported.value.structural.bounds

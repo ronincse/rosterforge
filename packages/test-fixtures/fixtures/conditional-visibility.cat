@@ -143,5 +143,32 @@
         </modifierGroup>
       </modifierGroups>
     </selectionEntry>
+    <!-- A required root that hides itself once the force holds anything. This
+         is the shape an allied library contributes through a catalogueLink
+         with importRootEntries: statically visible, so nothing filters it out
+         of the catalogue, but unselectable for this force. Its force-scoped
+         min of 1 is exactly what made a real Dark Angels roster report a
+         permanently violated "Code Chivalric" bound the player could not
+         satisfy. -->
+    <selectionEntry id="hidden-required-root" name="Hidden Required Root"
+      type="upgrade" hidden="false">
+      <constraints>
+        <constraint id="hidden-required-root-min" type="min"
+          field="selections" scope="force" value="1" shared="true"
+          includeChildForces="true" />
+        <constraint id="hidden-required-root-max" type="max"
+          field="selections" scope="force" value="1" shared="true"
+          includeChildForces="true" />
+      </constraints>
+      <modifiers>
+        <modifier type="set" field="hidden" value="true">
+          <conditions>
+            <condition type="atLeast" field="selections" scope="force"
+              childId="any" value="1" shared="true"
+              includeChildForces="true" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </selectionEntry>
   </selectionEntries>
 </catalogue>
