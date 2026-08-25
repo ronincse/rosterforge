@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (full 2,000-point reference army built)
+## Current Status — 2026-08-24 (costs verified against GW's MFM)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -166,8 +166,13 @@ diagnostic codes.
   Chivalric`**. It cannot currently call a correct Dark Angels army legal. The
   full run also found that a 13.6 MB draft is **not durable when the shelf says
   it is saved**: reloading ~1.5 s after saving lost the last 330 points, while
-  an 8 s wait restored all 2,000. Costs have still never been checked against an
-  external known-good list.
+  an 8 s wait restored all 2,000. **Costs are now verified against Games
+  Workshop's official Munitorum Field Manual v1.2**: 11 of the reference army's
+  12 unit costs matched exactly, and the one mismatch — Intercessor Squad, 80 in
+  the pinned data against 75 in MFM — was traced to BSData lagging GW, not to
+  RosterForge, by reading `pts: 80` straight out of the corpus. MFM also prices
+  many units by copy count (1st–2nd versus 3rd+); the reference army never
+  crosses a tier, so that behavior is **untested in either direction**.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -482,9 +487,11 @@ QA before classifying or implementing the discrepancy.
 | Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
 | `Code Chivalric` reported violated on every Dark Angels roster | **Next** | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
 | A saved draft is not durable immediately after the shelf shows it saved | Open | found by the full reference-army run. Clicking `Update saved draft` on a 13.6 MB draft, then reloading about 1.5 s later, restored the roster **330 points light** — the last three units were gone, though the shelf row had already updated to the new selection count. Repeating with an 8 s wait restored all 2,000 points exactly. So the write is not committed when the shelf claims it is. Whether the unsaved-changes indicator also clears early was **not** verified. A player who saves and immediately closes the tab can lose work, which is a direct failure of the v1 clause "save, reopen, and revise". **Ranked immediately after `Code Chivalric`, deliberately**: silent data loss is the more severe failure, but it needs a narrow race to hit, while the phantom violation is unconditional and breaks the north star's central promise on every roster of the faction. Take this one second |
+| Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
+| Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
 | Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
-| Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were not checked against an external known-good Dark Angels list — that remains the one unverified axis. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
+| Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Open | the projection already carries `attention` and `containsAttention` per node, and New Recruit attaches the failure to the category heading itself rather than collecting it into a report. Mostly rendering; take it after role grouping so the markers have rows to attach to |
 | Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
@@ -9011,3 +9018,94 @@ New Recruit ran.
 Start from the difference between how root *visibility* filtering and root
 *bound* enumeration select their roots: the former was corrected by the earlier
 allied-configuration fix and the latter evidently was not.
+
+## Completed Assignment — Costs Verified Against GW's MFM, 2026-08-24
+
+Baseline `954c07606e07673588014d9e564fcea222c500ee`; resulting commit recorded
+below. Documentation only: no application code changed. This closes the one
+axis of the v1 acceptance definition the full reference-army run could not.
+
+### Source
+
+Games Workshop's official Munitorum Field Manual, **v1.2**, at
+<https://mfm.warhammer-community.com/en/dark-angels>, supplied by the owner.
+Non-essential cookies were declined before reading. The page is a public,
+authoritative points list, which is precisely what "materially correct costs"
+had previously lacked a reference for.
+
+Only the twelve unit costs appearing in the reference army were extracted and
+compared. GW's points tables are their copyrighted content; this file records
+the **result** of the comparison and the single disagreeing value, not a
+reproduction of their list.
+
+### Result: 11 of 12 matched exactly
+
+Captain in Terminator Armour, Azrael, Hellblaster Squad, Deathwing Knights,
+Deathwing Terminator Squad, Bladeguard Veteran Squad, Inner Circle Companions
+(at six models), Impulsor, Rhino, Ballistus Dreadnought, and Land Raider all
+matched RosterForge's reported cost exactly, including the two units whose cost
+scales with model count.
+
+The one disagreement was **Intercessor Squad: RosterForge 80, MFM v1.2 75**.
+
+### The mismatch is data freshness, not a cost defect
+
+Checked directly against the pinned corpus rather than inferred:
+`Imperium - Space Marines.json` at pin `04c62fc` carries `pts: 80` for
+`Intercessor Squad`. RosterForge reported 80. **It read its source correctly.**
+
+This reproduces exactly the pattern the `Community-data mismatch diagnosis` row
+already recorded — RosterForge reading stale community data faithfully, with the
+actionable gap being freshness rather than cost evaluation. It is now recorded
+as its own row, because it is also concrete evidence for the open question of
+whether v1 requires *current* BSData or merely *compatible* BSData. The
+freshness signal already ships, and a player can import today's files
+themselves, so this is not v1-blocking; it is a decision the owner should make
+deliberately.
+
+The practical effect on the reference army is small and worth stating plainly:
+priced against MFM v1.2 the same list totals **1,990**, not 2,000, because two
+Intercessor Squads are each 5 points cheaper than the pinned data believes.
+
+### A gap in the acceptance scenario itself
+
+MFM v1.2 prices many units by **how many copies the army takes** — `YOUR 1ST TO
+2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`. A third Ballistus Dreadnought or
+a third Bladeguard Veteran Squad costs more than the first two.
+
+BSData stores a flat base `pts` on the entry plus a small number of modifiers,
+so that escalation, if modelled at all, has to be modifier-driven — exactly the
+class of behavior the reference army exists to exercise. **The 2,000-point army
+built earlier today never crossed a tier boundary**: two Ballistus, two
+Impulsors, two Intercessor Squads, two Hellblaster Squads, all inside their
+first tier.
+
+So RosterForge's handling of quantity-tiered pricing is **unverified in either
+direction** — not shown correct, not shown broken. That is a hole in the
+scenario, not just in the product, and it is now a roadmap row: extend the
+reference army to include a third copy of a tiered unit, then classify.
+
+Finding this is the strongest argument yet that the reference army earns its
+place. Twelve units priced correctly proved a great deal; the thirteenth, which
+nobody thought to add, is where the next real question lives.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test files,
+  unchanged: no code or test was touched.
+- Only `agent-handoff.md` changed.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, or corpus state changed. The corpus pin was **not** advanced, and no
+attempt was made to reconcile BSData with MFM v1.2 — that is a data question,
+not a code one. No finding from the reference-army run was fixed. The tiered
+pricing behavior was not tested, only identified.
+
+### Next recommended boundary
+
+Unchanged: **fix the `Code Chivalric` false violation**, then the
+save-durability race. The two rows added here are investigations rather than
+defects, and neither is blocking.
