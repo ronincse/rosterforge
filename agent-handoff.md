@@ -26,7 +26,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (list-first restructure started)
+## Current Status — 2026-08-24 (roster tree grouped by role)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -129,8 +129,11 @@ diagnostic codes.
   goal and settled the sequencing**: this is for building a viable 40k list, so
   the list and its unit stats are the focus, and building splits into a
   choosing phase and a reading phase where the catalogue gets out of the way.
-  Section F opens with that goal; the list-first restructure is now in progress
-  as four bounded rows, starting with battlefield-role grouping.
+  Section F opens with that goal. The list-first restructure is in progress as
+  four bounded rows; **battlefield-role grouping is done** — the tree now reads
+  Configuration, Character, Battleline, Vehicle and so on, from each unit's
+  effective primary category. Making unit stats reachable without two
+  expansions is next.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -434,7 +437,7 @@ QA before classifying or implementing the discrepancy.
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
 | Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
-| Separate configuration from army units | Done | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
+| Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
 | Build phase and reference phase | Open | **reframed 2026-08-24 by the stated goal.** Not a browsing-versus-editing toggle: the two phases are *choosing units*, where the catalogue should be pleasant and present, and *reading the finished list*, where the catalogue should be out of the way and unit stats and rules are what you scroll. The old row also wanted newly-added-unit focus, which still applies to the choosing phase. Design this after the list itself is list-first, not before |
 | Headline cost against its points limit | Open | found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
@@ -442,8 +445,8 @@ QA before classifying or implementing the discrepancy.
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
-| Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
-| Battlefield-role grouping in the selected-roster tree | **Next** | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
+| Unit stats and rules are buried two disclosures deep | **Next** | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
+| Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Open | the projection already carries `attention` and `containsAttention` per node, and New Recruit attaches the failure to the category heading itself rather than collecting it into a report. Mostly rendering; take it after role grouping so the markers have rows to attach to |
 | Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
 | The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** There the list *is* the page: route `/app/Lists/<id>`, document title is the list name, the body is organised by battlefield role (`Configuration`, `Epic Hero`, `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`, `Dedicated Transport`, `Fortification`, three `Allies:` groups), category headings carry counts against limits inline (`Character (0/1)`), violations are attached in place — the `Character` heading carried an error icon titled `• Roster requires 1 selections more of Character` — and the only chrome is a thin bar of list name, Export, Report Issue, List Options. RosterForge instead splits the screen between a selected-roster pane and an add browser, then follows it with Checks, structural status, and constraint bounds as co-equal sections, so the list competes with its own reports. This is an information-architecture finding about *emphasis*, **not** permission to copy New Recruit's visual design, markup, or code. It probably reframes several rows below rather than sitting beside them; see the ordering note |
@@ -458,7 +461,7 @@ The presentation model, the player header, the configuration split, and
 collapsible costed unit cards are complete. **The owner settled the sequencing
 question on 2026-08-24: take the list-first restructure now.** In order:
 
-1. battlefield-role grouping in the selected-roster tree;
+1. ~~battlefield-role grouping in the selected-roster tree~~ — done;
 2. unit stats and rules readable without two expansions;
 3. violations shown in place on the row that is wrong;
 4. demoting the report sections below the list;
@@ -8475,3 +8478,118 @@ temporary New Recruit list described above, which was removed.
 row that answer selects. If the answer is "continue as ordered", the **Next**
 remains shop/editor modes with newly-added-unit focus, consuming the
 projection's existing `activeSelectionId` ancestry.
+
+## Completed Assignment — Battlefield-Role Grouping, 2026-08-24
+
+Baseline `8203b5f79345bc146334b3686562f0c50a6dc71d`; resulting commits `3aa3356`
+(`docs: state the product goal and settle the list-first sequencing`), `45af7b1`
+(`feat: group the roster tree by battlefield role`), and this handoff commit.
+The first of the four list-first restructure rows.
+
+### The goal this now serves
+
+The owner stated the product goal on 2026-08-24 and it is recorded at the top of
+section F: build a **viable list for the chosen game system**, 40k first. The
+list and its unit stats are the focus, not the evaluator's reports; and building
+splits into a *choosing* phase, where the catalogue should be pleasant, and a
+*reading* phase, where the catalogue gets out of the way and stats and rules are
+what you scroll. New Recruit is the usability baseline, not a design to copy.
+
+The owner also settled the sequencing: take the list-first restructure now
+rather than after the remaining rows. The roadmap records why — the old
+shop/editor row was a two-pane concept the restructure dissolves, so building it
+first would have been building it twice.
+
+### What changed
+
+The selected-roster tree now renders one titled group per battlefield role, in
+catalogue order, instead of the `Configuration` / `Army units` split shipped
+earlier the same day. That split is marked **Done (superseded)**: Configuration
+survives as the first role group, which is what it always was.
+
+Verified against a pinned Death Guard roster — the tree read **Configuration**
+(Detachment, Battle Size, Force Disposition), **Character** (Lord of Contagion),
+**Battleline** (Plague Marines), **Vehicle** (Foetid Bloat-drone), with
+3 + 1 + 1 + 1 matching the pane's `6 top-level selections`. A later state added
+an **Infantry** group in the correct catalogue position. That is an army list
+rather than a tree.
+
+### The decision that mattered: which category is the role
+
+A unit belongs to many categories; it occupies one role. BattleScribe already
+answers this, and `packages/evaluation/src/categories.ts` had settled it with
+corpus evidence before this checkpoint: the primary category is "the category in
+which that entry will be visible in Roster Editor", singular, and `set-primary`
+displaces any previous primary.
+
+So grouping uses the **effective primary category**, not the declared category
+link the add browser groups by, because a modifier can move an entry between
+roles. The add browser's static reading stays correct for *choices*, which have
+no occurrence to evaluate; it would have been wrong for *selections*.
+
+The evaluator withholds `primaryCategories` exactly when a `set-primary` or
+`unset-primary` operation applied, since those are not executed. Absent means
+**unknown**, never "no primary". Such a selection is filed under `Other` with
+`known: false`, and the group renders a note saying the role is not established
+rather than implying the units have none. A selection that genuinely declares no
+primary also lands in `Other`, but with `known: true` and no note — the two
+cases are distinguishable, which is the point.
+
+The synthetic UI fixture turned out to be the second case: its squad's only
+category link carries `primary="false"`, so it correctly files under `Other`
+rather than under `Infantry`, the category it merely belongs to. The test now
+pins that, and asserts no `Infantry` group is invented.
+
+### What this costs, and why that is written on the function
+
+This puts one category evaluation per **top-level** selection on the per-edit
+path. The two expensive pieces are already memoized — `indexEvaluationChoices`
+by catalogue context, `rosterSelectionLocations` by roster identity — so neither
+rebuilds here. What is not memoized is the per-call inbound-contribution scan
+over every location, plus the category-name map
+`inspectLocalRosterSelectionCategories` rebuilds over every catalogue
+definition.
+
+Added work is therefore about `topLevel × (allSelections + categoryDefinitions)`
+— roughly **4,900 iterations** for a fifteen-unit Death Guard roster at 190
+categories. Small today, and no console errors or visible latency appeared in
+the browser, but it is **superlinear in roster size**, which is the exact shape
+that produced the 127-second validation regression this project already fixed
+once. `topLevelRole` records the cost and names the remedy — a batched
+primary-category index built once per roster beside `effectiveRosterCategories`
+— so the next reader does not reach for per-call caching instead.
+
+Browser timings were attempted and are **not** reported: React's asynchronous
+commit dominated them, and a promise-based measurement hung the hidden preview
+pane. The analytic bound above is what is actually known.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test
+  files, unchanged in count: existing tests were rewritten to the new grouping
+  rather than added to.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files —
+  **522 passed** across 53 test files.
+- At the 320 px supported minimum, `document.scrollWidth` stayed 320 with zero
+  overflowing elements; desktop 1265 px likewise. No console errors.
+
+### What this did not do
+
+No evaluator, session, persistence, or roster-model code changed — the role
+comes from an existing inspector. No behavior boundary moved, so
+`docs/compatibility.md` and `docs/diagnostics.md` are untouched. Unit stats are
+still two disclosures deep, violations are still collected into report sections
+rather than shown in place, and the report sections are still co-equal with the
+list. Those are rows 2, 3 and 4 of the restructure. No Reference Behavior QA
+ran: New Recruit informed the *goal*, and no behavioral claim is made here.
+
+### Next recommended boundary
+
+**Unit stats and rules readable without two expansions**, row 2. The datasheet
+already exists — `SelectionKeywords`, profiles, rules and info groups all render
+inside `Selection details` — but reaching a statline currently costs opening the
+unit card and then opening `Selection details`. The collapsible-card checkpoint
+added that second level, which is right for scanning a fifteen-unit army and
+wrong for reading it at a table. That checkpoint should resolve the tension
+between the two phases rather than simply undoing the collapse.
