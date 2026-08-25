@@ -4,6 +4,14 @@ The shared status and work-order document for every model working on this
 repository. `AGENTS.md` governs *how* to work. This file records *what is done,
 what is left, and what is blocked*.
 
+It does **not** define what the product is. `docs/product-vision.md` does:
+the north star, the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance
+definitions, the reference army those claims are measured against, the
+non-goals, and the five-question decision test. `docs/architecture.md` defines
+*how* the software is structured, and `docs/compatibility.md` defines *what*
+imported behavior is supported. A roadmap row here that cannot be justified
+against the vision should be challenged rather than inherited.
+
 ## Read This First
 
 A new session reads, in this order:
@@ -26,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (roster tree grouped by role)
+## Current Status — 2026-08-24 (product vision defined)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -134,6 +142,15 @@ diagnostic codes.
   Configuration, Character, Battleline, Vehicle and so on, from each unit's
   effective primary category. Making unit stats reachable without two
   expansions is next.
+- **Product definition.** `docs/product-vision.md` now carries the north star,
+  the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
+  the reference army (**2,000-point Dark Angels**, detachment, character with an
+  enhancement, squad with wargear replacements, dedicated transport), the
+  non-goals, and a five-question decision test for new work. `.ros`/`.rosz`
+  interchange is now a **stated non-goal**, not a deferral. The newest entry at
+  this file's end carries a roadmap review against that bar — recommendations
+  only; **no row was reordered or restatused**, and it names one missing v1
+  milestone: nobody has ever built the reference army.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -8593,3 +8610,152 @@ unit card and then opening `Selection details`. The collapsible-card checkpoint
 added that second level, which is right for scanning a fifteen-unit army and
 wrong for reading it at a table. That checkpoint should resolve the tension
 between the two phases rather than simply undoing the collapse.
+
+## Completed Assignment — Product Vision, 2026-08-24
+
+Baseline `e33911259a4960478afe32405e946010fb073890`; resulting commit recorded
+below. Documentation only: no application code changed, and no newly discovered
+roadmap work began.
+
+### What changed
+
+`docs/product-vision.md` is new. It carries the north star, the product
+definition and end-to-end workflow, behavioral-compatibility scope, the
+validity/completeness honesty rule stated as a *product* requirement rather than
+an engineering one, the BUILD → VALIDATE → PLAY lifecycle, roster-first UX
+principles with four testable acceptance proxies, the reference army, the v1 and
+v2 acceptance definitions, the non-goals, and the five-question decision test.
+
+`AGENTS.md` and this file gained a four-document map: vision defines *what
+RosterForge is becoming*, architecture *how* it is structured, compatibility
+*what* imported behavior is supported, and this file *what remains*.
+
+### The `.ros`/`.rosz` decision: a stated non-goal
+
+It had been "deferred" since 2026-08-20 and appeared in neither goals nor
+non-goals. It is now a **non-goal for both v1 and v2**, for three reasons:
+
+1. It is the opposite of the v1 bar. v1 is defined as completing the workflow
+   *without needing BattleScribe or New Recruit*; interchange is a feature for
+   interoperating with them.
+2. The reference army is built "from zero", so import cannot block v1 by
+   construction, and a finished list is read at the table in v2 rather than
+   exported.
+3. BSData publishes catalogues as JSON and the comparison tools are web-based
+   rather than trading roster files — the owner's original reasoning, and it
+   still holds.
+
+The architectural implication is the real cost and is recorded with the
+decision: faithful interchange requires the roster model to carry expanded
+profiles, rules, categories, and link identity from the BattleScribe roster
+schema — content it deliberately resolves from the catalogue instead. Adding it
+widens the immutable roster, which is the object persisted into every saved
+draft. This project already shipped one 8 MB per-write autosave regression by
+not noticing what a persisted structure costs; this would be the same class of
+change on purpose. The print/save-PDF path is a presentation export and is
+unaffected.
+
+The reversal condition is written down: a user actually asking to bring a list
+in from another tool, with a real use case. `.ros` ingestion (onboarding) is
+separable from `.ros` export (sharing).
+
+### Roadmap review — recommendations only, nothing reordered
+
+No row's status or position was changed. These are recommendations for the owner
+or the next lead.
+
+**Priorities that materially change now that v1 is the bar**
+
+1. **`Load catalogues directly from BSData` (F, Deferred) is the sharpest
+   tension the vision exposes.** v1 says "import **current** BSData", but the
+   application browses a *pinned* revision, and the roadmap already records a
+   real defect caused by that pin going stale. Either promote this to a v1 goal
+   or amend v1 to say "compatible BSData", which is the phrase the workflow list
+   uses. Those are different products; the owner should pick rather than let the
+   wording decide by accident.
+2. **`Headline cost against its points limit` (F, Open) should rise.** The
+   reference army is defined *by* its 2,000-point limit, and a points limit is
+   legality, not decoration — decision test 2. A player cannot tell they have
+   built a 2,000-point army without it.
+3. **`multiply`/`divide`/`modulo` (A, Open) should be relabelled a non-goal.**
+   Every prose statement about it already says it is unsupported on purpose
+   because the corpus uses none. Under the new non-goals that is settled, not
+   open work.
+4. **The three `.ros`/`.rosz` rows (C, Low priority) should become non-goals**
+   per the decision above. `Exact XML/JSON reserialization` should be classified
+   *separately* rather than swept in: it concerns catalogue bytes, not roster
+   interchange, and was not examined here.
+5. **`Unicode-normalised name matching` (F, Deferred)** waits on "`.ros`/
+   cross-tool import or another feature that actually matches external names".
+   One of its two triggers is now gone; the note should be updated so it is not
+   waiting on something that will never arrive.
+
+**Missing milestone required to reach v1**
+
+**An end-to-end reference-army acceptance scenario.** The roadmap has no row for
+building and validating the 2,000-point Dark Angels army, so "v1 complete" is
+currently unmeasurable. Every browser verification in this project has used
+**Death Guard**; the committed reference army is **Dark Angels with an
+enhancement, wargear replacements, and a dedicated transport** — a combination
+nobody has driven. Recommend adding it as a v1 milestone.
+
+**Status statements that are plainly stale**
+
+- `multiply`/`divide`/`modulo` = `Open` (see above).
+- The three `.ros`/`.rosz` rows = `Low priority` (see above).
+- Section B's `Sections C–E | Measured` row still says "interchange remains low
+  priority", which this checkpoint supersedes.
+
+### Remaining v1 work ranked by the decision test
+
+1. **Reference-army acceptance scenario** — test 1 by definition, and the only
+   item that reveals what the rest of the list actually is.
+2. **Headline cost against its points limit** — tests 2 and 4.
+3. **Unit stats and rules buried two disclosures deep** *(current Next)* —
+   test 4 for v1, test 3 for v2.
+4. **Violations shown in place** — test 4; also serves acceptance proxy 3.
+5. **Report sections demoted below the list** — test 4.
+6. **Permissive `defaultAmount` parsing** — test 2, but still unmeasured against
+   the corpus; the measurement should precede the work.
+7. **Legality-aware model-count controls** — test 4; validation already catches
+   an illegal count today.
+8. **Loadout flattening and Warlord controls** — test 4; needs Reference QA.
+9. **Per-edit whole-roster evaluation** — test 4 (speed), not urgent at measured
+   sizes.
+
+**The single next item should be building and validating the reference army
+end to end.** v1 is *defined* by that army and nobody has ever built it, so
+every other ranking above is speculation until someone does. This project's
+most-repeated lesson — recorded three separate times in this file — is that
+driving the app against a real army finds what the test suite cannot; the whole
+of section F exists because of it. Doing that first either confirms the list
+above or replaces it with real findings, and it does so before more effort is
+spent on rows that may turn out not to matter.
+
+That is a recommendation. The current **Next** row was left untouched.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test files,
+  unchanged: no code or test was touched.
+- Files changed: `docs/product-vision.md` (new), `AGENTS.md`,
+  `agent-handoff.md`.
+- The north star sentence was verified byte-for-byte against the text supplied
+  by the owner.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, or corpus state changed. No roadmap row was reordered, restatused,
+added, or removed. None of the newly identified work was started, including the
+reference-army scenario recommended above.
+
+### Next recommended boundary
+
+**Build and validate the reference army end to end** — the 2,000-point Dark
+Angels army with a detachment, a character carrying an enhancement, a squad
+using wargear replacements, and a dedicated transport, on current BSData — and
+record what breaks. If the owner prefers to continue the list-first restructure
+instead, the standing **Next** row remains unit stats and rules readable without
+two expansions.
