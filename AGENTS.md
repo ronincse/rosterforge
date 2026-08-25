@@ -1,5 +1,19 @@
 # RosterForge Engineering Rules
 
+Four documents divide the work, and confusing them wastes checkpoints:
+
+| Document | Answers |
+| --- | --- |
+| `docs/product-vision.md` | **What RosterForge is becoming** — north star, acceptance, non-goals |
+| `docs/architecture.md` | **How** the software is structured |
+| `docs/compatibility.md` | **What** imported behavior is supported |
+| `agent-handoff.md` | **What remains**, and what happens next |
+
+This file governs *how to work*. Read `docs/product-vision.md` before arguing a
+priority: it carries the v1/v2 acceptance definitions, the reference army every
+feature-complete claim is measured against, and the five-question decision test
+for newly discovered work.
+
 ## Cross-Model Handoffs
 
 Multiple models work on this repository. That is intentional: it gives better
