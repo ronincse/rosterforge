@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (costs verified against GW's MFM)
+## Current Status — 2026-08-24 (Dark Angels rosters can be legal again)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -173,6 +173,13 @@ diagnostic codes.
   RosterForge, by reading `pts: 80` straight out of the corpus. MFM also prices
   many units by copy count (1st–2nd versus 3rd+); the reference army never
   crosses a tier, so that behavior is **untested in either direction**.
+- **The phantom violation is fixed.** Root bound enumeration now honours dynamic
+  visibility, the same rule the add browser already used, so a root the player
+  is never offered no longer contributes a requirement. A configured Dark
+  Angels roster reports **0 known problems, "NO KNOWN VIOLATIONS"**; before it
+  could not be legal at all. A delegated `codex exec` review caught a real bug
+  in the first attempt — a hidden root that is *selected* must keep its bounds
+  — and the corpus caught the completeness change.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -485,8 +492,8 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
-| `Code Chivalric` reported violated on every Dark Angels roster | **Next** | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
-| A saved draft is not durable immediately after the shelf shows it saved | Open | found by the full reference-army run. Clicking `Update saved draft` on a 13.6 MB draft, then reloading about 1.5 s later, restored the roster **330 points light** — the last three units were gone, though the shelf row had already updated to the new selection count. Repeating with an 8 s wait restored all 2,000 points exactly. So the write is not committed when the shelf claims it is. Whether the unsaved-changes indicator also clears early was **not** verified. A player who saves and immediately closes the tab can lose work, which is a direct failure of the v1 clause "save, reopen, and revise". **Ranked immediately after `Code Chivalric`, deliberately**: silent data loss is the more severe failure, but it needs a narrow race to hit, while the phantom violation is unconditional and breaks the north star's central promise on every roster of the faction. Take this one second |
+| `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
+| A saved draft is not durable immediately after the shelf shows it saved | **Next** | found by the full reference-army run. Clicking `Update saved draft` on a 13.6 MB draft, then reloading about 1.5 s later, restored the roster **330 points light** — the last three units were gone, though the shelf row had already updated to the new selection count. Repeating with an 8 s wait restored all 2,000 points exactly. So the write is not committed when the shelf claims it is. Whether the unsaved-changes indicator also clears early was **not** verified. A player who saves and immediately closes the tab can lose work, which is a direct failure of the v1 clause "save, reopen, and revise". **Ranked immediately after `Code Chivalric`, deliberately**: silent data loss is the more severe failure, but it needs a narrow race to hit, while the phantom violation is unconditional and breaks the north star's central promise on every roster of the faction. Take this one second |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
 | Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
@@ -9109,3 +9116,107 @@ pricing behavior was not tested, only identified.
 Unchanged: **fix the `Code Chivalric` false violation**, then the
 save-durability race. The two rows added here are investigations rather than
 defects, and neither is blocking.
+
+## Completed Assignment — `Code Chivalric` False Violation, 2026-08-24
+
+Baseline `f2181782dcd4bf7c5098da16892363d18217640e`; resulting implementation
+commit `209787f` (`fix: stop reporting bounds for roots the player is never
+offered`) and this handoff commit. The roadmap's **Next**, found by the
+reference-army run.
+
+### The defect
+
+A Dark Angels roster reported a violated root bound for `Code Chivalric` —
+`Selected 0, minimum 1, maximum 1` — that no player could satisfy. The entry is
+an Imperial Knights configuration root that reaches the closure because
+`Imperium - Dark Angels.json` carries a `catalogueLink` to
+`Imperium - Imperial Knights - Library` with `importRootEntries="true"`. It is
+statically `hidden="false"`, so nothing static excluded it, and it only becomes
+hidden once the force is known.
+
+### Root cause: two readings of the same question
+
+The add browser and the bound enumeration both walk `context.roots.roots`, and
+both filter out `unresolvedEntryLink` with identical predicates. The divergence
+is that only one of them evaluates *dynamic* visibility.
+
+- `apps/web/src/roster-session.ts`, `inspectLocalRosterRootChoices`: its
+  `offered` predicate calls `evaluateRosterSelectionVisibility` against the
+  current force and drops roots that are certainly hidden. This is what takes
+  the Dark Angels catalogue's **292 visible roots down to the 110 offered**.
+- `packages/evaluation/src/structural-status.ts`: enumerated every root with no
+  visibility evaluation at all. `isRelevantRootBound` filters on bound shape
+  only — minimum above zero, finite maximum, or incomplete-with-selections —
+  which `Code Chivalric` passes.
+
+Both are answering "can the player put this in the roster". When they
+disagreed, the roster reported a violation for something it never offered.
+
+### The fix, and the two ways the first attempt was wrong
+
+Root bound enumeration now consults the same visibility evaluator the browser
+uses. Both corrections below came from review rather than from the tests, which
+is worth recording.
+
+**Delegated review caught a real bug.** The first version skipped every
+certainly-hidden root. An independent `codex exec --sandbox read-only` review
+pointed out that a root can be *selected* and then become hidden, and blanket
+skipping would suppress its genuine bounds — two occurrences of a now-hidden
+`max="1"` root would quietly stop being a violation, which is this same defect
+inverted. The rule is now: skip only a root that is certainly hidden **and has
+no selected occurrence**.
+
+**The completeness signal had to be narrowed.** The same review argued that an
+undecidable visibility must make the status incomplete rather than merely
+retaining the bound, since whether that bound applies was never established.
+Implemented as one aggregate
+`EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED` diagnostic. The first
+attempt counted every root with unresolved visibility and immediately turned a
+synthetic fixture incomplete for a root that had no relevant bound at all. Only
+a bound actually being **reported** can be uncertain, so the count now happens
+inside the relevance branch. Roots whose visibility cannot change any reported
+outcome are ignored.
+
+### Verification
+
+The regression test was proved to catch the defect rather than assumed to.
+`conditional-visibility.cat` gained a `Hidden Required Root` — force-scoped
+minimum of 1, hides itself once the force holds anything, which is the shape an
+allied library contributes. With the fix reverted the test fails with
+`expected [ 'Hidden Required Root', 'Alpha' ] to not include 'Hidden Required
+Root'`; restored, it passes.
+
+Measured in the browser on real pinned data, Dark Angels revision 3:
+
+| Roster state | Before | After |
+| --- | --- | --- |
+| Freshly created | 3 structural violations, one of them `Code Chivalric` | **2**, both genuine — Battle Size and Force Disposition unchosen |
+| Battle size, detachment and disposition chosen | still violated by `Code Chivalric` | **0 known problems, "NO KNOWN VIOLATIONS"**, 0 constraint violations |
+
+**RosterForge can now report a correct Dark Angels roster as legal.** Before
+this, it could not, for any Dark Angels roster at all.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- Normal `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test
+  files.
+- Pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` — **522 passed**.
+  The corpus caught the change: the Guardian Defenders scenario now emits one
+  additional `EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED`, because
+  exactly **one root in real data** carries a relevant bound whose visibility
+  cannot be decided. That expectation was updated with the reason, not relaxed.
+- `docs/compatibility.md` and `docs/diagnostics.md` updated: the boundary moved
+  and a diagnostic code was added.
+
+### What this did not do
+
+The save-durability race is untouched and remains the next item. No presentation
+work, no roadmap reordering beyond marking this row Done. Completeness still
+reports `incomplete` on these rosters, correctly — unresolved bounds remain.
+
+### Next recommended boundary
+
+**The save-durability race.** Saving a 13.6 MB draft and reloading ~1.5 s later
+lost the last 330 points while the shelf already showed the new state; an 8 s
+wait restored everything. Establish whether the unsaved-changes indicator also
+clears before the write commits, since that is what decides whether a player is
+warned before closing the tab.
