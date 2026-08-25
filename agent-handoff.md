@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (product vision defined)
+## Current Status — 2026-08-24 (reference army run; false violation found)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -151,6 +151,14 @@ diagnostic codes.
   this file's end carries a roadmap review against that bar — recommendations
   only; **no row was reordered or restatused**, and it names one missing v1
   milestone: nobody has ever built the reference army.
+- **Reference army.** That milestone has now had its first run, against pinned
+  BSData `04c62fc` and Dark Angels revision 3. Detachment, enhancement, wargear
+  replacement, dedicated transport, and save/reopen/revise all worked; the run
+  stopped at **325 points across five units** rather than a full 2,000. It found
+  a **false known violation** — `Code Chivalric`, an Imperial Knights entry, is
+  reported violated on every Dark Angels roster and cannot be satisfied — which
+  is now the **Next**. It also found that roster duplicate is unreachable in the
+  UI, and that "non-zero" is the wrong rule for the headline cost.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -457,12 +465,16 @@ QA before classifying or implementing the discrepancy.
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
 | Build phase and reference phase | Open | **reframed 2026-08-24 by the stated goal.** Not a browsing-versus-editing toggle: the two phases are *choosing units*, where the catalogue should be pleasant and present, and *reading the finished list*, where the catalogue should be out of the way and unit stats and rules are what you scroll. The old row also wanted newly-added-unit focus, which still applies to the choosing phase. Design this after the list itself is list-first, not before |
-| Headline cost against its points limit | Open | found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
+| Headline cost against its points limit | Open | **sharpened by the 2026-08-24 reference-army run: "non-zero" is the wrong rule for what leads the header.** A configured 2,000-point roster with no units yet showed a headline of `2 Detachment Points`, because `pts` was still 0 and zero totals are filtered out; after an enhancement the header carried three figures, `260 pts | 2 Detachment Points | 1 Enhancements`, two of them bookkeeping counters. Limit-bearing cost types should lead. Originally found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
-| Unit stats and rules are buried two disclosures deep | **Next** | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
+| Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
+| `Code Chivalric` reported violated on every Dark Angels roster | **Next** | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail |
+| Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
+| A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
+| Reference-army acceptance scenario | Open | first run 2026-08-24 against pinned BSData `04c62fc`, Dark Angels revision 3. It exercised detachment, battle size, enhancement, wargear replacement, dedicated transport, save/reopen/revise — and found the three rows above. **It did not build to a full 2,000 points** (stopped at 325 across 5 units) and did not check costs against an external known-good list. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Open | the projection already carries `attention` and `containsAttention` per node, and New Recruit attaches the failure to the category heading itself rather than collecting it into a report. Mostly rendering; take it after role grouping so the markers have rows to attach to |
 | Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
@@ -8759,3 +8771,123 @@ using wargear replacements, and a dedicated transport, on current BSData — and
 record what breaks. If the owner prefers to continue the list-first restructure
 instead, the standing **Next** row remains unit stats and rules readable without
 two expansions.
+
+## Completed Assignment — Reference Army Run, 2026-08-24
+
+Baseline `dbcc43560e8d9b0bf003377c9a08a3f1eff713d5`; resulting commit recorded
+below. Documentation only: no application code changed. This is the first run of
+the acceptance scenario `docs/product-vision.md` defines v1 against, and it was
+taken because v1 is measured by an army nobody had ever built.
+
+### Data and scope
+
+Pinned BSData `04c62fcd041b3808c39d5c46fd677c704027b979` (2026-08-23) through
+the application's own browse pin, `Imperium - Dark Angels.json` **revision 3**,
+292 visible roots, 152 categories. Built in the browser against the local dev
+server.
+
+**The run was partial, and that matters for how its results are read.** It
+exercised every *structural* requirement of the reference army — detachment,
+battle size, a character carrying an enhancement, a squad using wargear
+replacements, and a dedicated transport — plus save, reopen, and revise. It did
+**not** build to a full 2,000 points, stopping at **325 points across five
+units**, and it did not check costs against an external known-good Dark Angels
+list. Those two gaps are recorded in the new roadmap row rather than glossed.
+
+### What worked
+
+- Pinned browse, catalogue load, and roster creation.
+- `2. Strike Force (2000 Point limit)` and the `Unforgiven Task Force`
+  detachment.
+- **Force Disposition was correctly empty until a detachment existed**, then
+  offered `Take and Hold` — the `Force Disposition shows no entries` row
+  confirmed on a second faction.
+- **Enhancements were offered** — `Shroud of Heroes`, `Stubborn Tenacity`,
+  `Weapons of the First Legion` — confirming `Detachment enhancements never
+  offered` on Dark Angels.
+- **Modifier-driven cost change**: the Captain went 85 → **110 pts** on taking
+  Shroud of Heroes, and the roster total 235 → **260**.
+- **Cost aggregation**: 85 + 80 + 70 = 235, matching the header exactly.
+- **Wargear replacement**: the Sergeant's `Close combat weapon` became `Power
+  fist`, with the squad correctly staying at 80 pts.
+- **Role grouping** read Configuration / Character / Battleline / Dedicated
+  Transport.
+- **Durability**: save → full page reload → Open restored 260 pts, all four
+  groups, the enhancement, and the Power fist. Revising after reopen added a
+  Rhino for 325 pts and autosaved.
+
+That is a real v1 workflow completing end to end, and none of it needed
+BattleScribe or New Recruit.
+
+### What it found
+
+**1. `Code Chivalric` is reported violated on every Dark Angels roster.** A
+root-selection bound demands `Selected 0, minimum 1, maximum 1` of `Code
+Chivalric` — an **Imperial Knights** configuration entry — and marks it
+`Violated`. The entry is **not among the 110 offered roots**, so no player
+action can satisfy it, and its `Review available roots` link points at a
+browser that does not contain it. It persisted through the entire build.
+
+The `Allied config auto-inserts into a force` fix filtered roots by visibility
+for creation and browsing. Structural bound inspection evidently still
+enumerates the hidden allied root. The observable consequence is that
+RosterForge tells a Dark Angels player their legal army has a known violation
+they cannot fix — the exact failure the north star's second clause exists to
+prevent, and a direct failure of acceptance proxy 3.
+
+This is the most important result of the run and is now the roadmap's **Next**.
+
+**2. "Non-zero" is the wrong rule for the headline cost.** Immediately after
+configuring a 2,000-point roster with no units, the headline figure read
+**`2 Detachment Points`** — `pts` was still 0, and zero totals are filtered out,
+so a bookkeeping field became the number the player sees. After the enhancement
+the header carried three figures: `260 pts | 2 Detachment Points | 1
+Enhancements`, two of them counters rather than costs anyone builds against.
+The existing `Headline cost against its points limit` row now carries this
+evidence: limit-bearing cost types should lead.
+
+**3. Roster duplicate is not reachable.** Confirmed in the running app — the
+saved-draft shelf offers Open and Delete only, and there is no duplicate
+affordance anywhere. The commands exist and section E is honest that the
+*command set* is done. Workflow step 5 in the vision is "save, reopen,
+**duplicate**, and revise", so v1 is incomplete until it is exposed.
+
+**4. A 325-point, five-unit draft occupies 13.6 MB.** By design: drafts embed
+the source closure so they survive catalogue changes, and quota handling exists.
+Recorded as an open product question — how many saved armies is a player
+entitled to? — rather than as a defect.
+
+### One thing that is not a finding
+
+The renderer was disposed once mid-run while opening the draft with the browser
+pane hidden. It recovered on reload, the draft was intact, and it did not recur.
+The cause was not established, and a hidden-pane harness failure had already
+occurred earlier in this session for an unrelated reason. It is **not** recorded
+as an application defect, because the evidence does not support that.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test files,
+  unchanged: no code or test was touched.
+- Only `agent-handoff.md` changed.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, or corpus state changed. None of the four findings was fixed. The
+list-first restructure did not advance. No Reference Behavior QA against New
+Recruit ran; every observation here is about RosterForge against its own
+acceptance definition.
+
+### Next recommended boundary
+
+**Fix the `Code Chivalric` false violation.** It is the only finding that makes
+the application actively dishonest about legality, it affects every roster of
+the faction the reference army uses, and by the vision's decision test it
+outranks the remaining presentation work on question 2. Start from the
+difference between how root *visibility* filtering and root *bound* enumeration
+select their roots — the former was fixed, the latter apparently was not.
+
+The standing presentation row, unit stats and rules readable without two
+expansions, moves to second and is unchanged otherwise.
