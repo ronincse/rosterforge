@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-24 (reference army run; false violation found)
+## Current Status — 2026-08-24 (full 2,000-point reference army built)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -159,6 +159,15 @@ diagnostic codes.
   reported violated on every Dark Angels roster and cannot be satisfied — which
   is now the **Next**. It also found that roster duplicate is unreachable in the
   UI, and that "non-zero" is the wrong rule for the headline cost.
+- **The reference army is now built in full**: a legal 2,000-point Unforgiven
+  Task Force, 16 costed units summing exactly, every genuine violation resolved.
+  With the army correct, RosterForge reports **1 structural violation and 0
+  constraint violations — and that one violation is the phantom `Code
+  Chivalric`**. It cannot currently call a correct Dark Angels army legal. The
+  full run also found that a 13.6 MB draft is **not durable when the shelf says
+  it is saved**: reloading ~1.5 s after saving lost the last 330 points, while
+  an 8 s wait restored all 2,000. Costs have still never been checked against an
+  external known-good list.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -471,10 +480,11 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
-| `Code Chivalric` reported violated on every Dark Angels roster | **Next** | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail |
+| `Code Chivalric` reported violated on every Dark Angels roster | **Next** | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
+| A saved draft is not durable immediately after the shelf shows it saved | Open | found by the full reference-army run. Clicking `Update saved draft` on a 13.6 MB draft, then reloading about 1.5 s later, restored the roster **330 points light** — the last three units were gone, though the shelf row had already updated to the new selection count. Repeating with an 8 s wait restored all 2,000 points exactly. So the write is not committed when the shelf claims it is. Whether the unsaved-changes indicator also clears early was **not** verified. A player who saves and immediately closes the tab can lose work, which is a direct failure of the v1 clause "save, reopen, and revise". **Ranked immediately after `Code Chivalric`, deliberately**: silent data loss is the more severe failure, but it needs a narrow race to hit, while the phantom violation is unconditional and breaks the north star's central promise on every roster of the faction. Take this one second |
 | Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
-| Reference-army acceptance scenario | Open | first run 2026-08-24 against pinned BSData `04c62fc`, Dark Angels revision 3. It exercised detachment, battle size, enhancement, wargear replacement, dedicated transport, save/reopen/revise — and found the three rows above. **It did not build to a full 2,000 points** (stopped at 325 across 5 units) and did not check costs against an external known-good list. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
+| Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were not checked against an external known-good Dark Angels list — that remains the one unverified axis. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Open | the projection already carries `attention` and `containsAttention` per node, and New Recruit attaches the failure to the category heading itself rather than collecting it into a report. Mostly rendering; take it after role grouping so the markers have rows to attach to |
 | Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
@@ -8891,3 +8901,113 @@ select their roots — the former was fixed, the latter apparently was not.
 
 The standing presentation row, unit stats and rules readable without two
 expansions, moves to second and is unchanged otherwise.
+
+## Completed Assignment — Full Reference Army Run, 2026-08-24
+
+Baseline `4a1489e3e76e9748a1bdf2998d6f564c3c73295e`; resulting commit recorded
+below. Documentation only: no application code changed. This supersedes the
+partial run recorded in the entry above, which stopped at 325 points.
+
+### The army that was built
+
+Pinned BSData `04c62fcd041b3808c39d5c46fd677c704027b979`,
+`Imperium - Dark Angels.json` **revision 3**. Strike Force (2,000-point limit),
+**Unforgiven Task Force** detachment, Take and Hold disposition.
+
+| Role | Units |
+| --- | --- |
+| Character | Captain in Terminator Armour **110** *(Shroud of Heroes enhancement)* |
+| Epic Hero | Azrael **140** |
+| Infantry | Hellblaster Squad **110**, Deathwing Knights **240**, Deathwing Terminator Squad **165**, Bladeguard Veteran Squad **80**, Inner Circle Companions **160** *(6 models)*, Hellblaster Squad **110** |
+| Battleline | Intercessor Squad **80** *(5 models)*, Intercessor Squad **80** *(5 models)* |
+| Dedicated Transport | Impulsor **70**, Rhino **65**, Impulsor **70** |
+| Vehicle | Ballistus Dreadnought **150**, Land Raider **220**, Ballistus Dreadnought **150** |
+
+Sixteen costed units summing to **exactly 2,000 points**, verified by hand
+against the header. Every reference-army requirement is present: a detachment, a
+character carrying an enhancement, a squad using wargear replacements (the
+Intercessor Sergeant's close combat weapon replaced by a Power fist), and a
+dedicated transport.
+
+**Every genuine violation was resolved before the run was called complete.** The
+first pass at 2,000 points reported seven structural violations; six were real
+and correct — two Intercessor Squads at one model against a 5–10 minimum, two
+Impulsors missing a required sponson, two Hellblaster Sergeants missing a
+required pistol. Filling the squads to five models and choosing the required
+options cleared all six, and none of them changed the points total, which is
+correct for this data.
+
+### Final validation state
+
+- Structural: **100 satisfied, 1 violated, 15 unresolved**.
+- Constraints: **224 satisfied, 0 violated, 69 unresolved**.
+- Completeness: **incomplete**, as it should be while unresolved bounds exist.
+
+The single remaining violation is `Code Chivalric`. **RosterForge cannot report
+a correct, legal, fully configured 2,000-point Dark Angels army as legal**, and
+the only reason is a phantom Imperial Knights requirement. That is the sharpest
+possible statement of the defect's impact, and it is why it is the **Next**.
+
+### What the full run proved that the partial one could not
+
+- **Cost aggregation at scale.** Sixteen units, hand-verified to 2,000 exactly.
+- **Quantity-scaled costs.** Inner Circle Companions 3 → 6 models moved
+  80 → 160, matching the pinned GW-list finding.
+- **Unit-priced squads do not scale.** Intercessor Squad stayed 80 while going
+  from 1 to 5 models, which is correct — the cost is on the unit, not the model.
+- **Legality-aware amount controls are genuinely missing.** Typing 6 into a
+  Deathwing Knight amount produced a 10-model unit; the checks correctly caught
+  it as `Observed 9, limit 4`, but nothing stopped the entry. Reverting cleared
+  it. Real evidence for that open row.
+- **A suspected cost defect was disproved.** Deathwing Knights held at 240 pts
+  across that illegal 5 → 10 model change, which looked like a missing
+  bracket price. The constraint report settled it: the configuration was
+  illegal, so there was no bracket to price. Recorded because the wrong
+  conclusion was the tempting one.
+
+### A durability finding the partial run missed
+
+Clicking `Update saved draft` on the 13.6 MB draft and reloading about **1.5
+seconds** later restored the roster **330 points light** — the last three units
+were gone — even though the shelf row had already updated to the new selection
+count. Repeating the save and waiting **8 seconds** before reloading restored
+all 2,000 points and every group exactly.
+
+So the write is not committed at the moment the shelf claims it is. A player who
+saves and immediately closes the tab can lose work, which is a direct failure of
+the v1 clause "save, reopen, and revise". Whether the unsaved-changes indicator
+also clears early was **not** verified and is not claimed.
+
+It is ranked immediately after `Code Chivalric` rather than ahead of it: silent
+data loss is the more severe failure, but it needs a narrow race, while the
+phantom violation is unconditional on every roster of the faction and breaks the
+north star's central promise.
+
+### Draft size, clarified
+
+The partial run recorded 13.6 MB for 17 selections. The full army stored **120
+selections in the same 13.6 MB**. The size is the embedded catalogue closure,
+not the army, and drafts sharing an import share those bytes. That materially
+softens the open row: the cost is per distinct catalogue, not per roster.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **504 passed, 18 skipped (522 total)** across 53 test files,
+  unchanged: no code or test was touched.
+- Only `agent-handoff.md` changed.
+
+### What this did not do
+
+No application, test, dependency, build, architecture, compatibility,
+diagnostic, or corpus state changed. No finding was fixed. Costs were **not**
+checked against an external known-good Dark Angels list, which remains the one
+unverified axis of the acceptance definition. No Reference Behavior QA against
+New Recruit ran.
+
+### Next recommended boundary
+
+**Fix the `Code Chivalric` false violation**, then the save-durability race.
+Start from the difference between how root *visibility* filtering and root
+*bound* enumeration select their roots: the former was corrected by the earlier
+allied-configuration fix and the latter evidently was not.
