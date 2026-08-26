@@ -31,6 +31,7 @@ import {
   type LocalRosterDraftStore,
   type LocalRosterDraftSummary,
 } from "./browser-drafts.js";
+import { createRecoverySlot } from "./recovery-slot.js";
 import {
   commitBoundedHistory,
   createBoundedHistory,
@@ -437,7 +438,7 @@ export function useRosterForgeAppController({
 
   async function discardRecoverableRoster() {
     setRecoverableRoster(undefined);
-    await draftStore.delete(recoveryDraftId);
+    await recoverySlot.clear();
   }
 
   async function recoverUnsavedRoster() {
@@ -720,9 +721,16 @@ export function useRosterForgeAppController({
   // The recovery slot covers the case the draft autosave cannot: a roster the
   // user has never saved. One slot, overwritten, so its cost stays at one
   // catalogue closure however many rosters get tried.
+  const recoverySlot = useMemo(() => createRecoverySlot(draftStore), [
+    draftStore,
+  ]);
   const recoveryRef = useRef<() => Promise<void>>(async () => undefined);
   recoveryRef.current = async () => {
     if (loadState.kind !== "loaded" || rosterSession === undefined) return;
+    // The debounce timer can outlive the render that persisted the roster, so
+    // the writer re-checks here rather than trusting the effect cleanup to have
+    // cancelled it first.
+    if (rosterSession.roster === persistedRoster) return;
     const stamp = now();
     const draft = createLocalRosterDraft({
       id: recoveryDraftId,
@@ -736,7 +744,7 @@ export function useRosterForgeAppController({
         : { history: draftHistory(rosterHistory) }),
     });
     if (!draft.ok) return;
-    await draftStore.save(draft.value);
+    await recoverySlot.write(draft.value);
   };
   useEffect(() => {
     if (pendingRoster === undefined || pendingRoster === persistedRoster) {
@@ -754,11 +762,13 @@ export function useRosterForgeAppController({
   }, [activeDraft, autosaveDelayMs, pendingRoster, persistedRoster]);
 
   // Once the roster is persisted as a real draft the slot has nothing to
-  // recover, so it is cleared rather than left to be offered next session.
+  // recover, so it is cleared rather than left to be offered next session. The
+  // clear goes through the slot so it lands after any write already in flight
+  // rather than racing it — see `recovery-slot.ts`.
   useEffect(() => {
     if (persistedRoster === undefined) return;
-    void draftStore.delete(recoveryDraftId);
-  }, [draftStore, persistedRoster]);
+    void recoverySlot.clear();
+  }, [persistedRoster, recoverySlot]);
 
   // An unsaved roster is lost on reload: saving is manual until a draft exists,
   // and its undo history has nowhere to live until then. Say so, and make the
