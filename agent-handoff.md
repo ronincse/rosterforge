@@ -10393,7 +10393,9 @@ Verification:
 - `pnpm test` — **511 passed, 18 skipped (529)** across 54 files; and
 - optional exact Aeldari assertion at pinned corpus
   `04c62fcd041b3808c39d5c46fd677c704027b979` — **1 passed, 17 skipped** in
-  its focused integration file.
+  its focused integration file; and
+- GitHub Actions `#33014746560` for `d5b35b9` — **passed** all repository CI
+  gates.
 
 No New Recruit behavior was needed to classify these owner-observed
 RosterForge defects. No evaluator semantics, constraint composition, roster
