@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (one-click datasheets; lead returning to Codex)
+## Current Status — 2026-08-26 (bounded delegation cadence; Codex active)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -54,18 +54,13 @@ diagnostic codes.
   134 said `Claude Opus 5`, because Claude's tooling added one unprompted and
   nothing asked it of anyone else. An unmarked commit older than 2026-08-24
   therefore means only "not Claude". History was not rewritten.
-- **Active lead.** **Claude is handing the lead back to Codex.** The owner ended
-  the 2026-08-26 session at the usage limit and said the work goes to Codex next,
-  so treat this commit as the transfer record. Codex should run the
-  `docs/agent-workflow.md` "Formal Lead Transfer" pickup checks against this
-  commit before starting: clean checkout, `HEAD` equal to `origin/main`,
-  divergence `0 0`, only the primary worktree, no stash, no concurrent writer,
-  and a roadmap `Next` matching this record. **The `Next` is child-model
-  statlines.** Two things to know before touching anything: the unit-datasheet
-  row is **In progress, not Done** — top-level statlines take one expansion now,
-  child models still take two — and CI was disrupted all session by a GitHub
-  Actions outage, so **run `gh run list` first** rather than trusting any CI
-  claim written in this file.
+- **Active lead.** **Codex resumed the lead on 2026-08-26.** The formal pickup
+  checks passed at `9a7ea3b54ed663b72b615823e092b8cc51509bcb`: clean checkout,
+  `HEAD` equal to freshly fetched `origin/main`, divergence `0 0`, only the
+  primary worktree, no stash, no concurrent writer, and a roadmap `Next`
+  matching the transfer record. **The `Next` remains child-model statlines.**
+  The unit-datasheet row is **In progress, not Done** — top-level statlines take
+  one expansion now, child models still take two.
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -116,14 +111,20 @@ diagnostic codes.
   **not** inherit `CLAUDE.md`/`AGENTS.md` and holds a shell despite its
   read-only role label, so its brief must name the rules and any possible write
   needs a worktree. The Copilot template was corrected because `copilot.cmd`
-  silently truncated multi-line prompts.
+  silently truncated multi-line prompts. **Substantive application checkpoints
+  now plan delegation up front:** zero delegates is normal for tiny/mechanical
+  or documentation-only work, a normal product checkpoint targets one useful
+  lane, complex work targets one or two, and semantic/architectural/high-risk
+  correctness work expects model-diverse review when available. These are
+  judgment-based targets, not quotas; the lead remains primary implementer and
+  sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **504 passed, 18 skipped (522)**.
+  `git diff --check` all pass. `pnpm test` is **507 passed, 18 skipped (525)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **522 passed**; without the variable the 18 corpus tests are skipped.
+  **525 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -152,8 +153,8 @@ diagnostic codes.
   Section F opens with that goal. The list-first restructure is in progress as
   four bounded rows; **battlefield-role grouping is done** — the tree now reads
   Configuration, Character, Battleline, Vehicle and so on, from each unit's
-  effective primary category. Making unit stats reachable without two
-  expansions is next.
+  effective primary category. Top-level unit statlines now take one expansion;
+  finishing the same treatment for child models is next.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -202,11 +203,10 @@ diagnostic codes.
   queue on one chain (`apps/web/src/recovery-slot.ts`) so the clear cannot be
   overtaken by a write already in flight. **Local durability now has no known
   defect.**
-- **`33775ee` and `49d27c0` are locally verified but were never checked by CI.**
-  GitHub Actions was in a critical outage on 2026-08-26 and created no run for
-  them; `ci.yml` has no `workflow_dispatch`, so one cannot be fired after the
-  fact. The next push verifies them, since CI checks the whole tree. See that
-  entry's Verification section before assuming a green history.
+- **CI recovered.** Run `#32993598971` for `9a7ea3b` passed and checks the full
+  tree including the earlier recovery-slot and one-click datasheet work. The
+  old `95d9a79` run remains wedged as queued with no jobs, but later green runs
+  supersede it as verification evidence.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -9634,3 +9634,79 @@ and the sublinear scaling answers that directly.
 row this checkpoint opened; the second is the other half of the stated goal and
 is the larger win. Adding `workflow_dispatch:` to `ci.yml` is a small worthwhile
 side task that would have removed this session's entire CI blind spot.
+
+## Completed Assignment — Routine Bounded Delegation, 2026-08-26
+
+Baseline `9a7ea3b54ed663b72b615823e092b8cc51509bcb`; resulting workflow commit
+`71d2e31` and this handoff commit. Codex resumed the formal lead at the clean,
+freshly fetched baseline with `HEAD == origin/main`, divergence `0 0`, one
+worktree, no stash, no concurrent writer, and child-model statlines still the
+roadmap `Next`.
+
+### What changed
+
+`AGENTS.md` and `docs/agent-workflow.md` now make useful bounded delegation a
+normal part of substantive checkpoint planning instead of an opt-in step whose
+lowest-friction reading was to do everything in the lead thread.
+
+The active lead remains primary implementer and retains architecture,
+integration, final review, validation, handoff, commits, push, and CI. The new
+planning budget is deliberately small:
+
+- zero delegates is normal for tiny, mechanical, or documentation-only work;
+- a normal product checkpoint targets one useful delegate;
+- complex or cross-cutting work targets one or two useful delegates;
+- semantic, architectural, or high-risk correctness work expects an independent
+  capable non-lead frontier review when available; and
+- large separable implementation may use writer delegates only under the
+  existing worktree rules.
+
+The lead plans and launches a useful lane early enough to affect implementation,
+tests, or acceptance. Capability to do the work personally is no longer a reason
+to skip that step. The targets remain judgment-based rather than quotas: no
+duplicate investigations, overlapping writers, unnecessary model calls, or
+delegation whose safe briefing, isolation, review, and integration cost exceeds
+its likely value. A substantive no-delegate exception is stated in its
+completion report; trivial and mechanical work needs no explanation.
+
+### Decisions and preserved boundaries
+
+The correction changes cadence, not authority or access. It preserves the
+required task brief, least privilege, native-child capability checks, dedicated
+writer worktrees, one writer per worktree, Codex review of delegated code,
+Reference Behavior QA classification and browser gates, and all external-write
+rules.
+
+The alternative of requiring a fixed number of model calls was rejected because
+it would reward fan-out rather than useful independence. Keeping only the old
+"concrete advantage" wording was also rejected because recent Codex and Claude
+sessions showed that it consistently delayed or suppressed reviews that later
+caught real defects and incorrect assumptions.
+
+No delegate was used for this documentation-only correction. That is the normal
+zero-delegate case under the policy itself: there was no independent product or
+code question, and a second documentation lane would have cost more to brief and
+verify than this bounded wording change could return.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning.
+- `pnpm test` — **507 passed, 18 skipped (525)** across 54 files.
+- Pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **525 passed
+  (525)** across 54 files. Its branch is three commits behind its moving remote;
+  the exact pin was not changed.
+- CI before this push: `#32993598971` for `9a7ea3b` passed. The workflow
+  correction's own run is recorded after publication.
+
+### What this did not do
+
+No application code, tests, architecture, compatibility boundary, diagnostic,
+product behavior, corpus data, service configuration, or agent installation
+changed. The roadmap was not reordered or restatused.
+
+### Next recommended boundary
+
+**Child-model statlines**, exercising the new cadence with at least one useful
+bounded delegate launched before implementation is finished.
