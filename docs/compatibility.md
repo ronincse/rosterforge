@@ -168,6 +168,10 @@
   collapsed disclosures, and separately retained diagnostics; unsupported
   constraint shapes remain incomplete and diagnostic without inflating
   actionable issue counts
+- Inline known-violation presentation on the containing battlefield-role heading
+  and exact owning selection row, with a reciprocal link to the retained Checks
+  evidence. Propagated ancestors, unresolved coverage, structural root findings,
+  and force findings are not mislabeled as selection violations
 - Collapsible recursive selection-child collections, with large initialized
   subtrees closed by default, a reader-facing models/wargear/options label, and
   known-violation ancestor paths opened automatically; unresolved bounds do not

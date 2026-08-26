@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (catalogue placement; inline violations Next)
+## Current Status — 2026-08-26 (inline violations; report demotion Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -58,9 +58,10 @@ diagnostic codes.
   checks passed at `9a7ea3b54ed663b72b615823e092b8cc51509bcb`: clean checkout,
   `HEAD` equal to freshly fetched `origin/main`, divergence `0 0`, only the
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
-  matching the transfer record. Child-model statlines and bounded catalogue
-  placement were then completed under the resumed lead. **The `Next` is showing
-  violations in place on the row that is wrong.**
+  matching the transfer record. Child-model statlines, bounded catalogue
+  placement, and inline known-violation markers were then completed under the
+  resumed lead. **The `Next` is demoting the detailed report sections below the
+  list without weakening validation honesty.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -159,6 +160,10 @@ diagnostic codes.
   reader-controlled 320–400 px desktop sidebar: it starts present on desktop,
   can be unmounted so the roster takes the full width, and starts closed on a
   newly opened phone-width workspace while remaining explicitly reopenable.
+  Battlefield-role headings now signal when they contain a known violation,
+  and only the exact owning selection row receives the inline `Known violation`
+  marker and reciprocal link to Checks. Unresolved coverage remains separate
+  and never marks a roster row.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -534,7 +539,7 @@ QA before classifying or implementing the discrepancy.
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
-| Violations shown in place on the row that is wrong | Open | the projection already carries `attention` and `containsAttention` per node, and New Recruit attaches the failure to the category heading itself rather than collecting it into a report. Mostly rendering; take it after role grouping so the markers have rows to attach to |
+| Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
 | The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** There the list *is* the page: route `/app/Lists/<id>`, document title is the list name, the body is organised by battlefield role (`Configuration`, `Epic Hero`, `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`, `Dedicated Transport`, `Fortification`, three `Allies:` groups), category headings carry counts against limits inline (`Character (0/1)`), violations are attached in place — the `Character` heading carried an error icon titled `• Roster requires 1 selections more of Character` — and the only chrome is a thin bar of list name, Export, Report Issue, List Options. RosterForge instead splits the screen between a selected-roster pane and an add browser, then follows it with Checks, structural status, and constraint bounds as co-equal sections, so the list competes with its own reports. This is an information-architecture finding about *emphasis*, **not** permission to copy New Recruit's visual design, markup, or code. It probably reframes several rows below rather than sitting beside them; see the ordering note |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -553,8 +558,8 @@ question on 2026-08-24: take the list-first restructure now.** In order:
    done;
 3. ~~catalogue placement for the reading phase~~ — done, kept separate from
    broader mode semantics and newly-added-unit focus;
-4. violations shown in place on the row that is wrong — **Next**;
-5. demoting the report sections below the list;
+4. ~~violations shown in place on the row that is wrong~~ — done;
+5. demoting the report sections below the list — **Next**;
 6. remaining build-versus-reference phase behavior;
 7. legality-aware model-count controls;
 8. common-loadout flattening and dedicated Warlord controls; and
@@ -9932,3 +9937,103 @@ modes. No external Reference QA roster was created during this checkpoint.
 already carries `attention` and `containsAttention`; render that signal on the
 affected battlefield-role or selection row without weakening the existing
 validity/completeness boundary or removing the detailed checks.
+
+## Completed Assignment — Inline Known-Violation Markers, 2026-08-26
+
+Baseline `a423b1116cbf5307ecd205b6f8db4871b95b055b`; resulting implementation
+commit `2a7d960` and this handoff commit. Codex completed the next list-first
+presentation checkpoint as active lead, with one read-only native Codex lane
+launched before implementation to audit ownership semantics, accessibility,
+and regression seams.
+
+### What shipped
+
+Known supported-validation violations now appear where the player can act on
+them:
+
+- a battlefield-role heading says `Contains known violation` when one of its
+  selected subtrees contains an actionable finding;
+- only the exact owning selection row receives the red `Known violation`
+  marker and styling;
+- that marker links to the retained Checks section, whose detailed finding in
+  turn still links back to the exact stable occurrence anchor; and
+- resolving a finding removes both the exact-row marker and its containing role
+  signal on the next immutable roster snapshot.
+
+The marker is deliberately a presence signal rather than an issue count.
+Several findings can share one owner, and a role signal repeats location
+awareness rather than representing another problem; the player header and
+composed validation report remain the authoritative count.
+
+The existing presentation model owns the safety boundary. `attention` means the
+exact owner of a violated structural direct/group bound or selection constraint.
+`containsAttention` propagates only enough ancestry to open disclosures and
+signal the containing role. Ancestor selections therefore are not mislabeled as
+violating. Structural root findings and force constraints have no selection
+owner and remain in the header/detailed checks; unresolved and incomplete
+findings remain separately reported and never create inline markers.
+
+### Delegation changed the result
+
+The early read-only lane verified that no evaluator or model-policy change was
+needed and rejected deriving markers independently in React from raw findings.
+It made three boundaries explicit before commit: use `attention`, never
+`containsAttention`, on an exact row; do not turn a marker into a count; and do
+not guess root or force failures onto a battlefield role. It also identified the
+existing Squad Doctrine flow as the best dynamic regression seam and called out
+the new marker/Remove action row for phone-width QA. Codex reviewed each claim
+against `supportedValidationSelectionIds`, the projection recursion and the
+rendering diff before accepting it.
+
+### Reference evidence and live QA
+
+No new moving-reference discrepancy was classified. The checkpoint used the
+already recorded Reference Behavior QA observation that New Recruit attaches a
+Character requirement to its category heading rather than leaving every problem
+in a detached report. RosterForge follows that information-architecture goal
+with its own role and exact-selection surfaces; it does not copy New Recruit's
+markup, iconography or category-limit presentation.
+
+Live browser QA used the pinned Death Guard catalogue. Its initial Configuration
+group showed exact markers on Battle Size and Force Disposition while Detachment
+remained unmarked. Adding Plague Marines surfaced the exact Plague Champion
+owner under a signaled Battleline group, without marking the ancestor unit as
+the owner. Selecting Strike Force, Virulent Vectorium and Take and Hold removed
+both Configuration row markers and that role signal while leaving the unrelated
+Plague Champion marker intact. The inline link reached Checks at the sticky-bar
+offset, and a detailed `Review selection` link still resolved to a mounted exact
+row.
+
+At 390 x 844 the document measured 375 px client and scroll width; at a 335 px
+outer viewport it measured the supported 320 px content width for both. All
+three marked action rows had equal client and scroll widths at both sizes, and
+the browser console reported zero errors.
+
+### Verification
+
+- focused `App.ui.test.tsx` plus `roster-workspace-model.test.ts` — **18
+  passed**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **508 passed, 18 skipped (526)** across 54 files; and
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **526 passed
+  (526)** across all 54 files. Its branch is four commits behind its moving
+  remote; the exact pin was intentionally not changed.
+
+### What this did not do
+
+No evaluator, validation composition, roster model, controller, persistence,
+architecture, compatibility boundary, diagnostic code, corpus data, or
+third-party data changed. Detailed Checks, structural status and constraint
+bounds remain in their existing full-width position; demoting them is the next
+separate checkpoint. Root/force violations are not assigned to a selection or
+role that does not own them. Category limit copy, missing-role rows, full
+legality, and broader build/reference modes remain outside this slice.
+
+### Next recommended boundary
+
+**Demote the report sections below the list.** Keep the compact player header,
+inline markers, exact reciprocal links, validity/completeness distinction,
+unsupported-behavior diagnostics, and full detailed evidence, but make the
+army list visually primary instead of giving the reports co-equal page weight.

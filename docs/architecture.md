@@ -510,6 +510,15 @@ summed occurrence amount rather than a node count — the same measure as
 `topLevelSelectionCount`, which the groups add to — so a group label and the
 pane heading cannot disagree when a unit is taken more than once.
 
+The renderer consumes validation attention asymmetrically. A role heading uses
+`containsAttention` only to say that a known violation exists somewhere beneath
+it; an exact selection row uses only `attention` to label itself and link to the
+detailed Checks section. This keeps propagated ancestry from impersonating the
+owner. Root and force findings have no selection attention identity and remain
+in the header and reports, while unresolved findings never enter either inline
+signal. The marker is not a count because several findings can share one owner;
+the composed validation status remains authoritative.
+
 A role is the selection's **effective primary category**, not its declared
 category link: BattleScribe's primary category is "the category in which that
 entry will be visible in Roster Editor", and a modifier can move an entry
