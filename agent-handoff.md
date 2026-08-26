@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (child-model statlines; catalogue placement Next)
+## Current Status — 2026-08-26 (catalogue placement; inline violations Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -58,9 +58,9 @@ diagnostic codes.
   checks passed at `9a7ea3b54ed663b72b615823e092b8cc51509bcb`: clean checkout,
   `HEAD` equal to freshly fetched `origin/main`, divergence `0 0`, only the
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
-  matching the transfer record. Child-model statlines were then completed under
-  the resumed lead. **The `Next` is the catalogue-placement half of Build phase
-  and reference phase.**
+  matching the transfer record. Child-model statlines and bounded catalogue
+  placement were then completed under the resumed lead. **The `Next` is showing
+  violations in place on the row that is wrong.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -119,12 +119,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **507 passed, 18 skipped (525)**.
+  `git diff --check` all pass. `pnpm test` is **508 passed, 18 skipped (526)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **525 passed**; without the variable the 18 corpus tests are skipped.
+  **526 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -155,7 +155,10 @@ diagnostic codes.
   Configuration, Character, Battleline, Vehicle and so on, from each unit's
   effective primary category. Top-level unit and direct child-model statlines
   now take the same one unit-card expansion; upgrades and nested model wargear
-  remain behind their exact configuration disclosures.
+  remain behind their exact configuration disclosures. The catalogue is now a
+  reader-controlled 320–400 px desktop sidebar: it starts present on desktop,
+  can be unmounted so the roster takes the full width, and starts closed on a
+  newly opened phone-width workspace while remaining explicitly reopenable.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -514,7 +517,7 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
-| Build phase and reference phase | **Next — catalogue placement only** | **reframed 2026-08-24 by the stated goal.** Not a browsing-versus-editing toggle: the two phases are *choosing units*, where the catalogue should be pleasant and present, and *reading the finished list*, where the catalogue should be out of the way and unit stats and rules are what you scroll. The old row also wanted newly-added-unit focus, which still applies to the choosing phase. Take the next checkpoint as the bounded catalogue-placement half; do not absorb newly-added-unit focus or broader mode semantics into it. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. Independent analysis flagged that the 2026-08-26 datasheet checkpoint addressed only half the owner's stated goal — stats easy to find — and left this half untouched |
+| Build phase and reference phase | Done (catalogue placement); remaining phase behavior stays ordered below | **reframed 2026-08-24 by the stated goal.** The bounded placement half is complete: the catalogue starts as a 320–400 px desktop sidebar, an explicit sticky control unmounts it so the roster takes the full width, a fresh phone-width workspace starts roster-first and can reopen it, and the filter survives placement changes. Adding a unit never changes the choice. Newly-added-unit focus and broader build/reference behavior remain a later checkpoint rather than being smuggled into this one. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. RosterForge follows the measured interaction goal without copying that squeezed three-pane geometry |
 | Headline cost against its points limit | Open | **sharpened by the 2026-08-24 reference-army run: "non-zero" is the wrong rule for what leads the header.** A configured 2,000-point roster with no units yet showed a headline of `2 Detachment Points`, because `pts` was still 0 and zero totals are filtered out; after an enhancement the header carried three figures, `260 pts | 2 Detachment Points | 1 Enhancements`, two of them bookkeeping counters. Limit-bearing cost types should lead. Originally found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
@@ -548,9 +551,9 @@ question on 2026-08-24: take the list-first restructure now.** In order:
 1. ~~battlefield-role grouping in the selected-roster tree~~ — done;
 2. ~~unit and direct child-model stats readable after one unit expansion~~ —
    done;
-3. catalogue placement for the reading phase — **Next**, kept separate from
+3. ~~catalogue placement for the reading phase~~ — done, kept separate from
    broader mode semantics and newly-added-unit focus;
-4. violations shown in place on the row that is wrong;
+4. violations shown in place on the row that is wrong — **Next**;
 5. demoting the report sections below the list;
 6. remaining build-versus-reference phase behavior;
 7. legality-aware model-count controls;
@@ -9836,3 +9839,95 @@ fixture solely to add another attention transition test.
 phase`. Make the catalogue pleasant while choosing and able to get out of the
 way while reading; do not absorb newly-added-unit focus or broader mode semantics
 into the same checkpoint.
+
+## Completed Assignment — Reader-Controlled Catalogue Placement, 2026-08-26
+
+Baseline `fe3c8ec9167e0af81696f114423ce2eff7173484`; resulting implementation
+commit `bc95371` and this handoff commit. Codex completed the roadmap's bounded
+catalogue-placement half as active lead, with one read-only native Codex lane
+launched before implementation to inspect the layout, state and test seams.
+
+### What shipped
+
+The roster workspace now treats catalogue placement as a reader choice rather
+than a permanent equal-width pane:
+
+- desktop starts with the catalogue present as a bounded 320–400 px sidebar and
+  gives the roster the remaining width;
+- the sticky workspace navigation exposes an explicit Show/Hide catalogue
+  disclosure, with its available-choice count and accessible expanded state;
+- hiding the catalogue unmounts its potentially large choice tree and expands
+  the selected roster to the full builder width;
+- a newly opened workspace at the existing 850 px responsive breakpoint starts
+  roster-first, with the catalogue closed but explicitly reopenable; and
+- catalogue filtering survives hide/show, while adding a unit deliberately does
+  not change placement. Newly-added-unit focus and broader phase semantics stay
+  in their later roadmap checkpoint.
+
+The responsive initializer runs only when `RosterOverview` mounts. It does not
+subscribe to viewport changes, because resizing must not overwrite the user's
+explicit placement choice. Root-choice inspection diagnostics remain with the
+catalogue; command diagnostics from add/remove/rename/amount operations remain
+outside it, so hiding the browser cannot hide an error from a still-visible
+roster control.
+
+### Delegation changed the result
+
+The early read-only lane agreed that local `RosterOverview` presentation state
+was the correct seam and rejected controller, draft-persistence, and phase-mode
+changes. Its review then caught four issues before commit: the catalogue still
+owned more width than the roster, the nav action copy was ambiguous, the mobile
+default lacked a regression test, and controller-supplied roster diagnostics
+would have disappeared with the catalogue. Codex verified those findings in
+the call sites and incorporated each correction. The same review recommended
+conditional unmounting for the catalogue's large DOM; the collapsed control
+therefore omits `aria-controls` rather than pointing to a nonexistent target,
+while retaining `aria-expanded` as its disclosure state.
+
+### Reference evidence and live QA
+
+No new moving-reference discrepancy was classified. The implementation used
+the already captured 2026-08-26 Reference Behavior QA evidence recorded in the
+roadmap: New Recruit keeps a 400 px desktop catalogue, hides it on mobile, and
+offers explicit auto/always-hide settings. RosterForge adopts the supported
+interaction goal — present while choosing, removable while reading, roster-first
+on phone — without copying New Recruit's three-pane geometry or automatic mode
+policy.
+
+Live browser QA used the pinned Death Guard catalogue at desktop and 390 x 844:
+
+- at 1440 px the open builder measured 1,143 px, with a 727 px roster and exact
+  400 px catalogue; hiding expanded the roster to the full 1,143 px and removed
+  the catalogue DOM;
+- a `plague` filter retained all six matches across hide/show;
+- a fresh 390 x 844 workspace started with zero catalogue panes, reopened to a
+  293 px single-column catalogue, and closed again through the same control;
+- document client and scroll width both stayed 375 px at that phone viewport;
+  and
+- the browser console reported zero errors.
+
+### Verification
+
+- focused `App.ui.test.tsx` — **14 passed**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **508 passed, 18 skipped (526)** across 54 files; and
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **526 passed
+  (526)** across all 54 files. Its branch is four commits behind its moving
+  remote; the exact pin was intentionally not changed.
+
+### What this did not do
+
+No evaluator, roster model, controller, persistence format, architecture,
+compatibility boundary, diagnostic code, corpus data, or third-party data
+changed. The preference is session-local rather than persisted. Adding a unit
+does not focus it, automatically hide the catalogue, or introduce shop/editor
+modes. No external Reference QA roster was created during this checkpoint.
+
+### Next recommended boundary
+
+**Violations shown in place on the row that is wrong.** The presentation model
+already carries `attention` and `containsAttention`; render that signal on the
+affected battlefield-role or selection row without weakening the existing
+validity/completeness boundary or removing the detailed checks.
