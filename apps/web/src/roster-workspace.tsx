@@ -1307,11 +1307,23 @@ function RosterSelectionSection({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
 }) {
   if (selections.length === 0) return null;
+  // `containsAttention` is deliberately only a routing signal here. A role can
+  // point the reader toward a problem below it, but only the exact selection's
+  // `attention` flag may label a row as violating something.
+  const containsAttention = selections.some(
+    (selection) => selection.containsAttention,
+  );
   return (
     <section className="roster-selection-section" aria-labelledby={anchorId}>
-      <div className="roster-selection-section-heading">
+      <div
+        className="roster-selection-section-heading"
+        data-contains-attention={containsAttention}
+      >
         <h4 id={anchorId}>{heading}</h4>
-        <span>{formatCount(amount, "selection")}</span>
+        <div className="roster-selection-section-meta">
+          {containsAttention && <span>Contains known violation</span>}
+          <span>{formatCount(amount, "selection")}</span>
+        </div>
       </div>
       {!roleKnown && (
         <p className="roster-selection-section-note">
@@ -1471,6 +1483,7 @@ function RosterSelectionItem({
       className="roster-selection-item"
       id={selectionAnchor(selection.id)}
       data-occurrence-id={selection.id}
+      data-attention={selectionModel.attention ? "violation" : undefined}
       data-display-completeness={
         nameIncomplete || annotationIncomplete ? "incomplete" : "complete"
       }
@@ -1492,6 +1505,18 @@ function RosterSelectionItem({
           )}
         </span>
         <div className="selection-occurrence-actions">
+          {/* This is presence, not a count: more than one supported finding can
+              share an owner. The detailed checks remain authoritative and
+              link back to this exact stable row. */}
+          {selectionModel.attention && (
+            <a
+              className="selection-violation-link"
+              href="#roster-checks-heading"
+              aria-label={`Review known violations for ${annotatedName}`}
+            >
+              Known violation
+            </a>
+          )}
           {topLevel && <SelectionCostTotals costs={selectionModel.costs} />}
           <button
             type="button"

@@ -922,6 +922,17 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByRole("region", { name: "Configuration" }),
     ).toBeNull();
+    expect(
+      within(armySection).getByText("Contains known violation"),
+    ).toBeTruthy();
+    expect(
+      within(armySection).getByRole("link", {
+        name: "Review known violations for Infantry Squad (Elite)",
+      }),
+    ).toHaveProperty("hash", "#roster-checks-heading");
+    expect(rosterSelection("selection-ui-1")?.dataset.attention).toBe(
+      "violation",
+    );
 
     // The unit card carries its recursive cost in the always-visible row, so a
     // collapsed army still shows what each unit is worth.
@@ -1289,6 +1300,12 @@ describe("App local catalogue flow", () => {
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
     );
 
+    const inlineViolation = screen.getByRole("link", {
+      name: "Review known violations for Infantry Squad (Elite)",
+    });
+    expect(inlineViolation).toHaveProperty("hash", "#roster-checks-heading");
+    expect(screen.getByText("Contains known violation")).toBeTruthy();
+
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1359,6 +1376,12 @@ describe("App local catalogue flow", () => {
     expect(
       within(playerHeader).getByText("No known violations"),
     ).toBeTruthy();
+    expect(
+      screen.queryByRole("link", {
+        name: "Review known violations for Infantry Squad (Elite)",
+      }),
+    ).toBeNull();
+    expect(screen.queryByText("Contains known violation")).toBeNull();
     expect(
       constraintStatusText(structuralStatus, "Violated"),
     ).toBe("0Violated");
