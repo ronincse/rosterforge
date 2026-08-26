@@ -10292,7 +10292,8 @@ returned to `0` after Warhost was restored.
 - live desktop and 390 x 844 QA on the saved pinned Aeldari roster — Warhost was
   restored selected, the incomplete report remained honest at zero known
   violations, the collapsed row fit a 292 px content width, and the 390 px page
-  measured 375 px of document width with no horizontal overflow.
+  measured 375 px of document width with no horizontal overflow; and
+- GitHub Actions `#33011045411` for `7b45a87` — **passed**.
 
 No New Recruit behavior was needed to classify this checkpoint: it changes
 RosterForge's hierarchy around retained evidence, not imported game semantics.
