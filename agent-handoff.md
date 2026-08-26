@@ -61,11 +61,11 @@ diagnostic codes.
   commit before starting: clean checkout, `HEAD` equal to `origin/main`,
   divergence `0 0`, only the primary worktree, no stash, no concurrent writer,
   and a roadmap `Next` matching this record. **The `Next` is child-model
-  statlines.** Two things to know before touching anything: four commits are
-  locally verified but have **no CI run at all** because GitHub Actions was in a
-  critical outage all session, and the unit-datasheet row is **In progress, not
-  Done** — top-level statlines take one expansion now, child models still take
-  two.
+  statlines.** Two things to know before touching anything: the unit-datasheet
+  row is **In progress, not Done** — top-level statlines take one expansion now,
+  child models still take two — and CI was disrupted all session by a GitHub
+  Actions outage, so **run `gh run list` first** rather than trusting any CI
+  claim written in this file.
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -9609,15 +9609,24 @@ and the sublinear scaling answers that directly.
 - `pnpm test` — **507 passed, 18 skipped (525)** across 54 files.
 - Pinned corpus at `04c62fc` — **525 passed (525)**, all 54 files.
 - Browser measurements above, on real Dark Angels data.
-- **CI: still unverified.** GitHub Actions was in a critical outage for this
-  entire session (<https://stspg.io/pg14nv9m3095>, from 15:11 UTC) and created no
-  run for `33775ee`, `49d27c0`, `7bf2b57`, or this checkpoint. One run for
-  `95d9a79` wedged in inconsistent state: `gh run cancel` answered "Cannot cancel
-  a workflow run that is completed" while the REST object still read `queued`,
-  with zero jobs created. `ci.yml` triggers only on `push` and `pull_request`, so
-  no run can be fired after the fact. **Four commits are locally verified only.**
-  The next push after Actions recovers covers them, since CI checks the whole
-  tree rather than a diff.
+- **CI: partially recovered, and an earlier claim in this entry was wrong.**
+  GitHub Actions was in a critical outage for most of this session
+  (<https://stspg.io/pg14nv9m3095>, from 15:11 UTC). An earlier draft of this
+  entry said no run existed for `33775ee`, `49d27c0` or `7bf2b57`. That was true
+  when written and is **no longer true**: Actions caught up and created both runs
+  retroactively, and both **passed** — `#32990527086` for `7bf2b57` and
+  `#32990612032` for `49d27c0`. Because CI checks the whole tree, those two green
+  runs also cover `33775ee`, which never had a run of its own (it was pushed
+  together with `49d27c0`, and Actions creates one run per push, for the head
+  SHA).
+
+  Still outstanding: `95d9a79`'s run `#32985164048` is wedged in inconsistent
+  state — `gh run cancel` answers "Cannot cancel a workflow run that is
+  completed" while the REST object still reads `queued`, with zero jobs created —
+  and **this checkpoint's own commit had no run at push time**, with Actions
+  still reporting `major_outage`. `ci.yml` triggers only on `push` and
+  `pull_request`, so no run can be fired manually. Codex: run `gh run list`
+  before assuming this checkpoint is unverified; a run may have appeared since.
 
 ### Next recommended boundary
 
