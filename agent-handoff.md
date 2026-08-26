@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (group-choice deselection; report demotion Next)
+## Current Status — 2026-08-26 (stable group-choice labels; report demotion Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -59,10 +59,10 @@ diagnostic codes.
   `HEAD` equal to freshly fetched `origin/main`, divergence `0 0`, only the
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
   matching the transfer record. Child-model statlines, bounded catalogue
-  placement, inline known-violation markers, and explicit group-choice
-  deselection were then completed under the resumed lead. **The `Next` is
-  demoting the detailed report sections below the list without weakening
-  validation honesty.**
+  placement, inline known-violation markers, explicit group-choice
+  deselection, and stable name-only choice labels were then completed under the
+  resumed lead. **The `Next` is demoting the detailed report sections below the
+  list without weakening validation honesty.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -165,9 +165,11 @@ diagnostic codes.
   and only the exact owning selection row receives the inline `Known violation`
   marker and reciprocal link to Checks. Unresolved coverage remains separate
   and never marks a roster row. Grouped concrete choices now separate removal
-  from addition: a selected option deselects one newest matching occurrence,
-  while legitimate repeats use an explicit `Add another` action constrained by
-  both the aggregate group and the exact occurrence's effective maximum.
+  from addition: the option keeps the same visible name while its existing
+  filled/pressed state communicates selection, clicking a selected option
+  deselects one newest matching occurrence, and legitimate repeats use an
+  explicit `Add another` action constrained by both the aggregate group and the
+  exact occurrence's effective maximum.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -531,7 +533,7 @@ QA before classifying or implementing the discrepancy.
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
-| Selected group choices re-add themselves instead of deselecting | Done | selected concrete choices are explicit deselect actions; legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
+| Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Done | top-level units render Keywords, Profiles, Rules and info groups after one unit-card expansion, with editing behind `Edit selection`. Direct child selections whose resolved entry type is exactly `model` now render in an accessible `Models` section in that same open card. The remaining upgrade tree and each model's nested wargear stay lazy and preserve attention-driven opening; unknown types are never guessed into the model surface |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
@@ -10142,3 +10144,41 @@ reorder the approved list-first sequence. Keep the compact player header,
 inline markers, exact reciprocal links, validity/completeness distinction,
 unsupported-behavior diagnostics, and full detailed evidence while making the
 army list visually primary.
+
+## Completed Assignment — Stable Group-Choice Labels, 2026-08-26
+
+Baseline `cdad03f095b3f9367e5332586c6daf0511c9ef74`; resulting implementation
+commit `77b0aa2` and this handoff commit. At the owner's request, Codex completed
+one atomic presentation follow-up to the group-choice deselection checkpoint.
+
+Every concrete group choice now keeps its source display name in both states:
+`Warhost` before selection and `Warhost` after selection. The existing filled
+button styling and `aria-pressed` state carry selection instead of visible
+`Choose`/`Deselect` prefixes. A repeated exact choice retains its amount suffix
+when more than one copy exists, and the separate `Add another <choice>` action
+remains explicit because it performs a different operation.
+
+This checkpoint used no delegate. It was a genuinely atomic label/test
+correction with no semantic, architectural, or separable investigation lane;
+briefing and integrating another worker would have cost more than the change.
+
+Live browser QA reopened the saved pinned Aeldari roster. The visible Warhost
+label stayed identical while `aria-pressed` changed `true -> false -> true` and
+the Detachments status changed `1 selected -> 0 selected -> 1 selected`. The
+saved roster was restored to one Warhost and the local app was left running for
+owner review. No New Recruit behavior or external Reference QA state was
+needed: this was an owner-directed RosterForge copy decision.
+
+Verification:
+
+- focused `App.ui.test.tsx` — **16 passed**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **510 passed, 18 skipped (528)** across 54 files; and
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **528 passed
+  (528)** across all 54 files. The pin was intentionally unchanged.
+
+No evaluator, validation, roster command, persistence, architecture,
+compatibility, diagnostic, corpus, or third-party data changed. Report-section
+demotion remains **Next**.
