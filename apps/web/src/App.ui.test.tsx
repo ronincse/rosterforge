@@ -1829,6 +1829,21 @@ describe("App local catalogue flow", () => {
         selector: "strong",
       }),
     ).toBeTruthy();
+    const configurationSelectionToggle = within(configuration).getByRole(
+      "button",
+      { name: "Disabled Automatic Root" },
+    );
+    expect(configurationSelectionToggle.getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    fireEvent.click(configurationSelectionToggle);
+    expect(configurationSelectionToggle.getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    fireEvent.click(configurationSelectionToggle);
+    expect(configurationSelectionToggle.getAttribute("aria-expanded")).toBe(
+      "true",
+    );
 
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
@@ -1918,23 +1933,39 @@ describe("App local catalogue flow", () => {
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
-    // Direct models are reading material now. They render as soon as the unit
-    // card is open, while both their weapon subtrees and the unit's remaining
-    // upgrade stay lazy.
+    // The unit summary stays useful while collapsed: exact model children are
+    // counted across repeated occurrences and grouped by their catalogue name.
+    const composition = within(selectedRoster).getByRole("region", {
+      name: "Unit composition for Initialization Unit",
+    });
+    expect(within(composition).getByText("2× Required Model")).toBeTruthy();
+
+    // Direct models remain reading material, but each occurrence now has its
+    // own disclosure so a larger squad does not render every datasheet at once.
     const initializedModels = within(selectedRoster).getByRole("region", {
       name: "Models",
     });
+    const modelToggles = within(initializedModels).getAllByRole("button", {
+      name: "Required Model",
+    });
+    expect(modelToggles).toHaveLength(2);
+    expect(modelToggles[0]?.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(modelToggles[0]!);
     expect(
       within(initializedModels).getAllByText("Required Model profile"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       within(initializedModels).getAllByLabelText("Models in this squad"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       within(initializedModels).getAllByRole("button", {
         name: "Required Weapon",
         pressed: true,
       }),
+    ).toHaveLength(1);
+    fireEvent.click(modelToggles[1]!);
+    expect(
+      within(initializedModels).getAllByText("Required Model profile"),
     ).toHaveLength(2);
     expect(
       within(selectedRoster).queryByText("Default Option", {
@@ -1976,6 +2007,15 @@ describe("App local catalogue flow", () => {
     );
     expect(rosterSelection("selection-ui-bound-3")).toBeTruthy();
 
+    // Closing one exact model leaves the other model's details and the unit's
+    // always-visible composition summary intact.
+    fireEvent.click(modelToggles[0]!);
+    expect(
+      within(initializedModels).getAllByText("Required Model profile"),
+    ).toHaveLength(1);
+    expect(within(composition).getByText("2× Required Model")).toBeTruthy();
+    fireEvent.click(modelToggles[0]!);
+
     const unitToggle = within(selectedRoster).getByRole("button", {
       name: "Initialization Unit",
     });
@@ -1984,6 +2024,11 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).queryByRole("region", { name: "Models" }),
     ).toBeNull();
+    expect(
+      within(selectedRoster).getByRole("region", {
+        name: "Unit composition for Initialization Unit",
+      }),
+    ).toBeTruthy();
     fireEvent.click(unitToggle);
     const checksReport = screen.getByRole("group", {
       name: /Detailed supported evidence/u,
@@ -2061,25 +2106,26 @@ describe("App local catalogue flow", () => {
         name: "Add Disabled Automatic Root",
       }),
     ).toHaveProperty("disabled", false);
-    const requiredModelControl = await screen.findByRole("button", {
-      name: "Required Model (2 selected)",
+    const removeRequiredModel = await screen.findByRole("button", {
+      name: "Remove one Required Model",
     });
-    expect(requiredModelControl.getAttribute("aria-pressed")).toBe("true");
-    expect(requiredModelControl).toHaveProperty("disabled", false);
+    const addRequiredModel = screen.getByRole("button", {
+      name: "Add one Required Model",
+    });
+    expect(
+      screen.getByLabelText("Required Model selected count").textContent,
+    ).toBe("2");
+    expect(addRequiredModel).toHaveProperty("disabled", true);
     expect(
       screen.getByText("2 selected; requirement met"),
     ).toBeTruthy();
-    fireEvent.click(
-      screen.getAllByRole("button", {
-        name: "Remove Required Model",
-      })[0]!,
-    );
 
-    expect(rosterSelection("selection-ui-bound-2")).toBeNull();
-    expect(rosterSelection("selection-ui-bound-3")).toBeNull();
-    const addRequiredModel = screen.getByRole("button", {
-      name: "Add another Required Model",
-    });
+    fireEvent.click(removeRequiredModel);
+
+    expect(rosterSelection("selection-ui-bound-4")).toBeNull();
+    expect(rosterSelection("selection-ui-bound-5")).toBeNull();
+    expect(rosterSelection("selection-ui-bound-2")).toBeTruthy();
+    expect(within(composition).getByText("1× Required Model")).toBeTruthy();
     expect(
       screen.getByText("1 selected; 1 still required"),
     ).toBeTruthy();
@@ -2098,6 +2144,11 @@ describe("App local catalogue flow", () => {
     });
     const restoredModel = rosterSelection("selection-ui-bound-7");
     expect(restoredModel).toBeTruthy();
+    fireEvent.click(
+      within(restoredModel as HTMLElement).getByRole("button", {
+        name: "Required Model",
+      }),
+    );
     const restoredModelChildren = within(restoredModel as HTMLElement).getByRole(
       "group",
       {
@@ -2111,9 +2162,8 @@ describe("App local catalogue flow", () => {
       ),
     );
     expect(rosterSelection("selection-ui-bound-8")).toBeTruthy();
-    expect(
-      screen.queryByRole("button", { name: "Add another Required Model" }),
-    ).toBeNull();
+    expect(addRequiredModel).toHaveProperty("disabled", true);
+    expect(within(composition).getByText("2× Required Model")).toBeTruthy();
     expect(
       screen.getByText("2 selected; requirement met"),
     ).toBeTruthy();

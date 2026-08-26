@@ -16,8 +16,12 @@ import {
   type RosterStructuralBoundReport,
   type RosterStructuralBoundStatus,
 } from "@rosterforge/evaluation";
-import type { Diagnostic } from "@rosterforge/foundation";
+import type {
+  Diagnostic,
+  ValidationCompleteness,
+} from "@rosterforge/foundation";
 import {
+  rosterSelectionAmount,
   rosterSelectionsAmount,
   type RosterSelection,
   type SelectionOccurrenceId,
@@ -1523,7 +1527,8 @@ function RosterConfigurationSection({
           selections={group.selections}
           session={session}
           selectionCanAddAnother={selectionCanAddAnother}
-          collapsible={false}
+          collapsible
+          initiallyOpen
           onAddChild={onAddChild}
           onRename={onRename}
           onSetAmount={onSetAmount}
@@ -1568,9 +1573,9 @@ function RosterSelectionSection({
   readonly amount: number;
   readonly section: "configuration" | "army";
   /**
-   * Army units collapse; configuration does not. Hiding the detachment,
-   * battle-size and force-disposition pickers behind a click would bury the
-   * first thing a player has to set.
+   * Army units start collapsed. Configuration entries start open inside the
+   * already-collapsible setup step, then remember the player's own disclosure
+   * choices as they work through it.
    */
   readonly collapsible: boolean;
   readonly session: LocalRosterSession;
@@ -1634,6 +1639,7 @@ function RosterTopLevelSelectionList({
   session,
   selectionCanAddAnother,
   collapsible,
+  initiallyOpen = false,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1644,6 +1650,7 @@ function RosterTopLevelSelectionList({
   readonly session: LocalRosterSession;
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly collapsible: boolean;
+  readonly initiallyOpen?: boolean;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1676,6 +1683,7 @@ function RosterTopLevelSelectionList({
             selectionCanAddAnother={selectionCanAddAnother}
             topLevel
             collapsible={collapsible}
+            initiallyOpen={initiallyOpen}
             onAddChild={onAddChild}
             onRename={onRename}
             onSetAmount={onSetAmount}
@@ -1692,6 +1700,7 @@ function RosterSelectionItem({
   selectionModel,
   topLevel = false,
   collapsible = false,
+  initiallyOpen = false,
   collapseChildren = false,
   selectionCanAddAnother,
   onAddChild,
@@ -1705,6 +1714,8 @@ function RosterSelectionItem({
   readonly topLevel?: boolean;
   /** Collapses everything below the occurrence row behind a disclosure. */
   readonly collapsible?: boolean;
+  /** Starts a collapsible setup occurrence open on first encounter. */
+  readonly initiallyOpen?: boolean;
   /**
    * Keeps a promoted model's own wargear subtree lazy unless it needs
    * attention.
@@ -1811,12 +1822,22 @@ function RosterSelectionItem({
   // violation opens itself, because a problem nobody can see is worse than a
   // longer page. Unresolved bounds stay in the checks and do not expand it.
   const [cardOpen, setCardOpen] = useState(
-    () => !collapsible || selectionModel.containsAttention,
+    () => !collapsible || initiallyOpen || selectionModel.containsAttention,
   );
   useEffect(() => {
     if (collapsible && selectionModel.containsAttention) setCardOpen(true);
   }, [collapsible, selectionModel.containsAttention]);
   const bodyVisible = !collapsible || cardOpen;
+  // This summary intentionally counts only direct children whose materialized
+  // catalogue type is exactly `model`. Unresolved choices stay in the editing
+  // tree rather than being guessed into a squad composition.
+  const modelComposition =
+    topLevel &&
+    choice?.kind === "selectionEntry" &&
+    choice.type === "unit" &&
+    promotedModels.length > 0
+      ? createModelComposition(session, promotedModels)
+      : undefined;
   return (
     <li
       className="roster-selection-item"
@@ -1828,7 +1849,7 @@ function RosterSelectionItem({
       }
     >
       <div className="selection-occurrence">
-        <span>
+        <span className="selection-occurrence-heading">
           {collapsible ? (
             <button
               type="button"
@@ -1841,6 +1862,11 @@ function RosterSelectionItem({
             </button>
           ) : (
             <strong>{annotatedName}</strong>
+          )}
+          {modelComposition !== undefined && (
+            <span className="unit-model-total">
+              {formatCount(modelComposition.total, "model")}
+            </span>
           )}
         </span>
         <div className="selection-occurrence-actions">
@@ -1866,6 +1892,12 @@ function RosterSelectionItem({
           </button>
         </div>
       </div>
+      {modelComposition !== undefined && (
+        <UnitCompositionSummary
+          unitName={annotatedName}
+          composition={modelComposition}
+        />
+      )}
       {/* Rendering the body only while open keeps a closed unit's child
           choices, datasheet, and subtree off the render path entirely, the
           same reason the children list below is lazy. */}
@@ -1888,6 +1920,31 @@ function RosterSelectionItem({
                   (finiteMaximum === undefined ||
                     selectedAmount < finiteMaximum) &&
                   (selectionCanAddAnother.get(selectedOccurrence.id) ?? true);
+                if (
+                  isModelChoice(direct.choice) &&
+                  finiteMaximum !== 1
+                ) {
+                  return (
+                    <ModelQuantityChoice
+                      key={selectionChoiceKey(direct.choice)}
+                      label={choiceName}
+                      amount={selectedAmount}
+                      completeness={direct.completeness}
+                      status={status}
+                      canIncrease={
+                        (finiteMaximum === undefined ||
+                          selectedAmount < finiteMaximum) &&
+                        (selectedOccurrence === undefined || canAddAnother)
+                      }
+                      selectedOccurrence={selectedOccurrence}
+                      onIncrease={() =>
+                        onAddChild(selection.id, direct.choice)
+                      }
+                      onSetAmount={onSetAmount}
+                      onRemove={onRemove}
+                    />
+                  );
+                }
                 return (
                   <span
                     className="direct-child-choice"
@@ -1940,6 +1997,7 @@ function RosterSelectionItem({
                   group={group}
                   selectionCanAddAnother={selectionCanAddAnother}
                   onChoose={onAddChild}
+                  onSetAmount={onSetAmount}
                   onRemove={onRemove}
                 />
               ))}
@@ -1988,6 +2046,7 @@ function RosterSelectionItem({
                         session={session}
                         selectionModel={model}
                         selectionCanAddAnother={selectionCanAddAnother}
+                        collapsible
                         collapseChildren
                         onAddChild={onAddChild}
                         onRename={onRename}
@@ -2084,6 +2143,175 @@ function SelectionCostTotals({
   );
 }
 
+interface UnitComposition {
+  readonly total: number;
+  readonly entries: readonly {
+    readonly key: string;
+    readonly name: string;
+    readonly amount: number;
+  }[];
+}
+
+/**
+ * Folds exact promoted model occurrences into the compact unit-card summary.
+ *
+ * Repeated occurrences and one occurrence with an amount override are the two
+ * legal roster shapes for multiple models. Both count through the roster-model
+ * helper. Grouping keys come from the exact materialized model choice rather
+ * than a player rename or display-only name modifier, so the rows describe
+ * catalogue model types without inventing loadout text.
+ */
+function createModelComposition(
+  session: LocalRosterSession,
+  models: readonly RosterWorkspaceSelection[],
+): UnitComposition {
+  const entries = new Map<
+    string,
+    { key: string; name: string; amount: number }
+  >();
+  let total = 0;
+  for (const { occurrence } of models) {
+    const amount = rosterSelectionAmount(occurrence);
+    const choice = localRosterSelectionChoice(session, occurrence.id);
+    const name =
+      choice === undefined
+        ? occurrence.name ?? "Unnamed model"
+        : selectionChoiceLabel(choice);
+    const key =
+      choice === undefined
+        ? `occurrence:${occurrence.id}`
+        : selectionChoiceKey(choice);
+    total += amount;
+    const existing = entries.get(key);
+    entries.set(key, {
+      key,
+      name,
+      amount: (existing?.amount ?? 0) + amount,
+    });
+  }
+  return {
+    total,
+    entries: [...entries.values()],
+  };
+}
+
+function UnitCompositionSummary({
+  unitName,
+  composition,
+}: {
+  readonly unitName: string;
+  readonly composition: UnitComposition;
+}) {
+  return (
+    <section
+      className="unit-composition"
+      aria-label={`Unit composition for ${unitName}`}
+    >
+      <ul>
+        {composition.entries.map((entry) => (
+          <li key={entry.key}>
+            <span aria-hidden="true">&bull;</span>
+            <span>
+              {entry.amount}&times; {entry.name}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function isModelChoice(
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  return choice.kind === "selectionEntry" && choice.type === "model";
+}
+
+/** Describes the one-model mutation behind a quantity control's minus button. */
+export function modelQuantityDecreaseAction(
+  selection: RosterSelection,
+):
+  | { readonly kind: "setAmount"; readonly amount: number }
+  | { readonly kind: "remove" } {
+  const amount = rosterSelectionAmount(selection);
+  return amount > 1
+    ? { kind: "setAmount", amount: amount - 1 }
+    : { kind: "remove" };
+}
+
+/**
+ * Explicit count controls for repeatable model choices.
+ *
+ * A plus creates a fresh occurrence because copies may later carry different
+ * configured subtrees. A minus reduces an amount override by one when present,
+ * otherwise it removes only the newest occurrence. That makes each click a
+ * one-model change without flattening distinct loadouts into one occurrence.
+ */
+function ModelQuantityChoice({
+  label,
+  amount,
+  completeness,
+  status,
+  canIncrease,
+  selectedOccurrence,
+  onIncrease,
+  onSetAmount,
+  onRemove,
+}: {
+  readonly label: string;
+  readonly amount: number;
+  readonly completeness: ValidationCompleteness;
+  readonly status?: string | undefined;
+  readonly canIncrease: boolean;
+  readonly selectedOccurrence?: RosterSelection | undefined;
+  readonly onIncrease: () => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+}) {
+  return (
+    <span
+      className="model-quantity-choice"
+      data-completeness={completeness}
+    >
+      <strong>{label}</strong>
+      <span className="model-quantity-controls">
+        <button
+          type="button"
+          aria-label={`Remove one ${label}`}
+          disabled={selectedOccurrence === undefined}
+          onClick={() => {
+            if (selectedOccurrence === undefined) return;
+            const action = modelQuantityDecreaseAction(selectedOccurrence);
+            if (action.kind === "setAmount") {
+              onSetAmount(
+                selectedOccurrence.id,
+                action.amount,
+              );
+            } else {
+              onRemove(selectedOccurrence.id);
+            }
+          }}
+        >
+          &minus;
+        </button>
+        <output aria-label={`${label} selected count`}>{amount}</output>
+        <button
+          type="button"
+          aria-label={`Add one ${label}`}
+          disabled={!canIncrease}
+          onClick={onIncrease}
+        >
+          +
+        </button>
+      </span>
+      {status !== undefined && <small>{status}</small>}
+    </span>
+  );
+}
+
 function RosterSelectionChoiceGroup({
   session,
   parent,
@@ -2091,6 +2319,7 @@ function RosterSelectionChoiceGroup({
   group,
   selectionCanAddAnother,
   onChoose,
+  onSetAmount,
   onRemove,
 }: {
   readonly session: LocalRosterSession;
@@ -2102,6 +2331,10 @@ function RosterSelectionChoiceGroup({
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
     group: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
 }) {
@@ -2158,6 +2391,24 @@ function RosterSelectionChoiceGroup({
             const label = selectionChoiceLabel(choice);
             const displayLabel =
               choice.hidden === true ? `${label} (hidden)` : label;
+            if (isModelChoice(choice) && finiteMaximum !== 1) {
+              return (
+                <ModelQuantityChoice
+                  key={selectionChoiceKey(choice)}
+                  label={displayLabel}
+                  amount={selectedChoiceAmount}
+                  completeness={group.completeness}
+                  canIncrease={
+                    !blocksAdditionalChoices &&
+                    (selectedOccurrence === undefined || canAddAnother)
+                  }
+                  selectedOccurrence={selectedOccurrence}
+                  onIncrease={() => onChoose(parent.id, choice, group)}
+                  onSetAmount={onSetAmount}
+                  onRemove={onRemove}
+                />
+              );
+            }
             return selectedOccurrence === undefined ? (
               <button
                 key={selectionChoiceKey(choice)}
