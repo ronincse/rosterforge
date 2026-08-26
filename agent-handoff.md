@@ -190,6 +190,11 @@ diagnostic codes.
   queue on one chain (`apps/web/src/recovery-slot.ts`) so the clear cannot be
   overtaken by a write already in flight. **Local durability now has no known
   defect.**
+- **`33775ee` and `49d27c0` are locally verified but were never checked by CI.**
+  GitHub Actions was in a critical outage on 2026-08-26 and created no run for
+  them; `ci.yml` has no `workflow_dispatch`, so one cannot be fired after the
+  fact. The next push verifies them, since CI checks the whole tree. See that
+  entry's Verification section before assuming a green history.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -9410,6 +9415,23 @@ there. The sabotage test is the proof.
 - `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
 - `pnpm test` — **507 passed, 18 skipped (525 total)** across 54 test files, two
   new tests.
+- **CI did not run, and these two commits have no remote verification.** GitHub
+  Actions was in a `major_outage` (incident <https://stspg.io/pg14nv9m3095>,
+  impact critical, from 15:11 UTC) across this whole checkpoint. Run #85 for the
+  baseline `95d9a79` sat queued with **zero jobs created** and wedged in
+  inconsistent state — `gh run cancel` answered "Cannot cancel a workflow run
+  that is completed" while the REST run object still read `queued`, which is the
+  incident's database failover showing through. The push of `49d27c0` created
+  **no run at all**, because inbound Actions traffic was throttled. `ci.yml`
+  triggers only on `push` and `pull_request`, so there is no `workflow_dispatch`
+  to re-fire it and a run cannot be obtained retroactively.
+
+  **The next push is what verifies this work remotely** — CI checks the whole
+  tree rather than a diff, so the next checkpoint's run covers `33775ee` and
+  `49d27c0` along with its own change. Treat those two commits as locally
+  verified only until then. Adding `workflow_dispatch:` to the workflow would
+  remove this whole failure mode and is worth its own small checkpoint; it was
+  deliberately not smuggled into this one.
 
 ### What this did not do
 
