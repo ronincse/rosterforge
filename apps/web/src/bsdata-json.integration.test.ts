@@ -3330,6 +3330,100 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
         ).toEqual(["Reconnaissance"]);
+        const darkReapers = localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.name === "Dark Reapers",
+        );
+        expect(darkReapers).toBeDefined();
+        if (darkReapers === undefined) return;
+        let darkReaperChildId = 0;
+        const withDarkReapers = addLocalRosterRootSelection(
+          configured,
+          darkReapers,
+          {
+            selectionId: selectionOccurrenceId("real-aeldari-dark-reapers"),
+            createSelectionId: () =>
+              selectionOccurrenceId(
+                `real-aeldari-dark-reaper-child-${++darkReaperChildId}`,
+              ),
+          },
+        );
+        expect(withDarkReapers.ok).toBe(true);
+        if (!withDarkReapers.ok) return;
+        const darkReaperUnit =
+          withDarkReapers.value.roster.forces[0]?.selections.find(
+            ({ name }) => name === "Dark Reapers",
+          );
+        const darkReaperSelections =
+          darkReaperUnit === undefined
+            ? []
+            : rosterSelections([darkReaperUnit]);
+        const regularDarkReaper = darkReaperSelections.find(
+          ({ name }) => name === "Dark Reaper",
+        );
+        const darkReaperExarch = darkReaperSelections.find(
+          ({ name }) => name === "Dark Reaper Exarch",
+        );
+        expect(regularDarkReaper).toBeDefined();
+        expect(darkReaperExarch).toBeDefined();
+        if (
+          regularDarkReaper === undefined ||
+          darkReaperExarch === undefined
+        ) {
+          return;
+        }
+        const regularDarkReaperChoices = inspectLocalRosterChildChoices(
+          withDarkReapers.value,
+          regularDarkReaper.id,
+        );
+        const darkReaperExarchChoices = inspectLocalRosterChildChoices(
+          withDarkReapers.value,
+          darkReaperExarch.id,
+        );
+        expect(regularDarkReaperChoices.ok).toBe(true);
+        expect(darkReaperExarchChoices.ok).toBe(true);
+        if (!regularDarkReaperChoices.ok || !darkReaperExarchChoices.ok) {
+          return;
+        }
+        for (const requiredWargearName of [
+          "Close combat weapon",
+          "Reaper Launcher",
+        ]) {
+          expect(
+            regularDarkReaperChoices.value.direct.find(
+              ({ choice }) => choice.name === requiredWargearName,
+            ),
+          ).toMatchObject({
+            minimum: 1,
+            maximum: 1,
+            selected: [{ name: requiredWargearName }],
+            completeness: "complete",
+          });
+        }
+        expect(
+          darkReaperExarchChoices.value.direct.find(
+            ({ choice }) => choice.name === "Close combat weapon",
+          ),
+        ).toMatchObject({
+          minimum: 1,
+          maximum: 1,
+          selected: [{ name: "Close combat weapon" }],
+          completeness: "complete",
+        });
+        expect(
+          darkReaperExarchChoices.value.direct.find(
+            ({ choice }) => choice.name === "Reaper Launcher",
+          ),
+        ).toBeUndefined();
+        expect(
+          darkReaperExarchChoices.value.groups.find(
+            ({ group }) => group.name === "Weapon",
+          ),
+        ).toMatchObject({
+          minimum: 1,
+          maximum: 1,
+          selected: [{ name: "Reaper Launcher" }],
+          completeness: "complete",
+        });
         const corsairVoidscarred = localRosterRootChoices(catalogue).find(
           ({ materialized }) =>
             materialized.name === "Corsair Voidscarred",

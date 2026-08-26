@@ -1133,6 +1133,7 @@ describe("App local catalogue flow", () => {
       veterans as HTMLElement,
     ).getByRole("button", { name: "Special Weapon" });
     expect(selectedWeaponControl.getAttribute("aria-pressed")).toBe("true");
+    expect(selectedWeaponControl).toHaveProperty("disabled", false);
     expect(
       within(veterans as HTMLElement).getByRole("button", {
         name: "Add another Special Weapon",
@@ -1957,12 +1958,20 @@ describe("App local catalogue flow", () => {
     expect(
       within(initializedModels).getAllByLabelText("Models in this squad"),
     ).toHaveLength(1);
-    expect(
-      within(initializedModels).getAllByRole("button", {
+    const firstRequiredWeapon = within(initializedModels).getAllByRole(
+      "button",
+      {
         name: "Required Weapon",
         pressed: true,
-      }),
-    ).toHaveLength(1);
+      },
+    );
+    expect(firstRequiredWeapon).toHaveLength(1);
+    expect(firstRequiredWeapon[0]).toHaveProperty("disabled", true);
+    expect(
+      within(initializedModels).getByText("1 selected; required"),
+    ).toBeTruthy();
+    fireEvent.click(firstRequiredWeapon[0]!);
+    expect(firstRequiredWeapon[0]?.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(modelToggles[1]!);
     expect(
       within(initializedModels).getAllByText("Required Model profile"),
@@ -1987,6 +1996,11 @@ describe("App local catalogue flow", () => {
         selector: "strong",
       }),
     ).toBeTruthy();
+    expect(
+      within(selectedRoster).getByRole("button", {
+        name: "Modified Child",
+      }),
+    ).toHaveProperty("disabled", false);
     expect(
       within(initializedChildren).queryByText("Required Model profile"),
     ).toBeNull();

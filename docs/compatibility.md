@@ -183,6 +183,10 @@
   beside the model occurrence instead of behind its datasheet disclosure, and
   unresolved display-name/annotation notices remain available inside Selection
   details without becoming a banner on every occurrence
+- Required direct upgrades with a complete positive minimum remain visibly
+  selected but cannot be removed below that minimum. Surplus occurrences remain
+  removable, unresolved bounds stay permissive, and grouped replacement
+  weapons retain their ordinary deselect-or-replace controls
 - Persistent Roster, Add units, and Checks workspace navigation with live
   counts, a two-pane desktop builder, and a browser-verified full-width mobile
   fallback. At 390 px and the 320 px supported minimum, repository diagnostics

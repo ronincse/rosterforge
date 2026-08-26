@@ -1945,6 +1945,8 @@ function RosterSelectionItem({
                     />
                   );
                 }
+                const removalWouldViolateRequiredUpgrade =
+                  directUpgradeRemovalWouldViolateMinimum(direct);
                 return (
                   <span
                     className="direct-child-choice"
@@ -1958,9 +1960,10 @@ function RosterSelectionItem({
                       type="button"
                       aria-pressed={selectedOccurrence !== undefined}
                       disabled={
-                        selectedOccurrence === undefined &&
-                        finiteMaximum !== undefined &&
-                        selectedAmount >= finiteMaximum
+                        removalWouldViolateRequiredUpgrade ||
+                        (selectedOccurrence === undefined &&
+                          finiteMaximum !== undefined &&
+                          selectedAmount >= finiteMaximum)
                       }
                       onClick={() =>
                         selectedOccurrence === undefined
@@ -2225,6 +2228,37 @@ function isModelChoice(
   choice: BattleScribeRosterSelectionChoice,
 ): boolean {
   return choice.kind === "selectionEntry" && choice.type === "model";
+}
+
+/**
+ * Prevents the quick-choice control from removing mandatory direct wargear.
+ *
+ * Replacement weapons live in selection-entry groups, so they deliberately
+ * bypass this rule. Incomplete bounds also remain editable: treating an
+ * unresolved minimum as authoritative would turn unsupported semantics into a
+ * silently enforced restriction.
+ */
+function directUpgradeRemovalWouldViolateMinimum(
+  direct: LocalRosterDirectChildChoice,
+): boolean {
+  if (
+    direct.choice.kind !== "selectionEntry" ||
+    direct.choice.type !== "upgrade" ||
+    direct.completeness !== "complete" ||
+    direct.minimum === undefined ||
+    !Number.isFinite(direct.minimum) ||
+    direct.minimum <= 0
+  ) {
+    return false;
+  }
+
+  const selectedOccurrence = direct.selected.at(-1);
+  return (
+    selectedOccurrence !== undefined &&
+    rosterSelectionsAmount(direct.selected) -
+      rosterSelectionAmount(selectedOccurrence) <
+      direct.minimum
+  );
 }
 
 /** Describes the one-model mutation behind a quantity control's minus button. */
@@ -3303,6 +3337,9 @@ function directChoiceStatus(
   }
   if (direct.remaining !== undefined && direct.remaining > 0) {
     return `${selected}; ${direct.remaining} still required`;
+  }
+  if (directUpgradeRemovalWouldViolateMinimum(direct)) {
+    return `${selected}; required`;
   }
   if ((direct.minimum ?? 0) > 0) {
     return `${selected}; requirement met`;
