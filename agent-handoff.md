@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (save durability cleared; recovery race found)
+## Current Status — 2026-08-26 (durability closed; recovery race fixed)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -186,8 +186,10 @@ diagnostic codes.
   mid-write kill does lose the in-flight edit, but the `beforeunload` guard is
   active then, so a real user is warned. The commit ordering is now pinned by a
   test. The delegated audit did find a real **recovery-slot resurrection race**
-  on a roster's first save, which is the new **Next**; it cannot lose work but
-  can offer a stale recovery later.
+  on a roster's first save, which was fixed the same day: both slot writers now
+  queue on one chain (`apps/web/src/recovery-slot.ts`) so the clear cannot be
+  overtaken by a write already in flight. **Local durability now has no known
+  defect.**
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -499,10 +501,10 @@ QA before classifying or implementing the discrepancy.
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
-| Unit stats and rules are buried two disclosures deep | Open | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure |
+| Unit stats and rules are buried two disclosures deep | **Next** | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure. Restored as **Next** on 2026-08-26 now that the durability detour is closed; it was the standing Next before it |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
 | A saved draft is not durable immediately after the shelf shows it saved | Not reproducible | **The premise was wrong; see the 2026-08-26 entry.** Measured: the save takes about 1 s, and the unsaved-changes indicator clears in the *same tick* the save completes — it does not clear early. Every save-then-reload round-tripped exactly (360, 425, 495 pts). Killing the page mid-write does lose the in-flight edit, but the UI still shows `Saving…` and `Unsaved changes` then, so the `beforeunload` guard is registered and a real user is warned; only a programmatic reload bypasses it. An independent `codex exec` audit reached the same conclusion from the code. The commit ordering that makes this safe is now pinned by a test |
-| Recovery slot can be resurrected after it is cleared | **Next** | found by the delegated durability audit and verified in the code. On a roster's **first** save, `use-app-controller.ts:748` fires the recovery write and `:758-761` fires `void draftStore.delete(recoveryDraftId)` once `persistedRoster` is set; both are fire-and-forget, so a recovery write already in flight can finish *after* the delete and recreate `__recovery__` holding the pre-save roster. The saved draft is unaffected — this cannot lose work — but a later session can be offered a stale recovery for a roster that was already saved. Sequence the delete against any in-flight recovery write, or make the write a no-op once an active draft exists |
+| Recovery slot can be resurrected after it is cleared | Done | found by the delegated durability audit, verified in the code, fixed 2026-08-26. On a roster's **first** save the recovery write and `void draftStore.delete(recoveryDraftId)` were both fire-and-forget, so a write already in flight could finish *after* the delete and recreate `__recovery__` holding the pre-save roster — never losing work, but offering a later session a stale recovery of a roster it already has. Both operations now queue on one chain in `apps/web/src/recovery-slot.ts`, so the store applies them in request order; the writer additionally re-checks `roster === persistedRoster`, because the debounce timer can outlive the render that persisted the roster. Ordering, not exclusion, is the fix — see the 2026-08-26 entry |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
 | Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
@@ -9335,3 +9337,102 @@ path; the normal suite covers the store.
 **Fix the recovery-slot resurrection race.** It is small, it is the last known
 durability wart, and leaving it means a player can be offered a stale recovery
 of a roster they already saved.
+
+## Completed Assignment — Recovery Slot Resurrection Race, 2026-08-26
+
+Baseline `95d9a79d3d70bf254a9ef2044ab85a027e7c8f17`; resulting implementation
+commit and this handoff commit. The roadmap's **Next**, found by the previous
+checkpoint's delegated durability audit and fixed here.
+
+### The defect
+
+The unsaved-roster recovery slot is one record at `__recovery__`, written by a
+debounced effect while a roster has never been saved and deleted by a second
+effect once it becomes a real draft. Both were fire-and-forget — `await` inside
+a `void`ed call — so the two effects raced. A slot write copies a whole
+catalogue closure and takes about a second on real data, which is long enough
+for the delete to be issued, complete, and then be undone by the write landing
+behind it. `__recovery__` would be recreated holding the **pre-save** roster.
+
+Nothing is lost: the saved draft is untouched, and the next session's shelf
+still has it. What the player gets is a recovery offer for a roster they already
+saved — a prompt to restore an older version of work that is not missing.
+
+### The fix: ordering, not exclusion
+
+`apps/web/src/recovery-slot.ts` is new and owns the slot. Both operations queue
+onto a single promise chain, so the store applies them in the order they were
+*requested* rather than the order they happen to finish. A clear requested after
+a write always lands after it.
+
+Exclusion was the obvious alternative and is wrong. Refusing the write while a
+save is in progress leaves the pre-existing case uncovered — the write is
+already in flight when the save begins — and a lock would have to be released
+on every early return in the writer. Ordering needs neither.
+
+Two details are deliberate:
+
+- **A rejected operation must not poison the queue.** `tail.then(op, op)` runs
+  the successor from both handlers: it only needs the earlier store access to be
+  *finished*, not to have succeeded. A failed write that stranded the clear
+  would leave the slot populated for every later session — the same defect by a
+  different route. Pinned by the second test.
+- **The chain is bounded by work in flight, not by session length.** Each
+  operation replaces the tail, so a settled tail is discarded rather than
+  retained.
+
+The writer additionally re-checks `rosterSession.roster === persistedRoster`.
+This is not redundant with the effect cleanup: the debounce timer is a macrotask
+and React flushes effects in a scheduler task, so a timer can fire after the
+render that persisted the roster but before that render's cleanup clears it.
+
+### Verification
+
+**Proved by sabotage, not assumed.** Replacing the chain with a direct
+`operation()` — exactly the old fire-and-forget shape — fails the new test with
+`expected [ 'save:started', 'delete:started' ] to deeply equal [ 'save:started' ]`.
+That is the defect itself in the log: the delete ran while the write was still
+in flight, so the write would have landed after it. Restored, both tests pass.
+
+Measured in the running app on synthetic fixtures (`projection.gst` plus
+`projection.cat`), which keeps saves fast enough to interleave by hand:
+
+| Step | Result |
+| --- | --- |
+| Edit an unsaved roster, wait out the debounce | `__recovery__` and `history:__recovery__` written — the feature still works |
+| Edit, then Save 100 ms before the debounce fires | both slot records gone, and **still gone** when sampled at 0.5, 1, 2, 4 and 8 s |
+| Reload | one saved draft on the shelf, **no recovery offered** |
+
+The browser run is a regression check on a user-facing feature, not proof of the
+fix: a fixture roster saves in milliseconds, so the race window barely exists
+there. The sabotage test is the proof.
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean.
+- `pnpm test` — **507 passed, 18 skipped (525 total)** across 54 test files, two
+  new tests.
+
+### What this did not do
+
+No evaluation, parsing or presentation code changed; the corpus suite was not
+re-run because nothing it covers was touched. `discardRecoverableRoster` now
+also goes through the slot, which is a consistency change rather than a fix —
+its race was benign, since a session's own later write is legitimate.
+
+A delegated `codex exec --sandbox read-only` review of this diff confirmed the
+fix — "correctly closes the reported resurrection race" — and agreed the identity
+guard is neither redundant nor over-broad, since roster values are immutable so
+identity *is* the persisted-state test. It named one thing worth recording that
+the implementation had not: the clear is deliberately delayed behind a write, so
+an operation that never settled would strand everything behind it. That is a
+liveness trade required for ordering rather than another resurrection path, and
+it is bounded here because the store settles on all three terminal IndexedDB
+events — `oncomplete`, `onerror`, `onabort`. The comment in `recovery-slot.ts`
+now says so. This is the third consecutive checkpoint where a second model
+improved an ordering argument; keep routing this class of question out.
+
+### Next recommended boundary
+
+**Unit stats and rules readable without hunting** — restored as the roadmap's
+**Next**, which is what it was before the durability detour. Local durability
+now has no known defect, so the north star's first goal is once again the thing
+standing between this product and v1.
