@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (inline violations; report demotion Next)
+## Current Status — 2026-08-26 (group-choice deselection; report demotion Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -59,9 +59,10 @@ diagnostic codes.
   `HEAD` equal to freshly fetched `origin/main`, divergence `0 0`, only the
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
   matching the transfer record. Child-model statlines, bounded catalogue
-  placement, and inline known-violation markers were then completed under the
-  resumed lead. **The `Next` is demoting the detailed report sections below the
-  list without weakening validation honesty.**
+  placement, inline known-violation markers, and explicit group-choice
+  deselection were then completed under the resumed lead. **The `Next` is
+  demoting the detailed report sections below the list without weakening
+  validation honesty.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -120,12 +121,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **508 passed, 18 skipped (526)**.
+  `git diff --check` all pass. `pnpm test` is **510 passed, 18 skipped (528)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **526 passed**; without the variable the 18 corpus tests are skipped.
+  **528 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -163,7 +164,10 @@ diagnostic codes.
   Battlefield-role headings now signal when they contain a known violation,
   and only the exact owning selection row receives the inline `Known violation`
   marker and reciprocal link to Checks. Unresolved coverage remains separate
-  and never marks a roster row.
+  and never marks a roster row. Grouped concrete choices now separate removal
+  from addition: a selected option deselects one newest matching occurrence,
+  while legitimate repeats use an explicit `Add another` action constrained by
+  both the aggregate group and the exact occurrence's effective maximum.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -320,11 +324,11 @@ Status values: **Done**, **Next** (take this one), **Open** (ready, unblocked),
 not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
-The first phone-width QA pass, deterministic CI performance budget, and tested
-workspace presentation model are complete. The compact points-and-problems
-player header is the new **Next** and should consume that shared projection
-without folding the later configuration split or unit-card restructure into the
-same checkpoint. Whole-roster incremental evaluation stays Open. Take the
+The first phone-width QA pass, deterministic CI performance budget, tested
+workspace presentation model, compact player header, battlefield-role grouping,
+one-click unit/model statlines, reader-controlled catalogue placement, inline
+violation markers, and safe group-choice controls are complete. **Report-section
+demotion is Next.** Whole-roster incremental evaluation stays Open. Take the
 restored usability rows in the dependency order stated in section F rather than
 treating table position or raw status as priority.
 
@@ -527,6 +531,7 @@ QA before classifying or implementing the discrepancy.
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
+| Selected group choices re-add themselves instead of deselecting | Done | selected concrete choices are explicit deselect actions; legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Done | top-level units render Keywords, Profiles, Rules and info groups after one unit-card expansion, with editing behind `Edit selection`. Direct child selections whose resolved entry type is exactly `model` now render in an accessible `Models` section in that same open card. The remaining upgrade tree and each model's nested wargear stay lazy and preserve attention-driven opening; unknown types are never guessed into the model surface |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
@@ -10038,3 +10043,103 @@ legality, and broader build/reference modes remain outside this slice.
 inline markers, exact reciprocal links, validity/completeness distinction,
 unsupported-behavior diagnostics, and full detailed evidence, but make the
 army list visually primary instead of giving the reports co-equal page weight.
+
+## Completed Assignment — Explicit Group-Choice Deselection, 2026-08-26
+
+Baseline `558def142ee6266a86f3d721b7735028c1349e3f`; resulting implementation
+commit `4a75d14` and this handoff commit. The owner interrupted the roadmap with
+a bounded interaction defect: clicking the already-selected Aeldari `Warhost`
+choice added another occurrence and increased the group counter indefinitely.
+Codex fixed that defect as active lead without beginning report demotion.
+
+### What shipped
+
+A group member's selected state is no longer an overloaded add command:
+
+- one selected occurrence renders an enabled `Deselect <choice>` action;
+- repeated occurrences render `Remove one <choice> (<n> selected)` and remove
+  only the newest matching occurrence, preserving older independently
+  configured subtrees and making recovery one immutable undoable edit at a
+  time;
+- a repeat-capable exact choice retains a separate `Add another <choice>`
+  action while both its aggregate group and its effective exact parent maximum
+  have capacity; and
+- choosing a different member of a supported max-one group still performs the
+  existing atomic replacement.
+
+The exact-capacity decision reuses the supported-validation report already
+computed for the same immutable workspace snapshot. A complete finite
+parent-scoped `selections` maximum suppresses `Add another` when its observed
+amount reaches the effective limit. The `-1` sentinel remains unbounded, and an
+unknown or incomplete exact bound stays permissive and incomplete rather than
+being guessed. Removal remains available at a maximum and below a manual
+minimum; the existing validation surface reports the resulting violation.
+
+### Delegation changed the result
+
+One read-only native Codex lane was launched before implementation to trace
+group commands, exact-child capacity, and regression seams. Its pinned-corpus
+scan found at least **1,707** statically direct shapes where both the group and
+the concrete child legitimately permit multiple or unbounded copies: 691 model
+entries and 1,016 upgrades. That disproved the lead's first pure-toggle design,
+which would have fixed Warhost by removing the only way to add legal repeated
+models or wargear. The final design therefore separates Deselect/Remove from
+Add another and consumes effective exact-occurrence constraints instead of
+guessing from the group maximum alone. Codex reviewed the finding against the
+Aeldari source and the live constraint-report types before accepting it.
+
+### Live QA and discrepancy classification
+
+The saved pinned Aeldari roster reproduced the defect before the change:
+`Warhost selected` changed the Detachments status from `1 selected` to `2
+selected`, then `3 selected`, without offering removal. The source topology
+explains why group-only policy failed: `Detachments` is unbounded in the current
+Strike Force state, while the concrete Warhost entry carries an effective
+parent maximum of one.
+
+After the change, the accidentally duplicated live state recovered
+`3 -> 2 -> 1 -> 0` through explicit newest-first removal, then `Choose Warhost`
+restored the original single selection. A fresh final toggle measured `1 -> 0
+-> 1`; at one selected the group offered `Deselect Warhost`, no `Add another
+Warhost`, and every distinct detachment remained separately chooseable. The
+saved draft was left restored at one Warhost, and the local web application was
+left running for owner review.
+
+No moving-reference behavior was needed to classify this checkpoint. The owner
+reported the exact broken RosterForge interaction, and the fix preserves the
+repository's established permissive-edit and independent validity/completeness
+contract. No New Recruit roster or external Reference Behavior QA state was
+created.
+
+### Verification
+
+- focused `App.ui.test.tsx` — **16 passed**, including max-one deselection and
+  replacement, legitimate two-copy add/remove behavior, and an Aeldari-shaped
+  unbounded group with an exact max-one member;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **510 passed, 18 skipped (528)** across 54 files; and
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **528 passed
+  (528)** across all 54 files. Its branch is four commits behind its moving
+  remote; the exact pin was intentionally not changed.
+
+GitHub Actions is pending publication and will be recorded in the CI follow-up
+commit.
+
+### What this did not do
+
+No evaluator semantics, constraint composition, roster model, controller,
+persistence format, architecture boundary, diagnostic code, corpus data, or
+third-party data changed. The UI still permits an edit when support is unknown;
+it merely makes add and remove intent explicit. Common-loadout flattening,
+dedicated Warlord controls, model-count controls, and report demotion remain
+separate roadmap work.
+
+### Next recommended boundary
+
+**Demote the report sections below the list.** This defect checkpoint does not
+reorder the approved list-first sequence. Keep the compact player header,
+inline markers, exact reciprocal links, validity/completeness distinction,
+unsupported-behavior diagnostics, and full detailed evidence while making the
+army list visually primary.
