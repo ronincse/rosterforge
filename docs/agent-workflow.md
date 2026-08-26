@@ -7,19 +7,18 @@ active lead.
 
 ## Operating Model
 
-Codex is the preferred default lead and primary implementation agent. It should
-perform ordinary development itself. A capable model can become the active lead
-only through a formal handoff recorded in `agent-handoff.md`; receiving a
-delegated task never makes a worker the lead.
+Codex is the preferred default lead and primary implementation agent. A capable
+model can become the active lead only through a formal handoff recorded in
+`agent-handoff.md`; receiving a delegated task never makes a worker the lead.
 
 Whoever leads, that lead's **own** native subagent mechanism is the preferred
-first delegation lane for cleanly separable work that does not require a
+first delegation lane for ordinary separable work that does not require a
 particular external model or tool — Codex children under a Codex lead, Claude
 children under a Claude lead, and only where that mechanism's capabilities have
-been verified for the task at hand. This keeps the lead the primary
-implementer: routine work stays in the lead thread, while a bounded
-investigation, review, research lane, or non-overlapping implementation can run
-independently when that has a stated benefit.
+been verified for the task at hand. The lead remains the primary implementer,
+while bounded investigation, review, test analysis, risk discovery, plan review,
+or non-overlapping implementation proceeds early enough to improve the lead's
+work rather than merely inspect a finished decision.
 
 Everything below is written for the active lead rather than for Codex
 specifically. Where a rule genuinely depends on which model leads, it says so.
@@ -27,7 +26,7 @@ specifically. Where a rule genuinely depends on which model leads, it says so.
 The active lead owns all of the following:
 
 - establishing the clean baseline and reading repository instructions;
-- deciding whether delegation has a specific benefit;
+- planning useful delegation and any justified exception before implementation;
 - partitioning non-overlapping tasks and assigning explicit permissions;
 - normal implementation work and all architectural decisions;
 - reviewing every delegated diff and validating every delegated claim;
@@ -39,6 +38,31 @@ A delegated worker owns only the bounded task brief. It does not update the
 shared handoff, write in the primary checkout, push, open pull requests, deploy,
 or write to external services. A brief may authorize a local commit in its
 dedicated worktree, but the lead still decides whether and how to integrate it.
+
+### Checkpoint Delegation Budget
+
+Delegation is part of substantive checkpoint planning. Before implementation,
+the lead identifies bounded work that can proceed independently and launches it
+soon enough for the result to influence implementation, tests, or acceptance.
+Being capable of doing the work personally is not, by itself, a reason to skip
+that step.
+
+| Checkpoint shape | Normal target |
+| --- | --- |
+| Tiny, mechanical, or documentation-only | Zero delegates is normal |
+| Normal product checkpoint | One useful delegate |
+| Complex or cross-cutting checkpoint | One or two useful delegates |
+| Semantic, architectural, or high-risk correctness work | Independent review by the capable non-lead frontier model is expected when available |
+| Large separable implementation | Writer delegates may take non-overlapping scopes under the existing worktree rules |
+
+These are planning targets, not quotas. A useful lane has a distinct question,
+bounded scope, and a result the lead can act on. Do not launch duplicate
+investigations, overlapping writers, unnecessary model calls, or work whose
+briefing, isolation, review, and integration cost is likely to exceed its value.
+A genuinely atomic or mechanical task may stay entirely with the lead. When a
+substantive checkpoint uses no delegate, its completion report briefly explains
+why the exception was appropriate; trivial and mechanical work needs no such
+note.
 
 ## Formal Lead Transfer
 
@@ -128,8 +152,9 @@ able to tell reconstruction from fact.
 | Grok Build | Well-scoped implementation, non-overlapping parallel work, overflow capacity, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
 | GitHub Copilot CLI | GitHub-native work involving repository state, Actions, issues, or pull requests | Read-only/local repository access by default; GitHub writes require explicit task authority |
 
-These are affinities, not quotas. Use a specialist only when it improves
-coverage, speed, independence, or access to a tool the lead actually needs.
+These are affinities, not quotas. Use a specialist when model diversity or a
+particular tool improves coverage, speed, independence, or access beyond the
+ordinary native lane.
 
 The default decision path is written in terms of the **active lead**, whoever
 that currently is, rather than in terms of Codex:
@@ -162,7 +187,9 @@ available non-lead model reviews. Model diversity is the point of the review
 lane; a lead reviewing only its own reasoning is what this exists to avoid.
 
 Start elsewhere when the actual task, available tools, permissions, or model
-strengths justify it. This table never requires delegation.
+strengths justify it. Apply the checkpoint delegation budget above rather than
+treating this routing table as either a mandate to call every specialist or a
+reason to avoid useful delegation.
 
 Delegating to the Codex CLI draws on the **same OpenAI/Codex allowance a Codex
 lead would consume**. If Codex has become unavailable because that quota is
@@ -187,7 +214,7 @@ Good reasons to delegate include:
 Bad reasons include:
 
 - another agent happens to be installed;
-- the task is ordinary work the lead can complete directly;
+- satisfying a numeric target without a distinct useful question;
 - the scope is too vague to define files, outputs, or stop conditions;
 - multiple writers would touch the same files or share a worktree;
 - delegation would cost more review and integration time than it saves.

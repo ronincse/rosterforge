@@ -66,20 +66,41 @@ Codex is the preferred default lead and primary implementer, but any capable
 model may become the active lead through a formal handoff recorded in
 `agent-handoff.md`. Delegating a bounded task does not transfer lead ownership.
 
-- The active lead owns the plan, normal implementation work, architectural
+- The active lead owns the plan, primary implementation work, architectural
   decisions, delegate briefs, integration, final review, validation, handoff,
-  commits, push, and CI confirmation. Delegate only when a specialist or safe
-  parallel lane provides a concrete advantage; availability alone is not a
-  reason.
-- Ordinary work stays with whoever currently leads. Prefer that lead's **own**
-  native subagent mechanism for genuinely separable investigation, review,
-  research, or parallel implementation that does not need another model's
+  commits, push, and CI confirmation. Delegation is a normal part of substantive
+  checkpoint planning, not a transfer of any of those responsibilities.
+- Before implementing a substantive application-code checkpoint, identify work
+  that can proceed independently and launch a useful bounded investigation,
+  review, test-analysis, risk-discovery, plan-review, or non-overlapping writer
+  lane early enough for its findings to affect the result. The fact that the
+  lead could do the work itself is not, by itself, a reason to skip delegation.
+  Target zero delegates for tiny, mechanical, or documentation-only work; one
+  useful delegate for a normal product checkpoint; one or two for complex or
+  cross-cutting work; and an independent review by the capable non-lead frontier
+  model for semantic, architectural, or high-risk correctness work when that
+  model is available. Large separable implementations may use writer delegates
+  under the worktree rules below.
+- These targets guide judgment; they are not numeric quotas. Skip delegation
+  when a checkpoint is genuinely atomic or mechanical, or when safe briefing,
+  isolation, review, and integration would clearly cost more than the lane is
+  likely to return. Do not create duplicate investigations, overlapping
+  writers, unnecessary model calls, or work merely to fill a target. When a
+  substantive checkpoint uses no delegate, briefly record why the exception was
+  appropriate in its completion report; trivial or mechanical work needs no
+  explanation.
+- Prefer the active lead's **own** native subagent mechanism for ordinary
+  separable investigation, review, research, test analysis, risk discovery,
+  plan review, or bounded implementation that does not need another model's
   particular strengths or tools, and only where that mechanism's capabilities
-  have actually been verified for the task. Native delegation does not transfer
-  lead ownership. Route independent review, hard debugging, and second opinions
-  to the capable non-lead frontier model: Claude when Codex leads, the Codex CLI
-  when Claude leads and Codex quota is available. Affinities are advice, not
-  mandatory routing; `docs/agent-workflow.md` holds the full table.
+  have actually been verified for the task. Route independent review, hard
+  debugging, and second opinions to the capable non-lead frontier model: Claude
+  when Codex leads, the Codex CLI when Claude leads and Codex quota is available.
+  Use Antigravity for captured Reference Behavior QA evidence analysis, Grok for
+  bounded overflow implementation, Copilot for GitHub and Actions work, and a
+  verified browser-capable native agent for interactive Reference QA. Affinities
+  are guidance rather than permission to fan out; `docs/agent-workflow.md` holds
+  the full table.
 - A delegated worker owns only the task brief it receives. It must not edit the
   primary checkout, expand scope, update `agent-handoff.md`, push, open a pull
   request, deploy, or perform other external writes. It may commit only when the
