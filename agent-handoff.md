@@ -10177,7 +10177,8 @@ Verification:
 - `pnpm test` — **510 passed, 18 skipped (528)** across 54 files; and
 - pinned corpus `E:\GitHub\wh40k-11e` at
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **528 passed
-  (528)** across all 54 files. The pin was intentionally unchanged.
+  (528)** across all 54 files. The pin was intentionally unchanged; and
+- GitHub Actions `#33007682794` for `4025db2` — **passed**.
 
 No evaluator, validation, roster command, persistence, architecture,
 compatibility, diagnostic, corpus, or third-party data changed. Report-section
