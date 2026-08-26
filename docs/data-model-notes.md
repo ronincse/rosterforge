@@ -1739,10 +1739,15 @@ The workspace navigator is another derived presentation over the same
 snapshot. When a complete finite maximum exists for an evaluated cost type,
 its first link shows used, maximum, and remaining cost so that capacity stays
 visible while the document scrolls; otherwise it falls back to the number of
-direct selections in the displayed force. Its Add units count is the current
-filtered visible-root count, and its Checks count is the supported-validation
-violation count. Each link targets a stable heading. Desktop pane placement and
-mobile stacking do not create a second roster model or change category
-grouping, report order, or command eligibility. Hiding the catalogue summary
-while the roster workspace is active is likewise presentation-only; clearing
-setup reveals the same imported library.
+direct army selections in the displayed force. Configuration is rendered as a
+separate, default-open setup disclosure before that navigator and the
+roster/catalogue grid. Its own sticky summary repeats the exact limit-bearing
+cost while a long setup scrolls; after Configuration ends, the ordinary sticky
+navigator takes over. Collapsing setup, hiding the catalogue, or stacking panes
+on mobile changes no roster state. Exact validation links reopen Configuration
+when their target would otherwise be hidden. The navigator's Add units count is
+the current filtered visible-root count, and its Checks count is the supported-
+validation violation count. Each link targets a stable heading. None of these
+placement choices create a second roster model or change category grouping,
+report order, or command eligibility; clearing setup reveals the same imported
+library.

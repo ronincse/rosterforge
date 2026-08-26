@@ -49,8 +49,10 @@ import {
 } from "./roster-session.js";
 import {
   createRosterWorkspaceViewModel,
+  type RosterWorkspaceCost,
   type RosterWorkspaceSelection,
   type RosterWorkspaceSelectionCosts,
+  type RosterWorkspaceSelectionGroup,
   type RosterWorkspaceViewModel,
 } from "./roster-workspace-model.js";
 import {
@@ -111,6 +113,7 @@ export function RosterOverview({
   const [catalogueOpen, setCatalogueOpen] = useState(
     catalogueInitiallyOpen,
   );
+  const [configurationOpen, setConfigurationOpen] = useState(true);
   const [printBlocked, setPrintBlocked] = useState(false);
   // One memoized projection keeps every reader-facing rule on the same
   // immutable session snapshot. Layout components consume this model; the raw
@@ -126,6 +129,17 @@ export function RosterOverview({
     [session],
   );
   const force = workspace.primaryForce;
+  const configurationGroup = workspace.selections.groups.find(
+    ({ role }) => role.key === "configuration",
+  );
+  const hasConfiguration = configurationGroup !== undefined;
+  const armyGroups = workspace.selections.groups.filter(
+    ({ role }) => role.key !== "configuration",
+  );
+  const armyTopLevelSelectionCount = armyGroups.reduce(
+    (count, group) => count + group.amount,
+    0,
+  );
   const rootChoiceInspection = workspace.reports.rootChoices;
   const rootChoiceGroups = workspace.rootChoices.groups;
   const normalizedRootFilter = rootFilter.trim().toLowerCase();
@@ -190,7 +204,22 @@ export function RosterOverview({
   useEffect(() => {
     if (checksNeedAttention) setChecksOpen(true);
   }, [checksNeedAttention, validationIssueCount]);
-  const topLevelSelectionCount = workspace.topLevelSelectionCount;
+  const configurationNeedsAttention =
+    configurationGroup?.selections.some(
+      (selection) => selection.containsAttention,
+    ) ?? false;
+  useEffect(() => {
+    // A newly-invalid setup must not remain hidden behind a disclosure the
+    // player closed while it was valid. They may still close it deliberately
+    // after reviewing the problem.
+    if (configurationNeedsAttention) setConfigurationOpen(true);
+  }, [configurationNeedsAttention]);
+  useEffect(() => {
+    // Each roster's setup is encountered open. Removing and later restoring
+    // the configuration group is likewise a new setup encounter; ordinary
+    // edits keep the player's explicit disclosure choice.
+    if (hasConfiguration) setConfigurationOpen(true);
+  }, [hasConfiguration, workspace.rosterId]);
   const limitBearingCost = workspace.costs.available
     ? workspace.costs.activeTotals.find(({ limit }) => limit !== undefined)
     : undefined;
@@ -251,6 +280,25 @@ export function RosterOverview({
         </p>
       )}
 
+      {configurationGroup !== undefined && (
+        <RosterConfigurationSection
+          group={configurationGroup}
+          anchorId={stableDomAnchor(
+            "roster-role",
+            configurationGroup.role.key,
+          )}
+          open={configurationOpen}
+          onToggle={() => setConfigurationOpen((open) => !open)}
+          headlineCost={limitBearingCost}
+          session={session}
+          selectionCanAddAnother={selectionCanAddAnother}
+          onAddChild={onAddChildSelection}
+          onRename={onRenameSelection}
+          onSetAmount={onSetSelectionAmount}
+          onRemove={onRemoveSelection}
+        />
+      )}
+
       <nav
         className="roster-workspace-nav"
         aria-label="Roster workspace navigation"
@@ -260,8 +308,8 @@ export function RosterOverview({
           aria-label={
             limitBearingCost?.limit === undefined
               ? `Roster, ${formatCount(
-                  topLevelSelectionCount,
-                  "top-level selection",
+                  armyTopLevelSelectionCount,
+                  "army selection",
                 )}`
               : `Roster, ${formatNumber(limitBearingCost.value)} of ${formatNumber(
                   limitBearingCost.limit,
@@ -271,8 +319,8 @@ export function RosterOverview({
           {limitBearingCost?.limit === undefined ? (
             <>
               <span>Roster</span>
-              <strong>{topLevelSelectionCount}</strong>
-              <small>top-level selections</small>
+              <strong>{armyTopLevelSelectionCount}</strong>
+              <small>army selections</small>
             </>
           ) : (
             <>
@@ -335,7 +383,10 @@ export function RosterOverview({
               <h3 id="selected-roster-heading">Selected roster</h3>
             </div>
             <span>
-              {formatCount(topLevelSelectionCount, "top-level selection")}
+              {formatCount(
+                armyTopLevelSelectionCount,
+                "army selection",
+              )}
             </span>
           </div>
 
@@ -350,21 +401,22 @@ export function RosterOverview({
             <strong>{forceDefinitionLabel(session.forceDefinition)}</strong>
           </div>
 
-          {force === undefined || force.selections.length === 0 ? (
+          {force === undefined || armyGroups.length === 0 ? (
             <div className="empty-selected-roster">
-              <strong>No selections added yet</strong>
-              <span>Browse categories in Add units to begin this roster.</span>
+              <strong>No units added yet</strong>
+              <span>Browse Add units to begin building this army.</span>
             </div>
           ) : (
             <div className="roster-selection-list">
               {/* One group per battlefield role, in catalogue order, so the
-                  tree reads like an army list rather than a flat tree.
-                  Configuration leads because it is what a player sets before
-                  the army. A group renders only when it holds something: the
-                  add browser exposes every role for discovery, and a missing
-                  required one surfaces as a known problem in the checks rather
-                  than as an empty heading here. */}
-              {workspace.selections.groups.map((group) => (
+                  tree reads like an army list rather than a flat tree. The
+                  configuration group lives before the sticky workspace so it
+                  can be completed and dismissed before unit building begins.
+                  A group renders only when it holds something: the add browser
+                  exposes every role for discovery, and a missing required one
+                  surfaces as a known problem in the checks rather than as an
+                  empty heading here. */}
+              {armyGroups.map((group) => (
                 <RosterSelectionSection
                   key={group.role.key}
                   heading={group.role.name}
@@ -372,12 +424,8 @@ export function RosterOverview({
                   roleKnown={group.role.known}
                   selections={group.selections}
                   amount={group.amount}
-                  section={
-                    group.role.key === "configuration"
-                      ? "configuration"
-                      : "army"
-                  }
-                  collapsible={group.role.key !== "configuration"}
+                  section="army"
+                  collapsible
                   session={session}
                   selectionCanAddAnother={selectionCanAddAnother}
                   onAddChild={onAddChildSelection}
@@ -512,6 +560,26 @@ export function RosterOverview({
       <section
         className="roster-checks"
         aria-labelledby="roster-checks-heading"
+        onClick={(event) => {
+          if (!(event.target instanceof Element)) return;
+          const anchor = event.target.closest(
+            'a[href^="#"]',
+          );
+          const targetId = anchor?.getAttribute("href")?.slice(1);
+          const target =
+            targetId === undefined
+              ? null
+              : document.getElementById(decodeURIComponent(targetId));
+          if (
+            target !== null &&
+            target.closest(".roster-configuration") !== null
+          ) {
+            // Exact report links can point into setup. Reveal that target
+            // before the browser follows the fragment instead of leaving it
+            // inside a player-collapsed details element.
+            setConfigurationOpen(true);
+          }
+        }}
       >
         <div className="roster-checks-heading">
           <p className="eyebrow">Read-only checks</p>
@@ -1360,15 +1428,118 @@ function constraintObservation(item: ConstraintSummaryItem): string {
 }
 
 /**
- * One titled group of top-level selections inside the selected-roster tree.
+ * The full-width setup step that precedes the sticky building workspace.
  *
- * Renders nothing at all when the section is empty, so a roster with no
- * configuration shows an army list rather than an empty heading above it. The
- * amount is the model's summed occurrence amount, matching the pane heading's
- * measure rather than counting nodes.
+ * Configuration remains present and expanded on first encounter, but the
+ * player can collapse the whole step after choosing battle size, detachment,
+ * and related options. The presentation model remains the sole authority on
+ * which selections belong here.
+ */
+function RosterConfigurationSection({
+  group,
+  anchorId,
+  open,
+  onToggle,
+  headlineCost,
+  session,
+  selectionCanAddAnother,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+}: {
+  readonly group: RosterWorkspaceSelectionGroup;
+  readonly anchorId: string;
+  readonly open: boolean;
+  readonly onToggle: () => void;
+  readonly headlineCost: RosterWorkspaceCost | undefined;
+  readonly session: LocalRosterSession;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    childGroup?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+}) {
+  const containsAttention = group.selections.some(
+    (selection) => selection.containsAttention,
+  );
+  return (
+    <details
+      className="roster-configuration"
+      aria-labelledby={anchorId}
+      open={open}
+    >
+      <summary
+        onClick={(event) => {
+          // Keep the disclosure controlled so roster updates cannot reset the
+          // player's choice or race the attention-driven reopen above.
+          event.preventDefault();
+          onToggle();
+        }}
+      >
+        <h3
+          className="roster-configuration-summary-heading"
+          id={anchorId}
+          aria-label={group.role.name}
+        >
+          <span className="roster-configuration-title">
+            <span className="eyebrow">Army setup</span>
+            <span className="roster-configuration-name">
+              {group.role.name}
+            </span>
+          </span>
+          <span className="roster-configuration-meta">
+            {headlineCost?.limit !== undefined && (
+              <strong>
+                {formatNumber(headlineCost.value)} /{" "}
+                {formatNumber(headlineCost.limit)} {headlineCost.name}
+              </strong>
+            )}
+            {containsAttention && (
+              <span className="roster-configuration-attention">
+                Contains known violation
+              </span>
+            )}
+            <span>{formatCount(group.amount, "selection")}</span>
+            <span>
+              {open ? "Collapse configuration" : "Expand configuration"}
+            </span>
+          </span>
+        </h3>
+      </summary>
+      <div className="roster-configuration-body">
+        <RosterTopLevelSelectionList
+          roleKnown={group.role.known}
+          selections={group.selections}
+          session={session}
+          selectionCanAddAnother={selectionCanAddAnother}
+          collapsible={false}
+          onAddChild={onAddChild}
+          onRename={onRename}
+          onSetAmount={onSetAmount}
+          onRemove={onRemove}
+        />
+      </div>
+    </details>
+  );
+}
+
+/**
+ * One titled battlefield-role group inside the selected-roster tree.
  *
- * This groups what the presentation model already classified; it does not
- * decide what belongs in which section, and must not start doing so.
+ * Renders nothing when empty. The amount is the model's summed occurrence
+ * amount, matching the pane heading rather than counting nodes. This component
+ * only renders the grouping already decided by the presentation model.
  */
 function RosterSelectionSection({
   heading,
@@ -1442,13 +1613,61 @@ function RosterSelectionSection({
           <span>{formatCount(amount, "selection")}</span>
         </div>
       </div>
+      <RosterTopLevelSelectionList
+        roleKnown={roleKnown}
+        selections={selections}
+        session={session}
+        selectionCanAddAnother={selectionCanAddAnother}
+        collapsible={collapsible}
+        onAddChild={onAddChild}
+        onRename={onRename}
+        onSetAmount={onSetAmount}
+        onRemove={onRemove}
+      />
+    </section>
+  );
+}
+
+function RosterTopLevelSelectionList({
+  roleKnown,
+  selections,
+  session,
+  selectionCanAddAnother,
+  collapsible,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+}: {
+  readonly roleKnown: boolean;
+  readonly selections: readonly RosterWorkspaceSelection[];
+  readonly session: LocalRosterSession;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly collapsible: boolean;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    group?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+}) {
+  return (
+    <>
       {!roleKnown && (
         <p className="roster-selection-section-note">
           A category modifier moves these between roles, and that operation is
           not supported yet, so their battlefield role is not established here.
         </p>
       )}
-      <ul>
+      <ul className="roster-top-level-selection-list">
         {selections.map((selection) => (
           <RosterSelectionItem
             key={selection.occurrence.id}
@@ -1464,7 +1683,7 @@ function RosterSelectionSection({
           />
         ))}
       </ul>
-    </section>
+    </>
   );
 }
 

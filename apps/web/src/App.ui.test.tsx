@@ -766,7 +766,7 @@ describe("App local catalogue flow", () => {
     expect(within(workspaceNavigation).getByText("Checks")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 0 top-level selections",
+        name: "Roster, 0 army selections",
       }),
     ).toHaveProperty("hash", "#selected-roster-heading");
     expect(
@@ -780,7 +780,7 @@ describe("App local catalogue flow", () => {
       name: "Selected roster",
     });
     expect(
-      within(selectedRoster).getByText("No selections added yet"),
+      within(selectedRoster).getByText("No units added yet"),
     ).toBeTruthy();
     // One player header now carries what the separate cost and validation
     // cards used to. Validity and completeness stay independent signals.
@@ -1068,7 +1068,7 @@ describe("App local catalogue flow", () => {
     expect(within(playerHeader).getByText("160")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 2 top-level selections",
+        name: "Roster, 2 army selections",
       }),
     ).toBeTruthy();
     fireEvent.click(
@@ -1084,7 +1084,7 @@ describe("App local catalogue flow", () => {
     ).toHaveLength(1);
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 2 top-level selections",
+        name: "Roster, 2 army selections",
       }),
     ).toBeTruthy();
     expect(within(playerHeader).getByText("160")).toBeTruthy();
@@ -1766,6 +1766,109 @@ describe("App local catalogue flow", () => {
         name: "Defensive Doctrine",
       }),
     ).toBeTruthy();
+  });
+
+  it("places the whole configuration step before the sticky builder", async () => {
+    const initializationGameSystem = workspaceFixtureBytes("projection.gst");
+    const initializationCatalogue = workspaceFixtureBytes(
+      "selection-initialization.cat",
+    );
+    render(<App />);
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("projection.gst", initializationGameSystem),
+          browserFile(
+            "selection-initialization.cat",
+            initializationCatalogue,
+          ),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Selection Initialization/u });
+    const force = screen.getByLabelText("Starting force");
+    const initializationForce = Array.from(
+      force.querySelectorAll("option"),
+    ).find(({ textContent }) => textContent === "Initialization Force");
+    fireEvent.change(force, {
+      target: { value: initializationForce?.value },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+
+    const editor = screen.getByRole("region", { name: "Add units" });
+    fireEvent.click(
+      within(editor).getByRole("button", {
+        name: "Add Disabled Automatic Root",
+      }),
+    );
+
+    const configuration = await screen.findByRole("group", {
+      name: "Configuration",
+    });
+    const workspaceNavigation = screen.getByRole("navigation", {
+      name: "Roster workspace navigation",
+    });
+    const rosterBuilder = screen.getByRole("region", {
+      name: "Roster builder",
+    });
+    expect(
+      configuration.compareDocumentPosition(workspaceNavigation) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(
+      workspaceNavigation.compareDocumentPosition(rosterBuilder) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(configuration.hasAttribute("open")).toBe(true);
+    expect(
+      within(configuration).getByRole("heading", { name: "Configuration" }),
+    ).toBeTruthy();
+    expect(
+      within(configuration).getByText("Disabled Automatic Root", {
+        selector: "strong",
+      }),
+    ).toBeTruthy();
+
+    const selectedRoster = screen.getByRole("region", {
+      name: "Selected roster",
+    });
+    expect(
+      within(selectedRoster).queryByText("Disabled Automatic Root"),
+    ).toBeNull();
+    // Configuration is setup, not an army unit, so it does not inflate the
+    // roster count when it moves outside the army pane.
+    expect(
+      within(workspaceNavigation).getByRole("link", {
+        name: "Roster, 1 army selection",
+      }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      within(configuration).getByText("Collapse configuration"),
+    );
+    expect(configuration.hasAttribute("open")).toBe(false);
+    fireEvent.click(within(configuration).getByText("Expand configuration"));
+    expect(configuration.hasAttribute("open")).toBe(true);
+
+    // A detailed-check link must reveal a configuration target the player
+    // previously collapsed before the browser follows its fragment.
+    const configurationTarget = configuration.querySelector<HTMLElement>(
+      "[data-occurrence-id]",
+    );
+    expect(configurationTarget).not.toBeNull();
+    const reviewLink = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('a[href^="#roster-selection-"]'),
+    ).find(
+      ({ hash }) => hash === `#${configurationTarget?.id}`,
+    );
+    expect(reviewLink).toBeDefined();
+    fireEvent.click(
+      within(configuration).getByText("Collapse configuration"),
+    );
+    expect(configuration.hasAttribute("open")).toBe(false);
+    fireEvent.click(reviewLink as HTMLAnchorElement);
+    expect(configuration.hasAttribute("open")).toBe(true);
   });
 
   it("shows and restores supported required direct children", async () => {
