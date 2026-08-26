@@ -812,6 +812,19 @@ describe("App local catalogue flow", () => {
         name: /Zero-value source cost fields/u,
       }),
     ).toBeNull();
+    const checksReport = screen.getByRole("group", {
+      name: /Detailed supported evidence/u,
+    });
+    expect(checksReport.hasAttribute("open")).toBe(false);
+    expect(
+      within(checksReport).getByText(
+        "0 known violations | complete inspection",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(checksReport).getByText("Detailed supported evidence"),
+    );
+    expect(checksReport.hasAttribute("open")).toBe(true);
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1305,6 +1318,15 @@ describe("App local catalogue flow", () => {
     });
     expect(inlineViolation).toHaveProperty("hash", "#roster-checks-heading");
     expect(screen.getByText("Contains known violation")).toBeTruthy();
+    const checksReport = screen.getByRole("group", {
+      name: /Detailed supported evidence/u,
+    });
+    expect(checksReport.hasAttribute("open")).toBe(true);
+    expect(
+      within(checksReport).getByText(
+        "1 known violation | complete inspection",
+      ),
+    ).toBeTruthy();
 
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
@@ -1350,6 +1372,10 @@ describe("App local catalogue flow", () => {
     expect(
       within(doctrine).getByText("0 selected; 1 still required"),
     ).toBeTruthy();
+    fireEvent.click(
+      within(checksReport).getByText("Detailed supported evidence"),
+    );
+    expect(checksReport.hasAttribute("open")).toBe(false);
     fireEvent.click(
       within(doctrine).getByRole("button", {
         name: "Mobile Doctrine",
@@ -1403,6 +1429,9 @@ describe("App local catalogue flow", () => {
 
     await waitFor(() => {
       expect(rosterSelection("selection-ui-group-2")).toBeNull();
+    });
+    await waitFor(() => {
+      expect(checksReport.hasAttribute("open")).toBe(true);
     });
     doctrine = screen.getByRole("group", {
       name: "Squad Doctrine choices for Infantry Squad",
@@ -1742,6 +1771,13 @@ describe("App local catalogue flow", () => {
       within(selectedRoster).queryByRole("region", { name: "Models" }),
     ).toBeNull();
     fireEvent.click(unitToggle);
+    const checksReport = screen.getByRole("group", {
+      name: /Detailed supported evidence/u,
+    });
+    expect(checksReport.hasAttribute("open")).toBe(true);
+    expect(
+      within(checksReport).getByText(/incomplete inspection/u),
+    ).toBeTruthy();
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1870,6 +1906,32 @@ describe("App local catalogue flow", () => {
         name: "Structural violations 1 bound",
       }),
     ).toBeTruthy();
+
+    // Resolve the last known violation while leaving the modifier-driven bound
+    // unresolved. Incompleteness alone keeps detailed evidence open; a valid
+    // roster must not make unsupported behavior disappear behind a clean state.
+    const manualGroup = screen.getByRole("group", {
+      name: "Manual Group choices for Initialization Unit",
+    });
+    fireEvent.click(
+      within(manualGroup).getByRole("button", { name: "Manual Option One" }),
+    );
+    await waitFor(() => {
+      expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
+    });
+    expect(
+      within(playerHeader).getByText("Incomplete supported view"),
+    ).toBeTruthy();
+    expect(
+      within(structuralStatus).getByText("No known violations"),
+    ).toBeTruthy();
+    expect(
+      within(structuralStatus).getByText("Incomplete inspection"),
+    ).toBeTruthy();
+    expect(constraintStatusText(structuralStatus, "Violated")).toBe(
+      "0Violated",
+    );
+    expect(checksReport.hasAttribute("open")).toBe(true);
   });
 
   it("offers to recover an unsaved roster from a previous session", async () => {

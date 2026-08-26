@@ -2288,14 +2288,76 @@ h1 {
 
 .roster-checks {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   margin-top: 30px;
   padding-top: 26px;
   border-top: 1px solid #c9cec7;
   scroll-margin-top: 84px;
 }
 
-.roster-checks > .constraint-summary {
+.roster-checks-heading h3 {
+  margin: 2px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.roster-checks-report {
+  background: rgba(245, 243, 237, 0.52);
+  border: 1px solid #d1d3cd;
+  border-radius: 3px;
+}
+
+.roster-checks-report > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  color: var(--forest);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 800;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.roster-checks-report > summary::-webkit-details-marker {
+  display: none;
+}
+
+.roster-checks-report > summary::before {
+  content: "+";
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.roster-checks-report[open] > summary::before {
+  content: "−";
+}
+
+.roster-checks-report > summary > span:first-of-type {
+  margin-right: auto;
+}
+
+.roster-checks-report > summary > span:last-of-type {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-align: right;
+  text-transform: none;
+}
+
+.roster-checks-report-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.roster-checks-report-body > .constraint-summary {
   margin-top: 0;
 }
 
@@ -2529,6 +2591,17 @@ footer {
 
   .constraint-summary-heading {
     display: grid;
+  }
+
+  .roster-checks-report > summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .roster-checks-report > summary > span:last-of-type {
+    flex-basis: 100%;
+    padding-left: 22px;
+    text-align: left;
   }
 
   .completeness-badge {

@@ -176,6 +176,20 @@ export function RosterOverview({
     return capacity;
   }, [supportedValidation]);
   const validationIssueCount = workspace.validation.issueCount;
+  // A clean, complete roster can keep evaluator evidence out of the reading
+  // path. Anything less certain opens itself: hiding an incomplete-but-valid
+  // report would be just as misleading as hiding a known violation. A changed
+  // problem count reopens it even when incompleteness was already keeping the
+  // broad attention flag true; otherwise a newly introduced defect could stay
+  // behind a disclosure the user closed earlier.
+  const checksNeedAttention =
+    !workspace.validation.available ||
+    workspace.validation.validity !== "valid" ||
+    workspace.validation.completeness === "incomplete";
+  const [checksOpen, setChecksOpen] = useState(checksNeedAttention);
+  useEffect(() => {
+    if (checksNeedAttention) setChecksOpen(true);
+  }, [checksNeedAttention, validationIssueCount]);
   const topLevelSelectionCount = workspace.topLevelSelectionCount;
   return (
     <div className="roster-overview">
@@ -464,12 +478,39 @@ export function RosterOverview({
         className="roster-checks"
         aria-labelledby="roster-checks-heading"
       >
-        <div>
+        <div className="roster-checks-heading">
           <p className="eyebrow">Read-only checks</p>
           <h3 id="roster-checks-heading">Checks and diagnostics</h3>
         </div>
-        <RosterStructuralStatus result={supportedValidation} />
-        <RosterConstraintSummary result={supportedValidation} />
+        <details
+          className="roster-checks-report"
+          aria-label="Detailed supported evidence"
+          open={checksOpen}
+        >
+          <summary
+            onClick={(event) => {
+              // The `open` attribute is controlled so an attention transition
+              // cannot race a delayed native toggle event from the prior click.
+              event.preventDefault();
+              setChecksOpen((open) => !open);
+            }}
+          >
+            <span>Detailed supported evidence</span>
+            <span>
+              {workspace.validation.available
+                ? `${formatCount(validationIssueCount, "known violation")} | ${
+                    workspace.validation.completeness === "complete"
+                      ? "complete inspection"
+                      : "incomplete inspection"
+                  }`
+                : "Checks unavailable"}
+            </span>
+          </summary>
+          <div className="roster-checks-report-body">
+            <RosterStructuralStatus result={supportedValidation} />
+            <RosterConstraintSummary result={supportedValidation} />
+          </div>
+        </details>
       </section>
 
       <button className="secondary-action" type="button" onClick={onClear}>
