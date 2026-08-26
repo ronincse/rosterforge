@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (report evidence demoted; build/reference behavior Next)
+## Current Status — 2026-08-26 (setup precedes workspace; selected-unit behavior Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -62,8 +62,9 @@ diagnostic codes.
   placement, inline known-violation markers, explicit group-choice
   deselection, stable name-only choice labels, detailed report demotion,
   persistent points capacity, readable imported keywords, direct-choice
-  toggles, wide-screen use, and a stronger configuration boundary were then
-  completed under the resumed lead. **The `Next` is the selected-unit workspace:
+  toggles, wide-screen use, and a full-width collapsible configuration step
+  before the sticky roster workspace were then completed under the resumed
+  lead. **The `Next` is the selected-unit workspace:
   newly-added-unit focus, a dedicated options surface, and a separate full-card
   view without undoing reader-controlled catalogue placement.**
 - **Prior transfer.** The Codex-to-Claude transfer
@@ -128,7 +129,7 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **511 passed, 18 skipped (529)**.
+  `git diff --check` all pass. `pnpm test` is **512 passed, 18 skipped (530)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
@@ -176,7 +177,11 @@ diagnostic codes.
   filled/pressed state communicates selection, clicking a selected option
   deselects one newest matching occurrence, and legitimate repeats use an
   explicit `Add another` action constrained by both the aggregate group and the
-  exact occurrence's effective maximum.
+  exact occurrence's effective maximum. Configuration no longer occupies an
+  army-list role block: it is a default-open full-width setup disclosure before
+  the sticky navigator and roster/catalogue grid. Its sticky summary preserves
+  exact points capacity while setup scrolls, the whole step can be collapsed,
+  and exact validation links reveal hidden configuration targets.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -540,7 +545,7 @@ QA before classifying or implementing the discrepancy.
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
 | Build phase and reference phase | Next (selected-unit workspace) | **reframed 2026-08-26 by owner feedback.** Catalogue placement is complete and reader-controlled. The next bounded checkpoint selects and focuses a newly added unit, moves its configurable options into a dedicated workspace surface, and gives the list row a separate `View` action for the complete unit card. Do not copy New Recruit's squeezed permanent three-pane geometry: its measured desktop selection pane reduced the roster to about 34% of the window. Preserve the explicit catalogue placement, use the newly available wide shell, and define a coherent mobile transition rather than rendering three simultaneous phone panes |
 | Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
-| Wide-screen workspace and configuration boundary | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration remains first and expanded, now inside a gold-edged tinted section that is visibly distinct from battlefield-role unit groups |
+| Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration is now a full-width, default-open setup disclosure before the sticky navigator and roster/catalogue grid; its sticky summary repeats exact points capacity while setup scrolls, the whole step collapses, validation links reveal hidden targets, and configuration no longer inflates the army-selection count |
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
@@ -10411,3 +10416,88 @@ open the complete unit card. Preserve the explicit catalogue placement, the
 new full-width shell, list-first reading mode, one-click datasheets, sticky
 points capacity, attention routing, and phone-width no-overflow contract. Do
 not copy New Recruit's squeezed permanent three-pane desktop geometry.
+
+## Completed Assignment — Configuration Before The Roster Workspace, 2026-08-26
+
+Baseline `015e53bab941ffc3e106ee6367e374aced90d3fd`; resulting implementation
+commit `1abcaea` and this handoff commit. The owner requested that setup read as
+a step completed before unit building rather than as one role inside the army
+list.
+
+Configuration now renders as one full-width, default-open disclosure after the
+roster summary/actions and before the sticky navigator and roster/catalogue
+grid. Detachment, battle size, force disposition, and every other existing
+configuration row retain their exact controls and remain expanded inside that
+outer disclosure. Collapsing the whole section removes them from the building
+path without mutating or persisting roster state. A new roster or a removed and
+restored configuration group opens setup again; ordinary roster edits preserve
+the player's explicit open/closed choice. A newly introduced known violation
+also reopens setup, and detailed report links reveal an exact configuration
+target before following its fragment.
+
+Configuration no longer contributes to the Selected roster count or empty
+state. Those now use only the presentation model's army groups and their summed
+amounts, so a configuration-only force says `No units added yet` and an amount-
+greater-than-one unit is not undercounted. No evaluator, controller, roster,
+command, persistence, or classification rule changed.
+
+The earlier always-visible points requirement remains intact across the new
+document order. While expanded setup scrolls, its own sticky heading repeats the
+same exact limit-bearing used/maximum cost; when Configuration ends, the normal
+sticky workspace navigator takes over. This was preferred to moving the
+navigator ahead of setup, which would contradict the requested sequence, or to
+adding a separate fixed overlay.
+
+### Delegation and review
+
+One read-only native Codex lane reviewed the component, model contract, test
+seams, accessibility, sticky behavior, and mobile risks before and after
+implementation. Its early review caught an amount-count defect in the lead's
+first draft (`group.selections.length` instead of `group.amount`) and identified
+the exact-validation-link disclosure risk. Its final diff review caught two
+additional regressions before commit: Configuration had lost heading semantics,
+and nested configuration lists had fallen outside the old list-reset selector.
+The final code uses an accessible `h3`, restores all nested list resets, and
+pins exact-link reveal behavior in the UI test. Codex independently reviewed
+and reran every resulting check.
+
+### Evidence and validation
+
+Live browser QA reopened the unchanged saved pinned Aeldari roster at 90 points.
+At 1,920 x 1,080, Configuration and the navigator each measured 1,767 px wide,
+and document width was 1,905 px against a 1,920 px viewport. Configuration
+preceded the navigator, which preceded the roster/catalogue grid. At scroll Y
+2,039 the Configuration summary was sticky at viewport top `0`, still showing
+`90 / 2,000 pts`; collapsing reduced the section to 79 px, and the ordinary
+navigator reached sticky top `0` once the builder scrolled. At 390 x 844, the
+document measured 375 px with no horizontal overflow, and the wrapped setup
+summary, configuration section, and navigator each stayed within that width.
+The final DOM exposed Configuration as an `h3`, and every nested configuration
+list computed `list-style-type: none`.
+
+Verification:
+
+- focused `App.ui.test.tsx` — **18 passed**, including document order,
+  default-open collapse/reopen, configuration exclusion from the army count,
+  and exact validation-link reveal;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning; and
+- `pnpm test` — **512 passed, 18 skipped (530)** across 54 files.
+
+The optional corpus suite was not rerun because this checkpoint changes only
+web presentation and uses no new imported-data semantic claim. The configured
+corpus remains pinned at
+`04c62fcd041b3808c39d5c46fd677c704027b979`; the live roster was loaded from
+that saved pinned source. No New Recruit comparison was needed: this is an
+owner-directed RosterForge layout decision, not a reference-behavior
+classification. The local application remains running at
+`http://127.0.0.1:5173/`, with the saved Aeldari roster unchanged and
+Configuration left open for owner review.
+
+### Next recommended boundary
+
+**Build the selected-unit workspace.** Newly-added focus, the dedicated options
+surface, and the separate full-card `View` action apply only to army groups;
+configuration remains in this setup disclosure and must not take over the unit
+editor. Preserve explicit catalogue placement, sticky points capacity,
+attention routing, full-width use, and the phone-width no-overflow contract.
