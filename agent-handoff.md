@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (cross-provider delegation planning; report demotion Next)
+## Current Status — 2026-08-26 (report evidence demoted; build/reference behavior Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -60,9 +60,10 @@ diagnostic codes.
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
   matching the transfer record. Child-model statlines, bounded catalogue
   placement, inline known-violation markers, explicit group-choice
-  deselection, and stable name-only choice labels were then completed under the
-  resumed lead. **The `Next` is demoting the detailed report sections below the
-  list without weakening validation honesty.**
+  deselection, stable name-only choice labels, and detailed report demotion were
+  then completed under the resumed lead. **The `Next` is the remaining build-
+  versus-reference phase behavior, including newly-added-unit focus, without
+  undoing the reader-controlled catalogue placement.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -333,10 +334,11 @@ owner reprioritises).
 The first phone-width QA pass, deterministic CI performance budget, tested
 workspace presentation model, compact player header, battlefield-role grouping,
 one-click unit/model statlines, reader-controlled catalogue placement, inline
-violation markers, and safe group-choice controls are complete. **Report-section
-demotion is Next.** Whole-roster incremental evaluation stays Open. Take the
-restored usability rows in the dependency order stated in section F rather than
-treating table position or raw status as priority.
+violation markers, safe group-choice controls, and report-section demotion are
+complete. **The remaining build-versus-reference phase behavior is Next.**
+Whole-roster incremental evaluation stays Open. Take the restored usability rows
+in the dependency order stated in section F rather than treating table position
+or raw status as priority.
 
 ### A. Display-fidelity modifiers
 
@@ -532,7 +534,7 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
-| Build phase and reference phase | Done (catalogue placement); remaining phase behavior stays ordered below | **reframed 2026-08-24 by the stated goal.** The bounded placement half is complete: the catalogue starts as a 320–400 px desktop sidebar, an explicit sticky control unmounts it so the roster takes the full width, a fresh phone-width workspace starts roster-first and can reopen it, and the filter survives placement changes. Adding a unit never changes the choice. Newly-added-unit focus and broader build/reference behavior remain a later checkpoint rather than being smuggled into this one. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. RosterForge follows the measured interaction goal without copying that squeezed three-pane geometry |
+| Build phase and reference phase | Next (remaining phase behavior) | **reframed 2026-08-24 by the stated goal.** The bounded placement half is complete: the catalogue starts as a 320–400 px desktop sidebar, an explicit sticky control unmounts it so the roster takes the full width, a fresh phone-width workspace starts roster-first and can reopen it, and the filter survives placement changes. The remaining bounded checkpoint is newly-added-unit focus and the broader build/reference transition; do not undo the reader's explicit catalogue placement. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. RosterForge follows the measured interaction goal without copying that squeezed three-pane geometry |
 | Headline cost against its points limit | Open | **sharpened by the 2026-08-24 reference-army run: "non-zero" is the wrong rule for what leads the header.** A configured 2,000-point roster with no units yet showed a headline of `2 Detachment Points`, because `pts` was still 0 and zero totals are filtered out; after an enhancement the header carried three figures, `260 pts | 2 Detachment Points | 1 Enhancements`, two of them bookkeeping counters. Limit-bearing cost types should lead. Originally found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
@@ -551,7 +553,7 @@ QA before classifying or implementing the discrepancy.
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
-| Report sections demoted below the list | Open | Checks, structural status and constraint bounds are currently co-equal full-width sections competing with the list. Demote them without losing honesty: validity, completeness and unsupported-behavior reporting are `AGENTS.md` requirements, not preferences, so this is the riskiest of the four and goes last |
+| Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
 | The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** There the list *is* the page: route `/app/Lists/<id>`, document title is the list name, the body is organised by battlefield role (`Configuration`, `Epic Hero`, `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`, `Dedicated Transport`, `Fortification`, three `Allies:` groups), category headings carry counts against limits inline (`Character (0/1)`), violations are attached in place — the `Character` heading carried an error icon titled `• Roster requires 1 selections more of Character` — and the only chrome is a thin bar of list name, Export, Report Issue, List Options. RosterForge instead splits the screen between a selected-roster pane and an add browser, then follows it with Checks, structural status, and constraint bounds as co-equal sections, so the list competes with its own reports. This is an information-architecture finding about *emphasis*, **not** permission to copy New Recruit's visual design, markup, or code. It probably reframes several rows below rather than sitting beside them; see the ordering note |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
@@ -570,8 +572,8 @@ question on 2026-08-24: take the list-first restructure now.** In order:
 3. ~~catalogue placement for the reading phase~~ — done, kept separate from
    broader mode semantics and newly-added-unit focus;
 4. ~~violations shown in place on the row that is wrong~~ — done;
-5. demoting the report sections below the list — **Next**;
-6. remaining build-versus-reference phase behavior;
+5. ~~demoting the report sections below the list~~ — done;
+6. remaining build-versus-reference phase behavior — **Next**;
 7. legality-aware model-count controls;
 8. common-loadout flattening and dedicated Warlord controls; and
 9. print-output usability.
@@ -10232,3 +10234,77 @@ No application code, evaluator behavior, validation composition, persistence,
 architecture boundary, compatibility claim, diagnostic, corpus data, or third-
 party data changed. No roadmap row moved: **report-section demotion remains
 Next**.
+
+## Completed Assignment — Detailed Report Demotion, 2026-08-26
+
+Baseline `199f0340ad20938e990217aaec46f2eed11c0a28`; resulting implementation
+commit `b573d4b` and this handoff commit. Codex completed the last bounded row of
+the approved list-first restructure as active lead.
+
+The Checks heading and every existing fragment target remain permanently
+visible below the roster builder. The structural-status and constraint-bound
+cards, diagnostics, counts, satisfied evidence, unresolved evidence and exact
+review links now live inside one accessible `Detailed supported evidence`
+disclosure. A clean, complete roster starts with that evidence collapsed. Checks
+that are unavailable, invalid or incomplete open it automatically, so an
+incomplete-but-valid roster cannot look confidently clean. A changed known-
+violation count reopens evidence after a manual close, while the summary itself
+always states the current known-violation count and inspection completeness.
+
+This structure was chosen instead of wrapping the whole Checks region or each
+fragment target in a closed disclosure. Keeping `#roster-checks-heading`,
+`#roster-structural-status-heading` and `#roster-constraint-heading` on the
+always-reachable path preserves the sticky navigation, player-header links,
+inline selection-to-check links and report-to-selection links without relying
+on browser-specific fragment navigation to reveal a closed ancestor. It also
+avoids duplicating the full reports or weakening their validity/completeness
+language merely to reduce visual weight.
+
+### Delegation and review
+
+An early constrained read-only Claude Code review inspected the exact baseline
+with only `Read`, `Grep` and `Glob`. It identified two risks the lead's first
+layout sketch had not covered: fragment-link tests only proved target existence,
+not visibility, and the existing incomplete fixture was also invalid, leaving
+the valid-but-incomplete honesty case untested. The implementation therefore
+keeps the report anchors outside the collapsing body, opens on incompleteness as
+well as invalidity, and extends the fixture until its last known violation is
+resolved while its unsupported modifier-driven bound remains incomplete.
+
+Live browser QA found one additional race after that review: closing an already
+incomplete native `<details>` and immediately creating a violation could let the
+old toggle event overwrite the attention-driven reopen. The summary now owns
+the controlled toggle directly. Repeating the exact sequence changed the saved
+Aeldari roster from `0 known violations` to `1`, reopened the report, and then
+returned to `0` after Warhost was restored.
+
+### Verification
+
+- focused `App.ui.test.tsx` — **16 passed**, covering clean collapsed evidence,
+  automatic violated and incomplete states, a valid-but-incomplete state, and
+  reopening after a changed known-violation count;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **510 passed, 18 skipped (528)** across 54 files;
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **528 passed
+  (528)** across all 54 files; and
+- live desktop and 390 x 844 QA on the saved pinned Aeldari roster — Warhost was
+  restored selected, the incomplete report remained honest at zero known
+  violations, the collapsed row fit a 292 px content width, and the 390 px page
+  measured 375 px of document width with no horizontal overflow.
+
+No New Recruit behavior was needed to classify this checkpoint: it changes
+RosterForge's hierarchy around retained evidence, not imported game semantics.
+No evaluator, validation composition, roster command, persistence, architecture
+boundary, compatibility claim, diagnostic, corpus data or third-party data
+changed. The local application remains running at `http://127.0.0.1:5173/`, the
+saved Aeldari roster is restored to one Warhost, and the checks disclosure is
+left collapsed for owner review.
+
+### Next recommended boundary
+
+**Complete the remaining build-versus-reference phase behavior.** Keep the
+reader-controlled catalogue placement already shipped; make newly added units
+easy to find and refine the choosing-to-reading transition without recreating
+the old two-pane concept or copying New Recruit's squeezed three-pane geometry.
