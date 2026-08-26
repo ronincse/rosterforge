@@ -60,10 +60,12 @@ diagnostic codes.
   primary worktree, no stash, no concurrent writer, and a roadmap `Next`
   matching the transfer record. Child-model statlines, bounded catalogue
   placement, inline known-violation markers, explicit group-choice
-  deselection, stable name-only choice labels, and detailed report demotion were
-  then completed under the resumed lead. **The `Next` is the remaining build-
-  versus-reference phase behavior, including newly-added-unit focus, without
-  undoing the reader-controlled catalogue placement.**
+  deselection, stable name-only choice labels, detailed report demotion,
+  persistent points capacity, readable imported keywords, direct-choice
+  toggles, wide-screen use, and a stronger configuration boundary were then
+  completed under the resumed lead. **The `Next` is the selected-unit workspace:
+  newly-added-unit focus, a dedicated options surface, and a separate full-card
+  view without undoing reader-controlled catalogue placement.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -126,7 +128,7 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **510 passed, 18 skipped (528)**.
+  `git diff --check` all pass. `pnpm test` is **511 passed, 18 skipped (529)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
@@ -335,7 +337,9 @@ The first phone-width QA pass, deterministic CI performance budget, tested
 workspace presentation model, compact player header, battlefield-role grouping,
 one-click unit/model statlines, reader-controlled catalogue placement, inline
 violation markers, safe group-choice controls, and report-section demotion are
-complete. **The remaining build-versus-reference phase behavior is Next.**
+complete. Persistent limit-bearing costs, wide-screen use, readable imported
+keywords, stronger configuration separation, and safe direct-choice controls
+are complete too. **The selected-unit workspace is Next.**
 Whole-roster incremental evaluation stays Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
@@ -534,12 +538,15 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
-| Build phase and reference phase | Next (remaining phase behavior) | **reframed 2026-08-24 by the stated goal.** The bounded placement half is complete: the catalogue starts as a 320–400 px desktop sidebar, an explicit sticky control unmounts it so the roster takes the full width, a fresh phone-width workspace starts roster-first and can reopen it, and the filter survives placement changes. The remaining bounded checkpoint is newly-added-unit focus and the broader build/reference transition; do not undo the reader's explicit catalogue placement. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. RosterForge follows the measured interaction goal without copying that squeezed three-pane geometry |
-| Headline cost against its points limit | Open | **sharpened by the 2026-08-24 reference-army run: "non-zero" is the wrong rule for what leads the header.** A configured 2,000-point roster with no units yet showed a headline of `2 Detachment Points`, because `pts` was still 0 and zero totals are filtered out; after an enhancement the header carried three figures, `260 pts | 2 Detachment Points | 1 Enhancements`, two of them bookkeeping counters. Limit-bearing cost types should lead. Originally found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
+| Build phase and reference phase | Next (selected-unit workspace) | **reframed 2026-08-26 by owner feedback.** Catalogue placement is complete and reader-controlled. The next bounded checkpoint selects and focuses a newly added unit, moves its configurable options into a dedicated workspace surface, and gives the list row a separate `View` action for the complete unit card. Do not copy New Recruit's squeezed permanent three-pane geometry: its measured desktop selection pane reduced the roster to about 34% of the window. Preserve the explicit catalogue placement, use the newly available wide shell, and define a coherent mobile transition rather than rendering three simultaneous phone panes |
+| Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
+| Wide-screen workspace and configuration boundary | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration remains first and expanded, now inside a gold-edged tinted section that is visibly distinct from battlefield-role unit groups |
+| Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
+| Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Done | top-level units render Keywords, Profiles, Rules and info groups after one unit-card expansion, with editing behind `Edit selection`. Direct child selections whose resolved entry type is exactly `model` now render in an accessible `Models` section in that same open card. The remaining upgrade tree and each model's nested wargear stay lazy and preserve attention-driven opening; unknown types are never guessed into the model surface |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
@@ -10309,3 +10316,96 @@ left collapsed for owner review.
 reader-controlled catalogue placement already shipped; make newly added units
 easy to find and refine the choosing-to-reading transition without recreating
 the old two-pane concept or copying New Recruit's squeezed three-pane geometry.
+
+## Completed Assignment — Roster Orientation And Direct Choices, 2026-08-26
+
+Baseline `7ab7b0b900dee3aa03d808e720d3f2e87670c0ef`; resulting implementation
+commit `1b44cfb` and this handoff commit. The owner supplied one wide-screen
+Aeldari screenshot and six usability findings. Codex kept the selected-unit
+editor/view redesign as the next bounded checkpoint and completed the five
+independent defects that could ship without pre-empting that architecture.
+
+### What shipped
+
+- Complete finite force-cost maxima are joined to evaluated totals by cost-type
+  ID. A limit-bearing total renders at zero, the header shows used / maximum,
+  and the sticky workspace link shows used / maximum plus remaining or overage.
+  No cost name such as `pts` is treated as semantic.
+- Imported materialized choices use their authored category-link names only as
+  a fallback after canonical local category definitions. The pinned Corsair
+  Voidscarred now shows readable Keywords instead of opaque target IDs; no
+  ID-shaped content is hidden heuristically.
+- Direct quick choices now follow the already-shipped group-choice contract:
+  the stable selected button removes the newest exact occurrence, and a
+  separate `Add another` action remains only while direct and effective exact
+  maxima allow it. Existing immutable commands, reconciliation, undo, and
+  validation remain authoritative.
+- The application shell no longer stops at 1,240 px. Viewport gutters remain,
+  the catalogue remains bounded at 320–400 px, and the roster consumes the
+  recovered desktop width.
+- Configuration retains its existing semantic role and expanded behavior but
+  now sits in a tinted, gold-edged section clearly divided from the battlefield-
+  role army groups.
+
+### Delegation changed the plan
+
+A read-only native Codex lane was launched before implementation to trace the
+owner's Mistshield example through pinned data and the current choice model. It
+proved Mistshield is not a group member: Voidscarred Felarch directly links the
+shared Mistshield selection entry, with complete parent-scoped maximum one.
+That ruled out changing the group controller and kept the fix in the direct-
+choice presentation, using the existing `onRemove` command and exact-capacity
+index. The same review identified the project-owned repeatable Special Weapon
+fixture, which now proves the selected control removes while a distinct Add-
+another path survives. Codex reviewed the data IDs, materialization path,
+current diff, and all resulting tests before accepting the finding.
+
+### Evidence and validation
+
+The screenshot's five opaque keyword strings were category target IDs. The
+pinned Aeldari source gives those exact targets authored names including
+Anhrathe, Corsair Voidscarred, Aeldari, Ynnari, and Corsairs and Travelling
+Players. An optional real-data assertion now builds the exact Corsair path,
+checks those readable names, and pins Mistshield as a direct complete max-one
+choice.
+
+Live browser QA on the saved pinned Aeldari roster measured:
+
+- at a 1,920 x 1,080 viewport, a 1,865 px shell, 1,351 px roster pane, and
+  400 px catalogue pane, with no horizontal overflow;
+- the sticky navigation fixed at the viewport top showing `90 / 2,000 pts` and
+  `1,910 remaining`;
+- the strengthened Configuration section at 1,314 px wide with its distinct
+  background and 4 px edge;
+- Corsair Voidscarred with no opaque category IDs visible; and
+- Mistshield `aria-pressed=false -> true -> false` from the same stable button,
+  with zero `Add another Mistshield` controls at its complete maximum one.
+
+The temporary Corsair and Mistshield edits were undone. The saved roster was
+left at its original 90 points, and the local application remains running at
+`http://127.0.0.1:5173/` for owner review.
+
+Verification:
+
+- focused workspace model and UI — **21 passed**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **511 passed, 18 skipped (529)** across 54 files; and
+- optional exact Aeldari assertion at pinned corpus
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **1 passed, 17 skipped** in
+  its focused integration file.
+
+No New Recruit behavior was needed to classify these owner-observed
+RosterForge defects. No evaluator semantics, constraint composition, roster
+command, persistence format, architecture direction, compatibility claim,
+diagnostic, corpus data, or third-party data changed.
+
+### Next recommended boundary
+
+**Build the selected-unit workspace.** Adding or selecting a unit should focus
+it, its configurable options should occupy a dedicated editing surface instead
+of expanding inline through the army list, and a separate `View` action should
+open the complete unit card. Preserve the explicit catalogue placement, the
+new full-width shell, list-first reading mode, one-click datasheets, sticky
+points capacity, attention routing, and phone-width no-overflow contract. Do
+not copy New Recruit's squeezed permanent three-pane desktop geometry.
