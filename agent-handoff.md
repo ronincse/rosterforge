@@ -10672,7 +10672,8 @@ Verification:
   across 55 files;
 - full optional corpus suite with `ROSTERFORGE_BSDATA_JSON_DIR` set — **531
   passed** across 55 files; and
-- GitHub Actions for this handoff commit — **pending push**.
+- GitHub Actions `#33022413129` for `d0cc0b5` — **passed** every repository CI
+  gate.
 
 No evaluator rule, roster command, persisted format, package boundary,
 diagnostic, corpus data, or third-party data changed. `docs/compatibility.md`
