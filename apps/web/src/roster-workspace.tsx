@@ -1309,6 +1309,7 @@ function RosterSelectionItem({
   selectionModel,
   topLevel = false,
   collapsible = false,
+  collapseChildren = false,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1320,6 +1321,11 @@ function RosterSelectionItem({
   readonly topLevel?: boolean;
   /** Collapses everything below the occurrence row behind a disclosure. */
   readonly collapsible?: boolean;
+  /**
+   * Keeps a promoted model's own wargear subtree lazy unless it needs
+   * attention.
+   */
+  readonly collapseChildren?: boolean;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1363,14 +1369,52 @@ function RosterSelectionItem({
       : `${displayName} (${annotationValue})`;
   const annotationIncomplete =
     !annotation.ok || annotation.value.completeness === "incomplete";
-  const childrenContainAttention = selectionModel.selections.some(
+  // Only direct model children of a collapsible army card move into the reading
+  // surface. Recursing would flatten automatic sub-units, while promoting
+  // upgrades merely because they carry a profile would turn the unit card back
+  // into the configuration tree this checkpoint is trying to keep lazy.
+  const promotedModels: RosterWorkspaceSelection[] = [];
+  const configurableSelections: RosterWorkspaceSelection[] = [];
+  for (const child of selectionModel.selections) {
+    const childChoice = localRosterSelectionChoice(
+      session,
+      child.occurrence.id,
+    );
+    if (
+      choice !== undefined &&
+      collapsible &&
+      childChoice?.kind === "selectionEntry" &&
+      childChoice.type === "model"
+    ) {
+      promotedModels.push(child);
+    } else {
+      // Unknown choices stay configurable. Treating an unresolved type as a
+      // model would hide it from the only complete editing tree.
+      configurableSelections.push(child);
+    }
+  }
+  const childrenContainAttention = configurableSelections.some(
     ({ containsAttention }) => containsAttention,
   );
-  // Small subtrees stay open so a couple of models are reachable. Larger ones
-  // open only when a descendant has a known violation — unresolved bounds stay
-  // in the checks, they do not expand the tree.
+  const configurableSelectionLabel =
+    promotedModels.length > 0
+      ? "Wargear, Warlord and options"
+      : "Models, wargear, Warlord and options";
+  const configurableSelectionSummary =
+    promotedModels.length > 0
+      ? "Configure wargear, Warlord & options"
+      : "Configure models, wargear & options";
+  // A small ordinary subtree stays open when no promoted model section precedes
+  // it. Promoted models keep their own options shut by default, and a unit with
+  // promoted models keeps the remaining configuration out of the reading path.
+  // Known descendant violations still open the exact disclosure that owns them;
+  // unresolved bounds stay in the checks and do not expand the tree.
   const [childrenOpen, setChildrenOpen] = useState(
-    () => selection.selections.length <= 2 || childrenContainAttention,
+    () =>
+      (!collapseChildren &&
+        promotedModels.length === 0 &&
+        configurableSelections.length <= 2) ||
+      childrenContainAttention,
   );
   useEffect(() => {
     if (childrenContainAttention) setChildrenOpen(true);
@@ -1492,21 +1536,56 @@ function RosterSelectionItem({
             />
           )}
           {choice !== undefined && (
-            <RosterSelectionDetails
-              session={session}
-              choice={choice}
-              selection={selection}
-              onRename={onRename}
-              onSetAmount={onSetAmount}
-              displayNameIncomplete={nameIncomplete || annotationIncomplete}
-            />
+            <>
+              <RosterSelectionDatasheet
+                session={session}
+                choice={choice}
+                selection={selection}
+                displayNameIncomplete={nameIncomplete || annotationIncomplete}
+              />
+              {promotedModels.length > 0 && (
+                <section className="selection-models" aria-label="Models">
+                  <div className="selection-models-heading">
+                    <h4>Models</h4>
+                    <span>
+                      {formatCount(
+                        rosterSelectionsAmount(
+                          promotedModels.map(({ occurrence }) => occurrence),
+                        ),
+                        "model",
+                      )}
+                    </span>
+                  </div>
+                  <ul>
+                    {promotedModels.map((model) => (
+                      <RosterSelectionItem
+                        key={model.occurrence.id}
+                        session={session}
+                        selectionModel={model}
+                        collapseChildren
+                        onAddChild={onAddChild}
+                        onRename={onRename}
+                        onSetAmount={onSetAmount}
+                        onRemove={onRemove}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+              <RosterSelectionEdit
+                choice={choice}
+                selection={selection}
+                onRename={onRename}
+                onSetAmount={onSetAmount}
+              />
+            </>
           )}
-          {selection.selections.length > 0 && (
+          {configurableSelections.length > 0 && (
             <details
               className="selection-children"
               open={childrenOpen}
-              aria-label={`Models, wargear, Warlord and options ${formatCount(
-                selection.selections.length,
+              aria-label={`${configurableSelectionLabel} for ${name}; ${formatCount(
+                configurableSelections.length,
                 "selection",
               )}`}
             >
@@ -1519,9 +1598,9 @@ function RosterSelectionItem({
                   setChildrenOpen((current) => !current);
                 }}
               >
-                Configure models, wargear &amp; options
+                {configurableSelectionSummary}
                 <span>
-                  {formatCount(selection.selections.length, "selection")}
+                  {formatCount(configurableSelections.length, "selection")}
                 </span>
               </summary>
               {/* Same reason as the details panel: a collapsed list is still
@@ -1529,7 +1608,7 @@ function RosterSelectionItem({
                   only while open keeps a closed squad off the render path. */}
               {childrenOpen && (
                 <ul>
-                  {selectionModel.selections.map((child) => (
+                  {configurableSelections.map((child) => (
                     <RosterSelectionItem
                       key={child.occurrence.id}
                       session={session}
@@ -1669,25 +1748,15 @@ type SelectionProfileDetail =
   | { readonly origin: "Direct"; readonly value: DirectProfile }
   | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink };
 
-function RosterSelectionDetails({
+function RosterSelectionDatasheet({
   session,
   choice,
   selection,
-  onRename,
-  onSetAmount,
   displayNameIncomplete,
 }: {
   readonly session: LocalRosterSession;
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly selection: RosterSelection;
-  readonly onRename: (
-    id: SelectionOccurrenceId,
-    name: string | undefined,
-  ) => void;
-  readonly onSetAmount: (
-    id: SelectionOccurrenceId,
-    amount: number | undefined,
-  ) => void;
   readonly displayNameIncomplete: boolean;
 }) {
   // The datasheet is the reason a player opens a unit, so it is no longer behind
@@ -1702,7 +1771,6 @@ function RosterSelectionDetails({
   // repeated renders within one snapshot but *not* an edit, since an edit makes
   // a new session. Measured cost of many open datasheets per edit is recorded in
   // the checkpoint entry.
-  const [editing, setEditing] = useState(false);
   const characteristics = useMemo(
     () => inspectLocalRosterSelectionCharacteristics(session, selection.id),
     [session, selection.id],
@@ -1804,67 +1872,82 @@ function RosterSelectionDetails({
           </ul>
         </section>
       )}
-
-      {/* Renaming an occurrence, setting a non-model amount, and the definition
-          provenance rows are build-time work, not reading material — so they
-          stay behind a disclosure while the datasheet no longer does. It is
-          named for the editing it offers rather than "Selection details",
-          because non-model `Amount` is reachable *only* here and an unnamed
-          panel would hide it. Model amounts keep their promoted editor on the
-          card body. Open state is controlled rather than native: jsdom does not
-          implement `<details>` toggling, so a lazily rendered panel would be
-          permanently shut under test while working in a browser. */}
-      <details className="selection-edit" open={editing}>
-        <summary
-          onClick={(event) => {
-            event.preventDefault();
-            setEditing((current) => !current);
-          }}
-        >
-          <span>Edit selection</span>
-          <small>Name, amount, and source</small>
-        </summary>
-        {editing && (
-          <>
-            <dl className="selection-definition-details">
-              <Detail
-                label="Definition"
-                value={
-                  choice.kind === "selectionEntry"
-                    ? (choice.type ?? "Selection entry")
-                    : "Selection group"
-                }
-              />
-              <Detail
-                label="Source"
-                value={choice.definition.source.filename}
-              />
-              <Detail
-                label="Hidden"
-                value={
-                  choice.hidden === undefined
-                    ? "Not specified"
-                    : String(choice.hidden)
-                }
-              />
-            </dl>
-            <SelectionNameEditor
-              selection={selection}
-              definitionName={choice.name}
-              onRename={onRename}
-            />
-            {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
-              <SelectionAmountEditor
-                selection={selection}
-                defaultAmount={choice.defaultAmount}
-                step={choice.step}
-                onSetAmount={onSetAmount}
-              />
-            )}
-          </>
-        )}
-      </details>
     </div>
+  );
+}
+
+function RosterSelectionEdit({
+  choice,
+  selection,
+  onRename,
+  onSetAmount,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly selection: RosterSelection;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  return (
+    // Renaming an occurrence, setting a non-model amount, and the definition
+    // provenance rows are build-time work, not reading material. Open state is
+    // controlled because jsdom does not implement native `<details>` toggling.
+    <details className="selection-edit" open={editing}>
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          setEditing((current) => !current);
+        }}
+      >
+        <span>Edit selection</span>
+        <small>Name, amount, and source</small>
+      </summary>
+      {editing && (
+        <>
+          <dl className="selection-definition-details">
+            <Detail
+              label="Definition"
+              value={
+                choice.kind === "selectionEntry"
+                  ? (choice.type ?? "Selection entry")
+                  : "Selection group"
+              }
+            />
+            <Detail
+              label="Source"
+              value={choice.definition.source.filename}
+            />
+            <Detail
+              label="Hidden"
+              value={
+                choice.hidden === undefined
+                  ? "Not specified"
+                  : String(choice.hidden)
+              }
+            />
+          </dl>
+          <SelectionNameEditor
+            selection={selection}
+            definitionName={choice.name}
+            onRename={onRename}
+          />
+          {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
+            <SelectionAmountEditor
+              selection={selection}
+              defaultAmount={choice.defaultAmount}
+              step={choice.step}
+              onSetAmount={onSetAmount}
+            />
+          )}
+        </>
+      )}
+    </details>
   );
 }
 

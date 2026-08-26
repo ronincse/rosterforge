@@ -25,6 +25,17 @@
       </categoryLinks>
       <selectionEntries>
         <selectionEntry id="required-model" name="Required Model" type="model">
+          <profiles>
+            <profile id="required-model-profile" name="Required Model profile"
+              typeId="profile-type-unit" typeName="Unit">
+              <characteristics>
+                <characteristic name="Move"
+                  typeId="characteristic-move">6</characteristic>
+                <characteristic name="Save"
+                  typeId="characteristic-save">3+</characteristic>
+              </characteristics>
+            </profile>
+          </profiles>
           <selectionEntries>
             <selectionEntry id="required-weapon" name="Required Weapon"
               type="upgrade">

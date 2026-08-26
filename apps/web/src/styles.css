@@ -1838,6 +1838,42 @@ h1 {
   margin-top: 10px;
 }
 
+.selection-models {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.selection-models-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selection-models-heading h4 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.selection-models-heading span {
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.selection-models > ul {
+  display: grid;
+  gap: 7px;
+}
+
+.selection-models .roster-selection-item {
+  border-left-width: 2px;
+}
+
 /* Reuses the old `.selection-details` summary treatment verbatim: this is the
    same affordance in the same place, holding editing rather than everything. */
 .selection-edit {

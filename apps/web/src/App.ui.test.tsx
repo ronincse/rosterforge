@@ -1355,19 +1355,60 @@ describe("App local catalogue flow", () => {
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
+    // Direct models are reading material now. They render as soon as the unit
+    // card is open, while both their weapon subtrees and the unit's remaining
+    // upgrade stay lazy.
+    const initializedModels = within(selectedRoster).getByRole("region", {
+      name: "Models",
+    });
+    expect(
+      within(initializedModels).getAllByText("Required Model profile"),
+    ).toHaveLength(2);
+    expect(
+      within(initializedModels).getAllByLabelText("Models in this squad"),
+    ).toHaveLength(2);
+    expect(within(initializedModels).queryByText("Required Weapon")).toBeNull();
+    expect(within(selectedRoster).queryByText("Default Option")).toBeNull();
     const initializedChildren = within(selectedRoster).getByRole("group", {
-      name: "Models, wargear, Warlord and options 3 selections",
+      name: "Wargear, Warlord and options for Initialization Unit; 1 selection",
     });
     expect(initializedChildren.hasAttribute("open")).toBe(false);
     fireEvent.click(
       within(initializedChildren).getByText(
-        "Configure models, wargear & options",
+        "Configure wargear, Warlord & options",
       ),
     );
     expect(initializedChildren.hasAttribute("open")).toBe(true);
+    expect(within(initializedChildren).getByText("Default Option")).toBeTruthy();
     expect(
-      within(initializedChildren).getAllByLabelText("Models in this squad"),
-    ).toHaveLength(2);
+      within(initializedChildren).queryByText("Required Model profile"),
+    ).toBeNull();
+
+    const firstModel = rosterSelection("selection-ui-bound-2");
+    expect(firstModel).toBeTruthy();
+    const firstModelChildren = within(firstModel as HTMLElement).getByRole(
+      "group",
+      {
+        name: "Models, wargear, Warlord and options for Required Model; 1 selection",
+      },
+    );
+    expect(firstModelChildren.hasAttribute("open")).toBe(false);
+    fireEvent.click(
+      within(firstModelChildren).getByText(
+        "Configure models, wargear & options",
+      ),
+    );
+    expect(rosterSelection("selection-ui-bound-3")).toBeTruthy();
+
+    const unitToggle = within(selectedRoster).getByRole("button", {
+      name: "Initialization Unit",
+    });
+    fireEvent.click(unitToggle);
+    expect(unitToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      within(selectedRoster).queryByRole("region", { name: "Models" }),
+    ).toBeNull();
+    fireEvent.click(unitToggle);
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1468,8 +1509,22 @@ describe("App local catalogue flow", () => {
 
     await waitFor(() => {
       expect(rosterSelection("selection-ui-bound-7")).toBeTruthy();
-      expect(rosterSelection("selection-ui-bound-8")).toBeTruthy();
     });
+    const restoredModel = rosterSelection("selection-ui-bound-7");
+    expect(restoredModel).toBeTruthy();
+    const restoredModelChildren = within(restoredModel as HTMLElement).getByRole(
+      "group",
+      {
+        name: "Models, wargear, Warlord and options for Required Model; 1 selection",
+      },
+    );
+    expect(restoredModelChildren.hasAttribute("open")).toBe(false);
+    fireEvent.click(
+      within(restoredModelChildren).getByText(
+        "Configure models, wargear & options",
+      ),
+    );
+    expect(rosterSelection("selection-ui-bound-8")).toBeTruthy();
     expect(addRequiredModel).toHaveProperty("disabled", true);
     expect(
       screen.getByText("2 selected; requirement met"),
