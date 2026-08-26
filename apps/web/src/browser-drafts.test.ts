@@ -317,6 +317,32 @@ describe("local roster draft store", () => {
       ],
     });
   });
+
+  it("does not report a save until the IndexedDB transaction commits", async () => {
+    // The durability guarantee behind the v1 clause "save, reopen, and revise".
+    // A request succeeding is not a commit. Resolving on `onsuccess` would let
+    // the controller set `persistedRoster`, clear the unsaved-changes
+    // indicator, drop its beforeunload guard, and refresh the shelf while the
+    // write could still abort — the app would claim saved before it was. This
+    // pins the ordering those signals depend on.
+    // Every request succeeds on a microtask; every transaction commits only on
+    // a macrotask. Draining the microtask queue therefore completes all of the
+    // writes' requests while no transaction has committed. A store that
+    // resolved on `onsuccess` would have settled by then.
+    const store = createIndexedDbLocalRosterDraftStore(deferredCommitDb());
+    let settled = false;
+    const saving = store
+      .save(draft("commit-order", "2026-07-23T12:00:00.000Z"))
+      .then((result) => {
+        settled = true;
+        return result;
+      });
+
+    for (let turn = 0; turn < 100; turn += 1) await Promise.resolve();
+    expect(settled).toBe(false);
+
+    expect((await saving).ok).toBe(true);
+  });
 });
 
 function draft(id: string, updatedAt: string): LocalRosterDraft {
@@ -483,4 +509,64 @@ function failingBackend(
     put: operation === "save" ? fail : async () => undefined,
     delete: operation === "delete" ? fail : async () => undefined,
   };
+}
+
+/**
+ * An IndexedDB stand-in whose requests succeed on a microtask but whose
+ * transactions commit only on a macrotask.
+ *
+ * That gap is the whole point: draining the microtask queue finishes every
+ * request while nothing has committed, so a store that resolved on request
+ * success is distinguishable from one that waits for the commit.
+ *
+ * Only the surface `withObjectStore` touches is implemented.
+ */
+function deferredCommitDb(): IDBFactory {
+  const succeed = <Handler extends { onsuccess: (() => void) | null }>(
+    handler: Handler,
+  ): Handler => {
+    queueMicrotask(() => handler.onsuccess?.());
+    return handler;
+  };
+  const objectStore = () => {
+    const request = {
+      result: undefined,
+      error: null,
+      onsuccess: null as (() => void) | null,
+      onerror: null as (() => void) | null,
+    };
+    return () => succeed(request);
+  };
+  return {
+    open: () =>
+      succeed({
+        result: {
+          objectStoreNames: { contains: () => true },
+          createObjectStore: () => undefined,
+          close: () => undefined,
+          onversionchange: null,
+          transaction: () => {
+            const transaction = {
+              error: null,
+              oncomplete: null as (() => void) | null,
+              onerror: null as (() => void) | null,
+              onabort: null as (() => void) | null,
+              objectStore: () => ({
+                put: objectStore(),
+                get: objectStore(),
+                getAll: objectStore(),
+                delete: objectStore(),
+              }),
+            };
+            setTimeout(() => transaction.oncomplete?.(), 0);
+            return transaction;
+          },
+        },
+        error: null,
+        onupgradeneeded: null as (() => void) | null,
+        onsuccess: null as (() => void) | null,
+        onerror: null as (() => void) | null,
+        onblocked: null as (() => void) | null,
+      }),
+  } as unknown as IDBFactory;
 }
