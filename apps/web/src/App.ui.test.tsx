@@ -34,7 +34,10 @@ import {
 
 import type { BrowserFileSource } from "./browser-files.js";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const fixedOptions = {
   import: {
@@ -757,7 +760,9 @@ describe("App local catalogue flow", () => {
       name: "Roster workspace navigation",
     });
     expect(within(workspaceNavigation).getByText("Roster")).toBeTruthy();
-    expect(within(workspaceNavigation).getByText("Add units")).toBeTruthy();
+    expect(
+      within(workspaceNavigation).getByText("Hide catalogue"),
+    ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("Checks")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
@@ -765,10 +770,12 @@ describe("App local catalogue flow", () => {
       }),
     ).toHaveProperty("hash", "#selected-roster-heading");
     expect(
-      within(workspaceNavigation).getByRole("link", {
-        name: "Add units, 1 available choice",
-      }),
-    ).toHaveProperty("hash", "#root-choices-heading");
+      within(workspaceNavigation)
+        .getByRole("button", {
+          name: "Hide catalogue, 1 available choice",
+        })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
@@ -847,7 +854,25 @@ describe("App local catalogue flow", () => {
     expect(undo).toHaveProperty("disabled", true);
     expect(redo).toHaveProperty("disabled", true);
 
-    const editor = screen.getByRole("region", { name: "Add units" });
+    let editor = screen.getByRole("region", { name: "Add units" });
+    const catalogueToggle = within(workspaceNavigation).getByRole("button", {
+      name: "Hide catalogue, 1 available choice",
+    });
+    fireEvent.click(catalogueToggle);
+    expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(catalogueToggle.hasAttribute("aria-controls")).toBe(false);
+    expect(
+      screen.queryByRole("region", { name: "Add units" }),
+    ).toBeNull();
+    expect(selectedRoster).toBeTruthy();
+    expect(
+      screen
+        .getByRole("region", { name: "Roster builder" })
+        .getAttribute("data-catalogue-open"),
+    ).toBe("false");
+    fireEvent.click(catalogueToggle);
+    expect(catalogueToggle.getAttribute("aria-expanded")).toBe("true");
+    editor = screen.getByRole("region", { name: "Add units" });
     expect(within(editor).getByText("Uncategorized")).toBeTruthy();
     const rootFilter = within(editor).getByLabelText(
       "Find a unit or option",
@@ -862,13 +887,24 @@ describe("App local catalogue flow", () => {
     ).toBeNull();
     fireEvent.change(rootFilter, { target: { value: "infantry" } });
     expect(within(editor).getByText("1 matching choice")).toBeTruthy();
-    const addInfantry = screen.getByRole("button", {
+    expect(screen.getByRole("button", {
       name: "Add Infantry Squad",
-    });
-    fireEvent.click(addInfantry);
+    })).toBeTruthy();
+    fireEvent.click(catalogueToggle);
+    fireEvent.click(catalogueToggle);
+    editor = screen.getByRole("region", { name: "Add units" });
+    expect(
+      within(editor).getByLabelText("Find a unit or option"),
+    ).toHaveProperty("value", "infantry");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Infantry Squad" }),
+    );
     await waitFor(() => {
       expect(rosterSelection("selection-ui-1")).toBeTruthy();
     });
+    // Adding is deliberately not a hidden mode switch. Newly-added-unit focus
+    // remains a later checkpoint, so the reader's explicit placement wins.
+    expect(screen.getByRole("region", { name: "Add units" })).toBeTruthy();
     expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
@@ -1015,7 +1051,9 @@ describe("App local catalogue flow", () => {
       within(selectedRoster).getByRole("button", { name: "Use 1" }),
     );
 
-    fireEvent.click(addInfantry);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Infantry Squad" }),
+    );
     expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
@@ -1158,6 +1196,57 @@ describe("App local catalogue flow", () => {
         name: "Roster workspace navigation",
       }),
     ).toBeNull();
+  });
+
+  it("starts a phone-width roster with the catalogue out of the way", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({
+        matches: query === "(max-width: 850px)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    );
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "minimal.gst", bytes: gameSystemBytes },
+        { filename: "minimal.cat", bytes: catalogueBytes },
+      ],
+      fixedOptions,
+    );
+    const prepare = vi.fn<typeof prepareLocalCatalogueLibrary>(
+      async () => prepared,
+    );
+    render(<App prepareLibrary={prepare} />);
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", catalogueBytes),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+
+    const catalogueToggle = await screen.findByRole("button", {
+      name: "Show catalogue, 1 available choice",
+    });
+    expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("region", { name: "Add units" })).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Selected roster" }),
+    ).toBeTruthy();
+
+    fireEvent.click(catalogueToggle);
+    expect(catalogueToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("region", { name: "Add units" })).toBeTruthy();
   });
 
   it("presents selection groups as replaceable concrete choices", async () => {

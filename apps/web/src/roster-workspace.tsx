@@ -108,6 +108,9 @@ export function RosterOverview({
 }) {
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
+  const [catalogueOpen, setCatalogueOpen] = useState(
+    catalogueInitiallyOpen,
+  );
   const [printBlocked, setPrintBlocked] = useState(false);
   // One memoized projection keeps every reader-facing rule on the same
   // immutable session snapshot. Layout components consume this model; the raw
@@ -219,17 +222,20 @@ export function RosterOverview({
           <strong>{topLevelSelectionCount}</strong>
           <small>top-level selections</small>
         </a>
-        <a
-          href="#root-choices-heading"
-          aria-label={`Add units, ${formatCount(
+        <button
+          type="button"
+          aria-controls={catalogueOpen ? "root-choices-pane" : undefined}
+          aria-expanded={catalogueOpen}
+          aria-label={`${catalogueOpen ? "Hide" : "Show"} catalogue, ${formatCount(
             filteredRootChoiceCount,
             "available choice",
           )}`}
+          onClick={() => setCatalogueOpen((open) => !open)}
         >
-          <span>Add units</span>
+          <span>{catalogueOpen ? "Hide catalogue" : "Show catalogue"}</span>
           <strong>{filteredRootChoiceCount}</strong>
           <small>available choices</small>
-        </a>
+        </button>
         <a
           href="#roster-checks-heading"
           aria-label={`Checks, ${formatCount(
@@ -243,7 +249,11 @@ export function RosterOverview({
         </a>
       </nav>
 
-      <section className="roster-builder-grid" aria-label="Roster builder">
+      <section
+        className="roster-builder-grid"
+        aria-label="Roster builder"
+        data-catalogue-open={catalogueOpen}
+      >
         <section
           className="selected-roster-pane"
           aria-labelledby="selected-roster-heading"
@@ -303,114 +313,124 @@ export function RosterOverview({
           )}
         </section>
 
-        <section
-          className="selection-editor"
-          aria-labelledby="root-choices-heading"
-        >
-          <div className="builder-pane-heading">
-            <div>
-              <p className="eyebrow">Catalogue browser</p>
-              <h3 id="root-choices-heading">Add units</h3>
+        {catalogueOpen && (
+          <section
+            id="root-choices-pane"
+            className="selection-editor"
+            aria-labelledby="root-choices-heading"
+          >
+            <div className="builder-pane-heading">
+              <div>
+                <p className="eyebrow">Catalogue browser</p>
+                <h3 id="root-choices-heading">Add units</h3>
+              </div>
+              <span>
+                {formatCount(filteredRootChoiceCount, "matching choice")}
+              </span>
             </div>
-            <span>
-              {formatCount(filteredRootChoiceCount, "matching choice")}
-            </span>
-          </div>
 
-          {rootChoiceGroups.length > 0 && (
-            <div className="root-choice-filter">
-              <label htmlFor={rootFilterId}>Find a unit or option</label>
-              <input
-                id={rootFilterId}
-                type="search"
-                value={rootFilter}
-                placeholder="Filter available roots"
-                onChange={(event) => setRootFilter(event.currentTarget.value)}
-              />
-            </div>
-          )}
-
-          {rootChoiceGroups.length === 0 ? (
-            <p className="no-root-choices">
-              This catalogue context has no resolved visible root selections.
-            </p>
-          ) : filteredRootChoiceGroups.length === 0 ? (
-            <p className="no-root-choices">
-              No available roots match this filter.
-            </p>
-          ) : (
-            <div className="root-choice-categories">
-              {filteredRootChoiceGroups.map((group, index) => (
-                <details
-                  className="root-choice-category"
-                  key={group.key}
-                  open={
-                    normalizedRootFilter !== "" ||
-                    index === 0 ||
-                    group.section === "configuration"
+            {rootChoiceGroups.length > 0 && (
+              <div className="root-choice-filter">
+                <label htmlFor={rootFilterId}>Find a unit or option</label>
+                <input
+                  id={rootFilterId}
+                  type="search"
+                  value={rootFilter}
+                  placeholder="Filter available roots"
+                  onChange={(event) =>
+                    setRootFilter(event.currentTarget.value)
                   }
-                >
-                  <summary>
-                    <strong>{group.name}</strong>
-                    <span>{formatCount(group.choices.length, "choice")}</span>
-                  </summary>
-                  <div className="root-choice-list">
-                    {group.choices.map((state) => {
-                      const choice = state.choice;
-                      const status = rootChoiceStatus(state);
-                      const finiteMaximum =
-                        state.maximum !== undefined &&
-                        Number.isFinite(state.maximum)
-                          ? state.maximum
-                          : undefined;
-                      const maximumReached =
-                        finiteMaximum !== undefined &&
-                        rosterSelectionsAmount(state.selected) >= finiteMaximum;
-                      return (
-                        <div
-                          className="root-choice"
-                          key={rootChoiceKey(choice)}
-                          data-completeness={state.completeness}
-                        >
-                          <span>
-                            <strong>{rootChoiceLabel(choice)}</strong>
-                            <small>
-                              {choice.materialized.kind === "selectionEntry"
-                                ? "Selection entry"
-                                : "Selection group"}
-                              {choice.materialized.hidden === true
-                                ? " | Hidden"
-                                : ""}
-                            </small>
-                            {status !== undefined && (
-                              <small className="root-choice-status">
-                                {status}
-                              </small>
-                            )}
-                          </span>
-                          <button
-                            type="button"
-                            disabled={maximumReached}
-                            onClick={() => onAddRootSelection(choice)}
+                />
+              </div>
+            )}
+
+            {rootChoiceGroups.length === 0 ? (
+              <p className="no-root-choices">
+                This catalogue context has no resolved visible root selections.
+              </p>
+            ) : filteredRootChoiceGroups.length === 0 ? (
+              <p className="no-root-choices">
+                No available roots match this filter.
+              </p>
+            ) : (
+              <div className="root-choice-categories">
+                {filteredRootChoiceGroups.map((group, index) => (
+                  <details
+                    className="root-choice-category"
+                    key={group.key}
+                    open={
+                      normalizedRootFilter !== "" ||
+                      index === 0 ||
+                      group.section === "configuration"
+                    }
+                  >
+                    <summary>
+                      <strong>{group.name}</strong>
+                      <span>{formatCount(group.choices.length, "choice")}</span>
+                    </summary>
+                    <div className="root-choice-list">
+                      {group.choices.map((state) => {
+                        const choice = state.choice;
+                        const status = rootChoiceStatus(state);
+                        const finiteMaximum =
+                          state.maximum !== undefined &&
+                          Number.isFinite(state.maximum)
+                            ? state.maximum
+                            : undefined;
+                        const maximumReached =
+                          finiteMaximum !== undefined &&
+                          rosterSelectionsAmount(state.selected) >=
+                            finiteMaximum;
+                        return (
+                          <div
+                            className="root-choice"
+                            key={rootChoiceKey(choice)}
+                            data-completeness={state.completeness}
                           >
-                            {maximumReached
-                              ? `${rootChoiceLabel(choice)} maximum reached`
-                              : `Add ${rootChoiceLabel(choice)}`}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </details>
-              ))}
-            </div>
-          )}
-          {!rootChoiceInspection.ok && (
-            <DiagnosticList diagnostics={rootChoiceInspection.diagnostics} />
-          )}
-          <DiagnosticList diagnostics={diagnostics} />
-        </section>
+                            <span>
+                              <strong>{rootChoiceLabel(choice)}</strong>
+                              <small>
+                                {choice.materialized.kind === "selectionEntry"
+                                  ? "Selection entry"
+                                  : "Selection group"}
+                                {choice.materialized.hidden === true
+                                  ? " | Hidden"
+                                  : ""}
+                              </small>
+                              {status !== undefined && (
+                                <small className="root-choice-status">
+                                  {status}
+                                </small>
+                              )}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={maximumReached}
+                              onClick={() => onAddRootSelection(choice)}
+                            >
+                              {maximumReached
+                                ? `${rootChoiceLabel(choice)} maximum reached`
+                                : `Add ${rootChoiceLabel(choice)}`}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
+            {!rootChoiceInspection.ok && (
+              <DiagnosticList diagnostics={rootChoiceInspection.diagnostics} />
+            )}
+          </section>
+        )}
       </section>
+
+      {/* Command diagnostics also come from controls inside the roster pane.
+          Keep them outside the optional catalogue so hiding the browser never
+          hides an add, remove, rename, or amount failure. */}
+      <DiagnosticList diagnostics={diagnostics} />
 
       <section
         className="roster-checks"
@@ -428,6 +448,20 @@ export function RosterOverview({
         Change roster setup
       </button>
     </div>
+  );
+}
+
+/**
+ * Starts narrow workspaces in the roster-first reading view while keeping the
+ * catalogue present on desktop. This is intentionally an initial placement
+ * decision, not a live media-query subscription: resizing must not overwrite a
+ * reader's explicit catalogue choice.
+ */
+function catalogueInitiallyOpen(): boolean {
+  return (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function" ||
+    !window.matchMedia("(max-width: 850px)").matches
   );
 }
 
