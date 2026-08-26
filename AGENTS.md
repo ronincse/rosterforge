@@ -89,18 +89,37 @@ model may become the active lead through a formal handoff recorded in
   substantive checkpoint uses no delegate, briefly record why the exception was
   appropriate in its completion report; trivial or mechanical work needs no
   explanation.
-- Prefer the active lead's **own** native subagent mechanism for ordinary
-  separable investigation, review, research, test analysis, risk discovery,
-  plan review, or bounded implementation that does not need another model's
-  particular strengths or tools, and only where that mechanism's capabilities
-  have actually been verified for the task. Route independent review, hard
-  debugging, and second opinions to the capable non-lead frontier model: Claude
-  when Codex leads, the Codex CLI when Claude leads and Codex quota is available.
-  Use Antigravity for captured Reference Behavior QA evidence analysis, Grok for
-  bounded overflow implementation, Copilot for GitHub and Actions work, and a
-  verified browser-capable native agent for interactive Reference QA. Affinities
-  are guidance rather than permission to fan out; `docs/agent-workflow.md` holds
-  the full table.
+- At the beginning of a substantive checkpoint, briefly decide what stays with
+  the lead, whether a native lane is useful, whether an external lane is useful,
+  and which available model or tool best fits the bounded work. Native children
+  are especially useful for fast, tightly implementation-adjacent investigation,
+  test analysis, bounded browser QA, and work that benefits from the lead's
+  current context or same-model continuity. External specialists are especially
+  useful for independent review, architecture or semantic analysis, difficult
+  debugging, long read-only investigations, different reasoning, specialist
+  tools, and suitable work that can use another provider's allowance.
+- Preserving lead capacity by moving real, suitable work to another provider is
+  a legitimate delegation benefit. Weigh it with independent reasoning, tool
+  fit, parallel progress, context preservation, review quality, and coordination
+  cost. If native and external lanes are comparably suitable, the external lane
+  may be preferred when it both preserves lead capacity and adds useful model
+  diversity. Do not call a model merely to burn quota or duplicate work whose
+  likely information value is lower than its review and integration cost.
+- Across a sequence of substantive checkpoints, deliberately diversify useful
+  bounded work. If the previous two substantive checkpoints used only native
+  delegation, explicitly look for a suitable external lane while planning the
+  next one. Use it when one genuinely exists; otherwise briefly record why
+  native-only delegation remained appropriate. This is a streak-breaking
+  heuristic, not a numeric quota.
+- Route independent review, hard debugging, and second opinions to the capable
+  non-lead frontier model: Claude when Codex leads, the Codex CLI when Claude
+  leads and Codex quota is available. Use Antigravity for captured Reference
+  Behavior QA evidence analysis, large-context review, and alternate reasoning;
+  Grok for bounded overflow implementation, non-overlapping writer worktrees,
+  alternatives, and additional review; Copilot for GitHub, Actions, CI, issues,
+  and hosting work; and a verified browser-capable native agent for interactive
+  Reference QA. Affinities are guidance rather than permission to fan out;
+  `docs/agent-workflow.md` holds the full table.
 - A delegated worker owns only the task brief it receives. It must not edit the
   primary checkout, expand scope, update `agent-handoff.md`, push, open a pull
   request, deploy, or perform other external writes. It may commit only when the

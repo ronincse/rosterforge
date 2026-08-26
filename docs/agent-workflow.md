@@ -11,14 +11,13 @@ Codex is the preferred default lead and primary implementation agent. A capable
 model can become the active lead only through a formal handoff recorded in
 `agent-handoff.md`; receiving a delegated task never makes a worker the lead.
 
-Whoever leads, that lead's **own** native subagent mechanism is the preferred
-first delegation lane for ordinary separable work that does not require a
-particular external model or tool — Codex children under a Codex lead, Claude
-children under a Claude lead, and only where that mechanism's capabilities have
-been verified for the task at hand. The lead remains the primary implementer,
-while bounded investigation, review, test analysis, risk discovery, plan review,
-or non-overlapping implementation proceeds early enough to improve the lead's
-work rather than merely inspect a finished decision.
+The lead remains the primary implementer. Native children and external
+specialists are complementary delegation lanes, not a fixed first and second
+choice. Bounded investigation, review, test analysis, risk discovery, plan
+review, or non-overlapping implementation should begin early enough to improve
+the lead's work rather than merely inspect a finished decision. The lane choice
+depends on the work, verified capabilities, permissions, expected information
+value, and coordination cost.
 
 Everything below is written for the active lead rather than for Codex
 specifically. Where a rule genuinely depends on which model leads, it says so.
@@ -63,6 +62,25 @@ A genuinely atomic or mechanical task may stay entirely with the lead. When a
 substantive checkpoint uses no delegate, its completion report briefly explains
 why the exception was appropriate; trivial and mechanical work needs no such
 note.
+
+At the beginning of a substantive checkpoint, make a brief intentional choice:
+what stays with the lead, whether a native lane is useful, whether an external
+lane is useful, and which available model or tool best fits the bounded work.
+This is planning, not a written ceremony. The lead's ability to perform the work
+is not by itself a reason to keep every useful lane in-process.
+
+Cross-provider capacity balancing is a legitimate concrete benefit. Assigning a
+real, suitable task to another provider can preserve the active lead's allowance
+while also adding independent reasoning or model diversity. Weigh that benefit
+alongside specialist tools, parallel progress, context preservation, review
+quality, and the cost of briefing, isolation, review, and integration. Never call
+an external model merely to burn quota.
+
+Do not satisfy the budget indefinitely with only native children. If the prior
+two substantive checkpoints used only native delegation, explicitly look for a
+useful external lane during planning for the next one. Use it when a genuinely
+suitable task exists; otherwise briefly record why native-only delegation
+remained appropriate. This is a streak breaker, not an external-call quota.
 
 ## Formal Lead Transfer
 
@@ -145,16 +163,20 @@ able to tell reconstruction from fact.
 | Agent | Best use | Default authority |
 | --- | --- | --- |
 | Codex | Lead development, normal implementation, direct browser QA, integration, final review, validation, handoff, and publishing | Active lead and primary writer |
-| Native subagent of the active lead (Codex's or Claude's) | Cleanly separable investigation, review, research, tests, parallel implementation, or bounded browser QA once the current child tool surface is verified | Bounded child of the lead; shares the lead's filesystem unless given a worktree, and is never proven read-only while it holds a shell. A native Claude child does not inherit repository instructions |
+| Native subagent of the active lead (Codex's or Claude's) | Fast implementation-adjacent investigation, quick test or code-path analysis, bounded browser QA, and tightly coupled parallel work that benefits from the lead's context or same-model continuity | Bounded child of the lead; shares the lead's filesystem unless given a worktree, and is never proven read-only while it holds a shell. A native Claude child does not inherit repository instructions |
 | Codex CLI (`codex exec`), when the lead is not Codex | Independent implementation-plan review, difficult debugging, code review, bounded repository analysis, and a second implementation opinion where model diversity helps | Read-only specialist under `--sandbox read-only`; any write needs a dedicated worktree and an explicit brief |
 | Claude Code | Lead development when it holds the lead; otherwise deep repository and data-format analysis, architecture review, difficult semantic debugging, edge cases, and substantial code review | Active lead and primary writer after a formal handoff; a read-only specialist otherwise, unless given a dedicated writer worktree |
-| Antigravity (`agy`) | Independent analysis of captured Reference Behavior QA steps, screenshots, IDs, observations, and corpus evidence, plus large-context analysis, debugging hypotheses, plan review, and second opinions; this replaces the deprecated Gemini CLI | Isolated evidence analyst; never writes RosterForge during reference QA; may become lead only by formal handoff |
-| Grok Build | Well-scoped implementation, non-overlapping parallel work, overflow capacity, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
-| GitHub Copilot CLI | GitHub-native work involving repository state, Actions, issues, or pull requests | Read-only/local repository access by default; GitHub writes require explicit task authority |
+| Antigravity (`agy`) | Independent analysis of captured Reference Behavior QA steps, screenshots, IDs, observations, and corpus evidence, plus large-context review, debugging hypotheses, plan review, and alternate reasoning; this replaces the deprecated Gemini CLI | Isolated evidence analyst; never writes RosterForge during reference QA; may become lead only by formal handoff |
+| Grok Build | Well-scoped overflow implementation, non-overlapping parallel work, alternate implementations, and additional review | Dedicated worktree writer when explicitly authorized; otherwise plan-mode reviewer |
+| GitHub Copilot CLI | GitHub-native work involving repository state, Actions, CI, issues, pull requests, or hosting | Read-only/local repository access by default; GitHub writes require explicit task authority |
 
-These are affinities, not quotas. Use a specialist when model diversity or a
-particular tool improves coverage, speed, independence, or access beyond the
-ordinary native lane.
+These are affinities, not mandatory routing. Native children are especially
+appropriate when low overhead, current-context continuity, or tight coupling to
+the lead's implementation matters. External specialists are especially
+appropriate for independent review, semantic or architectural analysis,
+difficult debugging, long bounded read-only investigations, different model
+reasoning, specialist tools, or useful work that can consume a separate
+provider's allowance.
 
 The default decision path is written in terms of the **active lead**, whoever
 that currently is, rather than in terms of Codex:
@@ -162,7 +184,8 @@ that currently is, rather than in terms of Codex:
 | Work | Preferred starting lane |
 | --- | --- |
 | Ordinary development | The active lead |
-| Normal cleanly separable work | The active lead's own native subagent mechanism, when it is available, suitable, and its capabilities have been verified |
+| Fast, implementation-adjacent, or tightly coupled separable work | The active lead's native subagent mechanism when its capabilities have been verified |
+| Independent, long read-only, specialist-tool, or separate-provider work | The external specialist whose strengths and permissions fit the bounded task |
 | Independent frontier-model review, hard debugging, or a second opinion | The capable non-lead frontier model |
 | Deep repository, data-format, or semantic discrepancy analysis | The capable non-lead frontier model |
 | Bounded New Recruit behavioral/reference QA execution | A verified browser-capable native subagent of the active lead; otherwise the active lead directly |
@@ -173,18 +196,20 @@ that currently is, rather than in terms of Codex:
 "The capable non-lead frontier model" resolves by who currently leads:
 
 - **When Codex leads:** Codex is the primary implementer, native Codex subagents
-  are the preferred first parallel lane, and **Claude** is the independent
-  reviewer and semantic specialist.
+  are strong for tightly coupled implementation-adjacent work, and **Claude** is
+  the independent architecture/code reviewer, semantic and data-format analyst,
+  difficult debugger, edge-case analyst, and substantial second opinion.
 - **When Claude leads:** Claude is the primary implementer, native Claude
-  subagents are the preferred first parallel lane where their capabilities have
-  actually been verified for the task, and the **Codex CLI** is the independent
-  reviewer, debugger, and second opinion — subject to Codex quota being
-  available, and never as a way around an exhausted quota.
+  subagents are strong for tightly coupled work where their capabilities have
+  actually been verified, and the **Codex CLI** is the independent reviewer,
+  debugger, and second opinion — subject to Codex quota being available, and
+  never as a way around an exhausted quota.
 
 The same rule generalises if another model takes the lead: the lead implements,
-its own native subagents are the first parallel lane, and the strongest
-available non-lead model reviews. Model diversity is the point of the review
-lane; a lead reviewing only its own reasoning is what this exists to avoid.
+while native and external lanes are chosen intentionally for their actual
+strengths. The strongest available non-lead model handles work where model
+diversity is the point; a lead reviewing only its own reasoning is what that
+review lane exists to avoid.
 
 Start elsewhere when the actual task, available tools, permissions, or model
 strengths justify it. Apply the checkpoint delegation budget above rather than
@@ -208,6 +233,8 @@ Good reasons to delegate include:
   dedicated worktree;
 - a bounded overflow task preserves lead capacity while keeping review and
   integration costs low;
+- a suitable bounded task can use another provider's allowance, preserving lead
+  capacity while returning real independent information or progress;
 - a GitHub Actions investigation benefits from Copilot's GitHub-native tools;
 - a final review needs fresh eyes on edge cases or unsupported behavior.
 
