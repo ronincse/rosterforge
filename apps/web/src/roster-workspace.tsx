@@ -1835,7 +1835,7 @@ function RosterSelectionChoiceGroup({
                 disabled={blocksAdditionalChoices}
                 onClick={() => onChoose(parent.id, choice, group)}
               >
-                Choose {displayLabel}
+                {displayLabel}
               </button>
             ) : (
               <span
@@ -1851,8 +1851,8 @@ function RosterSelectionChoiceGroup({
                   onClick={() => onRemove(selectedOccurrence.id)}
                 >
                   {selectedChoiceAmount > 1
-                    ? `Remove one ${displayLabel} (${selectedChoiceAmount} selected)`
-                    : `Deselect ${displayLabel}`}
+                    ? `${displayLabel} (${selectedChoiceAmount} selected)`
+                    : displayLabel}
                 </button>
                 {canAddAnother && (
                   <button

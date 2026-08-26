@@ -1352,7 +1352,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Choose Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     );
 
@@ -1364,7 +1364,7 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(doctrine).getByRole("button", {
-        name: "Deselect Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     ).toHaveProperty("disabled", false);
     expect(
@@ -1397,7 +1397,7 @@ describe("App local catalogue flow", () => {
     ).toBeNull();
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Deselect Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     );
 
@@ -1415,7 +1415,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Choose Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     );
     await waitFor(() => {
@@ -1426,7 +1426,7 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Choose Defensive Doctrine",
+        name: "Defensive Doctrine",
       }),
     );
 
@@ -1439,12 +1439,12 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(doctrine).getByRole("button", {
-        name: "Deselect Defensive Doctrine",
+        name: "Defensive Doctrine",
       }),
     ).toHaveProperty("disabled", false);
     expect(
       within(doctrine).getByRole("button", {
-        name: "Choose Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     ).toBeTruthy();
   });
@@ -1500,7 +1500,7 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Choose Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     );
     await waitFor(() => {
@@ -1535,7 +1535,7 @@ describe("App local catalogue flow", () => {
     ).toBeNull();
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Remove one Mobile Doctrine (2 selected)",
+        name: "Mobile Doctrine (2 selected)",
       }),
     );
 
@@ -1609,7 +1609,7 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "Choose Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     );
 
@@ -1618,7 +1618,7 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(doctrine).getByRole("button", {
-        name: "Deselect Mobile Doctrine",
+        name: "Mobile Doctrine",
       }),
     ).toBeTruthy();
     expect(
@@ -1628,7 +1628,7 @@ describe("App local catalogue flow", () => {
     ).toBeNull();
     expect(
       within(doctrine).getByRole("button", {
-        name: "Choose Defensive Doctrine",
+        name: "Defensive Doctrine",
       }),
     ).toBeTruthy();
   });
@@ -1693,7 +1693,11 @@ describe("App local catalogue flow", () => {
       within(initializedModels).getAllByLabelText("Models in this squad"),
     ).toHaveLength(2);
     expect(within(initializedModels).queryByText("Required Weapon")).toBeNull();
-    expect(within(selectedRoster).queryByText("Default Option")).toBeNull();
+    expect(
+      within(selectedRoster).queryByText("Default Option", {
+        selector: "strong",
+      }),
+    ).toBeNull();
     const initializedChildren = within(selectedRoster).getByRole("group", {
       name: "Wargear, Warlord and options for Initialization Unit; 1 selection",
     });
@@ -1704,7 +1708,11 @@ describe("App local catalogue flow", () => {
       ),
     );
     expect(initializedChildren.hasAttribute("open")).toBe(true);
-    expect(within(initializedChildren).getByText("Default Option")).toBeTruthy();
+    expect(
+      within(initializedChildren).getByText("Default Option", {
+        selector: "strong",
+      }),
+    ).toBeTruthy();
     expect(
       within(initializedChildren).queryByText("Required Model profile"),
     ).toBeNull();
