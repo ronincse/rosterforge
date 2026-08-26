@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (stable group-choice labels; report demotion Next)
+## Current Status — 2026-08-26 (cross-provider delegation planning; report demotion Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -87,10 +87,14 @@ diagnostic codes.
 - **Agent workflow.** `AGENTS.md` distinguishes a formal lead handoff from
   bounded delegated work; Codex is the preferred default lead, not the only
   model allowed to own a checkpoint. Routing is now **lead-neutral**: the active
-  lead implements, that lead's own native subagents are the first parallel lane
-  where their capabilities are verified, and the capable non-lead frontier model
-  reviews — Claude when Codex leads, the Codex CLI when Claude leads and its
-  quota allows. Two transfer modes exist: the planned **Formal Lead Transfer**,
+  lead implements, while native and external lanes are chosen intentionally for
+  their actual strengths, permissions, information value, and coordination cost.
+  Preserving lead capacity through real work on another provider is now an
+  explicit legitimate benefit, and a two-native-checkpoint streak breaker makes
+  the next lead look for a useful external lane without manufacturing work to
+  satisfy a quota. The capable non-lead frontier model still reviews where model
+  diversity matters — Claude when Codex leads, the Codex CLI when Claude leads
+  and its quota allows. Two transfer modes exist: the planned **Formal Lead Transfer**,
   and an **Interrupted Lead Takeover** for a lead that vanishes mid-checkpoint
   without publishing one, which preserves the dirty tree as evidence and
   finishes the checkpoint already in progress.
@@ -10183,3 +10187,48 @@ Verification:
 No evaluator, validation, roster command, persistence, architecture,
 compatibility, diagnostic, corpus, or third-party data changed. Report-section
 demotion remains **Next**.
+
+## Completed Assignment — Cross-Provider Delegation Planning, 2026-08-26
+
+Baseline `14e406c6feb83213cfd718cd7fb59474b8063e0d`; resulting policy commit
+`81b2232` and this handoff commit. At the owner's request, Codex made one bounded
+workflow correction before returning to the product roadmap.
+
+`AGENTS.md` and `docs/agent-workflow.md` no longer treat the active lead's native
+children as the blanket first lane for ordinary separable work. Checkpoint
+planning now makes the native-versus-external choice explicit. Native children
+remain strongest for low-overhead, implementation-adjacent work that benefits
+from the lead's current context; external specialists remain strongest for
+independent review, semantic or architectural analysis, difficult debugging,
+long read-only work, different reasoning, specialist tools, and suitable tasks
+that can use a separate provider allowance.
+
+Cross-provider capacity balancing is now a legitimate concrete delegation
+benefit when the assigned work actually needs doing. It is weighed against
+independence, tool fit, parallel progress, context preservation, review quality,
+and coordination cost rather than used as a reason to call models merely to
+burn quota. If two consecutive substantive checkpoints used only native
+delegation, the next lead must explicitly look for a useful external lane; it
+uses one when suitable and records why not when none exists. The existing
+checkpoint budgets, lead ownership, least-privilege briefs, primary-checkout and
+worktree rules, external-write restrictions, integration responsibility, and
+Reference Behavior QA protocol are unchanged.
+
+This documentation-only checkpoint used no delegate. It was an atomic policy
+edit whose review and integration overhead would have exceeded the value of a
+delegated lane; the revised policy will be exercised on the substantive report-
+demotion checkpoint immediately after publication.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` — **510 passed, 18 skipped (528)** across 54 files; and
+- pinned corpus `E:\GitHub\wh40k-11e` at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **528 passed
+  (528)** across all 54 files. The pin was intentionally unchanged.
+
+No application code, evaluator behavior, validation composition, persistence,
+architecture boundary, compatibility claim, diagnostic, corpus data, or third-
+party data changed. No roadmap row moved: **report-section demotion remains
+Next**.
