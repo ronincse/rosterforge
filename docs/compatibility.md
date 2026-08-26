@@ -60,7 +60,9 @@
 - Recursive direct child choices from materialized selection entries and
   resolved entry links, with selection-entry groups rendered as transparent,
   ordered chooser containers over their concrete entries
-- Live group selected/required counts and atomic replacement for supported
+- Live group selected/required counts, explicit deselection of a concrete
+  member, separate add-another controls while both the aggregate group and the
+  exact member have effective capacity, and atomic replacement for supported
   max-one groups, with every concrete nested addition routed through
   roster-builder guards
 - Live direct-entry selected/required counts and disabled browser add controls

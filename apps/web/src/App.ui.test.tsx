@@ -1364,9 +1364,9 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(doctrine).getByRole("button", {
-        name: "Mobile Doctrine selected",
+        name: "Deselect Mobile Doctrine",
       }),
-    ).toHaveProperty("disabled", true);
+    ).toHaveProperty("disabled", false);
     expect(
       within(doctrine).getByText("1 selected; requirement met"),
     ).toBeTruthy();
@@ -1397,25 +1397,238 @@ describe("App local catalogue flow", () => {
     ).toBeNull();
     fireEvent.click(
       within(doctrine).getByRole("button", {
+        name: "Deselect Mobile Doctrine",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-group-2")).toBeNull();
+    });
+    doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    expect(
+      within(doctrine).getByText("0 selected; 1 still required"),
+    ).toBeTruthy();
+    expect(
+      within(playerHeader).getByText("Known violations"),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "Choose Mobile Doctrine",
+      }),
+    );
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-group-3")).toBeTruthy();
+    });
+    doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
         name: "Choose Defensive Doctrine",
       }),
     );
 
     await waitFor(() => {
-      expect(rosterSelection("selection-ui-group-3")).toBeTruthy();
+      expect(rosterSelection("selection-ui-group-4")).toBeTruthy();
     });
-    expect(rosterSelection("selection-ui-group-2")).toBeNull();
+    expect(rosterSelection("selection-ui-group-3")).toBeNull();
     doctrine = screen.getByRole("group", {
       name: "Squad Doctrine choices for Infantry Squad",
     });
     expect(
       within(doctrine).getByRole("button", {
-        name: "Defensive Doctrine selected",
+        name: "Deselect Defensive Doctrine",
       }),
-    ).toHaveProperty("disabled", true);
+    ).toHaveProperty("disabled", false);
     expect(
       within(doctrine).getByRole("button", {
         name: "Choose Mobile Doctrine",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("deselects an already selected choice when a group permits several", async () => {
+    const source = new TextDecoder().decode(catalogueBytes);
+    const multipleChoiceSource = source.replace(
+      /(id="group-squad-doctrine-max"[\s\S]*?value=")1("\s*\/>)/u,
+      (_match, prefix: string, suffix: string) => `${prefix}2${suffix}`,
+    );
+    expect(multipleChoiceSource).not.toBe(source);
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "minimal.gst", bytes: gameSystemBytes },
+        {
+          filename: "minimal.cat",
+          bytes: xmlBytes(multipleChoiceSource),
+        },
+      ],
+      fixedOptions,
+    );
+    const prepare = vi.fn<typeof prepareLocalCatalogueLibrary>(
+      async () => prepared,
+    );
+    let selectionIndex = 0;
+    render(
+      <App
+        prepareLibrary={prepare}
+        createEntityId={(kind) =>
+          kind === "selection"
+            ? `selection-ui-multiple-group-${++selectionIndex}`
+            : `${kind}-ui-multiple-group`
+        }
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", xmlBytes(multipleChoiceSource)),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+    );
+
+    let doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "Choose Mobile Doctrine",
+      }),
+    );
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-multiple-group-2")).toBeTruthy();
+    });
+
+    doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    expect(
+      within(doctrine).getByText("1 selected; requirement met"),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "Add another Mobile Doctrine",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-multiple-group-3")).toBeTruthy();
+    });
+    doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    expect(
+      within(doctrine).getByText("2 selected; requirement met"),
+    ).toBeTruthy();
+    expect(
+      within(doctrine).queryByRole("button", {
+        name: "Add another Mobile Doctrine",
+      }),
+    ).toBeNull();
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "Remove one Mobile Doctrine (2 selected)",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-multiple-group-3")).toBeNull();
+    });
+    expect(rosterSelection("selection-ui-multiple-group-2")).toBeTruthy();
+    doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    expect(
+      within(doctrine).getByText("1 selected; requirement met"),
+    ).toBeTruthy();
+    expect(
+      within(doctrine).getByRole("button", {
+        name: "Add another Mobile Doctrine",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("honors an exact choice maximum inside an unbounded group", async () => {
+    const source = new TextDecoder().decode(catalogueBytes);
+    const unboundedGroupSource = source
+      .replace(
+        /(id="group-squad-doctrine-max"[\s\S]*?value=")1("\s*\/>)/u,
+        (_match, prefix: string, suffix: string) => `${prefix}-1${suffix}`,
+      )
+      .replace(
+        /(<selectionEntry\s+id="entry-mobile-doctrine"[\s\S]*?type="upgrade"\s*)\/>/u,
+        `$1>
+              <constraints>
+                <constraint
+                  id="entry-mobile-doctrine-max"
+                  type="max"
+                  field="selections"
+                  scope="parent"
+                  value="1"
+                />
+              </constraints>
+            </selectionEntry>`,
+      );
+    expect(unboundedGroupSource).not.toBe(source);
+    const unboundedGroupBytes = xmlBytes(unboundedGroupSource);
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "minimal.gst", bytes: gameSystemBytes },
+        { filename: "minimal.cat", bytes: unboundedGroupBytes },
+      ],
+      fixedOptions,
+    );
+    const prepare = vi.fn<typeof prepareLocalCatalogueLibrary>(
+      async () => prepared,
+    );
+    render(<App prepareLibrary={prepare} />);
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", unboundedGroupBytes),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+    );
+    let doctrine = screen.getByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "Choose Mobile Doctrine",
+      }),
+    );
+
+    doctrine = await screen.findByRole("group", {
+      name: "Squad Doctrine choices for Infantry Squad",
+    });
+    expect(
+      within(doctrine).getByRole("button", {
+        name: "Deselect Mobile Doctrine",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(doctrine).queryByRole("button", {
+        name: "Add another Mobile Doctrine",
+      }),
+    ).toBeNull();
+    expect(
+      within(doctrine).getByRole("button", {
+        name: "Choose Defensive Doctrine",
       }),
     ).toBeTruthy();
   });

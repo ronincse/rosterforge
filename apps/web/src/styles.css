@@ -1850,6 +1850,12 @@ h1 {
   flex-wrap: wrap;
 }
 
+.child-choice-group-selected-option {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
 .child-choice-group-options button {
   min-height: 30px;
   padding: 0 9px;

@@ -148,6 +148,33 @@ export function RosterOverview({
   );
   const costResult = workspace.reports.costs;
   const supportedValidation = workspace.reports.validation;
+  // A group's total bound cannot answer whether one concrete member may be
+  // repeated: Aeldari Detachments is unbounded while Warhost itself is max
+  // one. Reuse the same-snapshot effective constraint reports already paid for
+  // by the workspace model so Add another follows the exact occurrence. An
+  // unresolved report stays permissive and incomplete rather than inventing a
+  // limit; the separate deselect control still prevents an accidental re-add.
+  const selectionCanAddAnother = useMemo(() => {
+    const capacity = new Map<SelectionOccurrenceId, boolean>();
+    if (!supportedValidation.ok) return capacity;
+    for (const selection of
+      supportedValidation.value.constraints.selections.selections) {
+      const reachedMaximum = selection.constraints.some(
+        (constraint) =>
+          constraint.constraintType === "max" &&
+          constraint.scope === "parent" &&
+          constraint.constraint.field === "selections" &&
+          constraint.completeness === "complete" &&
+          constraint.limit !== undefined &&
+          constraint.observed !== undefined &&
+          Number.isFinite(constraint.limit) &&
+          !isUnboundedConstraintValue(constraint.limit) &&
+          constraint.observed >= constraint.limit,
+      );
+      capacity.set(selection.owner.id, !reachedMaximum);
+    }
+    return capacity;
+  }, [supportedValidation]);
   const validationIssueCount = workspace.validation.issueCount;
   const topLevelSelectionCount = workspace.topLevelSelectionCount;
   return (
@@ -303,6 +330,7 @@ export function RosterOverview({
                   amount={group.amount}
                   collapsible={group.role.key !== "configuration"}
                   session={session}
+                  selectionCanAddAnother={selectionCanAddAnother}
                   onAddChild={onAddChildSelection}
                   onRename={onRenameSelection}
                   onSetAmount={onSetSelectionAmount}
@@ -1269,6 +1297,7 @@ function RosterSelectionSection({
   amount,
   collapsible,
   session,
+  selectionCanAddAnother,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1291,6 +1320,7 @@ function RosterSelectionSection({
    */
   readonly collapsible: boolean;
   readonly session: LocalRosterSession;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1337,6 +1367,7 @@ function RosterSelectionSection({
             key={selection.occurrence.id}
             session={session}
             selectionModel={selection}
+            selectionCanAddAnother={selectionCanAddAnother}
             topLevel
             collapsible={collapsible}
             onAddChild={onAddChild}
@@ -1356,6 +1387,7 @@ function RosterSelectionItem({
   topLevel = false,
   collapsible = false,
   collapseChildren = false,
+  selectionCanAddAnother,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1372,6 +1404,7 @@ function RosterSelectionItem({
    * attention.
    */
   readonly collapseChildren?: boolean;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1574,7 +1607,9 @@ function RosterSelectionItem({
                   parent={selection}
                   parentName={name}
                   group={group}
+                  selectionCanAddAnother={selectionCanAddAnother}
                   onChoose={onAddChild}
+                  onRemove={onRemove}
                 />
               ))}
             </div>
@@ -1621,6 +1656,7 @@ function RosterSelectionItem({
                         key={model.occurrence.id}
                         session={session}
                         selectionModel={model}
+                        selectionCanAddAnother={selectionCanAddAnother}
                         collapseChildren
                         onAddChild={onAddChild}
                         onRename={onRename}
@@ -1672,6 +1708,7 @@ function RosterSelectionItem({
                       key={child.occurrence.id}
                       session={session}
                       selectionModel={child}
+                      selectionCanAddAnother={selectionCanAddAnother}
                       onAddChild={onAddChild}
                       onRename={onRename}
                       onSetAmount={onSetAmount}
@@ -1721,27 +1758,34 @@ function RosterSelectionChoiceGroup({
   parent,
   parentName,
   group,
+  selectionCanAddAnother,
   onChoose,
+  onRemove,
 }: {
   readonly session: LocalRosterSession;
   readonly parent: RosterSelection;
   readonly parentName: string;
   readonly group: LocalRosterChildChoiceGroup;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onChoose: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
     group: LocalRosterChildChoiceGroup,
   ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
 }) {
   const name = group.group.name ?? group.group.id ?? "Unnamed selection group";
   const finiteMaximum =
     group.maximum !== undefined && Number.isFinite(group.maximum)
       ? group.maximum
       : undefined;
+  const selectedAmount = rosterSelectionsAmount(group.selected);
   const blocksAdditionalChoices =
     finiteMaximum !== undefined &&
     finiteMaximum !== 1 &&
-    rosterSelectionsAmount(group.selected) >= finiteMaximum;
+    selectedAmount >= finiteMaximum;
+  const groupAllowsAnotherCopy =
+    finiteMaximum === undefined || selectedAmount < finiteMaximum;
 
   return (
     <fieldset
@@ -1767,27 +1811,58 @@ function RosterSelectionChoiceGroup({
       ) : (
         <div className="child-choice-group-options">
           {group.choices.map((choice) => {
-            const selected = group.selected.some(
+            const selectedOccurrences = group.selected.filter(
               (selection) =>
                 localRosterSelectionChoice(session, selection.id) === choice,
             );
+            const selectedOccurrence = selectedOccurrences.at(-1);
+            const selected = selectedOccurrence !== undefined;
+            const selectedChoiceAmount = rosterSelectionsAmount(
+              selectedOccurrences,
+            );
+            const canAddAnother =
+              selectedOccurrence !== undefined &&
+              groupAllowsAnotherCopy &&
+              (selectionCanAddAnother.get(selectedOccurrence.id) ?? true);
             const label = selectionChoiceLabel(choice);
             const displayLabel =
               choice.hidden === true ? `${label} (hidden)` : label;
-            return (
+            return selectedOccurrence === undefined ? (
               <button
                 key={selectionChoiceKey(choice)}
                 type="button"
-                aria-pressed={selected}
-                disabled={
-                  (finiteMaximum === 1 && selected) || blocksAdditionalChoices
-                }
+                aria-pressed={false}
+                disabled={blocksAdditionalChoices}
                 onClick={() => onChoose(parent.id, choice, group)}
               >
-                {selected
-                  ? `${displayLabel} selected`
-                  : `Choose ${displayLabel}`}
+                Choose {displayLabel}
               </button>
+            ) : (
+              <span
+                className="child-choice-group-selected-option"
+                key={selectionChoiceKey(choice)}
+              >
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  // Repeated choices can carry different configured subtrees.
+                  // Remove only the newest one so recovery is undoable and
+                  // never silently destroys the older configured copies.
+                  onClick={() => onRemove(selectedOccurrence.id)}
+                >
+                  {selectedChoiceAmount > 1
+                    ? `Remove one ${displayLabel} (${selectedChoiceAmount} selected)`
+                    : `Deselect ${displayLabel}`}
+                </button>
+                {canAddAnother && (
+                  <button
+                    type="button"
+                    onClick={() => onChoose(parent.id, choice, group)}
+                  >
+                    Add another {displayLabel}
+                  </button>
+                )}
+              </span>
             );
           })}
         </div>

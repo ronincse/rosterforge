@@ -1527,8 +1527,14 @@ Choosing a group entry creates that concrete nested occurrence through
 group maximum is one, choosing a different entry immutably removes the prior
 member and adds the replacement as one session operation. A failed replacement
 exposes neither the removal nor a partial descendant expansion. Max-zero
-groups cannot be chosen. Larger or unknown maxima retain additive structural
-behavior and are not general legality enforcement.
+groups cannot be chosen. A selected concrete entry is always a distinct
+deselect action; it removes the newest matching occurrence so repeated entries
+with different configured descendants are not collapsed. Larger or unknown
+group maxima expose a separate add-another action only while the group has room
+and the selected occurrence's effective complete parent maximum has not been
+reached. Unknown exact bounds stay permissive and incomplete rather than being
+guessed. These controls prevent accidental re-addition without turning the
+chooser into general legality enforcement.
 
 The occurrence details disclosure reads the exact mapped choice. Profiles are
 shown as direct projections followed by resolved profile info-link wrappers;
