@@ -67,7 +67,10 @@ diagnostic codes.
   lead. Configuration selections and exact model occurrences now collapse
   independently; repeatable model choices use explicit minus/count/plus
   controls; and collapsed unit cards retain an exact total-and-type model
-  composition summary. **The `Next` is the selected-unit workspace:
+  composition summary. Direct required upgrades with complete known minima now
+  remain visibly selected and cannot be removed below their floor; replacement
+  groups and unresolved bounds retain their existing permissive behavior. **The
+  `Next` is the selected-unit workspace:
   newly-added-unit focus, a dedicated options surface, and a separate full-card
   view without undoing reader-controlled catalogue placement.**
 - **Prior transfer.** The Codex-to-Claude transfer
@@ -555,6 +558,7 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
+| Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
 | Unit stats and rules are buried two disclosures deep | Done | top-level units render Keywords, Profiles, Rules and info groups after one unit-card expansion, with editing behind `Edit selection`. Direct child selections whose resolved entry type is exactly `model` render in an accessible `Models` section; each exact model occurrence is independently collapsible, while its name remains in an always-visible total-and-type unit composition summary. The remaining upgrade tree and model wargear stay lazy and preserve attention-driven opening; unknown types are never guessed into the model surface |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
@@ -10602,3 +10606,84 @@ controls from this checkpoint; do not recreate them in a second state model.
 Keep Configuration outside that editor, preserve reader-controlled catalogue
 placement and attention routing, and define the mobile transition without a
 permanent three-pane phone layout.
+
+## Completed Assignment — Required Direct Wargear Protection, 2026-08-26
+
+Baseline `682cc2c2dd66cf482c4b86c350b4067f3bb730a2`; resulting implementation
+commit `4c4cd12e10b979c740feace6e6311645ea76b66c` and this handoff commit. The
+owner reported that a Dark Reaper could be stripped of the weapons every model
+must carry, while the Dark Reaper Exarch's replaceable launcher correctly
+needed to remain editable.
+
+The direct quick-choice control now distinguishes a complete known minimum
+from an optional or unresolved bound. A selected direct `upgrade` is disabled
+only when removing its newest exact occurrence would take the summed selected
+amount below that minimum. This amount-aware floor leaves genuine surplus
+copies removable. The selected state remains visible and its status says that
+the choice is required.
+
+The restriction intentionally stops at direct upgrades. Repeatable model
+quantity controls retain their separately documented recoverable-minimum
+behavior, root selections remain removable with their whole subtree, and
+selection-entry group members retain ordinary deselection and atomic max-one
+replacement. Incomplete bounds remain permissive rather than turning
+unsupported modifier semantics into a guessed UI restriction.
+
+### Delegation and review
+
+Codex remained the primary implementer and launched a constrained read-only
+Claude Code semantic review before implementation, with only repository read
+and search tools. Claude independently traced the direct/group/model render
+branches, the evaluated bound and completeness contract, and the pinned Dark
+Reaper topology. It recommended the final amount-subtraction rule, called out
+the incomplete-bound exception, and confirmed that the Exarch launcher's
+grouped replacement path must remain untouched. Codex reviewed those findings,
+the implementation diff, the corpus assertion, and every validation result
+before accepting them.
+
+### Reference behavior and corpus evidence
+
+The pinned BSData repository was verified clean at
+`04c62fcd041b3808c39d5c46fd677c704027b979`. Its Aeldari Library defines the
+regular Dark Reaper's `Close combat weapon` and `Reaper Launcher` as direct
+`upgrade` children with parent-scoped `min=1` and `max=1`. The Exarch instead
+has a direct minimum-one `Close combat weapon` plus a minimum-one, maximum-one
+`Weapon` group whose default Reaper Launcher can be replaced by Missile
+Launcher, Shuriken Cannon, or Tempest Launcher. The optional integration test
+now pins that distinction through the materialized roster session rather than
+only reading source JSON.
+
+Interactive Reference Behavior QA created one temporary Aeldari roster in New
+Recruit and added Dark Reapers. DOM evidence showed both `Close combat weapon`
+inputs and the regular model's `Reaper Launcher` checked, disabled, and marked
+`constant`. The Exarch's selected Reaper Launcher and its alternative weapon
+inputs were enabled. That confirms the owner's report as a RosterForge
+behavioral discrepancy rather than catalogue drift, intentional difference,
+known unsupported behavior, or unrelated roadmap work. The temporary New
+Recruit roster was deleted after capturing the evidence.
+
+Verification:
+
+- focused `App.ui.test.tsx` — **18 passed**;
+- focused pinned Aeldari integration scenario — **1 passed, 17 skipped**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  the production build retains only Vite's existing large-chunk warning;
+- `pnpm test` without the optional corpus — **513 passed, 18 skipped (531)**
+  across 55 files;
+- full optional corpus suite with `ROSTERFORGE_BSDATA_JSON_DIR` set — **531
+  passed** across 55 files; and
+- GitHub Actions for this handoff commit — **pending push**.
+
+No evaluator rule, roster command, persisted format, package boundary,
+diagnostic, corpus data, or third-party data changed. `docs/compatibility.md`
+now records the UI enforcement boundary.
+
+### Next recommended boundary
+
+**Build the selected-unit workspace.** Newly added or explicitly selected army
+units should focus a dedicated options surface, while a separate `View` action
+opens the complete unit card. Reuse this checkpoint's required-choice state,
+exact model counts, and quantity controls; do not create a second editability
+model. Configuration stays outside the selected-unit editor, and the roadmap's
+existing mobile, catalogue-placement, attention-routing, and full-width
+constraints remain authoritative.
