@@ -204,10 +204,11 @@ diagnostic codes.
   queue on one chain (`apps/web/src/recovery-slot.ts`) so the clear cannot be
   overtaken by a write already in flight. **Local durability now has no known
   defect.**
-- **CI recovered.** Run `#32994651571` for the delegation-policy handoff at
-  `83dac0e` passed and checks the full tree including the earlier recovery-slot
-  and one-click datasheet work. The old `95d9a79` run remains wedged as queued
-  with no jobs, but later green runs supersede it as verification evidence.
+- **CI recovered.** Run `#32997233432` for the child-model handoff at `ab8bb7e`
+  passed and checks the full tree including the earlier recovery-slot,
+  top-level datasheet and delegation-policy work. The old `95d9a79` run remains
+  wedged as queued with no jobs, but later green runs supersede it as
+  verification evidence.
 - **Comments.** The automatic helper records the deployed-runtime branch,
   54-owner split, five-group shape, source/reverse ordering, direct-edit
   priority, temporary group and child probe lifetimes, child-bound guards, and
@@ -9811,7 +9812,8 @@ minimum by scrolling; the promoted models were not the overflow source.
 - `pnpm test` — **507 passed, 18 skipped (525)** across 54 files; and
 - pinned corpus `E:\GitHub\wh40k-11e` at
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **525 passed
-  (525)** across all 54 files.
+  (525)** across all 54 files; and
+- GitHub Actions `#32997233432` for `ab8bb7e` — **passed**.
 
 The prior one-click datasheet Reference Behavior QA already established the
 bounded interaction target: New Recruit also requires one interaction to open a
