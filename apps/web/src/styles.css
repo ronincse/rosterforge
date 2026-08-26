@@ -1832,12 +1832,20 @@ h1 {
   opacity: 0.72;
 }
 
-.selection-details {
+/* The datasheet is now the card's main content rather than a panel, so it gets
+   separation from the choice controls above it but no border of its own. */
+.selection-datasheet {
+  margin-top: 10px;
+}
+
+/* Reuses the old `.selection-details` summary treatment verbatim: this is the
+   same affordance in the same place, holding editing rather than everything. */
+.selection-edit {
   margin-top: 10px;
   border-top: 1px solid #d3d8d4;
 }
 
-.selection-details > summary {
+.selection-edit > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1850,7 +1858,7 @@ h1 {
   list-style: none;
 }
 
-.selection-details > summary small {
+.selection-edit > summary small {
   color: var(--muted);
   font-size: 0.56rem;
   font-weight: 600;

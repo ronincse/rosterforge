@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (durability closed; recovery race fixed)
+## Current Status — 2026-08-26 (one-click datasheets; lead returning to Codex)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -54,7 +54,19 @@ diagnostic codes.
   134 said `Claude Opus 5`, because Claude's tooling added one unprompted and
   nothing asked it of anyone else. An unmarked commit older than 2026-08-24
   therefore means only "not Claude". History was not rewritten.
-- **Active lead.** **Claude is the active lead.** The Codex-to-Claude transfer
+- **Active lead.** **Claude is handing the lead back to Codex.** The owner ended
+  the 2026-08-26 session at the usage limit and said the work goes to Codex next,
+  so treat this commit as the transfer record. Codex should run the
+  `docs/agent-workflow.md` "Formal Lead Transfer" pickup checks against this
+  commit before starting: clean checkout, `HEAD` equal to `origin/main`,
+  divergence `0 0`, only the primary worktree, no stash, no concurrent writer,
+  and a roadmap `Next` matching this record. **The `Next` is child-model
+  statlines.** Two things to know before touching anything: four commits are
+  locally verified but have **no CI run at all** because GitHub Actions was in a
+  critical outage all session, and the unit-datasheet row is **In progress, not
+  Done** — top-level statlines take one expansion now, child models still take
+  two.
+- **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
   `ad2934166b726314ad55ae2db3f95ae4db655b59` and agreed: clean checkout, `HEAD`
@@ -500,16 +512,17 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open; configuration cards stay expanded. A card opens itself when it holds a known violation. The always-visible row shows the projection's recursive cost. Verified on pinned Death Guard: Lord of Contagion collapsed at `120 pts`, Plague Marines auto-opened at `90 pts`, one collapsed unit keeping 45 DOM nodes off the page |
-| Build phase and reference phase | Open | **reframed 2026-08-24 by the stated goal.** Not a browsing-versus-editing toggle: the two phases are *choosing units*, where the catalogue should be pleasant and present, and *reading the finished list*, where the catalogue should be out of the way and unit stats and rules are what you scroll. The old row also wanted newly-added-unit focus, which still applies to the choosing phase. Design this after the list itself is list-first, not before |
+| Build phase and reference phase | Open (has measured evidence) | **reframed 2026-08-24 by the stated goal.** Not a browsing-versus-editing toggle: the two phases are *choosing units*, where the catalogue should be pleasant and present, and *reading the finished list*, where the catalogue should be out of the way and unit stats and rules are what you scroll. The old row also wanted newly-added-unit focus, which still applies to the choosing phase. Design this after the list itself is list-first, not before. **Reference geometry measured 2026-08-26**: New Recruit keeps a 400 px catalogue permanently on screen on desktop and opens a *third* 400 px pane on selection, squeezing its roster to about 34% of window width; on mobile it hides the catalogue entirely and the list is the default screen. Its options expose `Always hide leftmost panel` and `Auto hide left panel`. Independent analysis flagged that the 2026-08-26 datasheet checkpoint addressed only half the owner's stated goal — stats easy to find — and left this half untouched |
 | Headline cost against its points limit | Open | **sharpened by the 2026-08-24 reference-army run: "non-zero" is the wrong rule for what leads the header.** A configured 2,000-point roster with no units yet showed a headline of `2 Detachment Points`, because `pts` was still 0 and zero totals are filtered out; after an enhancement the header carried three figures, `260 pts | 2 Detachment Points | 1 Enhancements`, two of them bookkeeping counters. Limit-bearing cost types should lead. Originally found while building the player header. The header shows `120 pts` where a matched-play player reads `120 / 2000 pts`; the limit is already evaluated by the force constraint report but is not projected into the presentation model. Scoped out of the header checkpoint because plumbing force constraints into the model is a different boundary that overlaps the legality-aware controls row |
 | Legality-aware model-count controls | Open | model amounts are exposed, positive-finite, source-step-aware, and automatically reconciled where supported; the remaining player control is still free-form and is not generally bounded by known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Nested automatic groups and unit-typed automatic sub-units | Low priority | measured ordinary-entry and direct-child group reconciliation is complete; these two remaining autofill shapes are diagnosed and withheld, and none of the five modifier-driven pinned groups uses either shape |
-| Unit stats and rules are buried two disclosures deep | **Next** | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure. Restored as **Next** on 2026-08-26 now that the durability detour is closed; it was the standing Next before it |
+| Unit stats and rules are buried two disclosures deep | In progress | the datasheet already exists — `SelectionKeywords`, `Profiles`, `Rules` and info groups all render inside `Selection details` — but reaching a unit's statline now costs two expansions: open the unit card, then open `Selection details`. The collapsible-card checkpoint on 2026-08-24 added the second level, which is the correct trade for *scanning* a fifteen-unit army and the wrong one for *reading* it at a table. Directly contradicts goal 1; take it with or immediately after the list-first restructure. Restored as Next on 2026-08-26 and taken the same day: a **top-level** unit's statline now costs one expansion, with editing moved behind `Edit selection`. **Not Done** — `selection-children` is untouched, so a squad's *model* statlines remain two deep. See the 2026-08-26 one-click datasheet entry |
 | `Code Chivalric` reported violated on every Dark Angels roster | Done | found by the 2026-08-24 reference-army run. A Dark Angels roster reports a violated root-selection bound for `Code Chivalric` — an **Imperial Knights** configuration entry — as `Selected 0, minimum 1, maximum 1`. The entry is **not among the 110 offered roots**, so the player cannot satisfy it, and its `Review available roots` link points at a browser that does not contain it. The visibility filter recorded in `Allied config auto-inserts into a force` fixed creation and browsing; structural bound inspection still enumerates the hidden allied root. This is a **false known violation** on the v1 reference path — the north star's honesty clause and acceptance proxy 3 both fail. The full 2,000-point run settled its impact exactly: with every genuine violation resolved, the finished legal army reports **100 structural bounds satisfied, 1 violated, 0 constraint violations** — and that single violation is this phantom one. RosterForge cannot currently report a correct Dark Angels army as legal |
 | A saved draft is not durable immediately after the shelf shows it saved | Not reproducible | **The premise was wrong; see the 2026-08-26 entry.** Measured: the save takes about 1 s, and the unsaved-changes indicator clears in the *same tick* the save completes — it does not clear early. Every save-then-reload round-tripped exactly (360, 425, 495 pts). Killing the page mid-write does lose the in-flight edit, but the UI still shows `Saving…` and `Unsaved changes` then, so the `beforeunload` guard is registered and a real user is warned; only a programmatic reload bypasses it. An independent `codex exec` audit reached the same conclusion from the code. The commit ordering that makes this safe is now pinned by a test |
 | Recovery slot can be resurrected after it is cleared | Done | found by the delegated durability audit, verified in the code, fixed 2026-08-26. On a roster's **first** save the recovery write and `void draftStore.delete(recoveryDraftId)` were both fire-and-forget, so a write already in flight could finish *after* the delete and recreate `__recovery__` holding the pre-save roster — never losing work, but offering a later session a stale recovery of a roster it already has. Both operations now queue on one chain in `apps/web/src/recovery-slot.ts`, so the store applies them in request order; the writer additionally re-checks `roster === persistedRoster`, because the debounce timer can outlive the render that persisted the roster. Ordering, not exclusion, is the fix — see the 2026-08-26 entry |
+| Child-model statlines are still two expansions deep | **Next** | finishes the row above. A squad's models sit behind `selection-children` ("Configure models, wargear and options"), so reading one model's statline costs unit card, then that disclosure, then the child's own datasheet. The top-level fix on 2026-08-26 did not touch it. Measured cost is the constraint to respect: 34 open datasheets on a real Dark Angels roster cost about 1.4x the edit time of 9, which is sublinear, but child expansion multiplies node count rather than card count |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
 | Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
@@ -9458,3 +9471,157 @@ improved an ordering argument; keep routing this class of question out.
 **Next**, which is what it was before the durability detour. Local durability
 now has no known defect, so the north star's first goal is once again the thing
 standing between this product and v1.
+
+## Completed Assignment — One-Click Unit Datasheets, 2026-08-26
+
+Baseline `7bf2b57`; resulting implementation commit and this handoff commit. The
+roadmap's **Next**, and the first checkpoint taken against the north star's first
+goal.
+
+**This row is NOT Done.** See "Why the row stays In progress" before reading it
+as closed.
+
+### What shipped
+
+Reaching a top-level unit's statline cost **two** expansions: open the unit card,
+then open "Selection details". It now costs **one**. Opening a unit card renders
+Keywords, Profiles and Rules directly in the card body.
+
+Editing and provenance moved behind a secondary disclosure named **`Edit
+selection`** — occurrence rename, non-model `Amount`, and the Definition/Source/
+Hidden rows. The name matters and was a review correction: non-model `Amount` is
+reachable *only* there, so a panel named for "details", or treated as debug
+material, would have been a discoverability regression. Model amounts keep their
+promoted editor on the card body.
+
+Laziness is preserved by **mounting**, not by a flag: the datasheet renders only
+inside `selection-card-body`, which exists only when the card is open. A closed
+unit still computes nothing, which is what the original 181-of-214 regression
+comment was protecting.
+
+### The design was wrong twice, and delegation caught both
+
+Three delegates ran in three lanes. Each changed the outcome.
+
+**A native `Explore` subagent mapped the rendering.** It established that there
+are **three** disclosure levels, not two — `selection-children` means a child
+model's statline is three deep — and that the print path is **not** prior art:
+`RosterPrintSelection` carries no profiles, rules, keywords or info groups at
+all. It also found the decisive cost fact: the statline *text* is free
+(materialized at load), but *effective values* cost four evaluator calls per
+profile, three of which run `collectAffectsRoutedModifiers`, which treats every
+roster occurrence as a candidate declarer. Verified by the lead at
+`packages/evaluation/src/characteristics.ts:1550` before being acted on.
+
+**Antigravity analysed the captured reference evidence and found two errors.**
+First, an earlier draft claimed PDF export *is* New Recruit's answer to reading
+an army at a table — a negative the evidence does not carry, since the QA never
+opened List Options nor loaded the `/app/list/:id` read route. Second, and more
+useful: **interaction count is not equivalence.** A near-fullscreen modal is an
+overlay that displaces nothing; an inline expansion reflows the list. Matching
+the click count does not match the ergonomics. Both corrections are in the plan.
+
+**Codex rejected the plan's central claim.** The plan said merging was
+cost-neutral because army cards default closed. Codex pointed out that
+`containsAttention` propagates recursively, so a roster under construction opens
+cards in **bulk**, and the attention effect only ever opens — never closes — so a
+card stays hot after its violation is resolved. Verified by the lead at
+`roster-workspace-model.ts:551`. Codex also supplied the correct CSS direction
+(reuse the auto-fit `dl` grid, introduce no fixed table) and the `Edit selection`
+naming argument.
+
+### Reference behavior, observed rather than assumed
+
+Delegated browser QA on New Recruit, 7 units / 1015 pts. **One click** reaches a
+statline there, via an always-visible per-row eye icon opening a datasheet, and
+**zero-interaction statlines do not exist there either** — its rows carry name,
+count, points and loadout only. That settled the target as one expansion rather
+than zero.
+
+Collection caveats, recorded because they bound the evidence: screenshots were
+impossible and real input events never reached the page, so the worker drove the
+SPA with synthetic DOM events and read state back from the live DOM. It declined
+to click Export to Link because that publishes to their server. The same
+non-compositing limitation bit the lead later — **`requestAnimationFrame` never
+fires in this browser pane**, which cost three timed-out measurements before it
+was identified. Do not use rAF to settle a measurement in this environment.
+
+### Measured, on the real pinned catalogue
+
+Codex's objection deserved a measurement rather than an argument. Pinned BSData
+`04c62fc`, Dark Angels revision 3, 292 visible roots, built to 34 cards:
+
+| Open datasheets | Edit time |
+| --- | --- |
+| 9 | 101, 103, 131 ms |
+| 31-33 | 127, 139, 175 ms |
+
+A **3.5x increase in open datasheets costs about 1.4x edit time** — sublinear,
+because fixed per-edit work (cost evaluation, structural validation) dominates
+the marginal datasheet. The bulk-open case is therefore affordable, which is the
+answer to the review objection. Note the 3 to 9 jump happened *on its own* as
+units with unsatisfied bounds were added: Codex's worst case occurs naturally,
+not only when forced.
+
+**Acceptance proxy 2 holds on real data**: 390 px viewport, **34 open
+datasheets**, `documentElement.scrollWidth === clientWidth`, zero overflowing
+descendants inside any datasheet, widest datasheet element 244.7 px. This is why
+the existing auto-fit `dl` grid was reused rather than replaced.
+
+### A cache was added, and it does less than it first appears
+
+`inspectLocalRosterSelectionCharacteristics` and
+`inspectLocalRosterSelectionCategories` are now memoized per session, extending
+the `WeakMap`-by-session pattern `roster-session.ts` already used for the two
+whole-roster reports.
+
+**It does not make an edit cheap.** An edit returns a new session, so every open
+card misses and recomputes. It covers repeated renders within one snapshot —
+opening a second card, local state changes — and undo/redo, which restores an
+already-evaluated session. An earlier version of the comment claimed it solved
+the per-edit bulk cost; that claim was wrong and was corrected in the code rather
+than left for the next reader to trust.
+
+### Why the row stays In progress
+
+`selection-children` is untouched, so a squad's **model** statlines remain two
+expansions deep: unit card, then "Configure models, wargear and options", then
+that child's datasheet. Codex raised this and it is right — marking the row Done
+would be false. A child-statline follow-up row is added.
+
+### What this did not do
+
+**Catalogue placement is untouched**, which is the other half of the owner's
+stated goal: once the list is created, the catalogue needs to be out of the way.
+Antigravity flagged the omission. It is already the "Build phase and reference
+phase" row, deliberately sequenced after the list is list-first, and that row now
+carries the measured New Recruit geometry — on desktop its roster is squeezed to
+about 34% of window width with a unit selected, while mobile hides the catalogue
+entirely.
+
+No before/after comparison against the old two-click build was taken; the numbers
+above are all post-change. The relevant question was whether bulk-open regresses,
+and the sublinear scaling answers that directly.
+
+### Verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` — clean.
+- `pnpm test` — **507 passed, 18 skipped (525)** across 54 files.
+- Pinned corpus at `04c62fc` — **525 passed (525)**, all 54 files.
+- Browser measurements above, on real Dark Angels data.
+- **CI: still unverified.** GitHub Actions was in a critical outage for this
+  entire session (<https://stspg.io/pg14nv9m3095>, from 15:11 UTC) and created no
+  run for `33775ee`, `49d27c0`, `7bf2b57`, or this checkpoint. One run for
+  `95d9a79` wedged in inconsistent state: `gh run cancel` answered "Cannot cancel
+  a workflow run that is completed" while the REST object still read `queued`,
+  with zero jobs created. `ci.yml` triggers only on `push` and `pull_request`, so
+  no run can be fired after the fact. **Four commits are locally verified only.**
+  The next push after Actions recovers covers them, since CI checks the whole
+  tree rather than a diff.
+
+### Next recommended boundary
+
+**Child-model statlines**, then **catalogue placement**. The first finishes the
+row this checkpoint opened; the second is the other half of the stated goal and
+is the larger win. Adding `workflow_dispatch:` to `ci.yml` is a small worthwhile
+side task that would have removed this session's entire CI blind spot.

@@ -909,9 +909,8 @@ describe("App local catalogue flow", () => {
     fireEvent.click(unitToggle);
     expect(unitToggle.getAttribute("aria-expanded")).toBe("false");
     expect(armySection.querySelector(".selection-card-body")).toBeNull();
-    expect(
-      within(armySection).queryByText("Selection details"),
-    ).toBeNull();
+    expect(armySection.querySelector(".selection-datasheet")).toBeNull();
+    expect(within(armySection).queryByText("Keywords")).toBeNull();
     fireEvent.click(unitToggle);
     expect(unitToggle.getAttribute("aria-expanded")).toBe("true");
     expect(within(playerHeader).getByText("80")).toBeTruthy();
@@ -925,14 +924,13 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(undo).toHaveProperty("disabled", false);
     expect(redo).toHaveProperty("disabled", true);
-    const selectionDetails =
-      within(selectedRoster).getByText("Selection details");
-    expect(
-      within(selectedRoster).getByText(
-        "1 profile, 2 rules, 1 info group",
-      ),
-    ).toBeTruthy();
-    fireEvent.click(selectionDetails);
+    // Opening the unit card is the ONLY expansion needed to read the unit.
+    // Everything below is asserted without a second click, which is the whole
+    // point of this structure: the datasheet is what a player opened the unit
+    // for. `Edit selection` still exists, and still starts closed.
+    expect(selectedRoster.querySelector(".selection-datasheet")).toBeTruthy();
+    const editDisclosure = selectedRoster.querySelector(".selection-edit");
+    expect(editDisclosure?.hasAttribute("open")).toBe(false);
     // Effective keywords include one the catalogue only grants by modifier.
     expect(within(selectedRoster).getByText("Keywords")).toBeTruthy();
     expect(within(selectedRoster).getByText("Battleline")).toBeTruthy();
@@ -988,6 +986,8 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getByText("Linked | minimal.cat"),
     ).toBeTruthy();
+    // Renaming is editing, so it moved behind `Edit selection` with the rest.
+    fireEvent.click(within(selectedRoster).getByText("Edit selection"));
     fireEvent.change(
       within(selectedRoster).getByLabelText("Occurrence name"),
       {
@@ -1078,12 +1078,8 @@ describe("App local catalogue flow", () => {
     expect(
       weaponNode.getByText("Special Weapon (Master-crafted)"),
     ).toBeTruthy();
-    expect(
-      weaponNode.queryByText(
-        "Some display naming is unresolved for this selection.",
-      ),
-    ).toBeNull();
-    fireEvent.click(weaponNode.getByText("Selection details"));
+    // The unresolved-naming notice now rides with the datasheet rather than
+    // waiting behind a second click, so it is visible as soon as the card is.
     expect(
       weaponNode.getByText(
         "Some display naming is unresolved for this selection.",
@@ -1585,7 +1581,9 @@ describe("App local catalogue flow", () => {
     expect(writes()).toBe(1);
 
     // The next edit autosaves, and the store refuses on space.
-    fireEvent.click(screen.getByText("Selection details"));
+    // Non-model `Amount` lives only behind `Edit selection`; reaching it here
+    // is what keeps that disclosure honestly named rather than a debug panel.
+    fireEvent.click(screen.getByText("Edit selection"));
     fireEvent.change(screen.getByLabelText("Amount"), {
       target: { value: "3" },
     });
@@ -1684,7 +1682,9 @@ describe("App local catalogue flow", () => {
     const storedAmount = (): number | undefined =>
       asStoredDraft(records.get("draft-ui"))?.roster.forces[0]?.selections[0]
         ?.amount;
-    fireEvent.click(screen.getByText("Selection details"));
+    // Non-model `Amount` lives only behind `Edit selection`; reaching it here
+    // is what keeps that disclosure honestly named rather than a debug panel.
+    fireEvent.click(screen.getByText("Edit selection"));
     fireEvent.change(screen.getByLabelText("Amount"), {
       target: { value: "3" },
     });

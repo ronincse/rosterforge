@@ -272,7 +272,10 @@ export function createLocalRosterSession(
   // applies, and on a Dark Angels force it does not.
   const force = withForce.value.forces[0];
   const visibleRoots = catalogue.context.roots.roots.filter((root) => {
-    if (root.materialized.kind === "unresolvedEntryLink" || force === undefined) {
+    if (
+      root.materialized.kind === "unresolvedEntryLink" ||
+      force === undefined
+    ) {
       return true;
     }
     const visibility = evaluateRosterSelectionVisibility(
@@ -474,10 +477,7 @@ export function localRosterRootChoices(
 export function localRosterRootChoiceGroups(
   catalogue: LocalCatalogueChoice,
 ): readonly LocalRosterRootChoiceGroup[] {
-  const categoriesById = new Map<
-    string,
-    BattleScribeCategoryDefinition[]
-  >();
+  const categoriesById = new Map<string, BattleScribeCategoryDefinition[]>();
   for (const category of catalogue.context.categories.definitions) {
     const id = category.source.id;
     if (id === undefined) continue;
@@ -503,7 +503,7 @@ export function localRosterRootChoiceGroups(
     const matches =
       primary?.targetId === undefined
         ? []
-        : categoriesById.get(primary.targetId) ?? [];
+        : (categoriesById.get(primary.targetId) ?? []);
     const category = matches.length === 1 ? matches[0] : undefined;
     const key =
       category === undefined
@@ -575,20 +575,18 @@ export function inspectLocalRosterRootChoices(
     return !visibility.ok || visibility.value.status !== "hidden";
   };
   const groups = localRosterRootChoiceGroups(session.catalogue)
-    .map(
-      (group): LocalRosterRootChoiceGroupState => ({
-        ...group,
-        choices: group.choices.filter(offered).map((choice) => {
-          const bound = byRoot.get(choice);
-          return localRosterRootChoiceState(
-            session,
-            choice,
-            rootSelections,
-            bound,
-          );
-        }),
+    .map((group): LocalRosterRootChoiceGroupState => ({
+      ...group,
+      choices: group.choices.filter(offered).map((choice) => {
+        const bound = byRoot.get(choice);
+        return localRosterRootChoiceState(
+          session,
+          choice,
+          rootSelections,
+          bound,
+        );
       }),
-    )
+    }))
     .filter(({ choices }) => choices.length > 0);
   return success(
     {
@@ -731,7 +729,96 @@ export function inspectLocalRosterSelectionAnnotation(
  * can look one up without re-deriving identity. This adapter adds no evaluation
  * semantics; it only supplies the occurrence and catalogue context.
  */
+/**
+ * Per-selection inspections, cached per session.
+ *
+ * Both are pure functions of `(session, selectionId)`, and a session is
+ * immutable — a command returns a new one for any real change — so a cached
+ * entry cannot describe a stale roster. This is the same argument, and the same
+ * `WeakMap`-by-session shape, as the two whole-roster reports above.
+ *
+ * **What this is for is the datasheet being on the open-card path.** A card
+ * opens itself whenever it contains a violation, and `containsAttention`
+ * propagates recursively (`roster-workspace-model.ts:551`), so a roster under
+ * construction can have most of its cards open at once. Characteristic
+ * evaluation is not cheap at that volume: each profile costs four evaluator
+ * calls, three of which run `collectAffectsRoutedModifiers`, which treats every
+ * roster occurrence as a candidate declarer
+ * (`packages/evaluation/src/characteristics.ts:1550`).
+ *
+ * **What this does not do is make an edit cheap.** An edit returns a new
+ * session, so every open card misses and recomputes. This cache covers repeated
+ * renders *within* one snapshot — opening a second card, local state changes,
+ * hover — and undo/redo, which restores a session that was already evaluated.
+ * The per-edit cost of many open datasheets is a separate problem; measure it
+ * before assuming it needs solving.
+ *
+ * Cost: one `Map` per session snapshot, holding at most one entry per selection
+ * occurrence that was actually inspected. Entries die with their session.
+ */
+const localRosterCharacteristicInspections = new WeakMap<
+  LocalRosterSession,
+  Map<SelectionOccurrenceId, Result<LocalRosterCharacteristicInspection>>
+>();
+
+const localRosterCategoryInspections = new WeakMap<
+  LocalRosterSession,
+  Map<SelectionOccurrenceId, Result<LocalRosterCategoryInspection>>
+>();
+
+function cachedBySelection<Value>(
+  store: WeakMap<LocalRosterSession, Map<SelectionOccurrenceId, Value>>,
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+  compute: () => Value,
+): Value {
+  let bySelection = store.get(session);
+  if (bySelection === undefined) {
+    bySelection = new Map();
+    store.set(session, bySelection);
+  }
+  const cached = bySelection.get(selectionId);
+  // A miss and a stored `undefined` are indistinguishable through `get`, and
+  // both inspections always return a `Result`, so `has` is not needed here.
+  if (cached !== undefined) return cached;
+  const computed = compute();
+  bySelection.set(selectionId, computed);
+  return computed;
+}
+
+/**
+ * Resolves one occurrence's profile characteristics. See
+ * {@link localRosterCharacteristicInspections} for the caching contract.
+ */
 export function inspectLocalRosterSelectionCharacteristics(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<LocalRosterCharacteristicInspection> {
+  return cachedBySelection(
+    localRosterCharacteristicInspections,
+    session,
+    selectionId,
+    () => computeSelectionCharacteristics(session, selectionId),
+  );
+}
+
+/**
+ * Resolves one occurrence's effective category membership. See
+ * {@link localRosterCharacteristicInspections} for the caching contract.
+ */
+export function inspectLocalRosterSelectionCategories(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): Result<LocalRosterCategoryInspection> {
+  return cachedBySelection(
+    localRosterCategoryInspections,
+    session,
+    selectionId,
+    () => computeSelectionCategories(session, selectionId),
+  );
+}
+
+function computeSelectionCharacteristics(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,
 ): Result<LocalRosterCharacteristicInspection> {
@@ -855,7 +942,7 @@ export function inspectLocalRosterSelectionCharacteristics(
 function localRosterProfileBaseName(profile: LocalRosterProfile): string {
   const name =
     "definition" in profile
-      ? profile.name ?? profile.definition.name
+      ? (profile.name ?? profile.definition.name)
       : profile.name;
   return name ?? "Unnamed profile";
 }
@@ -867,7 +954,7 @@ function localRosterProfileBaseName(profile: LocalRosterProfile): string {
  * Categories that no definition names keep their raw ID, so an unresolved
  * target stays visible rather than disappearing.
  */
-export function inspectLocalRosterSelectionCategories(
+function computeSelectionCategories(
   session: LocalRosterSession,
   selectionId: SelectionOccurrenceId,
 ): Result<LocalRosterCategoryInspection> {
@@ -903,7 +990,10 @@ export function inspectLocalRosterSelectionCategories(
     }
   }
   const report = evaluated.value;
-  const describe = (id: ObjectId, added: boolean): LocalRosterCategoryEntry => ({
+  const describe = (
+    id: ObjectId,
+    added: boolean,
+  ): LocalRosterCategoryEntry => ({
     id,
     name: names.get(id) ?? id,
     added,
@@ -940,8 +1030,7 @@ export function inspectLocalRosterStructuralStatus(
     session.roster,
     session.catalogue.context,
     {
-      materializationPartial:
-        session.catalogue.materializationTruncated,
+      materializationPartial: session.catalogue.materializationTruncated,
     },
   );
 }
@@ -967,10 +1056,7 @@ function inspectSupportedValidation(
 ): Result<LocalRosterSupportedValidationInspection> {
   const structural = inspectLocalRosterStructuralStatus(session);
   const constraints = inspectLocalRosterConstraints(session);
-  const diagnostics = [
-    ...structural.diagnostics,
-    ...constraints.diagnostics,
-  ];
+  const diagnostics = [...structural.diagnostics, ...constraints.diagnostics];
   if (!structural.ok || !constraints.ok) {
     return failure(diagnostics);
   }
@@ -1112,18 +1198,14 @@ export function inspectLocalRosterChildChoices(
         visibilityIncomplete = true;
         return true;
       }
-      visibilityIncomplete ||=
-        visibility.value.completeness === "incomplete";
+      visibilityIncomplete ||= visibility.value.completeness === "incomplete";
       return visibility.value.status !== "hidden";
     },
   });
   if (!inspected.ok) {
     return inspected;
   }
-  const diagnostics = [
-    ...visibilityDiagnostics,
-    ...inspected.diagnostics,
-  ];
+  const diagnostics = [...visibilityDiagnostics, ...inspected.diagnostics];
   const groups = inspected.value.groups.map((group) => {
     const groupPath = selectionEntryGroupVisibilityPath(
       parentChoice,
@@ -1141,16 +1223,10 @@ export function inspectLocalRosterChildChoices(
         visibilityIncomplete = true;
         return true;
       }
-      visibilityIncomplete ||=
-        visibility.value.completeness === "incomplete";
+      visibilityIncomplete ||= visibility.value.completeness === "incomplete";
       return visibility.value.status !== "hidden";
     });
-    return localRosterChildChoiceGroup(
-      session,
-      parent,
-      group,
-      visibleChoices,
-    );
+    return localRosterChildChoiceGroup(session, parent, group, visibleChoices);
   });
   return success(
     {
@@ -1159,8 +1235,7 @@ export function inspectLocalRosterChildChoices(
       ),
       groups,
       completeness:
-        inspected.value.completeness === "complete" &&
-        !visibilityIncomplete
+        inspected.value.completeness === "complete" && !visibilityIncomplete
           ? "complete"
           : "incomplete",
     },
@@ -1186,12 +1261,7 @@ export function addLocalRosterChildSelection(
   input: AddLocalRosterRootSelectionInput,
 ): Result<LocalRosterSession> {
   return reconcileEditedSession(
-    addLocalRosterChildSelectionUnreconciled(
-      session,
-      parentId,
-      choice,
-      input,
-    ),
+    addLocalRosterChildSelectionUnreconciled(session, parentId, choice, input),
     { ...input, preferredChoice: choice },
   );
 }
@@ -1267,8 +1337,7 @@ export function chooseLocalRosterChildGroupEntry(
       ...inspected.diagnostics,
       {
         code: "WEB_ROSTER_GROUP_CHOICE_MAXIMUM_ZERO",
-        message:
-          "The selected entry group currently permits no selections.",
+        message: "The selected entry group currently permits no selections.",
         severity: "error",
         impacts: ["compatibility"],
         location: {
@@ -1289,10 +1358,7 @@ export function chooseLocalRosterChildGroupEntry(
   if (liveGroup.maximum === 1) {
     const alreadySelected =
       rosterSelectionsAmount(liveGroup.selected) === 1 &&
-      localRosterSelectionChoice(
-        session,
-        liveGroup.selected[0]!.id,
-      ) === choice;
+      localRosterSelectionChoice(session, liveGroup.selected[0]!.id) === choice;
     if (alreadySelected) {
       return success(session, diagnostics);
     }
@@ -1317,10 +1383,10 @@ export function chooseLocalRosterChildGroupEntry(
   );
   diagnostics.push(...added.diagnostics);
   return added.ok
-    ? reconcileEditedSession(
-        success(added.value, diagnostics),
-        { ...input, preferredChoice: choice },
-      )
+    ? reconcileEditedSession(success(added.value, diagnostics), {
+        ...input,
+        preferredChoice: choice,
+      })
     : failure(diagnostics);
 }
 
@@ -1396,11 +1462,7 @@ export function setLocalRosterSelectionAmount(
 ): Result<LocalRosterSession> {
   const preferredChoice = localRosterSelectionChoice(session, selectionId);
   return reconcileEditedSession(
-    setLocalRosterSelectionAmountUnreconciled(
-      session,
-      selectionId,
-      amount,
-    ),
+    setLocalRosterSelectionAmountUnreconciled(session, selectionId, amount),
     {
       ...options,
       ...(preferredChoice === undefined ? {} : { preferredChoice }),
@@ -1413,11 +1475,7 @@ function setLocalRosterSelectionAmountUnreconciled(
   selectionId: SelectionOccurrenceId,
   amount: number | undefined,
 ): Result<LocalRosterSession> {
-  const updated = setRosterSelectionAmount(
-    session.roster,
-    selectionId,
-    amount,
-  );
+  const updated = setRosterSelectionAmount(session.roster, selectionId, amount);
   if (!updated.ok) return updated;
   return success(
     {
@@ -1463,10 +1521,7 @@ function initializeAddedSelection(
     choice,
   );
   if (createSelectionId === undefined) {
-    return success(
-      { ...session, roster, selectionChoices },
-      diagnostics,
-    );
+    return success({ ...session, roster, selectionChoices }, diagnostics);
   }
 
   const planned = planRosterSelectionInitialization(choice);
@@ -1536,9 +1591,7 @@ function applySelectionInitialization(
         addition.choice,
         {
           id: selectionId,
-          ...(amount === undefined || amount === 1
-            ? {}
-            : { amount }),
+          ...(amount === undefined || amount === 1 ? {} : { amount }),
         },
       );
       state.diagnostics.push(...added.diagnostics);
@@ -1547,13 +1600,15 @@ function applySelectionInitialization(
       }
       state.roster = added.value;
       state.selectionChoices.set(selectionId, addition.choice);
-      if (!applySelectionInitialization(
-        state,
-        session,
-        selectionId,
-        addition.initialization,
-        createSelectionId,
-      )) {
+      if (
+        !applySelectionInitialization(
+          state,
+          session,
+          selectionId,
+          addition.initialization,
+          createSelectionId,
+        )
+      ) {
         return false;
       }
     }
@@ -1618,19 +1673,14 @@ function effectiveInitializationAmount(
   ) {
     return addition.amount;
   }
-  return Math.max(
-    addition.minimumAmount ?? 0,
-    inspected.value.amount,
-  );
+  return Math.max(addition.minimumAmount ?? 0, inspected.value.amount);
 }
 
 function selectionTargetsDefaultAmount(
   choice: BattleScribeRosterSelectionChoice,
 ): boolean {
   return (
-    choice.modifiers.some(
-      ({ field }) => field === "defaultAmount",
-    ) ||
+    choice.modifiers.some(({ field }) => field === "defaultAmount") ||
     choice.modifierGroups.some((group) =>
       modifierGroupTargetsDefaultAmount(group),
     )
@@ -1641,17 +1691,17 @@ function modifierGroupTargetsDefaultAmount(
   group: BattleScribeRosterSelectionChoice["modifierGroups"][number],
 ): boolean {
   return (
-    group.modifiers.some(
-      ({ field }) => field === "defaultAmount",
-    ) ||
+    group.modifiers.some(({ field }) => field === "defaultAmount") ||
     group.modifierGroups.some(modifierGroupTargetsDefaultAmount)
   );
 }
 
 function isResolvedSelectionChoice(
-  choice: BattleScribeRosterSelectionChoice | {
-    readonly kind: "unresolvedEntryLink";
-  },
+  choice:
+    | BattleScribeRosterSelectionChoice
+    | {
+        readonly kind: "unresolvedEntryLink";
+      },
 ): choice is BattleScribeRosterSelectionChoice {
   return choice.kind !== "unresolvedEntryLink";
 }
@@ -1660,8 +1710,7 @@ function localRosterChildChoiceGroup(
   session: LocalRosterSession,
   parent: RosterSelection,
   inspection: RosterSelectionChoiceGroupInspection,
-  visibleChoices: readonly BattleScribeRosterSelectionChoice[] =
-    inspection.choices,
+  visibleChoices: readonly BattleScribeRosterSelectionChoice[] = inspection.choices,
 ): LocalRosterChildChoiceGroup {
   const selected = parent.selections.filter((selection) => {
     const choice = localRosterSelectionChoice(session, selection.id);
@@ -1696,10 +1745,7 @@ function localRosterRootChoiceState(
 ): LocalRosterRootChoiceState {
   const identity = inspection?.identity;
   const selected = rootSelections.filter((selection) => {
-    const selectedChoice = localRosterSelectionChoice(
-      session,
-      selection.id,
-    );
+    const selectedChoice = localRosterSelectionChoice(session, selection.id);
     if (selectedChoice === undefined) return false;
     return identity === undefined
       ? selectedChoice === choice.materialized
@@ -1732,9 +1778,7 @@ function rootBoundIdentitiesEqual(
   right: EmptySingleForceRootBoundIdentity | undefined,
 ): boolean {
   return (
-    right !== undefined &&
-    left.kind === right.kind &&
-    left.id === right.id
+    right !== undefined && left.kind === right.kind && left.id === right.id
   );
 }
 
@@ -1745,8 +1789,7 @@ function localRosterDirectChildChoice(
 ): LocalRosterDirectChildChoice {
   const selected = parent.selections.filter(
     (selection) =>
-      localRosterSelectionChoice(session, selection.id) ===
-      inspection.choice,
+      localRosterSelectionChoice(session, selection.id) === inspection.choice,
   );
   return {
     choice: inspection.choice,
@@ -1778,10 +1821,7 @@ function flattenForceDefinitions(
 
 function indexSelectionChoices(
   catalogue: LocalCatalogueChoice,
-): ReadonlyMap<
-  string,
-  readonly BattleScribeRosterSelectionChoice[]
-> {
+): ReadonlyMap<string, readonly BattleScribeRosterSelectionChoice[]> {
   const index = new Map<string, BattleScribeRosterSelectionChoice[]>();
   for (const root of catalogue.context.roots.roots) {
     if (root.materialized.kind === "unresolvedEntryLink") continue;
@@ -1821,14 +1861,8 @@ function indexSelectionChoice(
 
 function restoreSelectionChoices(
   selections: readonly RosterSelection[],
-  index: ReadonlyMap<
-    string,
-    readonly BattleScribeRosterSelectionChoice[]
-  >,
-  restored: Map<
-    SelectionOccurrenceId,
-    BattleScribeRosterSelectionChoice
-  >,
+  index: ReadonlyMap<string, readonly BattleScribeRosterSelectionChoice[]>,
+  restored: Map<SelectionOccurrenceId, BattleScribeRosterSelectionChoice>,
   catalogue: LocalCatalogueChoice,
 ): readonly ReturnType<typeof restoreDiagnostic>[] {
   const diagnostics: ReturnType<typeof restoreDiagnostic>[] = [];

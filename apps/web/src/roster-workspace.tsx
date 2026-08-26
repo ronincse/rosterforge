@@ -199,8 +199,8 @@ export function RosterOverview({
       </div>
       {printBlocked && (
         <p className="print-roster-error" role="alert">
-          The browser blocked the printable roster window. Allow popups for
-          this local page and try again.
+          The browser blocked the printable roster window. Allow popups for this
+          local page and try again.
         </p>
       )}
 
@@ -243,10 +243,7 @@ export function RosterOverview({
         </a>
       </nav>
 
-      <section
-        className="roster-builder-grid"
-        aria-label="Roster builder"
-      >
+      <section className="roster-builder-grid" aria-label="Roster builder">
         <section
           className="selected-roster-pane"
           aria-labelledby="selected-roster-heading"
@@ -275,9 +272,7 @@ export function RosterOverview({
           {force === undefined || force.selections.length === 0 ? (
             <div className="empty-selected-roster">
               <strong>No selections added yet</strong>
-              <span>
-                Browse categories in Add units to begin this roster.
-              </span>
+              <span>Browse categories in Add units to begin this roster.</span>
             </div>
           ) : (
             <div className="roster-selection-list">
@@ -330,9 +325,7 @@ export function RosterOverview({
                 type="search"
                 value={rootFilter}
                 placeholder="Filter available roots"
-                onChange={(event) =>
-                  setRootFilter(event.currentTarget.value)
-                }
+                onChange={(event) => setRootFilter(event.currentTarget.value)}
               />
             </div>
           )}
@@ -529,9 +522,7 @@ function RosterPlayerHeader({
           >
             <strong>{validation.issueCount}</strong>
             <span>
-              {validation.issueCount === 1
-                ? "known problem"
-                : "known problems"}
+              {validation.issueCount === 1 ? "known problem" : "known problems"}
             </span>
           </a>
         ) : (
@@ -652,9 +643,7 @@ function RosterPlayerHeader({
 function RosterStructuralStatus({
   result,
 }: {
-  readonly result: ReturnType<
-    typeof inspectLocalRosterSupportedValidation
-  >;
+  readonly result: ReturnType<typeof inspectLocalRosterSupportedValidation>;
 }) {
   if (!result.ok) {
     return (
@@ -706,10 +695,7 @@ function RosterStructuralStatus({
           </h3>
         </div>
         <div className="validation-badges">
-          <span
-            className="validity-badge"
-            data-validity={report.validity}
-          >
+          <span className="validity-badge" data-validity={report.validity}>
             {report.validity === "valid"
               ? "No known violations"
               : "Known violations"}
@@ -734,11 +720,7 @@ function RosterStructuralStatus({
           status="satisfied"
           value={satisfied}
         />
-        <ConstraintStatus
-          label="Violated"
-          status="violated"
-          value={violated}
-        />
+        <ConstraintStatus label="Violated" status="violated" value={violated} />
         <ConstraintStatus
           label="Unresolved"
           status="unresolved"
@@ -788,9 +770,7 @@ function RosterStructuralStatus({
         >
           <summary>
             Structural diagnostics
-            <span>
-              {formatCount(diagnostics.length, "diagnostic")}
-            </span>
+            <span>{formatCount(diagnostics.length, "diagnostic")}</span>
           </summary>
           <DiagnosticList diagnostics={diagnostics} />
         </details>
@@ -827,10 +807,7 @@ function StructuralBoundDetails({
       </summary>
       <ul>
         {bounds.map((bound) => (
-          <li
-            key={structuralBoundKey(bound)}
-            data-status={bound.status}
-          >
+          <li key={structuralBoundKey(bound)} data-status={bound.status}>
             <div>
               <strong>{structuralBoundName(bound)}</strong>
               <span>{structuralBoundKind(bound)}</span>
@@ -848,9 +825,7 @@ function StructuralBoundDetails({
             </span>
             <span className="constraint-status">
               {constraintStatusLabel(bound.status)}
-              {bound.completeness === "incomplete"
-                ? " | Incomplete"
-                : ""}
+              {bound.completeness === "incomplete" ? " | Incomplete" : ""}
             </span>
           </li>
         ))}
@@ -866,9 +841,7 @@ function countStructuralStatus(
   return bounds.filter((bound) => bound.status === status).length;
 }
 
-function structuralBoundName(
-  bound: RosterStructuralBoundReport,
-): string {
+function structuralBoundName(bound: RosterStructuralBoundReport): string {
   if (bound.kind === "root") {
     return bound.root.materialized.name ?? "Unnamed root choice";
   }
@@ -878,9 +851,7 @@ function structuralBoundName(
   return bound.group.name ?? "Unnamed selection group";
 }
 
-function structuralBoundKind(
-  bound: RosterStructuralBoundReport,
-): string {
+function structuralBoundKind(bound: RosterStructuralBoundReport): string {
   if (bound.kind === "root") return "Root selection bound";
   const owner = bound.owner.name ?? bound.owner.id;
   if (bound.kind === "direct") {
@@ -909,17 +880,14 @@ function structuralBoundObservation(
   return `${selected}, ${minimum}, ${maximum}`;
 }
 
-function structuralBoundKey(
-  bound: RosterStructuralBoundReport,
-): string {
+function structuralBoundKey(bound: RosterStructuralBoundReport): string {
   const source =
     bound.kind === "root"
       ? bound.root.materialized.occurrence
       : bound.kind === "direct"
         ? bound.choice.occurrence
         : bound.group.occurrence;
-  const owner =
-    bound.kind === "root" ? bound.force.id : bound.owner.id;
+  const owner = bound.kind === "root" ? bound.force.id : bound.owner.id;
   return JSON.stringify([
     bound.kind,
     owner,
@@ -928,9 +896,7 @@ function structuralBoundKey(
   ]);
 }
 
-function structuralBoundTarget(
-  bound: RosterStructuralBoundReport,
-): string {
+function structuralBoundTarget(bound: RosterStructuralBoundReport): string {
   return bound.kind === "root"
     ? "#root-choices-heading"
     : `#${selectionAnchor(bound.owner.id)}`;
@@ -955,9 +921,7 @@ interface ConstraintSummaryItem {
 function RosterConstraintSummary({
   result,
 }: {
-  readonly result: ReturnType<
-    typeof inspectLocalRosterSupportedValidation
-  >;
+  readonly result: ReturnType<typeof inspectLocalRosterSupportedValidation>;
 }) {
   if (!result.ok) {
     return (
@@ -968,7 +932,9 @@ function RosterConstraintSummary({
         <div className="constraint-summary-heading">
           <div>
             <p className="eyebrow">Read-only inspection</p>
-            <h3 id="roster-constraint-heading">Constraint report unavailable</h3>
+            <h3 id="roster-constraint-heading">
+              Constraint report unavailable
+            </h3>
           </div>
         </div>
         <p className="constraint-boundary">
@@ -986,15 +952,9 @@ function RosterConstraintSummary({
   const satisfied = countConstraintStatus(items, "satisfied");
   const violated = countConstraintStatus(items, "violated");
   const unresolved = countConstraintStatus(items, "unresolved");
-  const violatedItems = items.filter(
-    ({ status }) => status === "violated",
-  );
-  const unresolvedItems = items.filter(
-    ({ status }) => status === "unresolved",
-  );
-  const satisfiedItems = items.filter(
-    ({ status }) => status === "satisfied",
-  );
+  const violatedItems = items.filter(({ status }) => status === "violated");
+  const unresolvedItems = items.filter(({ status }) => status === "unresolved");
+  const satisfiedItems = items.filter(({ status }) => status === "satisfied");
   return (
     <section
       className="constraint-summary"
@@ -1016,7 +976,11 @@ function RosterConstraintSummary({
       </div>
 
       <ul className="constraint-status-list" aria-label="Constraint statuses">
-        <ConstraintStatus label="Satisfied" status="satisfied" value={satisfied} />
+        <ConstraintStatus
+          label="Satisfied"
+          status="satisfied"
+          value={satisfied}
+        />
         <ConstraintStatus label="Violated" status="violated" value={violated} />
         <ConstraintStatus
           label="Unresolved"
@@ -1027,8 +991,8 @@ function RosterConstraintSummary({
 
       {items.length === 0 ? (
         <p className="empty-constraints">
-          No supported actionable constraint bounds apply. Unsupported
-          projected constraints remain available in diagnostics.
+          No supported actionable constraint bounds apply. Unsupported projected
+          constraints remain available in diagnostics.
         </p>
       ) : (
         <>
@@ -1151,9 +1115,7 @@ function constraintSummaryItems(
   const selections = report.selections.selections.flatMap(({ constraints }) =>
     constraints
       .filter(isActionableSupportedConstraintReport)
-      .map((constraint) =>
-        selectionConstraintSummaryItem(constraint),
-      ),
+      .map((constraint) => selectionConstraintSummaryItem(constraint)),
   );
   const forces = report.forces.forces.flatMap(({ constraints }) =>
     constraints
@@ -1312,10 +1274,7 @@ function RosterSelectionSection({
 }) {
   if (selections.length === 0) return null;
   return (
-    <section
-      className="roster-selection-section"
-      aria-labelledby={anchorId}
-    >
+    <section className="roster-selection-section" aria-labelledby={anchorId}>
       <div className="roster-selection-section-heading">
         <h4 id={anchorId}>{heading}</h4>
         <span>{formatCount(amount, "selection")}</span>
@@ -1377,10 +1336,7 @@ function RosterSelectionItem({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
 }) {
   const selection = selectionModel.occurrence;
-  const childChoices = inspectLocalRosterChildChoices(
-    session,
-    selection.id,
-  );
+  const childChoices = inspectLocalRosterChildChoices(session, selection.id);
   const choice = localRosterSelectionChoice(session, selection.id);
   const annotation = useMemo(
     () => inspectLocalRosterSelectionAnnotation(session, selection.id),
@@ -1414,8 +1370,7 @@ function RosterSelectionItem({
   // open only when a descendant has a known violation — unresolved bounds stay
   // in the checks, they do not expand the tree.
   const [childrenOpen, setChildrenOpen] = useState(
-    () =>
-      selection.selections.length <= 2 || childrenContainAttention,
+    () => selection.selections.length <= 2 || childrenContainAttention,
   );
   useEffect(() => {
     if (childrenContainAttention) setChildrenOpen(true);
@@ -1497,9 +1452,7 @@ function RosterSelectionItem({
                         finiteMaximum !== undefined &&
                         rosterSelectionsAmount(direct.selected) >= finiteMaximum
                       }
-                      onClick={() =>
-                        onAddChild(selection.id, direct.choice)
-                      }
+                      onClick={() => onAddChild(selection.id, direct.choice)}
                     >
                       Add {choiceName}
                     </button>
@@ -1642,8 +1595,7 @@ function RosterSelectionChoiceGroup({
     group: LocalRosterChildChoiceGroup,
   ) => void;
 }) {
-  const name =
-    group.group.name ?? group.group.id ?? "Unnamed selection group";
+  const name = group.group.name ?? group.group.id ?? "Unnamed selection group";
   const finiteMaximum =
     group.maximum !== undefined && Number.isFinite(group.maximum)
       ? group.maximum
@@ -1679,8 +1631,7 @@ function RosterSelectionChoiceGroup({
           {group.choices.map((choice) => {
             const selected = group.selected.some(
               (selection) =>
-                localRosterSelectionChoice(session, selection.id) ===
-                choice,
+                localRosterSelectionChoice(session, selection.id) === choice,
             );
             const label = selectionChoiceLabel(choice);
             const displayLabel =
@@ -1691,8 +1642,7 @@ function RosterSelectionChoiceGroup({
                 type="button"
                 aria-pressed={selected}
                 disabled={
-                  (finiteMaximum === 1 && selected) ||
-                  blocksAdditionalChoices
+                  (finiteMaximum === 1 && selected) || blocksAdditionalChoices
                 }
                 onClick={() => onChoose(parent.id, choice, group)}
               >
@@ -1740,30 +1690,29 @@ function RosterSelectionDetails({
   ) => void;
   readonly displayNameIncomplete: boolean;
 }) {
-  // A closed `<details>` still builds its contents; the browser only hides
-  // them. On a fifteen-unit Dark Angels army 181 of 214 were closed, and React
-  // rebuilt every one of them on every edit. Nothing below is computed or
-  // rendered until the panel is open, and it is unmounted again when closed —
-  // keeping the tree small is the entire point.
-  const [opened, setOpened] = useState(false);
+  // The datasheet is the reason a player opens a unit, so it is no longer behind
+  // a second click. Laziness is preserved by *mounting*: this component renders
+  // only inside `selection-card-body`, which exists only when the card is open
+  // (`bodyVisible`), so a closed unit still computes nothing. That matters for
+  // the same reason as before — a closed `<details>` built its contents anyway,
+  // and on a fifteen-unit Dark Angels army 181 of 214 were closed while React
+  // rebuilt every one of them on every edit.
+  //
+  // Both inspections are cached per session (`roster-session.ts`), which covers
+  // repeated renders within one snapshot but *not* an edit, since an edit makes
+  // a new session. Measured cost of many open datasheets per edit is recorded in
+  // the checkpoint entry.
+  const [editing, setEditing] = useState(false);
   const characteristics = useMemo(
-    () =>
-      opened
-        ? inspectLocalRosterSelectionCharacteristics(session, selection.id)
-        : undefined,
-    [opened, session, selection.id],
+    () => inspectLocalRosterSelectionCharacteristics(session, selection.id),
+    [session, selection.id],
   );
   const categories = useMemo(
-    () =>
-      opened
-        ? inspectLocalRosterSelectionCategories(session, selection.id)
-        : undefined,
-    [opened, session, selection.id],
+    () => inspectLocalRosterSelectionCategories(session, selection.id),
+    [session, selection.id],
   );
   const reports =
-    characteristics?.ok === true
-      ? characteristics.value.byProfile
-      : undefined;
+    characteristics.ok === true ? characteristics.value.byProfile : undefined;
   const rules: readonly SelectionRuleDetail[] = [
     ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
     ...choice.materializedInfoLinks
@@ -1784,133 +1733,138 @@ function RosterSelectionDetails({
     ...choice.materializedInfoLinks.filter(isMaterializedInfoGroup),
   ];
   return (
-    <details className="selection-details" open={opened}>
-      {/* Open state is controlled rather than left to the native toggle: jsdom
-          does not implement `<details>` toggling at all, so a lazily rendered
-          panel would be permanently shut under test while working in a
-          browser. Controlling it makes both behave the same. */}
-      <summary
-        onClick={(event) => {
-          event.preventDefault();
-          setOpened((current) => !current);
-        }}
-      >
-        <span>Selection details</span>
-        <small>
-          {formatCount(profiles.length, "profile")},{" "}
-          {formatCount(rules.length, "rule")},{" "}
-          {formatCount(infoGroups.length, "info group")}
-        </small>
-      </summary>
-
-      {opened && (
-        <>
-          {/* Keep unresolved display-name warnings, but not as a banner on
-              every occurrence. Completeness of the name report is unchanged. */}
-          {displayNameIncomplete && (
-            <p className="selection-annotation-completeness">
-              Some display naming is unresolved for this selection.
-            </p>
-          )}
-          <dl className="selection-definition-details">
-            <Detail
-              label="Definition"
-              value={
-                choice.kind === "selectionEntry"
-                  ? (choice.type ?? "Selection entry")
-                  : "Selection group"
-              }
-            />
-            <Detail label="Source" value={choice.definition.source.filename} />
-            <Detail
-              label="Hidden"
-              value={
-                choice.hidden === undefined
-                  ? "Not specified"
-                  : String(choice.hidden)
-              }
-            />
-          </dl>
-
-          <SelectionNameEditor
-            selection={selection}
-            definitionName={choice.name}
-            onRename={onRename}
-          />
-          {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
-            <SelectionAmountEditor
-              selection={selection}
-              defaultAmount={choice.defaultAmount}
-              step={choice.step}
-              onSetAmount={onSetAmount}
-            />
-          )}
-
-          {categories?.ok === true && (
-            <SelectionKeywords inspection={categories.value} />
-          )}
-
-          {profiles.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Profiles</h4>
-              <div className="selection-profile-list">
-                {profiles.map((profile, index) => (
-                  <SelectionProfile
-                    key={selectionProfileKey(profile, index)}
-                    profile={profile}
-                    report={reports?.get(profile.value)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {rules.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Rules</h4>
-              <div className="selection-rule-list">
-                {rules.map((rule, index) => (
-                  <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {infoGroups.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Info groups</h4>
-              <div className="selection-info-group-list">
-                {infoGroups.map((infoGroup, index) => (
-                  <SelectionInfoGroup
-                    key={selectionInfoGroupKey(infoGroup, index)}
-                    infoGroup={infoGroup}
-                    reports={reports}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {unresolved.length > 0 && (
-            <section className="selection-info-section unresolved-info-links">
-              <h4>Unresolved info links</h4>
-              <ul>
-                {unresolved.map((infoLink, index) => (
-                  <li key={unresolvedInfoLinkKey(infoLink, index)}>
-                    <strong>
-                      {infoLink.link.name ??
-                        infoLink.link.targetId ??
-                        "Unnamed info link"}
-                    </strong>
-                    <span>{infoLink.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
+    <div className="selection-datasheet">
+      {/* Keep unresolved display-name warnings, but not as a banner on
+          every occurrence. Completeness of the name report is unchanged. */}
+      {displayNameIncomplete && (
+        <p className="selection-annotation-completeness">
+          Some display naming is unresolved for this selection.
+        </p>
       )}
-    </details>
+
+      {categories.ok === true && (
+        <SelectionKeywords inspection={categories.value} />
+      )}
+
+      {profiles.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Profiles</h4>
+          <div className="selection-profile-list">
+            {profiles.map((profile, index) => (
+              <SelectionProfile
+                key={selectionProfileKey(profile, index)}
+                profile={profile}
+                report={reports?.get(profile.value)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {rules.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Rules</h4>
+          <div className="selection-rule-list">
+            {rules.map((rule, index) => (
+              <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {infoGroups.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Info groups</h4>
+          <div className="selection-info-group-list">
+            {infoGroups.map((infoGroup, index) => (
+              <SelectionInfoGroup
+                key={selectionInfoGroupKey(infoGroup, index)}
+                infoGroup={infoGroup}
+                reports={reports}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {unresolved.length > 0 && (
+        <section className="selection-info-section unresolved-info-links">
+          <h4>Unresolved info links</h4>
+          <ul>
+            {unresolved.map((infoLink, index) => (
+              <li key={unresolvedInfoLinkKey(infoLink, index)}>
+                <strong>
+                  {infoLink.link.name ??
+                    infoLink.link.targetId ??
+                    "Unnamed info link"}
+                </strong>
+                <span>{infoLink.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Renaming an occurrence, setting a non-model amount, and the definition
+          provenance rows are build-time work, not reading material — so they
+          stay behind a disclosure while the datasheet no longer does. It is
+          named for the editing it offers rather than "Selection details",
+          because non-model `Amount` is reachable *only* here and an unnamed
+          panel would hide it. Model amounts keep their promoted editor on the
+          card body. Open state is controlled rather than native: jsdom does not
+          implement `<details>` toggling, so a lazily rendered panel would be
+          permanently shut under test while working in a browser. */}
+      <details className="selection-edit" open={editing}>
+        <summary
+          onClick={(event) => {
+            event.preventDefault();
+            setEditing((current) => !current);
+          }}
+        >
+          <span>Edit selection</span>
+          <small>Name, amount, and source</small>
+        </summary>
+        {editing && (
+          <>
+            <dl className="selection-definition-details">
+              <Detail
+                label="Definition"
+                value={
+                  choice.kind === "selectionEntry"
+                    ? (choice.type ?? "Selection entry")
+                    : "Selection group"
+                }
+              />
+              <Detail
+                label="Source"
+                value={choice.definition.source.filename}
+              />
+              <Detail
+                label="Hidden"
+                value={
+                  choice.hidden === undefined
+                    ? "Not specified"
+                    : String(choice.hidden)
+                }
+              />
+            </dl>
+            <SelectionNameEditor
+              selection={selection}
+              definitionName={choice.name}
+              onRename={onRename}
+            />
+            {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
+              <SelectionAmountEditor
+                selection={selection}
+                defaultAmount={choice.defaultAmount}
+                step={choice.step}
+                onSetAmount={onSetAmount}
+              />
+            )}
+          </>
+        )}
+      </details>
+    </div>
   );
 }
 
@@ -2003,7 +1957,9 @@ function SelectionAmountEditor({
           min="0.000000001"
           step={numericStep ?? "any"}
           value={amount}
-          aria-describedby={defaultAmount === undefined ? undefined : `${id}-hint`}
+          aria-describedby={
+            defaultAmount === undefined ? undefined : `${id}-hint`
+          }
           onChange={(event) => setAmount(event.currentTarget.value)}
         />
         <button type="submit" disabled={!canSave}>
@@ -2102,10 +2058,10 @@ function SelectionProfile({
 }) {
   const baseName =
     profile.origin === "Direct"
-      ? profile.value.name ?? "Unnamed profile"
-      : profile.value.name ??
+      ? (profile.value.name ?? "Unnamed profile")
+      : (profile.value.name ??
         profile.value.definition.name ??
-        "Unnamed profile";
+        "Unnamed profile");
   const { typeName, characteristics } = profile.value;
   // Effective name runs before annotation: "Mortifier w/ sarcophagus" can
   // still receive a separate parenthesized decoration. An unresolved name
@@ -2175,8 +2131,7 @@ function SelectionCharacteristic({
 }: {
   readonly characteristic: DirectProfile["characteristics"][number];
   readonly report:
-    | RosterProfileCharacteristicReport["characteristics"][number]
-    | undefined;
+    RosterProfileCharacteristicReport["characteristics"][number] | undefined;
 }) {
   const modified = report !== undefined && report.steps.length > 0;
   const unresolved = modified && report.value === undefined;
@@ -2191,7 +2146,7 @@ function SelectionCharacteristic({
   const routedName =
     routedStep === undefined
       ? undefined
-      : routedStep.declaredBy.name ?? "another selection";
+      : (routedStep.declaredBy.name ?? "another selection");
   // The verb has to match the operation. An `append` adds to the printed value
   // rather than replacing it, and calling that "set" would misdescribe what the
   // reader is looking at.
@@ -2217,8 +2172,7 @@ function SelectionCharacteristic({
         <span>{displayed === "" ? "Empty value" : displayed}</span>
         {changed && (
           <small>
-            Base{" "}
-            {report.baseValue === "" ? "empty value" : report.baseValue}
+            Base {report.baseValue === "" ? "empty value" : report.baseValue}
           </small>
         )}
         {unresolved && <small>Effective value unresolved</small>}
@@ -2236,7 +2190,7 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
   const name =
     rule.origin === "Direct"
       ? rule.value.name
-      : rule.value.name ?? rule.value.definition.name;
+      : (rule.value.name ?? rule.value.definition.name);
   const { description } = rule.value;
   const source =
     rule.origin === "Direct"
@@ -2486,9 +2440,7 @@ function stableDomAnchor(prefix: string, value: string): string {
 
 function rootChoiceLabel(choice: LocalRosterRootChoice): string {
   return (
-    choice.materialized.name ??
-    choice.materialized.id ??
-    "Unnamed selection"
+    choice.materialized.name ?? choice.materialized.id ?? "Unnamed selection"
   );
 }
 
@@ -2506,18 +2458,13 @@ function rootChoiceStatus(
   if ((state.minimum ?? 0) > 0) {
     return `${selected}; requirement met`;
   }
-  if (
-    state.maximum !== undefined &&
-    Number.isFinite(state.maximum)
-  ) {
+  if (state.maximum !== undefined && Number.isFinite(state.maximum)) {
     return `${selected} of ${state.maximum} allowed`;
   }
   return selectedAmount > 0 ? selected : undefined;
 }
 
-function selectionChoiceKey(
-  choice: BattleScribeRosterSelectionChoice,
-): string {
+function selectionChoiceKey(choice: BattleScribeRosterSelectionChoice): string {
   return JSON.stringify([
     choice.occurrence.source.sourceId,
     ...choice.occurrence.path,
@@ -2530,9 +2477,7 @@ function selectionChoiceLabel(
   return choice.name ?? choice.id ?? "Unnamed selection";
 }
 
-function selectionGroupStatus(
-  group: LocalRosterChildChoiceGroup,
-): string {
+function selectionGroupStatus(group: LocalRosterChildChoiceGroup): string {
   const selected = `${rosterSelectionsAmount(group.selected)} selected`;
   if (group.completeness === "incomplete") {
     return `${selected}; supported bounds are incomplete`;
@@ -2543,10 +2488,7 @@ function selectionGroupStatus(
   if ((group.minimum ?? 0) > 0) {
     return `${selected}; requirement met`;
   }
-  if (
-    group.maximum !== undefined &&
-    Number.isFinite(group.maximum)
-  ) {
+  if (group.maximum !== undefined && Number.isFinite(group.maximum)) {
     return `${selected} of ${group.maximum} allowed`;
   }
   return `${selected}; optional`;
@@ -2566,10 +2508,7 @@ function directChoiceStatus(
   if ((direct.minimum ?? 0) > 0) {
     return `${selected}; requirement met`;
   }
-  if (
-    direct.maximum !== undefined &&
-    Number.isFinite(direct.maximum)
-  ) {
+  if (direct.maximum !== undefined && Number.isFinite(direct.maximum)) {
     return `${selected} of ${direct.maximum} allowed`;
   }
   return selectedAmount > 0 ? selected : undefined;
