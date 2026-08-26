@@ -50,6 +50,7 @@ import {
   createLocalRosterSession,
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
+  inspectLocalRosterSelectionCategories,
   inspectLocalRosterConstraints,
   inspectLocalRosterRootChoices,
   inspectLocalRosterStructuralStatus,
@@ -3329,6 +3330,71 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
         ).toEqual(["Reconnaissance"]);
+        const corsairVoidscarred = localRosterRootChoices(catalogue).find(
+          ({ materialized }) =>
+            materialized.name === "Corsair Voidscarred",
+        );
+        expect(corsairVoidscarred).toBeDefined();
+        if (corsairVoidscarred === undefined) return;
+        let corsairChildId = 0;
+        const withCorsair = addLocalRosterRootSelection(
+          configured,
+          corsairVoidscarred,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-aeldari-corsair-voidscarred",
+            ),
+            createSelectionId: () =>
+              selectionOccurrenceId(
+                `real-aeldari-corsair-child-${++corsairChildId}`,
+              ),
+          },
+        );
+        expect(withCorsair.ok).toBe(true);
+        if (!withCorsair.ok) return;
+        const corsairSelection = withCorsair.value.roster.forces[0]?.selections
+          .find(({ name }) => name === "Corsair Voidscarred");
+        const felarch = corsairSelection === undefined
+          ? undefined
+          : rosterSelections([corsairSelection]).find(
+              ({ name }) => name === "Voidscarred Felarch",
+            );
+        expect(felarch).toBeDefined();
+        if (corsairSelection === undefined || felarch === undefined) return;
+        const corsairCategories = inspectLocalRosterSelectionCategories(
+          withCorsair.value,
+          corsairSelection.id,
+        );
+        expect(corsairCategories.ok).toBe(true);
+        if (!corsairCategories.ok) return;
+        expect(
+          corsairCategories.value.categories?.map(({ name }) => name),
+        ).toEqual(
+          expect.arrayContaining([
+            "Anhrathe",
+            "Corsair Voidscarred",
+            "Aeldari",
+            "Ynnari",
+            "Corsairs and Travelling Players",
+          ]),
+        );
+        expect(
+          corsairCategories.value.categories?.some(({ name, id }) => name === id),
+        ).toBe(false);
+        const felarchChoices = inspectLocalRosterChildChoices(
+          withCorsair.value,
+          felarch.id,
+        );
+        expect(felarchChoices.ok).toBe(true);
+        if (!felarchChoices.ok) return;
+        const mistshield = felarchChoices.value.direct.find(
+          ({ choice }) => choice.name === "Mistshield",
+        );
+        expect(mistshield).toMatchObject({
+          maximum: 1,
+          selected: [],
+          completeness: "complete",
+        });
         const guardianDefenders = localRosterRootChoices(catalogue).find(
           ({ materialized }) =>
             materialized.name === "Guardian Defenders",

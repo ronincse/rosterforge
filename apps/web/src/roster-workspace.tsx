@@ -191,6 +191,9 @@ export function RosterOverview({
     if (checksNeedAttention) setChecksOpen(true);
   }, [checksNeedAttention, validationIssueCount]);
   const topLevelSelectionCount = workspace.topLevelSelectionCount;
+  const limitBearingCost = workspace.costs.available
+    ? workspace.costs.activeTotals.find(({ limit }) => limit !== undefined)
+    : undefined;
   return (
     <div className="roster-overview">
       <RosterPlayerHeader workspace={workspace} />
@@ -254,14 +257,41 @@ export function RosterOverview({
       >
         <a
           href="#selected-roster-heading"
-          aria-label={`Roster, ${formatCount(
-            topLevelSelectionCount,
-            "top-level selection",
-          )}`}
+          aria-label={
+            limitBearingCost?.limit === undefined
+              ? `Roster, ${formatCount(
+                  topLevelSelectionCount,
+                  "top-level selection",
+                )}`
+              : `Roster, ${formatNumber(limitBearingCost.value)} of ${formatNumber(
+                  limitBearingCost.limit,
+                )} ${limitBearingCost.name} used`
+          }
         >
-          <span>Roster</span>
-          <strong>{topLevelSelectionCount}</strong>
-          <small>top-level selections</small>
+          {limitBearingCost?.limit === undefined ? (
+            <>
+              <span>Roster</span>
+              <strong>{topLevelSelectionCount}</strong>
+              <small>top-level selections</small>
+            </>
+          ) : (
+            <>
+              <span>{limitBearingCost.name} used</span>
+              <strong>
+                {formatNumber(limitBearingCost.value)} /{" "}
+                {formatNumber(limitBearingCost.limit)}
+              </strong>
+              <small>
+                {limitBearingCost.value > limitBearingCost.limit
+                  ? `${formatNumber(
+                      limitBearingCost.value - limitBearingCost.limit,
+                    )} over limit`
+                  : `${formatNumber(
+                      limitBearingCost.limit - limitBearingCost.value,
+                    )} remaining`}
+              </small>
+            </>
+          )}
         </a>
         <button
           type="button"
@@ -342,6 +372,11 @@ export function RosterOverview({
                   roleKnown={group.role.known}
                   selections={group.selections}
                   amount={group.amount}
+                  section={
+                    group.role.key === "configuration"
+                      ? "configuration"
+                      : "army"
+                  }
                   collapsible={group.role.key !== "configuration"}
                   session={session}
                   selectionCanAddAnother={selectionCanAddAnother}
@@ -608,7 +643,12 @@ function RosterPlayerHeader({
         ) : (
           costs.activeTotals.map((total) => (
             <p className="player-header-figure" key={total.typeId}>
-              <strong>{formatNumber(total.value)}</strong>
+              <strong>
+                {formatNumber(total.value)}
+                {total.limit === undefined
+                  ? ""
+                  : ` / ${formatNumber(total.limit)}`}
+              </strong>
               <span>{total.name}</span>
             </p>
           ))
@@ -1336,6 +1376,7 @@ function RosterSelectionSection({
   roleKnown,
   selections,
   amount,
+  section,
   collapsible,
   session,
   selectionCanAddAnother,
@@ -1354,6 +1395,7 @@ function RosterSelectionSection({
   readonly roleKnown: boolean;
   readonly selections: readonly RosterWorkspaceSelection[];
   readonly amount: number;
+  readonly section: "configuration" | "army";
   /**
    * Army units collapse; configuration does not. Hiding the detachment,
    * battle-size and force-disposition pickers behind a click would bury the
@@ -1385,7 +1427,11 @@ function RosterSelectionSection({
     (selection) => selection.containsAttention,
   );
   return (
-    <section className="roster-selection-section" aria-labelledby={anchorId}>
+    <section
+      className="roster-selection-section"
+      aria-labelledby={anchorId}
+      data-section={section}
+    >
       <div
         className="roster-selection-section-heading"
         data-contains-attention={containsAttention}
@@ -1611,28 +1657,53 @@ function RosterSelectionItem({
               {childChoices.value.direct.map((direct) => {
                 const choiceName = selectionChoiceLabel(direct.choice);
                 const status = directChoiceStatus(direct);
+                const selectedOccurrence = direct.selected.at(-1);
+                const selectedAmount = rosterSelectionsAmount(direct.selected);
                 const finiteMaximum =
                   direct.maximum !== undefined &&
                   Number.isFinite(direct.maximum)
                     ? direct.maximum
                     : undefined;
+                const canAddAnother =
+                  selectedOccurrence !== undefined &&
+                  (finiteMaximum === undefined ||
+                    selectedAmount < finiteMaximum) &&
+                  (selectionCanAddAnother.get(selectedOccurrence.id) ?? true);
                 return (
                   <span
                     className="direct-child-choice"
                     key={selectionChoiceKey(direct.choice)}
                     data-completeness={direct.completeness}
+                    data-selected={
+                      selectedOccurrence === undefined ? undefined : "true"
+                    }
                   >
                     <button
                       type="button"
-                      aria-label={`Add ${choiceName} to ${name}`}
+                      aria-pressed={selectedOccurrence !== undefined}
                       disabled={
+                        selectedOccurrence === undefined &&
                         finiteMaximum !== undefined &&
-                        rosterSelectionsAmount(direct.selected) >= finiteMaximum
+                        selectedAmount >= finiteMaximum
                       }
-                      onClick={() => onAddChild(selection.id, direct.choice)}
+                      onClick={() =>
+                        selectedOccurrence === undefined
+                          ? onAddChild(selection.id, direct.choice)
+                          : onRemove(selectedOccurrence.id)
+                      }
                     >
-                      Add {choiceName}
+                      {selectedAmount > 1
+                        ? `${choiceName} (${selectedAmount} selected)`
+                        : choiceName}
                     </button>
+                    {canAddAnother && (
+                      <button
+                        type="button"
+                        onClick={() => onAddChild(selection.id, direct.choice)}
+                      >
+                        Add another {choiceName}
+                      </button>
+                    )}
                     {status !== undefined && <small>{status}</small>}
                   </span>
                 );

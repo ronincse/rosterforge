@@ -1117,9 +1117,11 @@ describe("App local catalogue flow", () => {
       within(playerHeader).getByText("Known violations"),
     ).toBeTruthy();
 
+    const veterans = rosterSelection("selection-ui-1");
+    expect(veterans).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", {
-        name: "Add Special Weapon to Veterans",
+      within(veterans as HTMLElement).getByRole("button", {
+        name: "Special Weapon",
       }),
     );
     await waitFor(() => {
@@ -1127,9 +1129,15 @@ describe("App local catalogue flow", () => {
     });
     expect(screen.getByText("Special Weapon (Master-crafted)")).toBeTruthy();
     expect(within(playerHeader).getByText("170")).toBeTruthy();
+    const selectedWeaponControl = within(
+      veterans as HTMLElement,
+    ).getByRole("button", { name: "Special Weapon" });
+    expect(selectedWeaponControl.getAttribute("aria-pressed")).toBe("true");
     expect(
-      screen.getAllByRole("button", { name: /Add Special Weapon/u }),
-    ).toHaveLength(2);
+      within(veterans as HTMLElement).getByRole("button", {
+        name: "Add another Special Weapon",
+      }),
+    ).toBeTruthy();
 
     // The weapon's own datasheet says 4; the squad's `affects` selector routes a
     // set to it. The panel has to name the declarer, or the reader cannot tell
@@ -1160,6 +1168,23 @@ describe("App local catalogue flow", () => {
     expect(weaponNode.getByText("Added by Veterans")).toBeTruthy();
     // A display annotation renders in parentheses after the profile name, the
     // way New Recruit shows it.
+
+    // The same quick-choice control removes the newest exact occurrence. A
+    // distinct Add-another action keeps genuinely repeatable direct choices
+    // additive without making the selected control add by accident.
+    fireEvent.click(selectedWeaponControl);
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-3")).toBeNull();
+    });
+    expect(
+      within(veterans as HTMLElement)
+        .getByRole("button", { name: "Special Weapon" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    fireEvent.click(undo);
+    await waitFor(() => {
+      expect(rosterSelection("selection-ui-3")).toBeTruthy();
+    });
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -1219,6 +1244,87 @@ describe("App local catalogue flow", () => {
       screen.queryByRole("navigation", {
         name: "Roster workspace navigation",
       }),
+    ).toBeNull();
+  });
+
+  it("keeps the evaluated points limit visible and names imported keywords", async () => {
+    const systemSource = new TextDecoder().decode(gameSystemBytes);
+    const pointsLimitedSource = systemSource.replace(
+      /(id="force-roster-max"[\s\S]*?\/>\s*)(<\/constraints>)/u,
+      `$1<constraint
+          id="force-points-max"
+          type="max"
+          field="cost-points"
+          scope="force"
+          value="2000"
+          shared="true"
+          includeChildSelections="true"
+          includeChildForces="true"
+        />
+      $2`,
+    );
+    expect(pointsLimitedSource).not.toBe(systemSource);
+    const catalogueSource = new TextDecoder().decode(catalogueBytes);
+    const importedKeywordSource = catalogueSource.replace(
+      /(<categoryLink id="squad-infantry"[\s\S]*?\/>)/u,
+      `$1
+        <categoryLink id="squad-anhrathe" name="Anhrathe"
+          targetId="opaque-imported-category-id" primary="false" />`,
+    );
+    expect(importedKeywordSource).not.toBe(catalogueSource);
+    const system = xmlBytes(pointsLimitedSource);
+    const catalogue = xmlBytes(importedKeywordSource);
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "minimal.gst", bytes: system },
+        { filename: "minimal.cat", bytes: catalogue },
+      ],
+      fixedOptions,
+    );
+    const prepare = vi.fn<typeof prepareLocalCatalogueLibrary>(
+      async () => prepared,
+    );
+    render(<App prepareLibrary={prepare} />);
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", system),
+          browserFile("minimal.cat", catalogue),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const workspaceNavigation = screen.getByRole("navigation", {
+      name: "Roster workspace navigation",
+    });
+    expect(
+      within(workspaceNavigation).getByRole("link", {
+        name: "Roster, 0 of 2,000 Points used",
+      }),
+    ).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("0 / 2,000")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("2,000 remaining")).toBeTruthy();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+    );
+    await waitFor(() => {
+      expect(
+        within(workspaceNavigation).getByRole("link", {
+          name: "Roster, 80 of 2,000 Points used",
+        }),
+      ).toBeTruthy();
+    });
+    expect(within(workspaceNavigation).getByText("80 / 2,000")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("1,920 remaining")).toBeTruthy();
+    const selectedRoster = screen.getByRole("region", {
+      name: "Selected roster",
+    });
+    expect(within(selectedRoster).getByText("Anhrathe")).toBeTruthy();
+    expect(
+      within(selectedRoster).queryByText("opaque-imported-category-id"),
     ).toBeNull();
   });
 
@@ -1721,7 +1827,12 @@ describe("App local catalogue flow", () => {
     expect(
       within(initializedModels).getAllByLabelText("Models in this squad"),
     ).toHaveLength(2);
-    expect(within(initializedModels).queryByText("Required Weapon")).toBeNull();
+    expect(
+      within(initializedModels).getAllByRole("button", {
+        name: "Required Weapon",
+        pressed: true,
+      }),
+    ).toHaveLength(2);
     expect(
       within(selectedRoster).queryByText("Default Option", {
         selector: "strong",
@@ -1847,10 +1958,11 @@ describe("App local catalogue flow", () => {
         name: "Add Disabled Automatic Root",
       }),
     ).toHaveProperty("disabled", false);
-    const addRequiredModel = await screen.findByRole("button", {
-      name: "Add Required Model to Initialization Unit",
+    const requiredModelControl = await screen.findByRole("button", {
+      name: "Required Model (2 selected)",
     });
-    expect(addRequiredModel).toHaveProperty("disabled", true);
+    expect(requiredModelControl.getAttribute("aria-pressed")).toBe("true");
+    expect(requiredModelControl).toHaveProperty("disabled", false);
     expect(
       screen.getByText("2 selected; requirement met"),
     ).toBeTruthy();
@@ -1862,7 +1974,9 @@ describe("App local catalogue flow", () => {
 
     expect(rosterSelection("selection-ui-bound-2")).toBeNull();
     expect(rosterSelection("selection-ui-bound-3")).toBeNull();
-    expect(addRequiredModel).toHaveProperty("disabled", false);
+    const addRequiredModel = screen.getByRole("button", {
+      name: "Add another Required Model",
+    });
     expect(
       screen.getByText("1 selected; 1 still required"),
     ).toBeTruthy();
@@ -1894,7 +2008,9 @@ describe("App local catalogue flow", () => {
       ),
     );
     expect(rosterSelection("selection-ui-bound-8")).toBeTruthy();
-    expect(addRequiredModel).toHaveProperty("disabled", true);
+    expect(
+      screen.queryByRole("button", { name: "Add another Required Model" }),
+    ).toBeNull();
     expect(
       screen.getByText("2 selected; requirement met"),
     ).toBeTruthy();

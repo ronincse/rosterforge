@@ -989,6 +989,20 @@ function computeSelectionCategories(
       names.set(id, name);
     }
   }
+  // A materialized entry can originate in an imported catalogue whose
+  // category definitions are not part of the primary catalogue's local
+  // category view. The link still carries the authored display name. Use it as
+  // a fallback so those effective keywords remain readable instead of exposing
+  // their opaque target IDs; a resolved local definition above stays canonical.
+  for (const link of choice.categoryLinks) {
+    if (
+      link.targetId !== undefined &&
+      link.name !== undefined &&
+      !names.has(link.targetId)
+    ) {
+      names.set(link.targetId, link.name);
+    }
+  }
   const report = evaluated.value;
   const describe = (
     id: ObjectId,

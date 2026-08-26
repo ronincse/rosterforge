@@ -43,6 +43,8 @@ export interface RosterWorkspaceCost {
   readonly typeId: string;
   readonly name: string;
   readonly value: number;
+  /** Complete, finite maximum evaluated for this exact cost type. */
+  readonly limit?: number;
 }
 
 export type RosterWorkspaceCostSummary =
@@ -246,7 +248,7 @@ export function createRosterWorkspaceViewModel(
   activeSelectionId?: SelectionOccurrenceId,
 ): RosterWorkspaceViewModel {
   const primaryForce = session.roster.forces[0];
-  const costs = workspaceCostSummary(reports.costs);
+  const costs = workspaceCostSummary(reports.costs, reports.validation);
   const validation = workspaceValidationSummary(reports.validation);
   const sectionByChoice = rootChoiceSectionIndex(session);
   const costEvaluationBySelection = reports.costs.ok
@@ -294,6 +296,7 @@ export function createRosterWorkspaceViewModel(
 
 function workspaceCostSummary(
   result: Result<RosterSelectionConditionCostReport>,
+  validation: Result<LocalRosterSupportedValidationInspection>,
 ): RosterWorkspaceCostSummary {
   if (!result.ok) {
     return {
@@ -305,15 +308,30 @@ function workspaceCostSummary(
       diagnostics: result.diagnostics,
     };
   }
-  const totals = result.value.totals.map(workspaceCost);
+  const limits = workspaceCostLimits(validation);
+  const totals: RosterWorkspaceCost[] = result.value.totals.map((total) => {
+    const cost = workspaceCost(total);
+    const limited = limits.get(cost.typeId);
+    return limited === undefined ? cost : { ...cost, limit: limited.limit };
+  });
+  const projectedTypes = new Set(totals.map(({ typeId }) => typeId));
+  for (const limited of limits.values()) {
+    if (!projectedTypes.has(limited.typeId)) totals.push(limited);
+  }
   // Community catalogues attach many campaign bookkeeping fields to every
   // unit. Keep their zero totals available without promoting them beside
   // matched-play points or inventing a game-mode filter that drops source data.
   return {
     available: true,
     completeness: result.value.completeness,
-    activeTotals: totals.filter(({ value }) => value !== 0),
-    zeroTotals: totals.filter(({ value }) => value === 0),
+    // A limit-bearing total is active even at zero: 0 / 2,000 pts is the
+    // starting state a matched-play player needs, not bookkeeping to collapse.
+    activeTotals: totals.filter(
+      ({ value, limit }) => value !== 0 || limit !== undefined,
+    ),
+    zeroTotals: totals.filter(
+      ({ value, limit }) => value === 0 && limit === undefined,
+    ),
     excludedCount: result.value.selections.reduce(
       (total, selection) =>
         total +
@@ -325,6 +343,51 @@ function workspaceCostSummary(
     ).length,
     diagnostics: result.diagnostics,
   };
+}
+
+/**
+ * Finds the tightest complete maximum for every evaluated force-cost type.
+ *
+ * Force constraints are the authoritative points-limit source. Names such as
+ * `pts` are catalogue presentation and cannot safely identify matched-play
+ * points. Incomplete, unbounded, and non-cost constraints remain in Checks and
+ * are deliberately not promoted into a confident player-facing maximum.
+ */
+function workspaceCostLimits(
+  validation: Result<LocalRosterSupportedValidationInspection>,
+): ReadonlyMap<string, RosterWorkspaceCost & { readonly limit: number }> {
+  const limits = new Map<
+    string,
+    RosterWorkspaceCost & { readonly limit: number }
+  >();
+  if (!validation.ok) return limits;
+
+  for (const force of validation.value.constraints.forces.forces) {
+    for (const constraint of force.constraints) {
+      const evaluation = constraint.costEvaluation;
+      const limit = constraint.limit;
+      if (
+        constraint.constraintType !== "max" ||
+        constraint.completeness !== "complete" ||
+        evaluation?.exact !== true ||
+        limit === undefined ||
+        !Number.isFinite(limit) ||
+        limit < 0
+      ) {
+        continue;
+      }
+      const current = limits.get(evaluation.typeId);
+      if (current === undefined || limit < current.limit) {
+        limits.set(evaluation.typeId, {
+          typeId: evaluation.typeId,
+          name: evaluation.costType.name ?? evaluation.typeId,
+          value: evaluation.value,
+          limit,
+        });
+      }
+    }
+  }
+  return limits;
 }
 
 function workspaceValidationSummary(

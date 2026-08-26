@@ -1519,7 +1519,11 @@ combines the evaluation group projection with the parent's current direct
 children. It returns direct and grouped concrete choices, selected occurrences,
 amount-scaled selected totals, remaining supported minimum, supported maximum,
 and completeness. Direct
-choices at a reached supported maximum have disabled browser add controls. A
+choices use the same stable control for selection and removal: when selected,
+the control removes the newest matching occurrence, while a distinct
+add-another action preserves genuinely repeatable entries until their supported
+maximum is reached. Exact effective parent maxima also suppress add-another;
+unknown capacity stays permissive and incomplete rather than being guessed. A
 group is presentation metadata and is not added to the roster.
 
 Choosing a group entry creates that concrete nested occurrence through
@@ -1732,11 +1736,13 @@ findings and opens any ancestor disclosure containing one of those IDs.
 Disclosure state is neither part of `LocalRosterSession` nor persisted.
 
 The workspace navigator is another derived presentation over the same
-snapshot. Its Roster count is the number of direct selections in the one
-displayed force, its Add units count is the current filtered visible-root
-count, and its Checks count is the sum of violated and unresolved items in the
-supported-validation composition. Each link targets a stable heading. Desktop
-pane placement and mobile stacking do not create a second roster model or
-change category grouping, report order, or command eligibility. Hiding the
-catalogue summary while the roster workspace is active is likewise
-presentation-only; clearing setup reveals the same imported library.
+snapshot. When a complete finite maximum exists for an evaluated cost type,
+its first link shows used, maximum, and remaining cost so that capacity stays
+visible while the document scrolls; otherwise it falls back to the number of
+direct selections in the displayed force. Its Add units count is the current
+filtered visible-root count, and its Checks count is the supported-validation
+violation count. Each link targets a stable heading. Desktop pane placement and
+mobile stacking do not create a second roster model or change category
+grouping, report order, or command eligibility. Hiding the catalogue summary
+while the roster workspace is active is likewise presentation-only; clearing
+setup reveals the same imported library.

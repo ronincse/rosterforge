@@ -59,7 +59,11 @@ summary:focus-visible {
 }
 
 .app-shell {
-  width: min(1240px, calc(100% - 40px));
+  /* The workspace owns real horizontal tools (roster, catalogue, and the
+     upcoming selected-unit editor). A fixed 1,240 px cap stranded useful
+     desktop space and squeezed the roster first, so only the viewport gutters
+     bound the shell now; individual reading surfaces keep their own measures. */
+  width: calc(100% - 40px);
   min-height: 100vh;
   margin: 0 auto;
   display: flex;
@@ -1529,6 +1533,20 @@ h1 {
   min-width: 0;
 }
 
+.roster-selection-section[data-section="configuration"] {
+  padding: 14px;
+  background: #f3efe4;
+  border: 1px solid #d7c69d;
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+}
+
+.roster-selection-section[data-section="army"] +
+  .roster-selection-section[data-section="army"] {
+  padding-top: 14px;
+  border-top: 1px solid #cbd0ca;
+}
+
 .roster-selection-section-heading {
   display: flex;
   align-items: baseline;
@@ -1780,6 +1798,12 @@ h1 {
   display: grid;
   gap: 3px;
   max-width: 190px;
+}
+
+.direct-child-choice[data-selected="true"] > button:first-child {
+  color: #fffdf6;
+  background: var(--forest);
+  border-color: var(--forest);
 }
 
 .child-choice-list button {
@@ -2522,7 +2546,7 @@ footer {
   }
 
   .app-shell {
-    width: min(100% - 24px, 1240px);
+    width: calc(100% - 24px);
   }
 
   .site-header {
