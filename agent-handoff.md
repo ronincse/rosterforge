@@ -9915,7 +9915,8 @@ Live browser QA used the pinned Death Guard catalogue at desktop and 390 x 844:
 - pinned corpus `E:\GitHub\wh40k-11e` at
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files — **526 passed
   (526)** across all 54 files. Its branch is four commits behind its moving
-  remote; the exact pin was intentionally not changed.
+  remote; the exact pin was intentionally not changed; and
+- GitHub Actions `#33000424121` for `a8e6063` — **passed**.
 
 ### What this did not do
 
