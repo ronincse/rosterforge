@@ -10483,6 +10483,8 @@ Verification:
 - `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
   the production build retains only Vite's existing large-chunk warning; and
 - `pnpm test` — **512 passed, 18 skipped (530)** across 54 files.
+- GitHub Actions `#33017234229` for `fce72bd` — **passed** all repository CI
+  gates.
 
 The optional corpus suite was not rerun because this checkpoint changes only
 web presentation and uses no new imported-data semantic claim. The configured
