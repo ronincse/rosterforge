@@ -1324,6 +1324,11 @@ EVALUATION_ROOT_INITIALIZATION_CONSTRAINT_BOUNDS_CONFLICT
 EVALUATION_ROOT_INITIALIZATION_RESOURCE_LIMIT
 ```
 
+`EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED` says that
+the effective root limit is unresolved because its modifier applicability needs
+a live roster context. It is compatibility evidence, not a player mistake or a
+claim that an automatic quantity was required.
+
 Root shape diagnostics point to the projected constraint; group, conflict, and
 resource diagnostics point to the visible materialized occurrence. Modifier
 diagnostics point to the first relevant modifier or group. Supported

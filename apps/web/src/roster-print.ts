@@ -331,8 +331,8 @@ function renderCostSummary(costs: RosterPrintCostStatus): string {
     costs.completeness,
     "'><div class='status-heading'><h2>Roster costs</h2><strong>",
     costs.completeness === "complete"
-      ? "Complete supported view"
-      : "Incomplete supported view",
+      ? "Supported costs complete"
+      : "Some costs not evaluated",
     "</strong></div>",
     costs.totals.length === 0
       ? "<p>No supported numeric costs are present.</p>"

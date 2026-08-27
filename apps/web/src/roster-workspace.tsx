@@ -296,15 +296,17 @@ export function RosterOverview({
     }
   }, [viewedSelection, viewedSelectionId]);
   useEffect(() => {
-    if (viewedSelection === undefined) return;
+    if (viewedSelectionId === undefined) return;
     // View is a reading action, so reveal the full-width card after React
     // mounts it instead of leaving it below a long army and making the click
-    // appear to have done nothing.
+    // appear to have done nothing. Depend on the requested identity rather
+    // than the projected selection object: every roster edit rebuilds that
+    // object, and re-scrolling an already-open card steals the player's place.
     const card = document.getElementById("selected-unit-card-view");
     if (typeof card?.scrollIntoView === "function") {
       card.scrollIntoView({ block: "start" });
     }
-  }, [viewedSelection]);
+  }, [viewedSelectionId]);
   useEffect(() => {
     if (pendingSelectionAnchor === undefined) return;
     const target = document.getElementById(pendingSelectionAnchor);
@@ -315,16 +317,13 @@ export function RosterOverview({
     target.scrollIntoView?.({ block: "start" });
     setPendingSelectionAnchor(undefined);
   }, [activeSelectionId, pendingSelectionAnchor, session]);
-  // A clean, complete roster can keep evaluator evidence out of the reading
-  // path. Anything less certain opens itself: hiding an incomplete-but-valid
-  // report would be just as misleading as hiding a known violation. A changed
-  // problem count reopens it even when incompleteness was already keeping the
-  // broad attention flag true; otherwise a newly introduced defect could stay
-  // behind a disclosure the user closed earlier.
+  // A known violation opens its actionable evidence. Incompleteness remains a
+  // separate visible signal in the player header, but it does not force the
+  // evaluator report open: raw coverage evidence is useful on demand and made
+  // every otherwise-clean roster read like a debugger.
   const checksNeedAttention =
     !workspace.validation.available ||
-    workspace.validation.validity !== "valid" ||
-    workspace.validation.completeness === "incomplete";
+    workspace.validation.validity !== "valid";
   const [checksOpen, setChecksOpen] = useState(checksNeedAttention);
   useEffect(() => {
     if (checksNeedAttention) setChecksOpen(true);
@@ -934,7 +933,6 @@ function RosterPlayerHeader({
     costs.excludedCount > 0 ||
     costs.unresolvedSelectionCount > 0 ||
     costDiagnostics > 0 ||
-    validationDiagnostics > 0 ||
     header.incomplete.length > 0;
   return (
     // A named landmark, not a bare <header>: nested inside the workspace
@@ -1011,8 +1009,8 @@ function RosterPlayerHeader({
           data-completeness={header.completeness}
         >
           {header.completeness === "complete"
-            ? "Complete supported view"
-            : "Incomplete supported view"}
+            ? "Supported checks complete"
+            : "Some rules not checked"}
         </span>
       </div>
 
@@ -1089,26 +1087,28 @@ function RosterPlayerHeader({
           <summary>
             Report details
             <span>
-              {formatCount(
-                costDiagnostics + validationDiagnostics,
-                "diagnostic",
-              )}
+              {header.completeness === "incomplete"
+                ? "Coverage limited"
+                : formatCount(
+                    costDiagnostics + validationDiagnostics,
+                    "diagnostic",
+                  )}
             </span>
           </summary>
 
           {header.incomplete.length > 0 && (
             <p className="player-header-incomplete">
-              {`Incomplete: ${header.incomplete
+              {`RosterForge could not ${header.incomplete
                 .map((report) =>
                   report === "costs"
                     ? costs.available
-                      ? "costs exclude unresolved data or unsupported behavior"
-                      : "the cost report could not be produced"
+                      ? "evaluate every catalogue cost"
+                      : "produce the cost report"
                     : validation.available
-                      ? "checks exclude behavior outside the supported scope"
-                      : "the supported checks could not be composed",
+                      ? "check every applicable catalogue rule"
+                      : "produce the supported checks",
                 )
-                .join("; ")}.`}
+                .join(" or ")}. Known problems only cover the checks that completed.`}
             </p>
           )}
 
@@ -1122,8 +1122,22 @@ function RosterPlayerHeader({
               value={String(costs.unresolvedSelectionCount)}
             />
           </dl>
-          <DiagnosticList diagnostics={costs.diagnostics} />
-          <DiagnosticList diagnostics={validation.diagnostics} />
+          {costDiagnostics > 0 && (
+            <details className="player-header-developer-diagnostics">
+              <summary>
+                Developer cost diagnostics
+                <span>
+                  {formatCount(costDiagnostics, "diagnostic")}
+                </span>
+              </summary>
+              <p>
+                Technical evidence for unsupported or unresolved catalogue
+                behavior. These codes are not player actions or additional
+                known violations.
+              </p>
+              <DiagnosticList diagnostics={costs.diagnostics} />
+            </details>
+          )}
         </details>
       )}
     </section>
@@ -1253,13 +1267,13 @@ function RosterStructuralStatus({
       {diagnostics.length > 0 && (
         <details
           className="constraint-details structural-diagnostics"
-          aria-label={`Structural diagnostics ${formatCount(
+          aria-label={`Developer structural diagnostics ${formatCount(
             diagnostics.length,
             "diagnostic",
           )}`}
         >
           <summary>
-            Structural diagnostics
+            Developer structural diagnostics
             <span>{formatCount(diagnostics.length, "diagnostic")}</span>
           </summary>
           <DiagnosticList diagnostics={diagnostics} />
@@ -1515,13 +1529,13 @@ function RosterConstraintSummary({
       {diagnostics.length > 0 && (
         <details
           className="constraint-details"
-          aria-label={`Constraint diagnostics ${formatCount(
+          aria-label={`Developer constraint diagnostics ${formatCount(
             diagnostics.length,
             "diagnostic",
           )}`}
         >
           <summary>
-            Constraint diagnostics
+            Developer constraint diagnostics
             <span>{formatCount(diagnostics.length, "diagnostic")}</span>
           </summary>
           <DiagnosticList diagnostics={diagnostics} />
@@ -3690,12 +3704,6 @@ function CatalogueChoicePreviewDialog({
             Close
           </button>
         </header>
-        <p className="choice-preview-scope">
-          This shows source-authored catalogue values before selection. Initial
-          composition is derived from supported static minima and defaults;
-          roster-dependent names, visibility, keywords, and modified values
-          appear on the selected card after you add it.
-        </p>
         {!hasInformation && (
           <p className="choice-preview-empty">
             No rules, profiles, or information groups are attached to this

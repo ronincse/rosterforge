@@ -168,14 +168,16 @@
 - Composition input guards for report identity and inspection scope; the
   composer preserves its three source reports by reference and does not
   re-evaluate them or guard roster commands
-- Compact browser supported-validation ribbon with separate validity and
-  completeness badges, combined status counts, per-domain known-violation
-  links, and retained structural and constraint detail cards
+- Compact browser supported-validation ribbon with separate known-validity and
+  player-readable check-coverage badges, combined status counts, per-domain
+  known-violation links, and retained structural and constraint detail cards;
+  incomplete-but-valid reports no longer force those technical cards open
 - Violation-first constraint presentation with stable links to exact selection
   occurrences or the owning force, unresolved and satisfied bounds in separate
-  collapsed disclosures, and separately retained diagnostics; unsupported
-  constraint shapes remain incomplete and diagnostic without inflating
-  actionable issue counts
+  collapsed disclosures, and separately retained Developer diagnostics;
+  unsupported constraint shapes remain incomplete and diagnostic without
+  inflating actionable issue counts or duplicating raw codes in the player
+  summary
 - Inline known-violation presentation on the containing battlefield-role heading
   and exact owning selection row, with a reciprocal link to the retained Checks
   evidence. Propagated ancestors, unresolved coverage, structural root findings,

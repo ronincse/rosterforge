@@ -1139,7 +1139,7 @@ function effectiveRootBound(
         initializationDiagnostic(
           modifiers[0]!,
           "EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED",
-          "A required root bound has conditional modifiers, so its automatic quantity is not inferred.",
+          "This root bound has conditional modifiers, so its effective limit is unresolved.",
           undefined,
           { constraintId, modifiers: modifiers.length },
         ),

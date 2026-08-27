@@ -37,6 +37,7 @@ import type { BrowserFileSource } from "./browser-files.js";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
 });
 
 const fixedOptions = {
@@ -893,7 +894,7 @@ describe("App local catalogue flow", () => {
     const playerHeader = screen.getByRole("region", { name: "Roster summary" });
     expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
     expect(
-      within(playerHeader).getByText("Complete supported view"),
+      within(playerHeader).getByText("Supported checks complete"),
     ).toBeTruthy();
     expect(
       within(playerHeader).getByRole("link", {
@@ -1004,6 +1005,9 @@ describe("App local catalogue flow", () => {
     const unitPreview = screen.getByRole("dialog", {
       name: "Veteran Fireteam",
     });
+    expect(
+      within(unitPreview).queryByText(/source-authored catalogue values/u),
+    ).toBeNull();
     expect(
       within(unitPreview).getByText("Initial unit composition"),
     ).toBeTruthy();
@@ -1629,6 +1633,11 @@ describe("App local catalogue flow", () => {
   });
 
   it("presents selection groups as replaceable concrete choices", async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
     const prepared = await prepareLocalCatalogueLibrary(
       [
         { filename: "minimal.gst", bytes: gameSystemBytes },
@@ -1689,7 +1698,7 @@ describe("App local catalogue flow", () => {
     const playerHeader = screen.getByRole("region", { name: "Roster summary" });
     expect(within(playerHeader).getByText("Known violations")).toBeTruthy();
     expect(
-      within(playerHeader).getByText("Complete supported view"),
+      within(playerHeader).getByText("Supported checks complete"),
     ).toBeTruthy();
     expect(
       within(playerHeader).getByRole("link", {
@@ -1773,6 +1782,7 @@ describe("App local catalogue flow", () => {
     const unitCard = screen.getByRole("region", {
       name: "Unit card for Infantry Squad",
     });
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
     const selectedDoctrine = unitCard.querySelector(
       '[data-occurrence-id="selection-ui-group-2"]',
     );
@@ -1814,6 +1824,9 @@ describe("App local catalogue flow", () => {
     await waitFor(() => {
       expect(rosterSelection("selection-ui-group-2")).toBeNull();
     });
+    // Editing the roster updates the already-open card, but must not steal the
+    // player's scroll position by revealing that card again.
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
     await waitFor(() => {
       expect(checksReport.hasAttribute("open")).toBe(true);
     });
@@ -2486,8 +2499,22 @@ describe("App local catalogue flow", () => {
     // The header folds both reports into one badge, and does so
     // conservatively: an incomplete check makes the whole view incomplete.
     expect(
-      within(playerHeader).getByText("Incomplete supported view"),
+      within(playerHeader).getByText("Some rules not checked"),
     ).toBeTruthy();
+    const reportDetailsSummary = within(playerHeader).getByText(
+      "Report details",
+    );
+    fireEvent.click(reportDetailsSummary);
+    expect(
+      within(playerHeader).getByText(
+        /RosterForge could not check every applicable catalogue rule/u,
+      ),
+    ).toBeTruthy();
+    expect(
+      within(playerHeader).queryByText(
+        "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
+      ),
+    ).toBeNull();
     expect(
       within(structuralStatus).getByText("Known violations"),
     ).toBeTruthy();
@@ -2524,10 +2551,17 @@ describe("App local catalogue flow", () => {
       name: "Satisfied structural bounds 8 bounds",
     });
     expect(satisfiedBounds.hasAttribute("open")).toBe(false);
+    const developerStructuralDiagnostics = within(structuralStatus).getByRole(
+      "group",
+      {
+        name: "Developer structural diagnostics 1 diagnostic",
+      },
+    );
+    expect(developerStructuralDiagnostics.hasAttribute("open")).toBe(false);
     expect(
-      within(structuralStatus).getByRole("group", {
-        name: "Structural diagnostics 1 diagnostic",
-      }),
+      within(developerStructuralDiagnostics).getByText(
+        "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
+      ),
     ).toBeTruthy();
     expect(within(editor).getByText("Units")).toBeTruthy();
     expect(within(editor).getByText("Configuration")).toBeTruthy();
@@ -2653,8 +2687,8 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
 
     // Resolve the last known violation while leaving the modifier-driven bound
-    // unresolved. Incompleteness alone keeps detailed evidence open; a valid
-    // roster must not make unsupported behavior disappear behind a clean state.
+    // unresolved. The player-visible coverage badge stays honest, and a report
+    // the player already has open is not closed out from under them.
     const manualGroup = screen.getByRole("group", {
       name: "Manual Group choices for Initialization Unit",
     });
@@ -2665,7 +2699,7 @@ describe("App local catalogue flow", () => {
       expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
     });
     expect(
-      within(playerHeader).getByText("Incomplete supported view"),
+      within(playerHeader).getByText("Some rules not checked"),
     ).toBeTruthy();
     expect(
       within(structuralStatus).getByText("No known violations"),

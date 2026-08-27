@@ -1449,6 +1449,24 @@ h1 {
   font-weight: 800;
 }
 
+.player-header-developer-diagnostics {
+  margin-top: 12px;
+  padding: 0 10px 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid #d5d9d4;
+}
+
+.player-header-developer-diagnostics > summary {
+  padding-top: 10px;
+}
+
+.player-header-developer-diagnostics > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
 .constraint-summary {
   display: grid;
   gap: 14px;
