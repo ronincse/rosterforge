@@ -11342,8 +11342,8 @@ Verification:
 - ordinary suite — **521 passed, 18 skipped (539)** across 56 files;
 - pinned 46-document corpus suite — **539 passed (539)** across 56 files;
 - production build — clean except for Vite's existing large-chunk warning; and
-- GitHub Actions — pending this handoff push and must be recorded before the
-  checkpoint is declared remotely complete.
+- GitHub Actions `#33110587886` for `033f566` — **passed** every repository CI
+  gate.
 
 ### Remaining unsupported behavior
 
