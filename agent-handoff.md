@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (rich choice previews shipped; loadout/Warlord controls Next)
+## Current Status — 2026-08-27 (loadout/Warlord controls shipped; roster duplication Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -84,8 +84,11 @@ diagnostic codes.
   unit/model statlines, rules, keywords, supported static initial equipment,
   and separately collapsed model/loadout alternatives without creating a
   roster occurrence; completely known empty keyword sets no longer render an
-  empty section. **The `Next` is flattening common loadout groups and adding a
-  dedicated Warlord control.**
+  empty section. Common transparent loadout wrappers now present their authored
+  child groups as one shallow hierarchy while retaining aggregate bounds, and
+  exact one-per-roster upgrade roles such as Warlord have a dedicated toggle
+  above ordinary loadout controls. **The `Next` is exposing the existing roster
+  duplication command in the saved-roster workflow.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -148,12 +151,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **518 passed, 18 skipped (536)**.
+  `git diff --check` all pass. `pnpm test` is **520 passed, 18 skipped (538)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **528 passed**; without the variable the 18 corpus tests are skipped.
+  **538 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -571,7 +574,7 @@ QA before classifying or implementing the discrepancy.
 | Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
-| Flatten common loadout groups and add dedicated Warlord controls | Next | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control. Capture targeted Reference Behavior QA evidence for representative loadout and Warlord scenarios before classifying any parity discrepancy |
+| Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -583,7 +586,7 @@ QA before classifying or implementing the discrepancy.
 | Child-model statlines are still two expansions deep | Done | direct model occurrences are partitioned from the unit's configuration children and rendered once, immediately below the unit datasheet. The model row keeps its name, amount control, statline, edit disclosure and removal action; its own wargear/options subtree starts closed unless attention requires it. Non-model children remain in the parent configure disclosure, and nested/unit-typed sub-units are deliberately not flattened |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
-| Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed |
+| Roster duplicate is not reachable by a user | Next | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed. Keep the checkpoint bounded to the saved-roster user path and exact persistence/identity behavior |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
@@ -11095,3 +11098,138 @@ the exact transparent-group and child-selection semantics beneath the shallower
 player surface. Capture the roadmap's targeted representative loadout and
 Warlord Reference Behavior QA evidence before classifying any parity
 discrepancy.
+
+## Completed Assignment — Shallow Loadout Hierarchy And Roster Roles, 2026-08-27
+
+Baseline `ff85b3569a1dd297589a5b3475261edc938da587`; resulting implementation
+commit `531d6659e06384fee0a89a00fa01cccf7edd0a7b` and this handoff commit. Codex
+remained the active lead and primary implementer.
+
+The evaluator deliberately returns every inspected selection-entry group in a
+flat list: `choices` contains entries offered directly by that group, while
+`countedChoices` contains descendant entries that satisfy its bound. The web
+adapter had incorrectly calculated a group's selected state from `choices`, so a
+choice-less wrapper such as `Wargear` always displayed zero even after its
+Melee and Ranged children were satisfied. The adapter now counts exact
+`countedChoices`, and the workspace reconstructs the authored parent/child group
+hierarchy by materialized object identity. A pure wrapper is presented as one
+shallow context heading around its real child controls rather than as a false
+empty fieldset. Mixed groups and genuinely empty or conditionally hidden groups
+retain their existing messages and controls.
+
+Warlord is no longer promoted by display text or a faction-specific entry ID.
+The pinned game system defines one category with exact selection constraints of
+minimum 1 and maximum 1 at roster scope: Warlord category
+`5c0e-4c31-d51b-e470`. Twenty-five JSON files reference that category, with 30
+category links in total, while the string `Warlord` appears in 698 name fields;
+name matching would therefore be both noisy and brittle. The session adapter
+now identifies an exact materialized `upgrade` only when one uniquely resolved
+category link carries both authored roster-scoped bounds. Missing, ambiguous,
+modified, or differently shaped categories fail closed.
+
+Recognized choices render once in a dedicated `Roster role` surface above the
+ordinary direct choices and loadout groups. The stable choice name is the
+toggle, selected state uses `aria-pressed`, and the existing immutable add/remove
+commands remain authoritative. Selected Warlord occurrences stay available to
+the full read-only unit card but no longer duplicate themselves in the options
+subtree. Generic direct-choice and group behavior is unchanged.
+
+Automatic transfer, disabling the last Warlord, and rejecting a second Warlord
+were considered and rejected. They would add new command semantics not present
+in the catalogue and would contradict the reference behavior below. The UI
+permits zero or multiple roles as editable invalid states; existing validation
+reports the roster-scoped minimum or maximum violation.
+
+### Delegation, Reference Behavior QA, and classification
+
+Delegation was planned before implementation. Authenticated Claude Code ran a
+bounded read-only repository analysis with only Read/Grep/Glob access and no
+edits, shell, browser, commits, handoff changes, pushes, or external writes. It
+correctly identified the `choices` versus `countedChoices` adapter defect and
+recommended reconstructing the group tree at the web presentation boundary by
+object identity rather than changing the evaluator. Codex verified and adopted
+those findings, then implemented and reviewed the final diff itself.
+
+A verified browser-capable native Codex worker executed the bounded New Recruit
+scenario on 2026-08-27 13:03 CDT in an anonymous/local Aeldari roster
+`6a8f555d736363a9ed95befc`, viewport 1617 × 1260. New Recruit exposed the game
+system as `827374861----nr` and said it was updated one day earlier, but exposed
+no exact client or catalogue revision; data comparability is therefore
+**unknown**, not assumed equivalent to the pinned corpus.
+
+Observed Dark Reaper Exarch behavior: the model had a required disabled Close
+combat weapon and a nested `Weapon (1/1)` group containing Missile Launcher,
+Reaper Launcher, Shuriken Cannon, and Tempest Launcher. Selecting another weapon
+automatically replaced the current one. Clicking the selected weapon again was
+allowed, producing `Weapon (0/1)` and a visible required-selection error until
+Reaper Launcher was restored. This confirms the existing RosterForge max-one
+replacement plus explicit-deselection behavior; the discrepancy was the false
+wrapper presentation and count, a roadmap presentation defect rather than a new
+selection-semantic defect.
+
+Observed Warlord behavior: Autarch and Farseer each showed a standalone Warlord
+checkbox immediately above Wargear. Zero, one, or two Warlords were all editable;
+zero produced a missing-Warlord error, two produced a maximum-one error, and New
+Recruit did not transfer or reject the second designation. This supports the
+dedicated RosterForge control while preserving permissive invalid intermediate
+states and validation. The temporary reference roster ended with the Autarch as
+its sole Warlord and the Dark Reaper Exarch's Reaper Launcher restored.
+
+Antigravity was not used as interactive executor: the installed headless client
+still lacks browser actuation. No difficult unresolved semantic discrepancy
+remained for a second evidence-analysis pass after the browser observation,
+pinned-corpus measurement, and Claude review agreed.
+
+### Tests, corpus, and browser validation
+
+The project-owned nested-group fixture now includes both a two-of-two Wargear
+wrapper over two one-of-one child groups and a structurally identified singleton
+roster role. Session coverage proves the wrapper progresses from zero to Blade
+plus Pistol and reaches its aggregate requirement. UI coverage proves the false
+empty message is absent, the child hierarchy is accessible, parent status
+updates to two selected, and Warlord toggles off/on from its dedicated surface.
+
+The optional real-data integration test loads the pinned Aeldari Autarch and
+asserts that the structural classifier returns exactly `Warlord`. The pinned
+checkout `E:\GitHub\wh40k-11e` was verified clean at
+`04c62fcd041b3808c39d5c46fd677c704027b979`; its local branch is four commits
+behind the moving remote by design and was not updated.
+
+Post-implementation browser QA at 2026-08-27 13:21 CDT used the running local
+app at 1617 × 1209 and imported the two synthetic fixture files through the
+normal file chooser. Wargear rendered as context around its distinct Melee and
+Ranged groups; Blade then Pistol advanced the parent from zero of two to
+`2 selected; requirement met`, reducing structural violations from three to
+zero. Warlord appeared above Wargear, toggled off/on repeatedly with correct
+`aria-pressed` and status text, and the final selected Warlord/Blade/Pistol state
+had zero known violations. The page had no horizontal overflow, unnamed visible
+buttons, overlap, clipping, or ambiguous accessible group names. The roster
+remained unsaved in memory and no repository file or unrelated browser state was
+changed.
+
+Verification:
+
+- authenticated Claude read-only analysis and native browser Reference QA —
+  completed; neither worker changed repository files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **520 passed, 18 skipped (538)** across 56 files;
+- pinned 46-document corpus suite — **538 passed (538)** across 56 files;
+- production build — clean except for Vite's existing large-chunk warning; and
+- GitHub Actions — pending this handoff push.
+
+### Remaining unsupported behavior
+
+This checkpoint did not change evaluator group semantics, automatic nested-group
+initialization, unit-typed automatic sub-units, persisted formats, or global
+constraint handling. The roadmap's low-priority nested automatic shapes remain
+unsupported and explicit. Exact New Recruit data comparability remains unknown.
+
+### Next recommended boundary
+
+**Expose roster duplication in the saved-roster workflow.** The immutable
+duplication commands already exist and are tested headlessly, but no player can
+reach them. Keep the checkpoint bounded to a visible saved-roster action,
+identity-safe copied state, persistence, and focused browser validation; this
+closes the explicit duplicate step in the v1 product workflow without widening
+into export, sharing, or roster-file interchange.
