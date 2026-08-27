@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (bounded model amounts shipped; loadout/Warlord controls Next)
+## Current Status — 2026-08-27 (choice previews shipped; loadout/Warlord controls Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -78,8 +78,11 @@ diagnostic codes.
   lazy anchor. The advanced per-occurrence model editor now applies complete
   known selection and transparent-group minima/maxima to their observed
   aggregates, rejects new known violations, and permits monotonic recovery from
-  already-invalid state; incomplete bounds remain permissive. **The `Next` is
-  flattening common loadout groups and adding a dedicated Warlord control.**
+  already-invalid state; incomplete bounds remain permissive. Concrete root,
+  direct-child, and grouped choices now have independent eye-labelled catalogue
+  previews, and completely known empty keyword sets no longer render an empty
+  section. **The `Next` is flattening common loadout groups and adding a
+  dedicated Warlord control.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -564,6 +567,7 @@ QA before classifying or implementing the discrepancy.
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
+| Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, and grouped choices expose an eye-labelled modal with source-authored rules, profiles, and info groups without mutating the roster or claiming occurrence-dependent effective values. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Next | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control. Capture targeted Reference Behavior QA evidence for representative loadout and Warlord scenarios before classifying any parity discrepancy |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
@@ -10885,3 +10889,91 @@ Warlord as a dedicated control only where the catalogue's existing exact child
 choice identifies it; do not infer it from display text. Capture targeted
 Reference Behavior QA evidence for representative loadout replacement and
 Warlord scenarios before classifying any parity discrepancy.
+
+## Completed Assignment — Pre-Selection Choice Previews And Empty Keywords, 2026-08-27
+
+Baseline `69c078872ce21762922bdc9880516d6b8e91f620`; resulting implementation
+commit `822c46ebe1e45d3862c798bda51f95e69261545e` and this handoff commit. This
+bounded owner-observed usability checkpoint was inserted ahead of the existing
+loadout/Warlord `Next`; that roadmap row remains next rather than being silently
+absorbed.
+
+Concrete root, direct-child, repeatable-model, and grouped-choice controls now
+carry an independent eye-labelled action. It opens a modal containing the
+already-materialized choice's source-authored profiles, rules, information
+groups, and unresolved info-link evidence without running an add command. The
+modal has an accessible name and modal role, moves focus to Close, contains Tab
+focus, closes on Escape or backdrop click, and returns focus to its still-mounted
+trigger.
+
+The preview intentionally does **not** synthesize a temporary roster occurrence.
+Effective names, keywords, visibility, and characteristic modifiers can depend
+on the prospective parent and wider roster; presenting them from a fake owner
+would make an attractive shortcut into false rules evidence. The modal therefore
+states that it is the catalogue definition and leaves roster-dependent effective
+inspection to the selected card. Reusing the selected-card evaluator through an
+ephemeral mutation, selecting and undoing invisibly, and storing preview state in
+the immutable roster or draft were rejected for the same reason. The state is
+transient web presentation state owned by `roster-workspace.tsx`.
+
+`SelectionKeywords` now returns no section when category inspection is complete,
+has zero active categories, and has no removed source categories. Incomplete or
+unresolved evaluation remains visible; a completely known selection with only
+removed categories shows that struck-through evidence without a false
+"incomplete" message. This preserves the validity/completeness boundary while
+removing the player-facing `No keywords.` chrome from entries such as the points
+choice.
+
+### Delegation and review
+
+Codex remained the primary implementer and launched authenticated Grok Build
+1.0.5 in plan mode before implementation was finalized. The brief allowed only
+local read/search over the named workspace files, disabled web search and
+subagents, and forbade edits, commits, handoff changes, pushes, and external
+writes. Both bounded attempts reached their configured turn ceilings after
+reading more context than expected; `git status` confirmed no delegate-created
+change.
+
+The narrowed review still identified one real edge case: zero active keywords
+plus removed source keywords must show the removed evidence without calling the
+result incomplete. Codex adopted that correction and its focus-return guard.
+Codex rejected the review's contradictory claims that modal roles and empty-set
+coverage were absent because direct inspection showed the current diff already
+contained them. The delegated output was treated as untrusted review input, not
+accepted wholesale.
+
+### Browser QA and validation
+
+Live browser QA used application commit `822c46e` and the unchanged saved pinned
+Aeldari source at `04c62fcd041b3808c39d5c46fd677c704027b979`:
+
+- clicking `View rules for Warhost` opened a `Warhost` catalogue-preview dialog
+  containing `Martial Grace` and its full source description;
+- Warhost remained selected, the roster summary remained exactly 90 / 2,000
+  points, and closing the dialog returned to the unchanged setup;
+- every visible Detachment option exposed its own labelled preview action; and
+- the selected `2. Strike Force (2000 Point limit)` occurrence rendered no
+  Keywords section, while its Configuration parent and later Force Disposition
+  selection retained their real keyword sections.
+
+This was targeted RosterForge interaction QA, not Reference Behavior QA. New
+Recruit supplied the owner's usability inspiration, but no behavioral mismatch,
+data-version comparison, or parity defect was classified, so no external roster
+scenario was required.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- full `pnpm test` — **518 passed, 18 skipped (536)** across 56 files;
+- production build — clean except for Vite's existing large-chunk warning; and
+- optional corpus suite — not rerun because no evaluator, imported-data
+  semantics, diagnostic, persisted format, corpus data, or third-party data
+  changed.
+
+### Next recommended boundary
+
+**Flatten common loadout groups and add a dedicated Warlord control.** Preserve
+the existing transparent group and exact child-selection semantics, and capture
+the roadmap's targeted Reference Behavior QA evidence before classifying any
+parity discrepancy.
