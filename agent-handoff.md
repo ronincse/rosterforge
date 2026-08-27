@@ -10966,10 +10966,12 @@ Verification:
 - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
   `git diff --check` — clean;
 - full `pnpm test` — **518 passed, 18 skipped (536)** across 56 files;
-- production build — clean except for Vite's existing large-chunk warning; and
+- production build — clean except for Vite's existing large-chunk warning;
 - optional corpus suite — not rerun because no evaluator, imported-data
   semantics, diagnostic, persisted format, corpus data, or third-party data
-  changed.
+  changed; and
+- GitHub Actions `#33092692909` for `35ab2f4` — **passed** every repository CI
+  gate.
 
 ### Next recommended boundary
 
