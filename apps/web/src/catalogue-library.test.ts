@@ -83,6 +83,38 @@ describe("prepareLocalCatalogueLibrary", () => {
     );
   });
 
+  it("keeps a composed catalogue ready when it has non-fatal source notes", async () => {
+    const imported = await importLocalBattleScribeFiles(
+      [
+        { filename: "minimal.gst", bytes: fixtureBytes("minimal.gst") },
+        { filename: "minimal.cat", bytes: fixtureBytes("minimal.cat") },
+      ],
+      importOptions,
+    );
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) return;
+
+    const result = prepareImportedCatalogueLibrary(imported.value, [
+      {
+        code: "BS_PROJECTION_INVALID_ATTRIBUTE",
+        message: "An optional source value was not numeric.",
+        severity: "error",
+        impacts: ["compatibility"],
+      },
+    ]);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.status).toBe("ready");
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "BS_PROJECTION_INVALID_ATTRIBUTE",
+        }),
+      ]),
+    );
+  });
+
   it("composes matched BattleScribe JSON documents into a catalogue choice", async () => {
     const result = await prepareLocalCatalogueLibrary(
       [

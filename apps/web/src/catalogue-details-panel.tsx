@@ -89,9 +89,13 @@ export function CatalogueDetails({
       {sourceDiagnostics.length > 0 && (
         <details className="diagnostic-panel">
           <summary>
-            Catalogue diagnostics
-            <span>{formatCount(sourceDiagnostics.length, "issue")}</span>
+            Developer catalogue notes
+            <span>{formatCount(sourceDiagnostics.length, "diagnostic")}</span>
           </summary>
+          <p>
+            Preserved source-data details for debugging. These notes do not by
+            themselves prevent roster setup.
+          </p>
           <DiagnosticList diagnostics={sourceDiagnostics} />
         </details>
       )}

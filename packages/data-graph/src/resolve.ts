@@ -882,8 +882,14 @@ function referencesForCondition(
 ): readonly BattleScribeGraphReference[] {
   if (
     condition.childId === undefined ||
-    lexicalChildIds.has(condition.childId)
+    lexicalChildIds.has(condition.childId) ||
+    condition.scope === "primary-catalogue"
   ) {
+    // `primary-catalogue` compares the current catalogue's identity with the
+    // authored childId. The childId is a scalar selector, not an object that
+    // must be reachable in the focused dependency closure. Treating it as a
+    // graph edge produced false missing-reference warnings whenever another
+    // faction catalogue named its own ID here.
     return [];
   }
   return targetReference(

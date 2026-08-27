@@ -24,6 +24,7 @@ import {
   inspectRosterSelectionDefaultAmount,
   inspectRosterForceConstraintsInRoster,
   inspectRosterSelectionConstraintsInRoster,
+  inspectSingleForceRootChoices,
   planEmptySingleForceRootInitialization,
   planRosterSelectionInitialization,
   rootSelectionBoundIdentity,
@@ -542,14 +543,22 @@ export function localRosterRootChoiceGroups(
 export function inspectLocalRosterRootChoices(
   session: LocalRosterSession,
 ): Result<LocalRosterRootChoiceInspection> {
-  const inspected = inspectEmptySingleForceRootChoices(
-    session.catalogue.context.roots.roots,
-  );
+  const force = session.roster.forces[0];
+  const inspected =
+    force === undefined
+      ? inspectEmptySingleForceRootChoices(
+          session.catalogue.context.roots.roots,
+        )
+      : inspectSingleForceRootChoices(
+          session.roster,
+          session.catalogue.context,
+          force,
+          session.catalogue.context.roots.roots,
+        );
   if (!inspected.ok) return inspected;
   const byRoot = new Map(
     inspected.value.choices.map((choice) => [choice.root, choice]),
   );
-  const force = session.roster.forces[0];
   const rootSelections = force?.selections ?? [];
   /**
    * A root the catalogue is currently hiding is not offered.

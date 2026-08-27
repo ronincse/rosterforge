@@ -50,7 +50,7 @@ export function CatalogueLibraryPanel({
           label="Roster catalogues"
           value={String(library.selectableCatalogues.length)}
         />
-        <SummaryMetric label="Issues" value={String(diagnostics.length)} />
+        <SummaryMetric label="Rejected" value={String(rejectedCount)} />
       </div>
 
       {library.selectableCatalogues.length > 0 ? (
@@ -92,9 +92,14 @@ export function CatalogueLibraryPanel({
       {diagnostics.length > 0 && (
         <details className="batch-diagnostics">
           <summary>
-            Batch diagnostics
-            <span>{formatCount(diagnostics.length, "issue")}</span>
+            Developer import notes
+            <span>{formatCount(diagnostics.length, "diagnostic")}</span>
           </summary>
+          <p>
+            Technical source and reference notes are preserved for debugging.
+            They do not by themselves mean that the selected catalogue failed
+            to load.
+          </p>
           <DiagnosticList diagnostics={diagnostics} />
         </details>
       )}
@@ -161,7 +166,7 @@ function StatusBadge({
     empty: "Nothing imported",
     unavailable: "Needs a catalogue",
     ready: "Ready",
-    partial: "Ready with issues",
+    partial: "Partially loaded",
   } as const;
   return (
     <span className="status-badge" data-status={status}>

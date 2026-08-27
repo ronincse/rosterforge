@@ -322,9 +322,12 @@ document, catalogue context, and whether the aggregate visible-root
 materialization was truncated. Its key combines source provenance with the
 catalogue ID so duplicate IDs from distinct local files remain distinguishable.
 
-The library status is `ready` only when files imported completely, at least one
-catalogue is available, and no stage emitted diagnostics. `partial` keeps
-catalogue choices available alongside import or graph diagnostics;
+The library status is `ready` when files imported completely, at least one
+catalogue is available with its referenced game system, and root
+materialization was not truncated. Non-fatal projection and graph diagnostics
+remain ordered Developer notes but do not turn a usable library into a failed
+or partial one. `partial` keeps catalogue choices available after a rejected
+file, a missing game system, or truncated materialization;
 `unavailable` means documents imported but none were catalogues; and `empty`
 means no document was accepted. Stage diagnostics remain ordered from import,
 graph resolution, then context composition.
@@ -791,7 +794,11 @@ completeness as separate badges and exposes ordered root, direct-child, and
 group details. Violated and unresolved bounds are open first, while satisfied
 bounds and diagnostics use separate collapsed disclosures. Direct and group
 issues link to a stable anchor on their exact owning occurrence; root issues
-link to the available-root editor. An unselected root whose effective minimum
+link to the available-root editor. Live root inspection evaluates supported
+direct conditional bound modifiers against the current roster and force. The
+static creation planner remains conservative because its trigger selections do
+not exist yet; unresolved condition applicability still withholds the bound.
+An unselected root whose effective minimum
 and maximum are both unknown is not promoted into the actionable bound list;
 its unsupported behavior contributes to one catalogue-level inactive-root
 diagnostic without making roster structural completeness incomplete. Selecting

@@ -57,6 +57,14 @@ line, column, and source-text offset ranges. The corresponding optional typed
 property is absent. Other projected fields and the generic source node remain
 available.
 
+The browser presents successful-import projection and reference diagnostics in
+collapsed Developer notes. Severity describes the malformed or unresolved
+source fact; it does not, by itself, mean that the application failed to load a
+usable catalogue. Library readiness is based on accepted files, required game
+system availability, and complete root materialization. Rejected files and
+unusable composition still receive the ordinary player-visible partial or
+failure state.
+
 Unknown enum-like strings are preserved and do not produce diagnostics merely
 for being unknown. This accommodates real BSData values beyond closed
 BattleScribe 2.03 XSD enumerations.
@@ -67,6 +75,12 @@ diagnostics. For example, profile-owned `affects`, `join`, `arg`,
 Evaluation code must emit its own source-located unsupported diagnostic when
 such an attribute is applicable to an attempted operation; projection alone
 does not claim or reject execution semantics.
+
+A condition with `scope="primary-catalogue"` uses `childId` as the catalogue
+identity being compared. It is not a graph dependency, so data-graph resolution
+does not emit `BS_GRAPH_MISSING_REFERENCE` merely because a catalogue carrying
+that ID is outside the focused dependency closure. Other unresolved reference
+kinds remain diagnosed normally; they are not blanket-filtered.
 
 Local repository import can reject a complete batch before parsing with:
 

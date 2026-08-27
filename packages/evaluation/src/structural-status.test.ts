@@ -369,18 +369,14 @@ describe("empty single-force roster structural status", () => {
       inactive.value.bounds.find(
         (bound) => boundName(bound) === "Conditional Optional Root",
       ),
-    ).toBeUndefined();
-    expect(inactive.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED",
-          details: {
-            roots: 1,
-            suppressedDiagnostics: 1,
-          },
-        }),
-      ]),
-    );
+    ).toMatchObject({
+      kind: "root",
+      selectedCount: 0,
+      maximum: 1,
+      status: "satisfied",
+      completeness: "complete",
+    });
+    expect(inactive.diagnostics).toEqual([]);
     expect(
       selected.value.bounds.find(
         (bound) => boundName(bound) === "Conditional Optional Root",
@@ -388,26 +384,15 @@ describe("empty single-force roster structural status", () => {
     ).toMatchObject({
       kind: "root",
       selectedCount: 1,
-      status: "unresolved",
-      completeness: "incomplete",
+      maximum: 0,
+      status: "violated",
+      completeness: "complete",
     });
     expect(selected.value).toMatchObject({
-      validity: "valid",
-      completeness: "incomplete",
+      validity: "invalid",
+      completeness: "complete",
     });
-    expect(selected.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code:
-            "EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED",
-          location: expect.objectContaining({
-            source: expect.objectContaining({
-              filename: "structural-inactive-root.cat",
-            }),
-          }),
-        }),
-      ]),
-    );
+    expect(selected.diagnostics).toEqual([]);
   });
 
   it("does not enforce groups hidden for the containing force", () => {

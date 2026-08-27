@@ -91,7 +91,7 @@ describe.skipIf(realDataDirectory === undefined)(
           return;
         }
         expect(result.value.importReport.status).toBe("complete");
-        expect(result.value.status).toBe("partial");
+        expect(result.value.status).toBe("ready");
         expect(result.value.importReport.files.every(
           ({ status }) => status === "imported",
         )).toBe(true);
@@ -2719,6 +2719,15 @@ describe.skipIf(realDataDirectory === undefined)(
         );
         expect(result.ok).toBe(true);
         if (!result.ok) return;
+        expect(diagnosticCodeCounts(result.diagnostics)).toEqual({
+          BS_GRAPH_MISSING_REFERENCE: 4,
+          BS_PROJECTION_INVALID_ATTRIBUTE: 1,
+        });
+        expect(
+          result.diagnostics
+            .filter(({ code }) => code === "BS_GRAPH_MISSING_REFERENCE")
+            .map(({ details }) => details?.kind),
+        ).toEqual(["costType", "costType", "costType", "costType"]);
         const catalogue = result.value.catalogues.find(
           ({ name }) => name === "Xenos - Drukhari",
         );
@@ -3186,7 +3195,10 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ choice }) => choice.materialized.name === "Dire Avengers",
           );
         expect(direAvengers).toMatchObject({ selected: [] });
-        expect(direAvengers?.maximum).toBeUndefined();
+        expect(direAvengers).toMatchObject({
+          maximum: 3,
+          completeness: "complete",
+        });
         const direAvengersSourceMaximum =
           direAvengers?.choice.materialized.constraints.find(
             ({ type, field, scope }) =>
@@ -3361,12 +3373,61 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ name }) => name === "3. Onslaught (3000 Point limit)",
           ),
         ).toBe(false);
+        const incursion = battleSizeGroup?.choices.find(
+          ({ name }) => name === "1. Incursion (1000 Point limit)",
+        );
         const strikeForce = battleSizeGroup?.choices.find(
           ({ name }) => name === "2. Strike Force (2000 Point limit)",
         );
-        if (battleSizeGroup === undefined || strikeForce === undefined) {
+        if (
+          battleSizeGroup === undefined ||
+          incursion === undefined ||
+          strikeForce === undefined
+        ) {
           throw new Error("Expected the Battle Size choices.");
         }
+        const withIncursion = chooseLocalRosterChildGroupEntry(
+          created.value,
+          battleSize.id,
+          battleSizeGroup.group,
+          incursion,
+          {
+            selectionId: selectionOccurrenceId(
+              "real-aeldari-incursion",
+            ),
+          },
+        );
+        expect(withIncursion.ok).toBe(true);
+        if (!withIncursion.ok) return;
+        const incursionRoots = inspectLocalRosterRootChoices(
+          withIncursion.value,
+        );
+        expect(incursionRoots.ok).toBe(true);
+        if (!incursionRoots.ok) return;
+        expect(
+          Object.fromEntries(
+            incursionRoots.value.groups
+              .flatMap(({ choices }) => choices)
+              .filter(({ choice }) =>
+                ["Dire Avengers", "Guardian Defenders"].includes(
+                  choice.materialized.name ?? "",
+                ),
+              )
+              .map(({ choice, maximum, completeness }) => [
+                choice.materialized.name,
+                { maximum, completeness },
+              ]),
+          ),
+        ).toEqual({
+          "Guardian Defenders": {
+            maximum: 4,
+            completeness: "complete",
+          },
+          "Dire Avengers": {
+            maximum: 2,
+            completeness: "complete",
+          },
+        });
         const withBattleSize = chooseLocalRosterChildGroupEntry(
           created.value,
           battleSize.id,
@@ -3898,7 +3959,6 @@ describe.skipIf(realDataDirectory === undefined)(
             supported.value.structuralDiagnostics,
           )).toEqual({
             EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
-            EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
             // Added when root bounds began respecting visibility. Exactly one
             // root in this real catalogue carries a relevant bound whose
@@ -3921,12 +3981,6 @@ describe.skipIf(realDataDirectory === undefined)(
                     : undefined,
               })),
           ).toEqual([
-            {
-              kind: "root",
-              status: "unresolved",
-              selectedCount: 1,
-              name: "Guardian Defenders",
-            },
             // The `Detachments` group carrying `max="-1"`; the bound cannot be
             // decided while the value is withheld.
             {

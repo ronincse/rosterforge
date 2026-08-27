@@ -118,9 +118,14 @@ export function RemoteCatalogueSourcePanel({
               <summary>
                 {formatCount(
                   state.diagnostics.length,
-                  "repository diagnostic",
+                  "developer repository note",
                 )}
               </summary>
+              <p>
+                Technical source and cross-catalogue reference details. These
+                notes do not by themselves mean that the selected catalogue
+                failed to load.
+              </p>
               <DiagnosticList diagnostics={state.diagnostics} />
             </details>
           )}

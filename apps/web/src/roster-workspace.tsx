@@ -842,8 +842,8 @@ export function RosterOverview({
               {workspace.validation.available
                 ? `${formatCount(validationIssueCount, "known violation")} | ${
                     workspace.validation.completeness === "complete"
-                      ? "complete inspection"
-                      : "incomplete inspection"
+                      ? "all supported rules checked"
+                      : "some rules not checked"
                   }`
                 : "Checks unavailable"}
             </span>
@@ -881,6 +881,69 @@ function headlineRosterCost(
   totals: readonly RosterWorkspaceCost[],
 ): RosterWorkspaceCost | undefined {
   return totals.find(({ limit }) => limit !== undefined) ?? totals[0];
+}
+
+/**
+ * Distinguishes an unset setup-derived points cap from a literal zero limit.
+ *
+ * The Aeldari force authors a zero base maximum and lets the Battle Size
+ * choice set 1,000/2,000/3,000. Showing `515 / 0` before that required choice
+ * is made is numerically faithful but reads like a broken evaluator, so the
+ * player surface names the pending setup while the underlying report stays
+ * unchanged.
+ */
+function pointsLimitPending(
+  workspace: RosterWorkspaceViewModel,
+  cost: RosterWorkspaceCost | undefined,
+): boolean {
+  if (cost?.limit !== 0) return false;
+  const battleSize = workspace.selections.ordered.find(
+    ({ occurrence }) => occurrence.name === "Battle Size",
+  );
+  return battleSize !== undefined && battleSize.occurrence.selections.length === 0;
+}
+
+/** Translates evaluator coverage codes into bounded player-facing reasons. */
+function ruleCoverageReasons(
+  diagnostics: readonly Diagnostic[],
+): readonly string[] {
+  const codes = new Set(diagnostics.map(({ code }) => code));
+  const reasons: string[] = [];
+  if (
+    codes.has(
+      "EVALUATION_ROOT_INITIALIZATION_CONDITIONAL_MODIFIERS_UNSUPPORTED",
+    )
+  ) {
+    reasons.push(
+      "Some unit limits depend on roster setup in a way RosterForge cannot evaluate yet.",
+    );
+  }
+  if (codes.has("EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED")) {
+    reasons.push(
+      "Some catalogue entries have conditional availability that RosterForge cannot resolve yet.",
+    );
+  }
+  if (
+    codes.has("EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED") ||
+    codes.has("EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED")
+  ) {
+    reasons.push(
+      "Some selection limits use modifier shapes RosterForge cannot evaluate yet.",
+    );
+  }
+  if (
+    codes.has("EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED") ||
+    codes.has("EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED")
+  ) {
+    reasons.push(
+      "Some catalogue-specific limits use fields or attributes RosterForge cannot inspect yet.",
+    );
+  }
+  return reasons.length > 0
+    ? reasons
+    : [
+        "One or more imported rule shapes are not supported yet; exact evidence remains in Developer diagnostics.",
+      ];
 }
 
 /**
@@ -922,6 +985,7 @@ function RosterPlayerHeader({
   const headlineCost = costs.available
     ? headlineRosterCost(costs.activeTotals)
     : undefined;
+  const limitPending = pointsLimitPending(workspace, headlineCost);
   const secondaryTotals = costs.available
     ? costs.activeTotals.filter((total) => total !== headlineCost)
     : [];
@@ -934,6 +998,9 @@ function RosterPlayerHeader({
     costs.unresolvedSelectionCount > 0 ||
     costDiagnostics > 0 ||
     header.incomplete.length > 0;
+  const coverageReasons = validation.available
+    ? ruleCoverageReasons(validation.diagnostics)
+    : [];
   return (
     // A named landmark, not a bare <header>: nested inside the workspace
     // section a <header> element carries no role at all, so neither assistive
@@ -963,13 +1030,16 @@ function RosterPlayerHeader({
           <p className="player-header-figure" key={headlineCost.typeId}>
             <strong>
               {formatNumber(headlineCost.value)}
-              {headlineCost.limit === undefined
+              {limitPending || headlineCost.limit === undefined
                 ? ""
                 : ` / ${formatNumber(headlineCost.limit)}`}
             </strong>
             <span>
-              {headlineCost.name}
-              {headlineCost.limit === undefined ? "" : " used"}
+              {limitPending
+                ? `${headlineCost.name} so far — choose Battle Size`
+                : `${headlineCost.name}${
+                    headlineCost.limit === undefined ? "" : " used"
+                  }`}
             </span>
           </p>
         )}
@@ -1112,6 +1182,18 @@ function RosterPlayerHeader({
             </p>
           )}
 
+          {validation.available &&
+            validation.completeness === "incomplete" && (
+              <div className="player-header-coverage-reasons">
+                <strong>Why some rules were not checked</strong>
+                <ul>
+                  {coverageReasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
           <dl>
             <Detail
               label="Excluded costs"
@@ -1209,8 +1291,8 @@ function RosterStructuralStatus({
             data-completeness={report.completeness}
           >
             {report.completeness === "complete"
-              ? "Complete inspection"
-              : "Incomplete inspection"}
+              ? "All supported rules checked"
+              : "Some rules not checked"}
           </span>
         </div>
       </div>
@@ -1474,8 +1556,8 @@ function RosterConstraintSummary({
           data-completeness={report.completeness}
         >
           {report.completeness === "complete"
-            ? "Complete inspection"
-            : "Incomplete inspection"}
+            ? "All supported rules checked"
+            : "Some rules not checked"}
         </span>
       </div>
 

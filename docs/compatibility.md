@@ -35,8 +35,10 @@
 - Responsive React/Vite browser shell for selecting multiple local
   BattleScribe files, retaining partial-import results, choosing an imported
   catalogue, and inspecting source and composed-context counts
-- Accessible loading, batch-failure, empty, unavailable, ready, and
-  ready-with-issues states, with ordered file status and diagnostic summaries
+- Accessible loading, batch-failure, empty, unavailable, ready, and partially
+  loaded states, with ordered file status and collapsed Developer diagnostic
+  notes. Non-fatal source/reference diagnostics do not make an otherwise usable
+  composed catalogue partial
 - In-memory roster setup from one selected catalogue and one ordered top-level
   force definition, using guarded roster-builder references and caller-created
   branded occurrence IDs
@@ -156,6 +158,10 @@
 - Relevance-scoped structural completeness: unsupported dynamic bounds on a
   proven inactive root remain in one catalogue-level diagnostic but do not
   make the roster report incomplete until the root is selected
+- Live single-force root maxima with supported direct conditional modifiers;
+  exact pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian
+  Defenders 4 (base 6). Static pre-roster initialization and unresolved
+  condition applicability remain conservatively incomplete
 - Conditional child visibility for direct and recursively grouped Boolean
   `set` modifiers, with retained applicability trees, owner-direct then
   group-source ordering, and direct-before-nested group execution

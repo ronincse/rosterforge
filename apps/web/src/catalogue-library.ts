@@ -109,7 +109,8 @@ export function prepareImportedCatalogueLibrary(
       status: libraryStatus(
         imported,
         selectableCatalogues,
-        diagnostics.length > 0,
+        gameSystems,
+        contexts.value.roots.truncated,
       ),
       importReport: imported,
       documents: imported.documents,
@@ -149,7 +150,8 @@ function catalogueChoice(
 function libraryStatus(
   imported: LocalBattleScribeImportReport,
   catalogues: readonly LocalCatalogueChoice[],
-  hasDiagnostics: boolean,
+  gameSystems: readonly ParsedBattleScribeDocument[],
+  materializationTruncated: boolean,
 ): LocalCatalogueLibraryStatus {
   if (imported.documents.length === 0) {
     return "empty";
@@ -157,7 +159,20 @@ function libraryStatus(
   if (catalogues.length === 0) {
     return "unavailable";
   }
-  return imported.status === "complete" && !hasDiagnostics
-    ? "ready"
-    : "partial";
+  if (
+    imported.status !== "complete" ||
+    materializationTruncated ||
+    catalogues.some(
+      ({ gameSystemId }) =>
+        gameSystemId !== undefined &&
+        !gameSystems.some(({ metadata }) => metadata.id === gameSystemId),
+    )
+  ) {
+    return "partial";
+  }
+  // Projection and graph diagnostics are retained as source-level evidence,
+  // but a non-fatal note does not make a fully imported, composed catalogue
+  // unusable. Readiness describes the usable library; the disclosure below it
+  // describes data quirks without turning every quirk into an app failure.
+  return "ready";
 }

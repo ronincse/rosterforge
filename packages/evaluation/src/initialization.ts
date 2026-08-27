@@ -8,6 +8,7 @@ import {
 } from "@rosterforge/foundation";
 
 import type {
+  BattleScribeCatalogueContext,
   MaterializedSelectionContainer,
   MaterializedSelectionEntryGroup,
   MaterializedVisibleEntryLinkRoot,
@@ -16,6 +17,10 @@ import type {
   MaterializedVisibleSelectionEntryRoot,
 } from "@rosterforge/data-graph";
 
+import type { Roster, RosterForce } from "@rosterforge/roster-model";
+
+import { effectiveRosterCategories } from "./effective-categories.js";
+import { evaluateRosterModifierApplicability } from "./modifier-applicability.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 import { evaluateNumericModifierSequence } from "./modifiers.js";
 import { isUnboundedConstraintValue } from "./constraints.js";
@@ -58,6 +63,13 @@ export interface EmptySingleForceRootChoiceInspection {
 export interface EmptySingleForceRootChoicesInspection {
   readonly choices: readonly EmptySingleForceRootChoiceInspection[];
   readonly completeness: ValidationCompleteness;
+}
+
+interface LiveSingleForceRootInspectionContext {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly force: RosterForce;
+  readonly effectiveCategories: ReturnType<typeof effectiveRosterCategories>;
 }
 
 export type RosterSelectionInitializationPendingReason =
@@ -260,6 +272,40 @@ export function inspectRosterSelectionChildChoices(
 export function inspectEmptySingleForceRootChoices(
   roots: readonly MaterializedVisibleRoot[],
 ): Result<EmptySingleForceRootChoicesInspection> {
+  return inspectRootChoices(roots);
+}
+
+/**
+ * Inspects root bounds against the current single-force roster.
+ *
+ * Static initialization cannot answer a conditional maximum because its
+ * trigger may be a Battle Size or another configuration choice that does not
+ * exist yet. The live catalogue and validation surfaces do have that context,
+ * so they evaluate direct conditional modifiers here instead of continuing to
+ * advertise the source maximum or reporting the selected root as unresolved.
+ * Unsupported conditions and grouped modifiers remain incomplete.
+ */
+export function inspectSingleForceRootChoices(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  force: RosterForce,
+  roots: readonly MaterializedVisibleRoot[],
+): Result<EmptySingleForceRootChoicesInspection> {
+  return inspectRootChoices(roots, {
+    roster,
+    context,
+    force,
+    // Root inspection can visit hundreds of choices. Category membership is a
+    // roster-wide index, so compute it once instead of rebuilding it for every
+    // conditional bound encountered below.
+    effectiveCategories: effectiveRosterCategories(roster, context),
+  });
+}
+
+function inspectRootChoices(
+  roots: readonly MaterializedVisibleRoot[],
+  live?: LiveSingleForceRootInspectionContext,
+): Result<EmptySingleForceRootChoicesInspection> {
   const state: InitializationState = {
     diagnostics: [],
     incomplete: 0,
@@ -270,6 +316,7 @@ export function inspectEmptySingleForceRootChoices(
     const incompleteAtStart = state.incomplete;
     const bounds = rootSelectionBounds(root.materialized, state, {
       requireMaximum: true,
+      ...(live === undefined ? {} : { live }),
     });
     if (bounds.minimum > bounds.maximum) {
       diagnoseRootConflictingBounds(root.materialized, bounds, state);
@@ -1001,7 +1048,10 @@ function selectionBounds(
 function rootSelectionBounds(
   choice: EvaluationSelectionChoice,
   state: InitializationState,
-  options: { readonly requireMaximum?: boolean } = {},
+  options: {
+    readonly requireMaximum?: boolean;
+    readonly live?: LiveSingleForceRootInspectionContext;
+  } = {},
 ): SelectionBounds {
   let minimum = 0;
   let maximum = Number.POSITIVE_INFINITY;
@@ -1029,6 +1079,7 @@ function rootSelectionBounds(
       constraint,
       state,
       false,
+      options.live,
     );
     if (effective === undefined) {
       supported &&= unboundedBoundIdentity(baseValue, "min") === 0;
@@ -1051,6 +1102,7 @@ function rootSelectionBounds(
         constraint,
         state,
         true,
+        options.live,
       );
       if (effective === undefined) {
         supported = false;
@@ -1093,6 +1145,7 @@ function effectiveRootBound(
   constraint: EvaluationSelectionChoice["constraints"][number],
   state: InitializationState,
   diagnoseUnsupported: boolean,
+  live?: LiveSingleForceRootInspectionContext,
 ): number | undefined {
   const constraintId = constraint.id;
   const baseValue = constraint.value;
@@ -1133,6 +1186,50 @@ function effectiveRootBound(
         modifier.conditionGroups.length > 0,
     )
   ) {
+    if (live !== undefined) {
+      const applicability = new Map<
+        (typeof modifiers)[number],
+        {
+          readonly status: "applicable" | "notApplicable" | "unresolved";
+          readonly evaluated: boolean;
+          readonly completeness: ValidationCompleteness;
+        }
+      >();
+      for (const modifier of modifiers) {
+        const evaluated = evaluateRosterModifierApplicability(
+          live.roster,
+          live.context,
+          live.force,
+          modifier,
+          {
+            effectiveCategories: live.effectiveCategories,
+            prospectiveChild: true,
+          },
+        );
+        state.diagnostics.push(...evaluated.diagnostics);
+        if (evaluated.ok) applicability.set(modifier, evaluated.value);
+      }
+      const evaluated = evaluateNumericModifierSequence(baseValue, modifiers, {
+        applicability: (modifier) => applicability.get(modifier)?.status,
+        conditionGroupsEvaluated: (modifier) =>
+          applicability.get(modifier)?.evaluated === true,
+      });
+      state.diagnostics.push(...evaluated.diagnostics);
+      if (
+        !evaluated.ok ||
+        evaluated.value.completeness !== "complete" ||
+        applicability.size !== modifiers.length ||
+        [...applicability.values()].some(
+          ({ completeness }) => completeness !== "complete",
+        ) ||
+        !Number.isSafeInteger(evaluated.value.value) ||
+        evaluated.value.value < 0
+      ) {
+        markIncomplete(state);
+        return undefined;
+      }
+      return evaluated.value.value;
+    }
     markIncomplete(state);
     if (diagnoseUnsupported) {
       state.diagnostics.push(

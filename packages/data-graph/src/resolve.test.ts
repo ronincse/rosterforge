@@ -328,7 +328,9 @@ describe("BattleScribe data graph resolution", () => {
                     type: "instanceOf",
                     field: "selections",
                     scope: "primary-catalogue",
-                    childId: "selector-catalogue",
+                    // This is an identity literal, not a graph dependency. A
+                    // catalogue with this ID is deliberately not loaded.
+                    childId: "unloaded-catalogue",
                     value: 1,
                   },
                 ],
@@ -395,12 +397,12 @@ describe("BattleScribe data graph resolution", () => {
             kind === "repeatChild",
         )
         .map(({ targetId }) => targetId),
-    ).toEqual(["selector-catalogue"]);
+    ).toEqual([]);
     expect(
-      graph.value.references.find(
+      graph.value.references.some(
         ({ kind }) => kind === "conditionChild",
-      )?.targets.map(({ kind }) => kind),
-    ).toEqual(["catalogue"]);
+      ),
+    ).toBe(false);
     expect(
       graph.value.references
         .filter(({ kind }) => kind === "infoLink")

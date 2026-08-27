@@ -21,7 +21,7 @@ import {
 } from "@rosterforge/roster-model";
 
 import {
-  inspectEmptySingleForceRootChoices,
+  inspectSingleForceRootChoices,
   inspectRosterSelectionChildChoices,
   rootSelectionBoundIdentity,
   type EmptySingleForceRootBoundIdentity,
@@ -185,7 +185,12 @@ export function inspectEmptySingleForceRosterStructuralStatus(
     // nothing static excluded it. The add browser already applied the dynamic
     // rule and offered 110 of that catalogue's 292 roots; only this enumeration
     // did not, which is why the two disagreed.
-    const rootInspection = inspectEmptySingleForceRootChoices([root]);
+    const rootInspection = inspectSingleForceRootChoices(
+      roster,
+      context,
+      force,
+      [root],
+    );
     if (!rootInspection.ok) {
       state.incomplete = true;
       state.diagnostics.push(...rootInspection.diagnostics);

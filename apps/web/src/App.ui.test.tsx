@@ -769,10 +769,10 @@ describe("App local catalogue flow", () => {
     expect(
       await screen.findByRole("button", { name: /Synthetic Faction/u }),
     ).toBeTruthy();
-    expect(screen.getByText("Ready with issues")).toBeTruthy();
+    expect(screen.getByText("Partially loaded")).toBeTruthy();
     expect(screen.getByText("invalid.cat")).toBeTruthy();
     expect(screen.getByText("1 rejected")).toBeTruthy();
-    expect(screen.getByText("Batch diagnostics")).toBeTruthy();
+    expect(screen.getByText("Developer import notes")).toBeTruthy();
     expect(screen.getByText("BS_XML_INVALID")).toBeTruthy();
   });
 
@@ -925,7 +925,7 @@ describe("App local catalogue flow", () => {
     expect(checksReport.hasAttribute("open")).toBe(false);
     expect(
       within(checksReport).getByText(
-        "0 known violations | complete inspection",
+        "0 known violations | all supported rules checked",
       ),
     ).toBeTruthy();
     fireEvent.click(
@@ -939,12 +939,14 @@ describe("App local catalogue flow", () => {
       within(structuralStatus).getByText("No known violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("Complete inspection"),
+      within(structuralStatus).getByText("All supported rules checked"),
     ).toBeTruthy();
     const constraints = screen.getByRole("region", {
       name: "Constraint bounds",
     });
-    expect(within(constraints).getByText("Complete inspection")).toBeTruthy();
+    expect(
+      within(constraints).getByText("All supported rules checked"),
+    ).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
     ).toBe("1Satisfied");
@@ -1688,7 +1690,7 @@ describe("App local catalogue flow", () => {
     expect(checksReport.hasAttribute("open")).toBe(true);
     expect(
       within(checksReport).getByText(
-        "1 known violation | complete inspection",
+        "1 known violation | all supported rules checked",
       ),
     ).toBeTruthy();
 
@@ -2489,7 +2491,7 @@ describe("App local catalogue flow", () => {
     });
     expect(checksReport.hasAttribute("open")).toBe(true);
     expect(
-      within(checksReport).getByText(/incomplete inspection/u),
+      within(checksReport).getByText(/some rules not checked/u),
     ).toBeTruthy();
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
@@ -2519,7 +2521,7 @@ describe("App local catalogue flow", () => {
       within(structuralStatus).getByText("Known violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("Incomplete inspection"),
+      within(structuralStatus).getByText("Some rules not checked"),
     ).toBeTruthy();
     expect(
       constraintStatusText(structuralStatus, "Violated"),
@@ -2705,7 +2707,7 @@ describe("App local catalogue flow", () => {
       within(structuralStatus).getByText("No known violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("Incomplete inspection"),
+      within(structuralStatus).getByText("Some rules not checked"),
     ).toBeTruthy();
     expect(constraintStatusText(structuralStatus, "Violated")).toBe(
       "0Violated",
