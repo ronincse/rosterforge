@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (loadout/Warlord controls shipped; roster duplication Next)
+## Current Status — 2026-08-27 (catalogue readability shipped; roster duplication Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -84,7 +84,16 @@ diagnostic codes.
   unit/model statlines, rules, keywords, supported static initial equipment,
   and separately collapsed model/loadout alternatives without creating a
   roster occurrence; completely known empty keyword sets no longer render an
-  empty section. Common transparent loadout wrappers now present their authored
+  empty section. Catalogue roots now lead with one authored cost, a compact
+  selected/maximum count, a plus-only add action, and a larger disclosure
+  marker; conditional source maxima are labelled `base` and never enforced as
+  evaluated capacity. Detachment choices and costed upgrades use the same cost
+  treatment. The player header keeps one source-stable primary capacity while
+  secondary currencies move under `Other roster limits`, and imported
+  filenames and materializer reason codes are confined to collapsed Developer
+  details. Typography is larger and uses a condensed block face from the local
+  system font stack. Common transparent loadout wrappers now present their
+  authored
   child groups as one shallow hierarchy while retaining aggregate bounds, and
   exact one-per-roster upgrade roles such as Warlord have a dedicated toggle
   above ordinary loadout controls. **The `Next` is exposing the existing roster
@@ -151,12 +160,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **520 passed, 18 skipped (538)**.
+  `git diff --check` all pass. `pnpm test` is **521 passed, 18 skipped (539)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **538 passed**; without the variable the 18 corpus tests are skipped.
+  **539 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -366,9 +375,9 @@ one-click unit/model statlines, reader-controlled catalogue placement, inline
 violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
-are complete too. The selected-unit workspace and bounded per-occurrence model
-amount editor are complete. **Flatten common loadout groups and add a dedicated
-Warlord control is Next.**
+are complete too. The selected-unit workspace, bounded per-occurrence model
+amount editor, loadout/Warlord presentation, and catalogue readability pass are
+complete. **Expose roster duplication in the saved-roster workflow is Next.**
 Whole-roster incremental evaluation stays Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
@@ -575,6 +584,8 @@ QA before classifying or implementing the discrepancy.
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
+| Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. One source-stable primary capacity leads the roster header; secondary limits, import provenance, and materializer reason codes stay available behind explicit disclosures rather than competing with player actions |
+| Condition-aware root repetition maxima in the add catalogue | Open | pinned Dire Avengers authors a force maximum of 3 but conditionally sets it to 2 for Incursion. The static root initializer intentionally withholds that final maximum because it cannot evaluate the condition against the live roster. The catalogue now shows `0 / 3 base` and does not enforce it; a later semantic checkpoint must evaluate the condition-aware root bound before the qualifier can disappear or `+` can be disabled from it |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -11234,3 +11245,117 @@ reach them. Keep the checkpoint bounded to a visible saved-roster action,
 identity-safe copied state, persistence, and focused browser validation; this
 closes the explicit duplicate step in the v1 product workflow without widening
 into export, sharing, or roster-file interchange.
+
+## Completed Assignment — Catalogue Costs And Readability, 2026-08-27
+
+Baseline `169599ce461b43187f27ea532ace9b2cf58c8aa9`; resulting implementation
+commit `cac612c98a83cd0fa98be793ce547215a7df9084` and this handoff commit. Codex
+remained the active lead, primary implementer, integrator, reviewer, validator,
+and publisher.
+
+Catalogue roots now show the first authored non-zero cost in source order, the
+selected amount and supported maximum in a compact counter, a plus-only add
+segment, and the existing folded-page information segment. The same cost badge
+is present on direct upgrades, grouped choices, repeatable model choices, and
+detachment options, so the source's own currencies remain distinct: points are
+not guessed by name and Detachment Points are not relabelled as points. A root
+whose cost type is targeted by a modifier is visibly qualified as `base` rather
+than presented as an evaluated total.
+
+The same honesty boundary applies to catalogue repetition maxima. Pinned Dire
+Avengers authors force-scoped maximum constraint `3734-a76b-08f4-7518` at 3,
+but a conditional modifier sets it to 2 for Incursion. The static root
+inspection deliberately withholds the final maximum because it cannot evaluate
+that live-roster condition. The catalogue therefore shows `0 / 3 base`; only a
+fully evaluated `state.maximum` can disable Add. Showing a bare `0` omitted
+useful source information, while enforcing 3 or presenting it as final would be
+incorrect. The remaining condition-aware evaluation work is an explicit Open
+roadmap row.
+
+The roster header now chooses its primary capacity from the game system's exact
+cost-type declaration order. This is stable before and after the first unit is
+added and does not depend on force-constraint order or display-name matching.
+Secondary active currencies such as Enhancements and Detachment Points move
+under `Other roster limits`; zero-value source fields remain in their existing
+disclosure. The common player path consequently leads with points and known
+problems rather than an unexplained enhancement counter.
+
+Player-facing cards no longer print `Direct`/`Linked`, imported `.json`
+filenames, or the materializer reason `unprojectedTarget`. Unavailable links use
+one neutral explanation. Exact source filenames, unresolved target IDs, and raw
+reason codes remain preserved under one collapsed Developer details disclosure;
+the duplicated disclosure beside ordinary selection editing was removed. No
+imported evidence or diagnostic boundary was deleted.
+
+Typography moved to a local condensed system stack led by Bahnschrift, with a
+17 px root size and stronger weights. Root category disclosures have a 28 px
+filled chevron, unit/model disclosure triangles are larger, and phone-width
+root rows keep one compact action column. No hosted font or new asset dependency
+was introduced.
+
+### Delegation and review
+
+Delegation was launched before implementation. Grok Build received a bounded
+read-only audit brief but exhausted its client turn budget before returning a
+finding and changed no repository files. Authenticated Claude Opus 5 then
+completed the useful external read-only lane without edits or external writes.
+It identified two issues the lead had not initially handled: community data can
+carry several simultaneous non-zero campaign currencies, and the first
+evaluated/constraint-reported cost is not a stable points-headline policy.
+Codex verified both against the source and adopted the source-order/one-cost
+presentation above. Claude also warned against inventing denominators for
+incomplete bounds and against removing provenance rather than demoting it.
+Codex reviewed the final diff and reran every gate; no delegated code was
+accepted.
+
+### Browser QA, corpus, and validation
+
+Lead Codex used the browser-capable local QA lane against the running app and a
+fresh pinned Aeldari import at
+`04c62fcd041b3808c39d5c46fd677c704027b979`:
+
+- Dire Avengers showed `75 pts base`, `0 / 3 base`, plus, and the attached
+  information-page segment; Wraithguard showed its authored 145 pts without a
+  dynamic qualifier;
+- Detachment choices showed their authored Detachment Points, including
+  Armoured Warhost at 1 and Warhost at 3;
+- the primary header remained points while two secondary active limits were
+  available under `Other roster limits`;
+- the Dire Avengers catalogue preview retained unit/model statlines, rules,
+  profiles, initial equipment, keywords, and Developer details while its closed
+  player-facing text contained neither `.json` nor `unprojectedTarget`;
+- at 390 × 844 the document measured 375 px wide inside a 390 px viewport, with
+  no horizontal overflow; the 46 px category row, 28 px chevron, cost badges,
+  counters, plus controls, and information segments remained visible and
+  aligned; and
+- the computed root style was the intended 17 px Bahnschrift-led stack.
+
+The owner's New Recruit screenshots informed the desired information hierarchy,
+not a behavioral-discrepancy classification. No interactive reference parity
+claim was made, so the Reference Behavior QA discrepancy protocol did not need
+a New Recruit execution for this checkpoint.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **521 passed, 18 skipped (539)** across 56 files;
+- pinned 46-document corpus suite — **539 passed (539)** across 56 files;
+- production build — clean except for Vite's existing large-chunk warning; and
+- GitHub Actions — pending this handoff push and must be recorded before the
+  checkpoint is declared remotely complete.
+
+### Remaining unsupported behavior
+
+This checkpoint did not add live condition evaluation for unselected root
+maxima, change the permissive/incomplete editing contract, alter persisted
+formats, or change cost/constraint evaluation semantics. Source-authored `base`
+values are informational; only evaluated values enforce roster edits. The new
+Open roadmap row records that distinction.
+
+### Next recommended boundary
+
+**Expose roster duplication in the saved-roster workflow.** Keep the existing
+bounded scope: a visible saved-roster action, identity-safe copied state,
+persistence, and focused browser validation, without widening into sharing,
+export, or roster-file interchange.
