@@ -154,7 +154,11 @@ import reporting, catalogue details and roster setup, transient workspace
 states, diagnostic lists, detail rows, summary metrics, and locale formatting
 live in focused presentation modules. `roster-workspace.tsx` owns the active
 roster builder, supported checks, cost and constraint summaries, selection
-editing, and rule/profile inspection without changing their behavior.
+editing, and rule/profile inspection without changing their behavior. Its
+catalogue-choice preview is likewise a web-only projection: it reads
+source-authored rules, profiles, and info groups from an already-materialized
+choice, never creates a temporary roster occurrence, and therefore does not
+present occurrence-dependent values as effective before selection.
 `roster-print.ts` is a web-only presentation adapter: it copies roster identity
 and order plus report summaries into a serializable view, escapes all imported
 and user-authored strings, and does not mutate the roster or rerun evaluation.
@@ -476,8 +480,13 @@ roster is active, this focused workspace occupies the full library shell and
 the catalogue batch summary is hidden. Clearing roster setup restores that
 summary without changing the imported library. One player header stays above
 the builder, carrying the roster identity, its supported cost totals, and its
-known-problem count; detailed structural and constraint reports follow it. The
-selected-roster tree renders top-level selections in titled groups, one per
+known-problem count; detailed structural and constraint reports follow it.
+Concrete root, direct-child, and grouped-choice controls expose an independent
+read-only preview action. Its modal shows catalogue-authored rules, profiles,
+and information groups without selecting the choice; it contains focus,
+returns focus to its trigger, and leaves effective roster-dependent inspection
+to the selected card. The selected-roster tree renders top-level selections in
+titled groups, one per
 battlefield role, consuming the projection's classification rather than
 deciding membership itself. `Configuration` leads; the rest follow catalogue
 category order so the list reads the same way every time. A role with no

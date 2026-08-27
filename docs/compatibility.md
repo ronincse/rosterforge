@@ -196,6 +196,14 @@
   reuses the existing edit controls, and a separate read-only full unit-card
   View. Catalogue placement remains reader-controlled; configuration is never
   focused as an army unit
+- Eye-labelled read-only previews on concrete root, direct-child, and grouped
+  catalogue choices. They expose source-authored rules, profiles, and info
+  groups before selection without mutating the roster or claiming that
+  occurrence-dependent values are already effective
+- Keyword sections disappear when the effective category inspection is
+  complete and empty. Removed categories and incomplete or unresolved keyword
+  evaluation remain visible evidence rather than being collapsed into a false
+  empty result
 - At most two simultaneous desktop columns: roster plus catalogue while
   shopping, or roster list plus selected-unit options after the catalogue is
   hidden. The complete unit card follows below the builder, and all surfaces

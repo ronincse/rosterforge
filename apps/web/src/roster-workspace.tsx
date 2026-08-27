@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type {
   MaterializedInfoGroup,
@@ -70,6 +70,11 @@ import {
 } from "./selection-amount-policy.js";
 import { formatCount, formatNumber } from "./ui-format.js";
 
+type PreviewChoiceHandler = (
+  choice: BattleScribeRosterSelectionChoice,
+  trigger: HTMLButtonElement,
+) => void;
+
 export function RosterOverview({
   session,
   diagnostics,
@@ -130,6 +135,9 @@ export function RosterOverview({
     useState<SelectionOccurrenceId>();
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
+  const [previewedChoice, setPreviewedChoice] =
+    useState<BattleScribeRosterSelectionChoice>();
+  const previewReturnFocus = useRef<HTMLElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
     useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
@@ -215,6 +223,20 @@ export function RosterOverview({
     return capacity;
   }, [supportedValidation]);
   const validationIssueCount = workspace.validation.issueCount;
+  const openChoicePreview: PreviewChoiceHandler = (choice, trigger) => {
+    previewReturnFocus.current = trigger;
+    setPreviewedChoice(choice);
+  };
+  const closeChoicePreview = () => {
+    setPreviewedChoice(undefined);
+    const returnFocus = previewReturnFocus.current;
+    previewReturnFocus.current = null;
+    queueMicrotask(() => {
+      if (returnFocus !== null && document.contains(returnFocus)) {
+        returnFocus.focus();
+      }
+    });
+  };
   useEffect(() => {
     if (activeSelectionId !== undefined && activeSelection === undefined) {
       setActiveSelectionId(undefined);
@@ -351,6 +373,7 @@ export function RosterOverview({
           onRename={onRenameSelection}
           onSetAmount={onSetSelectionAmount}
           onRemove={onRemoveSelection}
+          onPreviewChoice={openChoicePreview}
         />
       )}
 
@@ -489,6 +512,7 @@ export function RosterOverview({
                   onRename={onRenameSelection}
                   onSetAmount={onSetSelectionAmount}
                   onRemove={onRemoveSelection}
+                  onPreviewChoice={openChoicePreview}
                   onSelect={setActiveSelectionId}
                   onView={(selectionId) =>
                     setViewedSelectionId((current) =>
@@ -510,6 +534,7 @@ export function RosterOverview({
               onRename={onRenameSelection}
               onSetAmount={onSetSelectionAmount}
               onRemove={onRemoveSelection}
+              onPreviewChoice={openChoicePreview}
               onClose={() => setActiveSelectionId(undefined)}
               onView={() =>
                 setViewedSelectionId((current) =>
@@ -615,24 +640,30 @@ export function RosterOverview({
                                 </small>
                               )}
                             </span>
-                            <button
-                              type="button"
-                              disabled={maximumReached}
-                              onClick={() => {
-                                const selectionId =
-                                  onAddRootSelection(choice);
-                                if (
-                                  selectionId !== undefined &&
-                                  group.section === "army"
-                                ) {
-                                  setActiveSelectionId(selectionId);
-                                }
-                              }}
-                            >
-                              {maximumReached
-                                ? `${rootChoiceLabel(choice)} maximum reached`
-                                : `Add ${rootChoiceLabel(choice)}`}
-                            </button>
+                            <span className="root-choice-actions">
+                              <ChoicePreviewButton
+                                choice={choice.materialized}
+                                onPreview={openChoicePreview}
+                              />
+                              <button
+                                type="button"
+                                disabled={maximumReached}
+                                onClick={() => {
+                                  const selectionId =
+                                    onAddRootSelection(choice);
+                                  if (
+                                    selectionId !== undefined &&
+                                    group.section === "army"
+                                  ) {
+                                    setActiveSelectionId(selectionId);
+                                  }
+                                }}
+                              >
+                                {maximumReached
+                                  ? `${rootChoiceLabel(choice)} maximum reached`
+                                  : `Add ${rootChoiceLabel(choice)}`}
+                              </button>
+                            </span>
                           </div>
                         );
                       })}
@@ -647,6 +678,13 @@ export function RosterOverview({
           </section>
         )}
       </section>
+
+      {previewedChoice !== undefined && (
+        <CatalogueChoicePreviewDialog
+          choice={previewedChoice}
+          onClose={closeChoicePreview}
+        />
+      )}
 
       {viewedSelection !== undefined && (
         <RosterUnitCardView
@@ -1571,6 +1609,7 @@ function RosterConfigurationSection({
   onRename,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
 }: {
   readonly group: RosterWorkspaceSelectionGroup;
   readonly anchorId: string;
@@ -1593,6 +1632,7 @@ function RosterConfigurationSection({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
 }) {
   const containsAttention = group.selections.some(
     (selection) => selection.containsAttention,
@@ -1653,6 +1693,7 @@ function RosterConfigurationSection({
           onRename={onRename}
           onSetAmount={onSetAmount}
           onRemove={onRemove}
+          onPreviewChoice={onPreviewChoice}
         />
       </div>
     </details>
@@ -1680,6 +1721,7 @@ function RosterSelectionSection({
   onRename,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
   onSelect,
   onView,
   viewedSelectionId,
@@ -1717,6 +1759,7 @@ function RosterSelectionSection({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onSelect: (id: SelectionOccurrenceId) => void;
   readonly onView: (id: SelectionOccurrenceId) => void;
   readonly viewedSelectionId?: SelectionOccurrenceId | undefined;
@@ -1754,6 +1797,7 @@ function RosterSelectionSection({
         onRename={onRename}
         onSetAmount={onSetAmount}
         onRemove={onRemove}
+        onPreviewChoice={onPreviewChoice}
         presentation="row"
         onSelect={onSelect}
         onView={onView}
@@ -1780,6 +1824,7 @@ function RosterTopLevelSelectionList({
   onRename,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
 }: {
   readonly roleKnown: boolean;
   readonly selections: readonly RosterWorkspaceSelection[];
@@ -1805,6 +1850,9 @@ function RosterTopLevelSelectionList({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice?:
+    | PreviewChoiceHandler
+    | undefined;
 }) {
   return (
     <>
@@ -1832,6 +1880,7 @@ function RosterTopLevelSelectionList({
             onRename={onRename}
             onSetAmount={onSetAmount}
             onRemove={onRemove}
+            onPreviewChoice={onPreviewChoice}
           />
         ))}
       </ul>
@@ -1895,6 +1944,7 @@ function RosterUnitOptionsPanel({
   onRename,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
   onClose,
   onView,
   viewed,
@@ -1916,6 +1966,7 @@ function RosterUnitOptionsPanel({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onClose: () => void;
   readonly onView: () => void;
   readonly viewed: boolean;
@@ -1960,6 +2011,7 @@ function RosterUnitOptionsPanel({
           onRename={onRename}
           onSetAmount={onSetAmount}
           onRemove={onRemove}
+          onPreviewChoice={onPreviewChoice}
         />
       </ul>
     </section>
@@ -2053,6 +2105,7 @@ function RosterSelectionItem({
   onRename,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
 }: {
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
@@ -2094,6 +2147,9 @@ function RosterSelectionItem({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice?:
+    | PreviewChoiceHandler
+    | undefined;
 }) {
   const selection = selectionModel.occurrence;
   const childChoices = inspectLocalRosterChildChoices(session, selection.id);
@@ -2332,6 +2388,8 @@ function RosterSelectionItem({
                       }
                       onSetAmount={onSetAmount}
                       onRemove={onRemove}
+                      choice={direct.choice}
+                      onPreview={onPreviewChoice}
                     />
                   );
                 }
@@ -2373,6 +2431,12 @@ function RosterSelectionItem({
                         Add another {choiceName}
                       </button>
                     )}
+                    {onPreviewChoice !== undefined && (
+                      <ChoicePreviewButton
+                        choice={direct.choice}
+                        onPreview={onPreviewChoice}
+                      />
+                    )}
                     {status !== undefined && <small>{status}</small>}
                   </span>
                 );
@@ -2392,6 +2456,7 @@ function RosterSelectionItem({
                   onChoose={onAddChild}
                   onSetAmount={onSetAmount}
                   onRemove={onRemove}
+                  onPreviewChoice={onPreviewChoice}
                 />
               ))}
             </div>
@@ -2455,6 +2520,7 @@ function RosterSelectionItem({
                     onRename={onRename}
                     onSetAmount={onSetAmount}
                     onRemove={onRemove}
+                    onPreviewChoice={onPreviewChoice}
                   />
                 ))}
               </ul>
@@ -2488,6 +2554,7 @@ function RosterSelectionItem({
                     onRename={onRename}
                     onSetAmount={onSetAmount}
                     onRemove={onRemove}
+                    onPreviewChoice={onPreviewChoice}
                   />
                 ))}
               </ul>
@@ -2534,6 +2601,7 @@ function RosterSelectionItem({
                       onRename={onRename}
                       onSetAmount={onSetAmount}
                       onRemove={onRemove}
+                      onPreviewChoice={onPreviewChoice}
                     />
                   ))}
                 </ul>
@@ -2659,6 +2727,202 @@ function isModelChoice(
   return choice.kind === "selectionEntry" && choice.type === "model";
 }
 
+/** Opens source-authored information without selecting or mutating the choice. */
+function ChoicePreviewButton({
+  choice,
+  onPreview,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly onPreview: PreviewChoiceHandler;
+}) {
+  const label = selectionChoiceLabel(choice);
+  return (
+    <button
+      className="choice-preview-button"
+      type="button"
+      aria-label={`View rules for ${label}`}
+      title={`View rules for ${label}`}
+      onClick={(event) => onPreview(choice, event.currentTarget)}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        focusable="false"
+      >
+        <path d="M2.4 12c2.2-4.1 5.5-6.2 9.6-6.2s7.4 2.1 9.6 6.2c-2.2 4.1-5.5 6.2-9.6 6.2S4.6 16.1 2.4 12Z" />
+        <circle cx="12" cy="12" r="3.2" />
+      </svg>
+      <span className="visually-hidden">View rules for {label}</span>
+    </button>
+  );
+}
+
+/**
+ * Catalogue-authored information for a choice before it has a roster owner.
+ *
+ * The preview deliberately does not create an ephemeral occurrence. Effective
+ * names, keywords, visibility, and characteristic modifiers can depend on the
+ * parent and wider roster, so presenting those values here would turn an
+ * attractive shortcut into false rules evidence. The selected card remains
+ * the authoritative effective view after the player makes the choice.
+ */
+function CatalogueChoicePreviewDialog({
+  choice,
+  onClose,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly onClose: () => void;
+}) {
+  const headingId = useId();
+  const rules: readonly SelectionRuleDetail[] = [
+    ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
+    ...choice.materializedInfoLinks
+      .filter(isMaterializedRuleInfoLink)
+      .map((value) => ({ origin: "Linked" as const, value })),
+  ];
+  const profiles: readonly SelectionProfileDetail[] = [
+    ...choice.profiles.map((value) => ({ origin: "Direct" as const, value })),
+    ...choice.materializedInfoLinks
+      .filter(isMaterializedProfileInfoLink)
+      .map((value) => ({ origin: "Linked" as const, value })),
+  ];
+  const infoGroups = [
+    ...choice.materializedInfoGroups,
+    ...choice.materializedInfoLinks.filter(isMaterializedInfoGroup),
+  ];
+  const unresolved = choice.materializedInfoLinks.filter(
+    isUnresolvedMaterializedInfoLink,
+  );
+  const hasInformation =
+    profiles.length > 0 ||
+    rules.length > 0 ||
+    infoGroups.length > 0 ||
+    unresolved.length > 0;
+  const label = selectionChoiceLabel(choice);
+  return (
+    <div
+      className="choice-preview-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        if (event.key === "Tab") {
+          const focusable = Array.from(
+            event.currentTarget.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          );
+          const first = focusable[0];
+          const last = focusable.at(-1);
+          if (first === undefined || last === undefined) return;
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (
+            !event.shiftKey &&
+            document.activeElement === last
+          ) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      }}
+    >
+      <section
+        className="choice-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+      >
+        <header className="choice-preview-heading">
+          <div>
+            <span className="eyebrow">Catalogue preview</span>
+            <h3 id={headingId}>{label}</h3>
+          </div>
+          <button type="button" autoFocus onClick={onClose}>
+            Close
+          </button>
+        </header>
+        <p className="choice-preview-scope">
+          This shows the catalogue definition before selection. Values that
+          depend on this roster appear on the selected card after you add it.
+        </p>
+        {!hasInformation && (
+          <p className="choice-preview-empty">
+            No rules, profiles, or information groups are attached to this
+            choice.
+          </p>
+        )}
+        <div className="selection-datasheet choice-preview-content">
+          {profiles.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Profiles</h4>
+              <div className="selection-profile-list">
+                {profiles.map((profile, index) => (
+                  <SelectionProfile
+                    key={selectionProfileKey(profile, index)}
+                    profile={profile}
+                    report={undefined}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+          {rules.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Rules</h4>
+              <div className="selection-rule-list">
+                {rules.map((rule, index) => (
+                  <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
+                ))}
+              </div>
+            </section>
+          )}
+          {infoGroups.length > 0 && (
+            <section className="selection-info-section">
+              <h4>Info groups</h4>
+              <div className="selection-info-group-list">
+                {infoGroups.map((infoGroup, index) => (
+                  <SelectionInfoGroup
+                    key={selectionInfoGroupKey(infoGroup, index)}
+                    infoGroup={infoGroup}
+                    reports={undefined}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+          {unresolved.length > 0 && (
+            <section className="selection-info-section unresolved-info-links">
+              <h4>Unresolved info links</h4>
+              <ul>
+                {unresolved.map((infoLink, index) => (
+                  <li key={unresolvedInfoLinkKey(infoLink, index)}>
+                    <strong>
+                      {infoLink.link.name ??
+                        infoLink.link.targetId ??
+                        "Unnamed info link"}
+                    </strong>
+                    <span>{infoLink.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 /**
  * Prevents the quick-choice control from removing mandatory direct wargear.
  *
@@ -2711,6 +2975,7 @@ export function modelQuantityDecreaseAction(
  * one-model change without flattening distinct loadouts into one occurrence.
  */
 function ModelQuantityChoice({
+  choice,
   label,
   amount,
   completeness,
@@ -2720,7 +2985,9 @@ function ModelQuantityChoice({
   onIncrease,
   onSetAmount,
   onRemove,
+  onPreview,
 }: {
+  readonly choice: BattleScribeRosterSelectionChoice;
   readonly label: string;
   readonly amount: number;
   readonly completeness: ValidationCompleteness;
@@ -2733,6 +3000,9 @@ function ModelQuantityChoice({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreview?:
+    | PreviewChoiceHandler
+    | undefined;
 }) {
   return (
     <span
@@ -2740,6 +3010,9 @@ function ModelQuantityChoice({
       data-completeness={completeness}
     >
       <strong>{label}</strong>
+      {onPreview !== undefined && (
+        <ChoicePreviewButton choice={choice} onPreview={onPreview} />
+      )}
       <span className="model-quantity-controls">
         <button
           type="button"
@@ -2784,6 +3057,7 @@ function RosterSelectionChoiceGroup({
   onChoose,
   onSetAmount,
   onRemove,
+  onPreviewChoice,
 }: {
   readonly session: LocalRosterSession;
   readonly parent: RosterSelection;
@@ -2800,6 +3074,9 @@ function RosterSelectionChoiceGroup({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice?:
+    | PreviewChoiceHandler
+    | undefined;
 }) {
   const name = group.group.name ?? group.group.id ?? "Unnamed selection group";
   const finiteMaximum =
@@ -2858,6 +3135,7 @@ function RosterSelectionChoiceGroup({
               return (
                 <ModelQuantityChoice
                   key={selectionChoiceKey(choice)}
+                  choice={choice}
                   label={displayLabel}
                   amount={selectedChoiceAmount}
                   completeness={group.completeness}
@@ -2869,19 +3147,30 @@ function RosterSelectionChoiceGroup({
                   onIncrease={() => onChoose(parent.id, choice, group)}
                   onSetAmount={onSetAmount}
                   onRemove={onRemove}
+                  onPreview={onPreviewChoice}
                 />
               );
             }
             return selectedOccurrence === undefined ? (
-              <button
+              <span
+                className="child-choice-group-option"
                 key={selectionChoiceKey(choice)}
-                type="button"
-                aria-pressed={false}
-                disabled={blocksAdditionalChoices}
-                onClick={() => onChoose(parent.id, choice, group)}
               >
-                {displayLabel}
-              </button>
+                <button
+                  type="button"
+                  aria-pressed={false}
+                  disabled={blocksAdditionalChoices}
+                  onClick={() => onChoose(parent.id, choice, group)}
+                >
+                  {displayLabel}
+                </button>
+                {onPreviewChoice !== undefined && (
+                  <ChoicePreviewButton
+                    choice={choice}
+                    onPreview={onPreviewChoice}
+                  />
+                )}
+              </span>
             ) : (
               <span
                 className="child-choice-group-selected-option"
@@ -2906,6 +3195,12 @@ function RosterSelectionChoiceGroup({
                   >
                     Add another {displayLabel}
                   </button>
+                )}
+                {onPreviewChoice !== undefined && (
+                  <ChoicePreviewButton
+                    choice={choice}
+                    onPreview={onPreviewChoice}
+                  />
                 )}
               </span>
             );
@@ -3376,6 +3671,16 @@ function SelectionKeywords({
   readonly inspection: LocalRosterCategoryInspection;
 }) {
   const { categories, removed, completeness } = inspection;
+  // A completely known empty set is absence, not player-facing information.
+  // Incomplete evaluation still renders below because hiding uncertainty would
+  // silently turn unsupported category behavior into a confident empty answer.
+  if (
+    completeness === "complete" &&
+    categories?.length === 0 &&
+    removed.length === 0
+  ) {
+    return null;
+  }
   if (categories === undefined && removed.length === 0) {
     return (
       <section className="selection-info-section selection-keywords">
@@ -3396,9 +3701,11 @@ function SelectionKeywords({
         <p className="keywords-unresolved">
           Effective keywords are unresolved for this selection.
         </p>
-      ) : categories.length === 0 ? (
-        <p>No keywords.</p>
-      ) : (
+      ) : categories.length === 0 && completeness === "incomplete" ? (
+        <p className="keywords-unresolved">
+          Effective keywords are incomplete for this selection.
+        </p>
+      ) : categories.length === 0 ? null : (
         <ul className="keyword-list">
           {categories.map((category) => (
             <li

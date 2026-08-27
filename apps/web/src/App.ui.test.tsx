@@ -253,7 +253,13 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
               id="entry-mobile-doctrine"
               name="Mobile Doctrine"
               type="upgrade"
-            />
+            >
+              <rules>
+                <rule id="rule-mobile-doctrine" name="Mobile Advance">
+                  <description>Keep moving while the enemy reacts.</description>
+                </rule>
+              </rules>
+            </selectionEntry>
             <selectionEntry
               id="entry-defensive-doctrine"
               name="Defensive Doctrine"
@@ -903,6 +909,27 @@ describe("App local catalogue flow", () => {
     expect(screen.getByRole("button", {
       name: "Add Infantry Squad",
     })).toBeTruthy();
+    const rootPreviewButton = within(editor).getByRole("button", {
+      name: "View rules for Infantry Squad",
+    });
+    fireEvent.click(rootPreviewButton);
+    const rootPreview = screen.getByRole("dialog", {
+      name: "Infantry Squad",
+    });
+    expect(within(rootPreview).getByText("Hold Ground")).toBeTruthy();
+    expect(
+      within(rootPreview).getByText("Remain on the objective."),
+    ).toBeTruthy();
+    expect(rosterSelection("selection-ui-1")).toBeNull();
+    const closeRootPreview = within(rootPreview).getByRole("button", {
+      name: "Close",
+    });
+    expect(document.activeElement).toBe(closeRootPreview);
+    fireEvent.keyDown(rootPreview, { key: "Tab" });
+    expect(document.activeElement).toBe(closeRootPreview);
+    fireEvent.keyDown(rootPreview, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(rootPreviewButton));
     fireEvent.click(catalogueToggle);
     fireEvent.click(catalogueToggle);
     editor = screen.getByRole("region", { name: "Add units" });
@@ -1504,6 +1531,22 @@ describe("App local catalogue flow", () => {
       within(doctrine).getByText("0 selected; 1 still required"),
     ).toBeTruthy();
     fireEvent.click(
+      within(doctrine).getByRole("button", {
+        name: "View rules for Mobile Doctrine",
+      }),
+    );
+    const doctrinePreview = screen.getByRole("dialog", {
+      name: "Mobile Doctrine",
+    });
+    expect(within(doctrinePreview).getByText("Mobile Advance")).toBeTruthy();
+    expect(
+      within(doctrinePreview).getByText(
+        "Keep moving while the enemy reacts.",
+      ),
+    ).toBeTruthy();
+    expect(rosterSelection("selection-ui-group-2")).toBeNull();
+    fireEvent.click(within(doctrinePreview).getByRole("button", { name: "Close" }));
+    fireEvent.click(
       within(checksReport).getByText("Detailed supported evidence"),
     );
     expect(checksReport.hasAttribute("open")).toBe(false);
@@ -1527,6 +1570,19 @@ describe("App local catalogue flow", () => {
     expect(
       within(doctrine).getByText("1 selected; requirement met"),
     ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "View unit card" }),
+    );
+    const unitCard = screen.getByRole("region", {
+      name: "Unit card for Infantry Squad",
+    });
+    const selectedDoctrine = unitCard.querySelector(
+      '[data-occurrence-id="selection-ui-group-2"]',
+    );
+    expect(selectedDoctrine).toBeTruthy();
+    expect(
+      within(selectedDoctrine as HTMLElement).queryByText("Keywords"),
+    ).toBeNull();
     expect(
       within(structuralStatus).getByText("No known violations"),
     ).toBeTruthy();
@@ -1724,8 +1780,8 @@ describe("App local catalogue flow", () => {
         (_match, prefix: string, suffix: string) => `${prefix}-1${suffix}`,
       )
       .replace(
-        /(<selectionEntry\s+id="entry-mobile-doctrine"[\s\S]*?type="upgrade"\s*)\/>/u,
-        `$1>
+        /(<selectionEntry\s+id="entry-mobile-doctrine"[\s\S]*?type="upgrade"\s*>)/u,
+        `$1
               <constraints>
                 <constraint
                   id="entry-mobile-doctrine-max"
@@ -1735,7 +1791,7 @@ describe("App local catalogue flow", () => {
                   value="1"
                 />
               </constraints>
-            </selectionEntry>`,
+            `,
       );
     expect(unboundedGroupSource).not.toBe(source);
     const unboundedGroupBytes = xmlBytes(unboundedGroupSource);
