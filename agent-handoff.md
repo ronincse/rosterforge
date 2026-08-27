@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (choice previews shipped; loadout/Warlord controls Next)
+## Current Status — 2026-08-27 (rich choice previews shipped; loadout/Warlord controls Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -79,9 +79,12 @@ diagnostic codes.
   known selection and transparent-group minima/maxima to their observed
   aggregates, rejects new known violations, and permits monotonic recovery from
   already-invalid state; incomplete bounds remain permissive. Concrete root,
-  direct-child, and grouped choices now have independent eye-labelled catalogue
-  previews, and completely known empty keyword sets no longer render an empty
-  section. **The `Next` is flattening common loadout groups and adding a
+  direct-child, repeatable-model, and grouped choices now have visually
+  integrated page-information actions. Unit previews expose authored
+  unit/model statlines, rules, keywords, supported static initial equipment,
+  and separately collapsed model/loadout alternatives without creating a
+  roster occurrence; completely known empty keyword sets no longer render an
+  empty section. **The `Next` is flattening common loadout groups and adding a
   dedicated Warlord control.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
@@ -145,7 +148,7 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **513 passed, 18 skipped (531)**.
+  `git diff --check` all pass. `pnpm test` is **518 passed, 18 skipped (536)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
@@ -567,7 +570,7 @@ QA before classifying or implementing the discrepancy.
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
-| Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, and grouped choices expose an eye-labelled modal with source-authored rules, profiles, and info groups without mutating the roster or claiming occurrence-dependent effective values. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
+| Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Next | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control. Capture targeted Reference Behavior QA evidence for representative loadout and Warlord scenarios before classifying any parity discrepancy |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
@@ -10892,6 +10895,12 @@ Warlord scenarios before classifying any parity discrepancy.
 
 ## Completed Assignment — Pre-Selection Choice Previews And Empty Keywords, 2026-08-27
 
+> **Partially superseded by the corrective checkpoint immediately below.** The
+> non-mutating source/effective boundary and empty-keyword behavior remain
+> authoritative. The separate eye control, shallow unit content, and associated
+> alignment conclusion do not; owner review replaced them with an attached
+> page-information control and richer unit/model previews.
+
 Baseline `69c078872ce21762922bdc9880516d6b8e91f620`; resulting implementation
 commit `822c46ebe1e45d3862c798bda51f95e69261545e` and this handoff commit. This
 bounded owner-observed usability checkpoint was inserted ahead of the existing
@@ -10979,3 +10988,108 @@ Verification:
 the existing transparent group and exact child-selection semantics, and capture
 the roadmap's targeted Reference Behavior QA evidence before classifying any
 parity discrepancy.
+
+## Completed Assignment — Integrated Information Controls And Rich Unit Previews, 2026-08-27
+
+Baseline `43efb41a022392aaf75f62565d00e00983801646`; resulting implementation
+commit `bf4d0fd4d168390b536d8c2fc8244fd97352df4a` and this handoff commit. This is
+the bounded owner-review correction to the immediately preceding preview
+checkpoint; the loadout/Warlord roadmap row remains `Next`.
+
+The separate eye button was creating both visual clutter and a real catalogue
+layout regression: its independent fixed-width flex/grid slot squeezed long
+configuration labels into a few characters. Every mutation and information
+action remains a separate semantic `<button>`, but the siblings now share one
+segmented visual surface and one border. The mutation button stays first in
+source order, retains `aria-pressed` or `disabled`, and the information segment
+remains independently focusable and enabled. The icon is now RosterForge's
+folded-page outline with a lowercase information mark, and its accessible name
+is `View information for …` rather than the too-narrow `View rules for …`.
+Repeatable model cards attach the same information action to their card header.
+
+Unit previews now reuse `planRosterSelectionInitialization` as a pure,
+non-mutating projection. Supported static minima and defaults produce an
+`Initial unit composition` hierarchy whose quantities multiply through model
+and equipment descendants. Source unit/model statlines, weapon profiles,
+abilities, rules, info groups, and human-readable named category links render
+through the existing profile/rule components. Hex-like imported category codes
+are filtered from this player-facing source-keyword list. Model/loadout choices
+outside that static plan are kept under one lazy `Available model options and
+alternate profiles` disclosure; structural groups remain as headings, while
+each informative alternative mounts its profiles only when opened.
+
+The preview still does **not** create a roster occurrence. Roster-dependent
+names, visibility, effective keywords, modifier results, and conditional
+defaults remain authoritative only after selection. An incomplete static plan
+is labelled rather than guessed. Rendering the selected-card evaluator against
+a fake owner, flattening every optional branch, and recursively mounting the
+unit's entire Crusade advancement library were rejected: the first would claim
+false effective evidence, the second would erase source context, and the third
+turned one bounded card into a second catalogue browser. Alternate traversal is
+therefore deliberately limited to model profiles and their equipment branches.
+
+### Delegation and review
+
+Codex remained the primary implementer and launched one native read-only review
+at baseline `43efb41a` before implementation. The brief named `AGENTS.md`, the
+handoff/workflow documents, the exact UI/CSS/test and materialization files,
+forbade edits and external actions, and asked specifically about compound
+controls, accessibility, alignment, recursive unit data, default-versus-
+alternate semantics, and coverage. The worker changed no files.
+
+The review correctly traced the alignment problem to the independent root,
+direct, and grouped action slots; recommended sibling semantic buttons inside a
+segmented visual wrapper; identified the materialized entry/group/link boundary
+for safe traversal; and warned against presenting optional equipment as
+equipped or mounting every nested branch. Codex verified those findings in the
+source, retained the existing modal focus/Escape/backdrop behavior, added lazy
+alternate mounting, reviewed the final diff, and reran every gate.
+
+### Browser QA and validation
+
+Live browser QA used the unchanged saved pinned Aeldari source at
+`04c62fcd041b3808c39d5c46fd677c704027b979` and a 90 / 2,000 point roster:
+
+- at a 1,280 × 720 viewport, each 345.33 px configuration root gave its label
+  136.89 px and its combined action 171.11 px; `Battle Focus - Agile
+  Manoeuvres` remained a readable label instead of collapsing to the narrow
+  column in the owner's screenshot;
+- selected and maximum-reached controls showed the attached page-information
+  segment, and the information action remained separately named in the
+  accessibility tree;
+- the Dire Avengers preview showed `Bladestorm`, `Battle Focus`, seven authored
+  keywords, 4× Dire Avenger plus 1× Dire Avenger Exarch statlines, 4× Close
+  Combat Weapon, 4× Avenger shuriken catapult, the linked Assault rule, and the
+  Exarch's initial close-combat profile;
+- opening the one model-alternative branch exposed the Exarch weapon choices
+  and their nested weapon profiles, while `Crusade` and `Aspect Shrine Token`
+  did not enter that datasheet-oriented surface; and
+- opening and closing previews did not change the roster's 90 / 2,000 points or
+  selected occurrences.
+
+The owner's New Recruit screenshots supplied the requested information
+hierarchy, not a behavioral-discrepancy claim. No RosterForge/New Recruit
+semantic mismatch was classified, so interactive Reference Behavior QA and its
+data-comparability protocol were not invoked.
+
+Verification:
+
+- delegated read-only review — completed; no worker files changed;
+- focused synthetic UI fixture — a five-model unit now proves source keyword
+  filtering, multiplied required weapon profiles, alternate-profile laziness,
+  non-mutation, focus return, and sibling mutation/information controls;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- full `pnpm test` — **518 passed, 18 skipped (536)** across 56 files;
+- production build — clean except for Vite's existing large-chunk warning; and
+- optional corpus suite — not rerun because evaluation semantics, imported-data
+  projection, diagnostics, persisted formats, corpus data, and third-party data
+  did not change.
+
+### Next recommended boundary
+
+**Flatten common loadout groups and add a dedicated Warlord control.** Preserve
+the exact transparent-group and child-selection semantics beneath the shallower
+player surface. Capture the roadmap's targeted representative loadout and
+Warlord Reference Behavior QA evidence before classifying any parity
+discrepancy.
