@@ -10873,7 +10873,8 @@ Verification:
 - optional corpus suite — not rerun because no evaluator, imported-data
   semantic, diagnostic, persisted format, corpus data, or third-party data
   changed; and
-- GitHub Actions — pending this handoff push.
+- GitHub Actions `#33090159557` for `82cc21d` — **passed** every repository CI
+  gate.
 
 ### Next recommended boundary
 
