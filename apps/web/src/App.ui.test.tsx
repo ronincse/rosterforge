@@ -2119,9 +2119,49 @@ describe("App local catalogue flow", () => {
   });
 
   it("places the whole configuration step before the sticky builder", async () => {
-    const initializationGameSystem = workspaceFixtureBytes("projection.gst");
-    const initializationCatalogue = workspaceFixtureBytes(
-      "selection-initialization.cat",
+    const initializationGameSystemSource = new TextDecoder()
+      .decode(workspaceFixtureBytes("projection.gst"))
+      .replace('name="Supply"', 'name="Detachment Points"')
+      .replace(
+        /(<bs:costType id="cost-supply"[^>]*?)hidden="true"/u,
+        '$1hidden="false"',
+      );
+    const initializationGameSystem = xmlBytes(
+      initializationGameSystemSource,
+    );
+    const initializationCatalogueSource = new TextDecoder()
+      .decode(workspaceFixtureBytes("selection-initialization.cat"))
+      .replace(
+        '<forceEntry id="initialization-force" name="Initialization Force" />',
+        `<forceEntry id="initialization-force" name="Initialization Force">
+      <constraints>
+        <constraint id="configuration-detachment-points-max"
+          type="max" field="cost-supply" scope="force" value="3"
+          shared="true" includeChildSelections="true"
+          includeChildForces="true" />
+      </constraints>
+    </forceEntry>`,
+      )
+      .replace(
+        /(<selectionEntry id="disabled-automatic-root"[\s\S]*?<\/categoryLinks>)/u,
+        `$1
+      <selectionEntryGroups>
+        <selectionEntryGroup id="configuration-detachments"
+          name="Detachments">
+          <selectionEntries>
+            <selectionEntry id="configuration-warhost" name="Warhost"
+              type="upgrade">
+              <costs>
+                <cost name="Detachment Points" typeId="cost-supply"
+                  value="3" />
+              </costs>
+            </selectionEntry>
+          </selectionEntries>
+        </selectionEntryGroup>
+      </selectionEntryGroups>`,
+      );
+    const initializationCatalogue = xmlBytes(
+      initializationCatalogueSource,
     );
     render(<App />);
     fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
@@ -2175,6 +2215,9 @@ describe("App local catalogue flow", () => {
       within(configuration).getByRole("heading", { name: "Configuration" }),
     ).toBeTruthy();
     expect(
+      within(configuration).getByText("0 / 3 Detachment Points"),
+    ).toBeTruthy();
+    expect(
       within(configuration).getByText("Disabled Automatic Root", {
         selector: "strong",
       }),
@@ -2201,11 +2244,11 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).queryByText("Disabled Automatic Root"),
     ).toBeNull();
-    // Configuration is setup, not an army unit, so it does not inflate the
-    // roster count when it moves outside the army pane.
+    // Configuration is setup, not an army unit. Its zero-cost currency remains
+    // a capacity display rather than being inflated by the configuration row.
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 1 army selection",
+        name: "Roster, 0 of 3 Detachment Points used",
       }),
     ).toBeTruthy();
 
@@ -2213,6 +2256,9 @@ describe("App local catalogue flow", () => {
       within(configuration).getByText("Collapse configuration"),
     );
     expect(configuration.hasAttribute("open")).toBe(false);
+    expect(
+      within(configuration).getByText("0 / 3 Detachment Points"),
+    ).toBeTruthy();
     fireEvent.click(within(configuration).getByText("Expand configuration"));
     expect(configuration.hasAttribute("open")).toBe(true);
 

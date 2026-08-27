@@ -142,6 +142,14 @@ describe("BattleScribe JSON ingestion", () => {
       type: "infoGroup",
       hidden: false,
     });
+    expect(result.projection.rules.map(({ id }) => id)).toEqual([
+      "json-group-rule",
+      "json-root-rule",
+    ]);
+    expect(result.projection.rules[1]).toMatchObject({
+      name: "Field Doctrine",
+      description: "Keep the patrol in a mutually supporting formation.",
+    });
   });
 
   it("projects local condition-group extensions without flattening them", () => {

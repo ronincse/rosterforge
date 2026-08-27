@@ -348,6 +348,13 @@ export function RosterOverview({
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace.costs.activeTotals)
     : undefined;
+  const configurationCostLimits = workspace.costs.available
+    ? configurationRelevantCostLimits(
+        configurationGroup,
+        session,
+        workspace.costs.activeTotals,
+      )
+    : [];
   return (
     <div className="roster-overview">
       <RosterPlayerHeader workspace={workspace} />
@@ -414,7 +421,7 @@ export function RosterOverview({
           )}
           open={configurationOpen}
           onToggle={() => setConfigurationOpen((open) => !open)}
-          headlineCost={limitBearingCost}
+          costLimits={configurationCostLimits}
           session={session}
           selectionCanAddAnother={selectionCanAddAnother}
           onAddChild={onAddChildSelection}
@@ -1712,7 +1719,7 @@ function RosterConfigurationSection({
   anchorId,
   open,
   onToggle,
-  headlineCost,
+  costLimits,
   session,
   selectionCanAddAnother,
   onAddChild,
@@ -1725,7 +1732,10 @@ function RosterConfigurationSection({
   readonly anchorId: string;
   readonly open: boolean;
   readonly onToggle: () => void;
-  readonly headlineCost: RosterWorkspaceCost | undefined;
+  /** Evaluated roster capacities that remain useful after setup is collapsed. */
+  readonly costLimits: readonly (RosterWorkspaceCost & {
+    readonly limit: number;
+  })[];
   readonly session: LocalRosterSession;
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onAddChild: (
@@ -1773,12 +1783,12 @@ function RosterConfigurationSection({
             </span>
           </span>
           <span className="roster-configuration-meta">
-            {headlineCost?.limit !== undefined && (
-              <strong>
-                {formatNumber(headlineCost.value)} /{" "}
-                {formatNumber(headlineCost.limit)} {headlineCost.name}
+            {costLimits.map((cost) => (
+              <strong key={cost.typeId}>
+                {formatNumber(cost.value)} / {formatNumber(cost.limit)}{" "}
+                {cost.name}
               </strong>
-            )}
+            ))}
             {containsAttention && (
               <span className="roster-configuration-attention">
                 Contains known violation
@@ -1807,6 +1817,64 @@ function RosterConfigurationSection({
         />
       </div>
     </details>
+  );
+}
+
+/**
+ * Keeps setup-only currencies beside the setup they constrain.
+ *
+ * The roster report already owns evaluated values and finite maxima. This
+ * helper only matches their exact type ids against selected configuration
+ * costs and immediately available configuration choices; it does not evaluate
+ * an unselected choice or infer a currency from a display name. In particular,
+ * the empty Detachment owner exposes its point budget through its child choices
+ * before the player selects one.
+ */
+function configurationRelevantCostLimits(
+  group: RosterWorkspaceSelectionGroup | undefined,
+  session: LocalRosterSession,
+  totals: readonly RosterWorkspaceCost[],
+): readonly (RosterWorkspaceCost & { readonly limit: number })[] {
+  if (group === undefined) return [];
+  const typeIds = new Set<string>();
+  const collectChoice = (choice: BattleScribeRosterSelectionChoice): void => {
+    for (const cost of choice.costs) {
+      // Community entries carry zero placeholders for every campaign currency.
+      // A choice makes a setup budget relevant only when it actually spends it.
+      if (
+        cost.typeId !== undefined &&
+        cost.value !== undefined &&
+        Number.isFinite(cost.value) &&
+        cost.value !== 0
+      ) {
+        typeIds.add(cost.typeId);
+      }
+    }
+  };
+  const visitSelection = (selection: RosterWorkspaceSelection): void => {
+    if (selection.costs.available) {
+      for (const cost of selection.costs.totals) {
+        if (cost.value !== 0) typeIds.add(cost.typeId);
+      }
+    }
+    const choices = inspectLocalRosterChildChoices(
+      session,
+      selection.occurrence.id,
+    );
+    if (choices.ok) {
+      for (const direct of choices.value.direct) collectChoice(direct.choice);
+      for (const childGroup of choices.value.groups) {
+        for (const choice of childGroup.choices) collectChoice(choice);
+      }
+    }
+    for (const child of selection.selections) visitSelection(child);
+  };
+  for (const selection of group.selections) visitSelection(selection);
+  return totals.filter(
+    (
+      total,
+    ): total is RosterWorkspaceCost & { readonly limit: number } =>
+      total.limit !== undefined && typeIds.has(total.typeId),
   );
 }
 

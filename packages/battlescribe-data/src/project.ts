@@ -72,7 +72,15 @@ export function projectBattleScribeDocument(
     sharedSelectionEntryGroups: mapContainer(located, "sharedSelectionEntryGroups", "selectionEntryGroup", context, projectSelectionEntryGroup),
     entryLinks: mapContainer(located, "entryLinks", "entryLink", context, projectEntryLink),
     infoGroups: mapContainer(located, "sharedInfoGroups", "infoGroup", context, projectInfoGroup),
-    rules: mapContainer(located, "sharedRules", "rule", context, projectRule),
+    // BattleScribe XML calls this root collection `sharedRules`, while five
+    // documents at the pinned 04c62fcd corpus revision use the canonical JSON
+    // key `rules` for the same catalogue-level definitions. Project both: an
+    // info link to one of those JSON rules must not become an opaque generic
+    // element merely because its serialized container name differs.
+    rules: [
+      ...mapContainer(located, "sharedRules", "rule", context, projectRule),
+      ...mapContainer(located, "rules", "rule", context, projectRule),
+    ],
     profiles: mapContainer(located, "sharedProfiles", "profile", context, projectProfile),
     publications: mapContainer(located, "publications", "publication", context, projectPublication),
   };

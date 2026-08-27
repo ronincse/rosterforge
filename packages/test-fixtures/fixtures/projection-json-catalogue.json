@@ -57,6 +57,13 @@
             "targetId": "json-pathfinder-abilities",
             "type": "infoGroup",
             "hidden": false
+          },
+          {
+            "name": "Field Doctrine",
+            "id": "json-root-rule-link",
+            "targetId": "json-root-rule",
+            "type": "rule",
+            "hidden": false
           }
         ],
         "costs": [
@@ -270,6 +277,14 @@
         "description": "Can chart an unexplored route.",
         "name": "Trail Reader",
         "id": "json-group-rule",
+        "hidden": false
+      }
+    ],
+    "rules": [
+      {
+        "description": "Keep the patrol in a mutually supporting formation.",
+        "name": "Field Doctrine",
+        "id": "json-root-rule",
         "hidden": false
       }
     ],

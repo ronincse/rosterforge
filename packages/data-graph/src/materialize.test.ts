@@ -452,6 +452,12 @@ describe("BattleScribe shared selection materialization", () => {
         rules: [{ id: "json-route-marker", name: "Route Marker" }],
       },
     ]);
+    expect(entry?.materializedInfoLinks[1]).toMatchObject({
+      kind: "ruleInfoLink",
+      definitionId: "json-root-rule",
+      name: "Field Doctrine",
+      description: "Keep the patrol in a mutually supporting formation.",
+    });
     expect(
       materialization.diagnostics.some(
         ({ code }) => code === "BS_MATERIALIZATION_MISSING_TARGET",

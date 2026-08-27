@@ -5,7 +5,9 @@
 - Uncompressed BattleScribe 2.03-style `.gst` and `.cat` XML ingestion
 - ZIP-based `.gstz` and `.catz` ingestion with one matching XML entry
 - BattleScribe 2.03 JSON game-system and catalogue ingestion from `.json`
-  files, including native Boolean and number values plus `$text` content
+  files, including native Boolean and number values plus `$text` content;
+  catalogue-root `rules` and XML-style `sharedRules` both project as shared
+  rule definitions
 - Root metadata projection for game systems and catalogues, including optional
   author fields, observed root type, and readme text
 - Typed, read-only BattleScribe 2.03 projections for:
@@ -869,6 +871,13 @@ repeated collections, native properties represent XML attributes or simple
 text children, and `$text` represents text on attributed elements such as
 characteristics. Root objects retain the historical catalogue or game-system
 namespace and declare `battleScribeVersion` `2.03`.
+
+The JSON surface is not always a literal spelling of the XML container names.
+At pinned commit `04c62fcd041b3808c39d5c46fd677c704027b979`, five documents use a
+catalogue-root `rules` array for shared rule definitions while other documents
+use `sharedRules`. Both spellings now feed the same typed rule projection. This
+keeps Aeldari's `Battle Focus` target `c324-e193-e23c-7d2e` resolvable from unit
+info links instead of retaining it only as an `unprojectedTarget` generic node.
 
 At commit `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, all 46 JSON files import:
 one game system and 45 catalogues. All 45 catalogue contexts compose. One

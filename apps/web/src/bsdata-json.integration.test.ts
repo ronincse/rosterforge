@@ -3216,6 +3216,21 @@ describe.skipIf(realDataDirectory === undefined)(
             ({ field }) => field === direAvengersPoints?.typeId,
           ),
         ).toBe(true);
+        // The Aeldari library serializes its four catalogue-level rule
+        // definitions under root `rules` rather than `sharedRules`. The
+        // Battle Focus info link must still resolve to player-facing text.
+        expect(
+          direAvengers?.choice.materialized.materializedInfoLinks.find(
+            (infoLink) => infoLink.link?.name === "Battle Focus",
+          ),
+        ).toMatchObject({
+          kind: "ruleInfoLink",
+          definitionId: "c324-e193-e23c-7d2e",
+          name: "Battle Focus",
+          description: expect.stringContaining(
+            "receive a number of Battle Focus tokens",
+          ),
+        });
         const detachmentOwner = created.value.roster.forces[0]?.selections.find(
           ({ name }) => name === "Detachment",
         );
@@ -3395,6 +3410,26 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
         ).toEqual(["Reconnaissance"]);
+        const configuredValidation =
+          inspectLocalRosterSupportedValidation(configured);
+        expect(configuredValidation.ok).toBe(true);
+        if (!configuredValidation.ok) return;
+        expect(
+          configuredValidation.value.constraints.forces.forces
+            .flatMap(({ constraints }) => constraints)
+            .find(
+              ({ constraintType, costEvaluation }) =>
+                constraintType === "max" &&
+                costEvaluation?.typeId === "82ae-1066-5107-6ae0",
+            ),
+        ).toMatchObject({
+          limit: 3,
+          costEvaluation: {
+            exact: true,
+            typeId: "82ae-1066-5107-6ae0",
+            value: 3,
+          },
+        });
         const autarch = localRosterRootChoices(catalogue).find(
           ({ materialized }) => materialized.name === "Autarch",
         );
