@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (model composition controls shipped; selected-unit behavior Next)
+## Current Status — 2026-08-26 (selected-unit workspace shipped; bounded model amounts Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -69,10 +69,15 @@ diagnostic codes.
   controls; and collapsed unit cards retain an exact total-and-type model
   composition summary. Direct required upgrades with complete known minima now
   remain visibly selected and cannot be removed below their floor; replacement
-  groups and unresolved bounds retain their existing permissive behavior. **The
-  `Next` is the selected-unit workspace:
-  newly-added-unit focus, a dedicated options surface, and a separate full-card
-  view without undoing reader-controlled catalogue placement.**
+  groups and unresolved bounds retain their existing permissive behavior. Army
+  unit rows are now compact selectors: a newly added or explicitly selected
+  unit focuses one dedicated options surface, and an independent `View` action
+  opens its complete read-only card. Catalogue placement remains
+  reader-controlled, the outer builder never becomes a permanent three-pane
+  layout, and nested validation links focus the owning unit before resolving a
+  lazy anchor. **The `Next` is the residual legality-aware amount editor: bound
+  its free-form per-occurrence value to complete known model minima/maxima while
+  preserving permissive unresolved recovery.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -135,7 +140,7 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **512 passed, 18 skipped (530)**.
+  `git diff --check` all pass. `pnpm test` is **513 passed, 18 skipped (531)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
@@ -350,7 +355,8 @@ one-click unit/model statlines, reader-controlled catalogue placement, inline
 violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
-are complete too. **The selected-unit workspace is Next.**
+are complete too. The selected-unit workspace is complete. **The bounded
+per-occurrence model amount editor is Next.**
 Whole-roster incremental evaluation stays Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
@@ -549,11 +555,11 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open. Configuration selections start open but now collapse independently inside the outer setup step, and promoted direct model occurrences collapse independently inside a unit. Every selection card reopens when it gains supported attention. The always-visible unit row shows recursive cost plus exact total-and-type model composition |
-| Build phase and reference phase | Next (selected-unit workspace) | **reframed 2026-08-26 by owner feedback.** Catalogue placement is complete and reader-controlled. The next bounded checkpoint selects and focuses a newly added unit, moves its configurable options into a dedicated workspace surface, and gives the list row a separate `View` action for the complete unit card. Do not copy New Recruit's squeezed permanent three-pane geometry: its measured desktop selection pane reduced the roster to about 34% of the window. Preserve the explicit catalogue placement, use the newly available wide shell, and define a coherent mobile transition rather than rendering three simultaneous phone panes |
+| Build phase and reference phase | Done | Newly added and explicitly selected army units focus one dedicated options surface that reuses the existing mutation controls; configuration never enters it. Compact rows retain cost and exact model composition, and a separate `View` opens the complete read-only card. The outer builder stays at two columns maximum: roster + catalogue while shopping, or list + options after hiding the catalogue; phone widths stack all surfaces. Nested validation links focus their owning unit before resolving lazy anchors |
 | Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
 | Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration is now a full-width, default-open setup disclosure before the sticky navigator and roster/catalogue grid; its sticky summary repeats exact points capacity while setup scrolls, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration no longer inflates the army-selection count |
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
-| Legality-aware model-count controls | Open | repeatable exact model choices now use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, known maxima disable plus, and unresolved bounds remain permissive/incomplete. The residual is the advanced per-occurrence amount editor, which is still free-form and not generally bounded by known legal minima/maxima |
+| Legality-aware model-count controls | Next (bound per-occurrence amounts) | repeatable exact model choices now use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, known maxima disable plus, and unresolved bounds remain permissive/incomplete. The residual is the advanced per-occurrence amount editor, which is still free-form and not generally bounded by complete known legal minima/maxima |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
@@ -10688,3 +10694,92 @@ exact model counts, and quantity controls; do not create a second editability
 model. Configuration stays outside the selected-unit editor, and the roadmap's
 existing mobile, catalogue-placement, attention-routing, and full-width
 constraints remain authoritative.
+
+## Completed Assignment — Selected-Unit Workspace, 2026-08-26
+
+Baseline `89a95fd14687fccd7c9d51035ee7939a0ddb7aa4`; resulting implementation
+commit `001071ed6bd2baafed9b074c4f21614724283313` and this handoff commit.
+
+Army units now render as compact selectable rows whose always-visible content
+retains recursive cost and exact model composition. Adding an army root returns
+its generated occurrence ID and focuses that new row without closing or opening
+the catalogue. Clicking an existing row changes only the ephemeral focused
+unit. Configuration roots deliberately do not enter this selection model.
+
+The focused unit mounts one dedicated options region that reuses the existing
+direct-choice, group-choice, model-quantity, required-upgrade, nested-selection,
+rename, and amount controls. It is a presentation mode over the same component,
+not another editability implementation. A separate row-level `View` action
+mounts the complete read-only unit card below the builder and scrolls it into
+view; it contains selected child/model datasheets but no editing controls.
+
+The outer builder still has at most two columns. With the catalogue open those
+columns remain roster and catalogue, and options stack within the roster pane.
+With the catalogue hidden, the selected-roster pane uses the reclaimed width
+for list and options columns. Both arrangements collapse to one column below
+850 px; the unit card stays outside the grid rather than manufacturing a
+permanent list/options/catalogue layout. Active and viewed IDs are React state
+only and never enter the immutable roster session, undo history, or saved draft.
+
+Validation anchors remain exact despite lazy option rendering. If a detailed
+check targets a nested selection that is not mounted, the click finds its
+owning top-level army unit in the immutable workspace tree, focuses that unit,
+then completes the scroll after the exact stable anchor appears. Configuration
+links retain their existing disclosure-reveal behavior.
+
+### Delegation and review
+
+Codex remained primary implementer and launched external review before coding.
+Antigravity 1.1.21 received a least-privilege plan brief in a disposable
+worktree, but its headless permission layer denied repository commands, so it
+returned no evidence and was not treated as a completed review. The same clean
+worktree then carried a bounded Grok Build 1.0.5 plan review with subagents and
+web disabled. Grok independently recommended one coherent checkpoint, ephemeral
+focus state, reuse of the existing presentation model and editing controls, a
+row-level independent View action, no automatic catalogue placement changes,
+and no permanent third column. It also found the nested validation-anchor risk
+that the final implementation closes. Codex checked those findings against the
+actual source, corrected Grok's mistaken claim that the controller already
+returned the new selection ID, reviewed the final diff, and reran every gate.
+The disposable worktree and branch were removed after review.
+
+### Browser QA and validation
+
+Live browser QA used the unchanged saved pinned Aeldari roster at
+`04c62fcd041b3808c39d5c46fd677c704027b979`, still one Guardian Defenders unit
+at 90 / 2,000 points:
+
+- selecting Guardian Defenders set its row pressed state and opened `Unit
+  options for Guardian Defenders`;
+- opening the catalogue left that options region mounted; at 1,440 px the
+  outer builder measured exactly two columns, 871.33 px roster + 400 px
+  catalogue;
+- hiding the catalogue changed the inner roster pane to exactly two columns,
+  836 px list + 400 px options, using the reclaimed width;
+- `View unit card` opened an independent read-only card with 34 selected
+  datasheet surfaces and zero `aria-pressed` editing controls; and
+- at 390 px the document measured 375 px wide with one-column builder/options,
+  and at the supported 320 px minimum document scroll width equalled the
+  viewport exactly. No horizontal overflow occurred.
+
+The viewport override was reset and the local RosterForge tab was left open
+with Guardian Defenders selected and its unit card visible for owner review.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- `pnpm test` — **513 passed, 18 skipped (531)** across 55 files;
+- production build — clean except for Vite's existing large-chunk warning;
+- optional corpus suite — not rerun because no evaluator, imported-data
+  semantic, diagnostic, persisted format, corpus data, or third-party data
+  changed; and
+- GitHub Actions — pending the checkpoint push.
+
+### Next recommended boundary
+
+**Bound the advanced per-occurrence model amount editor.** The dedicated
+minus/count/plus controls already enforce complete known maxima one model at a
+time. Bring the remaining free-form `Models in this squad` editor under the
+same complete known minimum/maximum contract without turning incomplete bounds
+into guessed restrictions or blocking recovery from an already-invalid roster.
