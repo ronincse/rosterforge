@@ -248,7 +248,11 @@ export function createRosterWorkspaceViewModel(
   activeSelectionId?: SelectionOccurrenceId,
 ): RosterWorkspaceViewModel {
   const primaryForce = session.roster.forces[0];
-  const costs = workspaceCostSummary(reports.costs, reports.validation);
+  const costs = workspaceCostSummary(
+    reports.costs,
+    reports.validation,
+    workspaceCostTypeOrder(session),
+  );
   const validation = workspaceValidationSummary(reports.validation);
   const sectionByChoice = rootChoiceSectionIndex(session);
   const costEvaluationBySelection = reports.costs.ok
@@ -297,6 +301,7 @@ export function createRosterWorkspaceViewModel(
 function workspaceCostSummary(
   result: Result<RosterSelectionConditionCostReport>,
   validation: Result<LocalRosterSupportedValidationInspection>,
+  costTypeOrder: ReadonlyMap<string, number>,
 ): RosterWorkspaceCostSummary {
   if (!result.ok) {
     return {
@@ -318,6 +323,15 @@ function workspaceCostSummary(
   for (const limited of limits.values()) {
     if (!projectedTypes.has(limited.typeId)) totals.push(limited);
   }
+  // The evaluator preserves first-selected occurrence order, while an empty
+  // roster receives limit-only totals in force-constraint order. Neither is a
+  // stable headline policy. Restore the source-authored cost-type order so the
+  // same exact type leads before and after the first unit is added.
+  totals.sort(
+    (left, right) =>
+      (costTypeOrder.get(left.typeId) ?? Number.MAX_SAFE_INTEGER) -
+      (costTypeOrder.get(right.typeId) ?? Number.MAX_SAFE_INTEGER),
+  );
   // Community catalogues attach many campaign bookkeeping fields to every
   // unit. Keep their zero totals available without promoting them beside
   // matched-play points or inventing a game-mode filter that drops source data.
@@ -343,6 +357,38 @@ function workspaceCostSummary(
     ).length,
     diagnostics: result.diagnostics,
   };
+}
+
+/**
+ * Orders cost types by their declarations in the reachable game-system data.
+ *
+ * Cost names are presentation strings and cannot identify matched-play points.
+ * The game system declares its currencies in intended display order, so using
+ * exact ids from that order keeps the primary capacity stable without guessing
+ * from labels such as `pts` or from whichever selection was added first.
+ */
+function workspaceCostTypeOrder(
+  session: LocalRosterSession,
+): ReadonlyMap<string, number> {
+  const context = session.catalogue.context;
+  const reachable =
+    context.graph.reachableDocumentsByDocument.get(context.document) ??
+    new Set([context.document]);
+  const documents = [...reachable].sort((left, right) => {
+    const leftOrder = left.metadata.kind === "gameSystem" ? 0 : 1;
+    const rightOrder = right.metadata.kind === "gameSystem" ? 0 : 1;
+    return leftOrder - rightOrder;
+  });
+  const order = new Map<string, number>();
+  let index = 0;
+  for (const document of documents) {
+    for (const costType of document.projection.costTypes) {
+      if (costType.id !== undefined && !order.has(costType.id)) {
+        order.set(costType.id, index++);
+      }
+    }
+  }
+  return order;
 }
 
 /**

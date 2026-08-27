@@ -1058,6 +1058,13 @@ describe("App local catalogue flow", () => {
     const rootAddButton = within(editor).getByRole("button", {
       name: "Add Infantry Squad",
     });
+    const rootChoiceCard = rootAddButton.closest(".root-choice");
+    expect(rootChoiceCard).toBeTruthy();
+    expect(rootAddButton.textContent).toBe("+");
+    expect(within(rootChoiceCard as HTMLElement).getByText("80 Points")).toBeTruthy();
+    // This synthetic root deliberately has no supported force-wide maximum,
+    // so the compact counter does not invent a denominator.
+    expect(within(rootChoiceCard as HTMLElement).getByText("0")).toBeTruthy();
     expect(rootPreviewButton.parentElement).toBe(rootAddButton.parentElement);
     expect(rootPreviewButton.parentElement?.classList).toContain(
       "choice-segmented-control",
@@ -1210,14 +1217,23 @@ describe("App local catalogue flow", () => {
     expect(
       within(unitCardView).getByText("Share every route discovered."),
     ).toBeTruthy();
+    // Player-facing profile and rule headers no longer expose import filenames
+    // or direct/linked implementation vocabulary. Provenance remains available
+    // under one explicit developer disclosure.
     expect(
-      within(unitCardView).getAllByText("Direct | minimal.cat"),
-    ).toHaveLength(3);
+      unitCardView.querySelector(".selection-profile header small"),
+    ).toBeNull();
     expect(
-      within(unitCardView).getAllByText("Linked | minimal.gst"),
-    ).toHaveLength(2);
+      unitCardView.querySelector(".selection-rule header small"),
+    ).toBeNull();
+    const developerDetails = within(unitCardView)
+      .getByText("Developer details")
+      .closest("details");
+    expect(developerDetails).toBeTruthy();
     expect(
-      within(unitCardView).getByText("Linked | minimal.cat"),
+      within(developerDetails as HTMLElement).getByText(
+        "minimal.cat, minimal.gst",
+      ),
     ).toBeTruthy();
     // Renaming is editing, so it moved behind `Edit selection` with the rest.
     fireEvent.click(within(unitOptions).getByText("Edit selection"));
@@ -1318,6 +1334,9 @@ describe("App local catalogue flow", () => {
     const selectedWeaponControl = within(unitOptions).getByRole("button", {
       name: "Special Weapon",
     });
+    expect(
+      within(selectedWeaponControl).getByText("10 Points"),
+    ).toBeTruthy();
     expect(selectedWeaponControl.getAttribute("aria-pressed")).toBe("true");
     expect(selectedWeaponControl).toHaveProperty("disabled", false);
     expect(
@@ -1450,6 +1469,16 @@ describe("App local catalogue flow", () => {
     const pointsLimitedSource = systemSource.replace(
       /(id="force-roster-max"[\s\S]*?\/>\s*)(<\/constraints>)/u,
       `$1<constraint
+          id="force-experience-max"
+          type="max"
+          field="cost-experience"
+          scope="force"
+          value="4"
+          shared="true"
+          includeChildSelections="true"
+          includeChildForces="true"
+        />
+        <constraint
           id="force-points-max"
           type="max"
           field="cost-points"
@@ -1504,6 +1533,24 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("0 / 2,000")).toBeTruthy();
     expect(within(workspaceNavigation).getByText("2,000 remaining")).toBeTruthy();
+    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
+    const headlineFigures = playerHeader.querySelector(
+      ".player-header-figures",
+    );
+    expect(headlineFigures).toBeTruthy();
+    expect(within(headlineFigures as HTMLElement).getByText("Points used")).toBeTruthy();
+    expect(
+      within(headlineFigures as HTMLElement).queryByText(
+        "Crusade: Experience used",
+      ),
+    ).toBeNull();
+    const otherLimits = within(playerHeader)
+      .getByText("Other roster limits")
+      .closest("details");
+    expect(otherLimits).toBeTruthy();
+    expect(
+      within(otherLimits as HTMLElement).getByText("Crusade: Experience used"),
+    ).toBeTruthy();
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
@@ -2439,11 +2486,15 @@ describe("App local catalogue flow", () => {
     expect(within(editor).getByText("Units")).toBeTruthy();
     expect(within(editor).getByText("Configuration")).toBeTruthy();
     expect(within(editor).getByText("Uncategorized")).toBeTruthy();
+    const initializationMaximum = within(editor).getByRole("button", {
+      name: "Initialization Unit maximum reached",
+    });
+    expect(initializationMaximum).toHaveProperty("disabled", true);
     expect(
-      within(editor).getByRole("button", {
-        name: "Initialization Unit maximum reached",
-      }),
-    ).toHaveProperty("disabled", true);
+      within(
+        initializationMaximum.closest(".root-choice") as HTMLElement,
+      ).getByText("1 / 1"),
+    ).toBeTruthy();
     expect(
       within(editor).getByRole("button", {
         name: "Duplicate Initialization Unit maximum reached",

@@ -50,4 +50,19 @@ describe("phone-width layout contracts", () => {
       /@media \(max-width: 850px\) \{[\s\S]*?\.selected-roster-pane\[data-options-open="true"\] \{\n {4}grid-template-columns: 1fr;/u,
     );
   });
+
+  it("keeps catalogue rows compact while making disclosure controls obvious", () => {
+    expect(styles).toContain(
+      ".root-choice {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;",
+    );
+    expect(styles).toContain(
+      ".root-choice-category > summary::before {\n  content: \"\\203A\";",
+    );
+    expect(styles).toContain(
+      ".unit-card-toggle::before {\n  display: inline-block;\n  width: 18px;",
+    );
+    expect(styles).toContain(
+      '--display-font:\n    "Bahnschrift SemiCondensed", Bahnschrift',
+    );
+  });
 });

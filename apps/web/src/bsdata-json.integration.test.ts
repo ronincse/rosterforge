@@ -3176,6 +3176,70 @@ describe.skipIf(realDataDirectory === undefined)(
           selected: [{ name: "Battle Size" }],
           completeness: "complete",
         });
+        // Catalogue rows show the first authored non-zero cost rather than a
+        // wall of campaign bookkeeping. Pin the two owner-reported cases: a
+        // unit's primary points cost (visibly qualified because its model-count
+        // modifier can change it) and a detachment's distinct source currency.
+        const direAvengers = inspectedRoots.value.groups
+          .flatMap(({ choices }) => choices)
+          .find(
+            ({ choice }) => choice.materialized.name === "Dire Avengers",
+          );
+        expect(direAvengers).toMatchObject({ selected: [] });
+        expect(direAvengers?.maximum).toBeUndefined();
+        const direAvengersSourceMaximum =
+          direAvengers?.choice.materialized.constraints.find(
+            ({ type, field, scope }) =>
+              type === "max" &&
+              field === "selections" &&
+              scope === "force",
+          );
+        expect(direAvengersSourceMaximum).toMatchObject({
+          id: "3734-a76b-08f4-7518",
+          value: 3,
+        });
+        expect(
+          direAvengers?.choice.materialized.modifiers.some(
+            ({ field }) => field === direAvengersSourceMaximum?.id,
+          ),
+        ).toBe(true);
+        const direAvengersPoints = direAvengers?.choice.materialized.costs.find(
+          ({ value }) => value !== undefined && value !== 0,
+        );
+        expect(direAvengersPoints).toMatchObject({
+          name: "pts",
+          typeId: "51b2-306e-1021-d207",
+          value: 75,
+        });
+        expect(
+          direAvengers?.choice.materialized.modifiers.some(
+            ({ field }) => field === direAvengersPoints?.typeId,
+          ),
+        ).toBe(true);
+        const detachmentOwner = created.value.roster.forces[0]?.selections.find(
+          ({ name }) => name === "Detachment",
+        );
+        if (detachmentOwner === undefined) {
+          throw new Error("Expected the initialized Detachment selection.");
+        }
+        const detachmentChoices = inspectLocalRosterChildChoices(
+          created.value,
+          detachmentOwner.id,
+        );
+        expect(detachmentChoices.ok).toBe(true);
+        if (!detachmentChoices.ok) return;
+        const armouredWarhost = detachmentChoices.value.groups
+          .flatMap(({ choices }) => choices)
+          .find(({ name }) => name === "Armoured Warhost");
+        expect(
+          armouredWarhost?.costs.find(
+            ({ value }) => value !== undefined && value !== 0,
+          ),
+        ).toMatchObject({
+          name: "Detachment Points",
+          typeId: "82ae-1066-5107-6ae0",
+          value: 1,
+        });
         const structuralStatus =
           inspectLocalRosterStructuralStatus(created.value);
         expect(structuralStatus.ok).toBe(true);

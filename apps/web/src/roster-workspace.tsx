@@ -346,7 +346,7 @@ export function RosterOverview({
     if (hasConfiguration) setConfigurationOpen(true);
   }, [hasConfiguration, workspace.rosterId]);
   const limitBearingCost = workspace.costs.available
-    ? workspace.costs.activeTotals.find(({ limit }) => limit !== undefined)
+    ? headlineRosterCost(workspace.costs.activeTotals)
     : undefined;
   return (
     <div className="roster-overview">
@@ -666,32 +666,55 @@ export function RosterOverview({
                           finiteMaximum !== undefined &&
                           rosterSelectionsAmount(state.selected) >=
                             finiteMaximum;
+                        const costDescriptionId =
+                          catalogueChoiceCosts(choice.materialized).length === 0
+                            ? undefined
+                            : choiceCostDescriptionId(
+                                "root",
+                                choice.materialized,
+                              );
                         return (
                           <div
                             className="root-choice"
                             key={rootChoiceKey(choice)}
                             data-completeness={state.completeness}
                           >
-                            <span>
-                              <strong>{rootChoiceLabel(choice)}</strong>
-                              <small>
-                                {choice.materialized.kind === "selectionEntry"
-                                  ? "Selection entry"
-                                  : "Selection group"}
-                                {choice.materialized.hidden === true
-                                  ? " | Hidden"
-                                  : ""}
+                            <span className="root-choice-copy">
+                              <span className="root-choice-heading">
+                                <strong>{rootChoiceLabel(choice)}</strong>
+                                <ChoiceCostBadges
+                                  choice={choice.materialized}
+                                  id={costDescriptionId}
+                                />
+                              </span>
+                              <small className="root-choice-status">
+                                <span>{status.value}</span>
+                                {status.sourceMaximum && (
+                                  <span
+                                    className="root-choice-status-qualifier"
+                                    title="Source maximum; roster options can change this number."
+                                  >
+                                    base
+                                  </span>
+                                )}
                               </small>
-                              {status !== undefined && (
-                                <small className="root-choice-status">
-                                  {status}
-                                </small>
-                              )}
                             </span>
                             <span className="root-choice-actions">
                               <span className="choice-segmented-control">
                                 <button
                                   type="button"
+                                  className="root-choice-add"
+                                  aria-describedby={costDescriptionId}
+                                  aria-label={
+                                    maximumReached
+                                      ? `${rootChoiceLabel(choice)} maximum reached`
+                                      : `Add ${rootChoiceLabel(choice)}`
+                                  }
+                                  title={
+                                    maximumReached
+                                      ? `${rootChoiceLabel(choice)} maximum reached`
+                                      : `Add ${rootChoiceLabel(choice)}`
+                                  }
                                   disabled={maximumReached}
                                   onClick={() => {
                                     const selectionId =
@@ -704,9 +727,7 @@ export function RosterOverview({
                                     }
                                   }}
                                 >
-                                  {maximumReached
-                                    ? `${rootChoiceLabel(choice)} maximum reached`
-                                    : `Add ${rootChoiceLabel(choice)}`}
+                                  <span aria-hidden="true">+</span>
                                 </button>
                                 <ChoicePreviewButton
                                   choice={choice.materialized}
@@ -849,6 +870,13 @@ function catalogueInitiallyOpen(): boolean {
   );
 }
 
+/** Uses the presentation model's source-stable order for the primary capacity. */
+function headlineRosterCost(
+  totals: readonly RosterWorkspaceCost[],
+): RosterWorkspaceCost | undefined {
+  return totals.find(({ limit }) => limit !== undefined) ?? totals[0];
+}
+
 /**
  * The player-facing header: what the list is, what it costs, and what is wrong
  * with it.
@@ -885,6 +913,12 @@ function RosterPlayerHeader({
   const costDiagnostics = costs.diagnostics.length;
   const validationDiagnostics = validation.diagnostics.length;
   const zeroTotals = costs.zeroTotals;
+  const headlineCost = costs.available
+    ? headlineRosterCost(costs.activeTotals)
+    : undefined;
+  const secondaryTotals = costs.available
+    ? costs.activeTotals.filter((total) => total !== headlineCost)
+    : [];
   // Two sibling disclosures rather than one nested pair. The zero-value cost
   // fields are a browsing affordance a player may open on their own; burying
   // them inside the report details would put them two clicks deep and behind an
@@ -915,23 +949,24 @@ function RosterPlayerHeader({
             <strong>&mdash;</strong>
             <span>costs unavailable</span>
           </p>
-        ) : costs.activeTotals.length === 0 ? (
+        ) : headlineCost === undefined ? (
           <p className="player-header-figure" data-figure="empty">
             <strong>0</strong>
             <span>costs so far</span>
           </p>
         ) : (
-          costs.activeTotals.map((total) => (
-            <p className="player-header-figure" key={total.typeId}>
-              <strong>
-                {formatNumber(total.value)}
-                {total.limit === undefined
-                  ? ""
-                  : ` / ${formatNumber(total.limit)}`}
-              </strong>
-              <span>{total.name}</span>
-            </p>
-          ))
+          <p className="player-header-figure" key={headlineCost.typeId}>
+            <strong>
+              {formatNumber(headlineCost.value)}
+              {headlineCost.limit === undefined
+                ? ""
+                : ` / ${formatNumber(headlineCost.limit)}`}
+            </strong>
+            <span>
+              {headlineCost.name}
+              {headlineCost.limit === undefined ? "" : " used"}
+            </span>
+          </p>
         )}
         {validation.available ? (
           <a
@@ -1012,6 +1047,31 @@ function RosterPlayerHeader({
           <ul className="zero-cost-list">
             {zeroTotals.map((total) => (
               <li key={total.typeId}>{total.name}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {secondaryTotals.length > 0 && (
+        <details className="player-header-details">
+          <summary>
+            Other roster limits
+            <span>{formatCount(secondaryTotals.length, "limit")}</span>
+          </summary>
+          <ul className="other-cost-list">
+            {secondaryTotals.map((total) => (
+              <li key={total.typeId}>
+                <strong>
+                  {formatNumber(total.value)}
+                  {total.limit === undefined
+                    ? ""
+                    : ` / ${formatNumber(total.limit)}`}
+                </strong>
+                <span>
+                  {total.name}
+                  {total.limit === undefined ? "" : " used"}
+                </span>
+              </li>
             ))}
           </ul>
         </details>
@@ -2436,6 +2496,13 @@ function RosterSelectionItem({
                 {rosterRoleChoices.map((direct) => {
                   const label = selectionChoiceLabel(direct.choice);
                   const selectedOccurrence = direct.selected.at(-1);
+                  const costDescriptionId =
+                    catalogueChoiceCosts(direct.choice).length === 0
+                      ? undefined
+                      : choiceCostDescriptionId(
+                          `${selection.id}:role`,
+                          direct.choice,
+                        );
                   return (
                     <span
                       className="roster-role-option"
@@ -2452,6 +2519,8 @@ function RosterSelectionItem({
                       >
                         <button
                           type="button"
+                          aria-label={label}
+                          aria-describedby={costDescriptionId}
                           aria-pressed={selectedOccurrence !== undefined}
                           onClick={() =>
                             selectedOccurrence === undefined
@@ -2459,7 +2528,13 @@ function RosterSelectionItem({
                               : onRemove(selectedOccurrence.id)
                           }
                         >
-                          {label}
+                          <span className="choice-button-copy">
+                            <span>{label}</span>
+                            <ChoiceCostBadges
+                              choice={direct.choice}
+                              id={costDescriptionId}
+                            />
+                          </span>
                         </button>
                         {onPreviewChoice !== undefined && (
                           <ChoicePreviewButton
@@ -2496,6 +2571,10 @@ function RosterSelectionItem({
                   (finiteMaximum === undefined ||
                     selectedAmount < finiteMaximum) &&
                   (selectionCanAddAnother.get(selectedOccurrence.id) ?? true);
+                const costDescriptionId =
+                  catalogueChoiceCosts(direct.choice).length === 0
+                    ? undefined
+                    : choiceCostDescriptionId(selection.id, direct.choice);
                 if (
                   isModelChoice(direct.choice) &&
                   finiteMaximum !== 1
@@ -2542,6 +2621,12 @@ function RosterSelectionItem({
                     >
                       <button
                         type="button"
+                        aria-label={
+                          selectedAmount > 1
+                            ? `${choiceName} (${selectedAmount} selected)`
+                            : choiceName
+                        }
+                        aria-describedby={costDescriptionId}
                         aria-pressed={selectedOccurrence !== undefined}
                         disabled={
                           removalWouldViolateRequiredUpgrade ||
@@ -2555,9 +2640,17 @@ function RosterSelectionItem({
                             : onRemove(selectedOccurrence.id)
                         }
                       >
-                        {selectedAmount > 1
-                          ? `${choiceName} (${selectedAmount} selected)`
-                          : choiceName}
+                        <span className="choice-button-copy">
+                          <span>
+                            {selectedAmount > 1
+                              ? `${choiceName} (${selectedAmount} selected)`
+                              : choiceName}
+                          </span>
+                          <ChoiceCostBadges
+                            choice={direct.choice}
+                            id={costDescriptionId}
+                          />
+                        </span>
                       </button>
                       {onPreviewChoice !== undefined && (
                         <ChoicePreviewButton
@@ -2569,9 +2662,14 @@ function RosterSelectionItem({
                     {canAddAnother && (
                       <button
                         type="button"
+                        aria-label={`Add another ${choiceName}`}
+                        aria-describedby={costDescriptionId}
                         onClick={() => onAddChild(selection.id, direct.choice)}
                       >
-                        Add another {choiceName}
+                        <span className="choice-button-copy">
+                          <span>Add another {choiceName}</span>
+                          <ChoiceCostBadges choice={direct.choice} />
+                        </span>
                       </button>
                     )}
                     {status !== undefined && <small>{status}</small>}
@@ -2664,12 +2762,20 @@ function RosterSelectionItem({
             </section>
           )}
           {choice !== undefined && presentation !== "card" && (
-            <RosterSelectionEdit
-              choice={choice}
-              selection={selection}
-              onRename={onRename}
-              onSetAmount={onSetAmount}
-            />
+            <>
+              <RosterSelectionEdit
+                choice={choice}
+                selection={selection}
+                onRename={onRename}
+                onSetAmount={onSetAmount}
+              />
+              {/* The normal selected-card datasheet already ends with this
+                  disclosure. Options-only presentation omits that datasheet,
+                  so it carries the single retained copy here instead. */}
+              {presentation === "options" && (
+                <ChoiceDeveloperDetails choice={choice} />
+              )}
+            </>
           )}
           {configurableSelections.length > 0 && (
             presentation === "card" ? (
@@ -2777,6 +2883,98 @@ function SelectionCostTotals({
         </span>
       ))}
     </span>
+  );
+}
+
+interface CatalogueChoiceCost {
+  readonly key: string;
+  readonly name: string;
+  readonly value: number;
+  readonly dynamic: boolean;
+}
+
+/**
+ * Returns the first finite, non-zero cost authored on a catalogue choice.
+ *
+ * This is deliberately a starting-cost label, not a speculative evaluation of
+ * an unselected roster occurrence. Conditional modifiers need an occurrence,
+ * its initialized children, and the current roster context; inventing that
+ * context in the catalogue would make a dynamic unit price look exact. Once a
+ * choice is selected, the unit card continues to show the evaluated recursive
+ * total instead. Source order is retained because catalogues put their primary
+ * list-building currency first; showing every non-zero bookkeeping currency
+ * turned an upgrade into a row of campaign counters.
+ */
+function catalogueChoiceCosts(
+  choice: BattleScribeRosterSelectionChoice,
+): readonly CatalogueChoiceCost[] {
+  const index = choice.costs.findIndex(
+    ({ value }) => value !== undefined && Number.isFinite(value) && value !== 0,
+  );
+  const cost = choice.costs[index];
+  if (cost?.value === undefined) return [];
+  const dynamic =
+    cost.typeId !== undefined &&
+    (choice.modifiers.some(({ field }) => field === cost.typeId) ||
+      choice.modifierGroups.some((group) =>
+        modifierGroupTargetsCost(group, cost.typeId!),
+      ));
+  return [
+    {
+      key: `${cost.typeId ?? cost.name ?? "cost"}:${index}`,
+      name: cost.name ?? cost.typeId ?? "cost",
+      value: cost.value,
+      dynamic,
+    },
+  ];
+}
+
+function modifierGroupTargetsCost(
+  group: BattleScribeRosterSelectionChoice["modifierGroups"][number],
+  typeId: string,
+): boolean {
+  return (
+    group.modifiers.some(({ field }) => field === typeId) ||
+    group.modifierGroups.some((nested) =>
+      modifierGroupTargetsCost(nested, typeId),
+    )
+  );
+}
+
+function ChoiceCostBadges({
+  choice,
+  id,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly id?: string | undefined;
+}) {
+  const costs = catalogueChoiceCosts(choice);
+  if (costs.length === 0) return null;
+  return (
+    <span
+      className="choice-cost-badges"
+      id={id}
+      title="Source starting cost; options and roster conditions can change the evaluated total."
+    >
+      {costs.map((cost) => (
+        <span className="choice-cost-badge" key={cost.key}>
+          {formatNumber(cost.value)} {cost.name}
+          {cost.dynamic && (
+            <span className="choice-cost-qualifier"> base</span>
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function choiceCostDescriptionId(
+  scope: string,
+  choice: BattleScribeRosterSelectionChoice,
+): string {
+  return stableDomAnchor(
+    "choice-cost",
+    `${scope}:${selectionChoiceKey(choice)}`,
   );
 }
 
@@ -3134,22 +3332,120 @@ function CatalogueChoiceInformationSections({
       )}
       {unresolved.length > 0 && (
         <section className="selection-info-section unresolved-info-links">
-          <h4>Unresolved info links</h4>
+          <h4>Unavailable linked information</h4>
           <ul>
             {unresolved.map((infoLink, index) => (
               <li key={unresolvedInfoLinkKey(infoLink, index)}>
                 <strong>
                   {infoLink.link.name ??
                     infoLink.link.targetId ??
-                    "Unnamed info link"}
+                    "Unnamed linked information"}
                 </strong>
-                <span>{infoLink.reason}</span>
+                <span>
+                  This information could not be loaded from the imported
+                  catalogue.
+                </span>
               </li>
             ))}
           </ul>
         </section>
       )}
+      <ChoiceDeveloperDetails choice={choice} />
     </>
+  );
+}
+
+interface ChoiceDeveloperProvenance {
+  readonly sources: readonly string[];
+  readonly unresolved: readonly UnresolvedMaterializedInfoLink[];
+}
+
+/**
+ * Collects imported provenance for the collapsed developer disclosure.
+ *
+ * Player cards intentionally omit source filenames and materializer reason
+ * codes, but those details remain available for debugging and corpus evidence.
+ * The traversal mirrors the information already rendered by the card and does
+ * not resolve, mutate, or silently drop an unavailable link.
+ */
+function choiceDeveloperProvenance(
+  choice: BattleScribeRosterSelectionChoice,
+): ChoiceDeveloperProvenance {
+  const sources = new Set<string>([choice.definition.source.filename]);
+  const unresolved: UnresolvedMaterializedInfoLink[] = [];
+  const visitInfoGroup = (infoGroup: MaterializedInfoGroup): void => {
+    sources.add(infoGroup.definition.source.filename);
+    for (const profile of infoGroup.profiles) {
+      sources.add(profile.source.filename);
+    }
+    for (const rule of infoGroup.rules) sources.add(rule.source.filename);
+    for (const infoLink of infoGroup.materializedInfoLinks) {
+      if (isMaterializedProfileInfoLink(infoLink)) {
+        sources.add(infoLink.definition.source.filename);
+      } else if (isMaterializedRuleInfoLink(infoLink)) {
+        sources.add(infoLink.definition.source.filename);
+      } else if (isMaterializedInfoGroup(infoLink)) {
+        visitInfoGroup(infoLink);
+      } else {
+        unresolved.push(infoLink);
+      }
+    }
+    for (const nested of infoGroup.materializedInfoGroups) {
+      visitInfoGroup(nested);
+    }
+  };
+
+  for (const profile of choice.profiles) sources.add(profile.source.filename);
+  for (const rule of choice.rules) sources.add(rule.source.filename);
+  for (const infoGroup of choice.materializedInfoGroups) {
+    visitInfoGroup(infoGroup);
+  }
+  for (const infoLink of choice.materializedInfoLinks) {
+    if (isMaterializedProfileInfoLink(infoLink)) {
+      sources.add(infoLink.definition.source.filename);
+    } else if (isMaterializedRuleInfoLink(infoLink)) {
+      sources.add(infoLink.definition.source.filename);
+    } else if (isMaterializedInfoGroup(infoLink)) {
+      visitInfoGroup(infoLink);
+    } else {
+      unresolved.push(infoLink);
+    }
+  }
+  return { sources: [...sources], unresolved };
+}
+
+function ChoiceDeveloperDetails({
+  choice,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+}) {
+  const provenance = choiceDeveloperProvenance(choice);
+  return (
+    <details className="selection-developer-details">
+      <summary>Developer details</summary>
+      <dl>
+        <Detail label="Source files" value={provenance.sources.join(", ")} />
+      </dl>
+      {provenance.unresolved.length > 0 && (
+        <ul>
+          {provenance.unresolved.map((infoLink, index) => (
+            <li key={unresolvedInfoLinkKey(infoLink, index)}>
+              <strong>
+                {infoLink.link.name ??
+                  infoLink.link.targetId ??
+                  "Unnamed linked information"}
+              </strong>
+              <span>
+                {infoLink.reason}
+                {infoLink.link.targetId === undefined
+                  ? ""
+                  : `; target ${infoLink.link.targetId}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
   );
 }
 
@@ -3485,13 +3781,21 @@ function ModelQuantityChoice({
     | PreviewChoiceHandler
     | undefined;
 }) {
+  const costDescriptionId = useId();
+  const hasCost = catalogueChoiceCosts(choice).length > 0;
   return (
     <span
       className="model-quantity-choice"
       data-completeness={completeness}
     >
       <span className="model-quantity-heading">
-        <strong>{label}</strong>
+        <strong>
+          <span>{label}</span>
+          <ChoiceCostBadges
+            choice={choice}
+            id={hasCost ? costDescriptionId : undefined}
+          />
+        </strong>
         {onPreview !== undefined && (
           <ChoicePreviewButton choice={choice} onPreview={onPreview} />
         )}
@@ -3500,6 +3804,7 @@ function ModelQuantityChoice({
         <button
           type="button"
           aria-label={`Remove one ${label}`}
+          aria-describedby={hasCost ? costDescriptionId : undefined}
           disabled={selectedOccurrence === undefined}
           onClick={() => {
             if (selectedOccurrence === undefined) return;
@@ -3520,6 +3825,7 @@ function ModelQuantityChoice({
         <button
           type="button"
           aria-label={`Add one ${label}`}
+          aria-describedby={hasCost ? costDescriptionId : undefined}
           disabled={!canIncrease}
           onClick={onIncrease}
         >
@@ -3651,6 +3957,10 @@ function RosterSelectionChoiceGroup({
             const label = selectionChoiceLabel(choice);
             const displayLabel =
               choice.hidden === true ? `${label} (hidden)` : label;
+            const costDescriptionId =
+              catalogueChoiceCosts(choice).length === 0
+                ? undefined
+                : choiceCostDescriptionId(parent.id, choice);
             if (isModelChoice(choice) && finiteMaximum !== 1) {
               return (
                 <ModelQuantityChoice
@@ -3679,11 +3989,19 @@ function RosterSelectionChoiceGroup({
                 <span className="choice-segmented-control">
                   <button
                     type="button"
+                    aria-label={displayLabel}
+                    aria-describedby={costDescriptionId}
                     aria-pressed={false}
                     disabled={blocksAdditionalChoices}
                     onClick={() => onChoose(parent.id, choice, group)}
                   >
-                    {displayLabel}
+                    <span className="choice-button-copy">
+                      <span>{displayLabel}</span>
+                      <ChoiceCostBadges
+                        choice={choice}
+                        id={costDescriptionId}
+                      />
+                    </span>
                   </button>
                   {onPreviewChoice !== undefined && (
                     <ChoicePreviewButton
@@ -3704,15 +4022,29 @@ function RosterSelectionChoiceGroup({
                 >
                   <button
                     type="button"
+                    aria-label={
+                      selectedChoiceAmount > 1
+                        ? `${displayLabel} (${selectedChoiceAmount} selected)`
+                        : displayLabel
+                    }
+                    aria-describedby={costDescriptionId}
                     aria-pressed={selected}
                     // Repeated choices can carry different configured subtrees.
                     // Remove only the newest one so recovery is undoable and
                     // never silently destroys the older configured copies.
                     onClick={() => onRemove(selectedOccurrence.id)}
                   >
-                    {selectedChoiceAmount > 1
-                      ? `${displayLabel} (${selectedChoiceAmount} selected)`
-                      : displayLabel}
+                    <span className="choice-button-copy">
+                      <span>
+                        {selectedChoiceAmount > 1
+                          ? `${displayLabel} (${selectedChoiceAmount} selected)`
+                          : displayLabel}
+                      </span>
+                      <ChoiceCostBadges
+                        choice={choice}
+                        id={costDescriptionId}
+                      />
+                    </span>
                   </button>
                   {onPreviewChoice !== undefined && (
                     <ChoicePreviewButton
@@ -3724,9 +4056,14 @@ function RosterSelectionChoiceGroup({
                 {canAddAnother && (
                   <button
                     type="button"
+                    aria-label={`Add another ${displayLabel}`}
+                    aria-describedby={costDescriptionId}
                     onClick={() => onChoose(parent.id, choice, group)}
                   >
-                    Add another {displayLabel}
+                    <span className="choice-button-copy">
+                      <span>Add another {displayLabel}</span>
+                      <ChoiceCostBadges choice={choice} />
+                    </span>
                   </button>
                 )}
               </span>
@@ -3861,21 +4198,25 @@ function RosterSelectionDatasheet({
 
       {unresolved.length > 0 && (
         <section className="selection-info-section unresolved-info-links">
-          <h4>Unresolved info links</h4>
+          <h4>Unavailable linked information</h4>
           <ul>
             {unresolved.map((infoLink, index) => (
               <li key={unresolvedInfoLinkKey(infoLink, index)}>
                 <strong>
                   {infoLink.link.name ??
                     infoLink.link.targetId ??
-                    "Unnamed info link"}
+                    "Unnamed linked information"}
                 </strong>
-                <span>{infoLink.reason}</span>
+                <span>
+                  This information could not be loaded from the imported
+                  catalogue.
+                </span>
               </li>
             ))}
           </ul>
         </section>
       )}
+      <ChoiceDeveloperDetails choice={choice} />
     </div>
   );
 }
@@ -3899,9 +4240,11 @@ function RosterSelectionEdit({
 }) {
   const [editing, setEditing] = useState(false);
   return (
-    // Renaming an occurrence, setting a non-model amount, and the definition
-    // provenance rows are build-time work, not reading material. Open state is
-    // controlled because jsdom does not implement native `<details>` toggling.
+    // Renaming an occurrence and setting a non-model amount are build-time
+    // work, not reading material. Imported provenance lives in the adjacent
+    // Developer details disclosure rather than leaking filenames into this
+    // ordinary editing surface. Open state is controlled because jsdom does
+    // not implement native `<details>` toggling.
     <details className="selection-edit" open={editing}>
       <summary
         onClick={(event) => {
@@ -3910,32 +4253,10 @@ function RosterSelectionEdit({
         }}
       >
         <span>Edit selection</span>
-        <small>Name, amount, and source</small>
+        <small>Name and amount</small>
       </summary>
       {editing && (
         <>
-          <dl className="selection-definition-details">
-            <Detail
-              label="Definition"
-              value={
-                choice.kind === "selectionEntry"
-                  ? (choice.type ?? "Selection entry")
-                  : "Selection group"
-              }
-            />
-            <Detail
-              label="Source"
-              value={choice.definition.source.filename}
-            />
-            <Detail
-              label="Hidden"
-              value={
-                choice.hidden === undefined
-                  ? "Not specified"
-                  : String(choice.hidden)
-              }
-            />
-          </dl>
           <SelectionNameEditor
             selection={selection}
             definitionName={choice.name}
@@ -4288,10 +4609,6 @@ function SelectionProfile({
     annotation === undefined || annotation === ""
       ? displayName
       : `${displayName} (${annotation})`;
-  const source =
-    profile.origin === "Direct"
-      ? profile.value.source.filename
-      : profile.value.definition.source.filename;
   return (
     <article
       className="selection-profile"
@@ -4304,9 +4621,6 @@ function SelectionProfile({
           <strong>{annotatedName}</strong>
           <span>{typeName ?? "Unspecified profile type"}</span>
         </div>
-        <small>
-          {profile.origin} | {source}
-        </small>
       </header>
       {/* A hidden profile is labelled, never removed, so nothing the source
           declares disappears from the occurrence. */}
@@ -4408,17 +4722,10 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
       ? rule.value.name
       : (rule.value.name ?? rule.value.definition.name);
   const { description } = rule.value;
-  const source =
-    rule.origin === "Direct"
-      ? rule.value.source.filename
-      : rule.value.definition.source.filename;
   return (
     <article className="selection-rule">
       <header>
         <strong>{name ?? "Unnamed rule"}</strong>
-        <small>
-          {rule.origin} | {source}
-        </small>
       </header>
       <p>
         {description === undefined
@@ -4469,10 +4776,6 @@ function SelectionInfoGroup({
     <article className="selection-info-group">
       <header>
         <strong>{infoGroup.name ?? "Unnamed info group"}</strong>
-        <small>
-          {infoGroup.link === undefined ? "Direct" : "Linked"} |{" "}
-          {infoGroup.definition.source.filename}
-        </small>
       </header>
 
       {profiles.length > 0 && (
@@ -4518,16 +4821,19 @@ function SelectionInfoGroup({
 
       {unresolved.length > 0 && (
         <div className="selection-info-group-content unresolved-info-links">
-          <h5>Unresolved info links</h5>
+          <h5>Unavailable linked information</h5>
           <ul>
             {unresolved.map((infoLink, index) => (
               <li key={unresolvedInfoLinkKey(infoLink, index)}>
                 <strong>
                   {infoLink.link.name ??
                     infoLink.link.targetId ??
-                    "Unnamed info link"}
+                    "Unnamed linked information"}
                 </strong>
-                <span>{infoLink.reason}</span>
+                <span>
+                  This information could not be loaded from the imported
+                  catalogue.
+                </span>
               </li>
             ))}
           </ul>
@@ -4660,24 +4966,55 @@ function rootChoiceLabel(choice: LocalRosterRootChoice): string {
   );
 }
 
+interface RootChoiceStatus {
+  readonly value: string;
+  readonly sourceMaximum: boolean;
+}
+
 function rootChoiceStatus(
   state: LocalRosterRootChoiceState,
-): string | undefined {
+): RootChoiceStatus {
   const selectedAmount = rosterSelectionsAmount(state.selected);
-  const selected = `${selectedAmount} selected`;
-  if (state.completeness === "incomplete") {
-    return `${selected}; supported bounds are incomplete`;
-  }
-  if (state.remaining !== undefined && state.remaining > 0) {
-    return `${selected}; ${state.remaining} still required`;
-  }
-  if ((state.minimum ?? 0) > 0) {
-    return `${selected}; requirement met`;
-  }
   if (state.maximum !== undefined && Number.isFinite(state.maximum)) {
-    return `${selected} of ${state.maximum} allowed`;
+    return {
+      value: `${formatNumber(selectedAmount)} / ${formatNumber(state.maximum)}`,
+      sourceMaximum: false,
+    };
   }
-  return selectedAmount > 0 ? selected : undefined;
+  const sourceMaximum = catalogueRootSourceMaximum(state.choice.materialized);
+  return {
+    value:
+      sourceMaximum === undefined
+        ? formatNumber(selectedAmount)
+        : `${formatNumber(selectedAmount)} / ${formatNumber(sourceMaximum)}`,
+    sourceMaximum: sourceMaximum !== undefined,
+  };
+}
+
+/**
+ * Returns the tightest authored force/roster repetition maximum for a root.
+ *
+ * Conditional modifiers can change this value after roster configuration, so
+ * this is presentation fallback only: it is visibly qualified as `base` and
+ * never disables Add. A fully evaluated maximum from the root inspection wins
+ * above and remains the only value allowed to enforce capacity.
+ */
+function catalogueRootSourceMaximum(
+  choice: BattleScribeRosterSelectionChoice,
+): number | undefined {
+  const maxima = choice.constraints
+    .filter(
+      ({ type, field, scope, value, percentValue }) =>
+        type === "max" &&
+        field === "selections" &&
+        (scope === "force" || scope === "roster") &&
+        percentValue !== true &&
+        value !== undefined &&
+        Number.isSafeInteger(value) &&
+        value >= 0,
+    )
+    .map(({ value }) => value!);
+  return maxima.length === 0 ? undefined : Math.min(...maxima);
 }
 
 function selectionChoiceKey(choice: BattleScribeRosterSelectionChoice): string {
