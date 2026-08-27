@@ -130,10 +130,15 @@ browser shell built with Vite. The browser shell reads caller-selected local
 files, invokes the composer, presents ordered catalogue choices and file-level
 diagnostics, inspects the selected catalogue context, edits one structural
 roster with explicit occurrence amounts, and explicitly saves local drafts
-through a native IndexedDB adapter. It can also browse an explicitly configured
-GitHub source pinned to an immutable commit, index its supported documents with
-progress and cancellation, acquire the selected catalogue's exact-ID dependency
-closure, and compose that closure through the same application model. Verified
+through a native IndexedDB adapter. Model amount editing remains a presentation
+guard rather than a roster-model command rule: complete condition-aware
+parent-selection constraints and complete transparent-group bounds are applied
+to their observed aggregates, incomplete bounds stay permissive, and an
+already-invalid roster may make monotonic recovery edits. It can also browse an
+explicitly configured GitHub source pinned to an immutable commit, index its
+supported documents with progress and cancellation, acquire the selected
+catalogue's exact-ID dependency closure, and compose that closure through the
+same application model. Verified
 repository bytes use a separate defensive IndexedDB cache. The browser can build
 an immutable presentation model from the active roster plus its already-computed
 cost and supported-validation reports, write an escaped standalone document to

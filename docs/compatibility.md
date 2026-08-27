@@ -45,7 +45,11 @@
   immutable occurrences
 - Optional positive finite amounts on selection occurrences, with absent
   amounts meaning one; immutable add/set/clear/duplicate commands, version-1
-  draft persistence, undo/redo, and a browser amount editor
+  draft persistence, undo/redo, and a browser amount editor. A model's advanced
+  editor applies complete known parent-selection and transparent-group minima
+  and maxima to the aggregate each bound actually observes. Already-invalid
+  state may move toward those bounds without worsening another complete known
+  bound, while incomplete bounds remain permissive rather than guessed
 - Lexical projection and link-over-definition materialization of selection
   `defaultAmount` and `step`, without silently treating comma-delimited source
   extensions as one numeric value

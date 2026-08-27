@@ -1991,6 +1991,20 @@ describe("App local catalogue flow", () => {
     expect(
       within(initializedModels).getAllByLabelText("Models in this squad"),
     ).toHaveLength(1);
+    const boundedAmountInput = within(initializedModels).getByLabelText(
+      "Models in this squad",
+    );
+    fireEvent.change(boundedAmountInput, { target: { value: "2" } });
+    expect(boundedAmountInput.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      within(initializedModels).getByRole("button", { name: "Set amount" }),
+    ).toHaveProperty("disabled", true);
+    expect(
+      within(initializedModels).getByText(
+        "Choose a value within the complete known model limits.",
+      ),
+    ).toBeTruthy();
+    fireEvent.change(boundedAmountInput, { target: { value: "1" } });
     const firstRequiredWeapon = within(initializedModels).getAllByRole(
       "button",
       {
@@ -2193,6 +2207,37 @@ describe("App local catalogue flow", () => {
         name: "Structural violations 2 bounds",
       }),
     ).toBeTruthy();
+
+    // The same aggregate bounds now permit a single remaining occurrence to
+    // repair the squad from one model to two. Resetting that occurrence to one
+    // would recreate the minimum violation, so the convenience action is
+    // bounded too. Undo returns to the under-minimum state for the dedicated
+    // plus control exercised below.
+    const remainingModel = rosterSelection("selection-ui-bound-2");
+    expect(remainingModel).toBeTruthy();
+    const remainingModelToggle = within(
+      remainingModel as HTMLElement,
+    ).getByRole("button", { name: "Required Model" });
+    if (remainingModelToggle.getAttribute("aria-expanded") === "false") {
+      fireEvent.click(remainingModelToggle);
+    }
+    const recoveryAmountInput = within(
+      remainingModel as HTMLElement,
+    ).getByLabelText("Models in this squad");
+    fireEvent.change(recoveryAmountInput, { target: { value: "2" } });
+    const setRecoveryAmount = within(
+      remainingModel as HTMLElement,
+    ).getByRole("button", { name: "Set amount" });
+    expect(setRecoveryAmount).toHaveProperty("disabled", false);
+    fireEvent.click(setRecoveryAmount);
+    expect(within(composition).getByText("2× Required Model")).toBeTruthy();
+    expect(
+      within(remainingModel as HTMLElement).getByRole("button", {
+        name: "Use 1",
+      }),
+    ).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(within(composition).getByText("1× Required Model")).toBeTruthy();
     fireEvent.click(addRequiredModel);
 
     await waitFor(() => {

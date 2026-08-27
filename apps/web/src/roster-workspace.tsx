@@ -63,6 +63,11 @@ import {
   createRosterPrintViewModel,
   type RosterPrintViewModel,
 } from "./roster-print.js";
+import {
+  selectionAmountChangeAllowed,
+  selectionAmountSatisfiesBounds,
+  type KnownSelectionAmountBound,
+} from "./selection-amount-policy.js";
 import { formatCount, formatNumber } from "./ui-format.js";
 
 export function RosterOverview({
@@ -2042,6 +2047,7 @@ function RosterSelectionItem({
   embedded = false,
   hideOccurrence = false,
   allowRemove = true,
+  amountBounds = [],
   selectionCanAddAnother,
   onAddChild,
   onRename,
@@ -2071,6 +2077,8 @@ function RosterSelectionItem({
   /** Lets the panel heading replace only its top selection's row. */
   readonly hideOccurrence?: boolean;
   readonly allowRemove?: boolean;
+  /** Complete aggregate bounds inherited from this occurrence's parent choice. */
+  readonly amountBounds?: readonly KnownSelectionAmountBound[];
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
@@ -2090,6 +2098,10 @@ function RosterSelectionItem({
   const selection = selectionModel.occurrence;
   const childChoices = inspectLocalRosterChildChoices(session, selection.id);
   const choice = localRosterSelectionChoice(session, selection.id);
+  const completeAmountBounds = [
+    ...knownSelectionAmountBounds(session, selection.id),
+    ...amountBounds,
+  ];
   const annotation = useMemo(
     () => inspectLocalRosterSelectionAnnotation(session, selection.id),
     [session, selection.id],
@@ -2395,6 +2407,7 @@ function RosterSelectionItem({
               selection={selection}
               defaultAmount={choice.defaultAmount}
               step={choice.step}
+              bounds={completeAmountBounds}
               onSetAmount={onSetAmount}
               label="Models in this squad"
             />
@@ -2428,6 +2441,10 @@ function RosterSelectionItem({
                     key={model.occurrence.id}
                     session={session}
                     selectionModel={model}
+                    amountBounds={childSelectionAmountBounds(
+                      model.occurrence,
+                      childChoices,
+                    )}
                     selectionCanAddAnother={selectionCanAddAnother}
                     collapsible={presentation !== "card"}
                     collapseChildren={presentation !== "card"}
@@ -2459,6 +2476,10 @@ function RosterSelectionItem({
                     key={child.occurrence.id}
                     session={session}
                     selectionModel={child}
+                    amountBounds={childSelectionAmountBounds(
+                      child.occurrence,
+                      childChoices,
+                    )}
                     selectionCanAddAnother={selectionCanAddAnother}
                     presentation="card"
                     embedded
@@ -2503,6 +2524,10 @@ function RosterSelectionItem({
                       key={child.occurrence.id}
                       session={session}
                       selectionModel={child}
+                      amountBounds={childSelectionAmountBounds(
+                        child.occurrence,
+                        childChoices,
+                      )}
                       selectionCanAddAnother={selectionCanAddAnother}
                       presentation={presentation}
                       onAddChild={onAddChild}
@@ -3154,16 +3179,108 @@ function SelectionNameEditor({
   );
 }
 
+const knownSelectionAmountBoundsCache = new WeakMap<
+  LocalRosterSession,
+  ReadonlyMap<SelectionOccurrenceId, readonly KnownSelectionAmountBound[]>
+>();
+
+/**
+ * Indexes exact complete selection constraints once per immutable session.
+ *
+ * A selection constraint's `observed` value is the aggregate under its declared
+ * parent scope. The amount policy applies only the edited occurrence's delta to
+ * that aggregate, preserving sibling contributions and condition-aware limits.
+ */
+function knownSelectionAmountBounds(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+): readonly KnownSelectionAmountBound[] {
+  let index = knownSelectionAmountBoundsCache.get(session);
+  if (index === undefined) {
+    const built = new Map<
+      SelectionOccurrenceId,
+      readonly KnownSelectionAmountBound[]
+    >();
+    const validation = inspectLocalRosterSupportedValidation(session);
+    if (validation.ok) {
+      for (const selection of validation.value.constraints.selections.selections) {
+        const bounds: KnownSelectionAmountBound[] = [];
+        for (const constraint of selection.constraints) {
+          if (
+            (constraint.constraintType !== "min" &&
+              constraint.constraintType !== "max") ||
+            constraint.scope !== "parent" ||
+            constraint.constraint.field !== "selections" ||
+            constraint.completeness !== "complete" ||
+            constraint.limit === undefined ||
+            constraint.observed === undefined ||
+            !Number.isFinite(constraint.limit) ||
+            !Number.isFinite(constraint.observed) ||
+            !constraint.matching.some(({ id }) => id === selection.owner.id) ||
+            (constraint.constraintType === "max" &&
+              isUnboundedConstraintValue(constraint.limit))
+          ) {
+            continue;
+          }
+          bounds.push({
+            type: constraint.constraintType,
+            limit: constraint.limit,
+            observed: constraint.observed,
+          });
+        }
+        built.set(selection.owner.id, bounds);
+      }
+    }
+    index = built;
+    knownSelectionAmountBoundsCache.set(session, index);
+  }
+  return index.get(selectionId) ?? [];
+}
+
+/**
+ * Adds a complete group aggregate when the edited occurrence belongs to it.
+ * Exact entry constraints come from `knownSelectionAmountBounds`; direct
+ * choice inspection is intentionally not duplicated here. Group constraints
+ * have no roster occurrence of their own, so the parent inspection is their
+ * authoritative editing boundary.
+ */
+function childSelectionAmountBounds(
+  selection: RosterSelection,
+  inspection: ReturnType<typeof inspectLocalRosterChildChoices>,
+): readonly KnownSelectionAmountBound[] {
+  if (!inspection.ok) return [];
+  const group = inspection.value.groups.find((candidate) =>
+    candidate.selected.some(({ id }) => id === selection.id),
+  );
+  if (group === undefined || group.completeness !== "complete") return [];
+
+  const observed = rosterSelectionsAmount(group.selected);
+  const bounds: KnownSelectionAmountBound[] = [];
+  if (group.minimum !== undefined && Number.isFinite(group.minimum)) {
+    bounds.push({ type: "min", limit: group.minimum, observed });
+  }
+  if (
+    group.maximum !== undefined &&
+    Number.isFinite(group.maximum) &&
+    !isUnboundedConstraintValue(group.maximum)
+  ) {
+    bounds.push({ type: "max", limit: group.maximum, observed });
+  }
+  return bounds;
+}
+
 function SelectionAmountEditor({
   selection,
   defaultAmount,
   step,
+  bounds = [],
   onSetAmount,
   label = "Amount",
 }: {
   readonly selection: RosterSelection;
   readonly defaultAmount: string | undefined;
   readonly step: string | undefined;
+  readonly bounds?: readonly KnownSelectionAmountBound[];
   readonly onSetAmount: (
     id: SelectionOccurrenceId,
     amount: number | undefined,
@@ -3176,8 +3293,18 @@ function SelectionAmountEditor({
   useEffect(() => setAmount(String(effectiveAmount)), [effectiveAmount]);
   const parsed = Number(amount);
   const valid = amount.trim() !== "" && Number.isFinite(parsed) && parsed > 0;
-  const canSave = valid && parsed !== effectiveAmount;
+  const allowed =
+    valid && selectionAmountChangeAllowed(effectiveAmount, parsed, bounds);
+  const canSave = allowed && parsed !== effectiveAmount;
+  const canUseOne =
+    selection.amount !== undefined &&
+    selectionAmountChangeAllowed(effectiveAmount, 1, bounds);
+  const currentSatisfiesBounds = selectionAmountSatisfiesBounds(
+    effectiveAmount,
+    bounds,
+  );
   const numericStep = positiveFiniteNumber(step);
+  const hintId = `${id}-hint`;
   return (
     <form
       className="selection-amount-editor"
@@ -3194,8 +3321,11 @@ function SelectionAmountEditor({
           min="0.000000001"
           step={numericStep ?? "any"}
           value={amount}
+          aria-invalid={valid && !allowed ? "true" : undefined}
           aria-describedby={
-            defaultAmount === undefined ? undefined : `${id}-hint`
+            defaultAmount === undefined && bounds.length === 0
+              ? undefined
+              : hintId
           }
           onChange={(event) => setAmount(event.currentTarget.value)}
         />
@@ -3204,16 +3334,28 @@ function SelectionAmountEditor({
         </button>
         <button
           type="button"
-          disabled={selection.amount === undefined}
+          disabled={!canUseOne}
           onClick={() => onSetAmount(selection.id, undefined)}
         >
           Use 1
         </button>
       </div>
-      {defaultAmount !== undefined && (
-        <small id={`${id}-hint`}>
-          Source default: {defaultAmount}
-          {numericStep === undefined ? "" : `; step ${numericStep}`}
+      {(defaultAmount !== undefined || bounds.length > 0) && (
+        <small id={hintId}>
+          {defaultAmount === undefined
+            ? ""
+            : `Source default: ${defaultAmount}${
+                numericStep === undefined ? "" : `; step ${numericStep}`
+              }. `}
+          {bounds.length === 0
+            ? ""
+            : valid && !allowed
+              ? currentSatisfiesBounds
+                ? "Choose a value within the complete known model limits."
+                : "Choose a value that moves the roster toward its complete known model limits without worsening another."
+              : currentSatisfiesBounds
+                ? "Complete known model limits apply."
+                : "This roster is outside a complete known model limit; changes toward legality remain available."}
         </small>
       )}
     </form>
