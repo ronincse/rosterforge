@@ -2362,6 +2362,101 @@ h1 {
   margin-top: 10px;
 }
 
+.roster-role-choices {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 9px 10px 10px;
+  background: rgba(225, 235, 229, 0.58);
+  border-left: 3px solid var(--forest);
+}
+
+.roster-role-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roster-role-heading h4 {
+  margin: 0;
+  color: var(--forest);
+  font-size: 0.66rem;
+}
+
+.roster-role-heading span,
+.roster-role-option small {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+
+.roster-role-options,
+.roster-role-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.roster-role-option > .choice-segmented-control > button:first-child {
+  min-height: 30px;
+  padding: 0 10px;
+  color: #315b47;
+  background: #e4eee8;
+  border-color: #abc0b3;
+  cursor: pointer;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.roster-role-option > .choice-segmented-control[data-selected="true"] > button {
+  color: #f7f5ed;
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+.roster-role-option > .choice-segmented-control[data-selected="true"]
+  > .choice-preview-button {
+  border-left-color: rgba(255, 255, 255, 0.4);
+}
+
+.child-choice-group-wrapper {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px 0 0;
+  border-top: 1px solid #c7d0ca;
+}
+
+.child-choice-group-wrapper[data-completeness="incomplete"] {
+  border-top-color: #c9b980;
+}
+
+.child-choice-group-wrapper-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.child-choice-group-wrapper-heading strong {
+  color: var(--forest);
+  font-size: 0.68rem;
+}
+
+.child-choice-group-wrapper-heading span {
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+
+.child-choice-group-children {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 8px;
+}
+
 .child-choice-group {
   display: grid;
   gap: 7px;

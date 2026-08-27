@@ -1999,6 +1999,78 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
   });
 
+  it("flattens wrapper loadouts and gives singleton roster roles a dedicated control", async () => {
+    const gameSystem = workspaceFixtureBytes("projection.gst");
+    const catalogue = workspaceFixtureBytes("nested-group-bound.cat");
+    let selectionIndex = 0;
+    render(
+      <App
+        createEntityId={(kind) =>
+          kind === "selection"
+            ? `nested-ui-selection-${++selectionIndex}`
+            : `nested-ui-${kind}`
+        }
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("projection.gst", gameSystem),
+          browserFile("nested-group-bound.cat", catalogue),
+        ],
+      },
+    });
+
+    await screen.findByRole("button", { name: /Nested Group Bound/u });
+    const force = screen.getByLabelText("Starting force");
+    const nestedForce = Array.from(force.querySelectorAll("option")).find(
+      ({ textContent }) => textContent === "Nested Force",
+    );
+    fireEvent.change(force, { target: { value: nestedForce?.value } });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = screen.getByRole("region", { name: "Add units" });
+    fireEvent.click(
+      within(editor).getByRole("button", { name: "Add Nested Unit" }),
+    );
+    const selectedRoster = screen.getByRole("region", {
+      name: "Selected roster",
+    });
+    fireEvent.click(
+      within(selectedRoster).getByRole("button", {
+        name: "Configure Nested Unit",
+      }),
+    );
+    const options = within(selectedRoster).getByRole("region", {
+      name: "Unit options for Nested Unit",
+    });
+
+    const role = within(options).getByRole("region", {
+      name: "Roster role for Nested Unit",
+    });
+    const warlord = within(role).getByRole("button", { name: "Warlord" });
+    expect(warlord.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(warlord);
+    expect(warlord.getAttribute("aria-pressed")).toBe("true");
+    expect(within(role).getByText("Selected for this unit")).toBeTruthy();
+    fireEvent.click(warlord);
+    expect(warlord.getAttribute("aria-pressed")).toBe("false");
+
+    const wargear = within(options).getByRole("group", {
+      name: "Wargear choices for Nested Unit",
+    });
+    expect(within(wargear).queryByText("No entries are defined in this group.")).toBeNull();
+    expect(within(wargear).getByText("0 selected; 2 still required")).toBeTruthy();
+    const melee = within(wargear).getByRole("group", {
+      name: "Melee options choices for Nested Unit",
+    });
+    const ranged = within(wargear).getByRole("group", {
+      name: "Ranged options choices for Nested Unit",
+    });
+    fireEvent.click(within(melee).getByRole("button", { name: "Blade" }));
+    fireEvent.click(within(ranged).getByRole("button", { name: "Pistol" }));
+    expect(within(wargear).getByText("2 selected; requirement met")).toBeTruthy();
+  });
+
   it("places the whole configuration step before the sticky builder", async () => {
     const initializationGameSystem = workspaceFixtureBytes("projection.gst");
     const initializationCatalogue = workspaceFixtureBytes(
@@ -2242,12 +2314,12 @@ describe("App local catalogue flow", () => {
       }),
     ).toBeNull();
     const initializedChildren = within(unitOptions).getByRole("group", {
-      name: "Wargear, Warlord and options for Initialization Unit; 1 selection",
+      name: "Wargear and options for Initialization Unit; 1 selection",
     });
     expect(initializedChildren.hasAttribute("open")).toBe(false);
     fireEvent.click(
       within(initializedChildren).getByText(
-        "Configure wargear, Warlord & options",
+        "Configure wargear & options",
       ),
     );
     expect(initializedChildren.hasAttribute("open")).toBe(true);
@@ -2270,7 +2342,7 @@ describe("App local catalogue flow", () => {
     const firstModelChildren = within(firstModel as HTMLElement).getByRole(
       "group",
       {
-        name: "Models, wargear, Warlord and options for Required Model; 1 selection",
+        name: "Models, wargear and options for Required Model; 1 selection",
       },
     );
     expect(firstModelChildren.hasAttribute("open")).toBe(false);
@@ -2459,7 +2531,7 @@ describe("App local catalogue flow", () => {
     const restoredModelChildren = within(restoredModel as HTMLElement).getByRole(
       "group",
       {
-        name: "Models, wargear, Warlord and options for Required Model; 1 selection",
+        name: "Models, wargear and options for Required Model; 1 selection",
       },
     );
     expect(restoredModelChildren.hasAttribute("open")).toBe(false);

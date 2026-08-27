@@ -55,6 +55,7 @@ import {
   inspectLocalRosterRootChoices,
   inspectLocalRosterStructuralStatus,
   inspectLocalRosterSupportedValidation,
+  isLocalRosterSingletonDesignationChoice,
   localRosterChildChoices,
   localRosterRootChoiceGroups,
   localRosterRootChoices,
@@ -3330,6 +3331,46 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
         ).toEqual(["Reconnaissance"]);
+        const autarch = localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.name === "Autarch",
+        );
+        expect(autarch).toBeDefined();
+        if (autarch === undefined) return;
+        let autarchChildId = 0;
+        const withAutarch = addLocalRosterRootSelection(configured, autarch, {
+          selectionId: selectionOccurrenceId("real-aeldari-autarch"),
+          createSelectionId: () =>
+            selectionOccurrenceId(
+              `real-aeldari-autarch-child-${++autarchChildId}`,
+            ),
+        });
+        expect(withAutarch.ok).toBe(true);
+        if (!withAutarch.ok) return;
+        const autarchOccurrence =
+          withAutarch.value.roster.forces[0]?.selections.find(
+            ({ name }) => name === "Autarch",
+          );
+        expect(autarchOccurrence).toBeDefined();
+        if (autarchOccurrence === undefined) return;
+        const autarchChoices = inspectLocalRosterChildChoices(
+          withAutarch.value,
+          autarchOccurrence.id,
+        );
+        expect(autarchChoices.ok).toBe(true);
+        if (!autarchChoices.ok) return;
+        // The shared-entry and link IDs vary across faction catalogues. The
+        // category's exact one-per-roster bounds are the stable structural
+        // signal used by the workspace's dedicated roster-role control.
+        expect(
+          autarchChoices.value.direct
+            .filter(({ choice }) =>
+              isLocalRosterSingletonDesignationChoice(
+                withAutarch.value,
+                choice,
+              ),
+            )
+            .map(({ choice }) => choice.name),
+        ).toEqual(["Warlord"]);
         const darkReapers = localRosterRootChoices(catalogue).find(
           ({ materialized }) => materialized.name === "Dark Reapers",
         );

@@ -10,6 +10,14 @@
   gameSystemRevision="0" library="false">
   <categoryEntries>
     <categoryEntry id="nested-category-units" name="Units" />
+    <categoryEntry id="nested-category-warlord" name="Warlord">
+      <constraints>
+        <constraint id="nested-warlord-category-min" type="min"
+          field="selections" scope="roster" value="1" />
+        <constraint id="nested-warlord-category-max" type="max"
+          field="selections" scope="roster" value="1" />
+      </constraints>
+    </categoryEntry>
   </categoryEntries>
   <forceEntries>
     <forceEntry id="nested-force" name="Nested Force" />
@@ -59,6 +67,20 @@
           </selectionEntryGroups>
         </selectionEntryGroup>
       </selectionEntryGroups>
+      <selectionEntries>
+        <selectionEntry id="nested-warlord" name="Warlord" type="upgrade">
+          <categoryLinks>
+            <categoryLink id="nested-warlord-category-link" name="Warlord"
+              targetId="nested-category-warlord" />
+          </categoryLinks>
+          <constraints>
+            <constraint id="nested-warlord-parent-min" type="min"
+              field="selections" scope="parent" value="0" />
+            <constraint id="nested-warlord-parent-max" type="max"
+              field="selections" scope="parent" value="1" />
+          </constraints>
+        </selectionEntry>
+      </selectionEntries>
     </selectionEntry>
   </selectionEntries>
 </catalogue>

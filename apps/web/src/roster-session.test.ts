@@ -22,6 +22,7 @@ import {
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterStructuralStatus,
   inspectLocalRosterSupportedValidation,
+  isLocalRosterSingletonDesignationChoice,
   localRosterChildChoices,
   localRosterRootChoiceGroups,
   localRosterRootChoices,
@@ -32,6 +33,121 @@ import {
   setLocalRosterSelectionAmount,
   setLocalRosterSelectionName,
 } from "./roster-session.js";
+
+describe("nested choice group session state", () => {
+  it("counts nested selections in wrapper bounds and identifies the roster role structurally", async () => {
+    const prepared = await prepareLocalCatalogueLibrary(
+      [
+        { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
+        {
+          filename: "nested-group-bound.cat",
+          bytes: fixtureBytes("nested-group-bound.cat"),
+        },
+      ],
+      {
+        import: {
+          batchId: "nested-group-session",
+          importedAt: "2026-08-27T00:00:00.000Z",
+        },
+      },
+    );
+    if (!prepared.ok) throw new Error("Expected nested-group catalogue.");
+    const catalogue = prepared.value.catalogues.find(
+      ({ id }) => id === "nested-group-bound",
+    );
+    const force = catalogue?.context.forces.definitions.find(
+      ({ source }) => source.id === "nested-force",
+    );
+    const root = catalogue === undefined
+      ? undefined
+      : localRosterRootChoices(catalogue).find(
+          ({ materialized }) => materialized.id === "nested-unit",
+        );
+    if (catalogue === undefined || force === undefined || root === undefined) {
+      throw new Error("Expected nested-group roster choices.");
+    }
+    const created = createLocalRosterSession(catalogue, force, {
+      rosterId: rosterId("nested-group-roster"),
+      forceId: forceOccurrenceId("nested-group-force"),
+      name: "Nested group roster",
+    });
+    if (!created.ok) throw new Error("Expected nested-group roster.");
+    const withUnit = addLocalRosterRootSelection(created.value, root, {
+      selectionId: selectionOccurrenceId("nested-unit-occurrence"),
+    });
+    if (!withUnit.ok) throw new Error("Expected nested unit.");
+
+    const initial = inspectLocalRosterChildChoices(
+      withUnit.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+    );
+    if (!initial.ok) throw new Error("Expected nested choices.");
+    const wargear = initial.value.groups.find(
+      ({ group }) => group.id === "nested-wargear",
+    );
+    const melee = initial.value.groups.find(
+      ({ group }) => group.id === "nested-melee",
+    );
+    const warlord = initial.value.direct.find(
+      ({ choice }) => choice.id === "nested-warlord",
+    );
+    expect(wargear).toMatchObject({ selected: [], remaining: 2 });
+    expect(warlord).toBeDefined();
+    expect(
+      warlord === undefined
+        ? false
+        : isLocalRosterSingletonDesignationChoice(
+            withUnit.value,
+            warlord.choice,
+          ),
+    ).toBe(true);
+    const blade = melee?.choices.find(({ id }) => id === "nested-blade");
+    if (melee === undefined || blade === undefined) {
+      throw new Error("Expected melee group choices.");
+    }
+    const withBlade = chooseLocalRosterChildGroupEntry(
+      withUnit.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+      melee.group,
+      blade,
+      { selectionId: selectionOccurrenceId("nested-blade-occurrence") },
+    );
+    if (!withBlade.ok) throw new Error("Expected Blade selection.");
+    const afterBlade = inspectLocalRosterChildChoices(
+      withBlade.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+    );
+    if (!afterBlade.ok) throw new Error("Expected refreshed nested choices.");
+    const ranged = afterBlade.value.groups.find(
+      ({ group }) => group.id === "nested-ranged",
+    );
+    const pistol = ranged?.choices.find(({ id }) => id === "nested-pistol");
+    if (ranged === undefined || pistol === undefined) {
+      throw new Error("Expected ranged group choices.");
+    }
+    const withPistol = chooseLocalRosterChildGroupEntry(
+      withBlade.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+      ranged.group,
+      pistol,
+      { selectionId: selectionOccurrenceId("nested-pistol-occurrence") },
+    );
+    if (!withPistol.ok) throw new Error("Expected Pistol selection.");
+    const complete = inspectLocalRosterChildChoices(
+      withPistol.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+    );
+    if (!complete.ok) throw new Error("Expected completed nested choices.");
+    expect(
+      complete.value.groups.find(
+        ({ group }) => group.id === "nested-wargear",
+      ),
+    ).toMatchObject({
+      selected: [{ name: "Blade" }, { name: "Pistol" }],
+      remaining: 0,
+    });
+  });
+});
 
 describe("createLocalRosterSession", () => {
   it("creates one context-backed roster force while retaining source identity", async () => {

@@ -212,6 +212,7 @@ export interface LocalRosterChildChoiceGroup {
   readonly hiddenChoiceCount: number;
   readonly minimum?: number;
   readonly maximum?: number;
+  /** Every selected descendant counted by this group's bound. */
   readonly selected: readonly RosterSelection[];
   readonly remaining?: number;
   readonly completeness: ValidationCompleteness;
@@ -1265,6 +1266,41 @@ export function localRosterSelectionChoice(
 }
 
 /**
+ * Identifies an upgrade whose category defines an exact one-per-roster role.
+ *
+ * The pinned 11th-edition corpus expresses Warlord this way, but the display
+ * name and shared-entry IDs vary between catalogues. Resolving the authored
+ * category link and its roster-scoped bounds keeps this presentation rule
+ * structural and fails closed when a category is missing or ambiguous.
+ */
+export function isLocalRosterSingletonDesignationChoice(
+  session: LocalRosterSession,
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  if (choice.kind !== "selectionEntry" || choice.type !== "upgrade") {
+    return false;
+  }
+  const matchingCategories = choice.categoryLinks.filter((link) => {
+    if (link.targetId === undefined) return false;
+    const definitions = session.catalogue.context.categories.definitions.filter(
+      ({ source }) => source.id === link.targetId,
+    );
+    if (definitions.length !== 1) return false;
+    const constraints = definitions[0]!.source.constraints;
+    return ["min", "max"].every((type) =>
+      constraints.some(
+        (constraint) =>
+          constraint.type === type &&
+          constraint.field === "selections" &&
+          constraint.scope === "roster" &&
+          constraint.value === 1,
+      ),
+    );
+  });
+  return matchingCategories.length === 1;
+}
+
+/**
  * Adds and initializes one child, then reconciles supported ordinary-entry and
  * group automatic bounds and newly required choices as one immutable action.
  */
@@ -1728,7 +1764,7 @@ function localRosterChildChoiceGroup(
 ): LocalRosterChildChoiceGroup {
   const selected = parent.selections.filter((selection) => {
     const choice = localRosterSelectionChoice(session, selection.id);
-    return choice !== undefined && inspection.choices.includes(choice);
+    return choice !== undefined && inspection.countedChoices.includes(choice);
   });
   return {
     group: inspection.group,

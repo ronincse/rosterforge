@@ -5,6 +5,7 @@ import type {
   MaterializedProfileInfoLink,
   MaterializedRuleInfoLink,
   MaterializedSelectionContainer,
+  MaterializedSelectionEntryGroup,
   UnresolvedMaterializedInfoLink,
 } from "@rosterforge/data-graph";
 import {
@@ -43,6 +44,7 @@ import {
   inspectLocalRosterSelectionName,
   inspectLocalRosterSelectionCharacteristics,
   inspectLocalRosterSupportedValidation,
+  isLocalRosterSingletonDesignationChoice,
   localRosterSelectionChoice,
   type LocalRosterChildChoiceGroup,
   type LocalRosterCategoryInspection,
@@ -77,6 +79,49 @@ type PreviewChoiceHandler = (
   choice: BattleScribeRosterSelectionChoice,
   trigger: HTMLButtonElement,
 ) => void;
+
+interface RosterSelectionChoiceGroupNode {
+  readonly group: LocalRosterChildChoiceGroup;
+  readonly children: readonly RosterSelectionChoiceGroupNode[];
+}
+
+/**
+ * Restores the authored group hierarchy from the evaluator's intentionally
+ * flat inspection list. Object identity is stable across materialization, so
+ * nested groups never need display-name or source-ID guessing.
+ */
+function rosterSelectionChoiceGroupTree(
+  groups: readonly LocalRosterChildChoiceGroup[],
+): readonly RosterSelectionChoiceGroupNode[] {
+  const byGroup = new Map(groups.map((group) => [group.group, group]));
+  const childrenByGroup = new Map<
+    MaterializedSelectionEntryGroup,
+    MaterializedSelectionEntryGroup[]
+  >();
+  const nested = new Set<MaterializedSelectionEntryGroup>();
+  for (const { group } of groups) {
+    const children = [
+      ...group.selectionEntryGroups,
+      ...group.entryLinks.filter(
+        (entry): entry is MaterializedSelectionEntryGroup =>
+          entry.kind === "selectionEntryGroup",
+      ),
+    ].filter((entry) => byGroup.has(entry));
+    childrenByGroup.set(group, children);
+    for (const child of children) nested.add(child);
+  }
+  const build = (
+    group: LocalRosterChildChoiceGroup,
+  ): RosterSelectionChoiceGroupNode => ({
+    group,
+    children: (childrenByGroup.get(group.group) ?? []).map((child) =>
+      build(byGroup.get(child)!),
+    ),
+  });
+  return groups
+    .filter(({ group }) => !nested.has(group))
+    .map((group) => build(group));
+}
 
 export function RosterOverview({
   session,
@@ -2159,6 +2204,22 @@ function RosterSelectionItem({
   const selection = selectionModel.occurrence;
   const childChoices = inspectLocalRosterChildChoices(session, selection.id);
   const choice = localRosterSelectionChoice(session, selection.id);
+  const rosterRoleChoices = childChoices.ok
+    ? childChoices.value.direct.filter(({ choice: childChoice }) =>
+        isLocalRosterSingletonDesignationChoice(session, childChoice),
+      )
+    : [];
+  const ordinaryDirectChoices = childChoices.ok
+    ? childChoices.value.direct.filter(
+        ({ choice: childChoice }) =>
+          !rosterRoleChoices.some(
+            ({ choice: roleChoice }) => roleChoice === childChoice,
+          ),
+      )
+    : [];
+  const childChoiceGroupTree = childChoices.ok
+    ? rosterSelectionChoiceGroupTree(childChoices.value.groups)
+    : [];
   const completeAmountBounds = [
     ...knownSelectionAmountBounds(session, selection.id),
     ...amountBounds,
@@ -2206,9 +2267,17 @@ function RosterSelectionItem({
       childChoice.type === "model"
     ) {
       promotedModels.push(child);
-    } else {
+    } else if (
+      presentation === "card" ||
+      childChoice === undefined ||
+      !rosterRoleChoices.some(
+        ({ choice: roleChoice }) => roleChoice === childChoice,
+      )
+    ) {
       // Unknown choices stay configurable. Treating an unresolved type as a
-      // model would hide it from the only complete editing tree.
+      // model would hide it from the only complete editing tree. A recognized
+      // selected roster role has its own control above the loadout groups, but
+      // remains in the full card so authored information is not discarded.
       configurableSelections.push(child);
     }
   }
@@ -2217,11 +2286,11 @@ function RosterSelectionItem({
   );
   const configurableSelectionLabel =
     promotedModels.length > 0
-      ? "Wargear, Warlord and options"
-      : "Models, wargear, Warlord and options";
+      ? "Wargear and options"
+      : "Models, wargear and options";
   const configurableSelectionSummary =
     promotedModels.length > 0
-      ? "Configure wargear, Warlord & options"
+      ? "Configure wargear & options"
       : "Configure models, wargear & options";
   // A small ordinary subtree stays open when no promoted model section precedes
   // it. Promoted models keep their own options shut by default, and a unit with
@@ -2354,9 +2423,65 @@ function RosterSelectionItem({
         <div className="selection-card-body" id={cardBodyId}>
           {presentation !== "card" && (
             <>
-          {childChoices.ok && childChoices.value.direct.length > 0 && (
+          {rosterRoleChoices.length > 0 && (
+            <section
+              className="roster-role-choices"
+              aria-label={`Roster role for ${name}`}
+            >
+              <div className="roster-role-heading">
+                <h4>Roster role</h4>
+                <span>Choose independently; roster checks enforce the limit.</span>
+              </div>
+              <div className="roster-role-options">
+                {rosterRoleChoices.map((direct) => {
+                  const label = selectionChoiceLabel(direct.choice);
+                  const selectedOccurrence = direct.selected.at(-1);
+                  return (
+                    <span
+                      className="roster-role-option"
+                      key={selectionChoiceKey(direct.choice)}
+                      data-selected={
+                        selectedOccurrence === undefined ? undefined : "true"
+                      }
+                    >
+                      <span
+                        className="choice-segmented-control"
+                        data-selected={
+                          selectedOccurrence === undefined ? undefined : "true"
+                        }
+                      >
+                        <button
+                          type="button"
+                          aria-pressed={selectedOccurrence !== undefined}
+                          onClick={() =>
+                            selectedOccurrence === undefined
+                              ? onAddChild(selection.id, direct.choice)
+                              : onRemove(selectedOccurrence.id)
+                          }
+                        >
+                          {label}
+                        </button>
+                        {onPreviewChoice !== undefined && (
+                          <ChoicePreviewButton
+                            choice={direct.choice}
+                            onPreview={onPreviewChoice}
+                          />
+                        )}
+                      </span>
+                      <small>
+                        {selectedOccurrence === undefined
+                          ? "Not selected for this unit"
+                          : "Selected for this unit"}
+                      </small>
+                    </span>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+          {ordinaryDirectChoices.length > 0 && (
             <div className="child-choice-list">
-              {childChoices.value.direct.map((direct) => {
+              {ordinaryDirectChoices.map((direct) => {
                 const choiceName = selectionChoiceLabel(direct.choice);
                 const status = directChoiceStatus(direct);
                 const selectedOccurrence = direct.selected.at(-1);
@@ -2455,15 +2580,15 @@ function RosterSelectionItem({
               })}
             </div>
           )}
-          {childChoices.ok && childChoices.value.groups.length > 0 && (
+          {childChoiceGroupTree.length > 0 && (
             <div className="child-choice-groups">
-              {childChoices.value.groups.map((group) => (
+              {childChoiceGroupTree.map((node) => (
                 <RosterSelectionChoiceGroup
-                  key={selectionChoiceKey(group.group)}
+                  key={selectionChoiceKey(node.group.group)}
                   session={session}
                   parent={selection}
                   parentName={name}
-                  group={group}
+                  node={node}
                   selectionCanAddAnother={selectionCanAddAnother}
                   onChoose={onAddChild}
                   onSetAmount={onSetAmount}
@@ -3410,7 +3535,7 @@ function RosterSelectionChoiceGroup({
   session,
   parent,
   parentName,
-  group,
+  node,
   selectionCanAddAnother,
   onChoose,
   onSetAmount,
@@ -3420,7 +3545,7 @@ function RosterSelectionChoiceGroup({
   readonly session: LocalRosterSession;
   readonly parent: RosterSelection;
   readonly parentName: string;
-  readonly group: LocalRosterChildChoiceGroup;
+  readonly node: RosterSelectionChoiceGroupNode;
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onChoose: (
     parentId: SelectionOccurrenceId,
@@ -3436,6 +3561,7 @@ function RosterSelectionChoiceGroup({
     | PreviewChoiceHandler
     | undefined;
 }) {
+  const { group, children } = node;
   const name = group.group.name ?? group.group.id ?? "Unnamed selection group";
   const finiteMaximum =
     group.maximum !== undefined && Number.isFinite(group.maximum)
@@ -3448,6 +3574,42 @@ function RosterSelectionChoiceGroup({
     selectedAmount >= finiteMaximum;
   const groupAllowsAnotherCopy =
     finiteMaximum === undefined || selectedAmount < finiteMaximum;
+
+  const nestedGroups = children.map((child) => (
+    <RosterSelectionChoiceGroup
+      key={selectionChoiceKey(child.group.group)}
+      session={session}
+      parent={parent}
+      parentName={parentName}
+      node={child}
+      selectionCanAddAnother={selectionCanAddAnother}
+      onChoose={onChoose}
+      onSetAmount={onSetAmount}
+      onRemove={onRemove}
+      onPreviewChoice={onPreviewChoice}
+    />
+  ));
+
+  if (
+    group.choices.length === 0 &&
+    group.hiddenChoiceCount === 0 &&
+    children.length > 0
+  ) {
+    return (
+      <section
+        className="child-choice-group-wrapper"
+        role="group"
+        aria-label={`${name} choices for ${parentName}`}
+        data-completeness={group.completeness}
+      >
+        <div className="child-choice-group-wrapper-heading">
+          <strong>{name}</strong>
+          <span>{selectionGroupStatus(group)}</span>
+        </div>
+        <div className="child-choice-group-children">{nestedGroups}</div>
+      </section>
+    );
+  }
 
   return (
     <fieldset
@@ -3571,6 +3733,9 @@ function RosterSelectionChoiceGroup({
             );
           })}
         </div>
+      )}
+      {children.length > 0 && (
+        <div className="child-choice-group-children">{nestedGroups}</div>
       )}
     </fieldset>
   );
