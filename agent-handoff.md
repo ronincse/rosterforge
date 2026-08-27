@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (coverage presentation corrected; condition-aware root limits Next)
+## Current Status — 2026-08-27 (conditional root limits complete; remaining Aeldari coverage Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -106,8 +106,14 @@ diagnostic codes.
   Validation coverage uses player language (`Some rules not checked`), does not
   force an otherwise-valid technical report open, and keeps exact evaluator
   codes in collapsed Developer structural/constraint disclosures rather than
-  duplicating them in the player header. **The `Next` is evaluating
-  condition-aware root repetition maxima against the live roster.**
+  duplicating them in the player header. Supported direct conditional root
+  modifiers now evaluate against the live single-force roster: pinned
+  Incursion maxima are Dire Avengers 2 and Guardian Defenders 4, and selected
+  root validation uses the same effective limit. Import and graph diagnostics
+  are retained as collapsed Developer notes rather than making a fully usable
+  catalogue look partially loaded; `primary-catalogue` identity literals no
+  longer create false missing-reference warnings. **The `Next` is closing the
+  remaining pinned Aeldari matched-play check coverage.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -170,12 +176,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **521 passed, 18 skipped (539)**.
+  `git diff --check` all pass. `pnpm test` is **522 passed, 18 skipped (540)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **539 passed**; without the variable the 18 corpus tests are skipped.
+  **540 passed**; without the variable the 18 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -388,9 +394,9 @@ keywords, stronger configuration separation, and safe direct-choice controls
 are complete too. The selected-unit workspace, bounded per-occurrence model
 amount editor, loadout/Warlord presentation, catalogue readability pass,
 configuration cost-capacity summary, root JSON rule projection, stable unit-card
-scroll behavior, and player-readable check coverage are complete. **Evaluate
-condition-aware root repetition maxima against the live roster Next.** Remaining
-pinned Aeldari check coverage, roster duplication, and whole-roster incremental
+scroll behavior, player-readable check coverage, and condition-aware live root
+maxima are complete. **Close the remaining pinned Aeldari matched-play check
+coverage Next.** Roster duplication and whole-roster incremental
 evaluation stay Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
@@ -598,8 +604,8 @@ QA before classifying or implementing the discrepancy.
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. One source-stable primary capacity leads the roster header; secondary limits, import provenance, and materializer reason codes stay available behind explicit disclosures rather than competing with player actions |
-| Condition-aware root repetition maxima in the add catalogue | Next | pinned Dire Avengers authors a force maximum of 3 but conditionally sets it to 2 for Incursion; Guardian Defenders similarly changes 6 to 4. The static root initializer withholds the final maximum because it lacks live roster context, producing the now player-translated root-limit coverage warning. Evaluate supported conditions against the live roster before the qualifier can disappear or `+` can be disabled from the effective maximum |
-| Remaining pinned Aeldari matched-play check coverage | Open | after condition-aware root maxima, classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. Measure each shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
+| Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
+| Remaining pinned Aeldari matched-play check coverage | Next | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, a selected Detachments group retains a modifier-driven unresolved bound, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. Measure each shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -11565,3 +11571,96 @@ Keep it bounded to supported condition applicability, effective root maximum,
 catalogue count/plus behavior, the existing incomplete fallback for unresolved
 conditions, and exact Dire Avengers/Guardian Defenders pinned assertions. Do not
 widen it into association semantics, campaign constraints, or roster duplication.
+
+## Completed Assignment — Conditional Root Limits And Honest Diagnostic Presentation, 2026-08-27
+
+Baseline `2527fcc`; resulting implementation commit `839149a` and this handoff
+commit. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+Supported direct conditional modifiers on root selection bounds now evaluate
+against the current single-force roster. The static creation path is unchanged:
+before setup selections exist it still withholds conditional values rather than
+guessing. The live add catalogue and structural report now share the effective
+maximum, so pinned Aeldari Incursion changes Dire Avengers from base 3 to 2 and
+Guardian Defenders from base 6 to 4. Complete applicability produces complete
+bounds; unsupported or unresolved applicability remains incomplete.
+
+The data graph no longer treats a `primary-catalogue` condition's `childId` as
+an object dependency. That value is the catalogue identity being compared, so
+requiring its target catalogue in a focused faction closure created false
+missing-reference warnings. The four remaining Aeldari closure warnings are all
+cross-catalogue `costType` targets and remain preserved; resolving whether those
+definitions must join the closure is separate work, not a reason to suppress
+them. The invalid empty `defaultCostLimit` is real malformed upstream source
+data. Projection still preserves the raw value, omits the invalid typed number,
+and reports it without blocking the otherwise usable catalogue.
+
+Library readiness now describes whether the imported catalogue can actually be
+used: all files accepted, required game system present, and root materialization
+complete. Non-fatal projection and graph diagnostics are collapsed under
+Developer notes rather than changing a usable library to `Ready with issues`.
+Rejected files, missing game systems, and truncation still produce a partial
+state. The library metric now reports rejected files instead of equating every
+technical diagnostic with an application issue.
+
+Roster coverage wording is consistent throughout: `Some rules not checked`
+replaces `Incomplete inspection`, and Report details translates the exact
+diagnostic families into player-readable reasons while retaining every raw code
+in the existing Developer disclosures. A setup-derived zero points cap now says
+to choose Battle Size rather than displaying a confusing used/zero fraction.
+Fresh-roster Battle Size and Force Disposition minima remain genuine known
+violations; they are not hidden or reclassified.
+
+### Delegation, classification, and evidence
+
+A native Codex worker received an early bounded read-only audit in disposable
+worktree `E:\GitHub\rosterforge-diagnostic-audit` at the exact baseline. It read
+the repository rules and traced projection, graph, evaluator, and presentation
+behavior without editing, committing, browsing, pushing, or performing external
+writes. It distinguished source-data faults, closure false alarms, genuine setup
+violations, and evaluator coverage gaps; it also caught that inactive dynamic
+roots do not themselves make completeness incomplete. Codex reviewed and
+adopted those findings, implemented the final diff, and reran every gate. No
+delegated code was accepted.
+
+Lead browser QA reproduced the owner's pinned Aeldari states before the change:
+the four-file closure had one invalid empty numeric plus ten grouped missing
+references, while a configured Guardian Defenders roster had zero known
+violations but incomplete structural and constraint coverage. After the change,
+the saved roster still showed `90 / 2,000`, zero known problems, and the honest
+`Some rules not checked` badge. A later hot-reload detail probe was blocked by
+the browser URL policy, so the new expanded explanatory copy is covered by the
+automated UI suite rather than claimed as a completed second browser action.
+
+### Tests, corpus, and remaining work
+
+The project-owned graph test proves an unloaded `primary-catalogue` identity
+literal creates no graph edge or false missing-reference diagnostic. Structural
+tests prove a direct conditional root maximum changes with live roster state.
+The pinned Aeldari integration test proves Incursion's exact 2/4 maxima, removes
+the former Guardian unresolved root bound, and pins the focused closure at one
+invalid numeric diagnostic plus four `costType` missing-reference groups.
+
+Verification:
+
+- bounded native Codex read-only audit — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **522 passed, 18 skipped (540)** across 56 files;
+- pinned 46-document corpus suite — **540 passed (540)** across 56 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+This checkpoint does not claim complete BattleScribe legality. One relevant
+root visibility decision, the selected Detachments group's modifier-driven
+bound, selected-unit association attributes/fields, hidden Crusade constraint
+fields, and the four focused-closure cost-type references remain explicit. They
+are the promoted `Next`; roster duplication remains Open behind them.
+
+### Next recommended boundary
+
+**Close one measured family from remaining pinned Aeldari matched-play check
+coverage.** Start by inventorying the exact unresolved root visibility and
+selected Detachments group shapes, then choose the smallest semantics that can
+be proven from the pinned corpus and Reference Behavior QA. Keep Crusade cost
+fields separate unless the evidence shows they share the same rule.
