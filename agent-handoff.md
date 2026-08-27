@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-26 (selected-unit workspace shipped; bounded model amounts Next)
+## Current Status — 2026-08-27 (bounded model amounts shipped; loadout/Warlord controls Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -75,9 +75,11 @@ diagnostic codes.
   opens its complete read-only card. Catalogue placement remains
   reader-controlled, the outer builder never becomes a permanent three-pane
   layout, and nested validation links focus the owning unit before resolving a
-  lazy anchor. **The `Next` is the residual legality-aware amount editor: bound
-  its free-form per-occurrence value to complete known model minima/maxima while
-  preserving permissive unresolved recovery.**
+  lazy anchor. The advanced per-occurrence model editor now applies complete
+  known selection and transparent-group minima/maxima to their observed
+  aggregates, rejects new known violations, and permits monotonic recovery from
+  already-invalid state; incomplete bounds remain permissive. **The `Next` is
+  flattening common loadout groups and adding a dedicated Warlord control.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -355,8 +357,9 @@ one-click unit/model statlines, reader-controlled catalogue placement, inline
 violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
-are complete too. The selected-unit workspace is complete. **The bounded
-per-occurrence model amount editor is Next.**
+are complete too. The selected-unit workspace and bounded per-occurrence model
+amount editor are complete. **Flatten common loadout groups and add a dedicated
+Warlord control is Next.**
 Whole-roster incremental evaluation stays Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
@@ -559,9 +562,9 @@ QA before classifying or implementing the discrepancy.
 | Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
 | Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration is now a full-width, default-open setup disclosure before the sticky navigator and roster/catalogue grid; its sticky summary repeats exact points capacity while setup scrolls, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration no longer inflates the army-selection count |
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
-| Legality-aware model-count controls | Next (bound per-occurrence amounts) | repeatable exact model choices now use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, known maxima disable plus, and unresolved bounds remain permissive/incomplete. The residual is the advanced per-occurrence amount editor, which is still free-form and not generally bounded by complete known legal minima/maxima |
+| Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
-| Flatten common loadout groups and add dedicated Warlord controls | Open | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control |
+| Flatten common loadout groups and add dedicated Warlord controls | Next | disclosures are clearer and group replacements work, but common loadout topology remains nested and Warlord is still an ordinary catalogue child rather than a dedicated player control. Capture targeted Reference Behavior QA evidence for representative loadout and Warlord scenarios before classifying any parity discrepancy |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -10784,3 +10787,100 @@ minus/count/plus controls already enforce complete known maxima one model at a
 time. Bring the remaining free-form `Models in this squad` editor under the
 same complete known minimum/maximum contract without turning incomplete bounds
 into guessed restrictions or blocking recovery from an already-invalid roster.
+
+## Completed Assignment — Bounded Per-Occurrence Model Amounts, 2026-08-27
+
+Baseline `3f76416321c97bb00be6e9abd64c601abeabf7eb`; resulting implementation
+commit `d4b1421e2ea6eeb99590caac021cf8c9c1506b17` and this handoff commit.
+
+The advanced `Models in this squad` editor now consumes the same-snapshot
+condition-aware selection reports and complete transparent-group inspection
+already used by the workspace. Each bound retains the aggregate amount it
+actually observed. A proposed edit replaces only the current occurrence's
+contribution, so five distinct one-model occurrences under a maximum of five
+correctly reject changing one occurrence to two; the editor never mistakes the
+aggregate maximum for a per-input maximum.
+
+Complete known minima and maxima constrain a roster that currently satisfies
+them. Already-invalid state remains recoverable: a candidate may fully satisfy
+the known bounds, or may strictly improve at least one known violation without
+worsening another. This permits partial repair when no single edit can reach a
+legal aggregate. The controlled submit and `Use 1` convenience action share the
+same policy, and an invalid candidate is named beside the input. Bounds whose
+effective report or transparent group remains incomplete do not become guessed
+restrictions.
+
+The policy is a pure web-presentation helper. Moving legality into
+`roster-model` was rejected because structural amount commands deliberately
+remain game-agnostic. A native HTML `min`/`max` clamp was rejected because it
+would apply an aggregate as though it belonged to one input and can trap an
+already-invalid roster. Recomputing constraints separately for the editor was
+also rejected; the immutable session already caches the authoritative
+same-snapshot supported-validation report.
+
+### Delegation and review
+
+Codex remained the primary implementer and launched Claude Code 2.1.240 as a
+bounded read-only semantic reviewer before implementation. Its tool set was
+limited to `Read`, `Grep`, and `Glob`; shell, write, browser, session persistence,
+and external services were unavailable. Claude changed no file and reported no
+permission denial. It independently identified the critical distinction between
+one occurrence amount and the sibling-inclusive observed aggregate, confirmed
+that no evaluator or roster-model change was needed, and pointed out that the
+brief's named `roster-workspace.test.tsx` did not exist.
+
+Claude recommended enforcing only increases above a maximum, matching the
+dedicated minus control's deliberately permissive minimum behavior. Codex did
+not adopt that narrower conclusion because this checkpoint's approved roadmap
+boundary explicitly names complete known minima and maxima. The final policy
+instead reconciles both requirements: legal state cannot create either known
+violation, while invalid state may move monotonically toward legality. Codex
+reviewed the full implementation diff and reran all focused and repository
+gates before accepting the checkpoint.
+
+### Browser QA and validation
+
+Live browser QA used application commit `d4b1421` and the unchanged saved
+pinned Aeldari source at `04c62fcd041b3808c39d5c46fd677c704027b979`:
+
+- a temporary Wraithguard unit began at five one-model occurrences and the
+  opened advanced editor reported that complete known model limits apply;
+- entering `2` for one occurrence would have raised the observed aggregate to
+  six, so the input became invalid, `Set amount` stayed disabled, and the
+  player-facing hint named the complete known limit;
+- removing one model made the squad's observed amount four. Entering `2` for
+  one remaining occurrence was accepted and restored the aggregate to five;
+- after that repair, `Use 1` was disabled because it would have recreated the
+  complete known minimum violation; and
+- three reversible Undo actions removed the amount edit, restored the removed
+  model, and removed the temporary unit. Autosave settled with the saved roster
+  back at one Guardian Defenders unit, 90 / 2,000 points, no Wraithguard, and no
+  unsaved indicator. The local app and verified tab were left open.
+
+This was targeted RosterForge interaction QA, not a New Recruit discrepancy
+classification. No interactive Reference Behavior QA was run because the
+checkpoint implements an explicitly approved RosterForge editing policy and
+does not claim a New Recruit mismatch, data-version match, or parity defect.
+
+Verification:
+
+- focused policy and UI run — **518 passed, 18 skipped (536)** across 56 test
+  files after adding five pure policy cases and the bounded editor interaction;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- full `pnpm test` — **518 passed, 18 skipped (536)** across 56 files;
+- production build — clean except for Vite's existing large-chunk warning;
+- optional corpus suite — not rerun because no evaluator, imported-data
+  semantic, diagnostic, persisted format, corpus data, or third-party data
+  changed; and
+- GitHub Actions — pending this handoff push.
+
+### Next recommended boundary
+
+**Flatten common loadout groups and add a dedicated Warlord control.** Keep the
+underlying transparent group and child-selection semantics intact while
+projecting common wargear choices into a shallower player surface. Treat
+Warlord as a dedicated control only where the catalogue's existing exact child
+choice identifies it; do not infer it from display text. Capture targeted
+Reference Behavior QA evidence for representative loadout replacement and
+Warlord scenarios before classifying any parity discrepancy.
