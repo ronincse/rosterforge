@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (setup budgets and root JSON rules shipped; roster duplication Next)
+## Current Status — 2026-08-27 (coverage presentation corrected; condition-aware root limits Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -100,9 +100,14 @@ diagnostic codes.
   evaluated secondary capacity visible while collapsed, including the live
   Detachment Point total and limit. JSON catalogue-root `rules` collections now
   join `sharedRules` in the typed projection, so Aeldari Battle Focus resolves
-  to its authored rule text instead of a player-facing unavailable fallback.
-  **The `Next` is exposing the existing roster
-  duplication command in the saved-roster workflow.**
+  to its authored rule text instead of a player-facing unavailable fallback. An
+  open unit card now scrolls into view only when the player explicitly opens a
+  different card, not whenever any roster interaction rebuilds its projection.
+  Validation coverage uses player language (`Some rules not checked`), does not
+  force an otherwise-valid technical report open, and keeps exact evaluator
+  codes in collapsed Developer structural/constraint disclosures rather than
+  duplicating them in the player header. **The `Next` is evaluating
+  condition-aware root repetition maxima against the live roster.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -382,9 +387,11 @@ complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
 are complete too. The selected-unit workspace, bounded per-occurrence model
 amount editor, loadout/Warlord presentation, catalogue readability pass,
-configuration cost-capacity summary, and root JSON rule projection are
-complete. **Expose roster duplication in the saved-roster workflow is Next.**
-Whole-roster incremental evaluation stays Open. Take the restored usability rows
+configuration cost-capacity summary, root JSON rule projection, stable unit-card
+scroll behavior, and player-readable check coverage are complete. **Evaluate
+condition-aware root repetition maxima against the live roster Next.** Remaining
+pinned Aeldari check coverage, roster duplication, and whole-roster incremental
+evaluation stay Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
 or raw status as priority.
 
@@ -591,7 +598,8 @@ QA before classifying or implementing the discrepancy.
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. One source-stable primary capacity leads the roster header; secondary limits, import provenance, and materializer reason codes stay available behind explicit disclosures rather than competing with player actions |
-| Condition-aware root repetition maxima in the add catalogue | Open | pinned Dire Avengers authors a force maximum of 3 but conditionally sets it to 2 for Incursion. The static root initializer intentionally withholds that final maximum because it cannot evaluate the condition against the live roster. The catalogue now shows `0 / 3 base` and does not enforce it; a later semantic checkpoint must evaluate the condition-aware root bound before the qualifier can disappear or `+` can be disabled from it |
+| Condition-aware root repetition maxima in the add catalogue | Next | pinned Dire Avengers authors a force maximum of 3 but conditionally sets it to 2 for Incursion; Guardian Defenders similarly changes 6 to 4. The static root initializer withholds the final maximum because it lacks live roster context, producing the now player-translated root-limit coverage warning. Evaluate supported conditions against the live roster before the qualifier can disappear or `+` can be disabled from the effective maximum |
+| Remaining pinned Aeldari matched-play check coverage | Open | after condition-aware root maxima, classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. Measure each shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -603,7 +611,7 @@ QA before classifying or implementing the discrepancy.
 | Child-model statlines are still two expansions deep | Done | direct model occurrences are partitioned from the unit's configuration children and rendered once, immediately below the unit datasheet. The model row keeps its name, amount control, statline, edit disclosure and removal action; its own wargear/options subtree starts closed unless attention requires it. Non-model children remain in the parent configure disclosure, and nested/unit-typed sub-units are deliberately not flattened |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
-| Roster duplicate is not reachable by a user | Next | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed. Keep the checkpoint bounded to the saved-roster user path and exact persistence/identity behavior |
+| Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed. The owner placed the newly surfaced check-coverage work ahead of duplication; keep the eventual checkpoint bounded to the saved-roster user path and exact persistence/identity behavior |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
@@ -11454,3 +11462,104 @@ remains unknown. The roadmap's existing Open rows remain accurate.
 bounded scope: one visible saved-roster action, identity-safe copied state,
 persistence, and focused browser validation without widening into sharing,
 export, or roster-file interchange.
+
+## Completed Assignment — Stable Unit Cards And Player-Readable Coverage, 2026-08-27
+
+Baseline `d0b981fdfd1f94621737bb5bbc85680be0701699`; resulting implementation
+commit `affacbf` and this handoff commit. Codex remained the active lead, primary
+implementer, integrator, reviewer, validator, and publisher.
+
+An open full-width unit card now scrolls into view only when its requested
+occurrence id changes. The old effect depended on the projected selection
+object, which is recreated after any roster edit or selected-unit change; every
+new object consequently called `scrollIntoView` and stole the player's place.
+The identity-only dependency preserves the deliberate first reveal while an
+already-open card updates in place without another scroll.
+
+The player header now says `Supported checks complete` or `Some rules not
+checked` instead of the evaluator phrase `Complete/Incomplete supported view`.
+Its Report details explains that known problems cover completed checks. Raw
+validation codes are no longer duplicated there; the exact ordered diagnostics
+remain under collapsed `Developer structural diagnostics` and `Developer
+constraint diagnostics` in the detailed Checks evidence. Cost diagnostics keep
+an equivalent nested Developer disclosure because they have no other report
+home. An incomplete-but-valid roster no longer forces the technical Checks card
+open, but the independent visible coverage badge remains, so uncertainty is not
+hidden or promoted into a false legality claim.
+
+The shared conditional-root warning now says that the effective limit is
+unresolved. Its prior text claimed a required automatic quantity even when the
+real Aeldari case was an optional repetition maximum, so that wording was a
+presentation defect. The diagnostic code, severity, source, completeness effect,
+and underlying conservative evaluator behavior are unchanged. The technical
+introductory paragraph about source-authored and roster-dependent values was
+also removed from catalogue preview cards; it described implementation limits
+without helping the player use the card.
+
+### Delegation and classification
+
+A native Codex worker received an early bounded read-only audit in disposable
+worktree `E:\GitHub\rosterforge-warning-audit` at the exact baseline. It read the
+repository rules and traced the completeness fold and diagnostic pipeline without
+editing, committing, browsing, pushing, or performing external writes. It
+confirmed that `Incomplete supported view` was not a legality failure, identified
+the misleading reuse of automatic-quantity wording for live root maxima, and
+caught that validation diagnostics were duplicated in both the header and Checks
+cards. Codex verified and adopted those findings, implemented the final diff,
+and reran every gate. The audit worktree was verified clean and removed afterward;
+no delegated code was accepted.
+
+Classification is intentionally split. The repeated card scroll was an actual
+RosterForge UI bug. The opaque coverage badge, forced-open debugger surface,
+duplicated raw warnings, and conditional-root message were player-presentation
+defects. The incomplete state itself is not a bug: it truthfully records imported
+behavior RosterForge has not evaluated. Marking that state complete or deleting
+its evidence would violate the independent validity/completeness contract.
+
+### Tests, corpus, and browser validation
+
+UI coverage proves that opening a card scrolls exactly once and a subsequent
+selection edit does not scroll it again. It also proves the new complete and
+limited-coverage wording, player explanation, absence of raw codes from the
+roster summary, continued availability of the exact code in a collapsed
+Developer disclosure, and absence of the catalogue-preview implementation note.
+
+Lead browser QA used the running local app and the saved pinned Aeldari roster.
+The valid roster showed `0 known problems`, `Some rules not checked`, and a
+collapsed detailed-evidence section. Report details contained only the coverage
+explanation and zero unresolved cost counts. The Dire Avengers preview opened
+directly into rules/profiles with no technical introduction. After opening the
+Guardian Defenders card, scrolling back to its roster row, and choosing
+`Configure Guardian Defenders`, the card stayed 2,591 px below the viewport
+instead of pulling the page back to it; no roster selection was changed by that
+focus test.
+
+Verification:
+
+- bounded native Codex read-only audit — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **521 passed, 18 skipped (539)** across 56 files;
+- pinned 46-document corpus suite — **539 passed (539)** across 56 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior and roadmap correction
+
+This checkpoint did not make the outstanding evaluator warnings disappear. It
+made their meaning and location appropriate. The owner's request puts their
+semantic closure ahead of saved-roster duplication. The existing conditional
+root repetition row is now `Next`; it covers Dire Avengers 3→2 and Guardian
+Defenders 6→4 under Incursion. A new Open row retains the remaining pinned
+Aeldari families: one relevant unresolved root visibility decision, association
+fields/attributes, and hidden Crusade Battle Honours/Weapon Modifications
+constraint fields. Each needs evidence-backed semantics or an evidence-backed
+applicability exclusion, never a UI-only suppression. Roster duplication returns
+to Open until those coverage checkpoints are complete.
+
+### Next recommended boundary
+
+**Evaluate condition-aware root repetition maxima against the live roster.**
+Keep it bounded to supported condition applicability, effective root maximum,
+catalogue count/plus behavior, the existing incomplete fallback for unresolved
+conditions, and exact Dire Avengers/Guardian Defenders pinned assertions. Do not
+widen it into association semantics, campaign constraints, or roster duplication.
