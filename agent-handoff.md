@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (catalogue readability shipped; roster duplication Next)
+## Current Status — 2026-08-27 (setup budgets and root JSON rules shipped; roster duplication Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -96,7 +96,12 @@ diagnostic codes.
   authored
   child groups as one shallow hierarchy while retaining aggregate bounds, and
   exact one-per-roster upgrade roles such as Warlord have a dedicated toggle
-  above ordinary loadout controls. **The `Next` is exposing the existing roster
+  above ordinary loadout controls. Configuration now keeps its relevant
+  evaluated secondary capacity visible while collapsed, including the live
+  Detachment Point total and limit. JSON catalogue-root `rules` collections now
+  join `sharedRules` in the typed projection, so Aeldari Battle Focus resolves
+  to its authored rule text instead of a player-facing unavailable fallback.
+  **The `Next` is exposing the existing roster
   duplication command in the saved-roster workflow.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
@@ -376,7 +381,8 @@ violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
 are complete too. The selected-unit workspace, bounded per-occurrence model
-amount editor, loadout/Warlord presentation, and catalogue readability pass are
+amount editor, loadout/Warlord presentation, catalogue readability pass,
+configuration cost-capacity summary, and root JSON rule projection are
 complete. **Expose roster duplication in the saved-roster workflow is Next.**
 Whole-roster incremental evaluation stays Open. Take the restored usability rows
 in the dependency order stated in section F rather than treating table position
@@ -11358,4 +11364,91 @@ Open roadmap row records that distinction.
 **Expose roster duplication in the saved-roster workflow.** Keep the existing
 bounded scope: a visible saved-roster action, identity-safe copied state,
 persistence, and focused browser validation, without widening into sharing,
+export, or roster-file interchange.
+
+## Completed Assignment — Detachment Budget And Root JSON Rules, 2026-08-27
+
+Baseline `4b191734f395036eb7d4dddda9b98bef42fd89b5`; resulting implementation
+commit `411853f` and this handoff commit. Codex remained the active lead, primary
+implementer, integrator, reviewer, validator, and publisher.
+
+Configuration now carries its own evaluated capacity summary. A setup currency
+appears there only when an exact cost-type id is both used by the selected or
+immediately available configuration subtree and has a finite evaluated roster
+limit. This keeps `Detachment Points` visible after configuration collapses,
+without guessing from display names or restoring the wall of zero-value campaign
+placeholders. The existing evaluator remains authoritative for both value and
+limit; unselected catalogue costs do not invent a denominator.
+
+BattleScribe JSON root `rules` collections now feed the same typed projection as
+XML-style `sharedRules`. The generic source tree and original bytes were already
+preserved, but those root rules were absent from `projection.rules`, so ordinary
+info-link resolution could only report `unprojectedTarget`. Projecting the
+observed alternate container fixes every such target generically. No Aeldari id,
+rule name, remote lookup, or player-facing fallback suppression is special-cased.
+
+### Delegation, evidence, and discrepancy classification
+
+Delegation was launched before implementation. Authenticated Claude Code ran a
+bounded read-only repository analysis with Read/Grep/Glob access and no shell,
+edits, subagents, commits, handoff changes, pushes, or external writes. It ruled
+out a selected-card-only resolver/session defect because preview and selected
+cards share the same materialized info-link path, and confirmed that the
+Detachment Point allowance should reuse evaluated force constraints rather than
+be inferred from catalogue labels. Codex then measured the pinned data, found
+the missing root-container projection, implemented the correction, reviewed the
+complete diff, and reran every gate. No delegated code was accepted.
+
+The owner's New Recruit screenshots captured on 2026-08-27 show Battle Focus
+with full text both in the Dire Avengers card and in the top-level Battle Focus
+- Agile Manoeuvres configuration. The exact New Recruit client and catalogue
+revision are not available, so direct data comparability remains unknown. The
+pinned imported bytes independently settle the classification: Aeldari Library
+contains the linked target `c324-e193-e23c-7d2e` and its full text, while the
+baseline app emitted `unprojectedTarget`. This was an actual RosterForge JSON
+projection defect, not catalogue drift, an intentional product difference,
+known unsupported behavior, or merely future roadmap work. The Detachment Point
+capacity display is a usability correction over already-supported evaluated
+semantics, not a new semantic discrepancy.
+
+### Tests, corpus, and browser validation
+
+The project-owned JSON fixture now includes a root `rules` definition and a
+linked catalogue entry; projection and materialization tests prove it becomes a
+resolved rule info link. The optional real-data integration test pins Dire
+Avengers' Battle Focus id and authored text, plus the Strike Force Detachment
+Point maximum and evaluated value.
+
+At pinned corpus revision `04c62fcd041b3808c39d5c46fd677c704027b979`, five of
+46 JSON documents have a non-empty root `rules` array and 24 use
+`sharedRules`; Aeldari Library contains four root rules. Lead Codex imported all
+46 documents through the running local app, created a fresh Aeldari roster,
+selected Strike Force and Warhost, and added Dire Avengers. The collapsed-ready
+configuration summary changed from `0 / 3 Detachment Points` to `3 / 3`, and the
+unit card contained the full Battle Focus text with no unavailable-information
+fallback. The temporary roster remains unsaved; no saved draft or unrelated
+browser state was overwritten.
+
+Verification:
+
+- authenticated Claude read-only analysis — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **521 passed, 18 skipped (539)** across 56 files;
+- pinned 46-document corpus suite — **539 passed (539)** across 56 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint recognizes the two root rule-container spellings measured in
+the pinned corpus; it does not speculate about unobserved JSON aliases. It does
+not change rule evaluation, cost/constraint semantics, persisted formats, or
+condition-aware root repetition maxima. Exact New Recruit data comparability
+remains unknown. The roadmap's existing Open rows remain accurate.
+
+### Next recommended boundary
+
+**Expose roster duplication in the saved-roster workflow.** Keep the existing
+bounded scope: one visible saved-roster action, identity-safe copied state,
+persistence, and focused browser validation without widening into sharing,
 export, or roster-file interchange.
