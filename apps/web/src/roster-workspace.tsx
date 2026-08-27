@@ -87,7 +87,9 @@ export function RosterOverview({
   readonly session: LocalRosterSession;
   readonly diagnostics: readonly Diagnostic[];
   readonly onClear: () => void;
-  readonly onAddRootSelection: (choice: LocalRosterRootChoice) => void;
+  readonly onAddRootSelection: (
+    choice: LocalRosterRootChoice,
+  ) => SelectionOccurrenceId | undefined;
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
   readonly onAddChildSelection: (
     parentId: SelectionOccurrenceId,
@@ -119,6 +121,12 @@ export function RosterOverview({
   );
   const [configurationOpen, setConfigurationOpen] = useState(true);
   const [printBlocked, setPrintBlocked] = useState(false);
+  const [activeSelectionId, setActiveSelectionId] =
+    useState<SelectionOccurrenceId>();
+  const [viewedSelectionId, setViewedSelectionId] =
+    useState<SelectionOccurrenceId>();
+  const [pendingSelectionAnchor, setPendingSelectionAnchor] =
+    useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
   // immutable session snapshot. Layout components consume this model; the raw
   // reports remain attached for the existing detailed inspectors and print
@@ -129,8 +137,8 @@ export function RosterOverview({
         rootChoices: inspectLocalRosterRootChoices(session),
         costs: evaluateLocalRosterCosts(session),
         validation: inspectLocalRosterSupportedValidation(session),
-      }),
-    [session],
+      }, activeSelectionId),
+    [session, activeSelectionId],
   );
   const force = workspace.primaryForce;
   const configurationGroup = workspace.selections.groups.find(
@@ -139,6 +147,14 @@ export function RosterOverview({
   const hasConfiguration = configurationGroup !== undefined;
   const armyGroups = workspace.selections.groups.filter(
     ({ role }) => role.key !== "configuration",
+  );
+  const activeSelection = topLevelWorkspaceSelection(
+    armyGroups,
+    activeSelectionId,
+  );
+  const viewedSelection = topLevelWorkspaceSelection(
+    armyGroups,
+    viewedSelectionId,
   );
   const armyTopLevelSelectionCount = armyGroups.reduce(
     (count, group) => count + group.amount,
@@ -194,6 +210,36 @@ export function RosterOverview({
     return capacity;
   }, [supportedValidation]);
   const validationIssueCount = workspace.validation.issueCount;
+  useEffect(() => {
+    if (activeSelectionId !== undefined && activeSelection === undefined) {
+      setActiveSelectionId(undefined);
+    }
+  }, [activeSelection, activeSelectionId]);
+  useEffect(() => {
+    if (viewedSelectionId !== undefined && viewedSelection === undefined) {
+      setViewedSelectionId(undefined);
+    }
+  }, [viewedSelection, viewedSelectionId]);
+  useEffect(() => {
+    if (viewedSelection === undefined) return;
+    // View is a reading action, so reveal the full-width card after React
+    // mounts it instead of leaving it below a long army and making the click
+    // appear to have done nothing.
+    const card = document.getElementById("selected-unit-card-view");
+    if (typeof card?.scrollIntoView === "function") {
+      card.scrollIntoView({ block: "start" });
+    }
+  }, [viewedSelection]);
+  useEffect(() => {
+    if (pendingSelectionAnchor === undefined) return;
+    const target = document.getElementById(pendingSelectionAnchor);
+    if (target === null) return;
+    // A check can target a child that is mounted only in the selected unit's
+    // options panel. Focus that unit first, then complete the original jump
+    // after React has rendered the exact stable anchor.
+    target.scrollIntoView?.({ block: "start" });
+    setPendingSelectionAnchor(undefined);
+  }, [activeSelectionId, pendingSelectionAnchor, session]);
   // A clean, complete roster can keep evaluator evidence out of the reading
   // path. Anything less certain opens itself: hiding an incomplete-but-valid
   // report would be just as misleading as hiding a known violation. A changed
@@ -376,10 +422,12 @@ export function RosterOverview({
         className="roster-builder-grid"
         aria-label="Roster builder"
         data-catalogue-open={catalogueOpen}
+        data-options-open={activeSelection !== undefined}
       >
         <section
           className="selected-roster-pane"
           aria-labelledby="selected-roster-heading"
+          data-options-open={activeSelection !== undefined}
         >
           <div className="builder-pane-heading">
             <div>
@@ -436,9 +484,39 @@ export function RosterOverview({
                   onRename={onRenameSelection}
                   onSetAmount={onSetSelectionAmount}
                   onRemove={onRemoveSelection}
+                  onSelect={setActiveSelectionId}
+                  onView={(selectionId) =>
+                    setViewedSelectionId((current) =>
+                      current === selectionId ? undefined : selectionId,
+                    )
+                  }
+                  viewedSelectionId={viewedSelectionId}
                 />
               ))}
             </div>
+          )}
+
+          {activeSelection !== undefined && (
+            <RosterUnitOptionsPanel
+              session={session}
+              selectionModel={activeSelection}
+              selectionCanAddAnother={selectionCanAddAnother}
+              onAddChild={onAddChildSelection}
+              onRename={onRenameSelection}
+              onSetAmount={onSetSelectionAmount}
+              onRemove={onRemoveSelection}
+              onClose={() => setActiveSelectionId(undefined)}
+              onView={() =>
+                setViewedSelectionId((current) =>
+                  current === activeSelection.occurrence.id
+                    ? undefined
+                    : activeSelection.occurrence.id,
+                )
+              }
+              viewed={
+                viewedSelectionId === activeSelection.occurrence.id
+              }
+            />
           )}
         </section>
 
@@ -535,7 +613,16 @@ export function RosterOverview({
                             <button
                               type="button"
                               disabled={maximumReached}
-                              onClick={() => onAddRootSelection(choice)}
+                              onClick={() => {
+                                const selectionId =
+                                  onAddRootSelection(choice);
+                                if (
+                                  selectionId !== undefined &&
+                                  group.section === "army"
+                                ) {
+                                  setActiveSelectionId(selectionId);
+                                }
+                              }}
                             >
                               {maximumReached
                                 ? `${rootChoiceLabel(choice)} maximum reached`
@@ -556,6 +643,19 @@ export function RosterOverview({
         )}
       </section>
 
+      {viewedSelection !== undefined && (
+        <RosterUnitCardView
+          session={session}
+          selectionModel={viewedSelection}
+          selectionCanAddAnother={selectionCanAddAnother}
+          onAddChild={onAddChildSelection}
+          onRename={onRenameSelection}
+          onSetAmount={onSetSelectionAmount}
+          onRemove={onRemoveSelection}
+          onClose={() => setViewedSelectionId(undefined)}
+        />
+      )}
+
       {/* Command diagnostics also come from controls inside the roster pane.
           Keep them outside the optional catalogue so hiding the browser never
           hides an add, remove, rename, or amount failure. */}
@@ -570,10 +670,14 @@ export function RosterOverview({
             'a[href^="#"]',
           );
           const targetId = anchor?.getAttribute("href")?.slice(1);
-          const target =
+          const decodedTargetId =
             targetId === undefined
+              ? undefined
+              : decodeURIComponent(targetId);
+          const target =
+            decodedTargetId === undefined
               ? null
-              : document.getElementById(decodeURIComponent(targetId));
+              : document.getElementById(decodedTargetId);
           if (
             target !== null &&
             target.closest(".roster-configuration") !== null
@@ -582,6 +686,17 @@ export function RosterOverview({
             // before the browser follows the fragment instead of leaving it
             // inside a player-collapsed details element.
             setConfigurationOpen(true);
+          }
+          if (target === null && decodedTargetId !== undefined) {
+            const owner = topLevelWorkspaceSelectionContainingAnchor(
+              armyGroups,
+              decodedTargetId,
+            );
+            if (owner !== undefined) {
+              event.preventDefault();
+              setActiveSelectionId(owner.occurrence.id);
+              setPendingSelectionAnchor(decodedTargetId);
+            }
           }
         }}
       >
@@ -1560,6 +1675,9 @@ function RosterSelectionSection({
   onRename,
   onSetAmount,
   onRemove,
+  onSelect,
+  onView,
+  viewedSelectionId,
 }: {
   readonly heading: string;
   readonly anchorId: string;
@@ -1594,6 +1712,9 @@ function RosterSelectionSection({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onSelect: (id: SelectionOccurrenceId) => void;
+  readonly onView: (id: SelectionOccurrenceId) => void;
+  readonly viewedSelectionId?: SelectionOccurrenceId | undefined;
 }) {
   if (selections.length === 0) return null;
   // `containsAttention` is deliberately only a routing signal here. A role can
@@ -1628,10 +1749,16 @@ function RosterSelectionSection({
         onRename={onRename}
         onSetAmount={onSetAmount}
         onRemove={onRemove}
+        presentation="row"
+        onSelect={onSelect}
+        onView={onView}
+        viewedSelectionId={viewedSelectionId}
       />
     </section>
   );
 }
+
+type RosterSelectionPresentation = "combined" | "row" | "options" | "card";
 
 function RosterTopLevelSelectionList({
   roleKnown,
@@ -1640,6 +1767,10 @@ function RosterTopLevelSelectionList({
   selectionCanAddAnother,
   collapsible,
   initiallyOpen = false,
+  presentation = "combined",
+  onSelect,
+  onView,
+  viewedSelectionId,
   onAddChild,
   onRename,
   onSetAmount,
@@ -1651,6 +1782,10 @@ function RosterTopLevelSelectionList({
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly collapsible: boolean;
   readonly initiallyOpen?: boolean;
+  readonly presentation?: RosterSelectionPresentation;
+  readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly onView?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly viewedSelectionId?: SelectionOccurrenceId | undefined;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1684,6 +1819,10 @@ function RosterTopLevelSelectionList({
             topLevel
             collapsible={collapsible}
             initiallyOpen={initiallyOpen}
+            presentation={presentation}
+            onSelect={onSelect}
+            onView={onView}
+            viewed={viewedSelectionId === selection.occurrence.id}
             onAddChild={onAddChild}
             onRename={onRename}
             onSetAmount={onSetAmount}
@@ -1695,6 +1834,200 @@ function RosterTopLevelSelectionList({
   );
 }
 
+/** Finds the exact top-level army unit that owns ephemeral workspace focus. */
+function topLevelWorkspaceSelection(
+  groups: readonly RosterWorkspaceSelectionGroup[],
+  selectionId: SelectionOccurrenceId | undefined,
+): RosterWorkspaceSelection | undefined {
+  if (selectionId === undefined) return undefined;
+  for (const group of groups) {
+    const selection = group.selections.find(
+      ({ occurrence }) => occurrence.id === selectionId,
+    );
+    if (selection !== undefined) return selection;
+  }
+  return undefined;
+}
+
+/** Finds the army row whose selected subtree contains one stable report link. */
+function topLevelWorkspaceSelectionContainingAnchor(
+  groups: readonly RosterWorkspaceSelectionGroup[],
+  anchorId: string,
+): RosterWorkspaceSelection | undefined {
+  for (const group of groups) {
+    const selection = group.selections.find((candidate) =>
+      workspaceSelectionContainsAnchor(candidate, anchorId),
+    );
+    if (selection !== undefined) return selection;
+  }
+  return undefined;
+}
+
+function workspaceSelectionContainsAnchor(
+  selection: RosterWorkspaceSelection,
+  anchorId: string,
+): boolean {
+  return (
+    selectionAnchor(selection.occurrence.id) === anchorId ||
+    selection.selections.some((child) =>
+      workspaceSelectionContainsAnchor(child, anchorId),
+    )
+  );
+}
+
+/**
+ * Dedicated editing surface for the currently focused army unit.
+ *
+ * It deliberately reuses `RosterSelectionItem`'s option controls. Required
+ * wargear, repeatable models, and grouped choices therefore keep one mutation
+ * path even though their presentation moved out of the compact army list.
+ */
+function RosterUnitOptionsPanel({
+  session,
+  selectionModel,
+  selectionCanAddAnother,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+  onClose,
+  onView,
+  viewed,
+}: {
+  readonly session: LocalRosterSession;
+  readonly selectionModel: RosterWorkspaceSelection;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    group?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onClose: () => void;
+  readonly onView: () => void;
+  readonly viewed: boolean;
+}) {
+  const name = selectionModel.occurrence.name ?? "Unnamed unit";
+  return (
+    <section
+      className="selected-unit-options"
+      aria-label={`Unit options for ${name}`}
+      aria-labelledby="selected-unit-options-heading"
+    >
+      <div className="selected-unit-panel-heading">
+        <div>
+          <span className="eyebrow">Selected unit</span>
+          <h3 id="selected-unit-options-heading">Unit options for {name}</h3>
+        </div>
+        <div className="selected-unit-panel-actions">
+          <button
+            type="button"
+            aria-expanded={viewed}
+            aria-controls="selected-unit-card-view"
+            onClick={onView}
+          >
+            View unit card
+          </button>
+          <button type="button" aria-label={`Close options for ${name}`} onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+      <ul className="roster-top-level-selection-list selected-unit-options-list">
+        <RosterSelectionItem
+          session={session}
+          selectionModel={selectionModel}
+          selectionCanAddAnother={selectionCanAddAnother}
+          topLevel
+          presentation="options"
+          embedded
+          hideOccurrence
+          allowRemove={false}
+          onAddChild={onAddChild}
+          onRename={onRename}
+          onSetAmount={onSetAmount}
+          onRemove={onRemove}
+        />
+      </ul>
+    </section>
+  );
+}
+
+/** Read-only full-width datasheet for the unit chosen with the row View action. */
+function RosterUnitCardView({
+  session,
+  selectionModel,
+  selectionCanAddAnother,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+  onClose,
+}: {
+  readonly session: LocalRosterSession;
+  readonly selectionModel: RosterWorkspaceSelection;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    group?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onClose: () => void;
+}) {
+  const name = selectionModel.occurrence.name ?? "Unnamed unit";
+  return (
+    <section
+      className="unit-card-view-panel"
+      id="selected-unit-card-view"
+      aria-label={`Unit card for ${name}`}
+      aria-labelledby="selected-unit-card-heading"
+    >
+      <div className="selected-unit-panel-heading">
+        <div>
+          <span className="eyebrow">Unit reference</span>
+          <h3 id="selected-unit-card-heading">Unit card for {name}</h3>
+        </div>
+        <button type="button" aria-label={`Close unit card for ${name}`} onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <ul className="roster-top-level-selection-list unit-card-view-list">
+        <RosterSelectionItem
+          session={session}
+          selectionModel={selectionModel}
+          selectionCanAddAnother={selectionCanAddAnother}
+          topLevel
+          presentation="card"
+          embedded
+          hideOccurrence
+          allowRemove={false}
+          onAddChild={onAddChild}
+          onRename={onRename}
+          onSetAmount={onSetAmount}
+          onRemove={onRemove}
+        />
+      </ul>
+    </section>
+  );
+}
+
 function RosterSelectionItem({
   session,
   selectionModel,
@@ -1702,6 +2035,13 @@ function RosterSelectionItem({
   collapsible = false,
   initiallyOpen = false,
   collapseChildren = false,
+  presentation = "combined",
+  onSelect,
+  onView,
+  viewed = false,
+  embedded = false,
+  hideOccurrence = false,
+  allowRemove = true,
   selectionCanAddAnother,
   onAddChild,
   onRename,
@@ -1721,6 +2061,16 @@ function RosterSelectionItem({
    * attention.
    */
   readonly collapseChildren?: boolean;
+  /** Selects the compact row, edits it, or renders its read-only unit card. */
+  readonly presentation?: RosterSelectionPresentation;
+  readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly onView?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly viewed?: boolean;
+  /** Omits the duplicate occurrence row and stable anchor inside a panel. */
+  readonly embedded?: boolean;
+  /** Lets the panel heading replace only its top selection's row. */
+  readonly hideOccurrence?: boolean;
+  readonly allowRemove?: boolean;
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
@@ -1778,7 +2128,7 @@ function RosterSelectionItem({
     );
     if (
       choice !== undefined &&
-      collapsible &&
+      topLevel &&
       childChoice?.kind === "selectionEntry" &&
       childChoice.type === "model"
     ) {
@@ -1827,7 +2177,8 @@ function RosterSelectionItem({
   useEffect(() => {
     if (collapsible && selectionModel.containsAttention) setCardOpen(true);
   }, [collapsible, selectionModel.containsAttention]);
-  const bodyVisible = !collapsible || cardOpen;
+  const bodyVisible =
+    presentation !== "row" && (!collapsible || cardOpen);
   // This summary intentionally counts only direct children whose materialized
   // catalogue type is exactly `model`. Unresolved choices stay in the editing
   // tree rather than being guessed into a squad composition.
@@ -1841,16 +2192,28 @@ function RosterSelectionItem({
   return (
     <li
       className="roster-selection-item"
-      id={selectionAnchor(selection.id)}
+      id={embedded ? undefined : selectionAnchor(selection.id)}
       data-occurrence-id={selection.id}
+      data-active={!embedded && selectionModel.active ? "true" : undefined}
+      aria-current={!embedded && selectionModel.active ? "true" : undefined}
       data-attention={selectionModel.attention ? "violation" : undefined}
       data-display-completeness={
         nameIncomplete || annotationIncomplete ? "incomplete" : "complete"
       }
     >
-      <div className="selection-occurrence">
+      {!hideOccurrence && <div className="selection-occurrence">
         <span className="selection-occurrence-heading">
-          {collapsible ? (
+          {presentation === "row" ? (
+            <button
+              type="button"
+              className="unit-card-select"
+              aria-pressed={selectionModel.active}
+              aria-label={`Configure ${annotatedName}`}
+              onClick={() => onSelect?.(selection.id)}
+            >
+              <strong>{annotatedName}</strong>
+            </button>
+          ) : collapsible ? (
             <button
               type="button"
               className="unit-card-toggle"
@@ -1883,15 +2246,28 @@ function RosterSelectionItem({
             </a>
           )}
           {topLevel && <SelectionCostTotals costs={selectionModel.costs} />}
-          <button
-            type="button"
-            aria-label={`Remove ${name}`}
-            onClick={() => onRemove(selection.id)}
-          >
-            Remove
-          </button>
+          {presentation === "row" && (
+            <button
+              type="button"
+              className="unit-card-view"
+              aria-expanded={viewed}
+              aria-controls="selected-unit-card-view"
+              onClick={() => onView?.(selection.id)}
+            >
+              View
+            </button>
+          )}
+          {allowRemove && (
+            <button
+              type="button"
+              aria-label={`Remove ${name}`}
+              onClick={() => onRemove(selection.id)}
+            >
+              Remove
+            </button>
+          )}
         </div>
-      </div>
+      </div>}
       {modelComposition !== undefined && (
         <UnitCompositionSummary
           unitName={annotatedName}
@@ -1903,6 +2279,8 @@ function RosterSelectionItem({
           same reason the children list below is lazy. */}
       {bodyVisible && (
         <div className="selection-card-body" id={cardBodyId}>
+          {presentation !== "card" && (
+            <>
           {childChoices.ok && childChoices.value.direct.length > 0 && (
             <div className="child-choice-list">
               {childChoices.value.direct.map((direct) => {
@@ -2021,62 +2399,86 @@ function RosterSelectionItem({
               label="Models in this squad"
             />
           )}
-          {choice !== undefined && (
-            <>
-              <RosterSelectionDatasheet
-                session={session}
-                choice={choice}
-                selection={selection}
-                displayNameIncomplete={nameIncomplete || annotationIncomplete}
-              />
-              {promotedModels.length > 0 && (
-                <section className="selection-models" aria-label="Models">
-                  <div className="selection-models-heading">
-                    <h4>Models</h4>
-                    <span>
-                      {formatCount(
-                        rosterSelectionsAmount(
-                          promotedModels.map(({ occurrence }) => occurrence),
-                        ),
-                        "model",
-                      )}
-                    </span>
-                  </div>
-                  <ul>
-                    {promotedModels.map((model) => (
-                      <RosterSelectionItem
-                        key={model.occurrence.id}
-                        session={session}
-                        selectionModel={model}
-                        selectionCanAddAnother={selectionCanAddAnother}
-                        collapsible
-                        collapseChildren
-                        onAddChild={onAddChild}
-                        onRename={onRename}
-                        onSetAmount={onSetAmount}
-                        onRemove={onRemove}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              )}
-              <RosterSelectionEdit
-                choice={choice}
-                selection={selection}
-                onRename={onRename}
-                onSetAmount={onSetAmount}
-              />
             </>
           )}
+          {choice !== undefined && presentation !== "options" && (
+            <RosterSelectionDatasheet
+              session={session}
+              choice={choice}
+              selection={selection}
+              displayNameIncomplete={nameIncomplete || annotationIncomplete}
+            />
+          )}
+          {promotedModels.length > 0 && (
+            <section className="selection-models" aria-label="Models">
+              <div className="selection-models-heading">
+                <h4>Models</h4>
+                <span>
+                  {formatCount(
+                    rosterSelectionsAmount(
+                      promotedModels.map(({ occurrence }) => occurrence),
+                    ),
+                    "model",
+                  )}
+                </span>
+              </div>
+              <ul>
+                {promotedModels.map((model) => (
+                  <RosterSelectionItem
+                    key={model.occurrence.id}
+                    session={session}
+                    selectionModel={model}
+                    selectionCanAddAnother={selectionCanAddAnother}
+                    collapsible={presentation !== "card"}
+                    collapseChildren={presentation !== "card"}
+                    presentation={presentation}
+                    embedded={presentation === "card"}
+                    allowRemove={false}
+                    onAddChild={onAddChild}
+                    onRename={onRename}
+                    onSetAmount={onSetAmount}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+          {choice !== undefined && presentation !== "card" && (
+            <RosterSelectionEdit
+              choice={choice}
+              selection={selection}
+              onRename={onRename}
+              onSetAmount={onSetAmount}
+            />
+          )}
           {configurableSelections.length > 0 && (
-            <details
-              className="selection-children"
-              open={childrenOpen}
-              aria-label={`${configurableSelectionLabel} for ${name}; ${formatCount(
-                configurableSelections.length,
-                "selection",
-              )}`}
-            >
+            presentation === "card" ? (
+              <ul className="selection-card-children">
+                {configurableSelections.map((child) => (
+                  <RosterSelectionItem
+                    key={child.occurrence.id}
+                    session={session}
+                    selectionModel={child}
+                    selectionCanAddAnother={selectionCanAddAnother}
+                    presentation="card"
+                    embedded
+                    allowRemove={false}
+                    onAddChild={onAddChild}
+                    onRename={onRename}
+                    onSetAmount={onSetAmount}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <details
+                className="selection-children"
+                open={childrenOpen}
+                aria-label={`${configurableSelectionLabel} for ${name}; ${formatCount(
+                  configurableSelections.length,
+                  "selection",
+                )}`}
+              >
               {/* Same controlled summary as Selection details: jsdom does not
                   toggle `<details>`, so a native click would set `open` without
                   rendering the lazy children. */}
@@ -2102,6 +2504,7 @@ function RosterSelectionItem({
                       session={session}
                       selectionModel={child}
                       selectionCanAddAnother={selectionCanAddAnother}
+                      presentation={presentation}
                       onAddChild={onAddChild}
                       onRename={onRename}
                       onSetAmount={onSetAmount}
@@ -2110,7 +2513,8 @@ function RosterSelectionItem({
                   ))}
                 </ul>
               )}
-            </details>
+              </details>
+            )
           )}
         </div>
       )}

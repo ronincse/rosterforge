@@ -915,9 +915,12 @@ describe("App local catalogue flow", () => {
     await waitFor(() => {
       expect(rosterSelection("selection-ui-1")).toBeTruthy();
     });
-    // Adding is deliberately not a hidden mode switch. Newly-added-unit focus
-    // remains a later checkpoint, so the reader's explicit placement wins.
+    // Adding keeps the catalogue where the reader placed it, while focusing
+    // the new army unit in the dedicated options surface.
     expect(screen.getByRole("region", { name: "Add units" })).toBeTruthy();
+    let unitOptions = screen.getByRole("region", {
+      name: "Unit options for Infantry Squad",
+    });
     expect(screen.queryByText("selection-ui-1")).toBeNull();
     // The catalogue's name modifier refines the displayed name.
     expect(screen.getByText("Infantry Squad (Elite)")).toBeTruthy();
@@ -953,26 +956,23 @@ describe("App local catalogue flow", () => {
     expect(unitCard?.textContent).toContain("80");
     expect(unitCard?.textContent).toContain("Points");
 
-    // This squad holds a known violation, so it opens itself rather than
-    // hiding the problem behind a disclosure — the same attention rule the
-    // nested children list already used.
-    const unitToggle = within(armySection).getByRole("button", {
-      name: "Infantry Squad (Elite)",
+    const unitSelector = within(armySection).getByRole("button", {
+      name: "Configure Infantry Squad (Elite)",
     });
-    expect(unitToggle.getAttribute("aria-expanded")).toBe("true");
-    expect(
-      armySection.querySelector(".selection-card-body"),
-    ).toBeTruthy();
-
-    // Collapsing takes the whole card body off the render path, not just out
-    // of view: a fifteen-unit army is a list of names and costs.
-    fireEvent.click(unitToggle);
-    expect(unitToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(unitSelector.getAttribute("aria-pressed")).toBe("true");
+    // Army rows remain compact. View is independent from selection and opens
+    // the complete reader-facing card below the two-column builder.
     expect(armySection.querySelector(".selection-card-body")).toBeNull();
     expect(armySection.querySelector(".selection-datasheet")).toBeNull();
     expect(within(armySection).queryByText("Keywords")).toBeNull();
-    fireEvent.click(unitToggle);
-    expect(unitToggle.getAttribute("aria-expanded")).toBe("true");
+    const viewButton = within(armySection).getByRole("button", {
+      name: "View",
+    });
+    fireEvent.click(viewButton);
+    expect(viewButton.getAttribute("aria-expanded")).toBe("true");
+    let unitCardView = screen.getByRole("region", {
+      name: "Unit card for Infantry Squad",
+    });
     expect(within(playerHeader).getByText("80")).toBeTruthy();
     expect(within(playerHeader).getByText("Points")).toBeTruthy();
     const zeroCosts = within(playerHeader).getByRole("group", {
@@ -984,86 +984,85 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(undo).toHaveProperty("disabled", false);
     expect(redo).toHaveProperty("disabled", true);
-    // Opening the unit card is the ONLY expansion needed to read the unit.
-    // Everything below is asserted without a second click, which is the whole
-    // point of this structure: the datasheet is what a player opened the unit
-    // for. `Edit selection` still exists, and still starts closed.
-    expect(selectedRoster.querySelector(".selection-datasheet")).toBeTruthy();
-    const editDisclosure = selectedRoster.querySelector(".selection-edit");
+    expect(unitCardView.querySelector(".selection-datasheet")).toBeTruthy();
+    const editDisclosure = unitOptions.querySelector(".selection-edit");
     expect(editDisclosure?.hasAttribute("open")).toBe(false);
     // Effective keywords include one the catalogue only grants by modifier.
-    expect(within(selectedRoster).getByText("Keywords")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Battleline")).toBeTruthy();
-    expect(within(selectedRoster).getByText("added")).toBeTruthy();
+    expect(within(unitCardView).getByText("Keywords")).toBeTruthy();
+    expect(within(unitCardView).getByText("Battleline")).toBeTruthy();
+    expect(within(unitCardView).getByText("added")).toBeTruthy();
     // Profile-name groups run before the separately routed annotation.
     expect(
-      within(selectedRoster).getByText(
+      within(unitCardView).getByText(
         "Veteran Infantry profile (Veteran Issue)",
       ),
     ).toBeTruthy();
-    expect(within(selectedRoster).getAllByText("Move")).toHaveLength(2);
+    expect(within(unitCardView).getAllByText("Move")).toHaveLength(2);
     // A supported profile set replaces the displayed value and keeps the
     // source value visible as the base.
-    expect(within(selectedRoster).getByText("8")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Base 6")).toBeTruthy();
-    expect(within(selectedRoster).queryByText("6")).toBeNull();
-    expect(within(selectedRoster).getByText("Hold Ground")).toBeTruthy();
+    expect(within(unitCardView).getByText("8")).toBeTruthy();
+    expect(within(unitCardView).getByText("Base 6")).toBeTruthy();
+    expect(within(unitCardView).queryByText("6")).toBeNull();
+    expect(within(unitCardView).getByText("Hold Ground")).toBeTruthy();
     expect(
-      within(selectedRoster).getByText("Remain on the objective."),
+      within(unitCardView).getByText("Remain on the objective."),
     ).toBeTruthy();
-    expect(within(selectedRoster).getByText("Shared Tactics")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Advance together.")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Info groups")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Fieldcraft")).toBeTruthy();
-    expect(within(selectedRoster).getByText("Forward Observer")).toBeTruthy();
+    expect(within(unitCardView).getByText("Shared Tactics")).toBeTruthy();
+    expect(within(unitCardView).getByText("Advance together.")).toBeTruthy();
+    expect(within(unitCardView).getByText("Info groups")).toBeTruthy();
+    expect(within(unitCardView).getByText("Fieldcraft")).toBeTruthy();
+    expect(within(unitCardView).getByText("Forward Observer")).toBeTruthy();
     // An unsupported increment leaves the info-group profile's effective value
     // unresolved, so the source value stays visible and is labelled.
-    expect(within(selectedRoster).getByText("Scout 6")).toBeTruthy();
+    expect(within(unitCardView).getByText("Scout 6")).toBeTruthy();
     expect(
-      within(selectedRoster).getByText("Effective value unresolved"),
+      within(unitCardView).getByText("Effective value unresolved"),
     ).toBeTruthy();
     // A hidden profile is labelled rather than removed.
     expect(
-      within(selectedRoster).getByText("Hidden by this catalogue."),
+      within(unitCardView).getByText("Hidden by this catalogue."),
     ).toBeTruthy();
     expect(
-      within(selectedRoster).getByText(
+      within(unitCardView).getByText(
         "Some display behavior on this profile is unsupported, so these values are not a complete result.",
       ),
     ).toBeTruthy();
     expect(
-      within(selectedRoster).getByText("Coordinated Scouting"),
+      within(unitCardView).getByText("Coordinated Scouting"),
     ).toBeTruthy();
     expect(
-      within(selectedRoster).getByText("Share every route discovered."),
+      within(unitCardView).getByText("Share every route discovered."),
     ).toBeTruthy();
     expect(
-      within(selectedRoster).getAllByText("Direct | minimal.cat"),
+      within(unitCardView).getAllByText("Direct | minimal.cat"),
     ).toHaveLength(3);
     expect(
-      within(selectedRoster).getAllByText("Linked | minimal.gst"),
+      within(unitCardView).getAllByText("Linked | minimal.gst"),
     ).toHaveLength(2);
     expect(
-      within(selectedRoster).getByText("Linked | minimal.cat"),
+      within(unitCardView).getByText("Linked | minimal.cat"),
     ).toBeTruthy();
     // Renaming is editing, so it moved behind `Edit selection` with the rest.
-    fireEvent.click(within(selectedRoster).getByText("Edit selection"));
+    fireEvent.click(within(unitOptions).getByText("Edit selection"));
     fireEvent.change(
-      within(selectedRoster).getByLabelText("Occurrence name"),
+      within(unitOptions).getByLabelText("Occurrence name"),
       {
         target: { value: "Veterans" },
       },
     );
     fireEvent.click(
-      within(selectedRoster).getByRole("button", { name: "Rename" }),
+      within(unitOptions).getByRole("button", { name: "Rename" }),
     );
     expect(
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
-    const amountInput = within(selectedRoster).getByLabelText("Amount");
+    unitOptions = screen.getByRole("region", {
+      name: "Unit options for Veterans",
+    });
+    const amountInput = within(unitOptions).getByLabelText("Amount");
     fireEvent.change(amountInput, { target: { value: "2" } });
     fireEvent.click(
-      within(selectedRoster).getByRole("button", { name: "Set amount" }),
+      within(unitOptions).getByRole("button", { name: "Set amount" }),
     );
     expect(within(playerHeader).getByText("160")).toBeTruthy();
     expect(
@@ -1121,21 +1120,31 @@ describe("App local catalogue flow", () => {
     expect(veterans).toBeTruthy();
     fireEvent.click(
       within(veterans as HTMLElement).getByRole("button", {
+        name: "Configure Veterans (Elite)",
+      }),
+    );
+    unitOptions = screen.getByRole("region", {
+      name: "Unit options for Veterans",
+    });
+    fireEvent.click(
+      within(unitOptions).getByRole("button", {
         name: "Special Weapon",
       }),
     );
     await waitFor(() => {
       expect(rosterSelection("selection-ui-3")).toBeTruthy();
     });
-    expect(screen.getByText("Special Weapon (Master-crafted)")).toBeTruthy();
+    expect(
+      within(unitOptions).getByText("Special Weapon (Master-crafted)"),
+    ).toBeTruthy();
     expect(within(playerHeader).getByText("170")).toBeTruthy();
-    const selectedWeaponControl = within(
-      veterans as HTMLElement,
-    ).getByRole("button", { name: "Special Weapon" });
+    const selectedWeaponControl = within(unitOptions).getByRole("button", {
+      name: "Special Weapon",
+    });
     expect(selectedWeaponControl.getAttribute("aria-pressed")).toBe("true");
     expect(selectedWeaponControl).toHaveProperty("disabled", false);
     expect(
-      within(veterans as HTMLElement).getByRole("button", {
+      within(unitOptions).getByRole("button", {
         name: "Add another Special Weapon",
       }),
     ).toBeTruthy();
@@ -1143,9 +1152,10 @@ describe("App local catalogue flow", () => {
     // The weapon's own datasheet says 4; the squad's `affects` selector routes a
     // set to it. The panel has to name the declarer, or the reader cannot tell
     // why the printed value and the displayed value disagree.
-    const weapon = rosterSelection("selection-ui-3");
-    expect(weapon).toBeTruthy();
-    const weaponNode = within(weapon as HTMLElement);
+    unitCardView = screen.getByRole("region", {
+      name: "Unit card for Veterans",
+    });
+    const weaponNode = within(unitCardView);
     expect(
       weaponNode.getByText("Special Weapon (Master-crafted)"),
     ).toBeTruthy();
@@ -1179,6 +1189,10 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(veterans as HTMLElement)
+        .queryByRole("button", { name: "Special Weapon" }),
+    ).toBeNull();
+    expect(
+      within(unitOptions)
         .getByRole("button", { name: "Special Weapon" })
         .getAttribute("aria-pressed"),
     ).toBe("false");
@@ -1221,6 +1235,12 @@ describe("App local catalogue flow", () => {
 
     fireEvent.click(undo);
     expect(rosterSelection("selection-ui-1")).toBeTruthy();
+    fireEvent.click(
+      within(rosterSelection("selection-ui-1") as HTMLElement).getByRole(
+        "button",
+        { name: "Configure Veterans (Elite)" },
+      ),
+    );
     expect(rosterSelection("selection-ui-3")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
@@ -1323,9 +1343,13 @@ describe("App local catalogue flow", () => {
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
-    expect(within(selectedRoster).getByText("Anhrathe")).toBeTruthy();
+    fireEvent.click(within(selectedRoster).getByRole("button", { name: "View" }));
+    const unitCard = screen.getByRole("region", {
+      name: "Unit card for Infantry Squad",
+    });
+    expect(within(unitCard).getByText("Anhrathe")).toBeTruthy();
     expect(
-      within(selectedRoster).queryByText("opaque-imported-category-id"),
+      within(unitCard).queryByText("opaque-imported-category-id"),
     ).toBeNull();
   });
 
@@ -1940,10 +1964,18 @@ describe("App local catalogue flow", () => {
       name: "Unit composition for Initialization Unit",
     });
     expect(within(composition).getByText("2× Required Model")).toBeTruthy();
+    fireEvent.click(
+      within(selectedRoster).getByRole("button", {
+        name: "Configure Initialization Unit",
+      }),
+    );
+    const unitOptions = within(selectedRoster).getByRole("region", {
+      name: "Unit options for Initialization Unit",
+    });
 
-    // Direct models remain reading material, but each occurrence now has its
-    // own disclosure so a larger squad does not render every datasheet at once.
-    const initializedModels = within(selectedRoster).getByRole("region", {
+    // Direct models remain individually collapsible in the options panel. A
+    // model with a known violation opens so its required wargear stays visible.
+    const initializedModels = within(unitOptions).getByRole("region", {
       name: "Models",
     });
     const modelToggles = within(initializedModels).getAllByRole("button", {
@@ -1952,9 +1984,10 @@ describe("App local catalogue flow", () => {
     expect(modelToggles).toHaveLength(2);
     expect(modelToggles[0]?.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(modelToggles[0]!);
-    expect(
-      within(initializedModels).getAllByText("Required Model profile"),
-    ).toHaveLength(1);
+    expect(modelToggles[0]?.getAttribute("aria-expanded")).toBe("true");
+    // Editing options do not duplicate the datasheet. The separate View action
+    // owns the complete reader-facing card.
+    expect(within(initializedModels).queryByText("Required Model profile")).toBeNull();
     expect(
       within(initializedModels).getAllByLabelText("Models in this squad"),
     ).toHaveLength(1);
@@ -1973,15 +2006,22 @@ describe("App local catalogue flow", () => {
     fireEvent.click(firstRequiredWeapon[0]!);
     expect(firstRequiredWeapon[0]?.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(modelToggles[1]!);
+    expect(modelToggles[1]?.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(
+      within(unitOptions).getByRole("button", { name: "View unit card" }),
+    );
+    const unitCard = screen.getByRole("region", {
+      name: "Unit card for Initialization Unit",
+    });
     expect(
-      within(initializedModels).getAllByText("Required Model profile"),
+      within(unitCard).getAllByText("Required Model profile"),
     ).toHaveLength(2);
     expect(
-      within(selectedRoster).queryByText("Default Option", {
+      within(unitOptions).queryByText("Default Option", {
         selector: "strong",
       }),
     ).toBeNull();
-    const initializedChildren = within(selectedRoster).getByRole("group", {
+    const initializedChildren = within(unitOptions).getByRole("group", {
       name: "Wargear, Warlord and options for Initialization Unit; 1 selection",
     });
     expect(initializedChildren.hasAttribute("open")).toBe(false);
@@ -1997,7 +2037,7 @@ describe("App local catalogue flow", () => {
       }),
     ).toBeTruthy();
     expect(
-      within(selectedRoster).getByRole("button", {
+      within(unitOptions).getByRole("button", {
         name: "Modified Child",
       }),
     ).toHaveProperty("disabled", false);
@@ -2021,20 +2061,18 @@ describe("App local catalogue flow", () => {
     );
     expect(rosterSelection("selection-ui-bound-3")).toBeTruthy();
 
-    // Closing one exact model leaves the other model's details and the unit's
-    // always-visible composition summary intact.
+    // Closing one exact model's options leaves the unit's always-visible
+    // composition summary and independent unit card intact.
     fireEvent.click(modelToggles[0]!);
-    expect(
-      within(initializedModels).getAllByText("Required Model profile"),
-    ).toHaveLength(1);
+    expect(modelToggles[0]?.getAttribute("aria-expanded")).toBe("false");
+    expect(within(unitCard).getAllByText("Required Model profile")).toHaveLength(2);
     expect(within(composition).getByText("2× Required Model")).toBeTruthy();
-    fireEvent.click(modelToggles[0]!);
 
-    const unitToggle = within(selectedRoster).getByRole("button", {
-      name: "Initialization Unit",
-    });
-    fireEvent.click(unitToggle);
-    expect(unitToggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(
+      within(unitOptions).getByRole("button", {
+        name: "Close options for Initialization Unit",
+      }),
+    );
     expect(
       within(selectedRoster).queryByRole("region", { name: "Models" }),
     ).toBeNull();
@@ -2043,7 +2081,11 @@ describe("App local catalogue flow", () => {
         name: "Unit composition for Initialization Unit",
       }),
     ).toBeTruthy();
-    fireEvent.click(unitToggle);
+    fireEvent.click(
+      within(selectedRoster).getByRole("button", {
+        name: "Configure Initialization Unit",
+      }),
+    );
     const checksReport = screen.getByRole("group", {
       name: /Detailed supported evidence/u,
     });

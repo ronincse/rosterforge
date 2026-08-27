@@ -266,7 +266,9 @@ function LibraryWorkspace({
     name: string,
   ) => void;
   readonly onClearRoster: () => void;
-  readonly onAddRootSelection: (choice: LocalRosterRootChoice) => void;
+  readonly onAddRootSelection: (
+    choice: LocalRosterRootChoice,
+  ) => SelectionOccurrenceId | undefined;
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
   readonly onAddChildSelection: (
     parentId: SelectionOccurrenceId,

@@ -187,6 +187,17 @@
   selected but cannot be removed below that minimum. Surplus occurrences remain
   removable, unresolved bounds stay permissive, and grouped replacement
   weapons retain their ordinary deselect-or-replace controls
+- Compact selectable army rows with recursive cost and exact model composition,
+  automatic focus for a newly added army unit, a dedicated options region that
+  reuses the existing edit controls, and a separate read-only full unit-card
+  View. Catalogue placement remains reader-controlled; configuration is never
+  focused as an army unit
+- At most two simultaneous desktop columns: roster plus catalogue while
+  shopping, or roster list plus selected-unit options after the catalogue is
+  hidden. The complete unit card follows below the builder, and all surfaces
+  stack without horizontal overflow at 390 px and the 320 px supported minimum
+- Validation links to nested selections focus the owning army unit before
+  resolving an anchor that otherwise would not be mounted in the options region
 - Persistent Roster, Add units, and Checks workspace navigation with live
   counts, a two-pane desktop builder, and a browser-verified full-width mobile
   fallback. At 390 px and the 320 px supported minimum, repository diagnostics

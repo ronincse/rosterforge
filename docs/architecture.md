@@ -479,17 +479,25 @@ category order so the list reads the same way every time. A role with no
 entries renders nothing, so a roster without configuration shows its units
 rather than an empty heading.
 
-Army unit cards are collapsible; configuration cards are not, because hiding
-the detachment, battle-size and force-disposition pickers would bury the first
-thing a player sets. A collapsible card starts closed and renders its body only
-while open, keeping a closed unit's child choices, datasheet, and subtree off
-the render path — the same laziness the nested children list already used. It
-opens itself when it holds a known violation, so a problem is never hidden
-behind a disclosure; unresolved bounds stay in the checks and do not expand it.
-The always-visible row carries the unit's recursive cost from the projection,
-so a collapsed army still shows what each unit is worth.
-Anchor navigation and pane state are UI concerns only and never enter the
-immutable session, history, or draft.
+Army units render as compact selectable rows. The always-visible row carries
+the projection's recursive cost and exact direct-model composition; selecting
+it mounts the existing mutation controls in one dedicated options surface, and
+a separate `View` action mounts a read-only complete card below the builder.
+The renderer has presentation modes, not separate editing implementations, so
+required upgrades, grouped replacements, and repeatable model quantities keep
+one mutation path. Configuration remains in the full-width setup step and can
+never become the selected army unit.
+
+The outer builder has at most two columns. With the catalogue open those are
+roster and catalogue, and the options surface stacks inside the roster pane.
+With the catalogue closed, the roster pane may use the reclaimed width for
+list and options columns. Both arrangements return to document-order single
+columns at the responsive breakpoint. The full unit card remains outside that
+grid so it never creates a permanent list/options/catalogue three-pane layout.
+Anchor navigation and selected/viewed pane state are UI concerns only and never
+enter the immutable session, history, or draft. A validation link whose exact
+nested anchor is not mounted first focuses its owning top-level unit, then
+completes the jump after the options surface renders the target.
 
 `createRosterWorkspaceViewModel` is the pure presentation boundary over one
 immutable session and its root-choice, cost, and supported-validation reports.

@@ -38,13 +38,16 @@ describe("phone-width layout contracts", () => {
     expect(styles).toContain(".player-header-figure {\n  min-width: 0;");
   });
 
-  it("gives the unit disclosure the full row on a phone", () => {
-    // Sharing its row with the cost and Remove button left the unit name — the
-    // disclosure control itself — 78 px wide at the 320 px minimum. Stacking
-    // the actions took it to 175 px. Pin the rule that does it.
+  it("gives unit selection and options the full usable phone width", () => {
+    // Sharing a row with cost, View, and Remove would squeeze the unit-select
+    // control at 320 px. The selected-unit panel must also collapse back to one
+    // column rather than becoming a third persistent desktop pane.
     expect(styles).toMatch(
       /@media \(max-width: 560px\) \{[\s\S]*?\.selection-occurrence \{\n {4}grid-template-columns: minmax\(0, 1fr\);/u,
     );
-    expect(styles).toContain(".unit-card-toggle {\n  display: block;\n  width: 100%;");
+    expect(styles).toContain(".unit-card-select {\n  display: block;\n  width: 100%;");
+    expect(styles).toMatch(
+      /@media \(max-width: 850px\) \{[\s\S]*?\.selected-roster-pane\[data-options-open="true"\] \{\n {4}grid-template-columns: 1fr;/u,
+    );
   });
 });

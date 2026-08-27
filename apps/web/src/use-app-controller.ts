@@ -342,15 +342,20 @@ export function useRosterForgeAppController({
     setRosterDiagnostics([]);
   }
 
-  function addRootSelection(choice: LocalRosterRootChoice) {
-    if (rosterSession === undefined) return;
+  function addRootSelection(
+    choice: LocalRosterRootChoice,
+  ): SelectionOccurrenceId | undefined {
+    if (rosterSession === undefined) return undefined;
+    const newSelectionId = selectionOccurrenceId(createEntityId("selection"));
     const result = addLocalRosterRootSelection(rosterSession, choice, {
-      selectionId: selectionOccurrenceId(createEntityId("selection")),
+      selectionId: newSelectionId,
       createSelectionId: () =>
         selectionOccurrenceId(createEntityId("selection")),
     });
     setRosterDiagnostics(result.diagnostics);
-    if (result.ok) commitRosterSession(result.value);
+    if (!result.ok) return undefined;
+    commitRosterSession(result.value);
+    return newSelectionId;
   }
 
   function removeSelection(id: SelectionOccurrenceId) {
