@@ -68,6 +68,17 @@ const gameSystemBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
         />
       </characteristicTypes>
     </profileType>
+    <profileType id="profile-type-weapon" name="Ranged Weapons">
+      <characteristicTypes>
+        <characteristicType id="weapon-range" name="Range" />
+        <characteristicType id="weapon-attacks" name="A" />
+        <characteristicType id="weapon-skill" name="BS" />
+        <characteristicType id="weapon-strength" name="S" />
+        <characteristicType id="weapon-ap" name="AP" />
+        <characteristicType id="weapon-damage" name="D" />
+        <characteristicType id="weapon-keywords" name="Keywords" />
+      </characteristicTypes>
+    </profileType>
   </profileTypes>
   <categoryEntries>
     <categoryEntry id="cat-infantry" name="Infantry" hidden="false" />
@@ -284,6 +295,95 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
           </constraints>
         </selectionEntryGroup>
       </selectionEntryGroups>
+    </selectionEntry>
+    <selectionEntry id="entry-veteran-fireteam" name="Veteran Fireteam" type="unit">
+      <categoryLinks>
+        <categoryLink id="veteran-infantry" name="Infantry"
+          targetId="cat-infantry" primary="false" />
+        <categoryLink id="veteran-code" name="9CF8-50F3-F6F5-EA4C"
+          targetId="opaque-veteran-code" primary="false" />
+      </categoryLinks>
+      <rules>
+        <rule id="rule-disciplined-fire" name="Disciplined Fire">
+          <description>This unit remains accurate while advancing.</description>
+        </rule>
+      </rules>
+      <selectionEntries>
+        <selectionEntry id="entry-veteran" name="Veteran" type="model"
+          defaultAmount="5" step="1">
+          <constraints>
+            <constraint id="veteran-min" type="min" field="selections"
+              scope="parent" value="5" />
+            <constraint id="veteran-max" type="max" field="selections"
+              scope="parent" value="10" />
+          </constraints>
+          <profiles>
+            <profile id="profile-veteran" name="Veteran"
+              typeId="profile-type-unit" typeName="Unit">
+              <characteristics>
+                <characteristic name="Move"
+                  typeId="characteristic-move">6</characteristic>
+                <characteristic name="Keywords"
+                  typeId="characteristic-keywords">Infantry</characteristic>
+              </characteristics>
+            </profile>
+          </profiles>
+          <selectionEntries>
+            <selectionEntry id="entry-service-rifle" name="Service rifle"
+              type="upgrade">
+              <constraints>
+                <constraint id="service-rifle-min" type="min"
+                  field="selections" scope="parent" value="1" />
+                <constraint id="service-rifle-max" type="max"
+                  field="selections" scope="parent" value="1" />
+              </constraints>
+              <profiles>
+                <profile id="profile-service-rifle" name="Service rifle"
+                  typeId="profile-type-weapon" typeName="Ranged Weapons">
+                  <characteristics>
+                    <characteristic name="Range"
+                      typeId="weapon-range">24</characteristic>
+                    <characteristic name="A"
+                      typeId="weapon-attacks">2</characteristic>
+                    <characteristic name="BS"
+                      typeId="weapon-skill">3+</characteristic>
+                    <characteristic name="S"
+                      typeId="weapon-strength">4</characteristic>
+                    <characteristic name="AP"
+                      typeId="weapon-ap">-1</characteristic>
+                    <characteristic name="D"
+                      typeId="weapon-damage">1</characteristic>
+                    <characteristic name="Keywords"
+                      typeId="weapon-keywords">Assault</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+            </selectionEntry>
+            <selectionEntry id="entry-plasma-rifle" name="Plasma rifle"
+              type="upgrade">
+              <profiles>
+                <profile id="profile-plasma-rifle" name="Plasma rifle"
+                  typeId="profile-type-weapon" typeName="Ranged Weapons">
+                  <characteristics>
+                    <characteristic name="Range"
+                      typeId="weapon-range">18</characteristic>
+                    <characteristic name="A"
+                      typeId="weapon-attacks">1</characteristic>
+                    <characteristic name="BS"
+                      typeId="weapon-skill">3+</characteristic>
+                    <characteristic name="S"
+                      typeId="weapon-strength">7</characteristic>
+                    <characteristic name="AP"
+                      typeId="weapon-ap">-2</characteristic>
+                    <characteristic name="D"
+                      typeId="weapon-damage">2</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+            </selectionEntry>
+          </selectionEntries>
+        </selectionEntry>
+      </selectionEntries>
     </selectionEntry>
   </selectionEntries>
   <sharedInfoGroups>
@@ -778,7 +878,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(workspaceNavigation)
         .getByRole("button", {
-          name: "Hide catalogue, 1 available choice",
+          name: "Hide catalogue, 2 available choices",
         })
         .getAttribute("aria-expanded"),
     ).toBe("true");
@@ -875,7 +975,7 @@ describe("App local catalogue flow", () => {
 
     let editor = screen.getByRole("region", { name: "Add units" });
     const catalogueToggle = within(workspaceNavigation).getByRole("button", {
-      name: "Hide catalogue, 1 available choice",
+      name: "Hide catalogue, 2 available choices",
     });
     fireEvent.click(catalogueToggle);
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
@@ -896,7 +996,50 @@ describe("App local catalogue flow", () => {
     const rootFilter = within(editor).getByLabelText(
       "Find a unit or option",
     );
-    expect(within(editor).getByText("1 matching choice")).toBeTruthy();
+    expect(within(editor).getByText("2 matching choices")).toBeTruthy();
+    const unitInformationButton = within(editor).getByRole("button", {
+      name: "View information for Veteran Fireteam",
+    });
+    fireEvent.click(unitInformationButton);
+    const unitPreview = screen.getByRole("dialog", {
+      name: "Veteran Fireteam",
+    });
+    expect(
+      within(unitPreview).getByText("Initial unit composition"),
+    ).toBeTruthy();
+    expect(within(unitPreview).getByText("5× Veteran")).toBeTruthy();
+    expect(within(unitPreview).getByText("5× Service rifle")).toBeTruthy();
+    expect(within(unitPreview).getByText("Disciplined Fire")).toBeTruthy();
+    expect(
+      within(unitPreview).getByText(
+        "This unit remains accurate while advancing.",
+      ),
+    ).toBeTruthy();
+    expect(within(unitPreview).getAllByText("24").length).toBeGreaterThan(0);
+    expect(
+      within(unitPreview).getAllByText("Infantry").length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(unitPreview).queryByText("9CF8-50F3-F6F5-EA4C"),
+    ).toBeNull();
+    const availableOptions = within(unitPreview)
+      .getByText("Available model options and alternate profiles")
+      .closest("summary");
+    expect(availableOptions).toBeTruthy();
+    const availableOptionsDetails = availableOptions!.closest("details");
+    expect(availableOptionsDetails).toBeTruthy();
+    availableOptionsDetails!.open = true;
+    fireEvent(availableOptionsDetails!, new Event("toggle"));
+    await waitFor(() =>
+      expect(
+        within(unitPreview).getAllByText("Plasma rifle").length,
+      ).toBeGreaterThan(0),
+    );
+    expect(rosterSelection("selection-ui-1")).toBeNull();
+    fireEvent.keyDown(unitPreview, { key: "Escape" });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(unitInformationButton),
+    );
     fireEvent.change(rootFilter, { target: { value: "missing" } });
     expect(
       within(editor).getByText("No available roots match this filter."),
@@ -910,8 +1053,15 @@ describe("App local catalogue flow", () => {
       name: "Add Infantry Squad",
     })).toBeTruthy();
     const rootPreviewButton = within(editor).getByRole("button", {
-      name: "View rules for Infantry Squad",
+      name: "View information for Infantry Squad",
     });
+    const rootAddButton = within(editor).getByRole("button", {
+      name: "Add Infantry Squad",
+    });
+    expect(rootPreviewButton.parentElement).toBe(rootAddButton.parentElement);
+    expect(rootPreviewButton.parentElement?.classList).toContain(
+      "choice-segmented-control",
+    );
     fireEvent.click(rootPreviewButton);
     const rootPreview = screen.getByRole("dialog", {
       name: "Infantry Squad",
@@ -1418,7 +1568,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
     const catalogueToggle = await screen.findByRole("button", {
-      name: "Show catalogue, 1 available choice",
+      name: "Show catalogue, 2 available choices",
     });
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("region", { name: "Add units" })).toBeNull();
@@ -1532,7 +1682,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     fireEvent.click(
       within(doctrine).getByRole("button", {
-        name: "View rules for Mobile Doctrine",
+        name: "View information for Mobile Doctrine",
       }),
     );
     const doctrinePreview = screen.getByRole("dialog", {

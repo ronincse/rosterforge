@@ -196,10 +196,13 @@
   reuses the existing edit controls, and a separate read-only full unit-card
   View. Catalogue placement remains reader-controlled; configuration is never
   focused as an army unit
-- Eye-labelled read-only previews on concrete root, direct-child, and grouped
-  catalogue choices. They expose source-authored rules, profiles, and info
-  groups before selection without mutating the roster or claiming that
-  occurrence-dependent values are already effective
+- Page-information actions visually attached to concrete root, direct-child,
+  repeatable-model, and grouped catalogue choice controls. They expose
+  source-authored rules, profiles, info groups, and human-readable source
+  keywords before selection. Unit previews additionally show statlines and
+  equipment from supported static initial composition, with alternate
+  informative branches kept in a separate collapsed disclosure. They do not
+  mutate the roster or claim roster-dependent values are already effective
 - Keyword sections disappear when the effective category inspection is
   complete and empty. Removed categories and incomplete or unresolved keyword
   evaluation remain visible evidence rather than being collapsed into a false

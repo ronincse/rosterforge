@@ -4,11 +4,14 @@ import type {
   MaterializedInfoGroup,
   MaterializedProfileInfoLink,
   MaterializedRuleInfoLink,
+  MaterializedSelectionContainer,
   UnresolvedMaterializedInfoLink,
 } from "@rosterforge/data-graph";
 import {
   isActionableSupportedConstraintReport,
   isUnboundedConstraintValue,
+  planRosterSelectionInitialization,
+  type RosterSelectionInitializationPlan,
   type RosterForceConstraintReport,
   type RosterProfileCharacteristicReport,
   type RosterSelectionConstraintReport,
@@ -641,28 +644,30 @@ export function RosterOverview({
                               )}
                             </span>
                             <span className="root-choice-actions">
-                              <ChoicePreviewButton
-                                choice={choice.materialized}
-                                onPreview={openChoicePreview}
-                              />
-                              <button
-                                type="button"
-                                disabled={maximumReached}
-                                onClick={() => {
-                                  const selectionId =
-                                    onAddRootSelection(choice);
-                                  if (
-                                    selectionId !== undefined &&
-                                    group.section === "army"
-                                  ) {
-                                    setActiveSelectionId(selectionId);
-                                  }
-                                }}
-                              >
-                                {maximumReached
-                                  ? `${rootChoiceLabel(choice)} maximum reached`
-                                  : `Add ${rootChoiceLabel(choice)}`}
-                              </button>
+                              <span className="choice-segmented-control">
+                                <button
+                                  type="button"
+                                  disabled={maximumReached}
+                                  onClick={() => {
+                                    const selectionId =
+                                      onAddRootSelection(choice);
+                                    if (
+                                      selectionId !== undefined &&
+                                      group.section === "army"
+                                    ) {
+                                      setActiveSelectionId(selectionId);
+                                    }
+                                  }}
+                                >
+                                  {maximumReached
+                                    ? `${rootChoiceLabel(choice)} maximum reached`
+                                    : `Add ${rootChoiceLabel(choice)}`}
+                                </button>
+                                <ChoicePreviewButton
+                                  choice={choice.materialized}
+                                  onPreview={openChoicePreview}
+                                />
+                              </span>
                             </span>
                           </div>
                         );
@@ -2404,25 +2409,38 @@ function RosterSelectionItem({
                       selectedOccurrence === undefined ? undefined : "true"
                     }
                   >
-                    <button
-                      type="button"
-                      aria-pressed={selectedOccurrence !== undefined}
-                      disabled={
-                        removalWouldViolateRequiredUpgrade ||
-                        (selectedOccurrence === undefined &&
-                          finiteMaximum !== undefined &&
-                          selectedAmount >= finiteMaximum)
-                      }
-                      onClick={() =>
-                        selectedOccurrence === undefined
-                          ? onAddChild(selection.id, direct.choice)
-                          : onRemove(selectedOccurrence.id)
+                    <span
+                      className="choice-segmented-control"
+                      data-selected={
+                        selectedOccurrence === undefined ? undefined : "true"
                       }
                     >
-                      {selectedAmount > 1
-                        ? `${choiceName} (${selectedAmount} selected)`
-                        : choiceName}
-                    </button>
+                      <button
+                        type="button"
+                        aria-pressed={selectedOccurrence !== undefined}
+                        disabled={
+                          removalWouldViolateRequiredUpgrade ||
+                          (selectedOccurrence === undefined &&
+                            finiteMaximum !== undefined &&
+                            selectedAmount >= finiteMaximum)
+                        }
+                        onClick={() =>
+                          selectedOccurrence === undefined
+                            ? onAddChild(selection.id, direct.choice)
+                            : onRemove(selectedOccurrence.id)
+                        }
+                      >
+                        {selectedAmount > 1
+                          ? `${choiceName} (${selectedAmount} selected)`
+                          : choiceName}
+                      </button>
+                      {onPreviewChoice !== undefined && (
+                        <ChoicePreviewButton
+                          choice={direct.choice}
+                          onPreview={onPreviewChoice}
+                        />
+                      )}
+                    </span>
                     {canAddAnother && (
                       <button
                         type="button"
@@ -2430,12 +2448,6 @@ function RosterSelectionItem({
                       >
                         Add another {choiceName}
                       </button>
-                    )}
-                    {onPreviewChoice !== undefined && (
-                      <ChoicePreviewButton
-                        choice={direct.choice}
-                        onPreview={onPreviewChoice}
-                      />
                     )}
                     {status !== undefined && <small>{status}</small>}
                   </span>
@@ -2740,8 +2752,8 @@ function ChoicePreviewButton({
     <button
       className="choice-preview-button"
       type="button"
-      aria-label={`View rules for ${label}`}
-      title={`View rules for ${label}`}
+      aria-label={`View information for ${label}`}
+      title={`View information for ${label}`}
       onClick={(event) => onPreview(choice, event.currentTarget)}
     >
       <svg
@@ -2751,11 +2763,353 @@ function ChoicePreviewButton({
         height="18"
         focusable="false"
       >
-        <path d="M2.4 12c2.2-4.1 5.5-6.2 9.6-6.2s7.4 2.1 9.6 6.2c-2.2 4.1-5.5 6.2-9.6 6.2S4.6 16.1 2.4 12Z" />
-        <circle cx="12" cy="12" r="3.2" />
+        <path d="M5.5 2.75h8.25l4.75 4.75v13.75h-13Z" />
+        <path d="M13.75 2.75V7.5h4.75" />
+        <circle cx="12" cy="10.75" r="0.7" fill="currentColor" stroke="none" />
+        <path d="M12 13.5v4" />
       </svg>
-      <span className="visually-hidden">View rules for {label}</span>
+      <span className="visually-hidden">View information for {label}</span>
     </button>
+  );
+}
+
+interface CatalogueChoiceInformation {
+  readonly profiles: readonly SelectionProfileDetail[];
+  readonly rules: readonly SelectionRuleDetail[];
+  readonly infoGroups: readonly MaterializedInfoGroup[];
+  readonly unresolved: readonly UnresolvedMaterializedInfoLink[];
+  readonly keywords: readonly string[];
+}
+
+interface CatalogueAvailableBranch {
+  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly showOwnInformation: boolean;
+  readonly children: readonly CatalogueAvailableBranch[];
+}
+
+/**
+ * Reads only authored catalogue information from a materialized choice.
+ *
+ * Category links contribute a keyword only when they carry a human-authored
+ * name. Hex identifiers sometimes occupy the name field in imported data; the
+ * preview filters those just as the selected-card projection avoids exposing
+ * opaque target IDs to players.
+ */
+function catalogueChoiceInformation(
+  choice: BattleScribeRosterSelectionChoice,
+): CatalogueChoiceInformation {
+  const keywords = [
+    ...new Set(
+      choice.categoryLinks
+        .map(({ name }) => name?.trim())
+        .filter(
+          (name): name is string =>
+            name !== undefined &&
+            name !== "" &&
+            !looksLikeOpaqueCatalogueCode(name),
+        ),
+    ),
+  ];
+  return {
+    profiles: [
+      ...choice.profiles.map((value) => ({
+        origin: "Direct" as const,
+        value,
+      })),
+      ...choice.materializedInfoLinks
+        .filter(isMaterializedProfileInfoLink)
+        .map((value) => ({ origin: "Linked" as const, value })),
+    ],
+    rules: [
+      ...choice.rules.map((value) => ({
+        origin: "Direct" as const,
+        value,
+      })),
+      ...choice.materializedInfoLinks
+        .filter(isMaterializedRuleInfoLink)
+        .map((value) => ({ origin: "Linked" as const, value })),
+    ],
+    infoGroups: [
+      ...choice.materializedInfoGroups,
+      ...choice.materializedInfoLinks.filter(isMaterializedInfoGroup),
+    ],
+    unresolved: choice.materializedInfoLinks.filter(
+      isUnresolvedMaterializedInfoLink,
+    ),
+    keywords,
+  };
+}
+
+function looksLikeOpaqueCatalogueCode(value: string): boolean {
+  return /^(?:[0-9a-f]{4,8}-){2,}[0-9a-f]{4,12}$/iu.test(value);
+}
+
+function catalogueChoiceHasOwnInformation(
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  const information = catalogueChoiceInformation(choice);
+  return (
+    information.profiles.length > 0 ||
+    information.rules.length > 0 ||
+    information.infoGroups.length > 0 ||
+    information.unresolved.length > 0 ||
+    information.keywords.length > 0
+  );
+}
+
+function directCatalogueChoices(
+  container: MaterializedSelectionContainer,
+): readonly BattleScribeRosterSelectionChoice[] {
+  return [
+    ...container.selectionEntries,
+    ...container.selectionEntryGroups,
+    ...container.entryLinks.filter(
+      (entryLink): entryLink is BattleScribeRosterSelectionChoice =>
+        entryLink.kind !== "unresolvedEntryLink",
+    ),
+  ];
+}
+
+function collectPlannedChoices(
+  plan: RosterSelectionInitializationPlan,
+  choices: Set<BattleScribeRosterSelectionChoice>,
+): void {
+  for (const addition of plan.additions) {
+    choices.add(addition.choice);
+    collectPlannedChoices(addition.initialization, choices);
+  }
+}
+
+/**
+ * Keeps unselected catalogue material separate from the initialization plan.
+ *
+ * A planned entry can still contain unplanned alternatives, so it remains as a
+ * context-only branch when such descendants exist. Selection-entry groups are
+ * structural headings rather than roster occurrences and are retained only
+ * when they lead to informative choices.
+ */
+function catalogueAvailableBranches(
+  container: MaterializedSelectionContainer,
+  plannedChoices: ReadonlySet<BattleScribeRosterSelectionChoice>,
+): readonly CatalogueAvailableBranch[] {
+  return directCatalogueChoices(container)
+    .map((choice) =>
+      plannedChoices.has(choice)
+        ? undefined
+        : catalogueAvailableBranch(choice, plannedChoices),
+    )
+    .filter(
+      (branch): branch is CatalogueAvailableBranch => branch !== undefined,
+    );
+}
+
+function catalogueAvailableBranch(
+  choice: BattleScribeRosterSelectionChoice,
+  plannedChoices: ReadonlySet<BattleScribeRosterSelectionChoice>,
+): CatalogueAvailableBranch | undefined {
+  const children = catalogueAvailableBranches(choice, plannedChoices);
+  const showOwnInformation =
+    !plannedChoices.has(choice) && catalogueChoiceHasOwnInformation(choice);
+  return showOwnInformation || children.length > 0
+    ? { choice, showOwnInformation, children }
+    : undefined;
+}
+
+/**
+ * Limits the unit's alternate surface to model profiles and their equipment.
+ *
+ * Unit roots can also carry entire Crusade advancement libraries. Those are
+ * valid catalogue branches but not useful datasheet alternatives, and mounting
+ * even their collapsed headings turns a quick unit preview into a second
+ * catalogue browser. Structural groups remain as context on paths to models.
+ */
+function catalogueUnitModelBranches(
+  container: MaterializedSelectionContainer,
+  plannedChoices: ReadonlySet<BattleScribeRosterSelectionChoice>,
+): readonly CatalogueAvailableBranch[] {
+  return directCatalogueChoices(container).flatMap((choice) => {
+    if (choice.kind === "selectionEntry" && choice.type === "model") {
+      const branch = plannedChoices.has(choice)
+        ? (() => {
+            const children = catalogueAvailableBranches(
+              choice,
+              plannedChoices,
+            );
+            return children.length === 0
+              ? undefined
+              : { choice, showOwnInformation: false, children };
+          })()
+        : catalogueAvailableBranch(choice, plannedChoices);
+      return branch === undefined ? [] : [branch];
+    }
+    if (choice.kind !== "selectionEntryGroup") return [];
+    const children = catalogueUnitModelBranches(choice, plannedChoices);
+    return children.length === 0
+      ? []
+      : [{ choice, showOwnInformation: false, children }];
+  });
+}
+
+function CatalogueChoiceInformationSections({
+  choice,
+}: {
+  readonly choice: BattleScribeRosterSelectionChoice;
+}) {
+  const { profiles, rules, infoGroups, unresolved, keywords } =
+    catalogueChoiceInformation(choice);
+  return (
+    <>
+      {profiles.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Profiles</h4>
+          <div className="selection-profile-list">
+            {profiles.map((profile, index) => (
+              <SelectionProfile
+                key={selectionProfileKey(profile, index)}
+                profile={profile}
+                report={undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      {rules.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Rules</h4>
+          <div className="selection-rule-list">
+            {rules.map((rule, index) => (
+              <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
+            ))}
+          </div>
+        </section>
+      )}
+      {infoGroups.length > 0 && (
+        <section className="selection-info-section">
+          <h4>Info groups</h4>
+          <div className="selection-info-group-list">
+            {infoGroups.map((infoGroup, index) => (
+              <SelectionInfoGroup
+                key={selectionInfoGroupKey(infoGroup, index)}
+                infoGroup={infoGroup}
+                reports={undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      {keywords.length > 0 && (
+        <section className="selection-info-section selection-keywords">
+          <h4>Keywords</h4>
+          <ul className="keyword-list">
+            {keywords.map((keyword) => (
+              <li key={keyword}>{keyword}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {unresolved.length > 0 && (
+        <section className="selection-info-section unresolved-info-links">
+          <h4>Unresolved info links</h4>
+          <ul>
+            {unresolved.map((infoLink, index) => (
+              <li key={unresolvedInfoLinkKey(infoLink, index)}>
+                <strong>
+                  {infoLink.link.name ??
+                    infoLink.link.targetId ??
+                    "Unnamed info link"}
+                </strong>
+                <span>{infoLink.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
+
+function CataloguePlannedChoice({
+  addition,
+  parentAmount,
+}: {
+  readonly addition: RosterSelectionInitializationPlan["additions"][number];
+  readonly parentAmount: number;
+}) {
+  const amount =
+    parentAmount * addition.quantity * (addition.amount ?? 1);
+  return (
+    <article className="choice-preview-planned-choice">
+      <header>
+        <strong>
+          {amount}&times; {selectionChoiceLabel(addition.choice)}
+        </strong>
+        <small>
+          {addition.choice.kind === "selectionEntry" &&
+          addition.choice.type === "model"
+            ? "Model"
+            : "Initial equipment or option"}
+        </small>
+      </header>
+      <CatalogueChoiceInformationSections choice={addition.choice} />
+      {addition.initialization.additions.length > 0 && (
+        <div className="choice-preview-planned-children">
+          {addition.initialization.additions.map((child, index) => (
+            <CataloguePlannedChoice
+              key={`${selectionChoiceKey(child.choice)}:${index}`}
+              addition={child}
+              parentAmount={amount}
+            />
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function CatalogueAvailableChoice({
+  branch,
+}: {
+  readonly branch: CatalogueAvailableBranch;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = selectionChoiceLabel(branch.choice);
+  if (!branch.showOwnInformation) {
+    return (
+      <section className="choice-preview-available-context">
+        <h5>{label}</h5>
+        <div className="choice-preview-available-children">
+          {branch.children.map((child, index) => (
+            <CatalogueAvailableChoice
+              key={`${selectionChoiceKey(child.choice)}:${index}`}
+              branch={child}
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  return (
+    <details
+      className="choice-preview-available-choice"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>{label}</summary>
+      {open && (
+        <>
+          <CatalogueChoiceInformationSections choice={branch.choice} />
+          {branch.children.length > 0 && (
+            <div className="choice-preview-available-children">
+              {branch.children.map((child, index) => (
+                <CatalogueAvailableChoice
+                  key={`${selectionChoiceKey(child.choice)}:${index}`}
+                  branch={child}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </details>
   );
 }
 
@@ -2776,30 +3130,26 @@ function CatalogueChoicePreviewDialog({
   readonly onClose: () => void;
 }) {
   const headingId = useId();
-  const rules: readonly SelectionRuleDetail[] = [
-    ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
-    ...choice.materializedInfoLinks
-      .filter(isMaterializedRuleInfoLink)
-      .map((value) => ({ origin: "Linked" as const, value })),
-  ];
-  const profiles: readonly SelectionProfileDetail[] = [
-    ...choice.profiles.map((value) => ({ origin: "Direct" as const, value })),
-    ...choice.materializedInfoLinks
-      .filter(isMaterializedProfileInfoLink)
-      .map((value) => ({ origin: "Linked" as const, value })),
-  ];
-  const infoGroups = [
-    ...choice.materializedInfoGroups,
-    ...choice.materializedInfoLinks.filter(isMaterializedInfoGroup),
-  ];
-  const unresolved = choice.materializedInfoLinks.filter(
-    isUnresolvedMaterializedInfoLink,
-  );
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const information = catalogueChoiceInformation(choice);
+  const initializationResult =
+    choice.kind === "selectionEntry" && choice.type === "unit"
+      ? planRosterSelectionInitialization(choice)
+      : undefined;
+  const initialization =
+    initializationResult?.ok === true ? initializationResult.value : undefined;
+  const plannedChoices = new Set<BattleScribeRosterSelectionChoice>();
+  if (initialization !== undefined) {
+    collectPlannedChoices(initialization, plannedChoices);
+  }
+  const availableBranches =
+    initialization === undefined
+      ? []
+      : catalogueUnitModelBranches(choice, plannedChoices);
   const hasInformation =
-    profiles.length > 0 ||
-    rules.length > 0 ||
-    infoGroups.length > 0 ||
-    unresolved.length > 0;
+    catalogueChoiceHasOwnInformation(choice) ||
+    (initialization?.additions.length ?? 0) > 0 ||
+    availableBranches.length > 0;
   const label = selectionChoiceLabel(choice);
   return (
     <div
@@ -2852,8 +3202,10 @@ function CatalogueChoicePreviewDialog({
           </button>
         </header>
         <p className="choice-preview-scope">
-          This shows the catalogue definition before selection. Values that
-          depend on this roster appear on the selected card after you add it.
+          This shows source-authored catalogue values before selection. Initial
+          composition is derived from supported static minima and defaults;
+          roster-dependent names, visibility, keywords, and modified values
+          appear on the selected card after you add it.
         </p>
         {!hasInformation && (
           <p className="choice-preview-empty">
@@ -2862,60 +3214,64 @@ function CatalogueChoicePreviewDialog({
           </p>
         )}
         <div className="selection-datasheet choice-preview-content">
-          {profiles.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Profiles</h4>
-              <div className="selection-profile-list">
-                {profiles.map((profile, index) => (
-                  <SelectionProfile
-                    key={selectionProfileKey(profile, index)}
-                    profile={profile}
-                    report={undefined}
-                  />
-                ))}
-              </div>
-            </section>
+          {(information.profiles.length > 0 ||
+            information.rules.length > 0 ||
+            information.infoGroups.length > 0 ||
+            information.unresolved.length > 0 ||
+            information.keywords.length > 0) && (
+            <CatalogueChoiceInformationSections choice={choice} />
           )}
-          {rules.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Rules</h4>
-              <div className="selection-rule-list">
-                {rules.map((rule, index) => (
-                  <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
-                ))}
-              </div>
-            </section>
-          )}
-          {infoGroups.length > 0 && (
-            <section className="selection-info-section">
-              <h4>Info groups</h4>
-              <div className="selection-info-group-list">
-                {infoGroups.map((infoGroup, index) => (
-                  <SelectionInfoGroup
-                    key={selectionInfoGroupKey(infoGroup, index)}
-                    infoGroup={infoGroup}
-                    reports={undefined}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-          {unresolved.length > 0 && (
-            <section className="selection-info-section unresolved-info-links">
-              <h4>Unresolved info links</h4>
-              <ul>
-                {unresolved.map((infoLink, index) => (
-                  <li key={unresolvedInfoLinkKey(infoLink, index)}>
-                    <strong>
-                      {infoLink.link.name ??
-                        infoLink.link.targetId ??
-                        "Unnamed info link"}
-                    </strong>
-                    <span>{infoLink.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {initialization !== undefined &&
+            initialization.additions.length > 0 && (
+              <section className="selection-info-section choice-preview-composition">
+                <h4>Initial unit composition</h4>
+                <div className="choice-preview-planned-list">
+                  {initialization.additions.map((addition, index) => (
+                    <CataloguePlannedChoice
+                      key={`${selectionChoiceKey(addition.choice)}:${index}`}
+                      addition={addition}
+                      parentAmount={1}
+                    />
+                  ))}
+                </div>
+                {(initialization.completeness === "incomplete" ||
+                  initialization.pendingChoices.length > 0) && (
+                  <p className="choice-preview-plan-note">
+                    Some initial choices depend on unsupported or unresolved
+                    catalogue behavior and are not presented as selected here.
+                  </p>
+                )}
+              </section>
+            )}
+          {availableBranches.length > 0 && (
+            <details
+              className="choice-preview-options"
+              onToggle={(event) => setOptionsOpen(event.currentTarget.open)}
+            >
+              <summary>
+                <strong>Available model options and alternate profiles</strong>
+                <span>
+                  {availableBranches.length}{" "}
+                  {availableBranches.length === 1 ? "branch" : "branches"}
+                </span>
+              </summary>
+              {optionsOpen && (
+                <>
+                  <p>
+                    These catalogue branches are available but are not
+                    presented as equipped in the initial composition.
+                  </p>
+                  <div className="choice-preview-available-list">
+                    {availableBranches.map((branch, index) => (
+                      <CatalogueAvailableChoice
+                        key={`${selectionChoiceKey(branch.choice)}:${index}`}
+                        branch={branch}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </details>
           )}
         </div>
       </section>
@@ -3009,10 +3365,12 @@ function ModelQuantityChoice({
       className="model-quantity-choice"
       data-completeness={completeness}
     >
-      <strong>{label}</strong>
-      {onPreview !== undefined && (
-        <ChoicePreviewButton choice={choice} onPreview={onPreview} />
-      )}
+      <span className="model-quantity-heading">
+        <strong>{label}</strong>
+        {onPreview !== undefined && (
+          <ChoicePreviewButton choice={choice} onPreview={onPreview} />
+        )}
+      </span>
       <span className="model-quantity-controls">
         <button
           type="button"
@@ -3156,38 +3514,51 @@ function RosterSelectionChoiceGroup({
                 className="child-choice-group-option"
                 key={selectionChoiceKey(choice)}
               >
-                <button
-                  type="button"
-                  aria-pressed={false}
-                  disabled={blocksAdditionalChoices}
-                  onClick={() => onChoose(parent.id, choice, group)}
-                >
-                  {displayLabel}
-                </button>
-                {onPreviewChoice !== undefined && (
-                  <ChoicePreviewButton
-                    choice={choice}
-                    onPreview={onPreviewChoice}
-                  />
-                )}
+                <span className="choice-segmented-control">
+                  <button
+                    type="button"
+                    aria-pressed={false}
+                    disabled={blocksAdditionalChoices}
+                    onClick={() => onChoose(parent.id, choice, group)}
+                  >
+                    {displayLabel}
+                  </button>
+                  {onPreviewChoice !== undefined && (
+                    <ChoicePreviewButton
+                      choice={choice}
+                      onPreview={onPreviewChoice}
+                    />
+                  )}
+                </span>
               </span>
             ) : (
               <span
                 className="child-choice-group-selected-option"
                 key={selectionChoiceKey(choice)}
               >
-                <button
-                  type="button"
-                  aria-pressed={selected}
-                  // Repeated choices can carry different configured subtrees.
-                  // Remove only the newest one so recovery is undoable and
-                  // never silently destroys the older configured copies.
-                  onClick={() => onRemove(selectedOccurrence.id)}
+                <span
+                  className="choice-segmented-control"
+                  data-selected="true"
                 >
-                  {selectedChoiceAmount > 1
-                    ? `${displayLabel} (${selectedChoiceAmount} selected)`
-                    : displayLabel}
-                </button>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    // Repeated choices can carry different configured subtrees.
+                    // Remove only the newest one so recovery is undoable and
+                    // never silently destroys the older configured copies.
+                    onClick={() => onRemove(selectedOccurrence.id)}
+                  >
+                    {selectedChoiceAmount > 1
+                      ? `${displayLabel} (${selectedChoiceAmount} selected)`
+                      : displayLabel}
+                  </button>
+                  {onPreviewChoice !== undefined && (
+                    <ChoicePreviewButton
+                      choice={choice}
+                      onPreview={onPreviewChoice}
+                    />
+                  )}
+                </span>
                 {canAddAnother && (
                   <button
                     type="button"
@@ -3195,12 +3566,6 @@ function RosterSelectionChoiceGroup({
                   >
                     Add another {displayLabel}
                   </button>
-                )}
-                {onPreviewChoice !== undefined && (
-                  <ChoicePreviewButton
-                    choice={choice}
-                    onPreview={onPreviewChoice}
-                  />
                 )}
               </span>
             );

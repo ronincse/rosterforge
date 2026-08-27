@@ -156,9 +156,13 @@ live in focused presentation modules. `roster-workspace.tsx` owns the active
 roster builder, supported checks, cost and constraint summaries, selection
 editing, and rule/profile inspection without changing their behavior. Its
 catalogue-choice preview is likewise a web-only projection: it reads
-source-authored rules, profiles, and info groups from an already-materialized
-choice, never creates a temporary roster occurrence, and therefore does not
-present occurrence-dependent values as effective before selection.
+source-authored rules, profiles, info groups, and named category links from an
+already-materialized choice. Unit previews reuse the pure static initialization
+planner to distinguish supported initial model/equipment choices from alternate
+materialized branches, then preserve that source hierarchy in collapsed
+disclosures. They never create a temporary roster occurrence, so they do not
+present roster-dependent names, visibility, keywords, or modified
+characteristics as effective before selection.
 `roster-print.ts` is a web-only presentation adapter: it copies roster identity
 and order plus report summaries into a serializable view, escapes all imported
 and user-authored strings, and does not mutate the roster or rerun evaluation.

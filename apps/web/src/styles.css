@@ -1747,7 +1747,7 @@ h1 {
 
 .root-choice {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(96px, 1fr) minmax(130px, 1.25fr);
   align-items: center;
   gap: 12px;
   padding: 12px;
@@ -1806,10 +1806,43 @@ h1 {
 }
 
 .root-choice-actions {
-  display: flex !important;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
+  display: block !important;
+  min-width: 0;
+}
+
+.root-choice-actions .choice-segmented-control {
+  width: 100%;
+}
+
+.root-choice-actions .choice-segmented-control > button:first-child {
+  min-width: 0;
+  padding: 5px 8px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* Mutation and information remain separate accessible buttons, but their
+   shared edge makes one compact choice control instead of two floating actions. */
+.choice-segmented-control {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.choice-segmented-control > button:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.choice-segmented-control > .choice-preview-button {
+  border-left-width: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.choice-segmented-control[data-selected="true"] > button {
+  color: #fffdf6;
+  background: var(--forest);
+  border-color: var(--forest);
 }
 
 .choice-preview-button {
@@ -1890,6 +1923,123 @@ h1 {
 
 .choice-preview-content {
   margin-top: 14px;
+}
+
+.choice-preview-planned-list,
+.choice-preview-planned-children,
+.choice-preview-available-list,
+.choice-preview-available-children {
+  display: grid;
+  gap: 8px;
+}
+
+.choice-preview-planned-choice {
+  min-width: 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid #c9d2cc;
+  border-left: 3px solid var(--forest);
+}
+
+.choice-preview-planned-choice > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.choice-preview-planned-choice > header strong {
+  min-width: 0;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.choice-preview-planned-choice > header small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.54rem;
+}
+
+.choice-preview-planned-children,
+.choice-preview-available-children {
+  margin-top: 9px;
+  padding-left: 10px;
+  border-left: 1px solid #cbd3cd;
+}
+
+.choice-preview-plan-note,
+.choice-preview-options > p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.choice-preview-options {
+  margin-top: 16px;
+  border: 1px solid #c8d0ca;
+}
+
+.choice-preview-options > summary,
+.choice-preview-available-choice > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  color: var(--forest);
+  background: #edf1eb;
+  cursor: pointer;
+  font-size: 0.64rem;
+  font-weight: 800;
+  list-style-position: inside;
+}
+
+.choice-preview-options > summary span {
+  color: var(--muted);
+  font-size: 0.54rem;
+}
+
+.choice-preview-options > p,
+.choice-preview-options > .choice-preview-available-list {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.choice-preview-options > .choice-preview-available-list {
+  margin-top: 9px;
+  margin-bottom: 10px;
+}
+
+.choice-preview-available-choice {
+  min-width: 0;
+  border: 1px solid #d2d8d3;
+}
+
+.choice-preview-available-context > h5 {
+  margin: 0;
+  color: var(--forest);
+  font-size: 0.62rem;
+  overflow-wrap: anywhere;
+}
+
+.choice-preview-available-context > .choice-preview-available-children {
+  margin-top: 6px;
+}
+
+.choice-preview-available-choice > summary {
+  background: rgba(255, 255, 255, 0.58);
+  overflow-wrap: anywhere;
+}
+
+.choice-preview-available-choice > .selection-info-section,
+.choice-preview-available-choice > .choice-preview-available-children {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.choice-preview-available-choice > .choice-preview-available-children {
+  margin-bottom: 10px;
 }
 
 .selection-list-label {
@@ -2109,10 +2259,8 @@ h1 {
   max-width: 190px;
 }
 
-.direct-child-choice[data-selected="true"] > button:first-child {
-  color: #fffdf6;
-  background: var(--forest);
-  border-color: var(--forest);
+.direct-child-choice > .choice-segmented-control {
+  width: 100%;
 }
 
 .child-choice-list button {
@@ -2144,7 +2292,7 @@ h1 {
 
 .model-quantity-choice {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 150px;
   gap: 4px;
   padding: 7px 8px;
@@ -2154,22 +2302,34 @@ h1 {
   border-radius: 3px;
 }
 
-.model-quantity-choice > strong {
-  min-width: 0;
-  font-size: 0.6rem;
+.model-quantity-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  margin: -7px -8px 0;
+  border-bottom: 1px solid #abc0b3;
 }
 
-.model-quantity-choice > .choice-preview-button {
-  grid-column: 2;
-  grid-row: 1;
+.model-quantity-heading > strong {
+  min-width: 0;
+  padding: 7px 8px;
+  font-size: 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.model-quantity-heading > .choice-preview-button {
   min-height: 26px;
-  width: 28px;
-  min-width: 28px;
+  width: 32px;
+  min-width: 32px;
+  border-width: 0 0 0 1px;
+  border-color: #abc0b3;
+  border-radius: 0;
+  background: transparent;
 }
 
 .model-quantity-choice > .model-quantity-controls,
 .model-quantity-choice > small {
-  grid-column: 1 / -1;
+  grid-column: 1;
 }
 
 .model-quantity-controls {
@@ -2241,12 +2401,13 @@ h1 {
 .child-choice-group-selected-option {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.child-choice-group-options .choice-preview-button {
-  min-height: 30px;
+.child-choice-group-option > .choice-segmented-control,
+.child-choice-group-selected-option > .choice-segmented-control {
+  max-width: 100%;
 }
 
 .child-choice-group-selected-option {
@@ -2271,6 +2432,12 @@ h1 {
   color: #f7f5ed;
   background: var(--forest);
   border-color: var(--forest);
+}
+
+.child-choice-group-options .choice-segmented-control > button:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .child-choice-group-options button:disabled {
