@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (live Detachments bounds complete; remaining Aeldari coverage Next)
+## Current Status — 2026-08-28 (list-first roster surface first slice on grok/implementation)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -42,10 +42,7 @@ layering and evaluator boundaries, `docs/compatibility.md` owns the exhaustive
 record of what is and is not supported, and `docs/diagnostics.md` owns
 diagnostic codes.
 
-- **Branch.** Work happens on `main` and is **pushed at the end of each
-  checkpoint**, once every gate passes. You do not need to ask; see `AGENTS.md`
-  "Publishing" for what still requires the owner (force-push, history rewrites,
-  pull requests). `git status -sb` should normally show no divergence.
+- **Branch.** Ordinary checkpoints ship on `main`. **This checkpoint is on the owner-created branch `grok/implementation` and must not be merged or force-pushed onto `main` from this session.** Push that branch once every gate passes; see `AGENTS.md` "Publishing" for what still requires the owner (force-push, history rewrites, pull requests). `git status -sb` should normally show no divergence from the branch tip being published.
 - **Commit attribution.** Every commit must now end with a `Co-Authored-By:`
   trailer naming the model that wrote it; `AGENTS.md` "Publishing" holds the
   exact strings. Git authors every commit as the owner's account, so this
@@ -204,8 +201,7 @@ diagnostic codes.
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** Product usability, measured against real lists. The first
-  phone-width pass is complete: a real Death Guard add/configure/amount/check
+- **Active area.** Product usability, measured against real lists. **The first list-first slice is on `grok/implementation` at `1727bb1`:** roster mode is a list, not a catalogue browser, while remaining Aeldari check coverage stays Next. The first phone-width pass is complete: a real Death Guard add/configure/amount/check
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
   and sticky workspace links leave their targets visible. The broader Grok
   usability audit has now been reconciled into explicit completed and residual
@@ -641,7 +637,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** There the list *is* the page: route `/app/Lists/<id>`, document title is the list name, the body is organised by battlefield role (`Configuration`, `Epic Hero`, `Character`, `Battleline`, `Infantry`, `Swarm`, `Beast`, `Vehicle`, `Dedicated Transport`, `Fortification`, three `Allies:` groups), category headings carry counts against limits inline (`Character (0/1)`), violations are attached in place — the `Character` heading carried an error icon titled `• Roster requires 1 selections more of Character` — and the only chrome is a thin bar of list name, Export, Report Issue, List Options. RosterForge instead splits the screen between a selected-roster pane and an add browser, then follows it with Checks, structural status, and constraint bounds as co-equal sections, so the list competes with its own reports. This is an information-architecture finding about *emphasis*, **not** permission to copy New Recruit's visual design, markup, or code. It probably reframes several rows below rather than sitting beside them; see the ordering note |
+| The army list is not the product's primary surface | Open | **Raised by the owner on 2026-08-24 and confirmed against New Recruit.** First slice shipped 2026-08-28 on `grok/implementation`: roster mode hides hero/import/shelf behind a Lists back control, `document.title` is the list name, the headline cost is `totals[0]` so Detachment Points cannot displace pts, compact army rows keep cost/model composition plus a Warlord pill and loadout summary, View lives on the options panel, and save confirmation plus draft diagnostics render in the roster. The list still shares the builder with an add-units pane and Checks remain a co-equal section below it — this is not New Recruit's "the list is the page". Remaining list-first work, print hierarchy, Duplicate, and Intercessor/Scout autofill stay out of this slice. New Recruit is the **usability baseline**, not a design to copy. |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -11906,3 +11902,56 @@ cost-type references.
 its exact owner, modifier carriers, conditions, and diagnostic first. Use
 Reference Behavior QA if the pinned source does not settle applicability; keep
 association and hidden Crusade fields as separate later families.
+
+## Completed Assignment — List-First Roster Surface First Slice, 2026-08-28
+
+Baseline `092422a`; resulting implementation commit `1727bb1` and this handoff
+commit. Shipped on owner-created branch `grok/implementation` only; this session
+must not merge or force-push onto `main`. Grok Build was the implementer.
+
+The Dark Angels 1,900-point QA pass found the list competing with catalogue
+chrome: Detachment Points could displace pts in the headline, the library hero
+and draft shelf stayed on screen while editing, army rows still asked the player
+to View a datasheet instead of reading a list, and a save confirmation lived
+only on the shelf. New Recruit remains the usability baseline, not a visual
+clone.
+
+This slice makes an open roster the product surface. Library hero, remote
+source, and the draft shelf unmount while a roster is open; a Lists control
+returns to them. `document.title` is `{name} — RosterForge`. The headline cost
+is `totals[0]` in source-stable order so a later Detachment Points limit cannot
+steal the pts figure. Compact army rows keep cost, exact model composition, a
+Warlord pill, and a loadout subtitle; Configure still selects the options
+panel, and View unit card lives there rather than on every row. Search units,
+Add unit/Close, and empty-copy language follow that list-first reading. Apple
+HIG tokens replace the graph-paper/gold chrome: system font, `#f2f2f7` grouped
+background, 44 px row targets, translucent header.
+
+Save confirmation and draft-action diagnostics render in the roster because the
+shelf is gone in that mode. A new desktop list still opens the add-units pane
+and configuration; a saved draft starts on the army. Phone width stays
+roster-first. Rejected alternatives were hiding the shelf with CSS so tests
+could keep a stale node, auto-closing the catalogue whenever any auto-initialized
+unit existed, duplicating the roster name as a second heading, and collapsing
+setup on every nonempty create.
+
+No Done roadmap rows were re-filed. Section F's "army list is not the primary
+surface" stays Open: the builder still splits list and add-units, and Checks
+remain a co-equal section. Print hierarchy, Duplicate, Intercessor/Scout
+autofill, and compact configuration pickers were explicitly out of this slice.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **526 passed, 19 skipped (545)** across 57 files;
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Next recommended boundary
+
+On `grok/implementation`, keep list-first work bounded: either finish the
+remaining emphasis of "the list is the page" (add-units as an explicit overlay,
+Checks no longer co-equal) or take Duplicate on the saved-roster path. Do not
+merge to `main` from this session. Remaining Aeldari check coverage stays Next
+on `main`.
+
