@@ -117,6 +117,41 @@ describe("BattleScribe catalogue contexts", () => {
     );
   });
 
+  it("can materialize one catalogue while retaining dependencies for resolution", () => {
+    const documents = visibilityFixtures();
+    const catalogue = documents.find(
+      ({ metadata }) => metadata.id === "visibility-primary",
+    );
+    const library = documents.find(
+      ({ metadata }) => metadata.id === "visibility-leaf",
+    );
+    expect(catalogue).toBeDefined();
+    expect(library).toBeDefined();
+    if (catalogue === undefined || library === undefined) return;
+
+    const graph = resolveBattleScribeDataGraph(documents);
+    expect(graph.ok).toBe(true);
+    if (!graph.ok) return;
+
+    const result = composeBattleScribeCatalogueContexts(graph.value, {
+      catalogueDocuments: [catalogue],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.catalogues.map(({ document }) => document)).toEqual([
+      catalogue,
+    ]);
+    expect(result.value.roots.catalogues).toHaveLength(1);
+    expect(
+      result.value.catalogues[0]?.roots.entryLinks.some(
+        ({ materialized }) =>
+          materialized.kind !== "unresolvedEntryLink" &&
+          materialized.definitionDocument === library,
+      ),
+    ).toBe(true);
+  });
+
   it("retains partial local definitions without adding roster or validation behavior", () => {
     const catalogue = parseFixture("projection.cat");
     expect(catalogue.ok).toBe(true);

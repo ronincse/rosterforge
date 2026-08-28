@@ -976,6 +976,16 @@ composition succeeds. Local file import remains available. Cache management,
 additional source configuration, and repository update discovery remain
 deferred.
 
+Focused remote composition materializes a workspace context only for the
+catalogue the player selected. Transitive non-library dependencies remain
+fully imported in the graph and continue to supply linked roots, definitions,
+and allied choices, but they are not promoted to peer catalogue buttons inside
+that focused library. A player who wants one of those catalogues as the primary
+faction selects it from the top-level repository list, which acquires and
+composes its own closure. Local multi-file import retains its existing behavior
+of exposing every imported non-library catalogue because no single acquisition
+root exists there.
+
 Already-ingested closure documents can now use the same graph/context
 composition path as local batches without changing their download provenance or
 source-byte identity. This is composition only; it does not imply dependency

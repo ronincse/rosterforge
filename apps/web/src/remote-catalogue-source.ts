@@ -252,13 +252,37 @@ export async function acquireRemoteCatalogue(
     options.batchId,
     options.importedAt,
   );
+  const selectedSummary = acquired.value.plan.selectedCatalogue;
+  const selectedDocument = importReport.documents.find(
+    ({ metadata, source }) =>
+      metadata.id === selectedSummary.id &&
+      source.filename === selectedSummary.path,
+  );
+  if (selectedDocument === undefined) {
+    return failure([
+      ...acquired.diagnostics,
+      remoteSourceDiagnostic(
+        "WEB_REMOTE_CATALOGUE_UNAVAILABLE",
+        "The acquired catalogue is not available for composition.",
+        ["import", "resolution"],
+        {
+          path: selectedSummary.path,
+          sourceId: selectedSummary.id,
+        },
+        selectedSummary,
+      ),
+    ]);
+  }
   const prepared = prepareImportedCatalogueLibrary(
     importReport,
     acquired.diagnostics,
+    // Dependency catalogues stay in the graph so imported roots and linked
+    // definitions resolve normally. Only the catalogue explicitly requested
+    // from the repository receives an independent workspace context.
+    { catalogueDocuments: [selectedDocument] },
   );
   if (!prepared.ok) return prepared;
 
-  const selectedSummary = acquired.value.plan.selectedCatalogue;
   const selected = prepared.value.selectableCatalogues.find(
     ({ document }) =>
       document.metadata.id === selectedSummary.id &&

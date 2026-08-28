@@ -340,7 +340,10 @@ persist bytes, or evaluate any BattleScribe behavior.
 boundary. It accepts an existing immutable import report, retains document and
 provenance object identity, and performs only graph resolution and catalogue
 context composition. Remote closure acquisition can therefore enter the same
-application model without reparsing downloaded bytes as local files.
+application model without reparsing downloaded bytes as local files. Context
+composition may be scoped to exact catalogue-document identities: every
+dependency remains in the graph for link resolution, while only the requested
+catalogue receives a materialized root view and independent workspace choice.
 
 ## Browser Application Boundary
 
@@ -363,10 +366,14 @@ available. This is a configured immutable source, not branch tracking or
 repository update discovery. A metadata hit changes browse performance only:
 selected closure bytes are still copied from the verified byte cache or network,
 Git-blob checked, securely re-ingested, and compared with the planning summary.
+The acquired dependency documents are resolution inputs, not alternate
+workspace choices. Loading one of those catalogues as the primary faction is a
+new top-level source selection and acquires that catalogue's own exact closure.
 
 The React shell has explicit idle, loading, loaded, and failed states. On a
 successful composition it selects the first ordered catalogue by its
-source-scoped key and lets the user choose another imported catalogue. The
+source-scoped key and lets the user choose another when the import intentionally
+exposes multiple catalogue workspaces. The
 inspector shows source metadata and counts from the exact composed context; it
 does not flatten or reinterpret those definitions. Partial batches keep valid
 catalogue choices available while rejected files and diagnostics remain

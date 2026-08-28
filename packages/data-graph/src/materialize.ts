@@ -62,6 +62,13 @@ export const defaultBattleScribeMaterializationLimits: BattleScribeMaterializati
 
 export interface BattleScribeMaterializationOptions {
   readonly limits?: Partial<BattleScribeMaterializationLimits>;
+  /**
+   * Restricts root materialization to these exact catalogue documents while
+   * leaving every document in the graph available for link resolution.
+   * Focused repository acquisition uses this to avoid treating dependency
+   * catalogues as independent roster workspaces.
+   */
+  readonly catalogueDocuments?: readonly ParsedBattleScribeDocument[];
 }
 
 export interface MaterializedSelectionContainer {
@@ -322,7 +329,17 @@ export function materializeBattleScribeVisibleRoots(
   const totalExpandedEntryLinks = { value: 0 };
   let truncated = false;
   const materializedBySource = new Map<object, MaterializedVisibleRoot["materialized"]>();
-  const catalogues = visibility.value.catalogues.map((catalogue) => {
+  const requestedDocuments =
+    options.catalogueDocuments === undefined
+      ? undefined
+      : new Set(options.catalogueDocuments);
+  const catalogueViews =
+    requestedDocuments === undefined
+      ? visibility.value.catalogues
+      : visibility.value.catalogues.filter(({ document }) =>
+          requestedDocuments.has(document),
+        );
+  const catalogues = catalogueViews.map((catalogue) => {
     const context: MaterializationContext = {
       graph,
       limits,

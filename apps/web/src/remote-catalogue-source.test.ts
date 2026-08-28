@@ -136,6 +136,55 @@ describe("remote catalogue source", () => {
     });
   });
 
+  it("keeps focused catalogue dependencies out of the workspace selector", async () => {
+    const fixture = await linkedCatalogueFixture();
+    const fetcher = fixtureFetch(fixture);
+    const indexed = await indexRemoteCatalogueSource(sourceDefinition, {
+      fetch: fetcher,
+      importedAt,
+    });
+    expect(indexed.ok).toBe(true);
+    if (!indexed.ok) return;
+
+    expect(indexed.value.catalogues.map(({ path }) => path)).toEqual([
+      "dependency.cat",
+      "selected.cat",
+    ]);
+    const acquired = await acquireRemoteCatalogue(
+      indexed.value,
+      "selected.cat",
+      {
+        batchId: "focused-remote-batch",
+        fetch: fetcher,
+        importedAt,
+      },
+    );
+    expect(acquired.ok).toBe(true);
+    if (!acquired.ok) return;
+
+    expect(
+      acquired.value.library.documents.map(({ metadata }) => metadata.id),
+    ).toEqual([
+      "synthetic-system",
+      "selected-catalogue",
+      "dependency-catalogue",
+    ]);
+    expect(
+      acquired.value.library.catalogues.map(({ name }) => name),
+    ).toEqual(["Selected Faction"]);
+    expect(
+      acquired.value.library.selectableCatalogues.map(({ name }) => name),
+    ).toEqual(["Selected Faction"]);
+    expect(
+      acquired.value.library.selectableCatalogues[0]?.context.roots.roots.some(
+        ({ materialized }) =>
+          materialized.kind !== "unresolvedEntryLink" &&
+          materialized.definitionDocument.metadata.id ===
+            "dependency-catalogue",
+      ),
+    ).toBe(true);
+  });
+
   it("rejects a moving or abbreviated revision before network access", async () => {
     const fetcher = vi.fn<RepositoryFetch>();
     const result = await indexRemoteCatalogueSource(
@@ -285,6 +334,48 @@ async function sourceFixture(): Promise<SourceFixture> {
   const bytesByPath = new Map([
     ["minimal.cat", new Uint8Array(fixtureBytes("minimal.cat"))],
     ["minimal.gst", new Uint8Array(fixtureBytes("minimal.gst"))],
+  ]);
+  const objectIdsByPath = new Map<string, GitObjectSha>();
+  for (const [path, bytes] of bytesByPath) {
+    objectIdsByPath.set(path, await calculateGitBlobObjectId(bytes));
+  }
+  return {
+    bytesByPath,
+    objectIdsByPath,
+    totalBytes: [...bytesByPath.values()].reduce(
+      (total, bytes) => total + bytes.byteLength,
+      0,
+    ),
+  };
+}
+
+async function linkedCatalogueFixture(): Promise<SourceFixture> {
+  const encode = (xml: string) => new TextEncoder().encode(xml);
+  const bytesByPath = new Map([
+    ["minimal.gst", new Uint8Array(fixtureBytes("minimal.gst"))],
+    [
+      "dependency.cat",
+      encode(`<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="dependency-catalogue" name="Dependency Faction" revision="1"
+  battleScribeVersion="2.03" gameSystemId="synthetic-system" library="false">
+  <selectionEntries>
+    <selectionEntry id="dependency-unit" name="Dependency Unit" type="unit" import="true" />
+  </selectionEntries>
+</catalogue>`),
+    ],
+    [
+      "selected.cat",
+      encode(`<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="selected-catalogue" name="Selected Faction" revision="1"
+  battleScribeVersion="2.03" gameSystemId="synthetic-system" library="false">
+  <catalogueLinks>
+    <catalogueLink id="selected-dependency" name="Dependency"
+      targetId="dependency-catalogue" importRootEntries="true" />
+  </catalogueLinks>
+</catalogue>`),
+    ],
   ]);
   const objectIdsByPath = new Map<string, GitObjectSha>();
   for (const [path, bytes] of bytesByPath) {
