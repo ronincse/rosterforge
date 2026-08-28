@@ -7,10 +7,13 @@ import type {
   LocalCatalogueLibrary,
 } from "./catalogue-library.js";
 import { DiagnosticList } from "./diagnostic-list.js";
-import { SummaryMetric } from "./summary-metric.js";
-import { formatCount, formatTimestamp, initials } from "./ui-format.js";
+import { formatCount, formatTimestamp } from "./ui-format.js";
 
-export function CatalogueLibraryPanel({
+/**
+ * Keeps exceptional import state and the uncommon multi-catalogue chooser near
+ * roster setup without making the import batch a permanent workspace column.
+ */
+export function CatalogueSetupContext({
   library,
   diagnostics,
   selectedCatalogue,
@@ -31,76 +34,81 @@ export function CatalogueLibraryPanel({
     ({ status }) => status === "imported",
   ).length;
   const rejectedCount = library.importReport.files.length - importedCount;
+  const showCatalogueChooser = library.selectableCatalogues.length > 1;
+  const selectedGameSystemMissing =
+    selectedCatalogue?.gameSystemId !== undefined &&
+    !library.gameSystems.some(
+      ({ metadata }) => metadata.id === selectedCatalogue.gameSystemId,
+    );
+  const showDeveloperDetails =
+    library.importReport.files.length > 0 || diagnostics.length > 0;
 
   return (
-    <section className="library-summary" aria-labelledby="library-heading">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Current local batch</p>
-          <h2 id="library-heading">Catalogue library</h2>
-        </div>
-        <StatusBadge status={library.status} />
-      </div>
-
-      <CatalogueDataFreshnessNote freshness={freshness} />
-
-      <div className="summary-grid">
-        <SummaryMetric label="Imported" value={String(importedCount)} />
-        <SummaryMetric
-          label="Roster catalogues"
-          value={String(library.selectableCatalogues.length)}
-        />
-        <SummaryMetric label="Rejected" value={String(rejectedCount)} />
-      </div>
-
-      {library.selectableCatalogues.length > 0 ? (
-        <div className="catalogue-list" aria-label="Available catalogues">
-          {library.selectableCatalogues.map((catalogue) => (
-            <button
-              className="catalogue-choice"
-              data-selected={catalogue.key === selectedCatalogue?.key}
-              key={catalogue.key}
-              type="button"
-              aria-pressed={catalogue.key === selectedCatalogue?.key}
-              onClick={() => onSelect(catalogue.key)}
-            >
-              <span className="catalogue-monogram" aria-hidden="true">
-                {initials(catalogue.name)}
-              </span>
-              <span className="catalogue-choice-copy">
-                <strong>{catalogue.name}</strong>
-                <span>Revision {catalogue.revision ?? "not specified"}</span>
-              </span>
-              <span className="choice-arrow" aria-hidden="true">
-                &gt;
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="no-catalogues">
-          <h3>No catalogue choices yet</h3>
+    <section className="catalogue-setup-context" aria-label="Import context">
+      {showCatalogueChooser && (
+        <div className="catalogue-setup-chooser">
+          <label htmlFor="catalogue-setup-choice">Catalogue</label>
+          <select
+            id="catalogue-setup-choice"
+            value={selectedCatalogue?.key ?? ""}
+            onChange={(event) => onSelect(event.currentTarget.value)}
+          >
+            {library.selectableCatalogues.map((catalogue) => (
+              <option key={catalogue.key} value={catalogue.key}>
+                {catalogue.name}
+              </option>
+            ))}
+          </select>
           <p>
-            {library.gameSystems.length > 0
-              ? "The game system imported, but this batch did not contain a catalogue."
-              : "No BattleScribe catalogue could be read from this batch."}
+            This import contains multiple roster catalogues. Choose which one
+            to use for roster setup.
           </p>
         </div>
       )}
 
-      <ImportReport library={library} rejectedCount={rejectedCount} />
-      {diagnostics.length > 0 && (
-        <details className="batch-diagnostics">
+      <CatalogueDataFreshnessNote freshness={freshness} />
+
+      {rejectedCount > 0 && (
+        <div className="catalogue-import-warning" role="alert">
+          <strong>{formatCount(rejectedCount, "file")} could not be loaded.</strong>
+          <span> Roster setup uses the files that imported successfully.</span>
+        </div>
+      )}
+
+      {selectedCatalogue?.materializationTruncated && (
+        <div className="catalogue-import-warning">
+          <strong>Some catalogue entries could not be prepared.</strong>
+          <span> Try importing a smaller or more focused set of files.</span>
+        </div>
+      )}
+
+      {selectedGameSystemMissing && (
+        <div className="catalogue-import-warning">
+          <strong>The matching game system is missing.</strong>
+          <span> Import it with this catalogue before creating a roster.</span>
+        </div>
+      )}
+
+      {showDeveloperDetails && (
+        <details className="catalogue-import-details">
           <summary>
-            Developer import notes
-            <span>{formatCount(diagnostics.length, "diagnostic")}</span>
+            Developer import details
+            <span>
+              {formatCount(diagnostics.length, "diagnostic")}
+              {rejectedCount > 0 ? `, ${rejectedCount} rejected` : ""}
+            </span>
           </summary>
-          <p>
-            Technical source and reference notes are preserved for debugging.
-            They do not by themselves mean that the selected catalogue failed
-            to load.
-          </p>
-          <DiagnosticList diagnostics={diagnostics} />
+          <ImportReport library={library} />
+          {diagnostics.length > 0 && (
+            <>
+              <p>
+                Technical source and reference notes are preserved for
+                debugging. They do not by themselves mean that the selected
+                catalogue failed to load.
+              </p>
+              <DiagnosticList diagnostics={diagnostics} />
+            </>
+          )}
         </details>
       )}
     </section>
@@ -120,14 +128,7 @@ function CatalogueDataFreshnessNote({
 }: {
   readonly freshness: ReturnType<typeof useCatalogueDataFreshness>;
 }) {
-  if (freshness === undefined) return null;
-  if (freshness.kind === "checking") {
-    return (
-      <p className="catalogue-data-freshness" role="status">
-        Checking how current this catalogue data is...
-      </p>
-    );
-  }
+  if (freshness === undefined || freshness.kind === "checking") return null;
   if (freshness.kind === "unknown") {
     return (
       <p className="catalogue-data-freshness" data-freshness="unknown">
@@ -137,57 +138,29 @@ function CatalogueDataFreshnessNote({
       </p>
     );
   }
+  if (!freshness.upstreamIsNewer) return null;
   return (
     <p
       className="catalogue-data-freshness"
-      data-freshness={freshness.upstreamIsNewer ? "stale" : "current"}
+      data-freshness="stale"
     >
       Imported {formatTimestamp(freshness.importedAt)}.{" "}
       {freshness.owner}/{freshness.repository} was last updated{" "}
       {formatTimestamp(freshness.lastUpdatedAt)}
-      {freshness.upstreamIsNewer ? (
-        <>
-          , so <strong>newer catalogue data is available</strong>. Points can
-          change between releases.
-        </>
-      ) : (
-        <>, so this import is current.</>
-      )}
+      , so <strong>newer catalogue data is available</strong>. Points can
+      change between releases.
     </p>
-  );
-}
-
-function StatusBadge({
-  status,
-}: {
-  readonly status: LocalCatalogueLibrary["status"];
-}) {
-  const labels = {
-    empty: "Nothing imported",
-    unavailable: "Needs a catalogue",
-    ready: "Ready",
-    partial: "Partially loaded",
-  } as const;
-  return (
-    <span className="status-badge" data-status={status}>
-      {labels[status]}
-    </span>
   );
 }
 
 function ImportReport({
   library,
-  rejectedCount,
 }: {
   readonly library: LocalCatalogueLibrary;
-  readonly rejectedCount: number;
 }) {
   return (
-    <details className="import-report" open={rejectedCount > 0}>
-      <summary>
-        File report
-        <span>{rejectedCount} rejected</span>
-      </summary>
+    <div className="import-report">
+      <h3>File report</h3>
       <ul>
         {library.importReport.files.map((file) => (
           <li key={`${file.index}:${file.source.filename}`}>
@@ -209,6 +182,6 @@ function ImportReport({
           </li>
         ))}
       </ul>
-    </details>
+    </div>
   );
 }

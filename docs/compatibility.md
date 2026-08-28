@@ -33,8 +33,9 @@
   choices, preserving the exact parsed documents, catalogue contexts, source
   IDs, BattleScribe IDs, diagnostics, and original bytes
 - Responsive React/Vite browser shell for selecting multiple local
-  BattleScribe files, retaining partial-import results, choosing an imported
-  catalogue, and inspecting source and composed-context counts
+  BattleScribe files, retaining partial-import results, conditionally choosing
+  among intentional multi-catalogue imports, and using a full-width roster
+  setup while source and composed-context counts remain available
 - Accessible loading, batch-failure, empty, unavailable, ready, and partially
   loaded states, with ordered file status and collapsed Developer diagnostic
   notes. Non-fatal source/reference diagnostics do not make an otherwise usable
@@ -229,7 +230,9 @@
   and the real-roster workspace remain inside the viewport; sticky navigation
   leaves its targets visible below the bar
 - Focused active-roster layout that uses the full library shell and restores
-  the unchanged catalogue batch summary when roster setup is cleared
+  the full-width roster setup when the active roster is cleared; stale/unknown
+  data, import failures, file reports, and batch diagnostics remain available
+  without a persistent catalogue-library column
 - Library-marked catalogues retained for composition and diagnostics but
   excluded from ordered roster-catalogue choices
 - Selected-roster empty state and catalogue category browser kept as separate

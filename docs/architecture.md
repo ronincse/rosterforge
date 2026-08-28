@@ -373,11 +373,14 @@ new top-level source selection and acquires that catalogue's own exact closure.
 The React shell has explicit idle, loading, loaded, and failed states. On a
 successful composition it selects the first ordered catalogue by its
 source-scoped key and lets the user choose another when the import intentionally
-exposes multiple catalogue workspaces. The
-inspector shows source metadata and counts from the exact composed context; it
-does not flatten or reinterpret those definitions. Partial batches keep valid
-catalogue choices available while rejected files and diagnostics remain
-visible.
+exposes multiple catalogue workspaces. Roster setup occupies the full library
+shell instead of sharing it with a persistent batch-summary column. A compact
+setup context renders the catalogue chooser only for an intentional
+multi-catalogue import, keeps stale/unknown data and partial-import failures
+visible, and preserves the complete file report and batch diagnostics in a
+collapsed Developer disclosure. The selected-catalogue details show source
+metadata and counts from the exact composed context; they do not flatten or
+reinterpret those definitions.
 
 Concurrent file selections and draft restoration are ordered by an in-memory
 request sequence, so a late result cannot replace a newer request. Draft-list
@@ -491,8 +494,8 @@ selection, filtered-choice, and supported-issue counts. On wide viewports the
 selected roster and catalogue browser occupy separate side-by-side panes; on
 narrow viewports they return to document order as full-width sections. While a
 roster is active, this focused workspace occupies the full library shell and
-the catalogue batch summary is hidden. Clearing roster setup restores that
-summary without changing the imported library. One player header stays above
+the setup surface is hidden. Clearing the roster restores the full-width setup
+surface without changing the imported library. One player header stays above
 the builder, carrying the roster identity, its supported cost totals, and its
 known-problem count; detailed structural and constraint reports follow it.
 Concrete root, direct-child, and grouped-choice controls expose an independent

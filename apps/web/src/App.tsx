@@ -10,7 +10,7 @@ import type {
   LocalCatalogueLibrary,
 } from "./catalogue-library.js";
 import { CatalogueDetails } from "./catalogue-details-panel.js";
-import { CatalogueLibraryPanel } from "./catalogue-library-panel.js";
+import { CatalogueSetupContext } from "./catalogue-library-panel.js";
 import type {
   LocalRosterRootChoice,
   LocalRosterChildChoiceGroup,
@@ -296,22 +296,11 @@ function LibraryWorkspace({
   const rosterActive =
     rosterSession !== undefined &&
     rosterSession.catalogue.key === selectedCatalogue?.key;
-  const InspectorElement = rosterActive ? "section" : "aside";
-
   return (
     <div className="library-layout" data-roster-active={rosterActive}>
-      {!rosterActive && (
-        <CatalogueLibraryPanel
-          library={library}
-          diagnostics={diagnostics}
-          selectedCatalogue={selectedCatalogue}
-          onSelect={onSelect}
-        />
-      )}
-
-      <InspectorElement
+      <section
         className="catalogue-inspector"
-        aria-label={rosterActive ? "Roster workspace" : "Catalogue details"}
+        aria-label={rosterActive ? "Roster workspace" : "Roster setup"}
       >
         {rosterActive ? (
           <RosterOverview
@@ -333,22 +322,32 @@ function LibraryWorkspace({
             hasSavedDraft={hasSavedDraft}
             unsavedChanges={unsavedChanges}
           />
-        ) : selectedCatalogue === undefined ? (
-          <div className="inspector-placeholder">
-            <p className="eyebrow">Selection</p>
-            <h2>No catalogue selected</h2>
-            <p>Choose an available catalogue to inspect its composed view.</p>
-          </div>
         ) : (
-          <CatalogueDetails
-            catalogue={selectedCatalogue}
-            library={library}
-            diagnostics={diagnostics}
-            rosterDiagnostics={rosterDiagnostics}
-            onCreateRoster={onCreateRoster}
-          />
+          <>
+            <CatalogueSetupContext
+              library={library}
+              diagnostics={diagnostics}
+              selectedCatalogue={selectedCatalogue}
+              onSelect={onSelect}
+            />
+            {selectedCatalogue === undefined ? (
+              <div className="inspector-placeholder">
+                <p className="eyebrow">Selection</p>
+                <h2>No catalogue selected</h2>
+                <p>Choose an available catalogue to continue.</p>
+              </div>
+            ) : (
+              <CatalogueDetails
+                catalogue={selectedCatalogue}
+                library={library}
+                diagnostics={diagnostics}
+                rosterDiagnostics={rosterDiagnostics}
+                onCreateRoster={onCreateRoster}
+              />
+            )}
+          </>
         )}
-      </InspectorElement>
+      </section>
     </div>
   );
 }

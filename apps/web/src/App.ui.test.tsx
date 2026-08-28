@@ -632,12 +632,7 @@ describe("App local catalogue flow", () => {
     );
 
     expect(
-      await screen.findByRole("button", {
-        name: /Fictional JSON Catalogue/u,
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", {
+      await screen.findByRole("heading", {
         name: "Fictional JSON Catalogue",
       }),
     ).toBeTruthy();
@@ -672,22 +667,13 @@ describe("App local catalogue flow", () => {
     });
 
     expect(
-      await screen.findByRole("button", {
-        name: /Projection Catalogue/u,
-      }),
+      await screen.findByRole("heading", { name: "Projection Catalogue" }),
     ).toBeTruthy();
-    expect(
-      screen.queryByRole("button", {
-        name: /Graph Library/u,
-      }),
-    ).toBeNull();
-    expect(
-      screen.getByRole("heading", { name: "Projection Catalogue" }),
-    ).toBeTruthy();
-    expect(screen.getByText("Roster catalogues")).toBeTruthy();
+    expect(screen.queryByLabelText("Catalogue")).toBeNull();
+    expect(screen.queryByText("Graph Library")).toBeNull();
   });
 
-  it("imports a browser file selection and exposes an accessible catalogue choice", async () => {
+  it("imports a browser file selection into a full-width roster setup", async () => {
     const prepared = await prepareLocalCatalogueLibrary(
       [
         { filename: "minimal.gst", bytes: gameSystemBytes },
@@ -721,13 +707,12 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    const choice = await screen.findByRole("button", {
-      name: /Synthetic Faction/u,
-    });
-    expect(choice.getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("heading", { name: "Synthetic Faction" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "Synthetic Faction" }),
+    ).toBeTruthy();
     expect(screen.getByText("Synthetic Game")).toBeTruthy();
-    expect(screen.getByText("Catalogue context composed")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
+    expect(screen.queryByText("Catalogue library")).toBeNull();
     expect(prepare).toHaveBeenCalledOnce();
 
     const [files, options] = prepare.mock.calls[0] ?? [];
@@ -766,13 +751,10 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    expect(
-      await screen.findByRole("button", { name: /Synthetic Faction/u }),
-    ).toBeTruthy();
-    expect(screen.getByText("Partially loaded")).toBeTruthy();
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
+    expect(screen.getByText(/1 file could not be loaded/u)).toBeTruthy();
+    fireEvent.click(screen.getByText("Developer import details"));
     expect(screen.getByText("invalid.cat")).toBeTruthy();
-    expect(screen.getByText("1 rejected")).toBeTruthy();
-    expect(screen.getByText("Developer import notes")).toBeTruthy();
     expect(screen.getByText("BS_XML_INVALID")).toBeTruthy();
   });
 
@@ -841,7 +823,7 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.change(screen.getByLabelText("Roster name"), {
       target: { value: "First Patrol" },
     });
@@ -855,7 +837,7 @@ describe("App local catalogue flow", () => {
       await screen.findByRole("heading", { name: "First Patrol" }),
     ).toBeTruthy();
     expect(
-      screen.queryByRole("region", { name: "Catalogue library" }),
+      screen.queryByText("Catalogue library"),
     ).toBeNull();
     expect(
       screen.getByRole("region", { name: "Roster workspace" }),
@@ -1457,12 +1439,8 @@ describe("App local catalogue flow", () => {
     expect(within(playerHeader).getByText("80")).toBeTruthy();
 
     fireEvent.click(changeRosterSetup);
-    expect(
-      screen.getByRole("region", { name: "Catalogue library" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("complementary", { name: "Catalogue details" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
+    expect(screen.queryByText("Catalogue library")).toBeNull();
     expect(
       screen.queryByRole("navigation", {
         name: "Roster workspace navigation",
@@ -1527,7 +1505,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
     const workspaceNavigation = screen.getByRole("navigation", {
       name: "Roster workspace navigation",
@@ -1617,7 +1595,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
     const catalogueToggle = await screen.findByRole("button", {
@@ -1673,7 +1651,7 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
@@ -1917,7 +1895,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
@@ -2027,7 +2005,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
@@ -2083,7 +2061,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Nested Group Bound/u });
+    await screen.findByRole("heading", { name: "Nested Group Bound" });
     const force = screen.getByLabelText("Starting force");
     const nestedForce = Array.from(force.querySelectorAll("option")).find(
       ({ textContent }) => textContent === "Nested Force",
@@ -2191,7 +2169,7 @@ describe("App local catalogue flow", () => {
       },
     });
 
-    await screen.findByRole("button", { name: /Selection Initialization/u });
+    await screen.findByRole("heading", { name: "Selection Initialization" });
     const force = screen.getByLabelText("Starting force");
     const initializationForce = Array.from(
       force.querySelectorAll("option"),
@@ -2327,8 +2305,8 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    await screen.findByRole("button", {
-      name: /Selection Initialization/u,
+    await screen.findByRole("heading", {
+      name: "Selection Initialization",
     });
     const force = screen.getByLabelText("Starting force");
     const initializationForce = Array.from(
@@ -2738,7 +2716,7 @@ describe("App local catalogue flow", () => {
         ],
       },
     });
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.change(screen.getByLabelText("Roster name"), {
       target: { value: "Recovered Patrol" },
     });
@@ -2794,7 +2772,7 @@ describe("App local catalogue flow", () => {
         ],
       },
     });
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.change(screen.getByLabelText("Roster name"), {
       target: { value: "Quota Patrol" },
     });
@@ -2861,7 +2839,7 @@ describe("App local catalogue flow", () => {
       },
     );
 
-    await screen.findByRole("button", { name: /Synthetic Faction/u });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.change(screen.getByLabelText("Roster name"), {
       target: { value: "Saved Patrol" },
     });
