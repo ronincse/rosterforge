@@ -75,6 +75,30 @@ summary:focus-visible {
   flex-direction: column;
 }
 
+/* An open roster is the application surface, not another card inside the
+   catalogue library. The later visual-system checkpoint will restyle its
+   contents; this boundary only removes the library gutter and poster shell. */
+.app-shell[data-screen="roster"] {
+  width: 100%;
+}
+
+.roster-screen {
+  min-width: 0;
+}
+
+.roster-screen-workspace {
+  min-height: 100vh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.roster-screen-content {
+  padding: clamp(16px, 2.5vw, 40px);
+}
+
 .site-header {
   min-height: 82px;
   display: flex;

@@ -240,10 +240,12 @@
   visible setup/secondary limit rather than replacing roster Points when source
   declaration order differs. Configuration presents Battle Size before
   Detachment without changing stored roster order
-- Focused active-roster layout that uses the full library shell and restores
-  the full-width roster setup when the active roster is cleared; stale/unknown
-  data, import failures, file reports, and batch diagnostics remain available
-  without a persistent catalogue-library column
+- Dedicated active-roster screen that does not mount the Lists hero,
+  import/repository controls, recovery prompt, draft shelf, setup region, site
+  header, or footer. Clearing the roster restores the same full-width Lists and
+  setup state without reloading its imported library; save/autosave feedback
+  remains visible with the open roster, and the browser title follows the open
+  roster name
 - Library-marked catalogues retained for composition and diagnostics but
   excluded from ordered roster-catalogue choices
 - Selected-roster empty state and catalogue category browser kept as separate

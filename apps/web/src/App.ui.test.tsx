@@ -839,9 +839,18 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByText("Catalogue library"),
     ).toBeNull();
+    expect(screen.getByRole("region", { name: "Open roster" })).toBeTruthy();
+    expect(document.title).toBe("First Patrol");
+    expect(screen.queryByLabelText("RosterForge home")).toBeNull();
     expect(
-      screen.getByRole("region", { name: "Roster workspace" }),
-    ).toBeTruthy();
+      screen.queryByRole("heading", {
+        name: "Build your roster. Keep your data local.",
+      }),
+    ).toBeNull();
+    expect(screen.queryByLabelText("Replace local files")).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "Saved roster drafts" }),
+    ).toBeNull();
     expect(screen.getAllByText("Patrol Detachment")).toHaveLength(2);
     expect(rosterForce("force-ui")).toBeTruthy();
     expect(screen.queryByText("force-ui")).toBeNull();
@@ -1440,6 +1449,12 @@ describe("App local catalogue flow", () => {
 
     fireEvent.click(changeRosterSetup);
     expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
+    expect(document.title).toBe("Lists");
+    expect(screen.getByLabelText("RosterForge home")).toBeTruthy();
+    expect(screen.getByLabelText("Replace local files")).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Saved roster drafts" }),
+    ).toBeTruthy();
     expect(screen.queryByText("Catalogue library")).toBeNull();
     expect(
       screen.queryByRole("navigation", {
@@ -2831,7 +2846,29 @@ describe("App local catalogue flow", () => {
     });
     expect(within(prompt).getByText("Recovered Patrol")).toBeTruthy();
 
-    fireEvent.click(within(prompt).getByRole("button", { name: "Discard" }));
+    // Starting a different roster makes the open list the sole primary
+    // surface, but it does not silently discard the recovery offer. Returning
+    // to Lists reveals the same pending decision again.
+    fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), {
+      target: {
+        files: [
+          browserFile("minimal.gst", gameSystemBytes),
+          browserFile("minimal.cat", catalogueBytes),
+        ],
+      },
+    });
+    await screen.findByRole("heading", { name: "Synthetic Faction" });
+    fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    expect(screen.queryByRole("region", { name: "Unsaved roster" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change roster setup" }),
+    );
+    const restoredPrompt = await screen.findByRole("region", {
+      name: "Unsaved roster",
+    });
+    fireEvent.click(
+      within(restoredPrompt).getByRole("button", { name: "Discard" }),
+    );
     await waitFor(() => {
       expect(records.has("__recovery__")).toBe(false);
     });
@@ -2969,10 +3006,12 @@ describe("App local catalogue flow", () => {
     expect(screen.getByText("Unsaved changes")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
-    await within(shelf).findByText("Saved Saved Patrol in this browser.");
+    await screen.findByText("Saved Saved Patrol in this browser.");
     // ...and stop saying so once it is.
     expect(screen.queryByText("Unsaved changes")).toBeNull();
-    expect(within(shelf).getByText("Saved Patrol")).toBeTruthy();
+    expect(
+      screen.queryByRole("region", { name: "Saved roster drafts" }),
+    ).toBeNull();
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),
     ).toBeTruthy();
@@ -3037,7 +3076,13 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByRole("heading", { name: "Saved Patrol" }),
     ).toBeNull();
-    fireEvent.click(within(shelf).getByRole("button", { name: "Open" }));
+    const restoredShelf = screen.getByRole("region", {
+      name: "Saved roster drafts",
+    });
+    expect(within(restoredShelf).getByText("Saved Patrol")).toBeTruthy();
+    fireEvent.click(
+      within(restoredShelf).getByRole("button", { name: "Open" }),
+    );
 
     expect(
       await screen.findByRole("heading", { name: "Saved Patrol" }),
@@ -3060,12 +3105,20 @@ describe("App local catalogue flow", () => {
     });
 
     fireEvent.click(
-      within(shelf).getByRole("button", { name: "Delete Saved Patrol" }),
+      screen.getByRole("button", { name: "Change roster setup" }),
+    );
+    const deletionShelf = screen.getByRole("region", {
+      name: "Saved roster drafts",
+    });
+    fireEvent.click(
+      within(deletionShelf).getByRole("button", {
+        name: "Delete Saved Patrol",
+      }),
     );
     fireEvent.click(
-      within(shelf).getByRole("button", { name: "Confirm delete" }),
+      within(deletionShelf).getByRole("button", { name: "Confirm delete" }),
     );
-    await within(shelf).findByText("No roster drafts saved yet.");
+    await within(deletionShelf).findByText("No roster drafts saved yet.");
     expect(records.size).toBe(0);
   });
 });

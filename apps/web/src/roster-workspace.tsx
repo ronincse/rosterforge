@@ -141,6 +141,8 @@ export function RosterOverview({
   isSavingDraft,
   hasSavedDraft,
   unsavedChanges,
+  draftActionMessage,
+  draftActionDiagnostics = [],
 }: {
   readonly session: LocalRosterSession;
   readonly diagnostics: readonly Diagnostic[];
@@ -171,6 +173,9 @@ export function RosterOverview({
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
   readonly unsavedChanges: boolean;
+  /** Save/autosave feedback stays with the open roster after the library unmounts. */
+  readonly draftActionMessage?: string | undefined;
+  readonly draftActionDiagnostics?: readonly Diagnostic[];
 }) {
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
@@ -404,6 +409,12 @@ export function RosterOverview({
           Print / Save PDF
         </button>
       </div>
+      {(draftActionMessage !== undefined || isSavingDraft) && (
+        <p className="draft-action-status" role="status">
+          {draftActionMessage ?? "Saving roster draft..."}
+        </p>
+      )}
+      <DiagnosticList diagnostics={draftActionDiagnostics} />
       {printBlocked && (
         <p className="print-roster-error" role="alert">
           The browser blocked the printable roster window. Allow popups for this

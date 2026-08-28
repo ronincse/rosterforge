@@ -498,9 +498,15 @@ first; other evaluated currencies remain available in setup or secondary-limit
 details. On wide viewports the
 selected roster and catalogue browser occupy separate side-by-side panes; on
 narrow viewports they return to document order as full-width sections. While a
-roster is active, this focused workspace occupies the full library shell and
-the setup surface is hidden. Clearing the roster restores the full-width setup
-surface without changing the imported library. One player header stays above
+roster is active, `App` mounts a dedicated full-viewport roster shell instead
+of the Lists shell: the site hero, import/repository controls, recovery prompt,
+draft shelf, catalogue setup, and footer are absent from that render rather
+than CSS-hidden. The controller and remote-source hooks remain mounted, so
+clearing the roster restores the same Lists/setup state, pending recovery, and
+acquisition evidence without reloading the imported library. Save and autosave
+feedback follows the roster into its action surface because the draft shelf is
+no longer mounted there. The document title is `Lists` or the open roster name,
+matching the primary object. One player header stays above
 the builder, carrying the roster identity, its supported cost totals, and its
 known-problem count; detailed structural and constraint reports follow it.
 Concrete root, direct-child, and grouped-choice controls expose an independent
@@ -538,6 +544,12 @@ Anchor navigation and selected/viewed pane state are UI concerns only and never
 enter the immutable session, history, or draft. A validation link whose exact
 nested anchor is not mounted first focuses its owning top-level unit, then
 completes the jump after the options surface renders the target.
+
+Shared web presentation rules live in `docs/ui-design-language.md`. They adapt
+current Apple Human Interface Guidelines into semantic web tokens and reusable
+navigation, grouped-list, sheet, inspector, control, motion, and accessibility
+contracts. They do not change package direction or authorize native-asset or
+third-party visual cloning.
 
 `createRosterWorkspaceViewModel` is the pure presentation boundary over one
 immutable session and its root-choice, cost, and supported-validation reports.
