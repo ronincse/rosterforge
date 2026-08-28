@@ -1952,6 +1952,7 @@ function RosterConfigurationSection({
           selectionCanAddAnother={selectionCanAddAnother}
           collapsible
           initiallyOpen
+          autoCollapseWhenRequirementsMet
           onAddChild={onAddChild}
           onRename={onRename}
           onSetAmount={onSetAmount}
@@ -2137,6 +2138,7 @@ function RosterTopLevelSelectionList({
   selectionCanAddAnother,
   collapsible,
   initiallyOpen = false,
+  autoCollapseWhenRequirementsMet = false,
   presentation = "combined",
   onSelect,
   onView,
@@ -2153,6 +2155,8 @@ function RosterTopLevelSelectionList({
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
   readonly collapsible: boolean;
   readonly initiallyOpen?: boolean;
+  /** Collapses a setup card after its last known required choice is selected. */
+  readonly autoCollapseWhenRequirementsMet?: boolean;
   readonly presentation?: RosterSelectionPresentation;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
   readonly onView?: ((id: SelectionOccurrenceId) => void) | undefined;
@@ -2193,6 +2197,7 @@ function RosterTopLevelSelectionList({
             topLevel
             collapsible={collapsible}
             initiallyOpen={initiallyOpen}
+            autoCollapseWhenRequirementsMet={autoCollapseWhenRequirementsMet}
             presentation={presentation}
             onSelect={onSelect}
             onView={onView}
@@ -2250,13 +2255,7 @@ function workspaceSelectionContainsAnchor(
   );
 }
 
-/**
- * Dedicated editing surface for the currently focused army unit.
- *
- * It deliberately reuses `RosterSelectionItem`'s option controls. Required
- * wargear, repeatable models, and grouped choices therefore keep one mutation
- * path even though their presentation moved out of the compact army list.
- */
+/** Dedicated editing surface for the currently focused army unit. */
 function RosterUnitOptionsPanel({
   session,
   selectionModel,
@@ -2406,12 +2405,50 @@ function RosterUnitCardView({
   );
 }
 
+type ChildChoiceRequirementState =
+  | "not-required"
+  | "unknown"
+  | "unsatisfied"
+  | "satisfied";
+
+/**
+ * Reduces one setup card's child inspection to a safe collapse decision.
+ *
+ * Only complete positive minima count. Optional choices should not dismiss a
+ * settings card, and unresolved bounds must remain available rather than
+ * looking complete. `remaining` already aggregates all exact occurrences the
+ * evaluator says the bound counts.
+ */
+function childChoiceRequirementState(
+  result: ReturnType<typeof inspectLocalRosterChildChoices>,
+): ChildChoiceRequirementState {
+  if (!result.ok || result.value.completeness === "incomplete") {
+    return "unknown";
+  }
+  const required = [...result.value.direct, ...result.value.groups].filter(
+    ({ minimum }) => (minimum ?? 0) > 0,
+  );
+  if (required.length === 0) return "not-required";
+  if (
+    required.some(
+      ({ completeness, remaining }) =>
+        completeness === "incomplete" || remaining === undefined,
+    )
+  ) {
+    return "unknown";
+  }
+  return required.some(({ remaining }) => remaining! > 0)
+    ? "unsatisfied"
+    : "satisfied";
+}
+
 function RosterSelectionItem({
   session,
   selectionModel,
   topLevel = false,
   collapsible = false,
   initiallyOpen = false,
+  autoCollapseWhenRequirementsMet = false,
   collapseChildren = false,
   presentation = "combined",
   onSelect,
@@ -2436,6 +2473,10 @@ function RosterSelectionItem({
   readonly collapsible?: boolean;
   /** Starts a collapsible setup occurrence open on first encounter. */
   readonly initiallyOpen?: boolean;
+  /**
+   * Setup-only behavior: close after the last known required choice is met.
+   */
+  readonly autoCollapseWhenRequirementsMet?: boolean;
   /**
    * Keeps a promoted model's own wargear subtree lazy unless it needs
    * attention.
@@ -2587,9 +2628,39 @@ function RosterSelectionItem({
   const [cardOpen, setCardOpen] = useState(
     () => !collapsible || initiallyOpen || selectionModel.containsAttention,
   );
+  const cardToggleRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (collapsible && selectionModel.containsAttention) setCardOpen(true);
   }, [collapsible, selectionModel.containsAttention]);
+  const setupRequirementState = autoCollapseWhenRequirementsMet
+    ? childChoiceRequirementState(childChoices)
+    : "not-required";
+  const previousKnownSetupRequirementState = useRef<
+    "unsatisfied" | "satisfied" | undefined
+  >(undefined);
+  useEffect(() => {
+    if (
+      setupRequirementState === "unknown" ||
+      setupRequirementState === "not-required"
+    ) {
+      return;
+    }
+    const previous = previousKnownSetupRequirementState.current;
+    previousKnownSetupRequirementState.current = setupRequirementState;
+    if (
+      autoCollapseWhenRequirementsMet &&
+      previous === "unsatisfied" &&
+      setupRequirementState === "satisfied" &&
+      !selectionModel.containsAttention
+    ) {
+      setCardOpen(false);
+      queueMicrotask(() => cardToggleRef.current?.focus());
+    }
+  }, [
+    autoCollapseWhenRequirementsMet,
+    setupRequirementState,
+    selectionModel.containsAttention,
+  ]);
   const bodyVisible =
     presentation !== "row" && (!collapsible || cardOpen);
   // This summary intentionally counts only direct children whose materialized
@@ -2628,6 +2699,7 @@ function RosterSelectionItem({
             </button>
           ) : collapsible ? (
             <button
+              ref={cardToggleRef}
               type="button"
               className="unit-card-toggle"
               aria-expanded={cardOpen}

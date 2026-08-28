@@ -2173,6 +2173,10 @@ describe("App local catalogue flow", () => {
       <selectionEntryGroups>
         <selectionEntryGroup id="configuration-detachments"
           name="Detachments">
+          <constraints>
+            <constraint id="configuration-detachments-min" type="min"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
           <selectionEntries>
             <selectionEntry id="configuration-warhost" name="Warhost"
               type="upgrade">
@@ -2312,6 +2316,40 @@ describe("App local catalogue flow", () => {
     expect(configurationSelectionToggle.getAttribute("aria-expanded")).toBe(
       "true",
     );
+    fireEvent.click(
+      within(configuration).getByRole("button", { name: "Warhost" }),
+    );
+    const collapsedConfigurationSelection = within(configuration).getByRole(
+      "button",
+      { name: "Disabled Automatic Root" },
+    );
+    expect(collapsedConfigurationSelection.getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toBe(collapsedConfigurationSelection);
+    });
+    // Removing a setting is not completion. Reopen the card, clear Warhost,
+    // and keep the now-empty section visible so the player can repair it.
+    fireEvent.click(collapsedConfigurationSelection);
+    fireEvent.click(
+      within(configuration).getByRole("button", { name: "Warhost" }),
+    );
+    const reopenedConfigurationSelection = within(configuration).getByRole(
+      "button",
+      { name: "Disabled Automatic Root" },
+    );
+    expect(reopenedConfigurationSelection.getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    fireEvent.click(
+      within(configuration).getByRole("button", { name: "Warhost" }),
+    );
+    expect(
+      within(configuration)
+        .getByRole("button", { name: "Disabled Automatic Root" })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
 
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
@@ -2343,7 +2381,7 @@ describe("App local catalogue flow", () => {
       .closest("details");
     expect(otherLimits).toBeTruthy();
     expect(
-      within(otherLimits as HTMLElement).getByText("0 / 3"),
+      within(otherLimits as HTMLElement).getByText("3 / 3"),
     ).toBeTruthy();
     expect(
       within(otherLimits as HTMLElement).getByText(
@@ -2356,7 +2394,7 @@ describe("App local catalogue flow", () => {
     );
     expect(configuration.hasAttribute("open")).toBe(false);
     expect(
-      within(configuration).getByText("0 / 3 Detachment Points"),
+      within(configuration).getByText("3 / 3 Detachment Points"),
     ).toBeTruthy();
     fireEvent.click(within(configuration).getByText("Expand configuration"));
     expect(configuration.hasAttribute("open")).toBe(true);
