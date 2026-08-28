@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (focused remote catalogue scoping complete; remaining Aeldari coverage Next)
+## Current Status — 2026-08-27 (full-width roster setup complete; remaining Aeldari coverage Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -117,6 +117,11 @@ diagnostic codes.
   every transitive dependency in the graph for linked roots and definitions;
   the Dark Angels closure no longer promotes Space Marines and Agents to peer
   workspace buttons, and its Space Marine unit choices remain available.
+  Roster setup now occupies the full workspace width without a persistent
+  catalogue-library summary column. Intentional multi-catalogue local imports
+  retain a compact labelled chooser; stale/unknown data, rejected files,
+  truncation, and missing-game-system states remain visible, while the complete
+  file report and batch diagnostics stay in collapsed Developer details.
   **The `Next` is closing the
   remaining pinned Aeldari matched-play check coverage.**
 - **Prior transfer.** The Codex-to-Claude transfer
@@ -181,12 +186,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **524 passed, 19 skipped (543)**.
+  `git diff --check` all pass. `pnpm test` is **526 passed, 19 skipped (545)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **543 passed**; without the variable the 19 corpus tests are skipped.
+  **545 passed**; without the variable the 19 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -590,6 +595,7 @@ QA before classifying or implementing the discrepancy.
 | Force Disposition shows no entries | Done | **not a defect**: the group is conditional on the detachment, in every faction checked. The message now distinguishes "nothing here" from "nothing yet" |
 | Community-data mismatch diagnosis | Done | both known GW discrepancies vanished when the corpus was updated: RosterForge had read stale source data faithfully. The actionable product gap was freshness, not a point-by-point GW comparison the app has no source for |
 | Surface how current the loaded data is | Done | import date against BSData's last upstream push, one request; falls back to a plain "may be out of date" note when GitHub is unreachable |
+| Full-width roster setup and import-context demotion | Done | removed the persistent catalogue-library column and its batch metrics/cards; setup is one primary full-width region. A labelled chooser appears only for intentional multi-catalogue local imports, actionable import/freshness warnings remain visible, and full file/diagnostic evidence stays under Developer details |
 | Detachment enhancements never offered | Done | `ancestor` scope resolved against an empty chain for prospective children; 2,635 corpus conditions affected. Four Virulent Vectorium enhancements now offered, and only those |
 | Browse pin stale against the measured corpus | Done | the app's configured source was still on the old revision after the re-pin |
 | Allied config auto-inserts into a force | Done | roster creation filters roots by visibility; Knights keeps `Code Chivalric`, other factions come up with three config slots |
@@ -11746,6 +11752,85 @@ semantics, or alter local multi-catalogue import. It also does not redesign
 nested definition memoization inside the one selected context; the existing
 materialization depth and expansion budgets remain the safety boundary there.
 The roadmap's pinned Aeldari coverage families remain open and unchanged.
+
+### Next recommended boundary
+
+**Close one measured family from remaining pinned Aeldari matched-play check
+coverage.** Start with the exact unresolved root visibility and selected
+Detachments-group shapes. Preserve independent completeness reporting and use
+Reference Behavior QA before classifying any semantic discrepancy.
+
+## Completed Assignment — Full-Width Roster Setup, 2026-08-27
+
+Baseline `66d4cef`; resulting implementation commit `a209e75` and this handoff
+commit. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The persistent `Catalogue library` column duplicated the selected catalogue,
+used half of the setup width for import metrics and catalogue cards, and made a
+normal focused repository load look like a two-surface workflow. Roster setup
+now occupies one primary full-width region. A labelled native catalogue chooser
+appears only when a local import intentionally exposes multiple playable
+catalogues; the normal focused repository path keeps the selected catalogue as
+the single setup identity without a redundant card.
+
+The column was not deleted by dropping its evidence. Current/checking freshness
+chatter and generic ready/partial badges are gone from the player surface, but
+stale or unknown data remains visible. Rejected files, materialization
+truncation, and a missing matching game system each have a concrete setup
+warning. The complete ordered file report and exact batch diagnostics remain in
+collapsed `Developer import details`. Source metadata and selected-catalogue
+diagnostics remain in the existing catalogue details. Clearing an active roster
+returns to this same full-width setup without changing the imported library.
+
+### Delegation and review
+
+A native Codex child received an early bounded read-only audit in disposable
+worktree `E:\GitHub\rosterforge-library-panel-audit` at the exact baseline. Its
+brief named the repository rules, prohibited writes and external actions, and
+asked it to identify the minimum restructuring, tests, accessibility risks, and
+information that could not safely disappear. It caught that the old generic
+`Partially loaded` badge could represent real truncation or a missing game
+system; Codex retained both conditions as explicit warnings, reviewed the
+result, and removed the verified clean worktree. No delegated code was
+accepted.
+
+### Tests, corpus, and browser validation
+
+Component coverage proves current data stays quiet, stale and unknown data stay
+visible, a one-catalogue setup has no chooser, and an intentional two-catalogue
+setup exposes a labelled selector that changes the selected key. Application UI
+coverage now synchronizes on the primary catalogue heading, proves the obsolete
+library region is absent, verifies the full-width setup landmark before and
+after clearing a roster, and retains rejected-file details and exact diagnostic
+codes.
+
+Lead browser QA used the already-running Dark Angels workspace. After clearing
+the roster, the setup region measured **1,223 px** inside a **1,225 px**
+workspace at a **1,265 px** viewport; the setup and library shell shared the
+same x-coordinate, and no `Catalogue library` heading remained. The roster-name
+field, starting-force selector, and create action used the resulting width.
+
+Verification:
+
+- bounded native Codex read-only audit — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- focused setup/UI suite — **24 passed** across 2 files;
+- ordinary suite — **526 passed, 19 skipped (545)** across 57 files;
+- pinned 46-document corpus suite at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **545 passed (545)** across
+  57 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint does not change catalogue composition, local multi-catalogue
+semantics, source metadata, roster creation, or evaluator behavior. It also does
+not take the broader setup-copy and selected-catalogue metadata cleanup suggested
+by the review; those details were outside the owner's bounded request and remain
+available rather than being silently removed. The pinned Aeldari coverage
+families remain open and unchanged.
 
 ### Next recommended boundary
 
