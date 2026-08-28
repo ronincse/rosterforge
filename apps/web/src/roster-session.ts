@@ -20,7 +20,7 @@ import {
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
-  inspectRosterSelectionChildChoices,
+  inspectSingleRosterSelectionChildChoices,
   inspectRosterSelectionDefaultAmount,
   inspectRosterForceConstraintsInRoster,
   inspectRosterSelectionConstraintsInRoster,
@@ -1209,23 +1209,30 @@ export function inspectLocalRosterChildChoices(
   }
   const visibilityDiagnostics: Diagnostic[] = [];
   let visibilityIncomplete = false;
-  const inspected = inspectRosterSelectionChildChoices(parentChoice, {
-    include: (_choice, path) => {
-      const visibility = evaluateRosterSelectionVisibilityPath(
-        session.roster,
-        session.catalogue.context,
-        parent,
-        path.slice(1),
-      );
-      visibilityDiagnostics.push(...visibility.diagnostics);
-      if (!visibility.ok) {
-        visibilityIncomplete = true;
-        return true;
-      }
-      visibilityIncomplete ||= visibility.value.completeness === "incomplete";
-      return visibility.value.status !== "hidden";
+  const inspected = inspectSingleRosterSelectionChildChoices(
+    session.roster,
+    session.catalogue.context,
+    parent,
+    parentChoice,
+    {
+      include: (_choice, path) => {
+        const visibility = evaluateRosterSelectionVisibilityPath(
+          session.roster,
+          session.catalogue.context,
+          parent,
+          path.slice(1),
+        );
+        visibilityDiagnostics.push(...visibility.diagnostics);
+        if (!visibility.ok) {
+          visibilityIncomplete = true;
+          return true;
+        }
+        visibilityIncomplete ||=
+          visibility.value.completeness === "incomplete";
+        return visibility.value.status !== "hidden";
+      },
     },
-  });
+  );
   if (!inspected.ok) {
     return inspected;
   }

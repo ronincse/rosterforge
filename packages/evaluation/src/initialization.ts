@@ -17,13 +17,24 @@ import type {
   MaterializedVisibleSelectionEntryRoot,
 } from "@rosterforge/data-graph";
 
-import type { Roster, RosterForce } from "@rosterforge/roster-model";
+import {
+  addRosterSelectionToSelection,
+  rosterDefinitionKeyForSource,
+  selectionOccurrenceId,
+  type Roster,
+  type RosterForce,
+  type RosterSelection,
+  type SelectionOccurrenceId,
+} from "@rosterforge/roster-model";
 
 import { effectiveRosterCategories } from "./effective-categories.js";
 import { evaluateRosterModifierApplicability } from "./modifier-applicability.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 import { evaluateNumericModifierSequence } from "./modifiers.js";
-import { isUnboundedConstraintValue } from "./constraints.js";
+import {
+  inspectRosterSelectionConstraintWithSelectionConditions,
+  isUnboundedConstraintValue,
+} from "./constraints.js";
 
 export interface RosterSelectionInitializationOptions {
   readonly maxPlannedSelections?: number;
@@ -70,6 +81,12 @@ interface LiveSingleForceRootInspectionContext {
   readonly context: BattleScribeCatalogueContext;
   readonly force: RosterForce;
   readonly effectiveCategories: ReturnType<typeof effectiveRosterCategories>;
+}
+
+interface LiveRosterSelectionChildInspectionContext {
+  readonly roster: Roster;
+  readonly context: BattleScribeCatalogueContext;
+  readonly owner: RosterSelection;
 }
 
 export type RosterSelectionInitializationPendingReason =
@@ -244,6 +261,35 @@ export function inspectRosterSelectionChildChoices(
   choice: EvaluationSelectionChoice,
   options: RosterSelectionChildChoicesInspectionOptions = {},
 ): Result<RosterSelectionChildChoicesInspection> {
+  return inspectChildChoices(choice, options);
+}
+
+/**
+ * Inspects one selected occurrence's child bounds against its current roster.
+ *
+ * Static initialization deliberately withholds modifier-driven child limits:
+ * the parent and the conditions they query do not exist yet. Once the parent
+ * is selected, this live variant probes an owner-local modifier target with a
+ * temporary occurrence and reuses the normal constraint evaluator. The probe
+ * never escapes and the input roster remains immutable. Modifiers carried by
+ * an ancestor still withhold because their cross-carrier ordering has not been
+ * established by the pinned corpus.
+ */
+export function inspectSingleRosterSelectionChildChoices(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  choice: EvaluationSelectionChoice,
+  options: RosterSelectionChildChoicesInspectionOptions = {},
+): Result<RosterSelectionChildChoicesInspection> {
+  return inspectChildChoices(choice, options, { roster, context, owner });
+}
+
+function inspectChildChoices(
+  choice: EvaluationSelectionChoice,
+  options: RosterSelectionChildChoicesInspectionOptions,
+  live?: LiveRosterSelectionChildInspectionContext,
+): Result<RosterSelectionChildChoicesInspection> {
   const state: InitializationState = {
     diagnostics: [],
     incomplete: 0,
@@ -254,10 +300,10 @@ export function inspectRosterSelectionChildChoices(
         options.include?.(child, [choice, child]) ?? true,
     )
     .map((child) =>
-      inspectDirectChoice(child, [choice, child], state),
+      inspectDirectChoice(child, [choice, child], state, live),
     );
   const groups: RosterSelectionChoiceGroupInspection[] = [];
-  collectChoiceGroups(choice, [choice], groups, state, options);
+  collectChoiceGroups(choice, [choice], groups, state, options, live);
   return success(
     {
       choice,
@@ -708,6 +754,7 @@ function collectChoiceGroups(
   groups: RosterSelectionChoiceGroupInspection[],
   state: InitializationState,
   options: RosterSelectionChildChoicesInspectionOptions = {},
+  live?: LiveRosterSelectionChildInspectionContext,
 ): void {
   for (const group of directChoices(container).filter(
     (choice): choice is MaterializedSelectionEntryGroup =>
@@ -722,7 +769,10 @@ function collectChoiceGroups(
       group,
       groupPath,
       state,
-      { requireMaximum: true },
+      {
+        requireMaximum: true,
+        ...(live === undefined ? {} : { live }),
+      },
     );
     if (bounds.minimum > bounds.maximum) {
       diagnoseConflictingBounds(group, bounds, state);
@@ -742,7 +792,7 @@ function collectChoiceGroups(
           ? "complete"
           : "incomplete",
     });
-    collectChoiceGroups(group, groupPath, groups, state, options);
+    collectChoiceGroups(group, groupPath, groups, state, options, live);
   }
 }
 
@@ -750,13 +800,17 @@ function inspectDirectChoice(
   choice: EvaluationSelectionChoice,
   carriers: readonly EvaluationSelectionChoice[],
   state: InitializationState,
+  live?: LiveRosterSelectionChildInspectionContext,
 ): RosterSelectionDirectChoiceInspection {
   const incompleteAtStart = state.incomplete;
   const bounds = selectionBounds(
     choice,
     carriers,
     state,
-    { requireMaximum: true },
+    {
+      requireMaximum: true,
+      ...(live === undefined ? {} : { live }),
+    },
   );
   if (bounds.minimum > bounds.maximum) {
     diagnoseConflictingBounds(choice, bounds, state);
@@ -955,7 +1009,10 @@ function selectionBounds(
   choice: EvaluationSelectionChoice,
   carriers: readonly EvaluationSelectionChoice[],
   state: InitializationState,
-  options: { readonly requireMaximum?: boolean } = {},
+  options: {
+    readonly requireMaximum?: boolean;
+    readonly live?: LiveRosterSelectionChildInspectionContext;
+  } = {},
 ): SelectionBounds {
   let minimum = 0;
   let maximum = Number.POSITIVE_INFINITY;
@@ -986,6 +1043,24 @@ function selectionBounds(
         carrierTargetsField(carrier, constraintId),
       )
     ) {
+      if (options.live !== undefined) {
+        const effective = effectiveSelectedChildBound(
+          choice,
+          carriers,
+          constraint,
+          options.live,
+          state,
+        );
+        if (effective === undefined) {
+          supported = false;
+        } else {
+          minimum = Math.max(
+            minimum,
+            unboundedBoundIdentity(effective, "min"),
+          );
+        }
+        continue;
+      }
       markIncomplete(state);
       if ((constraint.value ?? 0) > 0) {
         supported = false;
@@ -1023,6 +1098,24 @@ function selectionBounds(
           carrierTargetsField(carrier, constraintId),
         )
       ) {
+        if (options.live !== undefined) {
+          const effective = effectiveSelectedChildBound(
+            choice,
+            carriers,
+            constraint,
+            options.live,
+            state,
+          );
+          if (effective === undefined) {
+            supported = false;
+          } else {
+            maximum = Math.min(
+              maximum,
+              unboundedBoundIdentity(effective, "max"),
+            );
+          }
+          continue;
+        }
         supported = false;
         markIncomplete(state);
         state.diagnostics.push(
@@ -1043,6 +1136,131 @@ function selectionBounds(
     }
   }
   return { supported, minimum, maximum };
+}
+
+function effectiveSelectedChildBound(
+  choice: EvaluationSelectionChoice,
+  carriers: readonly EvaluationSelectionChoice[],
+  constraint: EvaluationSelectionChoice["constraints"][number],
+  live: LiveRosterSelectionChildInspectionContext,
+  state: InitializationState,
+): number | undefined {
+  const constraintId = constraint.id;
+  const baseValue = constraint.value;
+  if (constraintId === undefined || baseValue === undefined) {
+    return baseValue;
+  }
+  const targetingCarriers = carriers.filter((carrier) =>
+    carrierTargetsField(carrier, constraintId),
+  );
+  if (
+    targetingCarriers.length !== 1 ||
+    targetingCarriers[0] !== choice
+  ) {
+    markIncomplete(state);
+    state.diagnostics.push(
+      initializationDiagnostic(
+        constraint,
+        "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
+        "A parent selection bound has modifiers carried outside its own choice, so its live quantity is not inferred.",
+        undefined,
+        { constraintId, carriers: targetingCarriers.length },
+      ),
+    );
+    return undefined;
+  }
+
+  // Groups are transparent in durable browser rosters. A throwaway group
+  // occurrence recreates the relative `self`/`parent` position that the
+  // constraint evaluator expects without mutating or returning the probe.
+  const probeId = unusedChildBoundProbeId(live.roster);
+  const probed = addRosterSelectionToSelection(
+    live.roster,
+    live.owner.id,
+    {
+      id: probeId,
+      definition: {
+        kind: choice.kind,
+        key: rosterDefinitionKeyForSource(
+          choice.occurrence.source.sourceId,
+          choice.occurrence.path,
+        ),
+      },
+      ...(choice.name === undefined ? {} : { name: choice.name }),
+    },
+  );
+  state.diagnostics.push(...probed.diagnostics);
+  if (!probed.ok) {
+    markIncomplete(state);
+    return undefined;
+  }
+  const probe = findSelectionById(probed.value.forces, probeId);
+  if (probe === undefined) {
+    markIncomplete(state);
+    return undefined;
+  }
+  const inspected = inspectRosterSelectionConstraintWithSelectionConditions(
+    probed.value,
+    live.context,
+    probe,
+    constraint,
+  );
+  state.diagnostics.push(...inspected.diagnostics);
+  if (
+    !inspected.ok ||
+    inspected.value.completeness !== "complete" ||
+    inspected.value.limit === undefined ||
+    !Number.isSafeInteger(inspected.value.limit) ||
+    (inspected.value.limit < 0 &&
+      !(
+        isUnboundedConstraintValue(baseValue) &&
+        isUnboundedConstraintValue(inspected.value.limit)
+      ))
+  ) {
+    markIncomplete(state);
+    return undefined;
+  }
+  return inspected.value.limit;
+}
+
+function unusedChildBoundProbeId(roster: Roster): SelectionOccurrenceId {
+  let suffix = 0;
+  let candidate = selectionOccurrenceId("__rosterforge-child-bound-probe__");
+  while (findSelectionById(roster.forces, candidate) !== undefined) {
+    suffix += 1;
+    candidate = selectionOccurrenceId(
+      `__rosterforge-child-bound-probe__-${suffix}`,
+    );
+  }
+  return candidate;
+}
+
+function findSelectionById(
+  forces: readonly RosterForce[],
+  id: SelectionOccurrenceId,
+): RosterSelection | undefined {
+  for (const force of forces) {
+    for (const selection of force.selections) {
+      if (selection.id === id) return selection;
+      const nested = findSelectionByIdInTree(selection.selections, id);
+      if (nested !== undefined) return nested;
+    }
+    const nestedForce = findSelectionById(force.forces, id);
+    if (nestedForce !== undefined) return nestedForce;
+  }
+  return undefined;
+}
+
+function findSelectionByIdInTree(
+  selections: readonly RosterSelection[],
+  id: SelectionOccurrenceId,
+): RosterSelection | undefined {
+  for (const selection of selections) {
+    if (selection.id === id) return selection;
+    const nested = findSelectionByIdInTree(selection.selections, id);
+    if (nested !== undefined) return nested;
+  }
+  return undefined;
 }
 
 function rootSelectionBounds(

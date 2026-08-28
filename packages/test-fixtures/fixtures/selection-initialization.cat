@@ -60,9 +60,6 @@
             <constraint id="modified-child-min" type="min"
               field="selections" scope="parent" value="1" />
           </constraints>
-          <modifiers>
-            <modifier type="set" field="modified-child-min" value="0" />
-          </modifiers>
         </selectionEntry>
       </selectionEntries>
       <selectionEntryGroups>
@@ -110,6 +107,11 @@
           field="selections" scope="roster" value="1" shared="true"
           includeChildSelections="true" includeChildForces="true" />
       </constraints>
+      <modifiers>
+        <!-- Ancestor-carried child modifiers intentionally remain outside the
+          live child-bound support proven by the pinned Detachments group. -->
+        <modifier type="set" field="modified-child-min" value="0" />
+      </modifiers>
     </selectionEntry>
     <selectionEntry id="automatic-reconciliation-unit"
       name="Automatic Reconciliation Unit" type="unit">

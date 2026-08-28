@@ -22,7 +22,7 @@ import {
 
 import {
   inspectSingleForceRootChoices,
-  inspectRosterSelectionChildChoices,
+  inspectSingleRosterSelectionChildChoices,
   rootSelectionBoundIdentity,
   type EmptySingleForceRootBoundIdentity,
   type EmptySingleForceRootChoiceInspection,
@@ -294,16 +294,22 @@ function inspectSelectionTree(
   bounds: RosterStructuralBoundReport[],
   state: StructuralInspectionState,
 ): void {
-  const childInspection = inspectRosterSelectionChildChoices(ownerChoice, {
-    include: (_choice, path) =>
-      isStructurallyVisible(
-        roster,
-        context,
-        owner,
-        path.slice(1),
-        state,
-      ),
-  });
+  const childInspection = inspectSingleRosterSelectionChildChoices(
+    roster,
+    context,
+    owner,
+    ownerChoice,
+    {
+      include: (_choice, path) =>
+        isStructurallyVisible(
+          roster,
+          context,
+          owner,
+          path.slice(1),
+          state,
+        ),
+    },
+  );
   state.diagnostics.push(...childInspection.diagnostics);
   if (!childInspection.ok) {
     state.incomplete = true;

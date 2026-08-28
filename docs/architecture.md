@@ -686,9 +686,15 @@ wrapper remains available. Modifier-controlled or malformed bounds reuse
 initialization diagnostics and remain unknown rather than becoming UI limits.
 
 `inspectLocalRosterChildChoices` joins that group view to one exact roster
-selection. Direct entries and resolved entry links remain quick-add choices
-with live selected and remaining-required counts. A supported reached maximum
-disables the corresponding browser add control.
+selection. For a modifier-targeted child constraint carried by that same direct
+choice or transparent group, it immutably adds one short-lived probe occurrence
+and delegates the effective limit to the normal selection-constraint evaluator.
+That preserves the evaluator's established `self`, `parent`, `force`, and roster
+condition semantics without persisting a group wrapper or mutating the session.
+Ancestor-carried child modifiers remain unresolved until their cross-carrier
+ordering is independently established. Direct entries and resolved entry links
+remain quick-add choices with live selected and remaining-required counts. A
+supported reached maximum disables the corresponding browser add control.
 Selection-entry groups become labeled presentation containers whose selected
 count is derived from the parent's current direct child occurrences. The
 browser never creates a group occurrence from these controls. A supported

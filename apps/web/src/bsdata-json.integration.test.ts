@@ -3428,6 +3428,34 @@ describe.skipIf(realDataDirectory === undefined)(
             completeness: "complete",
           },
         });
+        const incursionWithDetachment = chooseNamedConfiguration(
+          withIncursion.value,
+          "Detachment",
+          "Warhost",
+          "real-aeldari-incursion-warhost",
+        );
+        const incursionDetachment =
+          incursionWithDetachment.roster.forces[0]?.selections.find(
+            ({ name }) => name === "Detachment",
+          );
+        expect(incursionDetachment).toBeDefined();
+        if (incursionDetachment === undefined) return;
+        const incursionDetachmentChoices = inspectLocalRosterChildChoices(
+          incursionWithDetachment,
+          incursionDetachment.id,
+        );
+        expect(incursionDetachmentChoices.ok).toBe(true);
+        if (!incursionDetachmentChoices.ok) return;
+        expect(
+          incursionDetachmentChoices.value.groups.find(
+            ({ group }) => group.name === "Detachments",
+          ),
+        ).toMatchObject({
+          minimum: 1,
+          maximum: 1,
+          selected: [{ name: "Warhost" }],
+          completeness: "complete",
+        });
         const withBattleSize = chooseLocalRosterChildGroupEntry(
           created.value,
           battleSize.id,
@@ -3471,6 +3499,28 @@ describe.skipIf(realDataDirectory === undefined)(
             .find(({ name }) => name === "Force Disposition")
             ?.selections.map(({ name }) => name),
         ).toEqual(["Reconnaissance"]);
+        const configuredDetachment =
+          configured.roster.forces[0]?.selections.find(
+            ({ name }) => name === "Detachment",
+          );
+        expect(configuredDetachment).toBeDefined();
+        if (configuredDetachment === undefined) return;
+        const configuredDetachmentChoices = inspectLocalRosterChildChoices(
+          configured,
+          configuredDetachment.id,
+        );
+        expect(configuredDetachmentChoices.ok).toBe(true);
+        if (!configuredDetachmentChoices.ok) return;
+        expect(
+          configuredDetachmentChoices.value.groups.find(
+            ({ group }) => group.name === "Detachments",
+          ),
+        ).toMatchObject({
+          minimum: 1,
+          maximum: Number.POSITIVE_INFINITY,
+          selected: [{ name: "Warhost" }],
+          completeness: "complete",
+        });
         const configuredValidation =
           inspectLocalRosterSupportedValidation(configured);
         expect(configuredValidation.ok).toBe(true);
@@ -3761,12 +3811,9 @@ describe.skipIf(realDataDirectory === undefined)(
               .filter((diagnostic) => diagnostic.code === code).length,
           ]),
         );
-        // The Aeldari `Detachments` group carries `max="-1"`. The value is
-        // understood since 2026-08-24; what is still withheld is a bound whose
-        // value a modifier computes, which is a separate and older rule.
-        expect(selectedChoiceDiagnosticSummary).toEqual({
-          EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
-        });
+        // The live owner-local Detachments modifier is now evaluated against
+        // the selected roster rather than being reported as unresolved.
+        expect(selectedChoiceDiagnosticSummary).toEqual({});
         const targetedScopeDiagnostics = selectedChoiceInspections
           .flatMap(({ diagnostics }) => diagnostics)
           .filter(
@@ -3958,7 +4005,6 @@ describe.skipIf(realDataDirectory === undefined)(
           expect(diagnosticCodeCounts(
             supported.value.structuralDiagnostics,
           )).toEqual({
-            EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED: 1,
             EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
             // Added when root bounds began respecting visibility. Exactly one
             // root in this real catalogue carries a relevant bound whose
@@ -3980,16 +4026,7 @@ describe.skipIf(realDataDirectory === undefined)(
                     ? bound.root.materialized.name
                     : undefined,
               })),
-          ).toEqual([
-            // The `Detachments` group carrying `max="-1"`; the bound cannot be
-            // decided while the value is withheld.
-            {
-              kind: "group",
-              status: "unresolved",
-              selectedCount: 1,
-              name: undefined,
-            },
-          ]);
+          ).toEqual([]);
           expect(diagnosticCodeCounts(
             supported.value.constraintDiagnostics,
           // The 2026-08-23 revision brought more unsupported attributes on

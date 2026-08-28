@@ -163,6 +163,12 @@
   exact pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian
   Defenders 4 (base 6). Static pre-roster initialization and unresolved
   condition applicability remain conservatively incomplete
+- Live selected-child bounds whose constraint modifier is carried by that same
+  direct choice or transparent group. The evaluator uses an immutable temporary
+  occurrence so ordinary condition scopes see the real selected parent and
+  roster; pinned Aeldari `Detachments` is unbounded at Strike Force and exactly
+  one at Incursion after a 3 Detachment Point choice. Static pre-selection
+  initialization and ancestor-carried child modifiers remain incomplete
 - Conditional child visibility for direct and recursively grouped Boolean
   `set` modifiers, with retained applicability trees, owner-direct then
   group-source ordering, and direct-before-nested group execution

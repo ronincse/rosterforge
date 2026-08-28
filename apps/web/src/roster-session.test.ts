@@ -1040,6 +1040,11 @@ describe("createLocalRosterSession", () => {
     ) {
       throw new Error("Expected both automatic groups and their triggers.");
     }
+    expect(sourceGroup).toMatchObject({
+      minimum: 0,
+      maximum: 1,
+      completeness: "complete",
+    });
 
     const withoutFactory = addLocalRosterChildSelection(
       withRoot.value,
@@ -1116,6 +1121,25 @@ describe("createLocalRosterSession", () => {
       { choiceId: "automatic-source-first", amount: 1 },
       { choiceId: "automatic-source-second", amount: 1 },
     ]);
+    const activatedInspection = inspectLocalRosterChildChoices(
+      withTrigger.value,
+      selectionOccurrenceId("automatic-group-root"),
+    );
+    expect(activatedInspection.ok).toBe(true);
+    if (!activatedInspection.ok) return;
+    expect(
+      activatedInspection.value.groups.find(
+        ({ group }) => group.id === "automatic-source-group",
+      ),
+    ).toMatchObject({
+      minimum: 2,
+      maximum: 2,
+      selected: expect.arrayContaining([
+        expect.objectContaining({ name: "Automatic Source First" }),
+        expect.objectContaining({ name: "Automatic Source Second" }),
+      ]),
+      completeness: "complete",
+    });
 
     const withoutTrigger = removeLocalRosterSelection(
       withTrigger.value,
