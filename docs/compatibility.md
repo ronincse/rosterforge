@@ -235,6 +235,11 @@
   fallback. At 390 px and the 320 px supported minimum, repository diagnostics
   and the real-roster workspace remain inside the viewport; sticky navigation
   leaves its targets visible below the bar
+- Sticky and player-header budgets prefer the finite-limit currency authored
+  on addable army roots by exact cost-type ID, so Detachment Points remain a
+  visible setup/secondary limit rather than replacing roster Points when source
+  declaration order differs. Configuration presents Battle Size before
+  Detachment without changing stored roster order
 - Focused active-roster layout that uses the full library shell and restores
   the full-width roster setup when the active roster is cleared; stale/unknown
   data, import failures, file reports, and batch diagnostics remain available

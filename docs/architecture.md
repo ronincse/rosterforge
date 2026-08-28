@@ -490,7 +490,12 @@ underlying group projection, materialized roots, visibility, or diagnostics.
 
 The active roster workspace uses three stable destinations: `Roster`,
 `Add units`, and `Checks`. A compact sticky navigator exposes live top-level
-selection, filtered-choice, and supported-issue counts. On wide viewports the
+selection, filtered-choice, and supported-issue counts. Its roster budget
+prefers a finite-limit cost type with non-zero authored costs on addable army
+roots, matched by exact cost-type ID. This keeps ordinary roster points primary
+when a game system declares a setup-only currency such as Detachment Points
+first; other evaluated currencies remain available in setup or secondary-limit
+details. On wide viewports the
 selected roster and catalogue browser occupy separate side-by-side panes; on
 narrow viewports they return to document order as full-width sections. While a
 roster is active, this focused workspace occupies the full library shell and
@@ -506,7 +511,11 @@ to the selected card. The selected-roster tree renders top-level selections in
 titled groups, one per
 battlefield role, consuming the projection's classification rather than
 deciding membership itself. `Configuration` leads; the rest follow catalogue
-category order so the list reads the same way every time. A role with no
+category order so the list reads the same way every time. Within Configuration,
+the presentation model places `Battle Size` before `Detachment`, because army
+size establishes both points capacities before detachment choices consume one;
+other configuration keeps source order. This is presentation ordering only and
+does not rewrite durable roster occurrence order. A role with no
 entries renders nothing, so a roster without configuration shows its units
 rather than an empty heading.
 
@@ -543,8 +552,9 @@ remain explicit unavailable states, and selected occurrences remain present.
 This projection does not evaluate, mutate, filter, legalize, or persist the
 roster.
 
-`selections.groups` partitions `selections.ordered` by battlefield role and
-preserves its relative order inside each group. Each group's `amount` is a
+`selections.groups` partitions `selections.ordered` by battlefield role. Army
+groups preserve relative roster order, while Configuration applies the setup
+prerequisite ordering above. Each group's `amount` is a
 summed occurrence amount rather than a node count — the same measure as
 `topLevelSelectionCount`, which the groups add to — so a group label and the
 pane heading cannot disagree when a unit is taken more than once.

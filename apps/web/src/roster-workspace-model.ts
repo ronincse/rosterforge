@@ -194,9 +194,10 @@ export interface RosterWorkspaceSelectionGroup {
 /**
  * Top-level selections, both as one ordered list and grouped by role.
  *
- * `groups` partitions `ordered` and preserves its relative order inside each
- * group, so a group renders source order without re-sorting. Empty roles are
- * absent rather than present-and-empty.
+ * `groups` partitions `ordered`. Army roles preserve roster-relative order;
+ * Configuration applies the explicit setup prerequisite order documented by
+ * `configurationSelectionPriority`. Empty roles are absent rather than
+ * present-and-empty.
  */
 export interface RosterWorkspaceSelections {
   readonly ordered: readonly RosterWorkspaceSelection[];
@@ -293,7 +294,7 @@ export function createRosterWorkspaceViewModel(
     validation,
     header: workspaceHeaderSummary(costs, validation),
     rootChoices: workspaceRootChoices(reports.rootChoices),
-    selections: workspaceSelections(ordered),
+    selections: workspaceSelections(ordered, session),
     reports,
   };
 }
@@ -559,6 +560,7 @@ function topLevelRole(
 
 function workspaceSelections(
   ordered: readonly RosterWorkspaceSelection[],
+  session: LocalRosterSession,
 ): RosterWorkspaceSelections {
   const byKey = new Map<string, RosterWorkspaceSelection[]>();
   const roles = new Map<string, RosterWorkspaceRole>();
@@ -569,18 +571,50 @@ function workspaceSelections(
     if (bucket === undefined) byKey.set(role.key, [selection]);
     else bucket.push(selection);
   }
-  const groups = [...byKey.entries()].map(([key, selections]) => ({
-    role: roles.get(key) ?? unassignedRole,
-    selections,
-    amount: rosterSelectionsAmount(
-      selections.map(({ occurrence }) => occurrence),
-    ),
-  }));
+  const groups = [...byKey.entries()].map(([key, selections]) => {
+    const presentedSelections =
+      key === configurationRole.key
+        ? [...selections].sort(
+            (left, right) =>
+              configurationSelectionPriority(left, session) -
+              configurationSelectionPriority(right, session),
+          )
+        : selections;
+    return {
+      role: roles.get(key) ?? unassignedRole,
+      selections: presentedSelections,
+      amount: rosterSelectionsAmount(
+        presentedSelections.map(({ occurrence }) => occurrence),
+      ),
+    };
+  });
   // Insertion order would be roster order, which puts whichever unit was added
   // first at the top. Sort by catalogue order so the list reads the same way
   // every time; ties keep insertion order because sort is stable.
   groups.sort((left, right) => left.role.order - right.role.order);
   return { ordered, groups };
+}
+
+/**
+ * Orders the two 40K setup prerequisites before dependent configuration.
+ *
+ * Battle Size establishes both the roster-points ceiling and the available
+ * Detachment Points, so it must be encountered before Detachment. These are
+ * player-facing workflow names rather than data identities: the ordering is a
+ * web presentation policy only and never changes the roster or evaluator.
+ * Unknown configuration choices retain source order after the two known setup
+ * steps because JavaScript sorting is stable.
+ */
+function configurationSelectionPriority(
+  selection: RosterWorkspaceSelection,
+  session: LocalRosterSession,
+): number {
+  const sourceName =
+    session.selectionChoices.get(selection.occurrence.id)?.name ??
+    selection.occurrence.name;
+  if (sourceName === "Battle Size") return 0;
+  if (sourceName === "Detachment") return 1;
+  return 2;
 }
 
 function workspaceHeaderSummary(

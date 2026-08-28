@@ -2114,6 +2114,12 @@ describe("App local catalogue flow", () => {
   it("places the whole configuration step before the sticky builder", async () => {
     const initializationGameSystemSource = new TextDecoder()
       .decode(workspaceFixtureBytes("projection.gst"))
+      // Put the setup-only currency first to prove the sticky budget does not
+      // mistake game-system declaration order for roster-points semantics.
+      .replace(
+        /(\s*<bs:costType id="cost-points"[^>]*\/>)(\s*<bs:costType id="cost-supply"[^>]*\/>)/u,
+        "$2$1",
+      )
       .replace('name="Supply"', 'name="Detachment Points"')
       .replace(
         /(<bs:costType id="cost-supply"[^>]*?)hidden="true"/u,
@@ -2132,8 +2138,19 @@ describe("App local catalogue flow", () => {
           type="max" field="cost-supply" scope="force" value="3"
           shared="true" includeChildSelections="true"
           includeChildForces="true" />
+        <constraint id="configuration-points-max"
+          type="max" field="cost-points" scope="force" value="2000"
+          shared="true" includeChildSelections="true"
+          includeChildForces="true" />
       </constraints>
     </forceEntry>`,
+      )
+      .replace(
+        /(<selectionEntry id="initialization-unit"[\s\S]*?<\/categoryLinks>)/u,
+        `$1
+      <costs>
+        <cost name="Points" typeId="cost-points" value="80" />
+      </costs>`,
       )
       .replace(
         /(<selectionEntry id="disabled-automatic-root"[\s\S]*?<\/categoryLinks>)/u,
@@ -2152,6 +2169,36 @@ describe("App local catalogue flow", () => {
           </selectionEntries>
         </selectionEntryGroup>
       </selectionEntryGroups>`,
+      )
+      .replace(
+        /(<\/selectionEntry>\s*<\/selectionEntries>\s*<sharedSelectionEntries>)/u,
+        `</selectionEntry>
+    <selectionEntry id="configuration-battle-size" name="Battle Size"
+      type="upgrade">
+      <categoryLinks>
+        <categoryLink id="configuration-battle-size-category"
+          name="Configuration"
+          targetId="initialization-category-configuration" primary="true" />
+      </categoryLinks>
+      <constraints>
+        <constraint id="configuration-battle-size-max" type="max"
+          field="selections" scope="force" value="1" shared="true" />
+      </constraints>
+    </selectionEntry>
+    <selectionEntry id="configuration-detachment" name="Detachment"
+      type="upgrade">
+      <categoryLinks>
+        <categoryLink id="configuration-detachment-category"
+          name="Configuration"
+          targetId="initialization-category-configuration" primary="true" />
+      </categoryLinks>
+      <constraints>
+        <constraint id="configuration-detachment-max" type="max"
+          field="selections" scope="force" value="1" shared="true" />
+      </constraints>
+    </selectionEntry>
+  </selectionEntries>
+  <sharedSelectionEntries>`,
       );
     const initializationCatalogue = xmlBytes(
       initializationCatalogueSource,
@@ -2185,6 +2232,14 @@ describe("App local catalogue flow", () => {
         name: "Add Disabled Automatic Root",
       }),
     );
+    // Add in the opposite order to the required workflow. Presentation must
+    // still put Battle Size before Detachment without mutating roster order.
+    fireEvent.click(
+      within(editor).getByRole("button", { name: "Add Detachment" }),
+    );
+    fireEvent.click(
+      within(editor).getByRole("button", { name: "Add Battle Size" }),
+    );
 
     const configuration = await screen.findByRole("group", {
       name: "Configuration",
@@ -2215,6 +2270,18 @@ describe("App local catalogue flow", () => {
         selector: "strong",
       }),
     ).toBeTruthy();
+    const battleSizeSelection = within(configuration).getByText(
+      "Battle Size",
+      { selector: "strong" },
+    );
+    const detachmentSelection = within(configuration).getByText(
+      "Detachment",
+      { selector: "strong" },
+    );
+    expect(
+      battleSizeSelection.compareDocumentPosition(detachmentSelection) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
     const configurationSelectionToggle = within(configuration).getByRole(
       "button",
       { name: "Disabled Automatic Root" },
@@ -2237,12 +2304,36 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).queryByText("Disabled Automatic Root"),
     ).toBeNull();
-    // Configuration is setup, not an army unit. Its zero-cost currency remains
-    // a capacity display rather than being inflated by the configuration row.
+    // Configuration is setup, not an army unit. Its Detachment Point capacity
+    // stays beside setup, while the sticky builder leads with the currency
+    // actually authored on army choices even though it was declared second.
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 0 of 3 Detachment Points used",
+        name: "Roster, 80 of 2,000 Points used",
       }),
+    ).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("80 / 2,000")).toBeTruthy();
+    const playerHeader = screen.getByRole("region", {
+      name: "Roster summary",
+    });
+    const headlineFigures = playerHeader.querySelector(
+      ".player-header-figures",
+    );
+    expect(headlineFigures).toBeTruthy();
+    expect(
+      within(headlineFigures as HTMLElement).getByText("Points used"),
+    ).toBeTruthy();
+    const otherLimits = within(playerHeader)
+      .getByText("Other roster limits")
+      .closest("details");
+    expect(otherLimits).toBeTruthy();
+    expect(
+      within(otherLimits as HTMLElement).getByText("0 / 3"),
+    ).toBeTruthy();
+    expect(
+      within(otherLimits as HTMLElement).getByText(
+        "Detachment Points used",
+      ),
     ).toBeTruthy();
 
     fireEvent.click(

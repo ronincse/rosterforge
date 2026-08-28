@@ -345,7 +345,7 @@ export function RosterOverview({
     if (hasConfiguration) setConfigurationOpen(true);
   }, [hasConfiguration, workspace.rosterId]);
   const limitBearingCost = workspace.costs.available
-    ? headlineRosterCost(workspace.costs.activeTotals)
+    ? headlineRosterCost(workspace)
     : undefined;
   const configurationCostLimits = workspace.costs.available
     ? configurationRelevantCostLimits(
@@ -876,11 +876,47 @@ function catalogueInitiallyOpen(): boolean {
   );
 }
 
-/** Uses the presentation model's source-stable order for the primary capacity. */
+/**
+ * Prefers the currency actually used by addable army units.
+ *
+ * A game system may declare a setup-only currency such as Detachment Points
+ * before ordinary unit points. Declaration order is still the fallback, but a
+ * non-zero authored cost on an army root is stronger evidence for the sticky
+ * roster budget than a cost used only by Configuration choices. Exact type ids
+ * carry the decision; display names are never treated as currency identities.
+ */
 function headlineRosterCost(
-  totals: readonly RosterWorkspaceCost[],
+  workspace: RosterWorkspaceViewModel,
 ): RosterWorkspaceCost | undefined {
-  return totals.find(({ limit }) => limit !== undefined) ?? totals[0];
+  if (!workspace.costs.available) return undefined;
+  const armyCostTypeIds = new Set<string>();
+  if (workspace.rootChoices.available) {
+    for (const group of workspace.rootChoices.groups) {
+      if (group.section !== "army") continue;
+      for (const { choice } of group.choices) {
+        for (const cost of choice.materialized.costs) {
+          if (
+            cost.typeId !== undefined &&
+            cost.value !== undefined &&
+            Number.isFinite(cost.value) &&
+            cost.value !== 0
+          ) {
+            armyCostTypeIds.add(cost.typeId);
+          }
+        }
+      }
+    }
+  }
+  const totals = workspace.costs.activeTotals;
+  return (
+    totals.find(
+      ({ typeId, limit }) =>
+        limit !== undefined && armyCostTypeIds.has(typeId),
+    ) ??
+    totals.find(({ typeId }) => armyCostTypeIds.has(typeId)) ??
+    totals.find(({ limit }) => limit !== undefined) ??
+    totals[0]
+  );
 }
 
 /**
@@ -983,7 +1019,7 @@ function RosterPlayerHeader({
   const validationDiagnostics = validation.diagnostics.length;
   const zeroTotals = costs.zeroTotals;
   const headlineCost = costs.available
-    ? headlineRosterCost(costs.activeTotals)
+    ? headlineRosterCost(workspace)
     : undefined;
   const limitPending = pointsLimitPending(workspace, headlineCost);
   const secondaryTotals = costs.available
