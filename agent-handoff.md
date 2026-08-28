@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (live Detachments bounds complete; remaining Aeldari coverage Next)
+## Current Status — 2026-08-28 (roster budget and setup order corrected; remaining Aeldari coverage Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -98,7 +98,12 @@ diagnostic codes.
   exact one-per-roster upgrade roles such as Warlord have a dedicated toggle
   above ordinary loadout controls. Configuration now keeps its relevant
   evaluated secondary capacity visible while collapsed, including the live
-  Detachment Point total and limit. JSON catalogue-root `rules` collections now
+  Detachment Point total and limit. The sticky navigator and player header now
+  prefer a finite-limit currency actually authored on addable army roots, so
+  roster Points remain primary even when Detachment Points are declared first;
+  Configuration and secondary-limit details retain the Detachment Point budget.
+  Configuration presentation also puts Battle Size before Detachment without
+  rewriting durable roster order. JSON catalogue-root `rules` collections now
   join `sharedRules` in the typed projection, so Aeldari Battle Focus resolves
   to its authored rule text instead of a player-facing unavailable fallback. An
   open unit card now scrolls into view only when the player explicitly opens a
@@ -621,7 +626,7 @@ QA before classifying or implementing the discrepancy.
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
-| Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. One source-stable primary capacity leads the roster header; secondary limits, import provenance, and materializer reason codes stay available behind explicit disclosures rather than competing with player actions |
+| Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky and player-header budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
 | Remaining pinned Aeldari matched-play check coverage | Next | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
@@ -11899,6 +11904,77 @@ Remaining Aeldari coverage consists of one relevant unresolved root visibility
 decision, selected-unit association attributes/fields, hidden Crusade Battle
 Honours and Weapon Modifications constraint fields, and four focused-closure
 cost-type references.
+
+### Next recommended boundary
+
+**Close the one remaining relevant Aeldari root-visibility decision.** Inventory
+its exact owner, modifier carriers, conditions, and diagnostic first. Use
+Reference Behavior QA if the pinned source does not settle applicability; keep
+association and hidden Crusade fields as separate later families.
+
+## Completed Assignment — Roster Budget Priority And Setup Order, 2026-08-28
+
+Baseline `092422a`; resulting implementation commit `3b92c12` and this handoff
+commit. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The sticky navigator and full player header had selected their headline cost by
+game-system declaration order. A setup-only currency such as Detachment Points
+could therefore replace the ordinary roster-points budget even though unit
+choices do not spend it. Both surfaces now prefer a finite-limit cost type with
+non-zero authored costs on addable army roots, using exact cost-type IDs rather
+than display-name guesses. Declaration order remains a conservative fallback,
+and Detachment Points remain visible in the Configuration summary and Other
+roster limits instead of disappearing.
+
+The Configuration presentation now places Battle Size before Detachment because
+army size establishes both available roster points and Detachment Points before
+the player spends the latter. The priority uses each occurrence's immutable
+materialized source choice name and a stable presentation-only sort. It does not
+rewrite durable roster occurrence order, and unknown configuration choices keep
+their source-relative order. Rejected alternatives were cost-name matching,
+hard-coding a cost-type ID, hiding Detachment Points, treating source declaration
+order as semantic priority, and mutating roster order.
+
+### Delegation and review
+
+A native Codex child received an early bounded read-only audit. Its brief named
+the repository rules, prohibited writes and external actions, and asked it to
+trace the cost and configuration-order data flow and identify regression risks.
+It changed no files. The audit found the declaration-order dependency, confirmed
+that setup currencies already use exact type IDs, and recommended immutable
+source-choice names plus DOM ordering. Codex reviewed and implemented those
+findings; no delegated code was accepted.
+
+### Tests, corpus, and validation
+
+The synthetic UI fixture deliberately declares Detachment Points before Points,
+gives both finite limits, and adds Detachment before Battle Size. It proves that
+both persistent summaries still lead with **80 / 2,000 Points**, that **0 / 3
+Detachment Points** remains visible in Configuration and Other roster limits,
+and that Battle Size precedes Detachment in the rendered workflow.
+
+Verification:
+
+- bounded native Codex read-only audit — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **526 passed, 19 skipped (545)** across 57 files;
+- pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` —
+  **545 passed (545)** across 57 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+The in-app browser's URL policy blocked localhost browser control, so no browser
+workaround was attempted. The presentation behavior is covered by component DOM
+assertions and the pinned real-data suite; this is a validation-environment
+limitation rather than a classified product discrepancy.
+
+### Remaining unsupported behavior
+
+This checkpoint changes only presentation priority and ordering. It does not
+change cost evaluation, Battle Size or Detachment semantics, initialization,
+durable roster order, validation completeness, or any remaining pinned Aeldari
+coverage family.
 
 ### Next recommended boundary
 
