@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (conditional root limits complete; remaining Aeldari coverage Next)
+## Current Status — 2026-08-27 (focused remote catalogue scoping complete; remaining Aeldari coverage Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -112,7 +112,12 @@ diagnostic codes.
   root validation uses the same effective limit. Import and graph diagnostics
   are retained as collapsed Developer notes rather than making a fully usable
   catalogue look partially loaded; `primary-catalogue` identity literals no
-  longer create false missing-reference warnings. **The `Next` is closing the
+  longer create false missing-reference warnings. Focused repository loads now
+  materialize and expose only the catalogue the player selected while retaining
+  every transitive dependency in the graph for linked roots and definitions;
+  the Dark Angels closure no longer promotes Space Marines and Agents to peer
+  workspace buttons, and its Space Marine unit choices remain available.
+  **The `Next` is closing the
   remaining pinned Aeldari matched-play check coverage.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
@@ -176,12 +181,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **522 passed, 18 skipped (540)**.
+  `git diff --check` all pass. `pnpm test` is **524 passed, 19 skipped (543)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **540 passed**; without the variable the 18 corpus tests are skipped.
+  **543 passed**; without the variable the 19 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -11664,3 +11669,87 @@ coverage.** Start by inventorying the exact unresolved root visibility and
 selected Detachments group shapes, then choose the smallest semantics that can
 be proven from the pinned corpus and Reference Behavior QA. Keep Crusade cost
 fields separate unless the evidence shows they share the same rule.
+
+## Completed Assignment — Focused Remote Catalogue Composition, 2026-08-27
+
+Baseline `f791a0b`; resulting implementation commit `4b2138c` and this handoff
+commit. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+Selecting the Space Marines dependency from a remotely acquired Dark Angels
+library could block the browser thread and eventually crash the tab. The
+Space Marines catalogue was not missing or malformed: it is a valid standalone
+repository choice and a valid dependency whose imported roots supply ordinary
+Space Marine units to Dark Angels. The defect was the boundary between focused
+repository acquisition and generic local multi-file import. The remote path
+fed its whole dependency closure into generic composition, which eagerly built
+an independent root context for every catalogue-kind document and then exposed
+every non-library dependency as a peer workspace choice.
+
+Focused acquisition now passes the exact selected document identity into root
+materialization. The graph still contains the game system and every transitive
+catalogue dependency, so linked roots and definitions resolve normally, but
+only the requested catalogue receives a materialized context and selectable
+workspace. Local file import is unchanged and still exposes every non-library
+catalogue the player intentionally imported together. Choosing Space Marines
+as the primary faction remains available from the top-level repository selector
+and acquires its own focused closure; switching a Dark Angels dependency button
+was never an ally-force editor.
+
+### Delegation and review
+
+Claude Sonnet 5 received an early bounded read-only audit in disposable
+worktree `E:\GitHub\rosterforge-dark-angels-audit` at the exact baseline. Its
+brief named the repository rules, prohibited writes and external actions, and
+asked it to trace dependency classification, root materialization, and likely
+CPU/heap amplification. It independently confirmed that Space Marines is a
+real non-library catalogue, identified scope-unaware eager context composition,
+and rejected rewriting authored `library` metadata or tightening global
+materialization limits. Codex reproduced the failure, reviewed the findings,
+implemented the narrower document-identity scope, and verified the clean audit
+worktree before removing it. No delegated code was accepted.
+
+### Tests, corpus, and browser validation
+
+Synthetic repository coverage now proves that a selected catalogue can import
+roots from a second playable non-library catalogue without exposing that
+dependency as a peer workspace. Data-graph coverage proves that exact-document
+context scoping retains dependency resolution. The optional real-corpus test
+imports the pinned 46-document set, composes only Dark Angels, asserts one
+selectable context, and proves at least one materialized root still resolves to
+the Space Marines document.
+
+Lead browser QA reproduced the pre-fix Dark Angels → Space Marines switch as a
+browser action that did not return within 20 seconds. After the correction, the
+cached eight-file Dark Angels closure loaded and composed in about 1.5 seconds,
+reported one roster catalogue instead of three, and offered no dependency
+switch. Creating its Army Roster took about 0.4 seconds; searching `Intercessor`
+returned Assault Intercessors with Jump Packs, Assault Intercessor Squad, Heavy
+Intercessor Squad, and Intercessor Squad, confirming that linked Space Marine
+content was retained.
+
+Verification:
+
+- authenticated Claude read-only analysis — completed and changed no files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **524 passed, 19 skipped (543)** across 57 files;
+- pinned 46-document corpus suite at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **543 passed (543)** across
+  57 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint does not add nested/allied forces, change catalogue-link
+semantics, or alter local multi-catalogue import. It also does not redesign
+nested definition memoization inside the one selected context; the existing
+materialization depth and expansion budgets remain the safety boundary there.
+The roadmap's pinned Aeldari coverage families remain open and unchanged.
+
+### Next recommended boundary
+
+**Close one measured family from remaining pinned Aeldari matched-play check
+coverage.** Start with the exact unresolved root visibility and selected
+Detachments-group shapes. Preserve independent completeness reporting and use
+Reference Behavior QA before classifying any semantic discrepancy.
