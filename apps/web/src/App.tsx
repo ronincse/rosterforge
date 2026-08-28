@@ -93,30 +93,55 @@ export function App(props: AppProps) {
     void importFiles(files);
   }
 
+  const rosterOpen =
+    loadState.kind === "loaded" &&
+    rosterSession !== undefined &&
+    rosterSession.catalogue.key === selectedCatalogue?.key;
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-mode={rosterOpen ? "roster" : "library"}>
       <header className="site-header">
-        <a className="brand" href="/" aria-label="RosterForge home">
-          <span className="brand-mark" aria-hidden="true">
-            RF
-          </span>
-          <span>RosterForge</span>
-        </a>
-        <span className="local-badge">
-          <span className="local-dot" aria-hidden="true" />
-          Local processing
-        </span>
+        {rosterOpen ? (
+          <>
+            <button
+              type="button"
+              className="nav-back"
+              onClick={clearRoster}
+            >
+              Lists
+            </button>
+            <div className="nav-title">
+              <strong>{rosterSession.roster.name}</strong>
+            </div>
+            <span className="local-badge">
+              <span className="local-dot" aria-hidden="true" />
+              Local
+            </span>
+          </>
+        ) : (
+          <>
+            <a className="brand" href="/" aria-label="RosterForge home">
+              <span className="brand-mark" aria-hidden="true">
+                RF
+              </span>
+              <span>RosterForge</span>
+            </a>
+            <span className="local-badge">
+              <span className="local-dot" aria-hidden="true" />
+              Local processing
+            </span>
+          </>
+        )}
       </header>
 
       <main>
+        {!rosterOpen && (
         <section className="hero" aria-labelledby="page-title">
-          <p className="eyebrow">BattleScribe 2.03 catalogue reader</p>
-          <h1 id="page-title">Build your roster. Keep your data local.</h1>
+          <p className="eyebrow">Army lists</p>
+          <h1 id="page-title">Build your list. Keep your data local.</h1>
           <p className="hero-copy">
-            Browse a pinned community repository or open game-system and
-            catalogue files together. RosterForge verifies and reads them in
-            this browser.
+            Start a list from pinned community data, or open game-system and
+            catalogue files together. Everything stays in this browser.
           </p>
 
           <div className="import-actions">
@@ -143,6 +168,7 @@ export function App(props: AppProps) {
             Unsaved work is held for recovery until you save or discard it.
           </p>
         </section>
+        )}
 
         {/* Offered rather than restored: silently reopening stale work from a
             previous session is its own kind of surprise. */}
@@ -166,6 +192,8 @@ export function App(props: AppProps) {
           </section>
         )}
 
+        {!rosterOpen && (
+          <>
         <RemoteCatalogueSourcePanel
           state={remoteSource.state}
           sources={remoteSource.sources}
@@ -182,6 +210,8 @@ export function App(props: AppProps) {
           onLoad={(id) => void loadRosterDraft(id)}
           onDelete={(id) => void deleteRosterDraft(id)}
         />
+          </>
+        )}
 
         <section className="workspace" aria-live="polite" aria-busy={loadState.kind === "loading"}>
           {loadState.kind === "idle" && <IdleState />}
@@ -218,6 +248,8 @@ export function App(props: AppProps) {
               isSavingDraft={draftAction.kind === "saving"}
               hasSavedDraft={activeDraft !== undefined}
               unsavedChanges={unsavedChanges}
+              draftActionMessage={draftAction.message}
+              draftActionDiagnostics={draftAction.diagnostics}
             />
           )}
         </section>
@@ -253,6 +285,8 @@ function LibraryWorkspace({
   isSavingDraft,
   hasSavedDraft,
   unsavedChanges,
+  draftActionMessage,
+  draftActionDiagnostics,
 }: {
   readonly library: LocalCatalogueLibrary;
   readonly diagnostics: readonly Diagnostic[];
@@ -292,6 +326,8 @@ function LibraryWorkspace({
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
   readonly unsavedChanges: boolean;
+  readonly draftActionMessage: string | undefined;
+  readonly draftActionDiagnostics: readonly Diagnostic[];
 }) {
   const rosterActive =
     rosterSession !== undefined &&
@@ -321,6 +357,8 @@ function LibraryWorkspace({
             isSavingDraft={isSavingDraft}
             hasSavedDraft={hasSavedDraft}
             unsavedChanges={unsavedChanges}
+            draftActionMessage={draftActionMessage}
+            draftActionDiagnostics={draftActionDiagnostics}
           />
         ) : (
           <>

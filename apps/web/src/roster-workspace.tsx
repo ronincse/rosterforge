@@ -141,6 +141,8 @@ export function RosterOverview({
   isSavingDraft,
   hasSavedDraft,
   unsavedChanges,
+  draftActionMessage,
+  draftActionDiagnostics = [],
 }: {
   readonly session: LocalRosterSession;
   readonly diagnostics: readonly Diagnostic[];
@@ -171,11 +173,13 @@ export function RosterOverview({
   readonly isSavingDraft: boolean;
   readonly hasSavedDraft: boolean;
   readonly unsavedChanges: boolean;
+  readonly draftActionMessage: string | undefined;
+  readonly draftActionDiagnostics?: readonly Diagnostic[];
 }) {
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
-  const [catalogueOpen, setCatalogueOpen] = useState(
-    catalogueInitiallyOpen,
+  const [catalogueOpen, setCatalogueOpen] = useState(() =>
+    catalogueInitiallyOpen(hasSavedDraft),
   );
   const [configurationOpen, setConfigurationOpen] = useState(true);
   const [printBlocked, setPrintBlocked] = useState(false);
@@ -339,11 +343,44 @@ export function RosterOverview({
     if (configurationNeedsAttention) setConfigurationOpen(true);
   }, [configurationNeedsAttention]);
   useEffect(() => {
-    // Each roster's setup is encountered open. Removing and later restoring
-    // the configuration group is likewise a new setup encounter; ordinary
-    // edits keep the player's explicit disclosure choice.
-    if (hasConfiguration) setConfigurationOpen(true);
+    // New lists keep setup open so battle size and detachment can be chosen.
+    // A saved army starts collapsed unless that setup itself is broken or the
+    // army is still empty.
+    if (!hasConfiguration) return;
+    setConfigurationOpen(
+      configurationNeedsAttention ||
+        armyTopLevelSelectionCount === 0 ||
+        !hasSavedDraft,
+    );
   }, [hasConfiguration, workspace.rosterId]);
+  useEffect(() => {
+    document.title = `${workspace.name} — RosterForge`;
+    return () => {
+      document.title = "RosterForge";
+    };
+  }, [workspace.name]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable);
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        setCatalogueOpen(true);
+        queueMicrotask(() => {
+          document.getElementById(rootFilterId)?.focus();
+        });
+      }
+      if (event.key === "Escape") {
+        setPreviewedChoice(undefined);
+        setActiveSelectionId(undefined);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [rootFilterId]);
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace.costs.activeTotals)
     : undefined;
@@ -409,6 +446,14 @@ export function RosterOverview({
           The browser blocked the printable roster window. Allow popups for this
           local page and try again.
         </p>
+      )}
+      {draftActionMessage !== undefined && (
+        <p className="draft-action-status" role="status">
+          {draftActionMessage}
+        </p>
+      )}
+      {draftActionDiagnostics.length > 0 && (
+        <DiagnosticList diagnostics={draftActionDiagnostics} />
       )}
 
       {configurationGroup !== undefined && (
@@ -477,15 +522,12 @@ export function RosterOverview({
           type="button"
           aria-controls={catalogueOpen ? "root-choices-pane" : undefined}
           aria-expanded={catalogueOpen}
-          aria-label={`${catalogueOpen ? "Hide" : "Show"} catalogue, ${formatCount(
-            filteredRootChoiceCount,
-            "available choice",
-          )}`}
+          aria-label={`${catalogueOpen ? "Hide" : "Show"} add units, ${filteredRootChoiceCount} available`}
           onClick={() => setCatalogueOpen((open) => !open)}
         >
-          <span>{catalogueOpen ? "Hide catalogue" : "Show catalogue"}</span>
+          <span>{catalogueOpen ? "Close" : "Add unit"}</span>
           <strong>{filteredRootChoiceCount}</strong>
-          <small>available choices</small>
+          <small>units</small>
         </button>
         <a
           href="#roster-checks-heading"
@@ -508,18 +550,18 @@ export function RosterOverview({
       >
         <section
           className="selected-roster-pane"
-          aria-labelledby="selected-roster-heading"
+          aria-label="Selected roster"
           data-options-open={activeSelection !== undefined}
         >
           <div className="builder-pane-heading">
             <div>
-              <p className="eyebrow">Your roster</p>
+              <p className="eyebrow">Army</p>
               <h3 id="selected-roster-heading">Selected roster</h3>
             </div>
             <span>
               {formatCount(
                 armyTopLevelSelectionCount,
-                "army selection",
+                "unit",
               )}
             </span>
           </div>
@@ -531,14 +573,14 @@ export function RosterOverview({
             id={force === undefined ? undefined : forceAnchor(force.id)}
             data-force-id={force?.id}
           >
-            <span className="force-kicker">Starting force</span>
+            <span className="force-kicker">Army</span>
             <strong>{forceDefinitionLabel(session.forceDefinition)}</strong>
           </div>
 
           {force === undefined || armyGroups.length === 0 ? (
             <div className="empty-selected-roster">
               <strong>No units added yet</strong>
-              <span>Browse Add units to begin building this army.</span>
+              <span>Add a unit to start this list.</span>
             </div>
           ) : (
             <div className="roster-selection-list">
@@ -612,7 +654,6 @@ export function RosterOverview({
           >
             <div className="builder-pane-heading">
               <div>
-                <p className="eyebrow">Catalogue browser</p>
                 <h3 id="root-choices-heading">Add units</h3>
               </div>
               <span>
@@ -622,12 +663,12 @@ export function RosterOverview({
 
             {rootChoiceGroups.length > 0 && (
               <div className="root-choice-filter">
-                <label htmlFor={rootFilterId}>Find a unit or option</label>
+                <label htmlFor={rootFilterId}>Search units</label>
                 <input
                   id={rootFilterId}
                   type="search"
                   value={rootFilter}
-                  placeholder="Filter available roots"
+                  placeholder="Search units"
                   onChange={(event) =>
                     setRootFilter(event.currentTarget.value)
                   }
@@ -637,11 +678,11 @@ export function RosterOverview({
 
             {rootChoiceGroups.length === 0 ? (
               <p className="no-root-choices">
-                This catalogue context has no resolved visible root selections.
+                Nothing to add in this catalogue.
               </p>
             ) : filteredRootChoiceGroups.length === 0 ? (
               <p className="no-root-choices">
-                No available roots match this filter.
+                No units match.
               </p>
             ) : (
               <div className="root-choice-categories">
@@ -863,12 +904,13 @@ export function RosterOverview({
 }
 
 /**
- * Starts narrow workspaces in the roster-first reading view while keeping the
- * catalogue present on desktop. This is intentionally an initial placement
- * decision, not a live media-query subscription: resizing must not overwrite a
- * reader's explicit catalogue choice.
+ * Starts the add-unit pane open on a new desktop army. A saved list already
+ * has units to read, so it opens on the army. Phone width stays roster-first
+ * either way. This is an initial placement, not a live media-query
+ * subscription: resizing must not overwrite an explicit catalogue choice.
  */
-function catalogueInitiallyOpen(): boolean {
+function catalogueInitiallyOpen(resumingSavedDraft: boolean): boolean {
+  if (resumingSavedDraft) return false;
   return (
     typeof window === "undefined" ||
     typeof window.matchMedia !== "function" ||
@@ -876,11 +918,17 @@ function catalogueInitiallyOpen(): boolean {
   );
 }
 
-/** Uses the presentation model's source-stable order for the primary capacity. */
+/**
+ * Uses the presentation model's source-stable order for the primary capacity.
+ *
+ * Do not pick "first total that still has a limit": after units exist, pts can
+ * lose its projected cap while Detachment Points (limit 3) remains, and the
+ * army's points disappear from the headline.
+ */
 function headlineRosterCost(
   totals: readonly RosterWorkspaceCost[],
 ): RosterWorkspaceCost | undefined {
-  return totals.find(({ limit }) => limit !== undefined) ?? totals[0];
+  return totals[0];
 }
 
 /**
@@ -1077,6 +1125,7 @@ function RosterPlayerHeader({
         <span
           className="completeness-badge"
           data-completeness={header.completeness}
+          data-quiet={header.completeness === "incomplete" ? "true" : undefined}
         >
           {header.completeness === "complete"
             ? "Supported checks complete"
@@ -1853,6 +1902,7 @@ function RosterConfigurationSection({
   const containsAttention = group.selections.some(
     (selection) => selection.containsAttention,
   );
+  const setupSummary = configurationSetupSummary(group);
   return (
     <details
       className="roster-configuration"
@@ -1873,9 +1923,8 @@ function RosterConfigurationSection({
           aria-label={group.role.name}
         >
           <span className="roster-configuration-title">
-            <span className="eyebrow">Army setup</span>
             <span className="roster-configuration-name">
-              {group.role.name}
+              {setupSummary || "Choose battle size and detachment"}
             </span>
           </span>
           <span className="roster-configuration-meta">
@@ -1887,10 +1936,9 @@ function RosterConfigurationSection({
             ))}
             {containsAttention && (
               <span className="roster-configuration-attention">
-                Contains known violation
+                Needs attention
               </span>
             )}
-            <span>{formatCount(group.amount, "selection")}</span>
             <span>
               {open ? "Collapse configuration" : "Expand configuration"}
             </span>
@@ -1914,6 +1962,24 @@ function RosterConfigurationSection({
       </div>
     </details>
   );
+}
+
+/**
+ * One line of what the player actually picked, not the catalogue slot names.
+ */
+function configurationSetupSummary(
+  group: RosterWorkspaceSelectionGroup,
+): string {
+  const names: string[] = [];
+  const visit = (selection: RosterSelection) => {
+    if (selection.selections.length === 0) {
+      if (selection.name) names.push(selection.name);
+      return;
+    }
+    for (const child of selection.selections) visit(child);
+  };
+  for (const selection of group.selections) visit(selection.occurrence);
+  return names.join(" · ");
 }
 
 /**
@@ -2444,6 +2510,17 @@ function RosterSelectionItem({
   const childChoiceGroupTree = childChoices.ok
     ? rosterSelectionChoiceGroupTree(childChoices.value.groups)
     : [];
+  const hasWarlord = rosterRoleChoices.some(
+    ({ selected }) => selected.length > 0,
+  );
+  const loadoutNames = collectLoadoutNames(
+    selection,
+    new Set(
+      rosterRoleChoices
+        .map(({ choice: roleChoice }) => roleChoice.name)
+        .filter((name): name is string => name !== undefined && name !== ""),
+    ),
+  );
   const completeAmountBounds = [
     ...knownSelectionAmountBounds(session, selection.id),
     ...amountBounds,
@@ -2578,6 +2655,9 @@ function RosterSelectionItem({
               onClick={() => onSelect?.(selection.id)}
             >
               <strong>{annotatedName}</strong>
+              {hasWarlord && presentation === "row" ? (
+                <span className="unit-warlord-pill">Warlord</span>
+              ) : null}
             </button>
           ) : collapsible ? (
             <button
@@ -2613,6 +2693,11 @@ function RosterSelectionItem({
           )}
           {topLevel && <SelectionCostTotals costs={selectionModel.costs} />}
           {presentation === "row" && (
+            <span className="unit-row-chevron" aria-hidden="true">
+              ›
+            </span>
+          )}
+          {presentation !== "row" && (
             <button
               type="button"
               className="unit-card-view"
@@ -2634,6 +2719,9 @@ function RosterSelectionItem({
           )}
         </div>
       </div>}
+      {presentation === "row" && loadoutNames.length > 0 && (
+        <p className="unit-loadout-summary">{loadoutNames.join(" · ")}</p>
+      )}
       {modelComposition !== undefined && (
         <UnitCompositionSummary
           unitName={annotatedName}
@@ -3192,6 +3280,26 @@ function createModelComposition(
     total,
     entries: [...entries.values()],
   };
+}
+
+function collectLoadoutNames(
+  selection: RosterSelection,
+  skip: ReadonlySet<string>,
+): string[] {
+  const names: string[] = [];
+  const walk = (node: RosterSelection) => {
+    for (const child of node.selections) {
+      const childName = child.name ?? "";
+      if (skip.has(childName)) continue;
+      if (child.selections.length === 0) {
+        if (childName !== "") names.push(childName);
+      } else {
+        walk(child);
+      }
+    }
+  };
+  walk(selection);
+  return [...new Set(names)];
 }
 
 function UnitCompositionSummary({

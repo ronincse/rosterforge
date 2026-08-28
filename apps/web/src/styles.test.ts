@@ -62,7 +62,7 @@ describe("phone-width layout contracts", () => {
       ".unit-card-toggle::before {\n  display: inline-block;\n  width: 18px;",
     );
     expect(styles).toContain(
-      '--display-font:\n    "Bahnschrift SemiCondensed", Bahnschrift',
+      '--font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",',
     );
   });
 });

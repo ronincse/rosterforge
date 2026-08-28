@@ -850,7 +850,7 @@ describe("App local catalogue flow", () => {
     });
     expect(within(workspaceNavigation).getByText("Roster")).toBeTruthy();
     expect(
-      within(workspaceNavigation).getByText("Hide catalogue"),
+      within(workspaceNavigation).getByText("Close"),
     ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("Checks")).toBeTruthy();
     expect(
@@ -861,7 +861,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(workspaceNavigation)
         .getByRole("button", {
-          name: "Hide catalogue, 2 available choices",
+          name: "Hide add units, 2 available",
         })
         .getAttribute("aria-expanded"),
     ).toBe("true");
@@ -960,7 +960,7 @@ describe("App local catalogue flow", () => {
 
     let editor = screen.getByRole("region", { name: "Add units" });
     const catalogueToggle = within(workspaceNavigation).getByRole("button", {
-      name: "Hide catalogue, 2 available choices",
+      name: "Hide add units, 2 available",
     });
     fireEvent.click(catalogueToggle);
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
@@ -979,7 +979,7 @@ describe("App local catalogue flow", () => {
     editor = screen.getByRole("region", { name: "Add units" });
     expect(within(editor).getByText("Uncategorized")).toBeTruthy();
     const rootFilter = within(editor).getByLabelText(
-      "Find a unit or option",
+      "Search units",
     );
     expect(within(editor).getByText("2 matching choices")).toBeTruthy();
     const unitInformationButton = within(editor).getByRole("button", {
@@ -1030,7 +1030,7 @@ describe("App local catalogue flow", () => {
     );
     fireEvent.change(rootFilter, { target: { value: "missing" } });
     expect(
-      within(editor).getByText("No available roots match this filter."),
+      within(editor).getByText("No units match."),
     ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: "Add Infantry Squad" }),
@@ -1079,7 +1079,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(catalogueToggle);
     editor = screen.getByRole("region", { name: "Add units" });
     expect(
-      within(editor).getByLabelText("Find a unit or option"),
+      within(editor).getByLabelText("Search units"),
     ).toHaveProperty("value", "infantry");
     fireEvent.click(
       screen.getByRole("button", { name: "Add Infantry Squad" }),
@@ -1137,8 +1137,8 @@ describe("App local catalogue flow", () => {
     expect(armySection.querySelector(".selection-card-body")).toBeNull();
     expect(armySection.querySelector(".selection-datasheet")).toBeNull();
     expect(within(armySection).queryByText("Keywords")).toBeNull();
-    const viewButton = within(armySection).getByRole("button", {
-      name: "View",
+    const viewButton = within(unitOptions).getByRole("button", {
+      name: "View unit card",
     });
     fireEvent.click(viewButton);
     expect(viewButton.getAttribute("aria-expanded")).toBe("true");
@@ -1551,7 +1551,9 @@ describe("App local catalogue flow", () => {
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
-    fireEvent.click(within(selectedRoster).getByRole("button", { name: "View" }));
+    fireEvent.click(
+      within(selectedRoster).getByRole("button", { name: "View unit card" }),
+    );
     const unitCard = screen.getByRole("region", {
       name: "Unit card for Infantry Squad",
     });
@@ -1599,7 +1601,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
     const catalogueToggle = await screen.findByRole("button", {
-      name: "Show catalogue, 2 available choices",
+      name: "Show add units, 2 available",
     });
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("region", { name: "Add units" })).toBeNull();
@@ -2878,10 +2880,9 @@ describe("App local catalogue flow", () => {
     expect(screen.getByText("Unsaved changes")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
-    await within(shelf).findByText("Saved Saved Patrol in this browser.");
+    await screen.findByText("Saved Saved Patrol in this browser.");
     // ...and stop saying so once it is.
     expect(screen.queryByText("Unsaved changes")).toBeNull();
-    expect(within(shelf).getByText("Saved Patrol")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Update saved draft" }),
     ).toBeTruthy();
@@ -2946,7 +2947,11 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByRole("heading", { name: "Saved Patrol" }),
     ).toBeNull();
-    fireEvent.click(within(shelf).getByRole("button", { name: "Open" }));
+    const libraryShelf = screen.getByRole("region", {
+      name: "Saved roster drafts",
+    });
+    expect(within(libraryShelf).getByText("Saved Patrol")).toBeTruthy();
+    fireEvent.click(within(libraryShelf).getByRole("button", { name: "Open" }));
 
     expect(
       await screen.findByRole("heading", { name: "Saved Patrol" }),
@@ -2969,12 +2974,18 @@ describe("App local catalogue flow", () => {
     });
 
     fireEvent.click(
-      within(shelf).getByRole("button", { name: "Delete Saved Patrol" }),
+      screen.getByRole("button", { name: "Change roster setup" }),
+    );
+    const drafts = screen.getByRole("region", {
+      name: "Saved roster drafts",
+    });
+    fireEvent.click(
+      within(drafts).getByRole("button", { name: "Delete Saved Patrol" }),
     );
     fireEvent.click(
-      within(shelf).getByRole("button", { name: "Confirm delete" }),
+      within(drafts).getByRole("button", { name: "Confirm delete" }),
     );
-    await within(shelf).findByText("No roster drafts saved yet.");
+    await within(drafts).findByText("No roster drafts saved yet.");
     expect(records.size).toBe(0);
   });
 });
