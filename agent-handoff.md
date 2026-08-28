@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-27 (full-width roster setup complete; remaining Aeldari coverage Next)
+## Current Status — 2026-08-27 (live Detachments bounds complete; remaining Aeldari coverage Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -121,7 +121,14 @@ diagnostic codes.
   catalogue-library summary column. Intentional multi-catalogue local imports
   retain a compact labelled chooser; stale/unknown data, rejected files,
   truncation, and missing-game-system states remain visible, while the complete
-  file report and batch diagnostics stay in collapsed Developer details.
+  file report and batch diagnostics stay in collapsed Developer details. Live
+  selected-child inspection now evaluates a modifier-driven constraint when
+  the constraint and modifier belong to the same direct choice or transparent
+  group. Pinned Aeldari `Detachments` is exactly max one for Incursion after a
+  3 Detachment Point choice and remains unbounded at Strike Force; the former
+  unresolved group bound and its compatibility diagnostic are gone. Static
+  pre-selection initialization and ancestor-carried child modifiers remain
+  conservative and diagnostic.
   **The `Next` is closing the
   remaining pinned Aeldari matched-play check coverage.**
 - **Prior transfer.** The Codex-to-Claude transfer
@@ -616,7 +623,7 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. One source-stable primary capacity leads the roster header; secondary limits, import provenance, and materializer reason codes stay available behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
-| Remaining pinned Aeldari matched-play check coverage | Next | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, a selected Detachments group retains a modifier-driven unresolved bound, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. Measure each shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
+| Remaining pinned Aeldari matched-play check coverage | Next | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -11838,3 +11845,64 @@ families remain open and unchanged.
 coverage.** Start with the exact unresolved root visibility and selected
 Detachments-group shapes. Preserve independent completeness reporting and use
 Reference Behavior QA before classifying any semantic discrepancy.
+
+## Completed Assignment — Live Modifier-Driven Child Bounds, 2026-08-27
+
+Baseline `42818fc`; resulting implementation commit `cd6fddb` and this handoff
+commit. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The pinned Aeldari `Detachments` group has a parent-scoped maximum whose `-1`
+sentinel becomes `1` only for Incursion with a selected 3 Detachment Point
+choice. Static initialization correctly lacks that roster state, but live child
+inspection had reused the same conservative path and left the bound unresolved.
+
+Live inspection now evaluates a modifier-driven child constraint when the
+constraint and modifier are carried by the same direct choice or transparent
+group. It adds one collision-safe occurrence to an immutable temporary roster,
+uses the existing selection-constraint evaluator, and discards the probe. This
+preserves established condition scopes and ordering without persisting group
+wrappers. Static inspection is unchanged, and ancestor-carried modifiers remain
+diagnostic because their cross-carrier ordering is not established. Rejected
+alternatives were static folding without roster state, generalizing every
+carrier path, suppressing the diagnostic, and persisting transparent groups.
+
+Claude Code completed an early authenticated, bounded read-only semantic audit
+without changing files. It independently selected this family as the smallest
+safe closure and identified the same owner-local versus ancestor-carried
+boundary. Codex reviewed and applied that finding; no delegated code was
+accepted.
+
+Lead Reference Behavior QA created the temporary New Recruit list
+`RosterForge QA - Aeldari Incursion bound 2026-08-27`. Incursion plus Warhost
+showed `Detachments (1/1)` and `3 / 3 Detachment Points`; switching the same
+roster to Strike Force removed the group-wide `1/1` limit. The list remains in
+New Recruit because deleting it is a separate destructive browser action.
+
+Project-owned tests pin the same-owner conditional group before and after its
+trigger while retaining an ancestor-carried modifier as explicitly incomplete.
+The real-data guard proves max one at Incursion, unbounded at Strike Force, and
+complete live structural validation.
+
+Verification:
+
+- focused evaluator/web suites — **52 passed** across 4 files;
+- focused pinned Aeldari suite — **18 passed**;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **526 passed, 19 skipped (545)** across 57 files;
+- pinned corpus at `04c62fcd041b3808c39d5c46fd677c704027b979` —
+  **545 passed (545)** across 57 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+Remaining Aeldari coverage consists of one relevant unresolved root visibility
+decision, selected-unit association attributes/fields, hidden Crusade Battle
+Honours and Weapon Modifications constraint fields, and four focused-closure
+cost-type references.
+
+### Next recommended boundary
+
+**Close the one remaining relevant Aeldari root-visibility decision.** Inventory
+its exact owner, modifier carriers, conditions, and diagnostic first. Use
+Reference Behavior QA if the pinned source does not settle applicability; keep
+association and hidden Crusade fields as separate later families.
