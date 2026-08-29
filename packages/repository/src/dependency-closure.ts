@@ -29,6 +29,7 @@ export interface BattleScribeRepositoryDocumentSummary {
   readonly name: string;
   readonly gameSystemId?: ObjectId;
   readonly library?: boolean;
+  readonly costTypeIds: readonly ObjectId[];
   readonly catalogueLinks: readonly RepositoryCatalogueLinkSummary[];
   readonly source?: SourceFileProvenance;
 }
@@ -70,6 +71,9 @@ export function summarizeBattleScribeRepositoryDocument(
     ...(document.metadata.library === undefined
       ? {}
       : { library: document.metadata.library }),
+    costTypeIds: document.projection.costTypes.flatMap(({ id }) =>
+      id === undefined ? [] : [id],
+    ),
     catalogueLinks: document.projection.catalogueLinks.map(summarizeCatalogueLink),
     source: document.source,
   };

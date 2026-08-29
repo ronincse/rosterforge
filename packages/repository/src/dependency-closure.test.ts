@@ -179,6 +179,7 @@ function document(
     id: objectId(id),
     name: id,
     ...(kind === "catalogue" ? { gameSystemId: objectId("system") } : {}),
+    costTypeIds: [],
     catalogueLinks: targets.map((target) => ({
       targetId: objectId(target),
       name: target,

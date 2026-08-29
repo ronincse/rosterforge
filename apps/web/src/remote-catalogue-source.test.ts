@@ -185,6 +185,39 @@ describe("remote catalogue source", () => {
     ).toBe(true);
   });
 
+  it("uses repository metadata to quiet inert costs owned outside the focused closure", async () => {
+    const fixture = await externalCostTypeFixture();
+    const fetcher = fixtureFetch(fixture);
+    const indexed = await indexRemoteCatalogueSource(sourceDefinition, {
+      fetch: fetcher,
+      importedAt,
+    });
+    expect(indexed.ok).toBe(true);
+    if (!indexed.ok) return;
+
+    expect(
+      indexed.value.report.index.documents.find(
+        ({ path }) => path === "cost-owner.cat",
+      )?.costTypeIds,
+    ).toEqual(["repository-owned-cost"]);
+    const acquired = await acquireRemoteCatalogue(
+      indexed.value,
+      "selected.cat",
+      {
+        batchId: "external-cost-type-batch",
+        fetch: fetcher,
+        importedAt,
+      },
+    );
+
+    expect(acquired.ok).toBe(true);
+    if (!acquired.ok) return;
+    expect(
+      acquired.value.library.documents.map(({ source }) => source.filename),
+    ).not.toContain("cost-owner.cat");
+    expect(acquired.diagnostics).toEqual([]);
+  });
+
   it("rejects a moving or abbreviated revision before network access", async () => {
     const fetcher = vi.fn<RepositoryFetch>();
     const result = await indexRemoteCatalogueSource(
@@ -374,6 +407,51 @@ async function linkedCatalogueFixture(): Promise<SourceFixture> {
     <catalogueLink id="selected-dependency" name="Dependency"
       targetId="dependency-catalogue" importRootEntries="true" />
   </catalogueLinks>
+</catalogue>`),
+    ],
+  ]);
+  const objectIdsByPath = new Map<string, GitObjectSha>();
+  for (const [path, bytes] of bytesByPath) {
+    objectIdsByPath.set(path, await calculateGitBlobObjectId(bytes));
+  }
+  return {
+    bytesByPath,
+    objectIdsByPath,
+    totalBytes: [...bytesByPath.values()].reduce(
+      (total, bytes) => total + bytes.byteLength,
+      0,
+    ),
+  };
+}
+
+async function externalCostTypeFixture(): Promise<SourceFixture> {
+  const encode = (xml: string) => new TextEncoder().encode(xml);
+  const bytesByPath = new Map([
+    ["minimal.gst", new Uint8Array(fixtureBytes("minimal.gst"))],
+    [
+      "cost-owner.cat",
+      encode(`<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="cost-owner" name="Cost Owner" revision="1"
+  battleScribeVersion="2.03" gameSystemId="synthetic-system" library="false">
+  <costTypes>
+    <costType id="repository-owned-cost" name="Legacy Cost" defaultCostLimit="-1" hidden="true" />
+  </costTypes>
+</catalogue>`),
+    ],
+    [
+      "selected.cat",
+      encode(`<?xml version="1.0" encoding="UTF-8"?>
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="selected-catalogue" name="Selected Faction" revision="1"
+  battleScribeVersion="2.03" gameSystemId="synthetic-system" library="false">
+  <selectionEntries>
+    <selectionEntry id="legacy-entry" name="Legacy Entry" type="unit" import="true">
+      <costs>
+        <cost name="Legacy Cost" typeId="repository-owned-cost" value="0" />
+      </costs>
+    </selectionEntry>
+  </selectionEntries>
 </catalogue>`),
     ],
   ]);

@@ -30,6 +30,7 @@ export interface BrowserRemoteMetadataCacheLimits {
   readonly maxDocuments: number;
   readonly maxDiagnostics: number;
   readonly maxCatalogueLinks: number;
+  readonly maxCostTypeIds: number;
 }
 
 /**
@@ -62,7 +63,8 @@ export interface BrowserRemoteMetadataCacheMetadataRecord {
 }
 
 const recordFormat = "rosterforge.pinned-repository-metadata-cache";
-const recordVersion = 1;
+const recordVersion = 2;
+const legacyRecordVersion = 1;
 const metadataFormat =
   "rosterforge.pinned-repository-metadata-cache-metadata";
 const metadataVersion = 1;
@@ -82,6 +84,7 @@ export const defaultBrowserRemoteMetadataCacheLimits: BrowserRemoteMetadataCache
     maxDocuments: 4096,
     maxDiagnostics: 100_000,
     maxCatalogueLinks: 65_536,
+    maxCostTypeIds: 65_536,
   };
 
 /**
@@ -109,6 +112,16 @@ export function createBrowserRemoteCatalogueMetadataCache(
       const id = cacheRecordId(key);
       const record = await backend.get(id);
       if (record === undefined) return undefined;
+      if (
+        isRecord(record) &&
+        record.format === recordFormat &&
+        record.version === legacyRecordVersion
+      ) {
+        // Version 1 predates repository cost-type summaries. Treating this
+        // expected schema transition as corruption would surface a false
+        // Developer warning; the verified index rebuild will replace it.
+        return undefined;
+      }
       const decoded = decodeCacheRecord(record, id, key, resolvedLimits);
       try {
         await backend.touch(
@@ -226,7 +239,7 @@ function decodePayload(
     throw invalidPayload("has an invalid document collection");
   }
 
-  const counts = { diagnostics: 0, catalogueLinks: 0 };
+  const counts = { diagnostics: 0, catalogueLinks: 0, costTypeIds: 0 };
   return {
     status: value.status,
     totalBytes: value.totalBytes,
@@ -239,7 +252,7 @@ function decodePayload(
 
 function decodeFile(
   value: unknown,
-  counts: { diagnostics: number; catalogueLinks: number },
+  counts: { diagnostics: number; catalogueLinks: number; costTypeIds: number },
   limits: BrowserRemoteMetadataCacheLimits,
 ): RemoteRepositoryIndexFileReport {
   if (!isRecord(value)) throw invalidPayload("contains a non-object file");
@@ -298,7 +311,7 @@ function decodeTreeFile(value: unknown): PinnedGitHubRepositoryFile {
 
 function decodeDocument(
   value: unknown,
-  counts: { diagnostics: number; catalogueLinks: number },
+  counts: { diagnostics: number; catalogueLinks: number; costTypeIds: number },
   limits: BrowserRemoteMetadataCacheLimits,
 ): BattleScribeRepositoryDocumentSummary {
   if (
@@ -310,13 +323,19 @@ function decodeDocument(
     (value.gameSystemId !== undefined &&
       typeof value.gameSystemId !== "string") ||
     (value.library !== undefined && typeof value.library !== "boolean") ||
-    !Array.isArray(value.catalogueLinks)
+    !Array.isArray(value.catalogueLinks) ||
+    !Array.isArray(value.costTypeIds) ||
+    !value.costTypeIds.every((id) => typeof id === "string")
   ) {
     throw invalidPayload("contains an invalid document summary");
   }
   counts.catalogueLinks += value.catalogueLinks.length;
   if (counts.catalogueLinks > limits.maxCatalogueLinks) {
     throw invalidPayload("contains too many catalogue links");
+  }
+  counts.costTypeIds += value.costTypeIds.length;
+  if (counts.costTypeIds > limits.maxCostTypeIds) {
+    throw invalidPayload("contains too many cost-type IDs");
   }
 
   const source =
@@ -330,6 +349,7 @@ function decodeDocument(
       ? {}
       : { gameSystemId: value.gameSystemId as ObjectId }),
     ...(value.library === undefined ? {} : { library: value.library }),
+    costTypeIds: value.costTypeIds as ObjectId[],
     catalogueLinks: value.catalogueLinks.map(decodeCatalogueLink),
     ...(source === undefined ? {} : { source }),
   };

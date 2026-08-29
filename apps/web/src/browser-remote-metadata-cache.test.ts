@@ -70,6 +70,14 @@ describe("browser remote catalogue metadata cache", () => {
     ).toBeUndefined();
   });
 
+  it("treats the prior metadata schema as a quiet cache miss", async () => {
+    const cache = createBrowserRemoteCatalogueMetadataCache(
+      fixedRecordBackend(validRecord({ version: 1 })),
+    );
+
+    await expect(cache.read(cacheKey())).resolves.toBeUndefined();
+  });
+
   it.each([
     { name: "non-object record", record: "invalid" },
     {
@@ -146,6 +154,21 @@ describe("browser remote catalogue metadata cache", () => {
         ],
       }),
     ).rejects.toThrow(/too many diagnostics/i);
+
+    await expect(
+      createBrowserRemoteCatalogueMetadataCache(memoryBackend().backend, {
+        maxCostTypeIds: 1,
+      }).write(cacheKey(), {
+        ...entry,
+        documents: entry.documents.map((document) => ({
+          ...document,
+          costTypeIds: [
+            ...document.costTypeIds,
+            objectId("second-fictional-cost"),
+          ],
+        })),
+      }),
+    ).rejects.toThrow(/too many cost-type IDs/i);
   });
 
   it("evicts least-recently-used indexes before exceeding the total bound", async () => {
@@ -281,6 +304,7 @@ function validEntry(): RemoteCatalogueMetadataCacheEntry {
     name: "Fictional Catalogue",
     gameSystemId: objectId("fictional-system"),
     library: false,
+    costTypeIds: [objectId("fictional-cost")],
     catalogueLinks: [
       {
         targetId: objectId("fictional-library"),
@@ -353,7 +377,7 @@ function validRecord(overrides: Record<string, unknown> = {}): unknown {
       key.treeObjectId,
     ]),
     format: "rosterforge.pinned-repository-metadata-cache",
-    version: 1,
+    version: 2,
     key,
     payload: JSON.stringify(validEntry()),
     ...overrides,

@@ -300,6 +300,37 @@ describe("BattleScribe JSON ingestion", () => {
     );
   });
 
+  it("treats an empty cost-type default limit as absent without losing source text", () => {
+    const result = parseBattleScribeJson(
+      new TextEncoder().encode(
+        JSON.stringify({
+          gameSystem: {
+            id: "empty-limit-system",
+            name: "Empty Limit System",
+            revision: 1,
+            battleScribeVersion: "2.03",
+            costTypes: [
+              {
+                id: "cost-optional",
+                name: "Optional Cost",
+                defaultCostLimit: "",
+              },
+            ],
+          },
+        }),
+      ),
+      { source: provenance("empty-cost-limit.json") },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.diagnostics).toEqual([]);
+    const costType = result.value.projection.costTypes[0];
+    expect(costType).toBeDefined();
+    expect(Object.hasOwn(costType ?? {}, "defaultCostLimit")).toBe(false);
+    expect(costType?.node.attributes.defaultCostLimit).toBe("");
+  });
+
   it("returns a structured diagnostic for invalid JSON", () => {
     const result = parseBattleScribeJson(
       new TextEncoder().encode(

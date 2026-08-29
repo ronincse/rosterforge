@@ -27,6 +27,7 @@ import {
   modifierTargetedCategoryIds,
   parseBattleScribeAffectsSelector,
 } from "@rosterforge/evaluation";
+import { objectId } from "@rosterforge/foundation";
 import {
   pinGitHubRepository,
   planBattleScribeDependencyClosure,
@@ -598,26 +599,7 @@ describe.skipIf(realDataDirectory === undefined)(
           result.diagnostics.filter(
             ({ code }) => code === "BS_PROJECTION_INVALID_ATTRIBUTE",
           ),
-        ).toEqual([
-          expect.objectContaining({
-            details: {
-              attribute: "defaultCostLimit",
-              expectedType: "number",
-              value: "",
-            },
-            location: expect.objectContaining({
-              source: expect.objectContaining({
-                filename: "Warhammer 40,000.json",
-              }),
-              path: [
-                "gameSystem",
-                "costTypes[0]",
-                "costType[7]",
-                "@defaultCostLimit",
-              ],
-            }),
-          }),
-        ]);
+        ).toEqual([]);
       },
       120_000,
     );
@@ -2721,7 +2703,6 @@ describe.skipIf(realDataDirectory === undefined)(
         if (!result.ok) return;
         expect(diagnosticCodeCounts(result.diagnostics)).toEqual({
           BS_GRAPH_MISSING_REFERENCE: 4,
-          BS_PROJECTION_INVALID_ATTRIBUTE: 1,
         });
         expect(
           result.diagnostics
@@ -3104,10 +3085,17 @@ describe.skipIf(realDataDirectory === undefined)(
               batchId: "real-bsdata-json-aeldari-initialization",
               importedAt: "2026-07-23T00:00:00.000Z",
             },
+            graphResolution: {
+              knownRepositoryCostTypeIds: new Set([
+                objectId("4d7c-04b6-8a79-837f"),
+                objectId("1cbe-d9c9-86a8-2d41"),
+              ]),
+            },
           },
         );
         expect(result.ok).toBe(true);
         if (!result.ok) return;
+        expect(result.diagnostics).toEqual([]);
         const catalogue = result.value.catalogues.find(
           ({ name }) => name === "Xenos - Aeldari",
         );

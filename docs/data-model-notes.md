@@ -1174,9 +1174,11 @@ to 375. Across the full supplied repository, every non-library catalogue
 composes with at least one force definition and one resolved root choice.
 
 The same pinned data explicitly sets the hidden `Enhancements` cost type's
-`defaultCostLimit` to an empty string. Because absence, empty text, and zero are
-distinct, the empty string remains in the generic JSON tree and produces an
-invalid-number diagnostic rather than becoming absent or zero silently.
+`defaultCostLimit` to an empty string. That exact lexical value is the optional
+field's no-limit sentinel: it remains in the generic JSON tree and original
+source bytes, while the typed numeric property is absent. It is neither coerced
+to zero nor reported as an invalid number; non-empty invalid numerics remain
+diagnostic.
 
 The pinned 10th-edition game system contains 301 constraints, primarily
 selection-count `min`/`max` limits across parent, force, and roster scopes. It

@@ -352,11 +352,25 @@ function projectCostType(
 ): CostTypeProjection {
   return {
     ...identified(located, context),
-    ...optionalNumber(located, "defaultCostLimit", context),
+    ...optionalCostTypeDefaultLimit(located, context),
     ...optionalBoolean(located, "hidden", context),
     modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
     modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
   };
+}
+
+function optionalCostTypeDefaultLimit(
+  located: LocatedElement,
+  context: ProjectionContext,
+): Readonly<Record<string, number>> {
+  // The community JSON exporter writes an empty string when this optional
+  // cost-type limit is unset. Preserve that exact value on the generic node,
+  // but do not turn an absent limit into either numeric zero or a projection
+  // error. Other numeric fields and non-empty malformed limits stay strict.
+  if (located.node.attributes.defaultCostLimit === "") {
+    return {};
+  }
+  return optionalNumber(located, "defaultCostLimit", context);
 }
 
 function projectCost(

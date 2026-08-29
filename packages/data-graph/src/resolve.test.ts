@@ -596,6 +596,63 @@ describe("BattleScribe data graph resolution", () => {
       }),
     ]);
   });
+
+  it("only quiets unresolved zero costs proven to exist in the repository", () => {
+    const parsed = parseJsonDocument("zero-missing-cost.json", {
+      gameSystem: {
+        id: "zero-missing-cost-system",
+        name: "Zero Missing Cost System",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        selectionEntries: [
+          {
+            id: "costed-entry",
+            name: "Costed Entry",
+            type: "unit",
+            costs: [
+              { typeId: "absent-cost-type", value: 0 },
+              { typeId: "absent-cost-type", value: 2 },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const unresolved = resolveBattleScribeDataGraph([parsed.value]);
+    const graph = resolveBattleScribeDataGraph([parsed.value], {
+      knownRepositoryCostTypeIds: new Set([objectId("absent-cost-type")]),
+    });
+
+    expect(unresolved.diagnostics).toEqual([
+      expect.objectContaining({
+        message: "Missing costType target absent-cost-type (2 occurrences).",
+      }),
+    ]);
+    expect(graph.ok).toBe(true);
+    if (!graph.ok) return;
+    expect(
+      graph.value.references.filter(
+        ({ kind, targetId }) =>
+          kind === "costType" && targetId === "absent-cost-type",
+      ),
+    ).toHaveLength(2);
+    expect(
+      graph.diagnostics.filter(
+        ({ code }) => code === "BS_GRAPH_MISSING_REFERENCE",
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        message: "Missing costType target absent-cost-type.",
+        details: expect.objectContaining({
+          kind: "costType",
+          occurrenceCount: 1,
+          occurrencePaths: [expect.arrayContaining(["cost[1]", "@typeId"])],
+        }),
+      }),
+    ]);
+  });
 });
 
 function resolvedProjectionGraph() {

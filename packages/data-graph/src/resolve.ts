@@ -13,6 +13,7 @@ import type {
   ConditionGroupProjection,
   ConditionProjection,
   ConstraintProjection,
+  CostProjection,
   EntryLinkProjection,
   ForceEntryProjection,
   InfoGroupProjection,
@@ -102,6 +103,11 @@ export interface BattleScribeDataGraph {
   readonly references: readonly BattleScribeGraphReference[];
 }
 
+/** Repository-level facts that refine diagnostics without changing resolution. */
+export interface ResolveBattleScribeDataGraphOptions {
+  readonly knownRepositoryCostTypeIds?: ReadonlySet<ObjectId>;
+}
+
 const lexicalConstraintScopes = new Set([
   "force",
   "model",
@@ -126,6 +132,7 @@ const genericElementsByObjectIndex = new WeakMap<
 
 export function resolveBattleScribeDataGraph(
   documents: readonly ParsedBattleScribeDocument[],
+  options: ResolveBattleScribeDataGraphOptions = {},
 ): Result<BattleScribeDataGraph> {
   const diagnostics: Diagnostic[] = [];
   const objects = documents.flatMap((document) => objectsForDocument(document));
@@ -151,7 +158,7 @@ export function resolveBattleScribeDataGraph(
   const references = documents.flatMap((document) =>
     referencesForDocument(document, objectsById, diagnostics),
   );
-  diagnostics.push(...missingReferenceDiagnostics(references));
+  diagnostics.push(...missingReferenceDiagnostics(references, options));
   diagnostics.push(...catalogueCycleDiagnostics(documents, references));
 
   return success({
@@ -1185,6 +1192,7 @@ export function battleScribeReachableObjectsById(
 
 function missingReferenceDiagnostics(
   references: readonly BattleScribeGraphReference[],
+  options: ResolveBattleScribeDataGraphOptions,
 ): readonly Diagnostic[] {
   const groups = new Map<string, BattleScribeGraphReference[]>();
   for (const reference of references) {
@@ -1192,6 +1200,13 @@ function missingReferenceDiagnostics(
       reference.targets.length > 0 ||
       reference.unprojectedTargets.length > 0
     ) {
+      continue;
+    }
+    if (isKnownRepositoryZeroCostReference(reference, options)) {
+      // Focused repository closures intentionally omit unrelated catalogues.
+      // A verified repository index can prove that a zero-value legacy cost's
+      // definition survives outside that closure. Keep the unresolved reference
+      // available to later evaluation, but do not mislabel it as repository-missing.
       continue;
     }
     const key = [
@@ -1205,6 +1220,17 @@ function missingReferenceDiagnostics(
     groups.set(key, existing);
   }
   return [...groups.values()].map(missingReferenceDiagnostic);
+}
+
+function isKnownRepositoryZeroCostReference(
+  reference: BattleScribeGraphReference,
+  options: ResolveBattleScribeDataGraphOptions,
+): boolean {
+  return (
+    reference.kind === "costType" &&
+    (reference.source as CostProjection).value === 0 &&
+    options.knownRepositoryCostTypeIds?.has(reference.targetId) === true
+  );
 }
 
 function missingReferenceDiagnostic(

@@ -953,13 +953,14 @@ use `sharedRules`. Both spellings now feed the same typed rule projection. This
 keeps Aeldari's `Battle Focus` target `c324-e193-e23c-7d2e` resolvable from unit
 info links instead of retaining it only as an `unprojectedTarget` generic node.
 
-At commit `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, all 46 JSON files import:
-one game system and 45 catalogues. All 45 catalogue contexts compose. One
-explicit typed-value discrepancy is retained and diagnosed:
+At pinned commit `04c62fcd041b3808c39d5c46fd677c704027b979`, all 46 JSON files import:
+one game system and 45 catalogues. All 45 catalogue contexts compose.
 `Warhammer 40,000.json` gives the hidden `Enhancements` cost type an empty
-string `defaultCostLimit`. An empty string is not treated as absence or zero,
-so its typed numeric property is absent and
-`BS_PROJECTION_INVALID_ATTRIBUTE` remains observable.
+string `defaultCostLimit`. For this optional field, the exact empty value is a
+source-compatible no-limit sentinel: its typed numeric property is absent, its
+generic attribute and original bytes remain unchanged, and it does not emit
+`BS_PROJECTION_INVALID_ATTRIBUTE`. Non-empty invalid numerics are still
+diagnosed rather than coerced.
 
 On August 13, 2026, the same 46-file checkout was measured through the local
 Vite application in a Chromium browser on Windows. The selected files totalled
@@ -1080,12 +1081,13 @@ A read-only orchestration proof against the same external checkout indexed all
 46 files sequentially from 65,641,889 verified cached Git-object bytes, then reacquired the
 seven-file Imperial Knights closure entirely from cache. The focused closure
 retained 7,521,360 source bytes. Serializing the bounded metadata-cache entry
-produced 181,985 bytes for 46 document summaries, 109 catalogue links, and one
-diagnostic, comfortably below the 32 MiB browser limit. Both operation statuses
-were `complete`; the only diagnostic was the existing source-located invalid
-empty `defaultCostLimit` from `Warhammer 40,000.json`. Acquisition completeness
-here means every planned source was verified and ingested, not that all
-projected BattleScribe behavior is supported or legal.
+produced 181,985 bytes for the then-current 46 document summaries, 109 catalogue
+links, and one diagnostic, comfortably below the 32 MiB browser limit. Metadata
+cache version 2 additionally carries bounded cost-type ID summaries and rejects
+older records so they are rebuilt from verified bytes. The current exact-empty
+`defaultCostLimit` sentinel produces no projection diagnostic. Acquisition
+completeness here means every planned source was verified and ingested, not that
+all projected BattleScribe behavior is supported or legal.
 
 The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
 339 `localConditionGroup` objects under ordinary `and` groups. Every local

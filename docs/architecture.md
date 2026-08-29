@@ -1101,6 +1101,12 @@ Duplicate-ID diagnostics are emitted only for occurrences that can coexist in
 at least one document closure. Missing-reference diagnostics group equal
 source-document, reference-kind, and target-ID occurrences while retaining the
 first source location, occurrence count, and up to 25 exact occurrence paths.
+Pinned repository summaries retain declared cost-type IDs as bounded metadata.
+Remote focused acquisition passes that verified repository-wide set to graph
+resolution, allowing it to distinguish a zero-valued cost defined outside the
+downloaded closure from an ID absent from the repository. This option refines
+diagnostics only: the graph reference remains unresolved, source bytes remain
+unchanged, and nonzero or repository-absent references remain warnings.
 BattleScribe lexical selectors such as `parent`, `force`, `roster`, `self`,
 `model`, `unit`, `root-entry`, `any`, `upgrade`, and the default sentinel
 `none` remain projected strings and are not treated as object references.

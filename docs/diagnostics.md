@@ -57,6 +57,12 @@ line, column, and source-text offset ranges. The corresponding optional typed
 property is absent. Other projected fields and the generic source node remain
 available.
 
+The optional cost-type `defaultCostLimit` has one source-compatible sentinel:
+an exact empty string means no typed default limit. RosterForge preserves those
+source bytes and the empty generic attribute, omits the optional numeric
+projection, and does not emit `BS_PROJECTION_INVALID_ATTRIBUTE`. Non-empty
+invalid numeric values continue to use the diagnostic above.
+
 The browser presents successful-import projection and reference diagnostics in
 collapsed Developer notes. Severity describes the malformed or unresolved
 source fact; it does not, by itself, mean that the application failed to load a
@@ -400,6 +406,14 @@ unrelated catalogues remain indexed but do not emit a false ambiguity warning.
 Catalogue-link cycles include the detected document ID path and point to the
 link that closes the cycle. These diagnostics are advisory for graph
 construction and do not imply roster validation has run.
+
+Focused pinned-repository acquisition also supplies the verified index's
+cost-type IDs to diagnostic resolution. An unresolved zero-valued cost whose
+target is proven to exist elsewhere in that repository remains in the graph but
+does not emit `BS_GRAPH_MISSING_REFERENCE`; it is outside the focused download,
+not absent from the source. Nonzero costs and cost-type IDs absent from the
+repository remain diagnosed. Local file imports have no repository-wide proof
+and therefore retain their ordinary missing-reference diagnostics.
 
 An ID retained by the generic tree but absent from the typed object index is an
 unprojected target, not a missing reference. The graph reference exposes it

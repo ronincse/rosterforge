@@ -6,6 +6,7 @@ import {
   type BattleScribeCatalogueContextOptions,
   type BattleScribeCatalogueContexts,
   type BattleScribeDataGraph,
+  type ResolveBattleScribeDataGraphOptions,
 } from "@rosterforge/data-graph";
 import {
   failure,
@@ -25,6 +26,7 @@ import {
 export interface PrepareLocalCatalogueLibraryOptions {
   readonly import: ImportLocalBattleScribeFilesOptions;
   readonly materialization?: BattleScribeCatalogueContextOptions;
+  readonly graphResolution?: ResolveBattleScribeDataGraphOptions;
 }
 
 export type LocalCatalogueLibraryStatus =
@@ -69,6 +71,7 @@ export async function prepareLocalCatalogueLibrary(
     imported.value,
     imported.diagnostics,
     options.materialization,
+    options.graphResolution,
   );
 }
 
@@ -76,10 +79,11 @@ export function prepareImportedCatalogueLibrary(
   imported: LocalBattleScribeImportReport,
   importDiagnostics: readonly Diagnostic[] = [],
   materialization?: BattleScribeCatalogueContextOptions,
+  graphResolution?: ResolveBattleScribeDataGraphOptions,
 ): Result<LocalCatalogueLibrary> {
 
   const diagnostics = [...importDiagnostics];
-  const graph = resolveBattleScribeDataGraph(imported.documents);
+  const graph = resolveBattleScribeDataGraph(imported.documents, graphResolution);
   diagnostics.push(...graph.diagnostics);
   if (!graph.ok) {
     return failure(diagnostics);

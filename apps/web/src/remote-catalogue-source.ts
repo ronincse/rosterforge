@@ -280,6 +280,11 @@ export async function acquireRemoteCatalogue(
     // definitions resolve normally. Only the catalogue explicitly requested
     // from the repository receives an independent workspace context.
     { catalogueDocuments: [selectedDocument] },
+    {
+      knownRepositoryCostTypeIds: new Set(
+        sourceIndex.report.index.documents.flatMap(({ costTypeIds }) => costTypeIds),
+      ),
+    },
   );
   if (!prepared.ok) return prepared;
 
