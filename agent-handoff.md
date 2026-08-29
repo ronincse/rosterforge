@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (false catalogue-load diagnostics fixed; active-roster system remains Next)
+## Current Status — 2026-08-29 (all selectable catalogue loads clean; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -187,13 +187,20 @@ diagnostic codes.
   constraint domain. Unselected unit materials retain the background colour
   but use a stronger shared border for scanability. Pinned repository selection
   now distinguishes cost types defined outside a focused closure from IDs absent
-  from the repository. Zero-valued legacy cost references remain unresolved and
-  observable without producing false load warnings when the verified index owns
-  their targets; nonzero and repository-absent references remain diagnostic.
+  from the repository. Unresolved named costs remain observable and defer an
+  incomplete-cost report until selected evaluation; unavailable group defaults
+  similarly defer to group initialization. Repository reverse-consumer facts
+  keep dependency-authored condition/repeat references quiet only when a
+  consuming catalogue owns the target. Local category aliases shadow imported
+  same-kind definitions for ambiguity reporting, equal characteristic IDs are
+  scoped by profile type, and finite link-local definition reuse no longer
+  produces a false cycle. Every one of the 36 selectable focused closures and
+  the complete 46-document import now compose with zero load diagnostics.
   An exact empty optional `defaultCostLimit` is preserved in the generic source
   tree and original bytes but treated as no typed limit rather than malformed
-  numeric data. Metadata-cache version 2 carries the bounded cost-type summaries,
-  and version 1 is a quiet verified rebuild rather than a corruption warning.
+  numeric data. Metadata-cache version 3 carries bounded cost-type and 35,492
+  selection-target summaries; versions 1 and 2 are quiet verified rebuilds
+  rather than corruption warnings.
   **The `Next` remains the complete shared active-roster component and token
   system; these owner-requested material and card-geometry slices did not claim
   that broader migration.**
@@ -259,12 +266,13 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **532 passed, 19 skipped (551)**.
+  `git diff --check` all pass. `pnpm test` is **545 passed, 20 skipped (565)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **551 passed**; without the variable the 19 corpus tests are skipped.
+  **565 passed**; the focused corpus file is **19 passed**, including an exact
+  zero-diagnostic assertion for every selectable catalogue.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -700,7 +708,7 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
-| False diagnostics after pinned catalogue selection | Done | exact-empty optional `defaultCostLimit` values retain their raw source spelling but omit the typed limit without an invalid-number diagnostic. Verified repository metadata carries cost-type IDs, so zero-valued legacy costs whose definitions live outside a focused closure remain unresolved and observable without being mislabeled missing; nonzero and repository-absent targets still warn. Live Xenos - Aeldari selection reports zero repository notes, zero import diagnostics, and no warning/error console output |
+| False diagnostics after pinned catalogue selection | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; and finite link overlays no longer look cyclic. Missing unnamed costs, unproved selectors, true same-scope duplicates, and definition recursion remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console |
 | Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
@@ -12994,6 +13002,12 @@ contracts.
 
 ## Completed Assignment — False Catalogue-Load Diagnostics, 2026-08-29
 
+> **Extended and superseded in part by "Every Selectable Catalogue Load" below.**
+> The exact-empty sentinel and repository-owned zero-cost conclusions remain;
+> the claim that every nonzero missing cost should warn during catalogue load
+> did not survive the all-catalogue audit because a named cost can remain
+> self-describing until selected evaluation needs its missing aggregate type.
+
 Baseline `596140a`; resulting implementation commit `8031905` and this handoff
 commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
 unchanged at `3e9d05d`. Codex remained the active lead, primary implementer,
@@ -13082,3 +13096,111 @@ or any active-roster presentation behavior.
 **Complete the remaining shared active-roster component and token system.**
 The owner-requested catalogue diagnostic fix does not change the overhaul's
 existing Next priority.
+
+## Completed Assignment — Every Selectable Catalogue Load, 2026-08-29
+
+Baseline `dc367e8e652386f386029f3be71571d752caceab`; resulting implementation
+commit `f607c7e` and this handoff commit on
+`codex/list-builder-ui-overhaul`. Stable `main` remains intentionally unchanged
+at `3e9d05d`. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+Every one of the 36 selectable catalogues now composes its exact pinned
+dependency closure without repository or import diagnostics. The complete
+46-document compatibility import is clean too. This is diagnostic
+classification, not source sanitization: original bytes, the generic XML/JSON
+tree, unresolved references, IDs, paths, and provenance remain intact.
+
+The two World Eaters `BS_MATERIALIZATION_ENTRY_LINK_CYCLE` cards were finite
+Chaos Knights library overlays, not recursion. Distinct child links for the
+Castigator and Atrapos reuse terminal Warlord definition
+`3bee-8c85-68f7-e54b`; link-owned overlay children may now materialize that
+definition while definition-owned self- and multi-definition cycles still stop
+and diagnose.
+
+The other catalogue warnings resolved into three contextual classes. A
+catalogue-local same-kind definition shadows an imported alias for duplicate
+diagnostics, while characteristic-type IDs are interpreted under their resolved
+profile type. Named costs and unavailable group defaults remain unresolved but
+defer until selected cost evaluation or group initialization can make them
+actionable. Finally, the verified repository index records 35,492 bounded
+selection-target IDs and derives dependency-path-to-consumer facts: a condition
+or repeat selector is quiet only when a catalogue that transitively consumes
+the source dependency owns that target. Metadata payload schema version 3
+stores those summaries; versions 1 and 2 rebuild quietly from verified bytes.
+
+### Decisions and rejected alternatives
+
+Occurrence syntax and authored scope won over suppressing codes or deleting
+Developer details. Link-local overlay trees are finite by construction, so only
+their definition-owned expansion edges participate in recursive cycle closure.
+Profile containment and catalogue-local precedence refine ambiguity without
+discarding any duplicate occurrence. Repository-wide target ownership alone
+was too broad for dependency-authored selectors; reverse-consumer proof keeps
+the six Tyranid-library-to-Genestealer-Cults selectors quiet without excusing
+unrelated copied references.
+
+Fetching every possible consumer into a selected workspace was rejected because
+it would replace the bounded authored dependency closure with most of the
+repository. Blanket missing-reference suppression was rejected because unnamed
+costs, unproved condition/repeat targets, true same-scope duplicates, and real
+definition cycles remain actionable. Treating every unavailable default or
+named cost as a load failure was also rejected: both are selected-use concerns,
+and the existing initialization/evaluation reports retain incompleteness when
+they actually matter.
+
+### Delegation and review
+
+A native Codex child performed an early read-only corpus and root-cause audit in
+a disposable worktree at exact baseline `dc367e8`. Before the fix it measured
+46 documents, 36 selectable catalogues, 409 diagnostic cards, and 55 unique
+source groups: 50 missing-reference groups, three duplicate-ID groups, and two
+false cycle groups. It proved the two finite Warlord overlays, identified 14
+reverse-consumer target IDs, and separated profile-owned and local/import alias
+duplicates from true ambiguity. Codex reviewed the evidence, implemented the
+narrower rules, added negative guards for genuine cycles/duplicates/missing
+references, and accepted no delegated code. The worktree was verified tracked-
+clean and removed, including its ignored dependency artifacts.
+
+### Browser, tests, corpus, and validation
+
+At external corpus revision
+`04c62fcd041b3808c39d5c46fd677c704027b979`, an integration test imports all 46
+documents once, plans each of the 36 selectable closures, prepares the same
+focused context used by remote acquisition, and asserts exact-empty diagnostics
+for every choice. The whole-repository compatibility path is exact-empty too.
+
+Lead browser QA repeated verified repository browsing and loaded Chaos - World
+Eaters through the actual picker. It reported ready and `Developer import
+details 0 diagnostics`, with no warning/error cards. Aeldari, T'au, Tyranids,
+Deathwatch, and Drukhari then exercised the other classification families; each
+reported ready, the snapshots exposed zero diagnostics, and the browser
+warning/error console was empty. The temporary QA tab and development server
+were closed.
+
+Verification:
+
+- focused profile/context/graph plus pinned integration run — **43 passed**;
+- pinned corpus integration file — **19 passed**;
+- ordinary suite — **545 passed, 20 skipped (565 total)** across 58 files;
+- complete pinned-corpus suite — **565 passed (565)** across 58 files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+These rules classify catalogue-load diagnostics only. They do not claim that an
+unresolved named cost can be aggregated or that an unavailable default can be
+initialized: selected evaluation and group initialization still report those
+conditions and preserve incomplete validation. Reverse-consumer proof does not
+resolve a target into the focused graph or authorize undeclared dependency
+fetches. True recursive definitions, same-scope duplicate IDs, unnamed missing
+costs, unproved selectors, unknown imported behavior, and all existing
+evaluation completeness boundaries remain observable.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+The owner-requested catalogue diagnostic audit is complete and does not change
+the overhaul's existing Next priority.
