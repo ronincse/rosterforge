@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (sticky roster identity simplified; active-roster system remains Next)
+## Current Status — 2026-08-29 (sticky actions and setup hierarchy refined; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -175,7 +175,17 @@ diagnostic codes.
   preferred live cost, Add unit count, and one compact warning triangle/count.
   Combined cost/check completeness, secondary limits, zero-value source fields,
   and Developer cost diagnostics remain under Detailed supported evidence below
-  the roster rather than being discarded or repeated above it.
+  the roster rather than being discarded or repeated above it. The sticky
+  navigator now starts at the viewport edge and owns one keyboard-complete More
+  menu for undo, redo, save, print, and returning to roster setup; the former
+  page-level action grid is gone. Required complete Configuration roots cannot
+  be removed below their known floor, while optional, surplus, and incomplete
+  roots retain their recovery controls. Required informational Configuration
+  leaves such as Aeldari Battle Focus now render in a separate read-only Army
+  rules disclosure, and Battle Size keeps its direct Override points limit
+  choice alongside the standard grouped sizes without changing either
+  constraint domain. Unselected unit materials retain the background colour
+  but use a stronger shared border for scanability.
   **The `Next` remains the complete shared active-roster component and token
   system; these owner-requested material and card-geometry slices did not claim
   that broader migration.**
@@ -700,7 +710,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, one shared 14 px exposed-corner rule, and simplified sticky roster identity/warning hierarchy are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, and stronger inactive-unit borders are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -727,9 +737,10 @@ bounded and independently reviewable:
 5. ~~collapse Configuration to one settings-style summary row while preserving
    all validation and details~~ — done on the overhaul branch;
 6. complete the shared system tokens and reusable navigation, row, sheet,
-   inspector, picker, switch, stepper, status, and More-menu primitives across
-   the active roster — **Next**. The requested dense-blur navigator, separate
-   top-level unit materials, and blurred modal backdrop are already delivered;
+   inspector, picker, switch, stepper, status, and remaining command primitives
+   across the active roster — **Next**. The requested dense-blur navigator,
+   separate top-level unit materials, blurred modal backdrop, and roster-action
+   More menu are already delivered;
 7. bring Lists, roster creation, source acquisition, recovery, and their
    empty/error states into the same component system;
 8. reconcile datasheets, checks, save/duplicate/print, and print hierarchy with
@@ -12853,3 +12864,114 @@ Consolidate legacy colors, typography, spacing, and one-off navigation, row,
 sheet, inspector, picker, switch, stepper, status, and More-menu rules while
 preserving the settled sticky identity/warning, evidence, card-material,
 radius, Add unit, Configuration, unit-card, and modal contracts.
+
+## Completed Assignment — Sticky Roster Actions And Setup Hierarchy, 2026-08-29
+
+Baseline `7293e35`; resulting implementation commit `ddca33c` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged at `3e9d05d`. Codex remained the active lead, primary implementer,
+integrator, reviewer, validator, and publisher.
+
+The sticky roster navigator is now the first painted workspace surface at the
+viewport edge rather than a destination reached after scrolling. Its new 44 px
+More trigger owns Undo, Redo, Save/Update draft, Print/Save PDF, and Change
+roster setup in one blurred popover. Disabled history commands stay visible,
+Arrow Up/Down, Home, End, Escape, outside-click dismissal, and trigger focus
+return are supported, and unsaved state appears on the trigger without
+recreating the former page-level action grid. Save and print feedback remains
+in the document flow beneath the navigator.
+
+Configuration now distinguishes required editable setup from required authored
+reference information. A complete root with a positive known minimum hides its
+Remove action only when subtracting that exact occurrence would take the root
+aggregate below the floor; optional, surplus, and incomplete roots remain
+recoverable. A required complete Configuration leaf with substantive authored
+profiles, rules, information groups, or unresolved information and no child
+choice surface moves into a separate read-only Army rules disclosure. This
+places pinned Aeldari `Battle Focus - Agile Manoeuvres` beside the roster as an
+army-wide reference without changing its source bytes, projection, validation,
+or durable roster occurrence.
+
+Battle Size now presents its direct `Override points limit?` choice in the same
+responsive row as its standard grouped sizes. The DOM and mutation path still
+keep the direct choice outside the group's constraint domain. Unselected unit
+cards keep the blurred background material but use the shared
+`rgba(63, 88, 75, 0.28)` border token so their boundaries remain legible.
+
+### Decisions and rejected alternatives
+
+One discoverable command surface won over removing or auto-running document
+actions because undo availability, save state, printing, and leaving the active
+roster still need explicit player control. The menu preserves disabled commands
+and full labels rather than hiding history state or relying on icon-only
+actions. Required-root removal is based on the evaluated occurrence aggregate
+and complete known minimum rather than a blanket Configuration-name rule; that
+keeps surplus cleanup and recovery from incomplete imported data possible.
+
+Army-rule classification uses the required, complete, authored, leaf shape
+rather than the Aeldari display name, so the behavior follows source structure
+without inventing a faction exception. Moving the Override occurrence into the
+Battle Size group was rejected because it would change constraint semantics;
+CSS places the existing sibling surfaces together visually. Increasing the
+unit-card fill opacity was rejected because it would reduce the requested
+background-through-glass effect; only the border contrast changed.
+
+### Delegation and review
+
+A native Codex child performed an early read-only configuration, action-menu,
+responsive-layout, accessibility, test, and documentation audit in a disposable
+worktree at exact baseline `7293e35`. It identified the aggregate-minus-
+occurrence minimum test, authored-leaf Army rules boundary, need to retain the
+direct/group constraint split, keyboard/focus requirements, zero top padding,
+and border-only card treatment. Codex reviewed and implemented those findings.
+The worktree was verified clean and removed; no delegated code was accepted.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA created a real Xenos - Aeldari roster from the pinned local
+repository, selected Strike Force, Warhost, and Reconnaissance, and added
+Guardian Defenders. Configuration exposed Battle Size, Detachment, and Force
+Disposition without Remove actions at their floors. `Battle Focus - Agile
+Manoeuvres` appeared only in Army rules, retained all six authored profiles,
+rendered no Configuration keyword chrome, and exposed no Remove action. Battle
+Size placed Override and the standard sizes on one grid row while retaining
+separate fieldsets. The closed Guardian Defenders card computed the expected
+transparent fill, the stronger border token, and the shared 14 px radius.
+
+At the normal 781 x 1119 browser viewport the navigator began at the workspace
+edge. At 390 px its four tracks measured 167 / 74 / 44 / 44 px; at 320 px they
+measured 97 / 74 / 44 / 44 px. The popover remained contained and the document
+did not overflow at either width. Arrow Down skipped disabled Undo/Redo and
+focused Save; Escape closed the menu and restored trigger focus. The temporary
+viewport override was reset, the Aeldari roster remains open in the preview,
+and the development server was deliberately left running for the owner.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+- pinned 46-document corpus at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **552 passed (552)** across
+  58 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint does not change evaluation, source projection, root visibility,
+validation completeness, imported-data semantics, persistence formats, or
+print output. Army rules is a presentation split over the retained
+Configuration occurrences, and its exact validation links reopen and focus the
+same underlying selection. The full 2,000-point Dark Angels reference army was
+not rebuilt for this bounded interaction checkpoint. The remaining shared
+active-roster component/token consolidation, Lists/creation migration,
+duplicate workflow, print hierarchy, installed-PWA boundary, dark appearance,
+exact 200% reflow, screen-reader acceptance, and final cross-mode acceptance
+remain in the roadmap.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+Consolidate legacy colors, typography, spacing, and one-off navigation, row,
+sheet, inspector, picker, switch, stepper, status, and remaining command rules
+while preserving the settled sticky identity/warning/action menu, evidence,
+card-material, radius, Add unit, Configuration, Army rules, unit-card, and modal
+contracts.
