@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (card geometry consistency complete; active-roster system remains Next)
+## Current Status — 2026-08-29 (sticky roster identity simplified; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -66,7 +66,7 @@ diagnostic codes.
   deselection, stable name-only choice labels, detailed report demotion,
   persistent points capacity, readable imported keywords, direct-choice
   toggles, wide-screen use, and a full-width collapsible configuration step
-  before the sticky roster workspace were then completed under the resumed
+  were then completed under the resumed
   lead. Configuration selections and exact model occurrences now collapse
   independently; repeatable model choices use explicit minus/count/plus
   controls; and collapsed unit cards retain an exact total-and-type model
@@ -96,7 +96,7 @@ diagnostic codes.
   selected/maximum count, a plus-only add action, and a larger disclosure
   marker; conditional source maxima are labelled `base` and never enforced as
   evaluated capacity. Detachment choices and costed upgrades use the same cost
-  treatment. The player header keeps one source-stable primary capacity while
+  treatment. The sticky navigator keeps one source-stable primary capacity while
   secondary currencies move under `Other roster limits`, and imported
   filenames and materializer reason codes are confined to collapsed Developer
   details. Typography is larger and uses a condensed block face from the local
@@ -106,7 +106,7 @@ diagnostic codes.
   exact one-per-roster upgrade roles such as Warlord have a dedicated toggle
   above ordinary loadout controls. Configuration now keeps its relevant
   evaluated secondary capacity visible while collapsed, including the live
-  Detachment Point total and limit. The sticky navigator and player header now
+  Detachment Point total and limit. The sticky navigator now
   prefer a finite-limit currency actually authored on addable army roots, so
   roster Points remain primary even when Detachment Points are declared first;
   Configuration and secondary-limit details retain the Detachment Point budget.
@@ -119,7 +119,7 @@ diagnostic codes.
   Validation coverage uses player language (`Some rules not checked`), does not
   force an otherwise-valid technical report open, and keeps exact evaluator
   codes in collapsed Developer structural/constraint disclosures rather than
-  duplicating them in the player header. Supported direct conditional root
+  duplicating them in the player workflow. Supported direct conditional root
   modifiers now evaluate against the live single-force roster: pinned
   Incursion maxima are Dire Avengers 2 and Guardian Defenders 4, and selected
   root validation uses the same effective limit. Import and graph diagnostics
@@ -170,6 +170,12 @@ diagnostic codes.
   Configuration options are distinct higher-opacity inset material cards inside
   their overall group without adding a backdrop filter to every child. A style
   contract rejects new off-system numeric radii in the active-roster CSS.
+  The former large roster summary card is now removed. The sticky navigator is
+  the first workspace element and carries the roster name, chosen faction,
+  preferred live cost, Add unit count, and one compact warning triangle/count.
+  Combined cost/check completeness, secondary limits, zero-value source fields,
+  and Developer cost diagnostics remain under Detailed supported evidence below
+  the roster rather than being discarded or repeated above it.
   **The `Next` remains the complete shared active-roster component and token
   system; these owner-requested material and card-geometry slices did not claim
   that broader migration.**
@@ -235,12 +241,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **531 passed, 19 skipped (550)**.
+  `git diff --check` all pass. `pnpm test` is **532 passed, 19 skipped (551)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **550 passed**; without the variable the 19 corpus tests are skipped.
+  **551 passed**; without the variable the 19 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -256,10 +262,10 @@ diagnostic codes.
   indexed choice resolutions must stay at or below 20,000. The live workspace
   now consumes one tested immutable presentation model for costs, violation
   attention, configuration classification, recursive unit totals, and optional
-  active-selection ancestry. That model now also backs one `Roster summary`
-  player header, which replaced the separate cost and validation cards: totals
-  and the known-problem count lead, and validity and completeness survive as
-  independent badges. The selected-roster tree now consumes the model's
+  active-selection ancestry. The sticky navigator consumes that model for the
+  roster identity, preferred live cost, and compact known-problem count; the
+  conservative combined completeness fold remains under Detailed supported
+  evidence. The selected-roster tree now consumes the model's
   classification too, rendering `Configuration` and `Army units` as separate
   titled sections, and army cards now collapse behind their name while showing
   the projection's recursive per-unit cost. **The owner then stated the product
@@ -286,8 +292,8 @@ diagnostic codes.
   deselects one newest matching occurrence, and legitimate repeats use an
   explicit `Add another` action constrained by both the aggregate group and the
   exact occurrence's effective maximum. Configuration no longer occupies an
-  army-list role block: it is a closed-by-default settings row before the
-  sticky navigator and roster workspace. Its compact summary preserves exact
+  army-list role block: it is a closed-by-default settings row after the
+  sticky navigator and before the roster builder. Its compact summary preserves exact
   selected values, primary and setup capacities, and known attention while the
   complete editor remains one action away. New supported attention reopens the
   controls, and exact validation links reveal and focus hidden configuration
@@ -449,7 +455,7 @@ not take it ahead of anything else), and **Deferred** (out of scope until the
 owner reprioritises).
 
 The first phone-width QA pass, deterministic CI performance budget, tested
-workspace presentation model, compact player header, battlefield-role grouping,
+workspace presentation model, compact sticky identity hierarchy, battlefield-role grouping,
 one-click unit/model statlines, focused catalogue task, inline
 violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
@@ -663,18 +669,18 @@ QA before classifying or implementing the discrepancy.
 | `skipIfPresent` on modifiers | Done | 359 modifiers across 20 files. Semantics pinned on the New Recruit wiki, not inferred: the guard is a **separate string from the appended value**. The pinned Manreaper's Keywords went from blank to the full four |
 | First QA presentation cleanup | Done | violation-first checks, reader-hidden occurrence IDs, collapsed zero-value campaign costs, clearer model/wargear/Warlord disclosure, exposed model quantities, and details-level display-name notices; this is the delivered subset, not closure of the rows below |
 | Tested workspace presentation model | Done | one pure same-snapshot projection now owns headline/zero costs, violated-selection attention, exact Configuration-versus-army classification, recursive top-level costs, unavailable states, and optional active-selection ancestry; the current DOM consumes it without a layout change |
-| Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
+| Compact points-and-problems player header; remove remaining evaluator chrome | Done (superseded) | the separate cost and validation cards, `Forces`/`Selections` metrics, and satisfied/violated/unresolved triple were removed. The later owner-directed sticky-identity checkpoint removed the interim `Roster summary` card too: roster name, faction, preferred cost, and compact warning/count now live in the sticky bar, while the conservative completeness fold and retained cost evidence live under Detailed supported evidence |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open. Configuration selections start open but now collapse independently inside the outer setup step, and promoted direct model occurrences collapse independently inside a unit. Every selection card reopens when it gains supported attention. The always-visible unit row shows recursive cost plus exact total-and-type model composition |
 | Build phase and reference phase | Done | Newly added and explicitly selected army units focus one dedicated options surface that reuses the existing mutation controls; configuration never enters it. Compact rows retain cost and exact model composition, and a separate `View` opens the complete read-only card. The outer builder is roster list plus options at two columns maximum; the catalogue is a transient Add unit sheet and phone widths use its full viewport. Nested validation links focus their owning unit before resolving lazy anchors |
-| Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
-| Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; the original 1,920 px measurement was a 1,865 px shell with a 1,351 px roster and 400 px catalogue, and Add unit has since removed that catalogue column entirely. Configuration remains a full-width, default-open setup disclosure before the sticky navigator and roster workspace; its summary repeats exact capacity while setup scrolls, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration does not inflate the army-selection count |
+| Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
+| Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; the original 1,920 px measurement was a 1,865 px shell with a 1,351 px roster and 400 px catalogue, and Add unit has since removed that catalogue column entirely. Configuration remains a full-width, closed-by-default setup disclosure after the sticky navigator and before the roster builder; its summary repeats exact capacity, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration does not inflate the army-selection count |
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
 | Preview catalogue choices before selection; suppress empty Keywords sections | Done | concrete root, direct-child, repeatable-model, and grouped choices use a visually attached page-information action. The modal exposes authored rules, profiles, readable source keywords, supported static initial unit/model/equipment composition, and separately collapsed model/loadout alternatives without mutating the roster or claiming roster-dependent values are effective. Completely known empty keyword sets render no section; removed, incomplete, and unresolved evidence stays visible |
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
-| Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky and player-header budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
+| Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
 | Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
@@ -692,9 +698,9 @@ QA before classifying or implementing the discrepancy.
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
-| Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
+| Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, and one shared 14 px exposed-corner rule are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, one shared 14 px exposed-corner rule, and simplified sticky roster identity/warning hierarchy are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -12738,3 +12744,112 @@ sheet, inspector, picker, switch, stepper, status, and More-menu rules without
 pulling Lists/creation, installed-PWA, or print acceptance into the same
 checkpoint. Preserve the settled card-material, radius, Add unit,
 Configuration, unit-card, and modal interaction contracts.
+
+## Completed Assignment — Simplified Sticky Roster Identity And Warning, 2026-08-29
+
+Baseline `86f77e6`; resulting implementation commit `1e6fd53` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The large player-facing roster summary card before the builder is gone. The
+sticky blurred navigator is now the first element of the active workspace and
+its flexible leading destination carries the roster name, chosen
+catalogue/faction, and preferred evaluated cost. The Add unit destination keeps
+its available-choice count. Checks no longer competes as a third equal-width
+destination: one code-native warning triangle and visible count occupy a 44 px
+control, become red only for known violations, remain neutral at zero, and name
+an unavailable report rather than presenting a false zero.
+
+Removing prominence did not remove evidence. The legality boundary, zero-value
+source cost fields, every secondary evaluated currency, the conservative
+cost-plus-validation completeness fold, incomplete-coverage reasons, excluded
+cost counts, unresolved selections, and Developer cost diagnostics now live in
+the existing Detailed supported evidence disclosure below the roster beside
+the structural and constraint reports. The disclosure summary consumes the
+combined report completeness rather than validation completeness alone.
+
+The problems trigger keeps its existing modal and trigger-reference path. It
+now exposes `aria-haspopup`, `aria-expanded`, and a live `aria-controls` target;
+the dialog has the matching stable ID. Escape and Close continue to restore
+focus. Save, update, undo/redo, and print actions remain reachable in their
+existing action row. The navigator moved ahead of Configuration so an expanded
+settings tree can never delay the sticky identity by several screens; the
+former negative history-row margin was removed.
+
+### Decisions and rejected alternatives
+
+The roster name, faction, live budget, Add unit action, and compact problem
+status won over retaining a second identity/metrics card because those are the
+only values needed continuously while building. A text `Checks` button and
+separate structural/constraint links in the bar were rejected because they
+recreated the prominence the owner asked to remove; exact findings remain in
+the problem sheet and detailed evidence. Cost and completeness evidence was
+moved rather than deleted because unsupported imported behavior must remain
+observable and incomplete. Red at zero was rejected because it would signal an
+error that does not exist. The warning stayed a 44 px target even though its
+painted content is small, preserving phone and keyboard usability.
+
+### Delegation and review
+
+A native Codex child performed an early read-only identity/data-flow,
+accessibility, responsive-layout, test, and documentation audit from a
+disposable worktree at exact baseline `86f77e6`. It identified the required
+first-child navigator placement, combined-completeness dependency, retained
+secondary/zero cost evidence, trigger focus path, responsive truncation needs,
+and stale architecture promises. Codex reviewed and implemented those findings.
+The audit worktree was verified clean and removed; no delegated code was
+accepted.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA recovered the project-owned Selection Initialization roster in
+the already-running preview. At the normal 781 px browser viewport, the
+navigator was the first workspace child, measured 56 px high with computed
+`blur(26px) saturate(1.15)`, and the warning measured 44 x 47 px. The former
+`.roster-player-header` was absent. At a 390 px window the document/client
+widths were 375/375, the bar tracks measured 208.646 / 77.354 / 44 px, and the
+roster title and faction both remained present with overflow containment. At
+the supported 320 px window the document/client widths were 305/305, the
+identity retained 138.646 px, Add unit 77 px, and the warning 44 px; there was
+no horizontal overflow.
+
+Opening the one-known-violation problem sheet at 320 px computed a 20 px full-
+viewport backdrop blur with the dialog sharp, focused Close, and exposed the
+matching `roster-problems-dialog` control relationship. Closing restored focus
+to `Open roster problems, 1 known violation` and cleared `aria-controls`. The
+temporary responsive viewport override was reset, the roster remains open in
+the preview, and the development server was deliberately left running for the
+owner.
+
+Verification:
+
+- focused UI/style run — **532 passed, 19 skipped (551 total)** across 58 files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **532 passed, 19 skipped (551 total)** across 58 files;
+- pinned 46-document corpus at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **551 passed (551)** across
+  58 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint changes presentation only. It does not alter evaluation, root
+visibility, mutation behavior, imported-data semantics, validation
+completeness, persistent formats, or the remaining pinned Aeldari behavior
+families. The warning presents known violations only; incomplete coverage stays
+separate under Detailed supported evidence by design. The remaining shared
+active-roster token/component work, Lists/creation migration, document action
+menu and duplicate workflow, installed-PWA behavior, dark appearance, exact
+200% reflow, screen-reader acceptance, and final print/cross-mode acceptance
+remain in the roadmap. The full 2,000-point Dark Angels army was not rebuilt in
+this bounded hierarchy checkpoint.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+Consolidate legacy colors, typography, spacing, and one-off navigation, row,
+sheet, inspector, picker, switch, stepper, status, and More-menu rules while
+preserving the settled sticky identity/warning, evidence, card-material,
+radius, Add unit, Configuration, unit-card, and modal contracts.
