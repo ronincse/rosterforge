@@ -4084,9 +4084,30 @@ describe.skipIf(realDataDirectory === undefined)(
               }),
             ]),
           );
-          expect(supported.value.status.validity).toBe("valid");
+          // The force definition's category-link minimum is the roster-wide
+          // Character requirement. This configured Guardian roster has no
+          // Character, so the new fourth validation family must keep it
+          // visibly invalid even though every selected unit is structurally
+          // well formed.
+          expect(supported.value.status.validity).toBe("invalid");
           expect(supported.value.status.completeness).toBe("incomplete");
-          expect(supported.value.status.statusCounts.violated).toBe(0);
+          expect(supported.value.status.statusCounts.violated).toBe(1);
+          expect(
+            supported.value.status.findings.find(
+              ({ kind }) => kind === "categoryConstraint",
+            ),
+          ).toMatchObject({
+            kind: "categoryConstraint",
+            status: "violated",
+            report: {
+              categoryName: "Character",
+              constraintType: "min",
+              scope: "roster",
+              limit: 1,
+              observed: 0,
+              completeness: "complete",
+            },
+          });
           expect(
             supported.value.status.findings.some(
               (finding) =>

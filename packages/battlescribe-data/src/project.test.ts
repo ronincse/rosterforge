@@ -81,6 +81,36 @@ describe("BattleScribe 2.03 typed projections", () => {
     expect(
       projection.forceEntries[0]?.forceEntries[0]?.categoryLinks[0]?.targetId,
     ).toBe("category-unit");
+    expect(
+      projection.forceEntries[0]?.forceEntries[0]?.categoryLinks[0],
+    ).toMatchObject({
+      constraints: [
+        {
+          id: "force-category-min",
+          type: "min",
+          field: "selections",
+          scope: "roster",
+          value: 1,
+          includeChildSelections: true,
+          includeChildForces: true,
+        },
+      ],
+      modifiers: [
+        {
+          type: "set",
+          field: "force-category-min",
+          value: "0",
+          conditions: [
+            {
+              type: "instanceOf",
+              scope: "primary-catalogue",
+              childId: "catalogue-exempt",
+            },
+          ],
+        },
+      ],
+      modifierGroups: [],
+    });
 
     const entry = projection.selectionEntries[0];
     expect(entry).toMatchObject({

@@ -9,6 +9,9 @@ import {
 import type { Roster } from "@rosterforge/roster-model";
 
 import type {
+  RosterCategoryConstraintsInRosterReport,
+} from "./category-constraints.js";
+import type {
   RosterSelectionConstraintInspectionScope,
   RosterSelectionConstraintReport,
   RosterSelectionConstraintsInRosterReport,
@@ -52,6 +55,7 @@ describe("supported roster validation composition", () => {
     const composed = composeSupportedRosterValidation(
       structural,
       selections,
+      categoryReport(roster, context, [], "complete"),
       forces,
     );
 
@@ -105,6 +109,7 @@ describe("supported roster validation composition", () => {
         ["satisfied"],
         "complete",
       ),
+      categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
     );
 
@@ -137,6 +142,7 @@ describe("supported roster validation composition", () => {
     const composed = composeSupportedRosterValidation(
       structuralReport(roster, context, [], "valid", "complete"),
       selections,
+      categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
     );
 
@@ -169,6 +175,7 @@ describe("supported roster validation composition", () => {
         "complete",
         "base",
       ),
+      categoryReport(otherRoster, context, [], "complete"),
       forceReport(
         roster,
         context,
@@ -223,6 +230,29 @@ function structuralReport(
         }) as RosterStructuralBoundReport,
     ),
   };
+}
+
+function categoryReport(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  statuses: readonly RosterStructuralBoundStatus[],
+  completeness: ValidationCompleteness,
+): RosterCategoryConstraintsInRosterReport {
+  return {
+    roster,
+    context,
+    completeness,
+    forces: [
+      {
+        constraints: statuses.map((status) => ({
+          status,
+          constraintType: "min",
+          scope: "roster",
+          limit: 1,
+        })),
+      },
+    ],
+  } as unknown as RosterCategoryConstraintsInRosterReport;
 }
 
 function selectionReport(

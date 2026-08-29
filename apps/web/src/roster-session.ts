@@ -20,6 +20,7 @@ import {
   evaluateRosterSelectionVisibilityPath,
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
+  inspectRosterCategoryConstraintsInRoster,
   inspectSingleRosterSelectionChildChoices,
   inspectRosterSelectionDefaultAmount,
   inspectRosterForceConstraintsInRoster,
@@ -33,6 +34,7 @@ import {
   type EmptySingleForceRootChoiceInspection,
   type EmptySingleForceRosterStructuralStatus,
   type RosterForceConstraintsInRosterReport,
+  type RosterCategoryConstraintsInRosterReport,
   type RosterProfileAnnotationReport,
   type RosterProfileCharacteristicReport,
   type RosterProfileNameReport,
@@ -107,6 +109,7 @@ export interface LocalRosterSession {
 export interface LocalRosterConstraintInspection {
   readonly completeness: ValidationCompleteness;
   readonly selections: RosterSelectionConstraintsInRosterReport;
+  readonly categories: RosterCategoryConstraintsInRosterReport;
   readonly forces: RosterForceConstraintsInRosterReport;
 }
 
@@ -651,18 +654,28 @@ export function inspectLocalRosterConstraints(
     session.catalogue.context,
     { inspectionScope: "conditions" },
   );
-  const diagnostics = [...selections.diagnostics, ...forces.diagnostics];
-  if (!selections.ok || !forces.ok) {
+  const categories = inspectRosterCategoryConstraintsInRoster(
+    session.roster,
+    session.catalogue.context,
+  );
+  const diagnostics = [
+    ...selections.diagnostics,
+    ...categories.diagnostics,
+    ...forces.diagnostics,
+  ];
+  if (!selections.ok || !categories.ok || !forces.ok) {
     return failure(diagnostics);
   }
   return success(
     {
       completeness:
         selections.value.completeness === "complete" &&
+        categories.value.completeness === "complete" &&
         forces.value.completeness === "complete"
           ? "complete"
           : "incomplete",
       selections: selections.value,
+      categories: categories.value,
       forces: forces.value,
     },
     diagnostics,
@@ -1087,6 +1100,7 @@ function inspectSupportedValidation(
   const status = composeSupportedRosterValidation(
     structural.value,
     constraints.value.selections,
+    constraints.value.categories,
     constraints.value.forces,
   );
   diagnostics.push(...status.diagnostics);

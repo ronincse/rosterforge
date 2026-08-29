@@ -189,6 +189,27 @@ function projectCategoryLink(
   return {
     ...link(located, context),
     ...optionalBoolean(located, "primary", context),
+    constraints: mapContainer(
+      located,
+      "constraints",
+      "constraint",
+      context,
+      projectConstraint,
+    ),
+    modifiers: mapContainer(
+      located,
+      "modifiers",
+      "modifier",
+      context,
+      projectModifier,
+    ),
+    modifierGroups: mapContainer(
+      located,
+      "modifierGroups",
+      "modifierGroup",
+      context,
+      projectModifierGroup,
+    ),
   };
 }
 

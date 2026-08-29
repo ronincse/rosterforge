@@ -189,6 +189,16 @@ export interface RosterWorkspaceSelectionGroup {
   readonly role: RosterWorkspaceRole;
   readonly selections: readonly RosterWorkspaceSelection[];
   readonly amount: number;
+  /** Exact supported category bound for this battlefield role, when authored. */
+  readonly requirement?: RosterWorkspaceRoleRequirement;
+}
+
+export interface RosterWorkspaceRoleRequirement {
+  readonly selected: number;
+  readonly minimum?: number;
+  readonly maximum?: number;
+  readonly status: "satisfied" | "violated" | "unresolved";
+  readonly completeness: ValidationCompleteness;
 }
 
 /**
@@ -196,8 +206,9 @@ export interface RosterWorkspaceSelectionGroup {
  *
  * `groups` partitions `ordered`. Army roles preserve roster-relative order;
  * Configuration applies the explicit setup prerequisite order documented by
- * `configurationSelectionPriority`. Empty roles are absent rather than
- * present-and-empty.
+ * `configurationSelectionPriority`. Optional empty roles are absent; an empty
+ * role with an active positive minimum remains so the player can see what the
+ * roster still requires.
  */
 export interface RosterWorkspaceSelections {
   readonly ordered: readonly RosterWorkspaceSelection[];
@@ -265,6 +276,10 @@ export function createRosterWorkspaceViewModel(
       )
     : undefined;
   const categoryOrder = catalogueCategoryOrder(session);
+  const roleRequirements = workspaceRoleRequirements(
+    reports.validation,
+    categoryOrder,
+  );
   const ordered = (primaryForce?.selections ?? []).map((selection) => {
     const section = rootSelectionSection(session, selection, sectionByChoice);
     return {
@@ -294,7 +309,7 @@ export function createRosterWorkspaceViewModel(
     validation,
     header: workspaceHeaderSummary(costs, validation),
     rootChoices: workspaceRootChoices(reports.rootChoices),
-    selections: workspaceSelections(ordered, session),
+    selections: workspaceSelections(ordered, session, roleRequirements),
     reports,
   };
 }
@@ -561,6 +576,10 @@ function topLevelRole(
 function workspaceSelections(
   ordered: readonly RosterWorkspaceSelection[],
   session: LocalRosterSession,
+  roleRequirements: ReadonlyMap<string, {
+    readonly role: RosterWorkspaceRole;
+    readonly requirement: RosterWorkspaceRoleRequirement;
+  }>,
 ): RosterWorkspaceSelections {
   const byKey = new Map<string, RosterWorkspaceSelection[]>();
   const roles = new Map<string, RosterWorkspaceRole>();
@@ -571,6 +590,10 @@ function workspaceSelections(
     if (bucket === undefined) byKey.set(role.key, [selection]);
     else bucket.push(selection);
   }
+  for (const [key, required] of roleRequirements) {
+    roles.set(key, required.role);
+    if (!byKey.has(key)) byKey.set(key, []);
+  }
   const groups = [...byKey.entries()].map(([key, selections]) => {
     const presentedSelections =
       key === configurationRole.key
@@ -580,12 +603,14 @@ function workspaceSelections(
               configurationSelectionPriority(right, session),
           )
         : selections;
+    const requirement = roleRequirements.get(key)?.requirement;
     return {
       role: roles.get(key) ?? unassignedRole,
       selections: presentedSelections,
       amount: rosterSelectionsAmount(
         presentedSelections.map(({ occurrence }) => occurrence),
       ),
+      ...(requirement === undefined ? {} : { requirement }),
     };
   });
   // Insertion order would be roster order, which puts whichever unit was added
@@ -593,6 +618,90 @@ function workspaceSelections(
   // every time; ties keep insertion order because sort is stable.
   groups.sort((left, right) => left.role.order - right.role.order);
   return { ordered, groups };
+}
+
+/**
+ * Folds exact force-category bounds into one display requirement per role.
+ *
+ * The evaluator owns category counting and conditional modifier semantics.
+ * This web projection only merges multiple supported reports conservatively:
+ * strongest minimum, tightest maximum, and the least-confident status. Empty
+ * roles are seeded only by a positive active minimum, so optional catalogue
+ * categories do not flood the selected-roster pane.
+ */
+function workspaceRoleRequirements(
+  validation: Result<LocalRosterSupportedValidationInspection>,
+  categoryOrder: ReadonlyMap<string, number>,
+): ReadonlyMap<string, {
+  readonly role: RosterWorkspaceRole;
+  readonly requirement: RosterWorkspaceRoleRequirement;
+}> {
+  const requirements = new Map<string, {
+    role: RosterWorkspaceRole;
+    requirement: RosterWorkspaceRoleRequirement;
+  }>();
+  if (!validation.ok) return requirements;
+
+  for (const force of validation.value.constraints.categories.forces) {
+    for (const report of force.constraints) {
+      const categoryId = report.categoryId;
+      const limit = report.limit;
+      if (
+        categoryId === undefined ||
+        limit === undefined ||
+        report.observed === undefined ||
+        (report.constraintType !== "min" && report.constraintType !== "max")
+      ) {
+        continue;
+      }
+      const current = requirements.get(categoryId);
+      const minimum =
+        report.constraintType === "min"
+          ? Math.max(current?.requirement.minimum ?? 0, limit)
+          : current?.requirement.minimum;
+      const maximum =
+        report.constraintType === "max"
+          ? Math.min(
+              current?.requirement.maximum ?? Number.POSITIVE_INFINITY,
+              limit,
+            )
+          : current?.requirement.maximum;
+      const status =
+        current?.requirement.status === "violated" ||
+        report.status === "violated"
+          ? "violated"
+          : current?.requirement.status === "unresolved" ||
+              report.status === "unresolved"
+            ? "unresolved"
+            : "satisfied";
+      requirements.set(categoryId, {
+        role: {
+          key: categoryId,
+          name: report.categoryName,
+          order: categoryOrder.get(categoryId) ?? Number.MAX_SAFE_INTEGER - 1,
+          known: true,
+        },
+        requirement: {
+          selected: report.observed,
+          ...(minimum === undefined ? {} : { minimum }),
+          ...(maximum === undefined || !Number.isFinite(maximum)
+            ? {}
+            : { maximum }),
+          status,
+          completeness:
+            current?.requirement.completeness === "incomplete" ||
+            report.completeness === "incomplete"
+              ? "incomplete"
+              : "complete",
+        },
+      });
+    }
+  }
+
+  for (const [key, value] of requirements) {
+    if ((value.requirement.minimum ?? 0) <= 0) requirements.delete(key);
+  }
+  return requirements;
 }
 
 /**

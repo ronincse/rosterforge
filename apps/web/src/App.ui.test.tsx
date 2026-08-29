@@ -888,10 +888,10 @@ describe("App local catalogue flow", () => {
       within(playerHeader).getByText("Supported checks complete"),
     ).toBeTruthy();
     expect(
-      within(playerHeader).getByRole("link", {
+      within(playerHeader).getByRole("button", {
         name: "Checks, 0 known problems",
       }),
-    ).toHaveProperty("hash", "#roster-checks-heading");
+    ).toBeTruthy();
     expect(within(playerHeader).getByText("costs so far")).toBeTruthy();
     // A clean roster stops reporting its own zeroes: the violation links and
     // the report disclosure appear only when they point at something.
@@ -1156,7 +1156,7 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(viewButton);
     expect(viewButton.getAttribute("aria-expanded")).toBe("true");
-    let unitCardView = screen.getByRole("region", {
+    let unitCardView = screen.getByRole("dialog", {
       name: "Unit card for Infantry Squad",
     });
     expect(within(playerHeader).getByText("80")).toBeTruthy();
@@ -1350,7 +1350,7 @@ describe("App local catalogue flow", () => {
     // The weapon's own datasheet says 4; the squad's `affects` selector routes a
     // set to it. The panel has to name the declarer, or the reader cannot tell
     // why the printed value and the displayed value disagree.
-    unitCardView = screen.getByRole("region", {
+    unitCardView = screen.getByRole("dialog", {
       name: "Unit card for Veterans",
     });
     const weaponNode = within(unitCardView);
@@ -1576,7 +1576,7 @@ describe("App local catalogue flow", () => {
         name: "View unit card",
       }),
     );
-    const unitCard = screen.getByRole("region", {
+    const unitCard = screen.getByRole("dialog", {
       name: "Unit card for Infantry Squad",
     });
     expect(within(unitCard).getByText("Anhrathe")).toBeTruthy();
@@ -1705,17 +1705,20 @@ describe("App local catalogue flow", () => {
     expect(
       within(playerHeader).getByText("Supported checks complete"),
     ).toBeTruthy();
+    const checksButton = within(playerHeader).getByRole("button", {
+      name: "Checks, 1 known problem",
+    });
+    expect(checksButton).toBeTruthy();
+    // Both summary affordances open the same compact actionable problem sheet.
     expect(
-      within(playerHeader).getByRole("link", {
-        name: "Checks, 1 known problem",
-      }),
-    ).toBeTruthy();
-    // The structural link earns its place now that it points at a violation.
-    expect(
-      within(playerHeader).getByRole("link", {
+      within(playerHeader).getByRole("button", {
         name: "1 structural violation",
       }),
-    ).toHaveProperty("hash", "#roster-structural-status-heading");
+    ).toBeTruthy();
+    fireEvent.click(checksButton);
+    expect(
+      screen.getByRole("dialog", { name: "Roster problems" }),
+    ).toBeTruthy();
     expect(
       within(structuralStatus).getByText("Known violations"),
     ).toBeTruthy();
@@ -1784,10 +1787,10 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "View unit card" }),
     );
-    const unitCard = screen.getByRole("region", {
+    const unitCard = screen.getByRole("dialog", {
       name: "Unit card for Infantry Squad",
     });
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).not.toHaveBeenCalled();
     const selectedDoctrine = unitCard.querySelector(
       '[data-occurrence-id="selection-ui-group-2"]',
     );
@@ -1829,9 +1832,8 @@ describe("App local catalogue flow", () => {
     await waitFor(() => {
       expect(rosterSelection("selection-ui-group-2")).toBeNull();
     });
-    // Editing the roster updates the already-open card, but must not steal the
-    // player's scroll position by revealing that card again.
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    // Editing the roster updates the open dialog without moving the document.
+    expect(scrollIntoView).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(checksReport.hasAttribute("open")).toBe(true);
     });
@@ -2543,7 +2545,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       within(unitOptions).getByRole("button", { name: "View unit card" }),
     );
-    const unitCard = screen.getByRole("region", {
+    const unitCard = screen.getByRole("dialog", {
       name: "Unit card for Initialization Unit",
     });
     expect(

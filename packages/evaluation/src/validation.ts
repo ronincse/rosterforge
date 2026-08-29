@@ -1,5 +1,5 @@
 /**
- * Folds the three validation reports into the one answer the UI shows.
+ * Folds the four validation reports into the one answer the UI shows.
  *
  * The two dimensions stay independent, which is the rule the rest of the
  * evaluator is built around. `validity` says whether the roster breaks a
@@ -23,6 +23,10 @@ import {
 } from "@rosterforge/foundation";
 
 import type {
+  RosterCategoryConstraintReport,
+  RosterCategoryConstraintsInRosterReport,
+} from "./category-constraints.js";
+import type {
   RosterForceConstraintReport,
   RosterForceConstraintsInRosterReport,
 } from "./force-constraints.js";
@@ -38,7 +42,7 @@ import type {
 
 /**
  * Structural bounds and constraints share one status vocabulary so
- * findings from all three sources can sit in a single list.
+ * findings from all four sources can sit in a single list.
  */
 export type SupportedRosterValidationStatus =
   RosterStructuralBoundStatus;
@@ -55,6 +59,11 @@ export type SupportedRosterValidationFinding =
       readonly report: RosterSelectionConstraintReport;
     }
   | {
+      readonly kind: "categoryConstraint";
+      readonly status: SupportedRosterValidationStatus;
+      readonly report: RosterCategoryConstraintReport;
+    }
+  | {
       readonly kind: "forceConstraint";
       readonly status: SupportedRosterValidationStatus;
       readonly report: RosterForceConstraintReport;
@@ -69,6 +78,7 @@ export interface SupportedRosterValidationStatusCounts {
 export interface SupportedRosterValidationFindingCounts {
   readonly structural: number;
   readonly selectionConstraints: number;
+  readonly categoryConstraints: number;
   readonly forceConstraints: number;
 }
 
@@ -76,6 +86,7 @@ export interface SupportedRosterValidationReport
   extends ValidationStatus {
   readonly structural: EmptySingleForceRosterStructuralStatus;
   readonly selectionConstraints: RosterSelectionConstraintsInRosterReport;
+  readonly categoryConstraints: RosterCategoryConstraintsInRosterReport;
   readonly forceConstraints: RosterForceConstraintsInRosterReport;
   readonly findings: readonly SupportedRosterValidationFinding[];
   readonly statusCounts: SupportedRosterValidationStatusCounts;
@@ -83,10 +94,10 @@ export interface SupportedRosterValidationReport
 }
 
 /**
- * Composes structural, selection-constraint, and force-constraint reports
+ * Composes structural, selection-, category-, and force-constraint reports
  * into a roster verdict.
  *
- * Fails rather than composing when the three did not come from the same
+ * Fails rather than composing when the four did not come from the same
  * roster and catalogue context objects, or when the constraint reports
  * were produced at the wrong inspection scope. Both are caller mistakes
  * that would otherwise yield a confident answer about a roster nobody
@@ -94,7 +105,7 @@ export interface SupportedRosterValidationReport
  *
  * `validity` turns invalid on a structural failure or any violated bound.
  * An `unresolved` bound does not: the evaluator could not decide, which is
- * not the same as deciding against. Completeness is taken from the three
+ * not the same as deciding against. Completeness is taken from the four
  * inputs' own completeness flags, never inferred from the status counts.
  *
  * `findings` is everything that is not `satisfied`, so it carries violated
@@ -103,11 +114,13 @@ export interface SupportedRosterValidationReport
 export function composeSupportedRosterValidation(
   structural: EmptySingleForceRosterStructuralStatus,
   selectionConstraints: RosterSelectionConstraintsInRosterReport,
+  categoryConstraints: RosterCategoryConstraintsInRosterReport,
   forceConstraints: RosterForceConstraintsInRosterReport,
 ): Result<SupportedRosterValidationReport> {
   const diagnostics = compositionDiagnostics(
     structural,
     selectionConstraints,
+    categoryConstraints,
     forceConstraints,
   );
   if (diagnostics.length > 0) return failure(diagnostics);
@@ -136,7 +149,21 @@ export function composeSupportedRosterValidation(
         report,
       })),
   );
-  const items = [...structuralItems, ...selectionItems, ...forceItems];
+  const categoryItems = categoryConstraints.forces.flatMap(({ constraints }) =>
+    constraints
+      .filter(isActionableSupportedConstraintReport)
+      .map((report) => ({
+        kind: "categoryConstraint" as const,
+        status: report.status,
+        report,
+      })),
+  );
+  const items = [
+    ...structuralItems,
+    ...selectionItems,
+    ...categoryItems,
+    ...forceItems,
+  ];
   const findings = items.filter(
     ({ status }) => status !== "satisfied",
   );
@@ -148,6 +175,7 @@ export function composeSupportedRosterValidation(
   return success({
     structural,
     selectionConstraints,
+    categoryConstraints,
     forceConstraints,
     findings,
     statusCounts,
@@ -157,6 +185,7 @@ export function composeSupportedRosterValidation(
         findings,
         "selectionConstraint",
       ),
+      categoryConstraints: countFindings(findings, "categoryConstraint"),
       forceConstraints: countFindings(findings, "forceConstraint"),
     },
     validity:
@@ -166,6 +195,7 @@ export function composeSupportedRosterValidation(
     completeness:
       structural.completeness === "complete" &&
       selectionConstraints.completeness === "complete" &&
+      categoryConstraints.completeness === "complete" &&
       forceConstraints.completeness === "complete"
         ? "complete"
         : "incomplete",
@@ -187,6 +217,7 @@ export function composeSupportedRosterValidation(
 export function isActionableSupportedConstraintReport(
   report:
     | RosterSelectionConstraintReport
+    | RosterCategoryConstraintReport
     | RosterForceConstraintReport,
 ): boolean {
   return (
@@ -199,13 +230,16 @@ export function isActionableSupportedConstraintReport(
 function compositionDiagnostics(
   structural: EmptySingleForceRosterStructuralStatus,
   selectionConstraints: RosterSelectionConstraintsInRosterReport,
+  categoryConstraints: RosterCategoryConstraintsInRosterReport,
   forceConstraints: RosterForceConstraintsInRosterReport,
 ): readonly Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   if (
     structural.roster !== selectionConstraints.roster ||
+    structural.roster !== categoryConstraints.roster ||
     structural.roster !== forceConstraints.roster ||
     structural.context !== selectionConstraints.context ||
+    structural.context !== categoryConstraints.context ||
     structural.context !== forceConstraints.context
   ) {
     diagnostics.push(

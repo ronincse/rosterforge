@@ -1208,6 +1208,24 @@ EVALUATION_FORCE_CONSTRAINT_COLLECTION_OWNER_DEFINITION_UNRESOLVED
 Per-force and roster-wide collections preserve source order and expose no
 combined status or validity field.
 
+Force-category constraint inspection can emit:
+
+```text
+EVALUATION_CATEGORY_CONSTRAINT_CATALOGUE_CONTEXT_MISMATCH
+EVALUATION_CATEGORY_CONSTRAINT_OWNER_DEFINITION_UNRESOLVED
+EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED
+EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED
+EVALUATION_CATEGORY_CONSTRAINT_MEMBERSHIP_UNRESOLVED
+```
+
+These diagnostics belong to bounds authored on a force definition's category
+links. The supported shape is a finite `min` or `max` selection bound at roster
+scope with child selections and child forces included. Shape and grouped-
+modifier diagnostics retain the projected source node; unresolved membership
+means at least one selected occurrence's effective categories could not be
+established exactly. The report remains read-only, keeps validity and
+completeness independent, and never guesses a category count.
+
 ## Selection Initialization Diagnostics
 
 The read-only initialization planner can emit:

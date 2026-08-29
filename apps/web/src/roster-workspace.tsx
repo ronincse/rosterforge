@@ -12,6 +12,7 @@ import {
   isActionableSupportedConstraintReport,
   isUnboundedConstraintValue,
   planRosterSelectionInitialization,
+  type RosterCategoryConstraintReport,
   type RosterSelectionInitializationPlan,
   type RosterForceConstraintReport,
   type RosterProfileCharacteristicReport,
@@ -19,6 +20,7 @@ import {
   type RosterSelectionConstraintStatus,
   type RosterStructuralBoundReport,
   type RosterStructuralBoundStatus,
+  type SupportedRosterValidationFinding,
 } from "@rosterforge/evaluation";
 import type {
   Diagnostic,
@@ -188,9 +190,12 @@ export function RosterOverview({
     useState<SelectionOccurrenceId>();
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
+  const [problemsOpen, setProblemsOpen] = useState(false);
   const [previewedChoice, setPreviewedChoice] =
     useState<BattleScribeRosterSelectionChoice>();
   const previewReturnFocus = useRef<HTMLElement | null>(null);
+  const unitCardReturnFocus = useRef<HTMLElement | null>(null);
+  const problemsReturnFocus = useRef<HTMLElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
     useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
@@ -290,6 +295,30 @@ export function RosterOverview({
       }
     });
   };
+  const openProblems = (trigger: HTMLElement) => {
+    problemsReturnFocus.current = trigger;
+    setProblemsOpen(true);
+  };
+  const closeProblems = () => {
+    setProblemsOpen(false);
+    const returnFocus = problemsReturnFocus.current;
+    problemsReturnFocus.current = null;
+    queueMicrotask(() => {
+      if (returnFocus !== null && document.contains(returnFocus)) {
+        returnFocus.focus();
+      }
+    });
+  };
+  const closeUnitCard = () => {
+    setViewedSelectionId(undefined);
+    const returnFocus = unitCardReturnFocus.current;
+    unitCardReturnFocus.current = null;
+    queueMicrotask(() => {
+      if (returnFocus !== null && document.contains(returnFocus)) {
+        returnFocus.focus();
+      }
+    });
+  };
   useEffect(() => {
     if (activeSelectionId !== undefined && activeSelection === undefined) {
       setActiveSelectionId(undefined);
@@ -300,18 +329,6 @@ export function RosterOverview({
       setViewedSelectionId(undefined);
     }
   }, [viewedSelection, viewedSelectionId]);
-  useEffect(() => {
-    if (viewedSelectionId === undefined) return;
-    // View is a reading action, so reveal the full-width card after React
-    // mounts it instead of leaving it below a long army and making the click
-    // appear to have done nothing. Depend on the requested identity rather
-    // than the projected selection object: every roster edit rebuilds that
-    // object, and re-scrolling an already-open card steals the player's place.
-    const card = document.getElementById("selected-unit-card-view");
-    if (typeof card?.scrollIntoView === "function") {
-      card.scrollIntoView({ block: "start" });
-    }
-  }, [viewedSelectionId]);
   useEffect(() => {
     if (pendingSelectionAnchor === undefined) return;
     const target = document.getElementById(pendingSelectionAnchor);
@@ -361,7 +378,7 @@ export function RosterOverview({
     : [];
   return (
     <div className="roster-overview">
-      <RosterPlayerHeader workspace={workspace} />
+      <RosterPlayerHeader workspace={workspace} onOpenChecks={openProblems} />
 
       <div className="history-actions" aria-label="Roster actions">
         <button type="button" disabled={!canUndo} onClick={onUndo}>
@@ -498,17 +515,18 @@ export function RosterOverview({
           <strong>{filteredRootChoiceCount}</strong>
           <small>available choices</small>
         </button>
-        <a
-          href="#roster-checks-heading"
+        <button
+          type="button"
           aria-label={`Checks, ${formatCount(
             validationIssueCount,
             "known violation",
           )}`}
+          onClick={(event) => openProblems(event.currentTarget)}
         >
           <span>Checks</span>
           <strong>{validationIssueCount}</strong>
           <small>known violations</small>
-        </a>
+        </button>
       </nav>
 
       <section
@@ -559,10 +577,9 @@ export function RosterOverview({
                   tree reads like an army list rather than a flat tree. The
                   configuration group lives before the sticky workspace so it
                   can be completed and dismissed before unit building begins.
-                  A group renders only when it holds something: the add browser
-                  exposes every role for discovery, and a missing required one
-                  surfaces as a known problem in the checks rather than as an
-                  empty heading here. */}
+                  Optional empty groups remain hidden. A supported positive
+                  role minimum deliberately seeds an empty group so the roster
+                  itself shows what is still required. */}
               {armyGroups.map((group) => (
                 <RosterSelectionSection
                   key={group.role.key}
@@ -571,6 +588,7 @@ export function RosterOverview({
                   roleKnown={group.role.known}
                   selections={group.selections}
                   amount={group.amount}
+                  requirement={group.requirement}
                   section="army"
                   collapsible
                   session={session}
@@ -598,11 +616,13 @@ export function RosterOverview({
               onPreviewChoice={openChoicePreview}
               onClose={() => setActiveSelectionId(undefined)}
               onView={() =>
-                setViewedSelectionId((current) =>
-                  current === activeSelection.occurrence.id
-                    ? undefined
-                    : activeSelection.occurrence.id,
-                )
+                {
+                  unitCardReturnFocus.current =
+                    document.activeElement instanceof HTMLElement
+                      ? document.activeElement
+                      : null;
+                  setViewedSelectionId(activeSelection.occurrence.id);
+                }
               }
               viewed={
                 viewedSelectionId === activeSelection.occurrence.id
@@ -779,7 +799,14 @@ export function RosterOverview({
           onRename={onRenameSelection}
           onSetAmount={onSetSelectionAmount}
           onRemove={onRemoveSelection}
-          onClose={() => setViewedSelectionId(undefined)}
+          onClose={closeUnitCard}
+        />
+      )}
+
+      {problemsOpen && (
+        <RosterProblemsDialog
+          result={supportedValidation}
+          onClose={closeProblems}
         />
       )}
 
@@ -1012,8 +1039,10 @@ function ruleCoverageReasons(
  */
 function RosterPlayerHeader({
   workspace,
+  onOpenChecks,
 }: {
   readonly workspace: RosterWorkspaceViewModel;
+  readonly onOpenChecks: (trigger: HTMLElement) => void;
 }) {
   const { costs, validation, header } = workspace;
   const structuralViolations = validation.available
@@ -1087,20 +1116,21 @@ function RosterPlayerHeader({
           </p>
         )}
         {validation.available ? (
-          <a
+          <button
+            type="button"
             className="player-header-figure player-header-problems"
-            href="#roster-checks-heading"
             data-problems={validation.issueCount === 0 ? "none" : "present"}
             aria-label={`Checks, ${formatCount(
               validation.issueCount,
               "known problem",
             )}`}
+            onClick={(event) => onOpenChecks(event.currentTarget)}
           >
             <strong>{validation.issueCount}</strong>
             <span>
               {validation.issueCount === 1 ? "known problem" : "known problems"}
             </span>
-          </a>
+          </button>
         ) : (
           <p className="player-header-figure" data-figure="unavailable">
             <strong>&mdash;</strong>
@@ -1130,14 +1160,20 @@ function RosterPlayerHeader({
       {(structuralViolations > 0 || constraintViolations > 0) && (
         <nav className="player-header-links" aria-label="Known problems">
           {structuralViolations > 0 && (
-            <a href="#roster-structural-status-heading">
+            <button
+              type="button"
+              onClick={(event) => onOpenChecks(event.currentTarget)}
+            >
               {formatCount(structuralViolations, "structural violation")}
-            </a>
+            </button>
           )}
           {constraintViolations > 0 && (
-            <a href="#roster-constraint-heading">
+            <button
+              type="button"
+              onClick={(event) => onOpenChecks(event.currentTarget)}
+            >
               {formatCount(constraintViolations, "constraint violation")}
-            </a>
+            </button>
           )}
         </nav>
       )}
@@ -1535,7 +1571,7 @@ interface ConstraintSummaryItem {
   readonly key: string;
   readonly ownerName: string;
   readonly ownerId: string;
-  readonly ownerKind: "Selection" | "Force";
+  readonly ownerKind: "Selection" | "Category" | "Force";
   readonly status: RosterSelectionConstraintStatus;
   readonly completeness: "complete" | "incomplete";
   readonly type: string | undefined;
@@ -1746,12 +1782,17 @@ function constraintSummaryItems(
       .filter(isActionableSupportedConstraintReport)
       .map((constraint) => selectionConstraintSummaryItem(constraint)),
   );
+  const categories = report.categories.forces.flatMap(({ constraints }) =>
+    constraints
+      .filter(isActionableSupportedConstraintReport)
+      .map((constraint) => categoryConstraintSummaryItem(constraint)),
+  );
   const forces = report.forces.forces.flatMap(({ constraints }) =>
     constraints
       .filter(isActionableSupportedConstraintReport)
       .map((constraint) => forceConstraintSummaryItem(constraint)),
   );
-  return [...selections, ...forces];
+  return [...selections, ...categories, ...forces];
 }
 
 function selectionConstraintSummaryItem(
@@ -1778,12 +1819,29 @@ function forceConstraintSummaryItem(
   );
 }
 
+function categoryConstraintSummaryItem(
+  report: RosterCategoryConstraintReport,
+): ConstraintSummaryItem {
+  return constraintSummaryItem(
+    "Category",
+    report.categoryName,
+    report.categoryId ?? report.categoryLink.source.id ?? report.owner.id,
+    report.categoryId === undefined
+      ? "#root-choices-heading"
+      : `#${stableDomAnchor("roster-role", report.categoryId)}`,
+    report,
+  );
+}
+
 function constraintSummaryItem(
-  ownerKind: "Selection" | "Force",
+  ownerKind: "Selection" | "Category" | "Force",
   ownerName: string,
   ownerId: string,
   target: string,
-  report: RosterSelectionConstraintReport | RosterForceConstraintReport,
+  report:
+    | RosterSelectionConstraintReport
+    | RosterCategoryConstraintReport
+    | RosterForceConstraintReport,
 ): ConstraintSummaryItem {
   return {
     key: JSON.stringify([
@@ -2031,6 +2089,7 @@ function RosterSelectionSection({
   roleKnown,
   selections,
   amount,
+  requirement,
   section,
   collapsible,
   session,
@@ -2052,6 +2111,7 @@ function RosterSelectionSection({
   readonly roleKnown: boolean;
   readonly selections: readonly RosterWorkspaceSelection[];
   readonly amount: number;
+  readonly requirement?: RosterWorkspaceSelectionGroup["requirement"];
   readonly section: "configuration" | "army";
   /**
    * Army units start collapsed. Configuration entries start open inside the
@@ -2078,13 +2138,12 @@ function RosterSelectionSection({
   readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onSelect: (id: SelectionOccurrenceId) => void;
 }) {
-  if (selections.length === 0) return null;
   // `containsAttention` is deliberately only a routing signal here. A role can
   // point the reader toward a problem below it, but only the exact selection's
   // `attention` flag may label a row as violating something.
-  const containsAttention = selections.some(
-    (selection) => selection.containsAttention,
-  );
+  const containsAttention =
+    requirement?.status === "violated" ||
+    selections.some((selection) => selection.containsAttention);
   return (
     <section
       className="roster-selection-section"
@@ -2098,23 +2157,39 @@ function RosterSelectionSection({
         <h4 id={anchorId}>{heading}</h4>
         <div className="roster-selection-section-meta">
           {containsAttention && <span>Contains known violation</span>}
-          <span>{formatCount(amount, "selection")}</span>
+          {requirement?.minimum !== undefined ? (
+            <span
+              className="roster-role-requirement"
+              data-status={requirement.status}
+            >
+              {formatNumber(requirement.selected)} /{" "}
+              {formatNumber(requirement.minimum)} required
+            </span>
+          ) : (
+            <span>{formatCount(amount, "selection")}</span>
+          )}
         </div>
       </div>
-      <RosterTopLevelSelectionList
-        roleKnown={roleKnown}
-        selections={selections}
-        session={session}
-        selectionCanAddAnother={selectionCanAddAnother}
-        collapsible={collapsible}
-        onAddChild={onAddChild}
-        onRename={onRename}
-        onSetAmount={onSetAmount}
-        onRemove={onRemove}
-        onPreviewChoice={onPreviewChoice}
-        presentation="row"
-        onSelect={onSelect}
-      />
+      {selections.length === 0 ? (
+        <p className="roster-selection-section-empty">
+          Add {heading.toLocaleLowerCase()} units to meet this requirement.
+        </p>
+      ) : (
+        <RosterTopLevelSelectionList
+          roleKnown={roleKnown}
+          selections={selections}
+          session={session}
+          selectionCanAddAnother={selectionCanAddAnother}
+          collapsible={collapsible}
+          onAddChild={onAddChild}
+          onRename={onRename}
+          onSetAmount={onSetAmount}
+          onRemove={onRemove}
+          onPreviewChoice={onPreviewChoice}
+          presentation="row"
+          onSelect={onSelect}
+        />
+      )}
     </section>
   );
 }
@@ -2529,7 +2604,7 @@ function RosterUnitOptionsPanel({
   );
 }
 
-/** Read-only full-width datasheet for the unit chosen with the row View action. */
+/** Read-only modal datasheet for the unit chosen with the row View action. */
 function RosterUnitCardView({
   session,
   selectionModel,
@@ -2561,39 +2636,240 @@ function RosterUnitCardView({
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
   return (
-    <section
-      className="unit-card-view-panel"
-      id="selected-unit-card-view"
-      aria-label={`Unit card for ${name}`}
-      aria-labelledby="selected-unit-card-heading"
+    <div
+      className="choice-preview-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        if (event.key === "Tab") trapDialogFocus(event.currentTarget, event);
+      }}
     >
-      <div className="selected-unit-panel-heading">
-        <div>
-          <span className="eyebrow">Unit reference</span>
-          <h3 id="selected-unit-card-heading">Unit card for {name}</h3>
+      <section
+        id="selected-unit-card-view"
+        className="choice-preview-dialog unit-card-view-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Unit card for ${name}`}
+      >
+        <div className="selected-unit-panel-heading">
+          <div>
+            <span className="eyebrow">Unit reference</span>
+            <h3 id="selected-unit-card-heading">{name}</h3>
+          </div>
+          <button
+            type="button"
+            autoFocus
+            aria-label={`Close unit card for ${name}`}
+            onClick={onClose}
+          >
+            Close
+          </button>
         </div>
-        <button type="button" aria-label={`Close unit card for ${name}`} onClick={onClose}>
-          Close
-        </button>
-      </div>
-      <ul className="roster-top-level-selection-list unit-card-view-list">
-        <RosterSelectionItem
-          session={session}
-          selectionModel={selectionModel}
-          selectionCanAddAnother={selectionCanAddAnother}
-          topLevel
-          presentation="card"
-          embedded
-          hideOccurrence
-          allowRemove={false}
-          onAddChild={onAddChild}
-          onRename={onRename}
-          onSetAmount={onSetAmount}
-          onRemove={onRemove}
-        />
-      </ul>
-    </section>
+        <ul className="roster-top-level-selection-list unit-card-view-list">
+          <RosterSelectionItem
+            session={session}
+            selectionModel={selectionModel}
+            selectionCanAddAnother={selectionCanAddAnother}
+            topLevel
+            presentation="card"
+            embedded
+            hideOccurrence
+            allowRemove={false}
+            onAddChild={onAddChild}
+            onRename={onRename}
+            onSetAmount={onSetAmount}
+            onRemove={onRemove}
+          />
+        </ul>
+      </section>
+    </div>
   );
+}
+
+/** Player-facing problem summary opened from the roster's persistent counters. */
+function RosterProblemsDialog({
+  result,
+  onClose,
+}: {
+  readonly result: ReturnType<typeof inspectLocalRosterSupportedValidation>;
+  readonly onClose: () => void;
+}) {
+  const findings = result.ok
+    ? result.value.status.findings.filter(({ status }) => status === "violated")
+    : [];
+  return (
+    <div
+      className="choice-preview-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        if (event.key === "Tab") trapDialogFocus(event.currentTarget, event);
+      }}
+    >
+      <section
+        className="choice-preview-dialog roster-problems-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Roster problems"
+      >
+        <header className="choice-preview-heading">
+          <div>
+            <span className="eyebrow">Roster checks</span>
+            <h3>{formatCount(findings.length, "known problem")}</h3>
+          </div>
+          <button type="button" autoFocus onClick={onClose}>
+            Close
+          </button>
+        </header>
+        {!result.ok ? (
+          <div className="roster-problems-content">
+            <p>Roster checks are unavailable.</p>
+            <DiagnosticList diagnostics={result.diagnostics} />
+          </div>
+        ) : findings.length === 0 ? (
+          <p className="choice-preview-empty">No supported rule is known to be violated.</p>
+        ) : (
+          <ul className="roster-problem-list">
+            {findings.map((finding) => (
+              <li key={validationFindingKey(finding)}>
+                <div>
+                  <strong>{validationFindingMessage(finding)}</strong>
+                  <span>{validationFindingObservation(finding)}</span>
+                </div>
+                <a
+                  href={validationFindingTarget(finding)}
+                  onClick={onClose}
+                >
+                  Review
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        {result.ok && result.value.status.completeness === "incomplete" && (
+          <p className="roster-problems-coverage">
+            Some catalogue behavior is not checked yet. Developer evidence
+            remains available in Checks and diagnostics below the workspace.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function validationFindingMessage(
+  finding: SupportedRosterValidationFinding,
+): string {
+  if (finding.kind === "categoryConstraint") {
+    const { categoryName, constraintType, limit, observed, minimum } =
+      finding.report;
+    if (constraintType === "min" && limit !== undefined) {
+      const selected = observed ?? minimum;
+      return `${categoryName}: ${formatCount(
+        Math.max(0, limit - selected),
+        "more selection",
+      )} required`;
+    }
+    if (constraintType === "max" && limit !== undefined) {
+      const selected = observed ?? minimum;
+      return `${categoryName}: ${formatCount(
+        Math.max(0, selected - limit),
+        "selection",
+      )} over the maximum`;
+    }
+    return `${categoryName} requirement`;
+  }
+  if (finding.kind === "structural") {
+    return structuralBoundName(finding.report);
+  }
+  const item =
+    finding.kind === "selectionConstraint"
+      ? selectionConstraintSummaryItem(finding.report)
+      : forceConstraintSummaryItem(finding.report);
+  return `${item.ownerName}: ${constraintTypeLabel(item.type)} requirement`;
+}
+
+function validationFindingObservation(
+  finding: SupportedRosterValidationFinding,
+): string {
+  if (finding.kind === "categoryConstraint") {
+    const { observed, minimum, maximum, limit } = finding.report;
+    const selected = observed ?? (minimum === maximum ? minimum : undefined);
+    return `${
+      selected === undefined
+        ? `${formatNumber(minimum)}–${formatNumber(maximum)} selected`
+        : `${formatNumber(selected)} selected`
+    }, ${limit === undefined ? "limit unresolved" : `limit ${formatNumber(limit)}`}`;
+  }
+  if (finding.kind === "structural") {
+    return structuralBoundObservation(finding.report);
+  }
+  return constraintObservation(
+    finding.kind === "selectionConstraint"
+      ? selectionConstraintSummaryItem(finding.report)
+      : forceConstraintSummaryItem(finding.report),
+  );
+}
+
+function validationFindingTarget(
+  finding: SupportedRosterValidationFinding,
+): string {
+  if (finding.kind === "categoryConstraint") {
+    return finding.report.categoryId === undefined
+      ? "#root-choices-heading"
+      : `#${stableDomAnchor("roster-role", finding.report.categoryId)}`;
+  }
+  if (finding.kind === "structural") return structuralBoundTarget(finding.report);
+  if (finding.kind === "selectionConstraint") {
+    return `#${selectionAnchor(finding.report.owner.id)}`;
+  }
+  return `#${forceAnchor(finding.report.owner.id)}`;
+}
+
+function validationFindingKey(
+  finding: SupportedRosterValidationFinding,
+): string {
+  if (finding.kind === "structural") return structuralBoundKey(finding.report);
+  return JSON.stringify([
+    finding.kind,
+    finding.report.constraint.source.sourceId,
+    ...finding.report.constraint.path,
+  ]);
+}
+
+function trapDialogFocus(
+  container: HTMLElement,
+  event: { readonly shiftKey: boolean; preventDefault(): void },
+): void {
+  const focusable = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (first === undefined || last === undefined) return;
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 type ChildChoiceRequirementState =
@@ -4667,15 +4943,7 @@ function RosterSelectionDatasheet({
       {profiles.length > 0 && (
         <section className="selection-info-section">
           <h4>Profiles</h4>
-          <div className="selection-profile-list">
-            {profiles.map((profile, index) => (
-              <SelectionProfile
-                key={selectionProfileKey(profile, index)}
-                profile={profile}
-                report={reports?.get(profile.value)}
-              />
-            ))}
-          </div>
+          <SelectionProfileTables profiles={profiles} reports={reports} />
         </section>
       )}
 
@@ -5161,6 +5429,191 @@ function SelectionProfile({
         </dl>
       )}
     </article>
+  );
+}
+
+interface SelectionProfileColumn {
+  readonly key: string;
+  readonly label: string;
+}
+
+/**
+ * Packs profiles of the same authored type into native comparison tables.
+ *
+ * The old one-card-per-profile layout repeated labels around every value and
+ * made a unit reference several screens tall. Tables preserve source order and
+ * all effective-value annotations while giving model and weapon stats the
+ * compact scan pattern players use during list building. Overflow is contained
+ * by the table wrapper rather than widening the roster or dialog.
+ */
+function SelectionProfileTables({
+  profiles,
+  reports,
+}: {
+  readonly profiles: readonly SelectionProfileDetail[];
+  readonly reports:
+    | ReadonlyMap<LocalRosterProfile, LocalRosterProfileCharacteristics>
+    | undefined;
+}) {
+  const groups = new Map<string, SelectionProfileDetail[]>();
+  for (const profile of profiles) {
+    const key = profile.value.typeId ?? profile.value.typeName ?? "unspecified";
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [profile]);
+    else group.push(profile);
+  }
+  return (
+    <div className="selection-profile-table-list">
+      {[...groups.entries()].map(([key, groupedProfiles]) => {
+        const columns = selectionProfileColumns(groupedProfiles);
+        const typeName =
+          groupedProfiles[0]?.value.typeName ?? "Unspecified profile type";
+        return (
+          <section className="selection-profile-table-group" key={key}>
+            <h5>{typeName}</h5>
+            <div className="selection-profile-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    {columns.map((column) => (
+                      <th scope="col" key={column.key}>{column.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupedProfiles.map((profile, index) => {
+                    const report = reports?.get(profile.value);
+                    return (
+                      <tr
+                        key={selectionProfileKey(profile, index)}
+                        data-completeness={report?.completeness}
+                      >
+                        <th scope="row">
+                          {selectionProfileDisplayName(profile, report)}
+                          {report?.visibility.status === "hidden" && (
+                            <small>Hidden by catalogue</small>
+                          )}
+                          {report?.visibility.status === "unresolved" && (
+                            <small>Visibility unresolved</small>
+                          )}
+                        </th>
+                        {columns.map((column) => {
+                          const characteristic = profile.value.characteristics.find(
+                            (candidate, candidateIndex) =>
+                              selectionProfileColumnKey(
+                                candidate,
+                                candidateIndex,
+                              ) === column.key,
+                          );
+                          const characteristicReport =
+                            characteristic === undefined
+                              ? undefined
+                              : report?.report.characteristics.find(
+                                  (candidate) =>
+                                    candidate.characteristic === characteristic,
+                                );
+                          return (
+                            <td key={column.key}>
+                              {characteristic === undefined ? (
+                                <span aria-label="Not provided">—</span>
+                              ) : (
+                                <SelectionCharacteristicValue
+                                  characteristic={characteristic}
+                                  report={characteristicReport}
+                                />
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function selectionProfileColumns(
+  profiles: readonly SelectionProfileDetail[],
+): readonly SelectionProfileColumn[] {
+  const columns = new Map<string, SelectionProfileColumn>();
+  for (const profile of profiles) {
+    profile.value.characteristics.forEach((characteristic, index) => {
+      const key = selectionProfileColumnKey(characteristic, index);
+      if (!columns.has(key)) {
+        columns.set(key, {
+          key,
+          label:
+            characteristic.name ?? characteristic.typeId ?? "Characteristic",
+        });
+      }
+    });
+  }
+  return [...columns.values()];
+}
+
+function selectionProfileColumnKey(
+  characteristic: DirectProfile["characteristics"][number],
+  index: number,
+): string {
+  return characteristic.typeId ?? characteristic.name ?? `column-${index}`;
+}
+
+function selectionProfileDisplayName(
+  profile: SelectionProfileDetail,
+  report: LocalRosterProfileCharacteristics | undefined,
+): string {
+  const baseName =
+    profile.origin === "Direct"
+      ? (profile.value.name ?? "Unnamed profile")
+      : (profile.value.name ??
+        profile.value.definition.name ??
+        "Unnamed profile");
+  const displayName = report?.name.value ?? baseName;
+  const annotation = report?.annotation.value;
+  return annotation === undefined || annotation === ""
+    ? displayName
+    : `${displayName} (${annotation})`;
+}
+
+function SelectionCharacteristicValue({
+  characteristic,
+  report,
+}: {
+  readonly characteristic: DirectProfile["characteristics"][number];
+  readonly report:
+    RosterProfileCharacteristicReport["characteristics"][number] | undefined;
+}) {
+  const modified = report !== undefined && report.steps.length > 0;
+  const unresolved = modified && report.value === undefined;
+  const displayed = report?.value ?? characteristic.value;
+  const changed = modified && !unresolved && displayed !== report.baseValue;
+  const routedStep = report?.steps.find((step) => step.origin === "affects");
+  const routedName =
+    routedStep === undefined
+      ? undefined
+      : (routedStep.declaredBy.name ?? "another selection");
+  const routedVerb =
+    routedStep !== undefined &&
+    routedStep.status !== "notApplicable" &&
+    routedStep.kind === "append"
+      ? "Added"
+      : "Set";
+  return (
+    <span className="selection-profile-table-value">
+      <span>{displayed === "" ? "Empty value" : displayed}</span>
+      {changed && (
+        <small>Base {report.baseValue === "" ? "empty value" : report.baseValue}</small>
+      )}
+      {unresolved && <small>Effective value unresolved</small>}
+      {routedName !== undefined && <small>{routedVerb} by {routedName}</small>}
+    </span>
   );
 }
 

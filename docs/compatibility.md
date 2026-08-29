@@ -175,16 +175,24 @@
 - Pinned WH40K 11e coverage for all 309 observed grouped hidden modifiers: 295
   set `true`, 14 set `false`, all scope-free and repeat-free in top-level
   `and` groups
-- Headless composition of structural, selection-condition constraint, and
-  force-condition constraint reports produced from the same immutable roster
-  snapshot, with ordered findings and independent validity and completeness
+- Force-category minimum and maximum selection bounds at roster scope, using
+  effective category membership across child selections and forces. The pinned
+  46-document WH40K 11e corpus contains two such bounds: both require one
+  Character and use a direct conditional numeric `set` modifier for the
+  primary-catalogue exemption. Wider category-bound shapes and modifier groups
+  remain explicitly incomplete
+- Headless composition of structural, selection-condition constraint,
+  force-category constraint, and force-condition constraint reports produced
+  from the same immutable roster snapshot, with ordered findings and
+  independent validity and completeness
 - Composition input guards for report identity and inspection scope; the
-  composer preserves its three source reports by reference and does not
+  composer preserves its four source reports by reference and does not
   re-evaluate them or guard roster commands
 - Compact browser supported-validation ribbon with separate known-validity and
-  player-readable check-coverage badges, combined status counts, per-domain
-  known-violation links, and retained structural and constraint detail cards;
-  incomplete-but-valid reports no longer force those technical cards open
+  player-readable check-coverage badges, combined status counts, a modal list
+  of actionable known problems, and retained structural and constraint detail
+  cards; incomplete-but-valid reports no longer force those technical cards
+  open
 - Violation-first constraint presentation with stable links to exact selection
   occurrences or the owning force, unresolved and satisfied bounds in separate
   collapsed disclosures, and separately retained Developer diagnostics;

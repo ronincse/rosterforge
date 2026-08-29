@@ -898,10 +898,17 @@ function diagnoseConditionShape(
     (scope === "force" ||
       scope === "roster" ||
       (scope === "parent" && prospectiveChild));
+  // Primary-catalogue identity is independent of the requesting occurrence.
+  // Force-owned category-link modifiers use this exact shape in the pinned
+  // 40K game system to exempt selected catalogues from a roster minimum.
+  const catalogueIdentityShape =
+    (condition.field === "selections" || condition.field === "forces") &&
+    scope === "primary-catalogue";
   if (
     forceOwner &&
     condition.field !== "forces" &&
-    !supportedForceOwnerSelectionCount
+    !supportedForceOwnerSelectionCount &&
+    !catalogueIdentityShape
   ) {
     diagnostics.push(
       shapeDiagnostic(
@@ -962,9 +969,6 @@ function diagnoseConditionShape(
   }
   // A primary-catalogue identity question is answerable whoever asked, so it is
   // never a shape problem; see `canCollectCatalogueIdentity`.
-  const catalogueIdentityShape =
-    (condition.field === "selections" || condition.field === "forces") &&
-    scope === "primary-catalogue";
   if (
     identityComparison !== undefined &&
     !catalogueIdentityShape &&

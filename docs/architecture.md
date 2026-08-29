@@ -875,26 +875,42 @@ state, general constraint collections, costs, or force composition, and it
 never permits or rejects an edit.
 
 `composeSupportedRosterValidation` is a headless composition boundary, not
-another evaluation pass. It consumes one structural report, one
-selection-condition constraint collection, and one force-condition constraint
-collection produced from the same roster and catalogue-context objects. It
-preserves those reports by reference, orders supported findings by domain,
-and derives independent aggregate validity and completeness. Constraint
+another evaluation pass. It consumes one structural report plus
+selection-condition, force-category, and force-condition constraint collections
+produced from the same roster and catalogue-context objects. It preserves those
+reports by reference, orders supported findings by domain, and derives
+independent aggregate validity and completeness. Constraint
 reports enter actionable findings only when they expose a supported type,
 scope, and effective limit. Unsupported projected constraints remain in their
 source reports and diagnostics and continue to make completeness incomplete.
 Mismatched objects or inspection scopes are rejected as internal input errors.
-`inspectLocalRosterSupportedValidation` computes those three inputs once for a
+`inspectLocalRosterSupportedValidation` computes those four inputs once for a
 browser session and retains structural and constraint diagnostics separately.
 The browser renders its result once as a compact supported-validation ribbon,
 then feeds the retained domain reports into the existing structural and
 constraint detail cards without re-running those inspectors. The ribbon keeps
-validity and completeness separate, shows combined status counts, and links
-to both detail cards. Constraint violations and unresolved bounds are expanded
-before satisfied bounds and link to the exact selection occurrence or force
-card; satisfied bounds and diagnostics remain separate collapsed disclosures.
-The aggregate remains read-only, does not guard commands, and does not claim
-full BattleScribe legality.
+validity and completeness separate and shows combined status counts. Its
+actionable counters open a modal problem sheet instead of moving the document;
+the sheet links each violation to the exact selection, force, or battlefield
+role. Constraint violations and unresolved bounds are expanded before
+satisfied bounds in the retained evidence cards, while satisfied bounds and
+diagnostics remain separate collapsed disclosures. The aggregate remains
+read-only, does not guard commands, and does not claim full BattleScribe
+legality.
+
+Force-category constraints are evaluated as their own report family because
+their owner is a force-definition category link, not an arbitrary selected
+entry. The supported slice is a finite minimum or maximum selection bound at
+roster scope with child selections and child forces included. Counts use each
+selection's effective categories, including modifier-added membership, and the
+ordinary direct numeric modifier sequence supplies conditional effective
+limits. In the pinned 46-document WH40K 11e corpus, both authored category-link
+constraints require one Character; both use a direct conditional `set 0`
+modifier to exempt the primary catalogue. Missing membership, wider bound
+shapes, and modifier groups remain unresolved and make completeness incomplete.
+The workspace presentation may seed an otherwise-empty battlefield role only
+when this report establishes a positive active minimum, which lets the selected
+roster show `0 / 1 required` without flooding it with optional empty categories.
 
 The browser wraps each successful edit in `BoundedHistory<LocalRosterSession>`.
 Commits retain at most 100 past snapshots, clear the redo branch, and preserve

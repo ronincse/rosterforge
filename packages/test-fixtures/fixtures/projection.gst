@@ -57,7 +57,23 @@
         <bs:forceEntry id="force-patrol-child" name="Patrol Detachment" hidden="true">
           <bs:categoryLinks>
             <bs:categoryLink id="force-child-category" name="Unit"
-              targetId="category-unit" primary="false" />
+              targetId="category-unit" primary="false">
+              <bs:constraints>
+                <bs:constraint id="force-category-min" type="min"
+                  field="selections" scope="roster" value="1"
+                  shared="true" includeChildSelections="true"
+                  includeChildForces="true" />
+              </bs:constraints>
+              <bs:modifiers>
+                <bs:modifier type="set" field="force-category-min" value="0">
+                  <bs:conditions>
+                    <bs:condition type="instanceOf" field="selections"
+                      scope="primary-catalogue" childId="catalogue-exempt"
+                      value="1" shared="true" />
+                  </bs:conditions>
+                </bs:modifier>
+              </bs:modifiers>
+            </bs:categoryLink>
           </bs:categoryLinks>
           <bs:modifiers>
             <bs:modifier type="set" field="force-child-roster-modified"
