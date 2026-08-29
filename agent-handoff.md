@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (blurred material foundations complete; active-roster system remains Next)
+## Current Status — 2026-08-29 (card geometry consistency complete; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -163,9 +163,16 @@ diagnostic codes.
   army unit owns a separately spaced thicker material card, and the shared
   modal overlay blurs the whole viewport behind its sharp task surface. Blur
   remains progressively enhanced with opaque reduced-transparency,
-  increased-contrast, and forced-colors fallbacks. **The `Next` remains the
-  complete shared active-roster component and token system; this owner-requested
-  material slice did not claim that broader migration.**
+  increased-contrast, and forced-colors fallbacks. Every active-roster
+  rectilinear card, field, dialog, disclosure, and button now consumes one 14 px
+  corner token; joined controls retain that radius only on exposed corners,
+  while full-bleed and surface-free wrappers remain square. Nested unit and
+  Configuration options are distinct higher-opacity inset material cards inside
+  their overall group without adding a backdrop filter to every child. A style
+  contract rejects new off-system numeric radii in the active-roster CSS.
+  **The `Next` remains the complete shared active-roster component and token
+  system; these owner-requested material and card-geometry slices did not claim
+  that broader migration.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -687,7 +694,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, and owner-requested blurred navigator/unit-card/modal-backdrop material slice are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, and one shared 14 px exposed-corner rule are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -12620,3 +12627,114 @@ sheet, inspector, picker, switch, stepper, status, and More-menu rules without
 pulling Lists/creation, installed-PWA, or print acceptance into the same
 checkpoint. Preserve the settled Add unit, Configuration, unit-card, and modal
 interaction contracts while completing their reusable visual vocabulary.
+
+## Completed Assignment — Unified Active-Roster Card Geometry, 2026-08-29
+
+Baseline `1163b5b`; resulting implementation commit `3ce9ac7` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+Every exposed rectangular corner in the active roster now consumes one shared
+14 px token. Cards, fields, dialogs, disclosures, standalone buttons, badges,
+and status surfaces therefore use the same geometry. Joined mutation and
+information controls preserve the 14 px radius on their exterior corners and
+square only the internal seam. True circles remain circular, and the compact
+full-viewport Add unit sheet and intentionally surface-free synthetic wrappers
+remain square because they expose no card corner.
+
+The existing selection hierarchy now expresses each nested option as a
+separate inset material card inside its overall group. Ordinary direct choices,
+repeatable model steppers, selection-entry groups, promoted model rows,
+configuration selections, role choices, profile/rule information, constraint
+rows, and Add unit results reuse their existing semantic wrappers rather than
+introducing parallel JSX or interaction state. Nested cards use a higher-opacity
+surface, shared translucent border, inset highlight, and shallow elevation. They
+do not add `backdrop-filter` at each level, avoiding a multiplied compositing
+cost on deeply configured phone-width rosters. The selected-unit inspector's
+synthetic root wrapper remains surface-free so it is the overall group rather
+than a redundant card around every real child.
+
+The design-language contract now treats the shared radius as a standing rule.
+A stylesheet regression test scans the active-roster layer and rejects any new
+numeric `border-radius` other than zero for an internal seam, full-bleed task,
+or surface-free wrapper. Architecture and compatibility records describe the
+presentation boundary and explicitly state that selection and evaluation
+semantics are unchanged.
+
+### Decisions and rejected alternatives
+
+The established 14 px unit-card radius won over retaining the previous 2, 3, 4,
+5, 6, 8, 10, 12, 16, and pill-specific radii. A second radius for buttons was
+rejected because it recreated the inconsistency the owner identified. Fully
+round pill radii were also rejected for rectangular badges; they now consume the
+same token and remain visually soft at their current height. Applying a backdrop
+filter to every nested option was rejected because the higher-opacity inset
+material already carries the page color and hierarchy without creating dozens
+of extra filtered layers. Rebuilding the JSX around a new card component was
+rejected because the existing semantic boundaries already match the requested
+visual hierarchy and no behavioral change was needed.
+
+### Delegation and review
+
+A native Codex child performed an early read-only JSX-boundary, radius-cascade,
+responsive, performance, and test-risk audit from a disposable worktree at the
+exact baseline. It identified the selected-unit synthetic-root exception, the
+joined-control cascade, the full-screen-sheet exception, existing fieldset and
+profile-table clipping risks, and the documentation conflict with nested cards.
+Codex reviewed and implemented those findings. The audit worktree was verified
+clean and removed; no delegated code was accepted.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA reused the running project-owned Selection Initialization
+fixture with `Initialization Unit`, `Automatic Reconciliation Unit`, grouped
+source/preferred choices, repeatable models, and a newly selected
+`Disabled Automatic Root` Configuration entry. At desktop and 390 x 844, the
+individual nested choices, two group fieldsets, model steppers, unit cards, and
+Configuration selection all computed to 14 px. Joined controls computed to
+`14px 0 0 14px` and `0 14px 14px 0`; all visible ordinary buttons consumed the
+same exposed radius. The full-bleed roster shell computed to zero as intended.
+
+At 320 x 568 and 390 x 844, document scroll width equalled client width. The
+regular Add unit dialog computed to 14 px at 561 px; its compact full-viewport
+form computed to zero at 560 px while its buttons remained 14 px. A nested
+choice information dialog and its Close button both computed to 14 px, and the
+shared overlay retained a live 20 px viewport blur while the dialog stayed
+sharp. The browser console reported no errors. Exact 200% text zoom, dark
+appearance, increased-contrast rendering, and screen-reader acceptance remain
+future cross-mode acceptance rather than being inferred from this geometry QA.
+
+Verification:
+
+- focused responsive-style suite — **10 passed** across one file;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **532 passed, 19 skipped (551 total)** across 58 files;
+- pinned 46-document corpus at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **551 passed (551)** across
+  58 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint changes presentation only. It does not alter evaluation, root
+visibility, mutation behavior, imported-data semantics, validation completeness,
+persistent formats, or the remaining pinned Aeldari behavior families. The
+shared 14 px rule is complete for the active roster; the legacy Lists and remote
+source surfaces are intentionally outside this checkpoint and retain their
+existing radii until the recorded Lists/creation migration. The active roster
+still has remaining legacy color, typography, spacing, and one-off component
+rules. Document workflows, installed-PWA behavior, dark appearance, exact 200%
+reflow, screen-reader acceptance, and final print/cross-mode acceptance remain
+recorded in the roadmap. The full 2,000-point Dark Angels army was not rebuilt
+in this bounded presentation checkpoint.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+Consolidate the legacy colors, typography, spacing, and one-off navigation, row,
+sheet, inspector, picker, switch, stepper, status, and More-menu rules without
+pulling Lists/creation, installed-PWA, or print acceptance into the same
+checkpoint. Preserve the settled card-material, radius, Add unit,
+Configuration, unit-card, and modal interaction contracts.
