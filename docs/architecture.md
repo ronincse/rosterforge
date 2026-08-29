@@ -488,11 +488,14 @@ Filtering preserves category and root order, opens matching category
 disclosures, and shows an explicit no-match state. It does not modify the
 underlying group projection, materialized roots, visibility, or diagnostics.
 
-The active roster workspace uses three stable destinations: `Roster`,
-`Add unit`, and `Checks`. A compact sticky navigator exposes live top-level
-selection, available-choice, and supported-issue counts. Its high-opacity
-blurred material is a presentation layer only; it does not change navigation
-state or the cost and issue projections beneath its counts. `Add unit` opens
+The active roster workspace begins with one compact sticky navigator. Its
+flexible leading destination carries the roster name, chosen catalogue/faction,
+and preferred live cost; `Add unit` retains its available-choice count, while
+supported problems collapse to a 44 px warning triangle and known-violation
+count. Zero and unavailable states remain neutral instead of impersonating an
+active warning. Its high-opacity blurred material is a presentation layer only;
+it does not change navigation state or the cost and issue projections beneath
+its values. `Add unit` opens
 the existing grouped and filterable root projection as a scoped modal task; the
 catalogue is closed by default and never consumes a permanent builder column.
 The sheet is bounded and centred at regular widths and fills the viewport at
@@ -518,9 +521,10 @@ clearing the roster restores the same Lists/setup state, pending recovery, and
 acquisition evidence without reloading the imported library. Save and autosave
 feedback follows the roster into its action surface because the draft shelf is
 no longer mounted there. The document title is `Lists` or the open roster name,
-matching the primary object. One player header stays above
-the builder, carrying the roster identity, its supported cost totals, and its
-known-problem count; detailed structural and constraint reports follow it.
+matching the primary object. There is no second player header before the
+builder: cost coverage, secondary limits, and source evidence remain under the
+existing detailed supported-evidence disclosure after the roster, alongside
+the structural and constraint reports.
 Concrete root, direct-child, and grouped-choice controls expose an independent
 read-only preview action. Its modal shows catalogue-authored rules, profiles,
 and information groups without selecting the choice; it contains focus,
@@ -615,9 +619,9 @@ The renderer consumes validation attention asymmetrically. A role heading uses
 it; an exact selection row uses only `attention` to label itself and link to the
 detailed Checks section. This keeps propagated ancestry from impersonating the
 owner. Root and force findings have no selection attention identity and remain
-in the header and reports, while unresolved findings never enter either inline
-signal. The marker is not a count because several findings can share one owner;
-the composed validation status remains authoritative.
+in the compact warning and reports, while unresolved findings never enter
+either inline signal. The marker is not a count because several findings can
+share one owner; the composed validation status remains authoritative.
 
 A role is the selection's **effective primary category**, not its declared
 category link: BattleScribe's primary category is "the category in which that
@@ -629,14 +633,15 @@ the group says the role is unestablished, rather than being guessed into a
 category it may not occupy. `topLevelRole` records what this costs on the
 per-edit path and the batched index that would replace it if that ever matters.
 
-The model also owns the header's completeness fold. The player header shows one
-completeness badge where the separate cost and validation cards each carried
-their own, so `header.completeness` is `complete` only when **both** reports are
-available and complete, and `header.incomplete` names each one that fell short.
+The model also owns the combined report completeness fold. The detailed
+supported-evidence summary shows one result where the separate cost and
+validation cards each carried their own, so `header.completeness` is `complete`
+only when **both** reports are available and complete, and `header.incomplete`
+names each one that fell short.
 An unavailable report counts as incomplete: it has established completeness no
 more than a report that returned `incomplete`, and treating it as complete is
 the failure the validation rules forbid. Root-choice completeness is excluded
-because it describes the add-units browser rather than the header. Validity and
+because it describes the add-units browser rather than the report. Validity and
 completeness remain independent signals throughout.
 
 The local library retains every composed catalogue context. The roster setup

@@ -917,7 +917,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  margin: -14px 0 20px;
+  margin: 12px 0 20px;
 }
 
 .history-actions button {
@@ -977,9 +977,9 @@ h1 {
   z-index: 5;
   top: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto 44px;
   gap: 1px;
-  margin-top: 18px;
+  margin-top: 0;
   padding: 4px;
   background: rgba(29, 68, 53, 0.82);
   border: 1px solid rgba(226, 240, 232, 0.42);
@@ -1110,9 +1110,8 @@ h1 {
 .roster-workspace-nav a,
 .roster-workspace-nav button {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1px 8px;
   min-width: 0;
+  min-height: 44px;
   padding: 9px 11px;
   color: #f7f5ec;
   background: rgba(255, 255, 255, 0.04);
@@ -1131,8 +1130,68 @@ h1 {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.roster-workspace-nav span,
-.roster-workspace-nav button span {
+.roster-nav-roster {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.roster-nav-identity,
+.roster-nav-budget {
+  display: grid;
+  min-width: 0;
+}
+
+.roster-nav-title {
+  overflow: hidden;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 0.94rem;
+  font-weight: 500;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-nav-faction {
+  overflow: hidden;
+  min-width: 0;
+  color: #d4e0da;
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-nav-budget {
+  justify-items: end;
+  text-align: right;
+}
+
+.roster-nav-budget strong {
+  color: #f1d998;
+  font-family: var(--display-font);
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.08;
+}
+
+.roster-nav-budget small {
+  overflow: hidden;
+  color: #d4e0da;
+  font-size: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-unit-trigger {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 8px;
+}
+
+.add-unit-trigger span {
   overflow: hidden;
   font-size: 0.7rem;
   font-weight: 800;
@@ -1140,8 +1199,7 @@ h1 {
   white-space: nowrap;
 }
 
-.roster-workspace-nav strong,
-.roster-workspace-nav button strong {
+.add-unit-trigger strong {
   grid-row: 1 / 3;
   grid-column: 2;
   align-self: center;
@@ -1149,15 +1207,58 @@ h1 {
   font-family: var(--display-font);
   font-size: 1.2rem;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-.roster-workspace-nav small,
-.roster-workspace-nav button small {
+.add-unit-trigger small {
   overflow: hidden;
   color: #d4e0da;
   font-size: 0.54rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.roster-problems-trigger {
+  grid-template-columns: 20px auto;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 5px;
+  color: #d4e0da;
+}
+
+.roster-problems-trigger strong {
+  color: currentColor;
+  font-family: var(--body-font);
+  font-size: 0.72rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-problems-trigger[data-problems="present"] {
+  color: #ff9b92;
+}
+
+.roster-problems-trigger[data-problems="unavailable"] {
+  color: #e6d8b6;
+}
+
+.roster-warning-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.roster-warning-icon circle {
+  fill: currentColor;
+  stroke: none;
 }
 
 .roster-builder-grid {
@@ -1330,99 +1431,15 @@ h1 {
   background: rgba(255, 255, 255, 0.45);
 }
 
-.roster-player-header {
+.roster-report-details {
   display: grid;
-  gap: 14px;
-  margin: 0 0 24px;
-  padding: 20px;
-  background: #eef1eb;
-  border: 1px solid #c9cfc8;
-  border-top: 3px solid var(--forest);
+  gap: 12px;
+  margin-top: 14px;
+  padding: 16px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
   border-radius: var(--corner-radius);
   box-shadow: var(--nested-card-shadow);
-}
-
-.roster-player-header[data-validity="invalid"] {
-  background: #f3e8e4;
-  border-color: #d5aaa2;
-  border-top-color: #9a4a3f;
-}
-
-.player-header-identity h2 {
-  margin: 0;
-  font-family: var(--display-font);
-  font-size: 1.5rem;
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-
-/* The 320 px supported minimum is the constraint here: `minmax(min(140px,
-   100%), 1fr)` lets a figure fall to the container width instead of forcing a
-   140 px track and widening the document, which is the defect the phone-width
-   checkpoint fixed elsewhere. */
-.player-header-figures {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
-  gap: 8px;
-}
-
-.player-header-figure {
-  min-width: 0;
-  margin: 0;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid #d1d6d0;
-  border-radius: var(--corner-radius);
-  text-decoration: none;
-  text-align: left;
-}
-
-button.player-header-figure {
-  width: 100%;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-}
-
-.player-header-figure strong,
-.player-header-figure span {
-  display: block;
-  overflow-wrap: anywhere;
-}
-
-.player-header-figure strong {
-  color: var(--forest);
-  font-family: var(--display-font);
-  font-size: 1.75rem;
-  font-weight: 500;
-  line-height: 1.1;
-}
-
-.player-header-figure span {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 0.64rem;
-  font-weight: 800;
-}
-
-.player-header-figure[data-figure="empty"] strong,
-.player-header-figure[data-figure="unavailable"] strong {
-  color: var(--muted);
-}
-
-.player-header-problems[data-problems="present"] {
-  background: #f7e9e5;
-  border-color: #c98d85;
-}
-
-.player-header-problems[data-problems="present"] strong {
-  color: #8a3e35;
-}
-
-.player-header-signals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 
 .completeness-badge {
@@ -1468,24 +1485,6 @@ button.player-header-figure {
   color: #7f352d;
   background: #f2deda;
   border-color: #c98d85;
-}
-
-.player-header-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.player-header-links a,
-.player-header-links button {
-  padding: 0;
-  color: #8a3e35;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-decoration: underline;
 }
 
 .player-header-boundary,
@@ -4198,17 +4197,20 @@ footer {
 
   .roster-workspace-nav a,
   .roster-workspace-nav button {
-    grid-template-columns: 1fr auto;
     padding: 8px;
   }
 
-  .roster-workspace-nav small,
-  .roster-workspace-nav button small {
+  .roster-nav-roster {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+
+  .roster-nav-budget small,
+  .add-unit-trigger small {
     display: none;
   }
 
-  .roster-workspace-nav strong,
-  .roster-workspace-nav button strong {
+  .add-unit-trigger strong {
     grid-row: 1;
   }
 

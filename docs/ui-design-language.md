@@ -138,10 +138,13 @@ corner are the only exceptions.
 
 An open roster uses one persistent navigation/toolbar layer:
 
-- leading: standard back chevron plus `Lists`;
-- title: roster name, with the points summary as its subtitle;
-- trailing: one prominent Add unit action and one More menu;
-- More: Save, Duplicate, Print, and other uncommon document actions.
+- leading: roster name with chosen faction/catalogue below it, plus the
+  preferred live points or cost budget;
+- trailing: one prominent Add unit action with its available-choice count;
+- status: a standard warning triangle and known-violation count in one compact
+  44 px control, red only while a known violation exists;
+- document actions remain in their existing action row until the shared More
+  menu checkpoint absorbs Save, Duplicate, Print, and uncommon commands.
 
 Navigation may use restrained translucency and strong background blur so
 content can scroll below it, but clear glass is not a general content surface.
@@ -154,6 +157,11 @@ filter at every nesting level. Modal overlays blur the entire underlying
 viewport while their task surface remains sharp. Do not title a window
 `RosterForge`, put destructive actions in the primary position, or keep
 parallel text-button rows for commands already in the toolbar/menu.
+
+Do not repeat roster identity, points, and known-problem totals in a large card
+above the builder. Completeness, secondary currencies, source cost fields, and
+diagnostic provenance remain available under Detailed supported evidence below
+the ordinary editing workflow.
 
 ## Lists, rows, and controls
 

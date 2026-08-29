@@ -866,16 +866,24 @@ describe("App local catalogue flow", () => {
     const workspaceNavigation = screen.getByRole("navigation", {
       name: "Roster workspace navigation",
     });
-    expect(within(workspaceNavigation).getByText("Roster")).toBeTruthy();
+    expect(
+      within(workspaceNavigation).getByRole("heading", {
+        name: "First Patrol",
+      }),
+    ).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("Synthetic Faction")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByText("Add unit"),
     ).toBeTruthy();
-    expect(within(workspaceNavigation).getByText("Checks")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 0 army selections",
+        name: "First Patrol, Synthetic Faction; 0 army selections",
       }),
     ).toHaveProperty("hash", "#selected-roster-heading");
+    const problemsButton = within(workspaceNavigation).getByRole("button", {
+      name: "Open roster problems, 0 known violations",
+    });
+    expect(problemsButton.dataset.problems).toBe("none");
     expect(
       within(workspaceNavigation)
         .getByRole("button", {
@@ -889,34 +897,19 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getByText("No units added yet"),
     ).toBeTruthy();
-    // One player header now carries what the separate cost and validation
-    // cards used to. Validity and completeness stay independent signals.
-    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
-    expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
+    // Identity, budget, and known problems live in the compact sticky bar;
+    // report evidence stays collapsed below the ordinary roster workflow.
     expect(
-      within(playerHeader).getByText("Supported checks complete"),
-    ).toBeTruthy();
+      screen.queryByRole("region", { name: "Roster summary" }),
+    ).toBeNull();
     expect(
-      within(playerHeader).getByRole("button", {
-        name: "Checks, 0 known problems",
-      }),
-    ).toBeTruthy();
-    expect(within(playerHeader).getByText("costs so far")).toBeTruthy();
-    // A clean roster stops reporting its own zeroes: the violation links and
-    // the report disclosure appear only when they point at something.
-    expect(
-      within(playerHeader).queryByRole("link", {
+      within(workspaceNavigation).queryByRole("link", {
         name: /structural violation/u,
       }),
     ).toBeNull();
     expect(
-      within(playerHeader).queryByRole("link", {
+      within(workspaceNavigation).queryByRole("link", {
         name: /constraint violation/u,
-      }),
-    ).toBeNull();
-    expect(
-      within(playerHeader).queryByRole("group", {
-        name: /Zero-value source cost fields/u,
       }),
     ).toBeNull();
     const checksReport = screen.getByRole("group", {
@@ -932,6 +925,14 @@ describe("App local catalogue flow", () => {
       within(checksReport).getByText("Detailed supported evidence"),
     );
     expect(checksReport.hasAttribute("open")).toBe(true);
+    const rosterReportDetails = screen.getByRole("region", {
+      name: "Roster report details",
+    });
+    expect(
+      within(rosterReportDetails).queryByRole("group", {
+        name: /Zero-value source cost fields/u,
+      }),
+    ).toBeNull();
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
@@ -1196,9 +1197,9 @@ describe("App local catalogue flow", () => {
     let unitCardView = screen.getByRole("dialog", {
       name: "Unit card for Infantry Squad",
     });
-    expect(within(playerHeader).getByText("80")).toBeTruthy();
-    expect(within(playerHeader).getByText("Points")).toBeTruthy();
-    const zeroCosts = within(playerHeader).getByRole("group", {
+    expect(within(workspaceNavigation).getByText("80")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("Points used")).toBeTruthy();
+    const zeroCosts = within(rosterReportDetails).getByRole("group", {
       name: "Zero-value source cost fields 1 field",
     });
     expect(zeroCosts.hasAttribute("open")).toBe(false);
@@ -1296,10 +1297,10 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       within(unitOptions).getByRole("button", { name: "Set amount" }),
     );
-    expect(within(playerHeader).getByText("160")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("160")).toBeTruthy();
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 2 army selections",
+        name: "First Patrol, Synthetic Faction; 160 Points used",
       }),
     ).toBeTruthy();
     fireEvent.click(
@@ -1316,11 +1317,11 @@ describe("App local catalogue flow", () => {
     ).toHaveLength(1);
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 2 army selections",
+        name: "First Patrol, Synthetic Faction; 160 Points used",
       }),
     ).toBeTruthy();
-    expect(within(playerHeader).getByText("160")).toBeTruthy();
-    expect(within(playerHeader).getByText("Points")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("160")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("Points used")).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
     ).toBe("1Satisfied");
@@ -1345,9 +1346,7 @@ describe("App local catalogue flow", () => {
           : document.getElementById(target.slice(1)),
       ).toBeTruthy();
     }
-    expect(
-      within(playerHeader).getByText("Known violations"),
-    ).toBeTruthy();
+    expect(problemsButton.dataset.problems).toBe("present");
 
     const veterans = rosterSelection("selection-ui-1");
     expect(veterans).toBeTruthy();
@@ -1370,7 +1369,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(unitOptions).getByText("Special Weapon (Master-crafted)"),
     ).toBeTruthy();
-    expect(within(playerHeader).getByText("170")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("170")).toBeTruthy();
     const selectedWeaponControl = within(unitOptions).getByRole("button", {
       name: "Special Weapon",
     });
@@ -1448,16 +1447,14 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
     ).toHaveLength(1);
-    expect(within(playerHeader).getByText("80")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("80")).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
     ).toBe("2Satisfied");
     expect(
       constraintStatusText(constraints, "Violated"),
     ).toBe("0Violated");
-    expect(
-      within(playerHeader).getByText("Known violations"),
-    ).toBeTruthy();
+    expect(problemsButton.dataset.problems).toBe("present");
     expect(
       within(constraints).queryByRole("group", {
         name: /Constraint violations/u,
@@ -1481,14 +1478,14 @@ describe("App local catalogue flow", () => {
     expect(
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
-    expect(within(playerHeader).getByText("170")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("170")).toBeTruthy();
     expect(redo).toHaveProperty("disabled", false);
 
     fireEvent.click(redo);
     expect(rosterSelection("selection-ui-1")).toBeNull();
     expect(rosterSelection("selection-ui-3")).toBeNull();
     expect(rosterSelection("selection-ui-2")).toBeTruthy();
-    expect(within(playerHeader).getByText("80")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("80")).toBeTruthy();
 
     fireEvent.click(changeRosterSetup);
     expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
@@ -1570,23 +1567,20 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 0 of 2,000 Points used",
+        name: "Synthetic Faction roster, Synthetic Faction; 0 of 2,000 Points used",
       }),
     ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("0 / 2,000")).toBeTruthy();
     expect(within(workspaceNavigation).getByText("2,000 remaining")).toBeTruthy();
-    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
-    const headlineFigures = playerHeader.querySelector(
-      ".player-header-figures",
-    );
-    expect(headlineFigures).toBeTruthy();
-    expect(within(headlineFigures as HTMLElement).getByText("Points used")).toBeTruthy();
-    expect(
-      within(headlineFigures as HTMLElement).queryByText(
-        "Crusade: Experience used",
-      ),
-    ).toBeNull();
-    const otherLimits = within(playerHeader)
+    expect(document.querySelector(".player-header-figures")).toBeNull();
+    const checksReport = screen.getByRole("group", {
+      name: /Detailed supported evidence/u,
+    });
+    fireEvent.click(within(checksReport).getByText("Detailed supported evidence"));
+    const rosterReportDetails = screen.getByRole("region", {
+      name: "Roster report details",
+    });
+    const otherLimits = within(rosterReportDetails)
       .getByText("Other roster limits")
       .closest("details");
     expect(otherLimits).toBeTruthy();
@@ -1601,7 +1595,7 @@ describe("App local catalogue flow", () => {
     await waitFor(() => {
       expect(
         within(workspaceNavigation).getByRole("link", {
-          name: "Roster, 80 of 2,000 Points used",
+          name: "Synthetic Faction roster, Synthetic Faction; 80 of 2,000 Points used",
         }),
       ).toBeTruthy();
     });
@@ -1769,25 +1763,24 @@ describe("App local catalogue flow", () => {
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
-    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
-    expect(within(playerHeader).getByText("Known violations")).toBeTruthy();
-    expect(
-      within(playerHeader).getByText("Supported checks complete"),
-    ).toBeTruthy();
-    const checksButton = within(playerHeader).getByRole("button", {
-      name: "Checks, 1 known problem",
+    const workspaceNavigation = screen.getByRole("navigation", {
+      name: "Roster workspace navigation",
     });
-    expect(checksButton).toBeTruthy();
-    // Both summary affordances open the same compact actionable problem sheet.
-    expect(
-      within(playerHeader).getByRole("button", {
-        name: "1 structural violation",
-      }),
-    ).toBeTruthy();
+    const checksButton = within(workspaceNavigation).getByRole("button", {
+      name: "Open roster problems, 1 known violation",
+    });
+    expect(checksButton.dataset.problems).toBe("present");
     fireEvent.click(checksButton);
-    expect(
-      screen.getByRole("dialog", { name: "Roster problems" }),
-    ).toBeTruthy();
+    const problemsDialog = screen.getByRole("dialog", {
+      name: "Roster problems",
+    });
+    expect(problemsDialog.id).toBe("roster-problems-dialog");
+    expect(checksButton.getAttribute("aria-controls")).toBe(
+      "roster-problems-dialog",
+    );
+    fireEvent.keyDown(problemsDialog, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(checksButton));
+    expect(checksButton.hasAttribute("aria-controls")).toBe(false);
     expect(
       within(structuralStatus).getByText("Known violations"),
     ).toBeTruthy();
@@ -1870,9 +1863,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(structuralStatus).getByText("No known violations"),
     ).toBeTruthy();
-    expect(
-      within(playerHeader).getByText("No known violations"),
-    ).toBeTruthy();
+    expect(checksButton.dataset.problems).toBe("none");
     expect(
       screen.queryByRole("link", {
         name: "Review known violations for Infantry Squad (Elite)",
@@ -1912,9 +1903,7 @@ describe("App local catalogue flow", () => {
     expect(
       within(doctrine).getByText("0 selected; 1 still required"),
     ).toBeTruthy();
-    expect(
-      within(playerHeader).getByText("Known violations"),
-    ).toBeTruthy();
+    expect(checksButton.dataset.problems).toBe("present");
     fireEvent.click(
       within(doctrine).getByRole("button", {
         name: "Mobile Doctrine",
@@ -2354,11 +2343,11 @@ describe("App local catalogue flow", () => {
       name: "Roster builder",
     });
     expect(
-      configuration.compareDocumentPosition(workspaceNavigation) &
+      workspaceNavigation.compareDocumentPosition(configuration) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
     expect(
-      workspaceNavigation.compareDocumentPosition(rosterBuilder) &
+      configuration.compareDocumentPosition(rosterBuilder) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
     const configurationSummary = configuration.querySelector<HTMLElement>(
@@ -2467,21 +2456,14 @@ describe("App local catalogue flow", () => {
     // actually authored on army choices even though it was declared second.
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Roster, 80 of 2,000 Points used",
+        name: "Selection Initialization roster, Selection Initialization; 80 of 2,000 Points used",
       }),
     ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("80 / 2,000")).toBeTruthy();
-    const playerHeader = screen.getByRole("region", {
-      name: "Roster summary",
+    const rosterReportDetails = screen.getByRole("region", {
+      name: "Roster report details",
     });
-    const headlineFigures = playerHeader.querySelector(
-      ".player-header-figures",
-    );
-    expect(headlineFigures).toBeTruthy();
-    expect(
-      within(headlineFigures as HTMLElement).getByText("Points used"),
-    ).toBeTruthy();
-    const otherLimits = within(playerHeader)
+    const otherLimits = within(rosterReportDetails)
       .getByText("Other roster limits")
       .closest("details");
     expect(otherLimits).toBeTruthy();
@@ -2729,24 +2711,32 @@ describe("App local catalogue flow", () => {
     const structuralStatus = screen.getByRole("region", {
       name: "Supported structural requirements",
     });
-    const playerHeader = screen.getByRole("region", { name: "Roster summary" });
-    expect(within(playerHeader).getByText("Known violations")).toBeTruthy();
-    // The header folds both reports into one badge, and does so
-    // conservatively: an incomplete check makes the whole view incomplete.
+    const workspaceNavigation = screen.getByRole("navigation", {
+      name: "Roster workspace navigation",
+    });
+    const problemsButton = within(workspaceNavigation).getByRole("button", {
+      name: "Open roster problems, 1 known violation",
+    });
+    expect(problemsButton.dataset.problems).toBe("present");
+    // The detailed evidence summary folds both reports into one status and
+    // does so conservatively: an incomplete check makes the whole view incomplete.
     expect(
-      within(playerHeader).getByText("Some rules not checked"),
+      within(checksReport).getByText(/Some rules not checked/u),
     ).toBeTruthy();
-    const reportDetailsSummary = within(playerHeader).getByText(
+    const rosterReportDetails = screen.getByRole("region", {
+      name: "Roster report details",
+    });
+    const reportDetailsSummary = within(rosterReportDetails).getByText(
       "Report details",
     );
     fireEvent.click(reportDetailsSummary);
     expect(
-      within(playerHeader).getByText(
+      within(rosterReportDetails).getByText(
         /RosterForge could not check every applicable catalogue rule/u,
       ),
     ).toBeTruthy();
     expect(
-      within(playerHeader).queryByText(
+      within(rosterReportDetails).queryByText(
         "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
       ),
     ).toBeNull();
@@ -2932,10 +2922,10 @@ describe("App local catalogue flow", () => {
       within(manualGroup).getByRole("button", { name: "Manual Option One" }),
     );
     await waitFor(() => {
-      expect(within(playerHeader).getByText("No known violations")).toBeTruthy();
+      expect(problemsButton.dataset.problems).toBe("none");
     });
     expect(
-      within(playerHeader).getByText("Some rules not checked"),
+      within(checksReport).getByText(/Some rules not checked/u),
     ).toBeTruthy();
     expect(
       within(structuralStatus).getByText("No known violations"),

@@ -30,16 +30,26 @@ describe("phone-width layout contracts", () => {
     expect(styles).toContain("html {\n  scroll-padding-top: 84px;\n}");
   });
 
-  it("keeps the player header figures shrinkable to the supported minimum", () => {
-    // The phone-width defect was a fixed grid track floor holding the document
-    // wider than the viewport. The header's figure grid is that same shape, so
-    // pin the min() that lets a figure fall to the container width instead of
-    // demanding 140 px it may not have at 320 px.
+  it("keeps roster identity and the compact warning usable in the sticky bar", () => {
+    // The first track absorbs long roster and faction names while Add unit and
+    // the warning keep predictable tap targets at the 320 px support floor.
     expect(styles).toContain(
-      ".player-header-figures {\n  display: grid;\n" +
-        "  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));",
+      ".roster-workspace-nav {\n  position: sticky;\n  z-index: 5;\n  top: 0;\n" +
+        "  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto 44px;",
     );
-    expect(styles).toContain(".player-header-figure {\n  min-width: 0;");
+    expect(styles).toContain("  margin-top: 0;\n  padding: 4px;");
+    expect(styles).toMatch(
+      /\.roster-nav-title \{[\s\S]*?min-width: 0;[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/u,
+    );
+    expect(styles).toMatch(
+      /\.roster-nav-faction \{[\s\S]*?min-width: 0;[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/u,
+    );
+    expect(styles).toMatch(
+      /\.roster-problems-trigger \{[\s\S]*?width: 44px;[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;/u,
+    );
+    expect(styles).toContain(
+      '.roster-problems-trigger[data-problems="present"] {\n  color: #ff9b92;',
+    );
   });
 
   it("gives unit selection and options the full usable phone width", () => {

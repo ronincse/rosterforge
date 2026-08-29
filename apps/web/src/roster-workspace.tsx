@@ -489,6 +489,7 @@ export function RosterOverview({
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace)
     : undefined;
+  const limitPending = pointsLimitPending(workspace, limitBearingCost);
   const configurationCostLimits = workspace.costs.available
     ? configurationRelevantCostLimits(
         configurationGroup,
@@ -512,7 +513,118 @@ export function RosterOverview({
   ];
   return (
     <div className="roster-overview">
-      <RosterPlayerHeader workspace={workspace} onOpenChecks={openProblems} />
+      <nav
+        className="roster-workspace-nav"
+        aria-label="Roster workspace navigation"
+      >
+        <a
+          className="roster-nav-roster"
+          href="#selected-roster-heading"
+          aria-label={
+            limitBearingCost === undefined
+              ? `${workspace.name}, ${workspace.catalogueName}; ${formatCount(
+                  armyTopLevelSelectionCount,
+                  "army selection",
+                )}`
+              : limitPending
+                ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
+                    limitBearingCost.value,
+                  )} ${limitBearingCost.name} used, limit pending`
+                : limitBearingCost.limit === undefined
+                  ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
+                      limitBearingCost.value,
+                    )} ${limitBearingCost.name} used`
+              : `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
+                  limitBearingCost.value,
+                )} of ${formatNumber(limitBearingCost.limit)} ${limitBearingCost.name} used`
+          }
+        >
+          <span className="roster-nav-identity">
+            <h2 className="roster-nav-title">{workspace.name}</h2>
+            <small className="roster-nav-faction">
+              {workspace.catalogueName}
+            </small>
+          </span>
+          <span className="roster-nav-budget">
+            {limitBearingCost === undefined ? (
+              <>
+                <strong>{armyTopLevelSelectionCount}</strong>
+                <small>army selections</small>
+              </>
+            ) : limitPending ? (
+              <>
+                <strong>{formatNumber(limitBearingCost.value)}</strong>
+                <small>{limitBearingCost.name}; limit pending</small>
+              </>
+            ) : limitBearingCost.limit === undefined ? (
+              <>
+                <strong>{formatNumber(limitBearingCost.value)}</strong>
+                <small>{limitBearingCost.name} used</small>
+              </>
+            ) : (
+              <>
+                <strong>
+                  {formatNumber(limitBearingCost.value)} /{" "}
+                  {formatNumber(limitBearingCost.limit)}
+                </strong>
+                <small>
+                  {limitBearingCost.value > limitBearingCost.limit
+                    ? `${formatNumber(
+                        limitBearingCost.value - limitBearingCost.limit,
+                      )} over limit`
+                    : `${formatNumber(
+                        limitBearingCost.limit - limitBearingCost.value,
+                      )} remaining`}
+                </small>
+              </>
+            )}
+          </span>
+        </a>
+        <button
+          className="add-unit-trigger"
+          type="button"
+          aria-controls={catalogueOpen ? "add-unit-dialog" : undefined}
+          aria-expanded={catalogueOpen}
+          aria-haspopup="dialog"
+          aria-label={`Add unit, ${formatCount(
+            filteredRootChoiceCount,
+            "available choice",
+          )}`}
+          onClick={(event) => openCatalogue(event.currentTarget)}
+        >
+          <span>Add unit</span>
+          <strong>{filteredRootChoiceCount}</strong>
+          <small>available choices</small>
+        </button>
+        <button
+          className="roster-problems-trigger"
+          type="button"
+          aria-controls={problemsOpen ? "roster-problems-dialog" : undefined}
+          aria-expanded={problemsOpen}
+          aria-haspopup="dialog"
+          aria-label={
+            workspace.validation.available
+              ? `Open roster problems, ${formatCount(
+                  validationIssueCount,
+                  "known violation",
+                )}`
+              : "Open roster problems, checks unavailable"
+          }
+          data-problems={
+            !workspace.validation.available
+              ? "unavailable"
+              : validationIssueCount === 0
+                ? "none"
+                : "present"
+          }
+          onClick={(event) => openProblems(event.currentTarget)}
+        >
+          <WarningTriangleIcon />
+          <strong>
+            {workspace.validation.available ? validationIssueCount : "—"}
+          </strong>
+        </button>
+      </nav>
 
       <div className="history-actions" aria-label="Roster actions">
         <button type="button" disabled={!canUndo} onClick={onUndo}>
@@ -593,78 +705,6 @@ export function RosterOverview({
           onPreviewChoice={openChoicePreview}
         />
       )}
-
-      <nav
-        className="roster-workspace-nav"
-        aria-label="Roster workspace navigation"
-      >
-        <a
-          href="#selected-roster-heading"
-          aria-label={
-            limitBearingCost?.limit === undefined
-              ? `Roster, ${formatCount(
-                  armyTopLevelSelectionCount,
-                  "army selection",
-                )}`
-              : `Roster, ${formatNumber(limitBearingCost.value)} of ${formatNumber(
-                  limitBearingCost.limit,
-                )} ${limitBearingCost.name} used`
-          }
-        >
-          {limitBearingCost?.limit === undefined ? (
-            <>
-              <span>Roster</span>
-              <strong>{armyTopLevelSelectionCount}</strong>
-              <small>army selections</small>
-            </>
-          ) : (
-            <>
-              <span>{limitBearingCost.name} used</span>
-              <strong>
-                {formatNumber(limitBearingCost.value)} /{" "}
-                {formatNumber(limitBearingCost.limit)}
-              </strong>
-              <small>
-                {limitBearingCost.value > limitBearingCost.limit
-                  ? `${formatNumber(
-                      limitBearingCost.value - limitBearingCost.limit,
-                    )} over limit`
-                  : `${formatNumber(
-                      limitBearingCost.limit - limitBearingCost.value,
-                    )} remaining`}
-              </small>
-            </>
-          )}
-        </a>
-        <button
-          className="add-unit-trigger"
-          type="button"
-          aria-controls={catalogueOpen ? "add-unit-dialog" : undefined}
-          aria-expanded={catalogueOpen}
-          aria-haspopup="dialog"
-          aria-label={`Add unit, ${formatCount(
-            filteredRootChoiceCount,
-            "available choice",
-          )}`}
-          onClick={(event) => openCatalogue(event.currentTarget)}
-        >
-          <span>Add unit</span>
-          <strong>{filteredRootChoiceCount}</strong>
-          <small>available choices</small>
-        </button>
-        <button
-          type="button"
-          aria-label={`Checks, ${formatCount(
-            validationIssueCount,
-            "known violation",
-          )}`}
-          onClick={(event) => openProblems(event.currentTarget)}
-        >
-          <span>Checks</span>
-          <strong>{validationIssueCount}</strong>
-          <small>known violations</small>
-        </button>
-      </nav>
 
       <section
         className="roster-builder-grid"
@@ -901,7 +941,7 @@ export function RosterOverview({
             <span>
               {workspace.validation.available
                 ? `${formatCount(validationIssueCount, "known violation")} | ${
-                    workspace.validation.completeness === "complete"
+                    workspace.header.completeness === "complete"
                       ? "all supported rules checked"
                       : "some rules not checked"
                   }`
@@ -911,6 +951,7 @@ export function RosterOverview({
           <div className="roster-checks-report-body">
             <RosterStructuralStatus result={supportedValidation} />
             <RosterConstraintSummary result={supportedValidation} />
+            <RosterReportDetails workspace={workspace} />
           </div>
         </details>
       </section>
@@ -1252,48 +1293,42 @@ function ruleCoverageReasons(
       ];
 }
 
+/** The compact warning glyph stays code-native and inherits the control state. */
+function WarningTriangleIcon() {
+  return (
+    <svg
+      className="roster-warning-icon"
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      focusable="false"
+    >
+      <path d="M12 3.5 21 20.5H3Z" />
+      <path d="M12 8.5v6" />
+      <circle cx="12" cy="17.5" r="1" />
+    </svg>
+  );
+}
+
 /**
- * The player-facing header: what the list is, what it costs, and what is wrong
- * with it.
+ * Cost coverage and source evidence retained below the actionable checks.
  *
- * This replaces the separate cost and validation cards. Those framed the same
- * two numbers in the vocabulary of the thing that produced them — "Read-only
- * evaluation", "Supported validation", a satisfied/violated/unresolved triple —
- * rather than the vocabulary of the person reading them. A player acts on two
- * figures, the cost totals and the number of known problems, so those lead.
- *
- * Nothing the cards carried is dropped. Zero-value source costs, excluded and
- * unresolved counts, diagnostics, and the per-report completeness breakdown all
- * move into the disclosure below, and the two violation links appear only when
- * they point at something, so a clean roster stops reporting its own zeroes.
- *
- * Validity and completeness stay independent signals, as `AGENTS.md` requires:
- * "no known violations" and "the supported view is complete" are different
- * claims, and a roster can honestly be the first without being the second.
- * The completeness shown here is the model's conservative fold across both
- * reports; see `RosterWorkspaceHeaderSummary`.
+ * These details used to live in a large player header before the roster. They
+ * remain observable because completeness and provenance cannot be discarded,
+ * but keeping them inside the existing evidence disclosure lets the sticky
+ * identity and the army list lead the normal workflow.
  */
-function RosterPlayerHeader({
+function RosterReportDetails({
   workspace,
-  onOpenChecks,
 }: {
   readonly workspace: RosterWorkspaceViewModel;
-  readonly onOpenChecks: (trigger: HTMLElement) => void;
 }) {
   const { costs, validation, header } = workspace;
-  const structuralViolations = validation.available
-    ? validation.structuralViolationCount
-    : 0;
-  const constraintViolations = validation.available
-    ? validation.constraintViolationCount
-    : 0;
   const costDiagnostics = costs.diagnostics.length;
   const validationDiagnostics = validation.diagnostics.length;
   const zeroTotals = costs.zeroTotals;
   const headlineCost = costs.available
     ? headlineRosterCost(workspace)
     : undefined;
-  const limitPending = pointsLimitPending(workspace, headlineCost);
   const secondaryTotals = costs.available
     ? costs.activeTotals.filter((total) => total !== headlineCost)
     : [];
@@ -1310,110 +1345,10 @@ function RosterPlayerHeader({
     ? ruleCoverageReasons(validation.diagnostics)
     : [];
   return (
-    // A named landmark, not a bare <header>: nested inside the workspace
-    // section a <header> element carries no role at all, so neither assistive
-    // technology nor a role query could reach the roster's headline figures.
     <section
-      className="roster-player-header"
-      aria-label="Roster summary"
-      data-validity={validation.available ? validation.validity : undefined}
+      className="roster-report-details"
+      aria-label="Roster report details"
     >
-      <div className="player-header-identity">
-        <h2>{workspace.name}</h2>
-        <p className="catalogue-subtitle">{workspace.catalogueName}</p>
-      </div>
-
-      <div className="player-header-figures">
-        {!costs.available ? (
-          <p className="player-header-figure" data-figure="unavailable">
-            <strong>&mdash;</strong>
-            <span>costs unavailable</span>
-          </p>
-        ) : headlineCost === undefined ? (
-          <p className="player-header-figure" data-figure="empty">
-            <strong>0</strong>
-            <span>costs so far</span>
-          </p>
-        ) : (
-          <p className="player-header-figure" key={headlineCost.typeId}>
-            <strong>
-              {formatNumber(headlineCost.value)}
-              {limitPending || headlineCost.limit === undefined
-                ? ""
-                : ` / ${formatNumber(headlineCost.limit)}`}
-            </strong>
-            <span>
-              {limitPending
-                ? `${headlineCost.name} so far — choose Battle Size`
-                : `${headlineCost.name}${
-                    headlineCost.limit === undefined ? "" : " used"
-                  }`}
-            </span>
-          </p>
-        )}
-        {validation.available ? (
-          <button
-            type="button"
-            className="player-header-figure player-header-problems"
-            data-problems={validation.issueCount === 0 ? "none" : "present"}
-            aria-label={`Checks, ${formatCount(
-              validation.issueCount,
-              "known problem",
-            )}`}
-            onClick={(event) => onOpenChecks(event.currentTarget)}
-          >
-            <strong>{validation.issueCount}</strong>
-            <span>
-              {validation.issueCount === 1 ? "known problem" : "known problems"}
-            </span>
-          </button>
-        ) : (
-          <p className="player-header-figure" data-figure="unavailable">
-            <strong>&mdash;</strong>
-            <span>checks unavailable</span>
-          </p>
-        )}
-      </div>
-
-      <div className="player-header-signals">
-        {validation.available && (
-          <span className="validity-badge" data-validity={validation.validity}>
-            {validation.validity === "valid"
-              ? "No known violations"
-              : "Known violations"}
-          </span>
-        )}
-        <span
-          className="completeness-badge"
-          data-completeness={header.completeness}
-        >
-          {header.completeness === "complete"
-            ? "Supported checks complete"
-            : "Some rules not checked"}
-        </span>
-      </div>
-
-      {(structuralViolations > 0 || constraintViolations > 0) && (
-        <nav className="player-header-links" aria-label="Known problems">
-          {structuralViolations > 0 && (
-            <button
-              type="button"
-              onClick={(event) => onOpenChecks(event.currentTarget)}
-            >
-              {formatCount(structuralViolations, "structural violation")}
-            </button>
-          )}
-          {constraintViolations > 0 && (
-            <button
-              type="button"
-              onClick={(event) => onOpenChecks(event.currentTarget)}
-            >
-              {formatCount(constraintViolations, "constraint violation")}
-            </button>
-          )}
-        </nav>
-      )}
-
       <p className="player-header-boundary">
         Supported checks and costs only. This does not establish full
         BattleScribe legality, and it never blocks an edit.
@@ -2980,6 +2915,7 @@ function RosterProblemsDialog({
       }}
     >
       <section
+        id="roster-problems-dialog"
         className="choice-preview-dialog roster-problems-dialog"
         role="dialog"
         aria-modal="true"

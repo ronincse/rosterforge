@@ -259,16 +259,19 @@
   resolving an anchor that otherwise would not be mounted in the options
   region. Configuration links open the compact outer row and every owning card,
   then focus the exact stable selection anchor
-- Persistent Roster, Add unit, and Checks workspace navigation with live counts
-  on a high-opacity blurred material, a two-pane roster/options desktop builder,
-  and a browser-verified
+- Persistent sticky workspace navigation with roster name, chosen
+  catalogue/faction, preferred live cost, Add unit count, and a compact warning
+  triangle/known-violation count on a high-opacity blurred material. The former
+  large roster summary is absent; secondary costs, completeness, and source
+  evidence remain in Detailed supported evidence below the builder. The
+  two-pane roster/options desktop builder has a browser-verified
   full-width mobile fallback. Add unit starts closed, preserves its search on
   dismissal, traps focus, opens search-first on compact screens or through `/`,
   and closes/focuses the new row after a successful army-unit add. At 390 px and
   the 320 px supported minimum, repository diagnostics and the real-roster
   workspace remain inside the viewport; sticky navigation leaves its targets
   visible below the bar
-- Sticky and player-header budgets prefer the finite-limit currency authored
+- The sticky budget prefers the finite-limit currency authored
   on addable army roots by exact cost-type ID, so Detachment Points remain a
   visible setup/secondary limit rather than replacing roster Points when source
   declaration order differs. Configuration presents Battle Size before
