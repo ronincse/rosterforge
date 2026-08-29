@@ -69,4 +69,26 @@ describe("phone-width layout contracts", () => {
       '--display-font:\n    "Bahnschrift SemiCondensed", Bahnschrift',
     );
   });
+
+  it("turns Add unit into an accessible regular sheet and compact full-screen task", () => {
+    // The catalogue no longer owns permanent page width. Pin the modal bounds,
+    // touch-target floor, visible keyboard focus, and compact safe-area rules
+    // that were verified in the real browser at the supported widths.
+    expect(styles).toContain(
+      ".add-unit-dialog {\n  display: grid;\n  width: min(760px, 100%);",
+    );
+    expect(styles).toContain(
+      ".choice-preview-heading.add-unit-heading button,\n" +
+        ".add-unit-dialog .root-choice-actions .choice-segmented-control > button {\n" +
+        "  min-width: 44px;\n" +
+        "  min-height: 44px;",
+    );
+    expect(styles).toContain(
+      ".add-unit-dialog .root-choice-filter input:focus-visible {\n" +
+        "  outline: 3px solid rgba(28, 107, 74, 0.42);",
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 560px\) \{[\s\S]*?\.add-unit-dialog \{\n {4}width: 100%;[\s\S]*?height: 100dvh;[\s\S]*?\.add-unit-heading \{[\s\S]*?env\(safe-area-inset-top\)/u,
+    );
+  });
 });

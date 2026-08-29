@@ -221,8 +221,8 @@
   and automatic focus for a newly added army unit. A dedicated options region
   reuses the existing edit controls and owns read-only full-card viewing and
   destructive removal, so rows carry no competing View/Remove controls.
-  Catalogue placement remains reader-controlled; configuration is never
-  focused as an army unit
+  The catalogue is available through a focused Add unit sheet; configuration
+  is never focused as an army unit
 - Required configuration cards collapse when a supported choice completes
   their known required child bounds, return focus to the disclosure, and reopen
   for supported attention. Optional-only or incomplete bounds do not cause an
@@ -238,17 +238,20 @@
   complete and empty. Removed categories and incomplete or unresolved keyword
   evaluation remain visible evidence rather than being collapsed into a false
   empty result
-- At most two simultaneous desktop columns: roster plus catalogue while
-  shopping, or roster list plus selected-unit options after the catalogue is
-  hidden. The complete unit card follows below the builder, and all surfaces
-  stack without horizontal overflow at 390 px and the 320 px supported minimum
+- At most two simultaneous desktop columns: roster list plus selected-unit
+  options. Add unit is a centred regular-width modal and a full-screen compact
+  sheet; the complete unit card is a separate modal reference. All surfaces
+  remain without horizontal overflow at 390 px and the 320 px supported minimum
 - Validation links to nested selections focus the owning army unit before
   resolving an anchor that otherwise would not be mounted in the options region
-- Persistent Roster, Add units, and Checks workspace navigation with live
-  counts, a two-pane desktop builder, and a browser-verified full-width mobile
-  fallback. At 390 px and the 320 px supported minimum, repository diagnostics
-  and the real-roster workspace remain inside the viewport; sticky navigation
-  leaves its targets visible below the bar
+- Persistent Roster, Add unit, and Checks workspace navigation with live
+  counts, a two-pane roster/options desktop builder, and a browser-verified
+  full-width mobile fallback. Add unit starts closed, preserves its search on
+  dismissal, traps focus, opens search-first on compact screens or through `/`,
+  and closes/focuses the new row after a successful army-unit add. At 390 px and
+  the 320 px supported minimum, repository diagnostics and the real-roster
+  workspace remain inside the viewport; sticky navigation leaves its targets
+  visible below the bar
 - Sticky and player-header budgets prefer the finite-limit currency authored
   on addable army roots by exact cost-type ID, so Detachment Points remain a
   visible setup/secondary limit rather than replacing roster Points when source
@@ -262,8 +265,8 @@
   roster name
 - Library-marked catalogues retained for composition and diagnostics but
   excluded from ordered roster-catalogue choices
-- Selected-roster empty state and catalogue category browser kept as separate
-  accessible regions without changing root visibility or add behavior
+- Selected-roster empty state and modal catalogue category browser kept as
+  separate accessible surfaces without changing root visibility or add behavior
 - DTD/entity declaration rejection and configurable byte, archive, XML-depth,
   XML-node, JSON-depth, and JSON-node limits
 - Structured diagnostics for invalid Boolean and numeric projected attributes

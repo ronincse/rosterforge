@@ -1,4 +1,11 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 
 import type {
   MaterializedInfoGroup,
@@ -61,6 +68,7 @@ import {
 import {
   createRosterWorkspaceViewModel,
   type RosterWorkspaceCost,
+  type RosterWorkspaceRootChoiceGroup,
   type RosterWorkspaceSelection,
   type RosterWorkspaceSelectionCosts,
   type RosterWorkspaceSelectionGroup,
@@ -181,12 +189,15 @@ export function RosterOverview({
 }) {
   const rootFilterId = useId();
   const [rootFilter, setRootFilter] = useState("");
-  const [catalogueOpen, setCatalogueOpen] = useState(
-    catalogueInitiallyOpen,
-  );
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [catalogueInitialFocus, setCatalogueInitialFocus] = useState<
+    "close" | "search"
+  >("close");
   const [configurationOpen, setConfigurationOpen] = useState(true);
   const [printBlocked, setPrintBlocked] = useState(false);
   const [activeSelectionId, setActiveSelectionId] =
+    useState<SelectionOccurrenceId>();
+  const [pendingAddedSelectionFocus, setPendingAddedSelectionFocus] =
     useState<SelectionOccurrenceId>();
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
@@ -196,6 +207,8 @@ export function RosterOverview({
   const previewReturnFocus = useRef<HTMLElement | null>(null);
   const unitCardReturnFocus = useRef<HTMLElement | null>(null);
   const problemsReturnFocus = useRef<HTMLElement | null>(null);
+  const catalogueReturnFocus = useRef<HTMLElement | null>(null);
+  const rootFilterInput = useRef<HTMLInputElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
     useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
@@ -319,6 +332,71 @@ export function RosterOverview({
       }
     });
   };
+  const openCatalogue = (
+    trigger: HTMLElement | null,
+    focus: "close" | "search" = compactAddUnitSearchPreferred()
+      ? "search"
+      : "close",
+  ) => {
+    catalogueReturnFocus.current = trigger;
+    setCatalogueInitialFocus(focus);
+    setCatalogueOpen(true);
+    if (focus === "search") {
+      queueMicrotask(() => rootFilterInput.current?.focus());
+    }
+  };
+  const closeCatalogue = (restoreFocus = true) => {
+    setCatalogueOpen(false);
+    const returnFocus = catalogueReturnFocus.current;
+    catalogueReturnFocus.current = null;
+    if (!restoreFocus) return;
+    queueMicrotask(() => {
+      if (returnFocus !== null && document.contains(returnFocus)) {
+        returnFocus.focus();
+      }
+    });
+  };
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const visibleDialog = document.querySelector(
+        '.choice-preview-backdrop:not([hidden]) [role="dialog"][aria-modal="true"]',
+      );
+      if (
+        event.key !== "/" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        editableKeyboardTarget(event.target) ||
+        (visibleDialog !== null && visibleDialog.id !== "add-unit-dialog")
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (catalogueOpen) {
+        rootFilterInput.current?.focus();
+        return;
+      }
+      openCatalogue(
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null,
+        "search",
+      );
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  });
+  useEffect(() => {
+    if (!catalogueOpen) return;
+    // The catalogue can be much taller than the roster. Keep wheel, touch, and
+    // keyboard scrolling inside the modal task so dismissal returns to the
+    // same roster position rather than a displaced background document.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [catalogueOpen]);
   useEffect(() => {
     if (activeSelectionId !== undefined && activeSelection === undefined) {
       setActiveSelectionId(undefined);
@@ -339,6 +417,18 @@ export function RosterOverview({
     target.scrollIntoView?.({ block: "start" });
     setPendingSelectionAnchor(undefined);
   }, [activeSelectionId, pendingSelectionAnchor, session]);
+  useEffect(() => {
+    if (pendingAddedSelectionFocus === undefined) return;
+    const row = document.getElementById(
+      selectionAnchor(pendingAddedSelectionFocus),
+    );
+    const disclosure = row?.querySelector<HTMLElement>(
+      ".roster-unit-row-disclosure",
+    );
+    if (disclosure == null) return;
+    disclosure.focus();
+    setPendingAddedSelectionFocus(undefined);
+  }, [pendingAddedSelectionFocus, workspace]);
   // A known violation opens its actionable evidence. Incompleteness remains a
   // separate visible signal in the player header, but it does not force the
   // evaluator report open: raw coverage evidence is useful on demand and made
@@ -502,16 +592,18 @@ export function RosterOverview({
           )}
         </a>
         <button
+          className="add-unit-trigger"
           type="button"
-          aria-controls={catalogueOpen ? "root-choices-pane" : undefined}
+          aria-controls={catalogueOpen ? "add-unit-dialog" : undefined}
           aria-expanded={catalogueOpen}
-          aria-label={`${catalogueOpen ? "Hide" : "Show"} catalogue, ${formatCount(
+          aria-haspopup="dialog"
+          aria-label={`Add unit, ${formatCount(
             filteredRootChoiceCount,
             "available choice",
           )}`}
-          onClick={() => setCatalogueOpen((open) => !open)}
+          onClick={(event) => openCatalogue(event.currentTarget)}
         >
-          <span>{catalogueOpen ? "Hide catalogue" : "Show catalogue"}</span>
+          <span>Add unit</span>
           <strong>{filteredRootChoiceCount}</strong>
           <small>available choices</small>
         </button>
@@ -532,7 +624,7 @@ export function RosterOverview({
       <section
         className="roster-builder-grid"
         aria-label="Roster builder"
-        data-catalogue-open={catalogueOpen}
+        data-catalogue-open="false"
         data-options-open={activeSelection !== undefined}
       >
         <section
@@ -569,7 +661,7 @@ export function RosterOverview({
           {force === undefined || armyGroups.length === 0 ? (
             <div className="empty-selected-roster">
               <strong>No units added yet</strong>
-              <span>Browse Add units to begin building this army.</span>
+              <span>Choose Add unit to begin building this army.</span>
             </div>
           ) : (
             <div className="roster-selection-list">
@@ -631,157 +723,34 @@ export function RosterOverview({
           )}
         </section>
 
-        {catalogueOpen && (
-          <section
-            id="root-choices-pane"
-            className="selection-editor"
-            aria-labelledby="root-choices-heading"
-          >
-            <div className="builder-pane-heading">
-              <div>
-                <p className="eyebrow">Catalogue browser</p>
-                <h3 id="root-choices-heading">Add units</h3>
-              </div>
-              <span>
-                {formatCount(filteredRootChoiceCount, "matching choice")}
-              </span>
-            </div>
-
-            {rootChoiceGroups.length > 0 && (
-              <div className="root-choice-filter">
-                <label htmlFor={rootFilterId}>Find a unit or option</label>
-                <input
-                  id={rootFilterId}
-                  type="search"
-                  value={rootFilter}
-                  placeholder="Filter available roots"
-                  onChange={(event) =>
-                    setRootFilter(event.currentTarget.value)
-                  }
-                />
-              </div>
-            )}
-
-            {rootChoiceGroups.length === 0 ? (
-              <p className="no-root-choices">
-                This catalogue context has no resolved visible root selections.
-              </p>
-            ) : filteredRootChoiceGroups.length === 0 ? (
-              <p className="no-root-choices">
-                No available roots match this filter.
-              </p>
-            ) : (
-              <div className="root-choice-categories">
-                {filteredRootChoiceGroups.map((group, index) => (
-                  <details
-                    className="root-choice-category"
-                    key={group.key}
-                    open={
-                      normalizedRootFilter !== "" ||
-                      index === 0 ||
-                      group.section === "configuration"
-                    }
-                  >
-                    <summary>
-                      <strong>{group.name}</strong>
-                      <span>{formatCount(group.choices.length, "choice")}</span>
-                    </summary>
-                    <div className="root-choice-list">
-                      {group.choices.map((state) => {
-                        const choice = state.choice;
-                        const status = rootChoiceStatus(state);
-                        const finiteMaximum =
-                          state.maximum !== undefined &&
-                          Number.isFinite(state.maximum)
-                            ? state.maximum
-                            : undefined;
-                        const maximumReached =
-                          finiteMaximum !== undefined &&
-                          rosterSelectionsAmount(state.selected) >=
-                            finiteMaximum;
-                        const costDescriptionId =
-                          catalogueChoiceCosts(choice.materialized).length === 0
-                            ? undefined
-                            : choiceCostDescriptionId(
-                                "root",
-                                choice.materialized,
-                              );
-                        return (
-                          <div
-                            className="root-choice"
-                            key={rootChoiceKey(choice)}
-                            data-completeness={state.completeness}
-                          >
-                            <span className="root-choice-copy">
-                              <span className="root-choice-heading">
-                                <strong>{rootChoiceLabel(choice)}</strong>
-                                <ChoiceCostBadges
-                                  choice={choice.materialized}
-                                  id={costDescriptionId}
-                                />
-                              </span>
-                              <small className="root-choice-status">
-                                <span>{status.value}</span>
-                                {status.sourceMaximum && (
-                                  <span
-                                    className="root-choice-status-qualifier"
-                                    title="Source maximum; roster options can change this number."
-                                  >
-                                    base
-                                  </span>
-                                )}
-                              </small>
-                            </span>
-                            <span className="root-choice-actions">
-                              <span className="choice-segmented-control">
-                                <button
-                                  type="button"
-                                  className="root-choice-add"
-                                  aria-describedby={costDescriptionId}
-                                  aria-label={
-                                    maximumReached
-                                      ? `${rootChoiceLabel(choice)} maximum reached`
-                                      : `Add ${rootChoiceLabel(choice)}`
-                                  }
-                                  title={
-                                    maximumReached
-                                      ? `${rootChoiceLabel(choice)} maximum reached`
-                                      : `Add ${rootChoiceLabel(choice)}`
-                                  }
-                                  disabled={maximumReached}
-                                  onClick={() => {
-                                    const selectionId =
-                                      onAddRootSelection(choice);
-                                    if (
-                                      selectionId !== undefined &&
-                                      group.section === "army"
-                                    ) {
-                                      setActiveSelectionId(selectionId);
-                                    }
-                                  }}
-                                >
-                                  <span aria-hidden="true">+</span>
-                                </button>
-                                <ChoicePreviewButton
-                                  choice={choice.materialized}
-                                  onPreview={openChoicePreview}
-                                />
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            )}
-            {!rootChoiceInspection.ok && (
-              <DiagnosticList diagnostics={rootChoiceInspection.diagnostics} />
-            )}
-          </section>
-        )}
       </section>
+
+      {catalogueOpen && (
+        <AddUnitDialog
+          covered={previewedChoice !== undefined}
+          filterId={rootFilterId}
+          filterInput={rootFilterInput}
+          filter={rootFilter}
+          initialFocus={catalogueInitialFocus}
+          groups={rootChoiceGroups}
+          filteredGroups={filteredRootChoiceGroups}
+          filteredCount={filteredRootChoiceCount}
+          normalizedFilter={normalizedRootFilter}
+          inspection={rootChoiceInspection}
+          onFilterChange={setRootFilter}
+          onClose={() => closeCatalogue()}
+          onAdd={(choice, armyChoice) => {
+            const selectionId = onAddRootSelection(choice);
+            if (selectionId === undefined) return;
+            if (armyChoice) {
+              setActiveSelectionId(selectionId);
+              setPendingAddedSelectionFocus(selectionId);
+              closeCatalogue(false);
+            }
+          }}
+          onPreviewChoice={openChoicePreview}
+        />
+      )}
 
       {previewedChoice !== undefined && (
         <CatalogueChoicePreviewDialog
@@ -896,17 +865,227 @@ export function RosterOverview({
   );
 }
 
-/**
- * Starts narrow workspaces in the roster-first reading view while keeping the
- * catalogue present on desktop. This is intentionally an initial placement
- * decision, not a live media-query subscription: resizing must not overwrite a
- * reader's explicit catalogue choice.
- */
-function catalogueInitiallyOpen(): boolean {
+/** The focused catalogue task opened from the roster's primary Add unit action. */
+function AddUnitDialog({
+  covered,
+  filterId,
+  filterInput,
+  filter,
+  initialFocus,
+  groups,
+  filteredGroups,
+  filteredCount,
+  normalizedFilter,
+  inspection,
+  onFilterChange,
+  onAdd,
+  onPreviewChoice,
+  onClose,
+}: {
+  readonly covered: boolean;
+  readonly filterId: string;
+  readonly filterInput: RefObject<HTMLInputElement | null>;
+  readonly filter: string;
+  readonly initialFocus: "close" | "search";
+  readonly groups: readonly RosterWorkspaceRootChoiceGroup[];
+  readonly filteredGroups: readonly RosterWorkspaceRootChoiceGroup[];
+  readonly filteredCount: number;
+  readonly normalizedFilter: string;
+  readonly inspection: ReturnType<typeof inspectLocalRosterRootChoices>;
+  readonly onFilterChange: (value: string) => void;
+  readonly onAdd: (choice: LocalRosterRootChoice, armyChoice: boolean) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
+  readonly onClose: () => void;
+}) {
   return (
-    typeof window === "undefined" ||
-    typeof window.matchMedia !== "function" ||
-    !window.matchMedia("(max-width: 850px)").matches
+    <div
+      className="choice-preview-backdrop add-unit-sheet-backdrop"
+      role="presentation"
+      hidden={covered}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        if (event.key === "Tab") trapDialogFocus(event.currentTarget, event);
+      }}
+    >
+      <section
+        id="add-unit-dialog"
+        className="choice-preview-dialog add-unit-dialog selection-editor"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-unit-heading"
+      >
+        <header className="choice-preview-heading add-unit-heading">
+          <div>
+            <span className="eyebrow">Army catalogue</span>
+            <h3 id="add-unit-heading">Add unit</h3>
+          </div>
+          <div className="add-unit-heading-actions">
+            <span>{formatCount(filteredCount, "matching choice")}</span>
+            <button
+              type="button"
+              autoFocus={initialFocus === "close"}
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </header>
+
+        {groups.length > 0 && (
+          <div className="root-choice-filter add-unit-search">
+            <label htmlFor={filterId}>Search units and options</label>
+            <input
+              ref={filterInput}
+              id={filterId}
+              type="search"
+              value={filter}
+              autoFocus={initialFocus === "search"}
+              placeholder="Unit name"
+              onChange={(event) =>
+                onFilterChange(event.currentTarget.value)
+              }
+            />
+          </div>
+        )}
+
+        {groups.length === 0 ? (
+          <p className="no-root-choices">
+            This catalogue context has no resolved visible root selections.
+          </p>
+        ) : filteredGroups.length === 0 ? (
+          <p className="no-root-choices">
+            No available units or options match this search.
+          </p>
+        ) : (
+          <div className="root-choice-categories add-unit-results">
+            {filteredGroups.map((group, index) => (
+              <details
+                className="root-choice-category"
+                key={group.key}
+                open={
+                  normalizedFilter !== "" ||
+                  index === 0 ||
+                  group.section === "configuration"
+                }
+              >
+                <summary>
+                  <strong>{group.name}</strong>
+                  <span>{formatCount(group.choices.length, "choice")}</span>
+                </summary>
+                <div className="root-choice-list">
+                  {group.choices.map((state) => {
+                    const choice = state.choice;
+                    const status = rootChoiceStatus(state);
+                    const finiteMaximum =
+                      state.maximum !== undefined &&
+                      Number.isFinite(state.maximum)
+                        ? state.maximum
+                        : undefined;
+                    const maximumReached =
+                      finiteMaximum !== undefined &&
+                      rosterSelectionsAmount(state.selected) >= finiteMaximum;
+                    const costDescriptionId =
+                      catalogueChoiceCosts(choice.materialized).length === 0
+                        ? undefined
+                        : choiceCostDescriptionId(
+                            "root",
+                            choice.materialized,
+                          );
+                    return (
+                      <div
+                        className="root-choice"
+                        key={rootChoiceKey(choice)}
+                        data-completeness={state.completeness}
+                      >
+                        <span className="root-choice-copy">
+                          <span className="root-choice-heading">
+                            <strong>{rootChoiceLabel(choice)}</strong>
+                            <ChoiceCostBadges
+                              choice={choice.materialized}
+                              id={costDescriptionId}
+                            />
+                          </span>
+                          <small className="root-choice-status">
+                            <span>{status.value}</span>
+                            {status.sourceMaximum && (
+                              <span
+                                className="root-choice-status-qualifier"
+                                title="Source maximum; roster options can change this number."
+                              >
+                                base
+                              </span>
+                            )}
+                          </small>
+                        </span>
+                        <span className="root-choice-actions">
+                          <span className="choice-segmented-control">
+                            <button
+                              type="button"
+                              className="root-choice-add"
+                              aria-describedby={costDescriptionId}
+                              aria-label={
+                                maximumReached
+                                  ? `${rootChoiceLabel(choice)} maximum reached`
+                                  : `Add ${rootChoiceLabel(choice)}`
+                              }
+                              title={
+                                maximumReached
+                                  ? `${rootChoiceLabel(choice)} maximum reached`
+                                  : `Add ${rootChoiceLabel(choice)}`
+                              }
+                              disabled={maximumReached}
+                              onClick={() =>
+                                onAdd(choice, group.section === "army")
+                              }
+                            >
+                              <span aria-hidden="true">+</span>
+                            </button>
+                            <ChoicePreviewButton
+                              choice={choice.materialized}
+                              onPreview={onPreviewChoice}
+                            />
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            ))}
+          </div>
+        )}
+        {!inspection.ok && (
+          <DiagnosticList diagnostics={inspection.diagnostics} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+/** Only the full-screen compact sheet raises search as its initial task. */
+function compactAddUnitSearchPreferred(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 560px)").matches
+  );
+}
+
+/** `/` is a roster shortcut only when it won't replace text being edited. */
+function editableKeyboardTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement)
   );
 }
 

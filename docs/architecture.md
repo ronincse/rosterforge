@@ -489,16 +489,25 @@ disclosures, and shows an explicit no-match state. It does not modify the
 underlying group projection, materialized roots, visibility, or diagnostics.
 
 The active roster workspace uses three stable destinations: `Roster`,
-`Add units`, and `Checks`. A compact sticky navigator exposes live top-level
-selection, filtered-choice, and supported-issue counts. Its roster budget
+`Add unit`, and `Checks`. A compact sticky navigator exposes live top-level
+selection, available-choice, and supported-issue counts. `Add unit` opens the
+existing grouped and filterable root projection as a scoped modal task; the
+catalogue is closed by default and never consumes a permanent builder column.
+The sheet is bounded and centred at regular widths and fills the viewport at
+the compact breakpoint. Compact opens and the `/` shortcut focus search;
+ordinary regular-width opens focus the explicit Close action. Escape and
+backdrop dismissal return focus to the trigger, while a successful army-root
+addition closes the sheet and focuses the new roster row. Configuration-root
+additions and failed mutations retain the open sheet and its filter. Opening a
+read-only catalogue preview temporarily hides the Add unit dialog so only one
+modal is exposed, then restores the originating information action.
+
+The navigator's roster budget
 prefers a finite-limit cost type with non-zero authored costs on addable army
 roots, matched by exact cost-type ID. This keeps ordinary roster points primary
 when a game system declares a setup-only currency such as Detachment Points
 first; other evaluated currencies remain available in setup or secondary-limit
-details. On wide viewports the
-selected roster and catalogue browser occupy separate side-by-side panes; on
-narrow viewports they return to document order as full-width sections. While a
-roster is active, `App` mounts a dedicated full-viewport roster shell instead
+details. While a roster is active, `App` mounts a dedicated full-viewport roster shell instead
 of the Lists shell: the site hero, import/repository controls, recovery prompt,
 draft shelf, catalogue setup, and footer are absent from that render rather
 than CSS-hidden. The controller and remote-source hooks remain mounted, so
@@ -542,12 +551,11 @@ editing implementations, so required upgrades, grouped replacements, and
 repeatable model quantities keep one mutation path. Configuration remains in
 the full-width setup step and can never become the selected army unit.
 
-The outer builder has at most two columns. With the catalogue open those are
-roster and catalogue, and the options surface stacks inside the roster pane.
-With the catalogue closed, the roster pane may use the reclaimed width for
-list and options columns. Both arrangements return to document-order single
-columns at the responsive breakpoint. The full unit card remains outside that
-grid so it never creates a permanent list/options/catalogue three-pane layout.
+The outer builder has at most two columns: the roster list and the selected
+unit's options surface. They return to document-order single columns at the
+responsive breakpoint. Add unit and the full unit card are transient modal
+tasks outside that grid, so neither can create a permanent
+list/options/catalogue three-pane layout.
 Anchor navigation and selected/viewed pane state are UI concerns only and never
 enter the immutable session, history, or draft. A validation link whose exact
 nested anchor is not mounted first focuses its owning top-level unit, then

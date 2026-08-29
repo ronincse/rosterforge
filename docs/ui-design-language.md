@@ -51,6 +51,50 @@ list, catalogue, and inspector as three simultaneous panes.
   move secondary panes into sheets. Resizing must not unexpectedly reset a
   player's selection or reopen a surface they dismissed.
 
+## Overhaul audit and delivery sequence
+
+The 2026-08-28 audit used the pinned Aeldari catalogue in the running branch at
+390 x 844, 768 x 1024, and 1440 x 1000. The page stayed within each viewport,
+and the dedicated roster shell, role grouping, compact unit rows, focused
+options surface, and modal reference cards were sound structural foundations.
+The visual and interaction system was not yet coherent: Configuration consumed
+several screens before the army, the permanent catalogue competed with the
+roster, document actions were fragmented, and the legacy parchment/pink palette,
+condensed uppercase type, small controls, borders, and deep technical detail
+still read as a catalogue debugger rather than an installed list builder. The
+Lists surface remains a separate legacy experience, and the application has no
+manifest, application icons, service-worker boundary, dark theme, or
+increased-contrast theme yet.
+
+A fresh review of the current Layout, Lists and tables, Toolbars, Search fields,
+Sheets, Materials, and Accessibility guidance confirms this document's intended
+direction, with three constraints made explicit:
+
+- translucent material is a restrained navigation/transient-control layer, not
+  the content background;
+- a sheet is one bounded task with one clear dismissal and retained context,
+  never another persistent application column; and
+- scalable text, contrast, color-independent state, and safe-area adaptation
+  are acceptance criteria rather than a final polish pass.
+
+The prose below describes the target system, not the current implementation.
+Deliver it through independently reviewable checkpoints in this order:
+
+| Checkpoint | State | Acceptance boundary |
+| --- | --- | --- |
+| Roster information architecture | Done | Dedicated roster screen, grouped compact rows, focused options, and modal problems/reference cards |
+| Add unit | Done | Closed-by-default grouped search sheet; compact full-screen and search-first, regular centred and Close-first; focus containment/return; close and focus the new row after a successful army add |
+| Configuration | Next | Replace the long default-open setup tree with one settings-style summary row while preserving every choice, check, capacity, and Developer detail |
+| Active-roster system | Open | Apply shared semantic tokens and reusable navigation, grouped-row, sheet, inspector, picker, switch, stepper, status, and More-menu primitives; remove the legacy visual vocabulary from this screen |
+| Lists and creation | Open | Bring saved rosters, creation, source acquisition, recovery, and empty/error states into the same hierarchy and component system without turning import evidence into primary content |
+| Reading and document workflows | Open | Reconcile unit datasheets, checks, save/duplicate/print actions, and print hierarchy with the final navigation and disclosure model |
+| Installed web app | Open | Add an owned manifest, icons, theme metadata, safe-area behavior, service-worker/update strategy, and an honest offline boundary for already-local data |
+| Cross-mode acceptance | Open | Re-run the reference army at phone portrait/landscape, tablet, desktop, and ultrawide; verify 200% reflow, dark appearance, increased contrast, reduced motion, keyboard-only use, screen-reader structure, and print |
+
+Do not combine checkpoints merely to make the page look finished. Each one must
+leave the roster fully usable, preserve imported-data and validation honesty,
+and pass its own real-browser path before the next visual layer depends on it.
+
 ## Shared tokens
 
 The implementation uses semantic custom properties so every component consumes

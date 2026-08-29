@@ -2255,6 +2255,10 @@ button.player-header-figure {
   place-items: center;
 }
 
+.choice-preview-backdrop[hidden] {
+  display: none;
+}
+
 .choice-preview-dialog {
   width: min(900px, 100%);
   max-height: calc(100vh - 48px);
@@ -2264,6 +2268,82 @@ button.player-header-figure {
   border: 1px solid #74847b;
   border-radius: 5px;
   box-shadow: 0 20px 60px rgba(10, 24, 17, 0.38);
+}
+
+/* Adding is a temporary catalogue task, not a permanent peer of the roster.
+   The regular-width sheet retains roster context around a bounded surface;
+   compact layouts spend the viewport on searchable results and safe areas. */
+.add-unit-sheet-backdrop {
+  background: rgba(19, 32, 26, 0.56);
+}
+
+.add-unit-dialog {
+  display: grid;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #f7f5ed;
+  border-radius: 14px;
+}
+
+.add-unit-heading {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  margin: 0;
+  padding: 16px 18px 14px;
+  background: rgba(247, 245, 237, 0.96);
+  border-bottom: 1px solid #cbd2cc;
+  backdrop-filter: blur(14px);
+}
+
+.add-unit-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-unit-heading-actions > span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.choice-preview-heading.add-unit-heading button,
+.add-unit-dialog .root-choice-actions .choice-segmented-control > button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.add-unit-search {
+  padding: 14px 18px 10px;
+}
+
+.add-unit-dialog .root-choice-filter input {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.add-unit-dialog .root-choice-filter input:focus-visible {
+  outline: 3px solid rgba(28, 107, 74, 0.42);
+  outline-offset: 2px;
+  border-color: #1c6b4a;
+}
+
+.add-unit-results {
+  padding: 0 18px 18px;
+}
+
+.add-unit-dialog > .no-root-choices,
+.add-unit-dialog > .diagnostic-list {
+  margin-right: 18px;
+  margin-left: 18px;
 }
 
 .unit-card-view-dialog {
@@ -3752,6 +3832,47 @@ footer {
 }
 
 @media (max-width: 560px) {
+  .add-unit-sheet-backdrop {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .add-unit-dialog {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .add-unit-heading {
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      calc(16px + env(safe-area-inset-right)) 12px
+      calc(16px + env(safe-area-inset-left));
+  }
+
+  .add-unit-heading-actions > span {
+    display: none;
+  }
+
+  .add-unit-search {
+    padding-right: calc(16px + env(safe-area-inset-right));
+    padding-left: calc(16px + env(safe-area-inset-left));
+  }
+
+  .add-unit-results {
+    padding-right: calc(16px + env(safe-area-inset-right));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    padding-left: calc(16px + env(safe-area-inset-left));
+  }
+
+  .add-unit-dialog .root-choice {
+    padding: 10px;
+  }
+
   /* The unit name is the disclosure control, and sharing its row with the cost
      and Remove left it 78 px wide at the 320 px minimum — a two-line tap
      target squeezed into a third of the card. Give the name the full width and

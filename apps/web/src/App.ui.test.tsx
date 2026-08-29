@@ -437,6 +437,15 @@ const remoteSourceDefinition: RemoteCatalogueSourceDefinition = {
   },
 };
 
+function addUnitTrigger(): HTMLElement {
+  return screen.getByRole("button", { name: /^Add unit,/u });
+}
+
+function openAddUnitDialog(): HTMLElement {
+  fireEvent.click(addUnitTrigger());
+  return screen.getByRole("dialog", { name: "Add unit" });
+}
+
 describe("App local catalogue flow", () => {
   it("browses a pinned source and opens the selected catalogue library", async () => {
     const prepared = await prepareLocalCatalogueLibrary(
@@ -859,7 +868,7 @@ describe("App local catalogue flow", () => {
     });
     expect(within(workspaceNavigation).getByText("Roster")).toBeTruthy();
     expect(
-      within(workspaceNavigation).getByText("Hide catalogue"),
+      within(workspaceNavigation).getByText("Add unit"),
     ).toBeTruthy();
     expect(within(workspaceNavigation).getByText("Checks")).toBeTruthy();
     expect(
@@ -870,10 +879,10 @@ describe("App local catalogue flow", () => {
     expect(
       within(workspaceNavigation)
         .getByRole("button", {
-          name: "Hide catalogue, 2 available choices",
+          name: "Add unit, 2 available choices",
         })
         .getAttribute("aria-expanded"),
-    ).toBe("true");
+    ).toBe("false");
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
@@ -967,16 +976,31 @@ describe("App local catalogue flow", () => {
     expect(undo).toHaveProperty("disabled", true);
     expect(redo).toHaveProperty("disabled", true);
 
-    let editor = screen.getByRole("region", { name: "Add units" });
+    expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
     const catalogueToggle = within(workspaceNavigation).getByRole("button", {
-      name: "Hide catalogue, 2 available choices",
+      name: "Add unit, 2 available choices",
     });
     fireEvent.click(catalogueToggle);
+    expect(catalogueToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(catalogueToggle.getAttribute("aria-controls")).toBe(
+      "add-unit-dialog",
+    );
+    let editor = screen.getByRole("dialog", { name: "Add unit" });
+    const closeCatalogue = within(editor).getByRole("button", {
+      name: "Close",
+    });
+    expect(document.activeElement).toBe(closeCatalogue);
+    fireEvent.keyDown(editor, { key: "/" });
+    expect(document.activeElement).toBe(
+      within(editor).getByRole("searchbox", {
+        name: "Search units and options",
+      }),
+    );
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(catalogueToggle));
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
     expect(catalogueToggle.hasAttribute("aria-controls")).toBe(false);
-    expect(
-      screen.queryByRole("region", { name: "Add units" }),
-    ).toBeNull();
     expect(selectedRoster).toBeTruthy();
     expect(
       screen
@@ -985,10 +1009,10 @@ describe("App local catalogue flow", () => {
     ).toBe("false");
     fireEvent.click(catalogueToggle);
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("true");
-    editor = screen.getByRole("region", { name: "Add units" });
+    editor = screen.getByRole("dialog", { name: "Add unit" });
     expect(within(editor).getByText("Uncategorized")).toBeTruthy();
     const rootFilter = within(editor).getByLabelText(
-      "Find a unit or option",
+      "Search units and options",
     );
     expect(within(editor).getByText("2 matching choices")).toBeTruthy();
     const unitInformationButton = within(editor).getByRole("button", {
@@ -1039,7 +1063,9 @@ describe("App local catalogue flow", () => {
     );
     fireEvent.change(rootFilter, { target: { value: "missing" } });
     expect(
-      within(editor).getByText("No available roots match this filter."),
+      within(editor).getByText(
+        "No available units or options match this search.",
+      ),
     ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: "Add Infantry Squad" }),
@@ -1082,13 +1108,17 @@ describe("App local catalogue flow", () => {
     fireEvent.keyDown(rootPreview, { key: "Tab" });
     expect(document.activeElement).toBe(closeRootPreview);
     fireEvent.keyDown(rootPreview, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    await waitFor(() => expect(document.activeElement).toBe(rootPreviewButton));
-    fireEvent.click(catalogueToggle);
-    fireEvent.click(catalogueToggle);
-    editor = screen.getByRole("region", { name: "Add units" });
     expect(
-      within(editor).getByLabelText("Find a unit or option"),
+      screen.queryByRole("dialog", { name: "Infantry Squad" }),
+    ).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(rootPreviewButton));
+    expect(screen.getByRole("dialog", { name: "Add unit" })).toBeTruthy();
+    fireEvent.click(within(editor).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(document.activeElement).toBe(catalogueToggle));
+    fireEvent.click(catalogueToggle);
+    editor = screen.getByRole("dialog", { name: "Add unit" });
+    expect(
+      within(editor).getByLabelText("Search units and options"),
     ).toHaveProperty("value", "infantry");
     fireEvent.click(
       screen.getByRole("button", { name: "Add Infantry Squad" }),
@@ -1096,9 +1126,9 @@ describe("App local catalogue flow", () => {
     await waitFor(() => {
       expect(rosterSelection("selection-ui-1")).toBeTruthy();
     });
-    // Adding keeps the catalogue where the reader placed it, while focusing
-    // the new army unit in the dedicated options surface.
-    expect(screen.getByRole("region", { name: "Add units" })).toBeTruthy();
+    // A successful army add closes the focused catalogue task while keeping
+    // the new unit selected in the dedicated options surface.
+    expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
     let unitOptions = screen.getByRole("region", {
       name: "Unit options for Infantry Squad",
     });
@@ -1128,6 +1158,13 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(rosterSelection("selection-ui-1")?.dataset.attention).toBe(
       "violation",
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(compactUnitRow as HTMLElement).getByRole("button", {
+          name: "Configure Infantry Squad (Elite)",
+        }),
+      ),
     );
 
     // The unit card carries its recursive cost in the always-visible row, so a
@@ -1269,9 +1306,10 @@ describe("App local catalogue flow", () => {
       within(selectedRoster).getByRole("button", { name: "Use 1" }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add Infantry Squad" }),
-    );
+    editor = openAddUnitDialog();
+    fireEvent.click(within(editor).getByRole("button", {
+      name: "Add Infantry Squad",
+    }));
     expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(
       within(selectedRoster).getAllByText("Infantry Squad (Elite)"),
@@ -1556,8 +1594,9 @@ describe("App local catalogue flow", () => {
       within(otherLimits as HTMLElement).getByText("Crusade: Experience used"),
     ).toBeTruthy();
 
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
     await waitFor(() => {
       expect(
@@ -1589,7 +1628,7 @@ describe("App local catalogue flow", () => {
     vi.stubGlobal(
       "matchMedia",
       vi.fn((query: string) => ({
-        matches: query === "(max-width: 850px)",
+        matches: query === "(max-width: 560px)",
         media: query,
         onchange: null,
         addListener: vi.fn(),
@@ -1623,17 +1662,46 @@ describe("App local catalogue flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
     const catalogueToggle = await screen.findByRole("button", {
-      name: "Show catalogue, 2 available choices",
+      name: "Add unit, 2 available choices",
     });
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("region", { name: "Add units" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
     expect(
       screen.getByRole("region", { name: "Selected roster" }),
     ).toBeTruthy();
 
     fireEvent.click(catalogueToggle);
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("region", { name: "Add units" })).toBeTruthy();
+    const editor = screen.getByRole("dialog", { name: "Add unit" });
+    const search = within(editor).getByRole("searchbox", {
+      name: "Search units and options",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(search));
+
+    const close = within(editor).getByRole("button", { name: "Close" });
+    const previewButtons = within(editor).getAllByRole("button", {
+      name: /^View information for /u,
+    });
+    const lastPreview = previewButtons.at(-1);
+    expect(lastPreview).toBeDefined();
+    lastPreview?.focus();
+    fireEvent.keyDown(editor, { key: "Tab" });
+    expect(document.activeElement).toBe(close);
+    close.focus();
+    fireEvent.keyDown(editor, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(lastPreview);
+
+    fireEvent.keyDown(editor, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(catalogueToggle));
+    fireEvent.keyDown(document, { key: "/" });
+    const reopenedEditor = screen.getByRole("dialog", { name: "Add unit" });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(reopenedEditor).getByRole("searchbox", {
+          name: "Search units and options",
+        }),
+      ),
+    );
   });
 
   it("presents selection groups as replaceable concrete choices", async () => {
@@ -1677,8 +1745,9 @@ describe("App local catalogue flow", () => {
 
     await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
 
     expect(
@@ -1924,8 +1993,9 @@ describe("App local catalogue flow", () => {
 
     await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
 
     let doctrine = screen.getByRole("group", {
@@ -2034,8 +2104,9 @@ describe("App local catalogue flow", () => {
 
     await screen.findByRole("heading", { name: "Synthetic Faction" });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
     let doctrine = screen.getByRole("group", {
       name: "Squad Doctrine choices for Infantry Squad",
@@ -2095,7 +2166,7 @@ describe("App local catalogue flow", () => {
     );
     fireEvent.change(force, { target: { value: nestedForce?.value } });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
-    const editor = screen.getByRole("region", { name: "Add units" });
+    const editor = openAddUnitDialog();
     fireEvent.click(
       within(editor).getByRole("button", { name: "Add Nested Unit" }),
     );
@@ -2257,7 +2328,7 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
-    const editor = screen.getByRole("region", { name: "Add units" });
+    const editor = openAddUnitDialog();
     fireEvent.click(
       within(editor).getByRole("button", {
         name: "Add Disabled Automatic Root",
@@ -2474,7 +2545,6 @@ describe("App local catalogue flow", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
-    const editor = screen.getByRole("region", { name: "Add units" });
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
@@ -2700,6 +2770,7 @@ describe("App local catalogue flow", () => {
         "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
       ),
     ).toBeTruthy();
+    const editor = openAddUnitDialog();
     expect(within(editor).getByText("Units")).toBeTruthy();
     expect(within(editor).getByText("Configuration")).toBeTruthy();
     expect(within(editor).getByText("Uncategorized")).toBeTruthy();
@@ -2878,8 +2949,9 @@ describe("App local catalogue flow", () => {
       target: { value: "Recovered Patrol" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
 
     // Never saved as a draft, so the shelf stays empty while the recovery
@@ -2956,8 +3028,9 @@ describe("App local catalogue flow", () => {
       target: { value: "Quota Patrol" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
     await waitFor(() => {
       expect(rosterSelection("selection-quota")).toBeTruthy();
@@ -3023,8 +3096,9 @@ describe("App local catalogue flow", () => {
       target: { value: "Saved Patrol" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
+    const editor = openAddUnitDialog();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Add Infantry Squad" }),
+      within(editor).getByRole("button", { name: "Add Infantry Squad" }),
     );
     await waitFor(() => {
       expect(rosterSelection("selection-draft-ui")).toBeTruthy();
