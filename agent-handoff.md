@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-28 (compact Configuration summary complete; active-roster system Next)
+## Current Status — 2026-08-29 (blurred material foundations complete; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -158,8 +158,14 @@ diagnostic codes.
   inserting a long card into the roster document; Escape restores focus to the
   invoking View button. Configuration is now a closed-by-default settings row
   with selected setup values, primary and setup capacities, visible attention,
-  and exact validation-link reveal into the complete retained editor. **The
-  `Next` is the shared active-roster component and token system.**
+  and exact validation-link reveal into the complete retained editor. The
+  sticky roster navigator now uses a dense blurred material, every top-level
+  army unit owns a separately spaced thicker material card, and the shared
+  modal overlay blurs the whole viewport behind its sharp task surface. Blur
+  remains progressively enhanced with opaque reduced-transparency,
+  increased-contrast, and forced-colors fallbacks. **The `Next` remains the
+  complete shared active-roster component and token system; this owner-requested
+  material slice did not claim that broader migration.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -222,12 +228,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **529 passed, 19 skipped (548)**.
+  `git diff --check` all pass. `pnpm test` is **531 passed, 19 skipped (550)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **548 passed**; without the variable the 19 corpus tests are skipped.
+  **550 passed**; without the variable the 19 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -450,8 +456,9 @@ complete. The owner has now
 reprioritised the product around the
 list-builder overhaul on `codex/list-builder-ui-overhaul`; the dedicated active
 roster shell, compact grouped army rows, focused reference dialogs, Add unit
-sheet, and compact Configuration row are its completed seams. **Apply the shared
-active-roster component/token system Next.** The remaining pinned Aeldari matched-play
+sheet, compact Configuration row, and requested blurred-material foundations
+are its completed seams. **Apply the complete shared active-roster
+component/token system Next.** The remaining pinned Aeldari matched-play
 coverage, roster duplication,
 and whole-roster incremental evaluation stay Open. Take the overhaul sequence
 in the dependency order stated in section F rather than treating table position
@@ -680,7 +687,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, and compact Configuration settings row are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** apply the shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, and owner-requested blurred navigator/unit-card/modal-backdrop material slice are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -706,9 +713,10 @@ bounded and independently reviewable:
    successful army add~~ — done on the overhaul branch;
 5. ~~collapse Configuration to one settings-style summary row while preserving
    all validation and details~~ — done on the overhaul branch;
-6. apply the shared system tokens and reusable navigation, row, sheet,
+6. complete the shared system tokens and reusable navigation, row, sheet,
    inspector, picker, switch, stepper, status, and More-menu primitives across
-   the active roster — **Next**;
+   the active roster — **Next**. The requested dense-blur navigator, separate
+   top-level unit materials, and blurred modal backdrop are already delivered;
 7. bring Lists, roster creation, source acquisition, recovery, and their
    empty/error states into the same component system;
 8. reconcile datasheets, checks, save/duplicate/print, and print hierarchy with
@@ -12495,3 +12503,120 @@ switch, stepper, status, and More-menu primitives on the active roster without
 pulling Lists/creation or installed-PWA work into the same checkpoint. Preserve
 the now-settled Add unit and Configuration interaction contracts while changing
 their visual vocabulary.
+
+## Completed Assignment — Blurred Material Foundations, 2026-08-29
+
+Baseline `e439e6e`; resulting implementation commit `f6a1b42` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The sticky Roster/Add unit/Checks navigator now uses a dense dark-green material
+with an 82% base surface, 26 px background blur, restrained saturation, a soft
+edge highlight, and enough opacity that its live counts remain readable while
+page color passes beneath it. Its small secondary labels were lightened after a
+contrast audit. The navigator's dimensions and `top: 0` sticky contract remain
+unchanged, so the existing 84 px fragment offset still clears it.
+
+The army-role list no longer paints one shared clipped box. It is a transparent
+grid with a measured 10 px gap, and every top-level unit owns its own rounded,
+72% standard-material card with 18 px blur, border, highlight, and elevation.
+Active selection and known-attention states now add to that base elevation
+instead of replacing it. Nested configuration, selections, inspectors, and
+reference content deliberately remain ordinary surfaces so a large roster does
+not become a stack of filtered panes.
+
+Every active-roster modal already shared the same overlay boundary. That overlay
+now applies a 20 px backdrop blur to the entire viewport while leaving its
+dialog child sharp. Unsupported browsers retain the prior darker scrim; the
+lighter blurred scrim is gated behind `@supports`. Reduced-transparency,
+increased-contrast, and forced-colors preferences disable the blur and restore
+opaque or system-color surfaces. No blur is animated and no `will-change` hint
+keeps these layers permanently promoted.
+
+Exact-minimum QA also exposed a pre-existing Windows scrollbar interaction:
+`body { min-width: 320px }` widened a 320 px window when a classic 15 px vertical
+scrollbar reduced its layout viewport to 305 px. The support floor is now capped
+at the available width. The same browser changed from document/client widths
+`320 / 305` to `305 / 305`, removing the horizontal scrollbar without changing
+the declared 320 px supported window size.
+
+The design-language, architecture, and compatibility records now distinguish
+the navigator's denser glass-like navigation material from the thicker standard
+material on top-level unit content. They also record the shared full-viewport
+modal blur. This is a bounded visual foundation, not completion of the broader
+semantic token and reusable-control migration.
+
+### Decisions and rejected alternatives
+
+Apple's current Materials guidance informed the hierarchy: the functional
+navigator uses the stronger glass-like treatment, while repeated unit content
+uses a thicker standard material. A clear, highly transparent navigator was
+rejected because the owner explicitly preferred blur and legibility. Applying
+glass to every nested selection or editor was rejected because it would weaken
+content hierarchy and create many more composited layers on a phone. Filtering
+the application root was rejected because it would blur the dialog as well as
+its surroundings; `backdrop-filter` on the overlay preserves the intended sharp
+task surface. A translucent-only implementation was rejected in favour of dark
+fallback scrims and opaque accessibility modes.
+
+### Delegation and review
+
+A native Codex child performed an early read-only CSS-boundary, modal-coverage,
+contrast, accessibility, performance, and documentation audit from a disposable
+worktree at the exact baseline. It confirmed that the existing JSX already
+provided separate unit `<li>` elements and one overlay class for Add unit, unit
+reference, problems, and catalogue preview, so no behavioral rewrite was
+warranted. Codex reviewed and implemented the findings. The audit worktree was
+verified clean and removed; no delegated code was accepted.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA used the project-owned Selection Initialization game-system and
+catalogue fixtures, created `Initialization Force`, and exercised separate
+`Initialization Unit` and `Automatic Reconciliation Unit` cards. The live
+computed styles measured a 10 px card gap, 18 px card blur, 26 px navigator
+blur, and 20 px modal blur. Add unit changed from an exact full-screen 560 x 800
+task to a 513.3 px-wide centred task with 24 px side insets at 561 px. Unit
+reference, Add unit, and Roster problems all left the dialog sharp while the
+entire underlying viewport visibly blurred.
+
+Responsive measurements covered 320 x 568, 390 x 844, the 560/561 px Add unit
+boundary, 768 x 1024, 844 x 390, 1440 x 1000, and 1920 x 1080. Document and
+client widths matched after the 320 px correction. At 844 x 390 the navigator
+remained at `top: 0` after a 650 px scroll; tablet card separation measured
+9.99998 px; and the ultrawide document/client widths both measured 1,905 px.
+The browser showed active and attention cards retaining their material and
+semantic state at portrait, landscape, tablet, and desktop widths.
+
+Verification:
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **531 passed, 19 skipped (550 total)** across 58 files;
+- pinned 46-document corpus at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **550 passed (550)** across
+  58 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint changes presentation only. It does not alter evaluation, root
+visibility, mutation behavior, imported-data semantics, validation completeness,
+persistent formats, or the remaining pinned Aeldari behavior families. The full
+active-roster semantic token and reusable navigation/row/sheet/inspector/control
+migration remains Next. Lists/creation, document workflows, installed-PWA
+behavior, dark appearance, exact 200% reflow, screen-reader acceptance, and
+final print/cross-mode acceptance remain recorded in the roadmap. The CSS
+preference fallbacks were added but do not claim that later cross-mode acceptance
+is complete. The full 2,000-point Dark Angels army was not rebuilt in this
+bounded material checkpoint.
+
+### Next recommended boundary
+
+**Complete the shared active-roster component and token system.** Consolidate
+the remaining legacy colors, typography, spacing, and one-off navigation, row,
+sheet, inspector, picker, switch, stepper, status, and More-menu rules without
+pulling Lists/creation, installed-PWA, or print acceptance into the same
+checkpoint. Preserve the settled Add unit, Configuration, unit-card, and modal
+interaction contracts while completing their reusable visual vocabulary.
