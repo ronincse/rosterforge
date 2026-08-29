@@ -2342,6 +2342,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       within(editor).getByRole("button", { name: "Add Battle Size" }),
     );
+    fireEvent.click(within(editor).getByRole("button", { name: "Close" }));
 
     const configuration = await screen.findByRole("group", {
       name: "Configuration",
@@ -2360,13 +2361,28 @@ describe("App local catalogue flow", () => {
       workspaceNavigation.compareDocumentPosition(rosterBuilder) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
-    expect(configuration.hasAttribute("open")).toBe(true);
+    const configurationSummary = configuration.querySelector<HTMLElement>(
+      ":scope > summary",
+    );
+    expect(configurationSummary).not.toBeNull();
+    expect(configuration.hasAttribute("open")).toBe(false);
     expect(
       within(configuration).getByRole("heading", { name: "Configuration" }),
     ).toBeTruthy();
     expect(
+      within(configuration).getByText("80 / 2,000 Points"),
+    ).toBeTruthy();
+    expect(
       within(configuration).getByText("0 / 3 Detachment Points"),
     ).toBeTruthy();
+    expect(
+      within(configuration).getByText("Contains known violation"),
+    ).toBeTruthy();
+    expect(
+      within(configuration).getByText("3 settings"),
+    ).toBeTruthy();
+    fireEvent.click(configurationSummary as HTMLElement);
+    expect(configuration.hasAttribute("open")).toBe(true);
     expect(
       within(configuration).getByText("Disabled Automatic Root", {
         selector: "strong",
@@ -2418,6 +2434,12 @@ describe("App local catalogue flow", () => {
     fireEvent.click(
       within(configuration).getByRole("button", { name: "Warhost" }),
     );
+    // A new setup violation reopens the repair controls, but once visible the
+    // player can deliberately collapse the still-invalid section.
+    expect(configuration.hasAttribute("open")).toBe(true);
+    fireEvent.click(configurationSummary as HTMLElement);
+    expect(configuration.hasAttribute("open")).toBe(false);
+    fireEvent.click(configurationSummary as HTMLElement);
     const reopenedConfigurationSelection = within(configuration).getByRole(
       "button",
       { name: "Disabled Automatic Root" },
@@ -2472,14 +2494,19 @@ describe("App local catalogue flow", () => {
       ),
     ).toBeTruthy();
 
-    fireEvent.click(
-      within(configuration).getByText("Collapse configuration"),
-    );
+    expect(
+      configuration.querySelector(".roster-configuration-subtitle")
+        ?.textContent,
+    ).toContain("Warhost");
+    fireEvent.click(configurationSummary as HTMLElement);
     expect(configuration.hasAttribute("open")).toBe(false);
+    expect(
+      within(configuration).getByText("80 / 2,000 Points"),
+    ).toBeTruthy();
     expect(
       within(configuration).getByText("3 / 3 Detachment Points"),
     ).toBeTruthy();
-    fireEvent.click(within(configuration).getByText("Expand configuration"));
+    fireEvent.click(configurationSummary as HTMLElement);
     expect(configuration.hasAttribute("open")).toBe(true);
 
     // A detailed-check link must reveal a configuration target the player
@@ -2494,12 +2521,13 @@ describe("App local catalogue flow", () => {
       ({ hash }) => hash === `#${configurationTarget?.id}`,
     );
     expect(reviewLink).toBeDefined();
-    fireEvent.click(
-      within(configuration).getByText("Collapse configuration"),
-    );
+    fireEvent.click(configurationSummary as HTMLElement);
     expect(configuration.hasAttribute("open")).toBe(false);
     fireEvent.click(reviewLink as HTMLAnchorElement);
     expect(configuration.hasAttribute("open")).toBe(true);
+    await waitFor(() => {
+      expect(document.activeElement).toBe(configurationTarget);
+    });
   });
 
   it("shows and restores supported required direct children", async () => {

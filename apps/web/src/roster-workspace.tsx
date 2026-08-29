@@ -193,7 +193,6 @@ export function RosterOverview({
   const [catalogueInitialFocus, setCatalogueInitialFocus] = useState<
     "close" | "search"
   >("close");
-  const [configurationOpen, setConfigurationOpen] = useState(true);
   const [printBlocked, setPrintBlocked] = useState(false);
   const [activeSelectionId, setActiveSelectionId] =
     useState<SelectionOccurrenceId>();
@@ -210,6 +209,8 @@ export function RosterOverview({
   const catalogueReturnFocus = useRef<HTMLElement | null>(null);
   const rootFilterInput = useRef<HTMLInputElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
+    useState<string>();
+  const [pendingConfigurationAnchor, setPendingConfigurationAnchor] =
     useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
   // immutable session snapshot. Layout components consume this model; the raw
@@ -444,18 +445,47 @@ export function RosterOverview({
     configurationGroup?.selections.some(
       (selection) => selection.containsAttention,
     ) ?? false;
+  const [configurationOpen, setConfigurationOpen] = useState(false);
+  const previousConfigurationState = useRef({
+    rosterId: workspace.rosterId,
+    hasConfiguration,
+    needsAttention: configurationNeedsAttention,
+  });
   useEffect(() => {
-    // A newly-invalid setup must not remain hidden behind a disclosure the
-    // player closed while it was valid. They may still close it deliberately
-    // after reviewing the problem.
-    if (configurationNeedsAttention) setConfigurationOpen(true);
-  }, [configurationNeedsAttention]);
+    const previous = previousConfigurationState.current;
+    const rosterChanged = previous.rosterId !== workspace.rosterId;
+    if (rosterChanged) {
+      setConfigurationOpen(false);
+    } else if (
+      previous.hasConfiguration &&
+      !previous.needsAttention &&
+      configurationNeedsAttention
+    ) {
+      // A new violation reveals its repair controls. Existing invalid setup
+      // still starts compact and can be deliberately closed after review.
+      setConfigurationOpen(true);
+    } else if (!hasConfiguration) {
+      setConfigurationOpen(false);
+    }
+
+    previousConfigurationState.current = {
+      rosterId: workspace.rosterId,
+      hasConfiguration,
+      needsAttention: configurationNeedsAttention,
+    };
+  }, [configurationNeedsAttention, hasConfiguration, workspace.rosterId]);
   useEffect(() => {
-    // Each roster's setup is encountered open. Removing and later restoring
-    // the configuration group is likewise a new setup encounter; ordinary
-    // edits keep the player's explicit disclosure choice.
-    if (hasConfiguration) setConfigurationOpen(true);
-  }, [hasConfiguration, workspace.rosterId]);
+    if (!configurationOpen || pendingConfigurationAnchor === undefined) return;
+    const target = document.getElementById(pendingConfigurationAnchor);
+    if (target === null) return;
+    // Configuration descendants can be behind two disclosures: the compact
+    // settings row and their owning selection card. Reveal both, then put the
+    // keyboard cursor on the exact report target instead of merely changing
+    // the URL fragment behind a closed editor.
+    target.scrollIntoView?.({ block: "start" });
+    target.focus({ preventScroll: true });
+    setPendingConfigurationAnchor(undefined);
+  }, [configurationOpen, pendingConfigurationAnchor, session]);
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace)
     : undefined;
@@ -466,6 +496,20 @@ export function RosterOverview({
         workspace.costs.activeTotals,
       )
     : [];
+  const configurationSummaryCostLimits: readonly (RosterWorkspaceCost & {
+    readonly limit: number;
+  })[] = [
+    ...(limitBearingCost?.limit === undefined
+      ? []
+      : [
+          limitBearingCost as RosterWorkspaceCost & {
+            readonly limit: number;
+          },
+        ]),
+    ...configurationCostLimits.filter(
+      ({ typeId }) => typeId !== limitBearingCost?.typeId,
+    ),
+  ];
   return (
     <div className="roster-overview">
       <RosterPlayerHeader workspace={workspace} onOpenChecks={openProblems} />
@@ -538,7 +582,8 @@ export function RosterOverview({
           )}
           open={configurationOpen}
           onToggle={() => setConfigurationOpen((open) => !open)}
-          costLimits={configurationCostLimits}
+          revealAnchor={pendingConfigurationAnchor}
+          costLimits={configurationSummaryCostLimits}
           session={session}
           selectionCanAddAnother={selectionCanAddAnother}
           onAddChild={onAddChildSelection}
@@ -801,14 +846,26 @@ export function RosterOverview({
             decodedTargetId === undefined
               ? null
               : document.getElementById(decodedTargetId);
+          const configurationOwner =
+            decodedTargetId === undefined || configurationGroup === undefined
+              ? undefined
+              : topLevelWorkspaceSelectionContainingAnchor(
+                  [configurationGroup],
+                  decodedTargetId,
+                );
           if (
-            target !== null &&
-            target.closest(".roster-configuration") !== null
+            decodedTargetId !== undefined &&
+            ((target !== null &&
+              target.closest(".roster-configuration") !== null) ||
+              configurationOwner !== undefined)
           ) {
             // Exact report links can point into setup. Reveal that target
             // before the browser follows the fragment instead of leaving it
             // inside a player-collapsed details element.
+            event.preventDefault();
             setConfigurationOpen(true);
+            setPendingConfigurationAnchor(decodedTargetId);
+            return;
           }
           if (target === null && decodedTargetId !== undefined) {
             const owner = topLevelWorkspaceSelectionContainingAnchor(
@@ -2085,16 +2142,16 @@ function constraintObservation(item: ConstraintSummaryItem): string {
 /**
  * The full-width setup step that precedes the sticky building workspace.
  *
- * Configuration remains present and expanded on first encounter, but the
- * player can collapse the whole step after choosing battle size, detachment,
- * and related options. The presentation model remains the sole authority on
- * which selections belong here.
+ * Configuration is one concise settings row until the player opens it or a
+ * later edit introduces attention. The presentation model remains the sole
+ * authority on which selections belong here.
  */
 function RosterConfigurationSection({
   group,
   anchorId,
   open,
   onToggle,
+  revealAnchor,
   costLimits,
   session,
   selectionCanAddAnother,
@@ -2108,6 +2165,8 @@ function RosterConfigurationSection({
   readonly anchorId: string;
   readonly open: boolean;
   readonly onToggle: () => void;
+  /** Stable report target whose owning setup cards must be revealed. */
+  readonly revealAnchor?: string | undefined;
   /** Evaluated roster capacities that remain useful after setup is collapsed. */
   readonly costLimits: readonly (RosterWorkspaceCost & {
     readonly limit: number;
@@ -2133,6 +2192,14 @@ function RosterConfigurationSection({
   const containsAttention = group.selections.some(
     (selection) => selection.containsAttention,
   );
+  // Top-level configuration entries are labels such as Battle Size and
+  // Detachment. Their selected descendants are the concise values a player
+  // needs when the full editor is collapsed; exact choice identity and source
+  // order are preserved without interpreting display names.
+  const selectedValues = selectedUpgradeSummary(
+    session,
+    group.selections.flatMap(({ selections }) => selections),
+  );
   return (
     <details
       className="roster-configuration"
@@ -2153,9 +2220,13 @@ function RosterConfigurationSection({
           aria-label={group.role.name}
         >
           <span className="roster-configuration-title">
-            <span className="eyebrow">Army setup</span>
             <span className="roster-configuration-name">
               {group.role.name}
+            </span>
+            <span className="roster-configuration-subtitle">
+              {selectedValues.length > 0
+                ? formatSelectedChoiceSummary(selectedValues)
+                : formatCount(group.amount, "setting")}
             </span>
           </span>
           <span className="roster-configuration-meta">
@@ -2170,9 +2241,13 @@ function RosterConfigurationSection({
                 Contains known violation
               </span>
             )}
-            <span>{formatCount(group.amount, "selection")}</span>
-            <span>
-              {open ? "Collapse configuration" : "Expand configuration"}
+            <span className="roster-configuration-chevron" aria-hidden="true">
+              &#8250;
+            </span>
+            <span className="visually-hidden">
+              {open
+                ? "Hide configuration details"
+                : "Show configuration details"}
             </span>
           </span>
         </h3>
@@ -2186,6 +2261,7 @@ function RosterConfigurationSection({
           collapsible
           initiallyOpen
           autoCollapseWhenRequirementsMet
+          revealAnchor={revealAnchor}
           onAddChild={onAddChild}
           onRename={onRename}
           onSetAmount={onSetAmount}
@@ -2387,6 +2463,7 @@ function RosterTopLevelSelectionList({
   collapsible,
   initiallyOpen = false,
   autoCollapseWhenRequirementsMet = false,
+  revealAnchor,
   presentation = "combined",
   onSelect,
   onAddChild,
@@ -2403,6 +2480,8 @@ function RosterTopLevelSelectionList({
   readonly initiallyOpen?: boolean;
   /** Collapses a setup card after its last known required choice is selected. */
   readonly autoCollapseWhenRequirementsMet?: boolean;
+  /** Stable descendant anchor whose owning cards must be mounted and open. */
+  readonly revealAnchor?: string | undefined;
   readonly presentation?: RosterSelectionPresentation;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
   readonly onAddChild: (
@@ -2452,6 +2531,7 @@ function RosterTopLevelSelectionList({
               autoCollapseWhenRequirementsMet={
                 autoCollapseWhenRequirementsMet
               }
+              revealAnchor={revealAnchor}
               presentation={presentation}
               onAddChild={onAddChild}
               onRename={onRename}
@@ -3095,6 +3175,7 @@ function RosterSelectionItem({
   collapsible = false,
   initiallyOpen = false,
   autoCollapseWhenRequirementsMet = false,
+  revealAnchor,
   collapseChildren = false,
   presentation = "combined",
   embedded = false,
@@ -3120,6 +3201,8 @@ function RosterSelectionItem({
    * Setup-only behavior: close after the last known required choice is met.
    */
   readonly autoCollapseWhenRequirementsMet?: boolean;
+  /** Stable descendant anchor that must remain reachable from a report link. */
+  readonly revealAnchor?: string | undefined;
   /**
    * Keeps a promoted model's own wargear subtree lazy unless it needs
    * attention.
@@ -3216,6 +3299,14 @@ function RosterSelectionItem({
   const childrenContainAttention = configurableSelections.some(
     ({ containsAttention }) => containsAttention,
   );
+  const childrenContainRevealTarget =
+    revealAnchor !== undefined &&
+    configurableSelections.some((child) =>
+      workspaceSelectionContainsAnchor(child, revealAnchor),
+    );
+  const selectionContainsRevealTarget =
+    revealAnchor !== undefined &&
+    workspaceSelectionContainsAnchor(selectionModel, revealAnchor);
   const configurableSelectionLabel =
     promotedModels.length > 0
       ? "Wargear and options"
@@ -3237,8 +3328,10 @@ function RosterSelectionItem({
       childrenContainAttention,
   );
   useEffect(() => {
-    if (childrenContainAttention) setChildrenOpen(true);
-  }, [childrenContainAttention]);
+    if (childrenContainAttention || childrenContainRevealTarget) {
+      setChildrenOpen(true);
+    }
+  }, [childrenContainAttention, childrenContainRevealTarget]);
   const cardBodyId = useId();
   // A collapsible unit starts closed so a fifteen-unit army is a scannable
   // list of names and costs rather than fifteen open datasheets. The one
@@ -3250,8 +3343,17 @@ function RosterSelectionItem({
   );
   const cardToggleRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (collapsible && selectionModel.containsAttention) setCardOpen(true);
-  }, [collapsible, selectionModel.containsAttention]);
+    if (
+      collapsible &&
+      (selectionModel.containsAttention || selectionContainsRevealTarget)
+    ) {
+      setCardOpen(true);
+    }
+  }, [
+    collapsible,
+    selectionContainsRevealTarget,
+    selectionModel.containsAttention,
+  ]);
   const setupRequirementState = autoCollapseWhenRequirementsMet
     ? childChoiceRequirementState(childChoices)
     : "not-required";
@@ -3296,6 +3398,7 @@ function RosterSelectionItem({
     <li
       className="roster-selection-item"
       id={embedded ? undefined : selectionAnchor(selection.id)}
+      tabIndex={embedded ? undefined : -1}
       data-occurrence-id={selection.id}
       data-active={!embedded && selectionModel.active ? "true" : undefined}
       aria-current={!embedded && selectionModel.active ? "true" : undefined}
@@ -3629,6 +3732,7 @@ function RosterSelectionItem({
                     selectionCanAddAnother={selectionCanAddAnother}
                     collapsible={presentation !== "card"}
                     collapseChildren={presentation !== "card"}
+                    revealAnchor={revealAnchor}
                     presentation={presentation}
                     embedded={presentation === "card"}
                     allowRemove={false}
@@ -3679,6 +3783,7 @@ function RosterSelectionItem({
                     onSetAmount={onSetAmount}
                     onRemove={onRemove}
                     onPreviewChoice={onPreviewChoice}
+                    revealAnchor={revealAnchor}
                   />
                 ))}
               </ul>
@@ -3721,6 +3826,7 @@ function RosterSelectionItem({
                       )}
                       selectionCanAddAnother={selectionCanAddAnother}
                       presentation={presentation}
+                      revealAnchor={revealAnchor}
                       onAddChild={onAddChild}
                       onRename={onRename}
                       onSetAmount={onSetAmount}

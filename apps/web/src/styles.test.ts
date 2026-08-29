@@ -91,4 +91,21 @@ describe("phone-width layout contracts", () => {
       /@media \(max-width: 560px\) \{[\s\S]*?\.add-unit-dialog \{\n {4}width: 100%;[\s\S]*?height: 100dvh;[\s\S]*?\.add-unit-heading \{[\s\S]*?env\(safe-area-inset-top\)/u,
     );
   });
+
+  it("keeps roster configuration a compact settings row", () => {
+    // The complete setup tree remains mounted below this disclosure, but its
+    // default footprint must stay one tap-sized row at every supported width.
+    expect(styles).toContain(
+      ".roster-configuration > summary {\n  display: block;\n  min-height: 64px;",
+    );
+    expect(styles).toContain(
+      ".roster-configuration-summary-heading {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;",
+    );
+    expect(styles).toContain(
+      ".roster-configuration > summary:focus-visible {\n  outline: 3px solid rgba(28, 107, 74, 0.42);",
+    );
+    expect(styles).toContain(
+      ".roster-configuration[open] .roster-configuration-chevron {\n  transform: rotate(90deg);",
+    );
+  });
 });

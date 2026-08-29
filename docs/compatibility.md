@@ -227,6 +227,12 @@
   their known required child bounds, return focus to the disclosure, and reopen
   for supported attention. Optional-only or incomplete bounds do not cause an
   automatic collapse
+- Configuration's outer editor is closed by default behind one settings-style
+  row. The row preserves selected descendant values in source order, exact
+  primary and distinct setup-capacity totals, and a text attention state. A new
+  supported violation reopens the editor; initial attention does not make an
+  existing roster several screens long, and a player may close invalid setup
+  deliberately. The complete editor and Developer details remain mounted
 - Page-information actions visually attached to concrete root, direct-child,
   repeatable-model, and grouped catalogue choice controls. They expose
   source-authored rules, profiles, info groups, and human-readable source
@@ -243,7 +249,9 @@
   sheet; the complete unit card is a separate modal reference. All surfaces
   remain without horizontal overflow at 390 px and the 320 px supported minimum
 - Validation links to nested selections focus the owning army unit before
-  resolving an anchor that otherwise would not be mounted in the options region
+  resolving an anchor that otherwise would not be mounted in the options
+  region. Configuration links open the compact outer row and every owning card,
+  then focus the exact stable selection anchor
 - Persistent Roster, Add unit, and Checks workspace navigation with live
   counts, a two-pane roster/options desktop builder, and a browser-verified
   full-width mobile fallback. Add unit starts closed, preserves its search on

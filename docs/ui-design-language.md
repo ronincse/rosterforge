@@ -84,8 +84,8 @@ Deliver it through independently reviewable checkpoints in this order:
 | --- | --- | --- |
 | Roster information architecture | Done | Dedicated roster screen, grouped compact rows, focused options, and modal problems/reference cards |
 | Add unit | Done | Closed-by-default grouped search sheet; compact full-screen and search-first, regular centred and Close-first; focus containment/return; close and focus the new row after a successful army add |
-| Configuration | Next | Replace the long default-open setup tree with one settings-style summary row while preserving every choice, check, capacity, and Developer detail |
-| Active-roster system | Open | Apply shared semantic tokens and reusable navigation, grouped-row, sheet, inspector, picker, switch, stepper, status, and More-menu primitives; remove the legacy visual vocabulary from this screen |
+| Configuration | Done | Closed-by-default settings row with selected values, exact primary/secondary capacities, visible attention, complete on-demand editor, and exact validation-link reveal |
+| Active-roster system | Next | Apply shared semantic tokens and reusable navigation, grouped-row, sheet, inspector, picker, switch, stepper, status, and More-menu primitives; remove the legacy visual vocabulary from this screen |
 | Lists and creation | Open | Bring saved rosters, creation, source acquisition, recovery, and empty/error states into the same hierarchy and component system without turning import evidence into primary content |
 | Reading and document workflows | Open | Reconcile unit datasheets, checks, save/duplicate/print actions, and print hierarchy with the final navigation and disclosure model |
 | Installed web app | Open | Add an owned manifest, icons, theme metadata, safe-area behavior, service-worker/update strategy, and an honest offline boundary for already-local data |
@@ -165,6 +165,15 @@ Use controls according to their meaning:
 - stepper: bounded quantity with the value always visible;
 - checkmark row: one choice in a settings-style picker;
 - information page: read-only rules or datasheet detail.
+
+Configuration precedes the roster as one compact settings row, closed by
+default. Its summary carries selected setup values in source order, exact
+evaluated primary and setup-specific capacities, and a text attention state.
+Opening it reveals the complete existing editor; no authored choice, diagnostic,
+or Developer detail is replaced by the summary. A newly introduced known
+violation reopens the editor, but an already-invalid roster remains compact on
+entry and the player may deliberately close it after review. Exact report links
+open every owning disclosure and focus their stable target.
 
 ## Search, sheets, and inspector
 

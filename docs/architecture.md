@@ -534,6 +534,16 @@ does not rewrite durable roster occurrence order. A role with no
 entries renders nothing, so a roster without configuration shows its units
 rather than an empty heading.
 
+The outer Configuration step is a controlled, closed-by-default settings
+disclosure. Its summary projects selected descendant upgrades in existing
+source order and combines the exact-ID headline roster capacity with distinct
+setup-relevant finite capacities; it does not infer currencies or settings from
+display names. The full selection tree remains mounted beneath the disclosure,
+so collapsing it cannot discard edit state, diagnostics, or Developer details.
+Initial known attention remains visible in the row without forcing the long
+tree open. A later no-attention-to-attention transition opens the editor, while
+the player can still deliberately close an invalid section.
+
 An open required configuration card collapses when its known child-choice
 requirements transition from unsatisfied to satisfied. Optional-only and
 incomplete requirements do not trigger the transition, and supported attention
@@ -559,7 +569,9 @@ list/options/catalogue three-pane layout.
 Anchor navigation and selected/viewed pane state are UI concerns only and never
 enter the immutable session, history, or draft. A validation link whose exact
 nested anchor is not mounted first focuses its owning top-level unit, then
-completes the jump after the options surface renders the target.
+completes the jump after the options surface renders the target. Configuration
+links similarly open the outer settings disclosure and every owning selection
+card before scrolling to and focusing the exact stable anchor.
 
 Shared web presentation rules live in `docs/ui-design-language.md`. They adapt
 current Apple Human Interface Guidelines into semantic web tokens and reusable
