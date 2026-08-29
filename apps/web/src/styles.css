@@ -1460,10 +1460,7 @@ h1 {
 
 .roster-builder-grid[data-catalogue-open="false"]
   .selected-roster-pane[data-options-open="true"]
-  > .builder-pane-heading,
-.roster-builder-grid[data-catalogue-open="false"]
-  .selected-roster-pane[data-options-open="true"]
-  > .force-card {
+  > .builder-pane-heading {
   grid-column: 1 / -1;
 }
 
@@ -1553,30 +1550,6 @@ h1 {
   color: var(--muted);
   font-size: 0.58rem;
   font-weight: 700;
-}
-
-.force-card {
-  display: grid;
-  gap: 5px;
-  padding: 17px;
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid #cbd0ca;
-  border-left: 3px solid var(--gold);
-  border-radius: var(--corner-radius);
-  box-shadow: var(--nested-card-shadow);
-}
-
-.force-card .force-kicker {
-  color: var(--warning);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.force-card strong {
-  font-family: var(--display-font);
-  font-size: 1.15rem;
 }
 
 .secondary-action {
@@ -2078,9 +2051,8 @@ h1 {
   min-width: 0;
 }
 
-/* Army units are scan-first cards. The parent deliberately has no shared
-   surface so each top-level unit can carry its own material and state; the
-   adjacent inspector still owns editing, viewing, and destructive actions. */
+/* Army units are scan-first cards. Each row owns its primary Configure target
+   plus sibling reference and occurrence actions, avoiding nested controls. */
 .roster-selection-section[data-section="army"]
   > .roster-top-level-selection-list {
   display: grid;
@@ -2108,6 +2080,8 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.82);
   -webkit-backdrop-filter: blur(18px) saturate(115%);
   backdrop-filter: blur(18px) saturate(115%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .roster-unit-row[data-active="true"] {
@@ -2229,6 +2203,38 @@ h1 {
   font-weight: 400;
   line-height: 1;
   transform: translateY(-1px);
+}
+
+.roster-unit-row-actions {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  background: rgba(248, 249, 245, 0.34);
+  border-left: 1px solid var(--nested-card-border);
+}
+
+.roster-unit-row-actions button {
+  min-height: 36px;
+  padding: 0 9px;
+  color: var(--forest);
+  background: rgba(241, 245, 239, 0.74);
+  border: 1px solid #9fb0a6;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.roster-unit-row-actions button:last-child {
+  color: #7b3e36;
+  border-color: #c8aaa5;
+}
+
+.roster-unit-row-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
 }
 
 .roster-selection-section[data-section="army"] +
@@ -2723,9 +2729,12 @@ h1 {
 .choice-preview-planned-choice {
   min-width: 0;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid #c9d2cc;
-  border-left: 3px solid var(--forest);
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .choice-preview-planned-choice > header {
@@ -2750,8 +2759,7 @@ h1 {
 .choice-preview-planned-children,
 .choice-preview-available-children {
   margin-top: 9px;
-  padding-left: 10px;
-  border-left: 1px solid #cbd3cd;
+  padding-left: 0;
 }
 
 .choice-preview-plan-note,
@@ -2764,7 +2772,11 @@ h1 {
 
 .choice-preview-options {
   margin-top: 16px;
-  border: 1px solid #c8d0ca;
+  overflow: hidden;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .choice-preview-options > summary,
@@ -2800,7 +2812,13 @@ h1 {
 
 .choice-preview-available-choice {
   min-width: 0;
-  border: 1px solid #d2d8d3;
+  overflow: hidden;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .choice-preview-available-context > h5 {
@@ -3054,9 +3072,17 @@ h1 {
    choices without incorrectly moving it into that max-one fieldset. */
 .roster-selection-item[data-section="configuration"]
   .selection-card-body:has(> .child-choice-list + .child-choice-groups) {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto auto;
   align-items: end;
+  justify-content: start;
   column-gap: 8px;
+  padding: 10px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .roster-selection-item[data-section="configuration"]
@@ -3077,6 +3103,23 @@ h1 {
   > .child-choice-list {
   grid-row: 1;
   grid-column: 2;
+}
+
+/* Battle Size keeps separate constraint domains in the DOM while sharing one
+   visual option card. The group and direct override therefore relinquish only
+   their redundant outer surfaces; the controls themselves remain distinct. */
+.roster-selection-item[data-section="configuration"]
+  .selection-card-body:has(> .child-choice-list + .child-choice-groups)
+  > .child-choice-groups
+  > .child-choice-group,
+.roster-selection-item[data-section="configuration"]
+  .selection-card-body:has(> .child-choice-list + .child-choice-groups)
+  > .child-choice-list
+  > .direct-child-choice {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .selection-annotation-completeness {
@@ -3612,9 +3655,12 @@ h1 {
 .selection-profile-table-group {
   overflow: hidden;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid #d2d8d3;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
   border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .selection-profile-table-group > h5 {
@@ -3701,10 +3747,12 @@ h1 {
 .selection-info-group {
   min-width: 0;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid #d2d8d3;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
   border-radius: var(--corner-radius);
-  box-shadow: var(--nested-card-shadow);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .selection-profile header,
@@ -3761,9 +3809,10 @@ h1 {
 .selection-profile dl > div {
   min-width: 0;
   padding: 7px;
-  background: #f4f3ee;
-  border: 1px solid #dcdfdc;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
   border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .selection-profile dt {
@@ -3810,6 +3859,31 @@ h1 {
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
+}
+
+.keyword-rule-button {
+  min-height: 24px;
+  margin: -3px -7px;
+  padding: 3px 7px;
+  color: var(--forest);
+  background: rgba(226, 236, 229, 0.72);
+  border: 0;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.keyword-rule-button:hover {
+  background: rgba(211, 227, 217, 0.9);
+}
+
+.keyword-rules-dialog {
+  width: min(680px, 100%);
 }
 
 .removed-keywords li {
@@ -3872,7 +3946,7 @@ h1 {
 }
 
 .selection-info-group .selection-info-group {
-  background: rgba(244, 243, 238, 0.72);
+  background: var(--nested-card-material);
 }
 
 .unresolved-info-links ul {
@@ -4249,7 +4323,7 @@ footer {
 
   .selected-unit-panel-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .selected-unit-panel-heading button {
@@ -4259,6 +4333,21 @@ footer {
   .roster-unit-row-disclosure {
     gap: 8px;
     padding-right: 10px;
+  }
+
+  .roster-unit-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roster-unit-row-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-top: 8px;
+    border-top: 1px solid var(--nested-card-border);
+    border-left: 0;
+  }
+
+  .roster-unit-row-actions button {
+    min-height: 44px;
   }
 
   .roster-unit-row-title {
@@ -4508,8 +4597,16 @@ footer {
   }
 
   .roster-actions-popover,
-  .roster-army-rules {
+  .roster-army-rules,
+  .selection-profile,
+  .selection-rule,
+  .selection-info-group,
+  .selection-profile-table-group,
+  .choice-preview-planned-choice,
+  .choice-preview-available-choice,
+  .choice-preview-options {
     background: #f7f5ed;
+    border-color: #839087;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -4526,7 +4623,14 @@ footer {
   .roster-workspace-nav,
   .roster-unit-row,
   .roster-actions-popover,
-  .roster-army-rules {
+  .roster-army-rules,
+  .selection-profile,
+  .selection-rule,
+  .selection-info-group,
+  .selection-profile-table-group,
+  .choice-preview-planned-choice,
+  .choice-preview-available-choice,
+  .choice-preview-options {
     color: CanvasText;
     background: Canvas;
     border: 1px solid CanvasText;

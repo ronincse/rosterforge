@@ -535,7 +535,9 @@ existing detailed supported-evidence disclosure after the roster, alongside
 the structural and constraint reports.
 Concrete root, direct-child, and grouped-choice controls expose an independent
 read-only preview action. Its modal shows catalogue-authored rules, profiles,
-and information groups without selecting the choice; it contains focus,
+and information groups without selecting the choice; the action is absent when
+a choice has no substantive reference or useful unit composition/model branch.
+Keywords and unresolved links alone do not create an empty preview. It contains focus,
 returns focus to its trigger, and leaves effective roster-dependent inspection
 to the selected card. The selected-roster tree renders top-level selections in
 titled groups, one per
@@ -579,9 +581,10 @@ Top-level Remove is suppressed only when the current root-choice inspection
 proves that subtracting that occurrence's amount would breach a complete
 positive minimum. Surplus occurrences and incomplete bounds stay removable.
 Direct adjunct choices and constrained groups keep separate mutation and bound
-semantics; when both share one Configuration parent, CSS places them in one
-responsive row and wraps them at phone width instead of moving the adjunct into
-the group's fieldset.
+semantics; when both share one Configuration parent, CSS presents them inside
+one shared nested card and wraps them at phone width instead of moving the
+adjunct into the group's fieldset. Battle Size strips only its display-leading
+numeric ordinals; imported names and durable roster identity remain unchanged.
 
 Army units render as compact selectable cards grouped by battlefield role. The
 group has no shared container surface: each top-level unit owns a separate,
@@ -594,12 +597,16 @@ internal seam, while full-bleed and surface-free wrappers remain square. Each
 unit card has one disclosure control and carries the
 projection's recursive cost, exact direct-model composition and selected
 upgrade identity, plus structurally recognized designation and attention pills.
-Selecting it mounts the existing mutation controls in one dedicated options
-surface. That inspector owns the
-read-only `View unit card` and destructive `Remove unit` actions; neither is
-duplicated on every army row. The renderer has presentation modes, not separate
-editing implementations, so required upgrades, grouped replacements, and
-repeatable model quantities keep one mutation path. Configuration remains in
+Sibling View, Duplicate, and Remove controls operate on that exact occurrence
+without first selecting it. Selecting the disclosure mounts the same commands
+beside the existing mutation controls in one dedicated options surface.
+Duplicate delegates to `roster-model`'s immutable subtree copy, mints a fresh
+ID for every descendant, copies every occurrence-to-materialized-choice mapping,
+and commits once to bounded history without reinitialization or reconciliation;
+configured amounts, names, models, and loadouts therefore remain independently
+editable and Undo removes the whole copy. The renderer has presentation modes,
+not separate editing implementations, so required upgrades, grouped replacements,
+and repeatable model quantities keep one mutation path. Configuration remains in
 the full-width setup step and can never become the selected army unit.
 
 The outer builder has at most two columns: the roster list and the selected
@@ -607,6 +614,9 @@ unit's options surface. They return to document-order single columns at the
 responsive breakpoint. Add unit and the full unit card are transient modal
 tasks outside that grid, so neither can create a permanent
 list/options/catalogue three-pane layout.
+The selected-roster pane has one visible `Your roster` heading. Its retained
+force anchor/data attribute still resolves force-scoped validation links without
+repeating the generated force hierarchy as player-facing headings.
 Anchor navigation and selected/viewed pane state are UI concerns only and never
 enter the immutable session, history, or draft. A validation link whose exact
 nested anchor is not mounted first focuses its owning top-level unit, then

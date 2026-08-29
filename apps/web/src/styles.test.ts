@@ -59,16 +59,17 @@ describe("phone-width layout contracts", () => {
   });
 
   it("gives unit selection and options the full usable phone width", () => {
-    // The unit row owns one full-width disclosure; View and Remove move into
-    // the selected-unit panel instead of squeezing the row at 320 px. That
-    // panel must also collapse back to one column rather than becoming a third
-    // persistent desktop pane.
+    // The unit row owns one full-width disclosure plus sibling actions. At the
+    // support floor those actions move to a second row of 44 px targets.
     expect(styles).toContain(
       ".roster-unit-row-disclosure {\n  display: grid;\n" +
         "  grid-template-columns: minmax(0, 1fr) auto;",
     );
     expect(styles).toMatch(
       /@media \(max-width: 560px\) \{[\s\S]*?\.selected-unit-panel-heading button \{\n {4}min-height: 44px;/u,
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 560px\) \{[\s\S]*?\.roster-unit-row \{\n {4}grid-template-columns: minmax\(0, 1fr\);[\s\S]*?\.roster-unit-row-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?\.roster-unit-row-actions button \{\n {4}min-height: 44px;/u,
     );
     expect(styles).toMatch(
       /@media \(max-width: 850px\) \{[\s\S]*?\.selected-roster-pane\[data-options-open="true"\] \{\n {4}grid-template-columns: 1fr;/u,
@@ -137,7 +138,7 @@ describe("phone-width layout contracts", () => {
       /\.roster-actions-popover \{[\s\S]*?right: 0;[\s\S]*?width: min\(310px, calc\(100vw - 32px\)\);[\s\S]*?max-height: min\(480px, calc\(100vh - 72px\)\);/u,
     );
     expect(styles).toMatch(
-      /\.roster-selection-item\[data-section="configuration"\][\s\S]*?\.selection-card-body:has\(> \.child-choice-list \+ \.child-choice-groups\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto;/u,
+      /\.roster-selection-item\[data-section="configuration"\][\s\S]*?\.selection-card-body:has\(> \.child-choice-list \+ \.child-choice-groups\)[\s\S]*?grid-template-columns: auto auto;[\s\S]*?justify-content: start;/u,
     );
   });
 
@@ -171,6 +172,22 @@ describe("phone-width layout contracts", () => {
       "@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {",
     );
     expect(styles).toContain("@media (forced-colors: active) {");
+    for (const selector of [
+      ".selection-profile",
+      ".selection-rule",
+      ".selection-info-group",
+      ".selection-profile-table-group",
+      ".choice-preview-planned-choice",
+      ".choice-preview-available-choice",
+    ]) {
+      expect(styles).toContain(selector);
+    }
+    expect(styles).toMatch(
+      /\.choice-preview-planned-choice \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).not.toMatch(
+      /\.choice-preview-planned-choice \{[^}]*border-left: 3px solid/u,
+    );
   });
 
   it("uses one exposed-corner radius throughout the active roster", () => {
@@ -189,6 +206,12 @@ describe("phone-width layout contracts", () => {
     );
     expect(styles).toMatch(
       /\.child-choice-group \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).toMatch(
+      /\.roster-unit-row-actions button \{[\s\S]*?border-radius: var\(--corner-radius\);/u,
+    );
+    expect(styles).toMatch(
+      /\.keyword-rule-button \{[\s\S]*?border-radius: var\(--corner-radius\);/u,
     );
     expect(styles).toContain(
       "border-radius: var(--corner-radius) 0 0 var(--corner-radius);",

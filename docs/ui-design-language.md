@@ -181,10 +181,13 @@ unit name plus semantic pills such as Warlord and trailing points/chevron. Its
 second line summarizes only selected model types and wargear. A known problem
 uses direct player language such as `Needs 4 more models`.
 
-Tapping the row selects it for editing. Read-only information and destructive
-removal live in the inspector, not as competing row buttons. A disclosure
-chevron means navigation into configuration; the information-page action means
-read-only reference and never impersonates navigation.
+Tapping the main row disclosure selects it for editing. Sibling View,
+Duplicate, and Remove controls target that exact occurrence without first
+selecting it; at compact widths they form a second row of 44 px controls instead
+of squeezing the unit copy. A disclosure chevron means navigation into
+configuration; View means read-only reference, Duplicate creates a fresh exact
+configured occurrence, and Remove is visually destructive. The inspector may
+repeat these commands for the already-selected unit.
 
 Use controls according to their meaning:
 
@@ -211,8 +214,10 @@ Configuration, without Remove, Edit, or the source-only Configuration keyword.
 Required editable roots omit Remove only when subtracting that exact occurrence
 would breach a complete evaluated minimum; optional or surplus roots remain
 removable. When a setting has both an authored constrained group and a direct
-adjunct, they share one responsive row without moving the adjunct into the
-group's constraint scope.
+adjunct, they share one responsive nested card without moving the adjunct into
+the group's constraint scope. Battle Size removes source ordering ordinals only
+from its displayed choice labels and places Override points limit in that same
+visual option surface.
 
 ## Search, sheets, and inspector
 
@@ -227,6 +232,13 @@ Present one sheet at a time. A sheet owns a concise task, a clear dismissal,
 focus containment, and focus return. At regular width, selecting a roster row
 updates a 320–380 px inspector. At compact width, the same semantic inspector
 content appears in a sheet rather than becoming a separately designed editor.
+Reference rules, profiles, tables, initial composition, and lower nested
+selection content all reuse the inset material, border, shallow shadow, and
+shared corner token; legacy left rails are not a second hierarchy language.
+Information controls are absent when a choice has no substantive reference.
+An effective keyword is button-styled only when its exact resolved category has
+an attached rule, and its rule popup temporarily covers the unit-card modal so
+only one modal remains exposed to assistive technology.
 
 ## State, motion, and accessibility
 

@@ -30,7 +30,11 @@ import {
   type SupportedRosterValidationFinding,
 } from "@rosterforge/evaluation";
 import type {
+  RuleProjection,
+} from "@rosterforge/battlescribe-data";
+import type {
   Diagnostic,
+  ObjectId,
   ValidationCompleteness,
 } from "@rosterforge/foundation";
 import {
@@ -43,7 +47,6 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 
 import { Detail } from "./detail-row.js";
 import { DiagnosticList } from "./diagnostic-list.js";
-import { forceDefinitionLabel } from "./force-definition.js";
 import {
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
@@ -89,6 +92,11 @@ type PreviewChoiceHandler = (
   choice: BattleScribeRosterSelectionChoice,
   trigger: HTMLButtonElement,
 ) => void;
+
+interface KeywordRulePreview {
+  readonly keyword: string;
+  readonly rules: readonly SelectionRuleDetail[];
+}
 
 interface RosterSelectionChoiceGroupNode {
   readonly group: LocalRosterChildChoiceGroup;
@@ -138,6 +146,7 @@ export function RosterOverview({
   diagnostics,
   onClear,
   onAddRootSelection,
+  onDuplicateSelection,
   onRemoveSelection,
   onAddChildSelection,
   onRenameSelection,
@@ -159,6 +168,9 @@ export function RosterOverview({
   readonly onClear: () => void;
   readonly onAddRootSelection: (
     choice: LocalRosterRootChoice,
+  ) => SelectionOccurrenceId | undefined;
+  readonly onDuplicateSelection: (
+    id: SelectionOccurrenceId,
   ) => SelectionOccurrenceId | undefined;
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
   readonly onAddChildSelection: (
@@ -200,6 +212,8 @@ export function RosterOverview({
     useState<SelectionOccurrenceId>();
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
+  const [keywordRulePreview, setKeywordRulePreview] =
+    useState<KeywordRulePreview>();
   const [problemsOpen, setProblemsOpen] = useState(false);
   const actionsMenuId = useId();
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
@@ -207,6 +221,7 @@ export function RosterOverview({
     useState<BattleScribeRosterSelectionChoice>();
   const previewReturnFocus = useRef<HTMLElement | null>(null);
   const unitCardReturnFocus = useRef<HTMLElement | null>(null);
+  const keywordRuleReturnFocus = useRef<HTMLElement | null>(null);
   const problemsReturnFocus = useRef<HTMLElement | null>(null);
   const catalogueReturnFocus = useRef<HTMLElement | null>(null);
   const actionsMenu = useRef<HTMLDivElement | null>(null);
@@ -286,6 +301,10 @@ export function RosterOverview({
   );
   const nonRemovableRootSelectionIds = useMemo(
     () => requiredRootSelectionIds(rootChoiceInspection),
+    [rootChoiceInspection],
+  );
+  const rootSelectionCanDuplicate = useMemo(
+    () => rootSelectionDuplicationCapacity(rootChoiceInspection),
     [rootChoiceInspection],
   );
   const rootChoiceGroups = workspace.rootChoices.groups;
@@ -386,6 +405,42 @@ export function RosterOverview({
         returnFocus.focus();
       }
     });
+  };
+  const openUnitCard = (
+    selectionId: SelectionOccurrenceId,
+    trigger: HTMLElement,
+  ) => {
+    unitCardReturnFocus.current = trigger;
+    setViewedSelectionId(selectionId);
+  };
+  const openKeywordRules = (
+    preview: KeywordRulePreview,
+    trigger: HTMLButtonElement,
+  ) => {
+    keywordRuleReturnFocus.current = trigger;
+    setKeywordRulePreview(preview);
+  };
+  const closeKeywordRules = () => {
+    setKeywordRulePreview(undefined);
+    const returnFocus = keywordRuleReturnFocus.current;
+    keywordRuleReturnFocus.current = null;
+    queueMicrotask(() => {
+      if (returnFocus !== null && document.contains(returnFocus)) {
+        returnFocus.focus();
+      }
+    });
+  };
+  const duplicateArmySelection = (
+    selectionId: SelectionOccurrenceId,
+  ): SelectionOccurrenceId | undefined => {
+    const duplicateId = onDuplicateSelection(selectionId);
+    if (duplicateId !== undefined) setPendingAddedSelectionFocus(duplicateId);
+    return duplicateId;
+  };
+  const removeArmySelection = (selectionId: SelectionOccurrenceId) => {
+    if (activeSelectionId === selectionId) setActiveSelectionId(undefined);
+    if (viewedSelectionId === selectionId) setViewedSelectionId(undefined);
+    onRemoveSelection(selectionId);
   };
   const openCatalogue = (
     trigger: HTMLElement | null,
@@ -891,33 +946,21 @@ export function RosterOverview({
       >
         <section
           className="selected-roster-pane"
+          id={force === undefined ? undefined : forceAnchor(force.id)}
+          data-force-id={force?.id}
           aria-labelledby="selected-roster-heading"
           data-options-open={activeSelection !== undefined}
         >
           <div className="builder-pane-heading">
-            <div>
-              <p className="eyebrow">Your roster</p>
-              <h3 id="selected-roster-heading" tabIndex={-1}>
-                Selected roster
-              </h3>
-            </div>
+            <h3 id="selected-roster-heading" tabIndex={-1}>
+              Your roster
+            </h3>
             <span>
               {formatCount(
                 armyTopLevelSelectionCount,
                 "army selection",
               )}
             </span>
-          </div>
-
-          {/* Occurrence IDs stay on data attributes for anchors and tests.
-              They are not shown to the reader. */}
-          <div
-            className="force-card"
-            id={force === undefined ? undefined : forceAnchor(force.id)}
-            data-force-id={force?.id}
-          >
-            <span className="force-kicker">Starting force</span>
-            <strong>{forceDefinitionLabel(session.forceDefinition)}</strong>
           </div>
 
           {force === undefined || armyGroups.length === 0 ? (
@@ -953,6 +996,10 @@ export function RosterOverview({
                   onRemove={onRemoveSelection}
                   onPreviewChoice={openChoicePreview}
                   onSelect={setActiveSelectionId}
+                  selectionCanDuplicate={rootSelectionCanDuplicate}
+                  onViewUnit={openUnitCard}
+                  onDuplicateUnit={duplicateArmySelection}
+                  onRemoveUnit={removeArmySelection}
                 />
               ))}
             </div>
@@ -969,14 +1016,18 @@ export function RosterOverview({
               onRemove={onRemoveSelection}
               onPreviewChoice={openChoicePreview}
               onClose={() => setActiveSelectionId(undefined)}
-              onView={() =>
-                {
-                  unitCardReturnFocus.current =
-                    document.activeElement instanceof HTMLElement
-                      ? document.activeElement
-                      : null;
-                  setViewedSelectionId(activeSelection.occurrence.id);
-                }
+              onView={(trigger) =>
+                openUnitCard(activeSelection.occurrence.id, trigger)
+              }
+              onDuplicate={() =>
+                duplicateArmySelection(activeSelection.occurrence.id)
+              }
+              canDuplicate={
+                (rootSelectionCanDuplicate.get(
+                  activeSelection.occurrence.id,
+                ) ?? true) &&
+                (selectionCanAddAnother.get(activeSelection.occurrence.id) ??
+                  true)
               }
               viewed={
                 viewedSelectionId === activeSelection.occurrence.id
@@ -1023,6 +1074,7 @@ export function RosterOverview({
 
       {viewedSelection !== undefined && (
         <RosterUnitCardView
+          covered={keywordRulePreview !== undefined}
           session={session}
           selectionModel={viewedSelection}
           selectionCanAddAnother={selectionCanAddAnother}
@@ -1030,7 +1082,15 @@ export function RosterOverview({
           onRename={onRenameSelection}
           onSetAmount={onSetSelectionAmount}
           onRemove={onRemoveSelection}
+          onViewKeywordRules={openKeywordRules}
           onClose={closeUnitCard}
+        />
+      )}
+
+      {keywordRulePreview !== undefined && (
+        <KeywordRulesDialog
+          preview={keywordRulePreview}
+          onClose={closeKeywordRules}
         />
       )}
 
@@ -2639,6 +2699,36 @@ function requiredRootSelectionIds(
 }
 
 /**
+ * Returns exact roots that still fit inside their complete root-choice maximum.
+ *
+ * An unresolved maximum stays permissive because the editor must not invent a
+ * restriction. Amount is included because duplicating one occurrence copies
+ * that occurrence's effective amount, not merely one abstract selection.
+ */
+function rootSelectionDuplicationCapacity(
+  result: ReturnType<typeof inspectLocalRosterRootChoices>,
+): ReadonlyMap<SelectionOccurrenceId, boolean> {
+  const capacity = new Map<SelectionOccurrenceId, boolean>();
+  if (!result.ok) return capacity;
+  for (const group of result.value.groups) {
+    for (const state of group.choices) {
+      const selectedAmount = rosterSelectionsAmount(state.selected);
+      for (const selection of state.selected) {
+        capacity.set(
+          selection.id,
+          state.completeness !== "complete" ||
+            state.maximum === undefined ||
+            !Number.isFinite(state.maximum) ||
+            isUnboundedConstraintValue(state.maximum) ||
+            selectedAmount + rosterSelectionAmount(selection) <= state.maximum,
+        );
+      }
+    }
+  }
+  return capacity;
+}
+
+/**
  * One titled battlefield-role group inside the selected-roster tree.
  *
  * Renders nothing when empty. The amount is the model's summed occurrence
@@ -2662,6 +2752,10 @@ function RosterSelectionSection({
   onRemove,
   onPreviewChoice,
   onSelect,
+  selectionCanDuplicate,
+  onViewUnit,
+  onDuplicateUnit,
+  onRemoveUnit,
 }: {
   readonly heading: string;
   readonly anchorId: string;
@@ -2699,6 +2793,15 @@ function RosterSelectionSection({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
   readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onSelect: (id: SelectionOccurrenceId) => void;
+  readonly selectionCanDuplicate: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly onViewUnit: (
+    id: SelectionOccurrenceId,
+    trigger: HTMLButtonElement,
+  ) => void;
+  readonly onDuplicateUnit: (
+    id: SelectionOccurrenceId,
+  ) => SelectionOccurrenceId | undefined;
+  readonly onRemoveUnit: (id: SelectionOccurrenceId) => void;
 }) {
   // `containsAttention` is deliberately only a routing signal here. A role can
   // point the reader toward a problem below it, but only the exact selection's
@@ -2750,6 +2853,10 @@ function RosterSelectionSection({
           onPreviewChoice={onPreviewChoice}
           presentation="row"
           onSelect={onSelect}
+          selectionCanDuplicate={selectionCanDuplicate}
+          onViewUnit={onViewUnit}
+          onDuplicateUnit={onDuplicateUnit}
+          onRemoveUnit={onRemoveUnit}
         />
       )}
     </section>
@@ -2775,6 +2882,10 @@ function RosterTopLevelSelectionList({
   allowRemove = () => true,
   showKeywords = true,
   onSelect,
+  selectionCanDuplicate,
+  onViewUnit,
+  onDuplicateUnit,
+  onRemoveUnit,
   onAddChild,
   onRename,
   onSetAmount,
@@ -2797,6 +2908,16 @@ function RosterTopLevelSelectionList({
   /** Army-wide reference entries do not expose their source filing category. */
   readonly showKeywords?: boolean;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly selectionCanDuplicate?:
+    | ReadonlyMap<SelectionOccurrenceId, boolean>
+    | undefined;
+  readonly onViewUnit?:
+    | ((id: SelectionOccurrenceId, trigger: HTMLButtonElement) => void)
+    | undefined;
+  readonly onDuplicateUnit?:
+    | ((id: SelectionOccurrenceId) => SelectionOccurrenceId | undefined)
+    | undefined;
+  readonly onRemoveUnit?: ((id: SelectionOccurrenceId) => void) | undefined;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -2831,6 +2952,13 @@ function RosterTopLevelSelectionList({
               session={session}
               selectionModel={selection}
               onSelect={onSelect}
+              canDuplicate={
+                (selectionCanDuplicate?.get(selection.occurrence.id) ?? true) &&
+                (selectionCanAddAnother.get(selection.occurrence.id) ?? true)
+              }
+              onView={onViewUnit}
+              onDuplicate={onDuplicateUnit}
+              onRemove={onRemoveUnit}
             />
           ) : (
             <RosterSelectionItem
@@ -2902,17 +3030,32 @@ function useRosterSelectionDisplayName(
 }
 
 /**
- * One compact army-list row; editing and reading remain in their dedicated
- * panels rather than competing as actions on every unit.
+ * One compact army-list row with direct reference and occurrence actions.
+ *
+ * Configure still owns the large disclosure target. View, Duplicate, and
+ * Remove are independent siblings rather than nested buttons, so each command
+ * remains reachable without first changing the selected-unit inspector.
  */
 function RosterUnitRow({
   session,
   selectionModel,
   onSelect,
+  canDuplicate,
+  onView,
+  onDuplicate,
+  onRemove,
 }: {
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
+  readonly canDuplicate: boolean;
+  readonly onView?:
+    | ((id: SelectionOccurrenceId, trigger: HTMLButtonElement) => void)
+    | undefined;
+  readonly onDuplicate?:
+    | ((id: SelectionOccurrenceId) => SelectionOccurrenceId | undefined)
+    | undefined;
+  readonly onRemove?: ((id: SelectionOccurrenceId) => void) | undefined;
 }) {
   const selection = selectionModel.occurrence;
   const { annotatedName, incomplete } = useRosterSelectionDisplayName(
@@ -2971,6 +3114,27 @@ function RosterUnitRow({
     : selectionModel.containsAttention
       ? "Needs attention"
       : undefined;
+  const focusAfterRemoval = (trigger: HTMLButtonElement) => {
+    const row = trigger.closest(".roster-unit-row");
+    const next = row?.nextElementSibling?.querySelector<HTMLElement>(
+      ".roster-unit-row-disclosure",
+    );
+    const previous = row?.previousElementSibling?.querySelector<HTMLElement>(
+      ".roster-unit-row-disclosure",
+    );
+    onRemove?.(selection.id);
+    queueMicrotask(() => {
+      const target =
+        next !== null && next !== undefined && document.contains(next)
+          ? next
+          : previous !== null &&
+              previous !== undefined &&
+              document.contains(previous)
+            ? previous
+            : document.getElementById("selected-roster-heading");
+      target?.focus();
+    });
+  };
   return (
     <li
       className="roster-unit-row"
@@ -3031,6 +3195,32 @@ function RosterUnitRow({
           </span>
         </span>
       </button>
+      <div className="roster-unit-row-actions" aria-label={`Actions for ${annotatedName}`}>
+        <button
+          type="button"
+          aria-label={`View unit card for ${annotatedName}`}
+          aria-haspopup="dialog"
+          onClick={(event) => onView?.(selection.id, event.currentTarget)}
+        >
+          View
+        </button>
+        <button
+          type="button"
+          aria-label={`Duplicate ${annotatedName}`}
+          disabled={!canDuplicate}
+          title={canDuplicate ? undefined : "Unit maximum reached"}
+          onClick={() => onDuplicate?.(selection.id)}
+        >
+          Duplicate
+        </button>
+        <button
+          type="button"
+          aria-label={`Remove ${annotatedName}`}
+          onClick={(event) => focusAfterRemoval(event.currentTarget)}
+        >
+          Remove
+        </button>
+      </div>
     </li>
   );
 }
@@ -3088,6 +3278,8 @@ function RosterUnitOptionsPanel({
   onPreviewChoice,
   onClose,
   onView,
+  onDuplicate,
+  canDuplicate,
   viewed,
 }: {
   readonly session: LocalRosterSession;
@@ -3109,7 +3301,9 @@ function RosterUnitOptionsPanel({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
   readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onClose: () => void;
-  readonly onView: () => void;
+  readonly onView: (trigger: HTMLButtonElement) => void;
+  readonly onDuplicate: () => SelectionOccurrenceId | undefined;
+  readonly canDuplicate: boolean;
   readonly viewed: boolean;
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
@@ -3137,9 +3331,18 @@ function RosterUnitOptionsPanel({
             type="button"
             aria-expanded={viewed}
             aria-controls="selected-unit-card-view"
-            onClick={onView}
+            onClick={(event) => onView(event.currentTarget)}
           >
             View unit card
+          </button>
+          <button
+            type="button"
+            aria-label={`Duplicate ${name}`}
+            disabled={!canDuplicate}
+            title={canDuplicate ? undefined : "Unit maximum reached"}
+            onClick={onDuplicate}
+          >
+            Duplicate unit
           </button>
           <button
             type="button"
@@ -3180,6 +3383,7 @@ function RosterUnitOptionsPanel({
 
 /** Read-only modal datasheet for the unit chosen with the row View action. */
 function RosterUnitCardView({
+  covered,
   session,
   selectionModel,
   selectionCanAddAnother,
@@ -3187,8 +3391,10 @@ function RosterUnitCardView({
   onRename,
   onSetAmount,
   onRemove,
+  onViewKeywordRules,
   onClose,
 }: {
+  readonly covered: boolean;
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
@@ -3206,12 +3412,17 @@ function RosterUnitCardView({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onViewKeywordRules: (
+    preview: KeywordRulePreview,
+    trigger: HTMLButtonElement,
+  ) => void;
   readonly onClose: () => void;
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
   return (
     <div
       className="choice-preview-backdrop"
+      hidden={covered}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -3260,8 +3471,62 @@ function RosterUnitCardView({
             onRename={onRename}
             onSetAmount={onSetAmount}
             onRemove={onRemove}
+            onViewKeywordRules={onViewKeywordRules}
           />
         </ul>
+      </section>
+    </div>
+  );
+}
+
+/** One keyword's source-authored rules, layered over the owning unit card. */
+function KeywordRulesDialog({
+  preview,
+  onClose,
+}: {
+  readonly preview: KeywordRulePreview;
+  readonly onClose: () => void;
+}) {
+  const headingId = useId();
+  return (
+    <div
+      className="choice-preview-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        if (event.key === "Tab") trapDialogFocus(event.currentTarget, event);
+      }}
+    >
+      <section
+        className="choice-preview-dialog keyword-rules-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+      >
+        <header className="choice-preview-heading">
+          <div>
+            <span className="eyebrow">Keyword reference</span>
+            <h3 id={headingId}>{preview.keyword}</h3>
+          </div>
+          <button type="button" autoFocus onClick={onClose}>
+            Close
+          </button>
+        </header>
+        <section className="selection-info-section">
+          <h4>Rules</h4>
+          <div className="selection-rule-list">
+            {preview.rules.map((rule, index) => (
+              <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
+            ))}
+          </div>
+        </section>
       </section>
     </div>
   );
@@ -3505,6 +3770,7 @@ function RosterSelectionItem({
   onSetAmount,
   onRemove,
   onPreviewChoice,
+  onViewKeywordRules,
 }: {
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
@@ -3552,6 +3818,9 @@ function RosterSelectionItem({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
   readonly onPreviewChoice?:
     | PreviewChoiceHandler
+    | undefined;
+  readonly onViewKeywordRules?:
+    | ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void)
     | undefined;
 }) {
   const selection = selectionModel.occurrence;
@@ -3797,7 +4066,7 @@ function RosterSelectionItem({
               </div>
               <div className="roster-role-options">
                 {rosterRoleChoices.map((direct) => {
-                  const label = selectionChoiceLabel(direct.choice);
+                  const label = childSelectionChoiceLabel(choice, direct.choice);
                   const selectedOccurrence = direct.selected.at(-1);
                   const costDescriptionId =
                     catalogueChoiceCosts(direct.choice).length === 0
@@ -3860,7 +4129,10 @@ function RosterSelectionItem({
           {ordinaryDirectChoices.length > 0 && (
             <div className="child-choice-list">
               {ordinaryDirectChoices.map((direct) => {
-                const choiceName = selectionChoiceLabel(direct.choice);
+                const choiceName = childSelectionChoiceLabel(
+                  choice,
+                  direct.choice,
+                );
                 const status = directChoiceStatus(direct);
                 const selectedOccurrence = direct.selected.at(-1);
                 const selectedAmount = rosterSelectionsAmount(direct.selected);
@@ -4024,6 +4296,7 @@ function RosterSelectionItem({
               selection={selection}
               displayNameIncomplete={displayNameIncomplete}
               showKeywords={showKeywords}
+              onViewKeywordRules={onViewKeywordRules}
             />
           )}
           {promotedModels.length > 0 && (
@@ -4061,6 +4334,7 @@ function RosterSelectionItem({
                     onSetAmount={onSetAmount}
                     onRemove={onRemove}
                     onPreviewChoice={onPreviewChoice}
+                    onViewKeywordRules={onViewKeywordRules}
                   />
                 ))}
               </ul>
@@ -4103,6 +4377,7 @@ function RosterSelectionItem({
                     onSetAmount={onSetAmount}
                     onRemove={onRemove}
                     onPreviewChoice={onPreviewChoice}
+                    onViewKeywordRules={onViewKeywordRules}
                     revealAnchor={revealAnchor}
                   />
                 ))}
@@ -4152,6 +4427,7 @@ function RosterSelectionItem({
                       onSetAmount={onSetAmount}
                       onRemove={onRemove}
                       onPreviewChoice={onPreviewChoice}
+                      onViewKeywordRules={onViewKeywordRules}
                     />
                   ))}
                 </ul>
@@ -4466,6 +4742,7 @@ function ChoicePreviewButton({
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly onPreview: PreviewChoiceHandler;
 }) {
+  if (!catalogueChoiceHasPreviewInformation(choice)) return null;
   const label = selectionChoiceLabel(choice);
   return (
     <button
@@ -4570,10 +4847,51 @@ function catalogueChoiceHasOwnInformation(
   return (
     information.profiles.length > 0 ||
     information.rules.length > 0 ||
-    information.infoGroups.length > 0 ||
-    information.unresolved.length > 0 ||
-    information.keywords.length > 0
+    information.infoGroups.length > 0
   );
+}
+
+const catalogueChoicePreviewAvailabilityCache = new WeakMap<
+  BattleScribeRosterSelectionChoice,
+  boolean
+>();
+
+/**
+ * Keeps the info affordance honest without discarding useful unit previews.
+ *
+ * Keywords and unresolved references alone are diagnostic/source evidence,
+ * not a player-facing reference card. A unit may still be informative through
+ * its initialized composition or available model profiles, so those branches
+ * are planned before suppressing the button.
+ */
+function catalogueChoiceHasPreviewInformation(
+  choice: BattleScribeRosterSelectionChoice,
+): boolean {
+  const cached = catalogueChoicePreviewAvailabilityCache.get(choice);
+  if (cached !== undefined) return cached;
+  if (catalogueChoiceHasOwnInformation(choice)) {
+    catalogueChoicePreviewAvailabilityCache.set(choice, true);
+    return true;
+  }
+  if (choice.kind !== "selectionEntry" || choice.type !== "unit") {
+    catalogueChoicePreviewAvailabilityCache.set(choice, false);
+    return false;
+  }
+  const plan = planRosterSelectionInitialization(choice);
+  if (!plan.ok) {
+    catalogueChoicePreviewAvailabilityCache.set(choice, false);
+    return false;
+  }
+  const plannedChoices = new Set<BattleScribeRosterSelectionChoice>();
+  collectPlannedChoices(plan.value, plannedChoices);
+  const availableBranches = catalogueUnitModelBranches(
+    choice,
+    plannedChoices,
+  );
+  const available =
+    plan.value.additions.length > 0 || availableBranches.length > 0;
+  catalogueChoicePreviewAvailabilityCache.set(choice, available);
+  return available;
 }
 
 function directCatalogueChoices(
@@ -5258,6 +5576,7 @@ function RosterSelectionChoiceGroup({
     | undefined;
 }) {
   const { group, children } = node;
+  const parentChoice = localRosterSelectionChoice(session, parent.id);
   const name = group.group.name ?? group.group.id ?? "Unnamed selection group";
   const finiteMaximum =
     group.maximum !== undefined && Number.isFinite(group.maximum)
@@ -5344,7 +5663,7 @@ function RosterSelectionChoiceGroup({
               selectedOccurrence !== undefined &&
               groupAllowsAnotherCopy &&
               (selectionCanAddAnother.get(selectedOccurrence.id) ?? true);
-            const label = selectionChoiceLabel(choice);
+            const label = childSelectionChoiceLabel(parentChoice, choice);
             const displayLabel =
               choice.hidden === true ? `${label} (hidden)` : label;
             const costDescriptionId =
@@ -5485,12 +5804,16 @@ function RosterSelectionDatasheet({
   selection,
   displayNameIncomplete,
   showKeywords = true,
+  onViewKeywordRules,
 }: {
   readonly session: LocalRosterSession;
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly selection: RosterSelection;
   readonly displayNameIncomplete: boolean;
   readonly showKeywords?: boolean;
+  readonly onViewKeywordRules?:
+    | ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void)
+    | undefined;
 }) {
   // The datasheet is the reason a player opens a unit, so it is no longer behind
   // a second click. Laziness is preserved by *mounting*: this component renders
@@ -5544,7 +5867,11 @@ function RosterSelectionDatasheet({
       )}
 
       {showKeywords && categories.ok === true && (
-        <SelectionKeywords inspection={categories.value} />
+        <SelectionKeywords
+          session={session}
+          inspection={categories.value}
+          onViewRules={onViewKeywordRules}
+        />
       )}
 
       {profiles.length > 0 && (
@@ -5901,9 +6228,15 @@ function positiveFiniteNumber(value: string | undefined): number | undefined {
 }
 
 function SelectionKeywords({
+  session,
   inspection,
+  onViewRules,
 }: {
+  readonly session: LocalRosterSession;
   readonly inspection: LocalRosterCategoryInspection;
+  readonly onViewRules?:
+    | ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void)
+    | undefined;
 }) {
   const { categories, removed, completeness } = inspection;
   // A completely known empty set is absence, not player-facing information.
@@ -5942,16 +6275,36 @@ function SelectionKeywords({
         </p>
       ) : categories.length === 0 ? null : (
         <ul className="keyword-list">
-          {categories.map((category) => (
-            <li
-              key={category.id}
-              data-added={category.added ? "true" : undefined}
-              data-primary={category.primary ? "true" : undefined}
-            >
-              {category.name}
-              {category.added && <small>added</small>}
-            </li>
-          ))}
+          {categories.map((category) => {
+            const rules = categoryRuleDetails(session, category.id);
+            return (
+              <li
+                key={category.id}
+                data-added={category.added ? "true" : undefined}
+                data-primary={category.primary ? "true" : undefined}
+              >
+                {rules.length > 0 && onViewRules !== undefined ? (
+                  <button
+                    type="button"
+                    className="keyword-rule-button"
+                    aria-label={`View rules for keyword ${category.name}`}
+                    aria-haspopup="dialog"
+                    onClick={(event) =>
+                      onViewRules(
+                        { keyword: category.name, rules },
+                        event.currentTarget,
+                      )
+                    }
+                  >
+                    {category.name}
+                  </button>
+                ) : (
+                  category.name
+                )}
+                {category.added && <small>added</small>}
+              </li>
+            );
+          })}
         </ul>
       )}
       {/* A removed keyword is shown struck through rather than hidden, so the
@@ -5968,6 +6321,38 @@ function SelectionKeywords({
       )}
     </section>
   );
+}
+
+/**
+ * Resolves rules attached to one unambiguous effective category definition.
+ *
+ * Category identity, not display text, is the join key. Ambiguous definitions
+ * and links stay plain keywords so a convenient popup never guesses which
+ * imported rule the player meant; those resolution facts remain in diagnostics.
+ */
+function categoryRuleDetails(
+  session: LocalRosterSession,
+  categoryId: ObjectId,
+): readonly SelectionRuleDetail[] {
+  const definitions = session.catalogue.context.categories.definitions.filter(
+    ({ source }) => source.id === categoryId,
+  );
+  const definition = definitions.length === 1 ? definitions[0] : undefined;
+  if (definition === undefined) return [];
+
+  const rules: SelectionRuleDetail[] = definition.source.rules.map((value) => ({
+    origin: "Direct",
+    value,
+  }));
+  for (const link of definition.source.infoLinks) {
+    const reference = session.catalogue.context.graph.references.find(
+      (candidate) => candidate.kind === "infoLink" && candidate.source === link,
+    );
+    const target = reference?.targets.length === 1 ? reference.targets[0] : undefined;
+    if (target?.kind !== "rule") continue;
+    rules.push({ origin: "Direct", value: target.source as RuleProjection });
+  }
+  return rules;
 }
 
 function SelectionProfile({
@@ -6597,6 +6982,18 @@ function selectionChoiceLabel(
   choice: BattleScribeRosterSelectionChoice,
 ): string {
   return choice.name ?? choice.id ?? "Unnamed selection";
+}
+
+/** Removes source ordering only inside the Battle Size presentation. */
+function childSelectionChoiceLabel(
+  parent: BattleScribeRosterSelectionChoice | undefined,
+  child: BattleScribeRosterSelectionChoice,
+): string {
+  const label = selectionChoiceLabel(child);
+  return selectionChoiceLabel(parent ?? child).trim().toLocaleLowerCase() ===
+    "battle size"
+    ? label.replace(/^\d+\.\s+/u, "")
+    : label;
 }
 
 function selectionGroupStatus(group: LocalRosterChildChoiceGroup): string {

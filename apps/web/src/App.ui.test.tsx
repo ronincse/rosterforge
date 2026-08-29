@@ -82,7 +82,13 @@ const gameSystemBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
     </profileType>
   </profileTypes>
   <categoryEntries>
-    <categoryEntry id="cat-infantry" name="Infantry" hidden="false" />
+    <categoryEntry id="cat-infantry" name="Infantry" hidden="false">
+      <rules>
+        <rule id="rule-infantry-discipline" name="Infantry discipline">
+          <description>Infantry hold ground through coordinated formations.</description>
+        </rule>
+      </rules>
+    </categoryEntry>
     <categoryEntry id="cat-battleline" name="Battleline" hidden="false" />
   </categoryEntries>
   <forceEntries>
@@ -860,7 +866,7 @@ describe("App local catalogue flow", () => {
     expect(
       screen.queryByRole("region", { name: "Saved roster drafts" }),
     ).toBeNull();
-    expect(screen.getAllByText("Patrol Detachment")).toHaveLength(2);
+    expect(screen.getAllByText("Patrol Detachment")).toHaveLength(1);
     expect(rosterForce("force-ui")).toBeTruthy();
     expect(screen.queryByText("force-ui")).toBeNull();
     const workspaceNavigation = screen.getByRole("navigation", {
@@ -892,7 +898,7 @@ describe("App local catalogue flow", () => {
         .getAttribute("aria-expanded"),
     ).toBe("false");
     const selectedRoster = screen.getByRole("region", {
-      name: "Selected roster",
+      name: "Your roster",
     });
     expect(
       within(selectedRoster).getByText("No units added yet"),
@@ -1203,17 +1209,15 @@ describe("App local catalogue flow", () => {
     );
     expect(
       within(compactUnitRow as HTMLElement).getAllByRole("button"),
-    ).toHaveLength(1);
-    // Army rows remain compact. Viewing and removal live in the focused
-    // inspector instead of multiplying controls on every list row.
+    ).toHaveLength(4);
+    // Direct row actions do not require changing the configured unit first.
     expect(armySection.querySelector(".selection-card-body")).toBeNull();
     expect(armySection.querySelector(".selection-datasheet")).toBeNull();
     expect(within(armySection).queryByText("Keywords")).toBeNull();
-    const viewButton = within(unitOptions).getByRole("button", {
-      name: "View unit card",
+    const viewButton = within(compactUnitRow as HTMLElement).getByRole("button", {
+      name: "View unit card for Infantry Squad (Elite)",
     });
     fireEvent.click(viewButton);
-    expect(viewButton.getAttribute("aria-expanded")).toBe("true");
     let unitCardView = screen.getByRole("dialog", {
       name: "Unit card for Infantry Squad",
     });
@@ -1241,6 +1245,28 @@ describe("App local catalogue flow", () => {
     expect(within(unitCardView).getByText("Keywords")).toBeTruthy();
     expect(within(unitCardView).getByText("Battleline")).toBeTruthy();
     expect(within(unitCardView).getByText("added")).toBeTruthy();
+    const infantryKeyword = within(unitCardView).getByRole("button", {
+      name: "View rules for keyword Infantry",
+    });
+    expect(
+      within(unitCardView).queryByRole("button", {
+        name: "View rules for keyword Battleline",
+      }),
+    ).toBeNull();
+    fireEvent.click(infantryKeyword);
+    const keywordRules = screen.getByRole("dialog", { name: "Infantry" });
+    expect(within(keywordRules).getByText("Infantry discipline")).toBeTruthy();
+    expect(
+      within(keywordRules).getByText(
+        "Infantry hold ground through coordinated formations.",
+      ),
+    ).toBeTruthy();
+    expect(unitCardView.parentElement?.hasAttribute("hidden")).toBe(true);
+    fireEvent.keyDown(keywordRules, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(infantryKeyword));
+    unitCardView = screen.getByRole("dialog", {
+      name: "Unit card for Infantry Squad",
+    });
     // Profile-name groups run before the separately routed annotation.
     expect(
       within(unitCardView).getByText(
@@ -1640,7 +1666,7 @@ describe("App local catalogue flow", () => {
     expect(within(workspaceNavigation).getByText("80 / 2,000")).toBeTruthy();
     expect(within(workspaceNavigation).getByText("1,920 remaining")).toBeTruthy();
     const selectedRoster = screen.getByRole("region", {
-      name: "Selected roster",
+      name: "Your roster",
     });
     fireEvent.click(
       within(selectedRoster).getByRole("button", {
@@ -1699,7 +1725,7 @@ describe("App local catalogue flow", () => {
     expect(catalogueToggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
     expect(
-      screen.getByRole("region", { name: "Selected roster" }),
+      screen.getByRole("region", { name: "Your roster" }),
     ).toBeTruthy();
 
     fireEvent.click(catalogueToggle);
@@ -2198,7 +2224,7 @@ describe("App local catalogue flow", () => {
       within(editor).getByRole("button", { name: "Add Nested Unit" }),
     );
     const selectedRoster = screen.getByRole("region", {
-      name: "Selected roster",
+      name: "Your roster",
     });
     fireEvent.click(
       within(selectedRoster).getByRole("button", {
@@ -2234,6 +2260,66 @@ describe("App local catalogue flow", () => {
     fireEvent.click(within(melee).getByRole("button", { name: "Blade" }));
     fireEvent.click(within(ranged).getByRole("button", { name: "Pistol" }));
     expect(within(wargear).getByText("2 selected; requirement met")).toBeTruthy();
+
+    const sourceRow = selectedRoster.querySelector<HTMLElement>(
+      ".roster-unit-row",
+    );
+    expect(sourceRow).not.toBeNull();
+    fireEvent.click(
+      within(sourceRow as HTMLElement).getByRole("button", {
+        name: "Duplicate Nested Unit",
+      }),
+    );
+    const rows = selectedRoster.querySelectorAll<HTMLElement>(
+      ".roster-unit-row",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.dataset.occurrenceId).not.toBe(
+      rows[1]?.dataset.occurrenceId,
+    );
+    const duplicatedDisclosure = within(rows[1]!).getByRole("button", {
+      name: "Configure Nested Unit",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(duplicatedDisclosure));
+    fireEvent.click(duplicatedDisclosure);
+    const duplicatedOptions = screen.getByRole("region", {
+      name: "Unit options for Nested Unit",
+    });
+    const duplicatedWargear = within(duplicatedOptions).getByRole("group", {
+      name: "Wargear choices for Nested Unit",
+    });
+    expect(
+      within(duplicatedWargear)
+        .getByRole("button", { name: "Blade" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      within(duplicatedWargear)
+        .getByRole("button", { name: "Pistol" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+
+    const actions = openRosterActionsMenu();
+    fireEvent.click(within(actions).getByRole("menuitem", { name: "Undo" }));
+    expect(
+      selectedRoster.querySelectorAll(".roster-unit-row"),
+    ).toHaveLength(1);
+    const remainingRow = selectedRoster.querySelector<HTMLElement>(
+      ".roster-unit-row",
+    );
+    fireEvent.click(
+      within(remainingRow as HTMLElement).getByRole("button", {
+        name: "Remove Nested Unit",
+      }),
+    );
+    expect(
+      selectedRoster.querySelectorAll(".roster-unit-row"),
+    ).toHaveLength(0);
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { name: "Your roster" }),
+      ),
+    );
   });
 
   it("places the whole configuration step before the sticky builder", async () => {
@@ -2325,9 +2411,9 @@ describe("App local catalogue flow", () => {
               field="selections" scope="parent" value="1" shared="true" />
           </constraints>
           <selectionEntries>
-            <selectionEntry id="configuration-incursion" name="Incursion"
+            <selectionEntry id="configuration-incursion" name="1. Incursion"
               type="upgrade" />
-            <selectionEntry id="configuration-strike-force" name="Strike Force"
+            <selectionEntry id="configuration-strike-force" name="2. Strike Force"
               type="upgrade" />
           </selectionEntries>
         </selectionEntryGroup>
@@ -2515,6 +2601,19 @@ describe("App local catalogue flow", () => {
     ).toBe(battleSizeBody);
     expect(
       within(battleSizeCard as HTMLElement).getByRole("button", {
+        name: "Strike Force",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(battleSizeCard as HTMLElement).queryByText("1. Incursion"),
+    ).toBeNull();
+    expect(
+      within(battleSizeCard as HTMLElement).queryByRole("button", {
+        name: "View information for Strike Force",
+      }),
+    ).toBeNull();
+    expect(
+      within(battleSizeCard as HTMLElement).getByRole("button", {
         name: "Override points limit?",
       }).closest(".selection-card-body"),
     ).toBe(battleSizeBody);
@@ -2575,7 +2674,7 @@ describe("App local catalogue flow", () => {
     ).toBe("false");
 
     const selectedRoster = screen.getByRole("region", {
-      name: "Selected roster",
+      name: "Your roster",
     });
     expect(
       within(selectedRoster).queryByText("Disabled Automatic Root"),
@@ -2685,7 +2784,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
 
     const selectedRoster = screen.getByRole("region", {
-      name: "Selected roster",
+      name: "Your roster",
     });
     // The unit summary stays useful while collapsed: exact model children are
     // counted across repeated occurrences and grouped by their catalogue name.

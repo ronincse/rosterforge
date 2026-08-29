@@ -58,6 +58,7 @@ export function App(props: AppProps) {
     createRoster,
     clearRoster,
     addRootSelection,
+    duplicateSelection,
     removeSelection,
     addChildSelection,
     renameSelection,
@@ -116,6 +117,7 @@ export function App(props: AppProps) {
                 diagnostics={rosterDiagnostics}
                 onClear={clearRoster}
                 onAddRootSelection={addRootSelection}
+                onDuplicateSelection={duplicateSelection}
                 onRemoveSelection={removeSelection}
                 onAddChildSelection={addChildSelection}
                 onRenameSelection={renameSelection}

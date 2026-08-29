@@ -65,6 +65,7 @@ import {
   type BattleScribeRosterSelectionChoice,
 } from "@rosterforge/roster-builder";
 import {
+  duplicateRosterSelection,
   removeRosterSelection,
   rosterDefinitionKeyForSource,
   rosterSelectionAmount,
@@ -1487,6 +1488,58 @@ export function removeLocalRosterSelection(
       ...options,
       ...(preferredChoice === undefined ? {} : { preferredChoice }),
     },
+  );
+}
+
+/**
+ * Copies one configured selection subtree and preserves its choice projection.
+ *
+ * Duplication deliberately bypasses initialization and automatic
+ * reconciliation: the roster-model command has already copied every selected
+ * descendant, name, and amount exactly. Replanning from the catalogue would
+ * replace the player's configured unit with its defaults, while reconciling
+ * the copy could silently remove an authored automatic child from only one of
+ * the otherwise-identical siblings.
+ */
+export function duplicateLocalRosterSelection(
+  session: LocalRosterSession,
+  selectionId: SelectionOccurrenceId,
+  createSelectionId: (
+    sourceId: SelectionOccurrenceId,
+  ) => SelectionOccurrenceId,
+): Result<LocalRosterSession> {
+  const duplicatedIds = new Map<SelectionOccurrenceId, SelectionOccurrenceId>();
+  const updated = duplicateRosterSelection(session.roster, selectionId, {
+    selectionId(sourceId) {
+      const duplicateId = createSelectionId(sourceId);
+      duplicatedIds.set(sourceId, duplicateId);
+      return duplicateId;
+    },
+  });
+  if (!updated.ok) return updated;
+
+  const selectionChoices = new Map(session.selectionChoices);
+  for (const [sourceId, duplicateId] of duplicatedIds) {
+    const choice = session.selectionChoices.get(sourceId);
+    if (choice === undefined) {
+      return failure([
+        ...updated.diagnostics,
+        {
+          code: "APP_ROSTER_DUPLICATE_CHOICE_UNAVAILABLE",
+          message:
+            "A roster selection can be duplicated only when every copied occurrence still has its materialized catalogue choice.",
+          severity: "error",
+          impacts: ["internal"],
+          details: { sourceId, duplicateId },
+        },
+      ]);
+    }
+    selectionChoices.set(duplicateId, choice);
+  }
+
+  return success(
+    { ...session, roster: updated.value, selectionChoices },
+    updated.diagnostics,
   );
 }
 

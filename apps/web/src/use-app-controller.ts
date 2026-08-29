@@ -44,6 +44,7 @@ import {
   addLocalRosterRootSelection,
   chooseLocalRosterChildGroupEntry,
   createLocalRosterSession,
+  duplicateLocalRosterSelection,
   removeLocalRosterSelection,
   restoreLocalRosterSession,
   restoreLocalRosterSessions,
@@ -366,6 +367,27 @@ export function useRosterForgeAppController({
     });
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);
+  }
+
+  function duplicateSelection(
+    id: SelectionOccurrenceId,
+  ): SelectionOccurrenceId | undefined {
+    if (rosterSession === undefined) return undefined;
+    const duplicatedRootId = selectionOccurrenceId(
+      createEntityId("selection"),
+    );
+    const result = duplicateLocalRosterSelection(
+      rosterSession,
+      id,
+      (sourceId) =>
+        sourceId === id
+          ? duplicatedRootId
+          : selectionOccurrenceId(createEntityId("selection")),
+    );
+    setRosterDiagnostics(result.diagnostics);
+    if (!result.ok) return undefined;
+    commitRosterSession(result.value);
+    return duplicatedRootId;
   }
 
   function addChildSelection(
@@ -810,6 +832,7 @@ export function useRosterForgeAppController({
     createRoster,
     clearRoster,
     addRootSelection,
+    duplicateSelection,
     removeSelection,
     addChildSelection,
     renameSelection,

@@ -219,9 +219,12 @@
 - Compact army-unit cards, individually separated on high-opacity blurred
   material, with one disclosure target, recursive cost, exact model/loadout
   composition, structurally recognized designation/status pills, and automatic
-  focus for a newly added army unit. A dedicated options region
-  reuses the existing edit controls and owns read-only full-card viewing and
-  destructive removal, so rows carry no competing View/Remove controls.
+  focus for a newly added or duplicated army unit. Sibling View, Duplicate,
+  and Remove row actions target the exact occurrence without first selecting
+  it; the dedicated options region repeats those commands beside the existing
+  edit controls. Duplicate copies the configured occurrence subtree and all
+  web choice mappings with fresh IDs as one Undo/Redo action, without rebuilding
+  defaults or reconciling away copied descendants.
   Nested options remain separate higher-opacity inset material cards inside
   their owning group, and all exposed active-roster cards, fields, dialogs, and
   buttons consume one 14 px corner token; joined controls square only their
@@ -248,19 +251,23 @@
   proves that subtracting the exact occurrence would breach a complete positive
   minimum. Optional roots, surplus occurrences, and incomplete bounds remain
   removable. Direct setup adjuncts remain outside sibling group constraints but
-  share their responsive visual row; Aeldari's Override points limit stays next
-  to its standard Battle Size choices
+  share one nested option card; Aeldari's Override points limit stays beside
+  its standard Battle Size choices while their source-authored numeric ordinals
+  are removed from display only
 - Page-information actions visually attached to concrete root, direct-child,
   repeatable-model, and grouped catalogue choice controls. They expose
-  source-authored rules, profiles, info groups, and human-readable source
-  keywords before selection. Unit previews additionally show statlines and
+  source-authored rules, profiles, and info groups before selection, and are
+  omitted when no substantive reference is available. Keywords or unresolved
+  links alone do not open an empty dialog. Unit previews additionally show statlines and
   equipment from supported static initial composition, with alternate
   informative branches kept in a separate collapsed disclosure. They do not
   mutate the roster or claim roster-dependent values are already effective
 - Keyword sections disappear when the effective category inspection is
   complete and empty. Removed categories and incomplete or unresolved keyword
   evaluation remain visible evidence rather than being collapsed into a false
-  empty result
+  empty result. An effective keyword becomes a dialog-triggering reference only
+  when its exact ID has one unambiguous category definition with an attached
+  direct or uniquely resolved linked rule; other and removed chips stay plain
 - At most two simultaneous desktop columns: roster list plus selected-unit
   options. Add unit is a centred regular-width modal and a full-screen compact
   sheet; the complete unit card is a separate modal reference. Their shared
@@ -299,7 +306,10 @@
 - Library-marked catalogues retained for composition and diagnostics but
   excluded from ordered roster-catalogue choices
 - Selected-roster empty state and modal catalogue category browser kept as
-  separate accessible surfaces without changing root visibility or add behavior
+  separate accessible surfaces without changing root visibility or add behavior.
+  The roster itself has one visible `Your roster` heading; force identity is
+  retained only as a stable report-link anchor/data attribute rather than a
+  redundant visible force card
 - DTD/entity declaration rejection and configurable byte, archive, XML-depth,
   XML-node, JSON-depth, and JSON-node limits
 - Structured diagnostics for invalid Boolean and numeric projected attributes

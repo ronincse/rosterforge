@@ -14,6 +14,7 @@ import {
   addLocalRosterRootSelection,
   chooseLocalRosterChildGroupEntry,
   createLocalRosterSession,
+  duplicateLocalRosterSelection,
   evaluateLocalRosterCosts,
   inspectLocalRosterChildChoices,
   inspectLocalRosterConstraints,
@@ -146,6 +147,41 @@ describe("nested choice group session state", () => {
       selected: [{ name: "Blade" }, { name: "Pistol" }],
       remaining: 0,
     });
+
+    const renamed = setLocalRosterSelectionName(
+      withPistol.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+      "Configured veterans",
+    );
+    if (!renamed.ok) throw new Error("Expected configured unit rename.");
+    const duplicated = duplicateLocalRosterSelection(
+      renamed.value,
+      selectionOccurrenceId("nested-unit-occurrence"),
+      (sourceId) => selectionOccurrenceId(`${sourceId}-copy`),
+    );
+    if (!duplicated.ok) throw new Error("Expected exact configured duplicate.");
+    const [source, copy] = duplicated.value.roster.forces[0]?.selections ?? [];
+    expect(source?.name).toBe("Configured veterans");
+    expect(copy?.name).toBe("Configured veterans");
+    expect(copy?.id).toBe("nested-unit-occurrence-copy");
+    expect(copy?.definition).toEqual(source?.definition);
+    expect(copy?.selections.map(({ name }) => name)).toEqual(
+      source?.selections.map(({ name }) => name),
+    );
+    expect(copy?.selections.map(({ amount }) => amount)).toEqual(
+      source?.selections.map(({ amount }) => amount),
+    );
+    expect(copy?.selections.map(({ definition }) => definition)).toEqual(
+      source?.selections.map(({ definition }) => definition),
+    );
+    for (let index = 0; index < (source?.selections.length ?? 0); index += 1) {
+      const sourceChild = source?.selections[index];
+      const copyChild = copy?.selections[index];
+      expect(copyChild?.id).toBe(`${sourceChild?.id}-copy`);
+      expect(
+        duplicated.value.selectionChoices.get(copyChild!.id),
+      ).toBe(renamed.value.selectionChoices.get(sourceChild!.id));
+    }
   });
 });
 
