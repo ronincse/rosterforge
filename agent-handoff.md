@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (sticky actions and setup hierarchy refined; active-roster system remains Next)
+## Current Status — 2026-08-29 (false catalogue-load diagnostics fixed; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -185,7 +185,15 @@ diagnostic codes.
   rules disclosure, and Battle Size keeps its direct Override points limit
   choice alongside the standard grouped sizes without changing either
   constraint domain. Unselected unit materials retain the background colour
-  but use a stronger shared border for scanability.
+  but use a stronger shared border for scanability. Pinned repository selection
+  now distinguishes cost types defined outside a focused closure from IDs absent
+  from the repository. Zero-valued legacy cost references remain unresolved and
+  observable without producing false load warnings when the verified index owns
+  their targets; nonzero and repository-absent references remain diagnostic.
+  An exact empty optional `defaultCostLimit` is preserved in the generic source
+  tree and original bytes but treated as no typed limit rather than malformed
+  numeric data. Metadata-cache version 2 carries the bounded cost-type summaries,
+  and version 1 is a quiet verified rebuild rather than a corruption warning.
   **The `Next` remains the complete shared active-roster component and token
   system; these owner-requested material and card-geometry slices did not claim
   that broader migration.**
@@ -692,6 +700,7 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
+| False diagnostics after pinned catalogue selection | Done | exact-empty optional `defaultCostLimit` values retain their raw source spelling but omit the typed limit without an invalid-number diagnostic. Verified repository metadata carries cost-type IDs, so zero-valued legacy costs whose definitions live outside a focused closure remain unresolved and observable without being mislabeled missing; nonzero and repository-absent targets still warn. Live Xenos - Aeldari selection reports zero repository notes, zero import diagnostics, and no warning/error console output |
 | Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
@@ -11677,6 +11686,13 @@ widen it into association semantics, campaign constraints, or roster duplication
 
 ## Completed Assignment — Conditional Root Limits And Honest Diagnostic Presentation, 2026-08-27
 
+> **Superseded in part by the 2026-08-29 false catalogue-load diagnostics
+> checkpoint.** Repository-wide evidence established that the four focused
+> Aeldari cost targets exist in the pinned repository and that the exact-empty
+> optional `defaultCostLimit` is a benign source sentinel. The raw values and
+> unresolved graph references remain preserved, but those five load diagnostics
+> no longer represent missing or malformed source facts.
+
 Baseline `2527fcc`; resulting implementation commit `839149a` and this handoff
 commit. Codex remained the active lead, primary implementer, integrator,
 reviewer, validator, and publisher.
@@ -12975,3 +12991,94 @@ sheet, inspector, picker, switch, stepper, status, and remaining command rules
 while preserving the settled sticky identity/warning/action menu, evidence,
 card-material, radius, Add unit, Configuration, Army rules, unit-card, and modal
 contracts.
+
+## Completed Assignment — False Catalogue-Load Diagnostics, 2026-08-29
+
+Baseline `596140a`; resulting implementation commit `8031905` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged at `3e9d05d`. Codex remained the active lead, primary implementer,
+integrator, reviewer, validator, and publisher.
+
+Selecting pinned Xenos - Aeldari now produces no repository or import
+diagnostics. The hidden `Enhancements` cost type's exact empty optional
+`defaultCostLimit` remains byte-for-byte present in the retained source and
+generic node while the typed optional number is absent. That sentinel no longer
+emits `BS_PROJECTION_INVALID_ATTRIBUTE`; non-empty malformed numbers remain
+strict and diagnostic.
+
+Focused remote acquisition now carries every declared cost-type ID in the
+already-verified repository metadata index. Data-graph diagnostic resolution
+uses that set only to quiet an unresolved cost when its source value is exactly
+zero and its target is proven elsewhere in the pinned repository. The graph
+reference remains unresolved and available to later evaluation. Nonzero missing
+costs and zero-valued targets absent from the repository still emit
+`BS_GRAPH_MISSING_REFERENCE`, so the change does not convert absence into
+support. Browser metadata cache version 2 stores the bounded ID summaries;
+version 1 becomes a quiet cache miss and is rebuilt from verified bytes instead
+of surfacing a one-time false warning.
+
+### Decisions and rejected alternatives
+
+The repository summary won over adding the unrelated T'au catalogue to every
+focused closure: the index has already parsed and verified all 46 documents, so
+bounded ID arrays in those summaries settle repository ownership without
+retaining another multi-megabyte source document in the selected workspace.
+Blanket suppression of unresolved zero costs was rejected because the pinned corpus contains 79
+zero-valued occurrences whose cost-type IDs are genuinely absent. Coercing the
+empty `defaultCostLimit` to zero was rejected because absence and a numeric zero
+limit have different semantics; rejecting or rewriting the imported source was
+rejected because the generic tree and original bytes are authoritative.
+
+### Delegation and review
+
+A native Codex child performed an early read-only source, graph, test, and
+corpus investigation in a disposable worktree at exact baseline `596140a`. It
+confirmed the sentinel's upstream shape, identified the two T'au-owned cost-type
+IDs, and found the 79-occurrence negative guard that ruled out blanket zero-cost
+suppression. Codex independently reviewed the findings, implemented the narrower
+repository-aware design, reran every relevant test, and accepted no delegated
+code.
+
+### Browser, tests, corpus, and validation
+
+At external corpus revision
+`04c62fcd041b3808c39d5c46fd677c704027b979`, each affected cost-type ID occurs
+1,018 times across 24 documents: 1,009 values are zero and the nine nonzero
+values are all in T'au. The focused Aeldari game system and library files account
+for 171 and 61 zero-valued occurrences of each ID respectively; the only two
+definitions are hidden `defaultCostLimit=-1` declarations in T'au. No corpus
+modifier targets either ID.
+
+Lead browser QA repeated the complete pinned-source flow from Browse catalogues
+through Xenos - Aeldari selection. The browse surface reported zero developer
+repository notes; the ready import context reported `0 diagnostics`; neither
+`BS_PROJECTION_INVALID_ATTRIBUTE` nor `BS_GRAPH_MISSING_REFERENCE` appeared;
+and the browser warning/error console was empty.
+
+Verification:
+
+- focused projection, graph, repository, remote-source, and browser-cache suites
+  — **50 passed** across five files;
+- pinned 46-document corpus suite — **18 passed** at
+  `04c62fcd041b3808c39d5c46fd677c704027b979`;
+- normal suite — **537 passed, 19 skipped** across 58 files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+Repository metadata proves ownership, not applicability. A zero-valued cost
+defined outside the focused closure remains unresolved in the graph, and later
+evaluation must still diagnose it if a supported operation requires the missing
+definition. Local file imports do not have repository-wide ownership evidence
+and retain ordinary missing-reference diagnostics. This checkpoint does not
+change cost evaluation, validation completeness, imported source bytes,
+persistent roster formats, the ongoing matched-play campaign-field boundaries,
+or any active-roster presentation behavior.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+The owner-requested catalogue diagnostic fix does not change the overhaul's
+existing Next priority.
