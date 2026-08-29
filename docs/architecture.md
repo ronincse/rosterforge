@@ -555,8 +555,13 @@ choice removes the clicked control from the document.
 
 Army units render as compact selectable cards grouped by battlefield role. The
 group has no shared container surface: each top-level unit owns a separate,
-high-opacity blurred material while nested selection editors remain ordinary
-opaque content. Each card has one disclosure control and carries the
+high-opacity blurred material. Existing semantic wrappers inside the selected
+unit and configuration editors provide a higher-opacity inset card for each
+nested option, without adding new roster state or a backdrop-filter compositing
+layer per child. All exposed rectilinear active-roster surfaces and controls
+consume one shared corner-radius token; joined controls square only their
+internal seam, while full-bleed and surface-free wrappers remain square. Each
+unit card has one disclosure control and carries the
 projection's recursive cost, exact direct-model composition and selected
 upgrade identity, plus structurally recognized designation and attention pills.
 Selecting it mounts the existing mutation controls in one dedicated options

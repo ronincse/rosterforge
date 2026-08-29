@@ -130,7 +130,7 @@ describe("phone-width layout contracts", () => {
         "  background: transparent;\n  border: 0;",
     );
     expect(styles).toMatch(
-      /\.roster-unit-row \{[\s\S]*?background: rgba\(247, 245, 237, 0\.72\);[\s\S]*?border-radius: 14px;[\s\S]*?-webkit-backdrop-filter: blur\(18px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(18px\) saturate\(115%\);/u,
+      /\.roster-unit-row \{[\s\S]*?background: var\(--card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?-webkit-backdrop-filter: blur\(18px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(18px\) saturate\(115%\);/u,
     );
     expect(styles).not.toContain(".roster-unit-row + .roster-unit-row");
     expect(styles).toMatch(
@@ -140,5 +140,42 @@ describe("phone-width layout contracts", () => {
       "@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {",
     );
     expect(styles).toContain("@media (forced-colors: active) {");
+  });
+
+  it("uses one exposed-corner radius throughout the active roster", () => {
+    expect(styles).toContain("--corner-radius: 14px;");
+    expect(styles).toContain(
+      "button,\ninput,\nselect {\n  border-radius: var(--corner-radius);",
+    );
+    expect(styles).toMatch(
+      /\.roster-selection-item \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).toMatch(
+      /\.direct-child-choice \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).toMatch(
+      /\.model-quantity-choice \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).toMatch(
+      /\.child-choice-group \{[\s\S]*?background: var\(--nested-card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?box-shadow:/u,
+    );
+    expect(styles).toContain(
+      "border-radius: var(--corner-radius) 0 0 var(--corner-radius);",
+    );
+    expect(styles).toContain(
+      "border-radius: 0 var(--corner-radius) var(--corner-radius) 0;",
+    );
+
+    // Rectilinear roster surfaces consume the shared token. A zero radius is
+    // reserved for square internal seams and full-bleed/surface-free wrappers.
+    const activeRosterStyles = styles.slice(
+      styles.indexOf(".roster-setup {"),
+      styles.indexOf(".remote-source-browser"),
+    );
+    const offSystemRadii = [...activeRosterStyles.matchAll(/border-radius:\s*([^;]+);/gu)]
+      .map((match) => match[1]?.trim() ?? "")
+      .filter((radius) => radius !== "0" && !radius.includes("var(--corner-radius)"));
+
+    expect(offSystemRadii).toEqual([]);
   });
 });

@@ -222,6 +222,11 @@
   focus for a newly added army unit. A dedicated options region
   reuses the existing edit controls and owns read-only full-card viewing and
   destructive removal, so rows carry no competing View/Remove controls.
+  Nested options remain separate higher-opacity inset material cards inside
+  their owning group, and all exposed active-roster cards, fields, dialogs, and
+  buttons consume one 14 px corner token; joined controls square only their
+  internal seam. This presentation rule does not change selection semantics or
+  evaluation.
   The catalogue is available through a focused Add unit sheet; configuration
   is never focused as an army unit
 - Required configuration cards collapse when a supported choice completes

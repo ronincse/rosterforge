@@ -70,9 +70,10 @@ A fresh review of the current Layout, Lists and tables, Toolbars, Search fields,
 Sheets, Materials, and Accessibility guidance confirms this document's intended
 direction, with three constraints made explicit:
 
-- translucent material is a restrained navigation/transient-control layer;
-  top-level army units may use a thicker standard-material card so the page
-  color carries through without turning nested editors into glass;
+- translucent material is strongest on navigation and transient controls;
+  top-level army units use a thicker blurred material, while nested options use
+  a higher-opacity inset material so the page color still carries through
+  without compounding a backdrop filter at every level;
 - a sheet is one bounded task with one clear dismissal and retained context,
   never another persistent application column; and
 - scalable text, contrast, color-independent state, and safe-area adaptation
@@ -113,7 +114,7 @@ surfaces; dark and increased-contrast variants must keep the same meanings.
 --fill: rgba(120, 120, 128, 0.16);
 --tint: #1c6b4a;
 --danger: #ff3b30;
---radius: 10px;
+--corner-radius: 14px;
 --row: 44px;
 --pad: 16px;
 ```
@@ -127,7 +128,11 @@ content or controls.
 Spacing follows an 8-point rhythm: 8, 16, 24, and 32 px, with 20 px only where
 the type hierarchy needs its established intermediate gap. Interactive rows and
 targets are at least 44 by 44 CSS pixels on touch layouts. Borders are one-pixel
-separators. Content groups use a 10 px radius; primary buttons may use 12 px.
+separators. Every exposed rectangular corner in the active roster consumes the
+same 14 px `--corner-radius`, including cards, fields, sheets, disclosures, and
+buttons. Joined controls keep that radius on their outside corners and square
+only their internal seam. True circles and full-bleed surfaces with no exposed
+corner are the only exceptions.
 
 ## Navigation and actions
 
@@ -140,23 +145,27 @@ An open roster uses one persistent navigation/toolbar layer:
 
 Navigation may use restrained translucency and strong background blur so
 content can scroll below it, but clear glass is not a general content surface.
-Top-level army units are the deliberate exception: each unit owns a separate,
-high-opacity standard-material card whose blur carries through page color while
-preserving the scan boundary. Nested selections, editors, and other content
-groups stay on opaque standard surfaces. Modal overlays blur the entire
-underlying viewport while their task surface remains sharp. Do not title a
-window `RosterForge`, put destructive actions in the primary position, or keep
+Top-level army units are the deliberate content exception: each unit owns a
+separate, high-opacity standard-material card whose blur carries through page
+color while preserving the scan boundary. Every nested option also owns an
+inset card inside its overall group. Those repeated cards use a higher-opacity
+material, border, highlight, and shallow shadow instead of adding a backdrop
+filter at every nesting level. Modal overlays blur the entire underlying
+viewport while their task surface remains sharp. Do not title a window
+`RosterForge`, put destructive actions in the primary position, or keep
 parallel text-button rows for commands already in the toolbar/menu.
 
 ## Lists, rows, and controls
 
 Each battlefield role is one scan group with 16 px page margins. Every top-level
 unit is its own rounded material card, separated from its siblings by the shared
-spacing rhythm rather than merged by inset separators. A unit row has a minimum
-44 px target and 16 px horizontal padding. Its first line is the unit name plus
-semantic pills such as Warlord and trailing points/chevron. Its second line
-summarizes only selected model types and wargear. A known problem uses direct
-player language such as `Needs 4 more models`.
+spacing rhythm rather than merged by inset separators. Nested choices repeat
+that card grammar inside the owning unit or choice group; a parent remains the
+overall group, and each actionable child remains visually distinct. A unit row
+has a minimum 44 px target and 16 px horizontal padding. Its first line is the
+unit name plus semantic pills such as Warlord and trailing points/chevron. Its
+second line summarizes only selected model types and wargear. A known problem
+uses direct player language such as `Needs 4 more models`.
 
 Tapping the row selects it for editing. Read-only information and destructive
 removal live in the inspector, not as competing row buttons. A disclosure
@@ -216,7 +225,9 @@ grouped section, list row, disclosure, information action, sheet, inspector,
 search field, checkmark picker, switch, stepper, status line, and action menu.
 One-off shadows, radii, spacing, font stacks, uppercase eyebrows, accent borders,
 or alternate interaction patterns are regressions unless this document is
-deliberately updated first.
+deliberately updated first. New active-roster rectangles must consume
+`--corner-radius`; introducing another numeric radius requires an explicit
+design-language decision rather than a local visual adjustment.
 
 ## Current guideline basis
 

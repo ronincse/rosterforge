@@ -6,6 +6,13 @@
   --display-font:
     "Bahnschrift SemiCondensed", Bahnschrift, "Arial Narrow", "Roboto Condensed",
     "Segoe UI", sans-serif;
+  --corner-radius: 14px;
+  --card-material: rgba(247, 245, 237, 0.72);
+  --card-material-border: rgba(255, 255, 255, 0.72);
+  --card-material-shadow: 0 7px 20px rgba(31, 56, 46, 0.11);
+  --nested-card-material: rgba(247, 245, 237, 0.78);
+  --nested-card-border: rgba(255, 255, 255, 0.78);
+  --nested-card-shadow: 0 4px 12px rgba(31, 56, 46, 0.09);
   font-family: var(--ui-font);
   font-size: 17px;
   font-weight: 500;
@@ -49,6 +56,7 @@ body {
 button,
 input,
 select {
+  border-radius: var(--corner-radius);
   font: inherit;
 }
 
@@ -864,7 +872,7 @@ h1 {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid #bcc5be;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
 }
 
 .roster-setup > input:focus,
@@ -878,7 +886,7 @@ h1 {
   min-height: 43px;
   margin-top: 8px;
   padding: 0 16px;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 800;
@@ -917,7 +925,7 @@ h1 {
   color: var(--forest);
   background: rgba(255, 255, 255, 0.44);
   border: 1px solid #9aaca1;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.66rem;
   font-weight: 800;
@@ -975,7 +983,7 @@ h1 {
   padding: 4px;
   background: rgba(29, 68, 53, 0.82);
   border: 1px solid rgba(226, 240, 232, 0.42);
-  border-radius: 16px;
+  border-radius: var(--corner-radius);
   box-shadow:
     0 10px 30px rgba(18, 45, 35, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.24);
@@ -984,10 +992,11 @@ h1 {
 }
 
 .roster-configuration {
+  overflow: hidden;
   margin-top: 12px;
   background: #f7f5ed;
   border: 1px solid #cbd2cc;
-  border-radius: 10px;
+  border-radius: var(--corner-radius);
 }
 
 .roster-configuration > summary {
@@ -999,7 +1008,7 @@ h1 {
   cursor: pointer;
   list-style: none;
   background: #f7f5ed;
-  border-radius: 10px;
+  border-radius: var(--corner-radius);
 }
 
 .roster-configuration-summary-heading {
@@ -1108,7 +1117,7 @@ h1 {
   color: #f7f5ec;
   background: rgba(255, 255, 255, 0.04);
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -1169,7 +1178,8 @@ h1 {
   padding: 18px;
   background: rgba(248, 248, 243, 0.72);
   border: 1px solid #cbd0ca;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .selected-roster-pane {
@@ -1198,12 +1208,14 @@ h1 {
 }
 
 .selected-unit-options {
+  overflow: hidden;
   min-width: 0;
   padding: 16px;
   background: rgba(255, 255, 255, 0.68);
   border: 1px solid #bfc9c2;
   border-top: 3px solid var(--forest);
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .selected-unit-options {
@@ -1239,7 +1251,7 @@ h1 {
   color: var(--forest);
   background: #f8f7f1;
   border: 1px solid #9aaca1;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 800;
@@ -1249,7 +1261,15 @@ h1 {
 .unit-card-view-list > .roster-selection-item {
   padding: 0;
   background: transparent;
-  border-left: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The generic workspace rule is declared later for the legacy Lists surface.
+   Keep the roster shell full-bleed: it has no exposed card corner to round. */
+.workspace.roster-screen-workspace {
+  border-radius: 0;
 }
 
 .builder-pane-heading {
@@ -1282,6 +1302,8 @@ h1 {
   background: rgba(255, 255, 255, 0.48);
   border: 1px solid #cbd0ca;
   border-left: 3px solid var(--gold);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .force-card .force-kicker {
@@ -1316,7 +1338,8 @@ h1 {
   background: #eef1eb;
   border: 1px solid #c9cfc8;
   border-top: 3px solid var(--forest);
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .roster-player-header[data-validity="invalid"] {
@@ -1349,6 +1372,7 @@ h1 {
   padding: 12px;
   background: rgba(255, 255, 255, 0.62);
   border: 1px solid #d1d6d0;
+  border-radius: var(--corner-radius);
   text-decoration: none;
   text-align: left;
 }
@@ -1407,7 +1431,7 @@ button.player-header-figure {
   color: #315b47;
   background: #dfe9e2;
   border: 1px solid #98aa9f;
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -1433,7 +1457,7 @@ button.player-header-figure {
   color: #315b47;
   background: #dfe9e2;
   border: 1px solid #98aa9f;
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -1508,7 +1532,7 @@ button.player-header-figure {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid #d5d9d4;
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   font-size: 0.58rem;
 }
 
@@ -1528,6 +1552,7 @@ button.player-header-figure {
   padding: 7px 9px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid #d5d9d4;
+  border-radius: var(--corner-radius);
   font-size: 0.68rem;
 }
 
@@ -1538,12 +1563,14 @@ button.player-header-figure {
 .player-header-details dl {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+  gap: 6px;
   margin: 12px 0 0;
 }
 
 .player-header-details dl > div {
   padding: 8px;
   border: 1px solid #d5d9d4;
+  border-radius: var(--corner-radius);
 }
 
 .player-header-details dt {
@@ -1562,6 +1589,7 @@ button.player-header-figure {
   padding: 0 10px 10px;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid #d5d9d4;
+  border-radius: var(--corner-radius);
 }
 
 .player-header-developer-diagnostics > summary {
@@ -1583,7 +1611,7 @@ button.player-header-figure {
   background: #f2efe7;
   border: 1px solid #d2ccc0;
   border-top: 3px solid var(--gold);
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
 }
 
 .constraint-summary-heading {
@@ -1607,6 +1635,7 @@ button.player-header-figure {
 .constraint-status-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1617,11 +1646,8 @@ button.player-header-figure {
   padding: 10px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid #d7d1c6;
+  border-radius: var(--corner-radius);
   text-align: center;
-}
-
-.constraint-status-list li + li {
-  border-left: 0;
 }
 
 .constraint-status-list strong,
@@ -1663,6 +1689,7 @@ button.player-header-figure {
   padding: 12px;
   background: rgba(255, 255, 255, 0.42);
   border: 1px dashed #ccc5b9;
+  border-radius: var(--corner-radius);
 }
 
 .constraint-details {
@@ -1705,6 +1732,7 @@ button.player-header-figure {
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid #d7d1c6;
   border-left: 3px solid #7d9688;
+  border-radius: var(--corner-radius);
 }
 
 .constraint-details > ul > li[data-status="violated"] {
@@ -1797,7 +1825,7 @@ button.player-header-figure {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid #bfc7c1;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   font: inherit;
   font-size: 0.7rem;
 }
@@ -1810,7 +1838,8 @@ button.player-header-figure {
 .root-choice-category {
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid #ccd1cc;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .root-choice-category > summary {
@@ -1834,7 +1863,7 @@ button.player-header-figure {
   height: 28px;
   color: #fffdf6;
   background: var(--forest);
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   font-size: 1.45rem;
   font-weight: 900;
   line-height: 1;
@@ -1905,15 +1934,15 @@ button.player-header-figure {
 }
 
 .roster-unit-row {
-  --unit-card-elevation: 0 7px 20px rgba(31, 56, 46, 0.11);
+  --unit-card-elevation: var(--card-material-shadow);
   --unit-card-state-shadow: 0 0 0 transparent;
   --unit-card-attention-shadow: 0 0 0 transparent;
 
   overflow: hidden;
   scroll-margin-top: 84px;
-  background: rgba(247, 245, 237, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 14px;
+  background: var(--card-material);
+  border: 1px solid var(--card-material-border);
+  border-radius: var(--corner-radius);
   box-shadow:
     var(--unit-card-elevation),
     var(--unit-card-state-shadow),
@@ -1991,7 +2020,7 @@ button.player-header-figure {
   padding: 2px 6px;
   color: var(--forest);
   background: rgba(36, 93, 72, 0.09);
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   font-size: 0.53rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -2098,7 +2127,7 @@ button.player-header-figure {
   color: #7b4a42;
   background: rgba(247, 233, 229, 0.72);
   border: 1px solid #d7aaa2;
-  border-radius: 10px;
+  border-radius: var(--corner-radius);
   font-size: 0.68rem;
   font-weight: 700;
 }
@@ -2118,7 +2147,10 @@ button.player-header-figure {
   padding: 12px;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid #ccd1cc;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .root-choice > span,
@@ -2174,7 +2206,7 @@ button.player-header-figure {
   color: var(--forest);
   background: #e1ebe5;
   border: 1px solid #9eb5a7;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 800;
@@ -2216,15 +2248,23 @@ button.player-header-figure {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
   min-width: 0;
+  overflow: hidden;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .choice-segmented-control > button:first-child {
-  border-radius: 3px 0 0 3px;
+  border-width: 0;
+  border-radius: var(--corner-radius) 0 0 var(--corner-radius);
 }
 
 .choice-segmented-control > .choice-preview-button {
-  border-left-width: 0;
-  border-radius: 0 3px 3px 0;
+  border-width: 0 0 0 1px;
+  border-radius: 0 var(--corner-radius) var(--corner-radius) 0;
 }
 
 .choice-segmented-control[data-selected="true"] > button {
@@ -2306,7 +2346,7 @@ button.player-header-figure {
   overflow-y: auto;
   background: #f7f5ed;
   border: 1px solid #74847b;
-  border-radius: 5px;
+  border-radius: var(--corner-radius);
   box-shadow: 0 20px 60px rgba(10, 24, 17, 0.38);
 }
 
@@ -2342,7 +2382,7 @@ button.player-header-figure {
   overflow-y: auto;
   overscroll-behavior: contain;
   background: #f7f5ed;
-  border-radius: 14px;
+  border-radius: var(--corner-radius);
 }
 
 .add-unit-heading {
@@ -2381,7 +2421,7 @@ button.player-header-figure {
 
 .add-unit-dialog .root-choice-filter input {
   min-height: 44px;
-  border-radius: 10px;
+  border-radius: var(--corner-radius);
   font-size: 1rem;
 }
 
@@ -2441,7 +2481,8 @@ button.player-header-figure {
   background: rgba(255, 255, 255, 0.64);
   border: 1px solid #d4aaa3;
   border-left: 3px solid #9a4a3f;
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .roster-problem-list li > div {
@@ -2496,7 +2537,7 @@ button.player-header-figure {
   color: var(--forest);
   background: #edf1eb;
   border: 1px solid #aab7ae;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   font-size: 0.68rem;
   font-weight: 800;
 }
@@ -2661,20 +2702,51 @@ button.player-header-figure {
 }
 
 .roster-selection-item {
+  --selection-card-state-shadow: 0 0 0 transparent;
+  --selection-card-attention-shadow: 0 0 0 transparent;
+
+  overflow: hidden;
   scroll-margin-top: 20px;
   padding: 10px 12px;
-  background: #f6f4ed;
-  border-left: 3px solid var(--forest);
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    var(--selection-card-state-shadow),
+    var(--selection-card-attention-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .roster-selection-item[data-attention="violation"] {
+  --selection-card-attention-shadow: inset 3px 0 0 #9a4a3f;
+
   background: #f7e9e5;
-  border-left-color: #9a4a3f;
+  border-color: #d5aaa2;
 }
 
 .roster-selection-item[data-active="true"] {
+  --selection-card-state-shadow: inset 0 0 0 1px #96aa9e;
+
   background: #e7eee8;
-  box-shadow: inset 0 0 0 1px #96aa9e;
+  border-color: #96aa9e;
+}
+
+/* The inspector itself is the selected unit's overall group. Its synthetic
+   root occurrence stays surface-free while every real nested choice below it
+   receives the shared inset-card treatment. */
+.selected-unit-options-list > .roster-selection-item,
+.selected-unit-options-list > .roster-selection-item[data-active],
+.selected-unit-options-list > .roster-selection-item[data-attention],
+.unit-card-view-list > .roster-selection-item,
+.unit-card-view-list > .roster-selection-item[data-active],
+.unit-card-view-list > .roster-selection-item[data-attention] {
+  overflow: visible;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .selection-occurrence {
@@ -2729,7 +2801,7 @@ button.player-header-figure {
   color: #7b3e36;
   background: transparent;
   border: 1px solid #c8aaa5;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 800;
@@ -2836,11 +2908,22 @@ button.player-header-figure {
 .direct-child-choice {
   display: grid;
   gap: 3px;
-  max-width: 190px;
+  max-width: 220px;
+  overflow: hidden;
+  padding-bottom: 7px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .direct-child-choice > .choice-segmented-control {
   width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .child-choice-list button {
@@ -2849,7 +2932,7 @@ button.player-header-figure {
   color: #315b47;
   background: #e4eee8;
   border: 1px solid #abc0b3;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 800;
@@ -2861,6 +2944,7 @@ button.player-header-figure {
 }
 
 .direct-child-choice small {
+  padding: 0 9px;
   color: var(--muted);
   font-size: 0.64rem;
   line-height: 1.3;
@@ -2877,9 +2961,13 @@ button.player-header-figure {
   gap: 4px;
   padding: 7px 8px;
   color: #315b47;
-  background: #eef4f0;
-  border: 1px solid #abc0b3;
-  border-radius: 3px;
+  overflow: hidden;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .model-quantity-heading {
@@ -2903,7 +2991,7 @@ button.player-header-figure {
   min-width: 32px;
   border-width: 0 0 0 1px;
   border-color: #abc0b3;
-  border-radius: 0;
+  border-radius: 0 var(--corner-radius) 0 0;
   background: transparent;
 }
 
@@ -2948,7 +3036,9 @@ button.player-header-figure {
   margin-top: 10px;
   padding: 9px 10px 10px;
   background: rgba(225, 235, 229, 0.58);
-  border-left: 3px solid var(--forest);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .roster-role-heading {
@@ -3004,8 +3094,11 @@ button.player-header-figure {
   display: grid;
   gap: 7px;
   min-width: 0;
-  padding: 8px 0 0;
-  border-top: 1px solid #c7d0ca;
+  padding: 9px 10px 10px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .child-choice-group-wrapper[data-completeness="incomplete"] {
@@ -3043,9 +3136,12 @@ button.player-header-figure {
   min-width: 0;
   margin: 0;
   padding: 9px 10px 10px;
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid #c7d0ca;
-  border-radius: 3px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow:
+    var(--nested-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .child-choice-group[data-completeness="incomplete"] {
@@ -3097,7 +3193,7 @@ button.player-header-figure {
   color: #315b47;
   background: #e4eee8;
   border: 1px solid #abc0b3;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 800;
@@ -3118,6 +3214,19 @@ button.player-header-figure {
 .child-choice-group-options button:disabled {
   cursor: default;
   opacity: 0.72;
+}
+
+/* Family-specific button rules appear after the shared segmented control in
+   the cascade. Reassert one shared exterior radius and a square internal seam
+   so the two accessible actions still read as one option card. */
+.choice-segmented-control > button:first-child {
+  border-width: 0;
+  border-radius: var(--corner-radius) 0 0 var(--corner-radius);
+}
+
+.choice-segmented-control > .choice-preview-button {
+  border-width: 0 0 0 1px;
+  border-radius: 0 var(--corner-radius) var(--corner-radius) 0;
 }
 
 /* The datasheet is now the card's main content rather than a panel, so it gets
@@ -3261,7 +3370,7 @@ button.player-header-figure {
   padding: 0 8px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid #bdc7c0;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   font: inherit;
   font-size: 0.65rem;
 }
@@ -3273,7 +3382,7 @@ button.player-header-figure {
   color: var(--forest);
   background: #e3ebe6;
   border: 1px solid #a9baaf;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.58rem;
   font-weight: 800;
@@ -3312,10 +3421,11 @@ button.player-header-figure {
 }
 
 .selection-profile-table-group {
+  overflow: hidden;
   min-width: 0;
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid #d2d8d3;
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
 }
 
 .selection-profile-table-group > h5 {
@@ -3404,6 +3514,8 @@ button.player-header-figure {
   padding: 10px;
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid #d2d8d3;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .selection-profile header,
@@ -3453,6 +3565,7 @@ button.player-header-figure {
 .selection-profile dl {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  gap: 5px;
   margin: 9px 0 0;
 }
 
@@ -3461,10 +3574,7 @@ button.player-header-figure {
   padding: 7px;
   background: #f4f3ee;
   border: 1px solid #dcdfdc;
-}
-
-.selection-profile dl > div + div {
-  border-left: 0;
+  border-radius: var(--corner-radius);
 }
 
 .selection-profile dt {
@@ -3495,7 +3605,7 @@ button.player-header-figure {
   padding: 3px 7px;
   background: #f4f3ee;
   border: 1px solid #dcdfdc;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -3591,6 +3701,7 @@ button.player-header-figure {
   padding: 7px;
   background: #f3e8d6;
   border: 1px solid #d7bd91;
+  border-radius: var(--corner-radius);
   font-size: 0.68rem;
 }
 
@@ -3612,6 +3723,7 @@ button.player-header-figure {
   color: var(--forest);
   background: rgba(231, 236, 231, 0.72);
   border: 1px solid #cbd3cd;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 800;
@@ -3668,7 +3780,8 @@ button.player-header-figure {
 .roster-checks-report {
   background: rgba(245, 243, 237, 0.52);
   border: 1px solid #d1d3cd;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
 }
 
 .roster-checks-report > summary {
@@ -3783,14 +3896,14 @@ button.player-header-figure {
   padding: 11px;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(154, 101, 31, 0.2);
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
 }
 
 .diagnostic-list li > span {
   padding: 3px 5px;
   color: #76511b;
   background: #f3e4c7;
-  border-radius: 2px;
+  border-radius: var(--corner-radius);
   font-size: 0.58rem;
   font-weight: 800;
   text-transform: uppercase;
