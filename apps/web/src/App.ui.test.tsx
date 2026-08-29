@@ -1122,11 +1122,10 @@ describe("App local catalogue flow", () => {
     expect(
       within(armySection).getByText("Contains known violation"),
     ).toBeTruthy();
+    const compactUnitRow = rosterSelection("selection-ui-1");
     expect(
-      within(armySection).getByRole("link", {
-        name: "Review known violations for Infantry Squad (Elite)",
-      }),
-    ).toHaveProperty("hash", "#roster-checks-heading");
+      within(compactUnitRow as HTMLElement).getByText("Known violation"),
+    ).toBeTruthy();
     expect(rosterSelection("selection-ui-1")?.dataset.attention).toBe(
       "violation",
     );
@@ -1140,14 +1139,20 @@ describe("App local catalogue flow", () => {
     const unitSelector = within(armySection).getByRole("button", {
       name: "Configure Infantry Squad (Elite)",
     });
-    expect(unitSelector.getAttribute("aria-pressed")).toBe("true");
-    // Army rows remain compact. View is independent from selection and opens
-    // the complete reader-facing card below the two-column builder.
+    expect(unitSelector.getAttribute("aria-expanded")).toBe("true");
+    expect(unitSelector.getAttribute("aria-controls")).toBe(
+      "selected-unit-options-panel",
+    );
+    expect(
+      within(compactUnitRow as HTMLElement).getAllByRole("button"),
+    ).toHaveLength(1);
+    // Army rows remain compact. Viewing and removal live in the focused
+    // inspector instead of multiplying controls on every list row.
     expect(armySection.querySelector(".selection-card-body")).toBeNull();
     expect(armySection.querySelector(".selection-datasheet")).toBeNull();
     expect(within(armySection).queryByText("Keywords")).toBeNull();
-    const viewButton = within(armySection).getByRole("button", {
-      name: "View",
+    const viewButton = within(unitOptions).getByRole("button", {
+      name: "View unit card",
     });
     fireEvent.click(viewButton);
     expect(viewButton.getAttribute("aria-expanded")).toBe("true");
@@ -1566,7 +1571,11 @@ describe("App local catalogue flow", () => {
     const selectedRoster = screen.getByRole("region", {
       name: "Selected roster",
     });
-    fireEvent.click(within(selectedRoster).getByRole("button", { name: "View" }));
+    fireEvent.click(
+      within(selectedRoster).getByRole("button", {
+        name: "View unit card",
+      }),
+    );
     const unitCard = screen.getByRole("region", {
       name: "Unit card for Infantry Squad",
     });
@@ -1672,10 +1681,11 @@ describe("App local catalogue flow", () => {
       await screen.findByRole("button", { name: "Add Infantry Squad" }),
     );
 
-    const inlineViolation = screen.getByRole("link", {
-      name: "Review known violations for Infantry Squad (Elite)",
-    });
-    expect(inlineViolation).toHaveProperty("hash", "#roster-checks-heading");
+    expect(
+      within(rosterSelection("selection-ui-group-1") as HTMLElement).getByText(
+        "Known violation",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("Contains known violation")).toBeTruthy();
     const checksReport = screen.getByRole("group", {
       name: /Detailed supported evidence/u,
@@ -2472,6 +2482,7 @@ describe("App local catalogue flow", () => {
       name: "Unit composition for Initialization Unit",
     });
     expect(within(composition).getByText("2× Required Model")).toBeTruthy();
+    expect(within(composition).getByText("Required Weapon")).toBeTruthy();
     fireEvent.click(
       within(selectedRoster).getByRole("button", {
         name: "Configure Initialization Unit",

@@ -525,7 +525,9 @@ export function RosterOverview({
           <div className="builder-pane-heading">
             <div>
               <p className="eyebrow">Your roster</p>
-              <h3 id="selected-roster-heading">Selected roster</h3>
+              <h3 id="selected-roster-heading" tabIndex={-1}>
+                Selected roster
+              </h3>
             </div>
             <span>
               {formatCount(
@@ -579,12 +581,6 @@ export function RosterOverview({
                   onRemove={onRemoveSelection}
                   onPreviewChoice={openChoicePreview}
                   onSelect={setActiveSelectionId}
-                  onView={(selectionId) =>
-                    setViewedSelectionId((current) =>
-                      current === selectionId ? undefined : selectionId,
-                    )
-                  }
-                  viewedSelectionId={viewedSelectionId}
                 />
               ))}
             </div>
@@ -2045,8 +2041,6 @@ function RosterSelectionSection({
   onRemove,
   onPreviewChoice,
   onSelect,
-  onView,
-  viewedSelectionId,
 }: {
   readonly heading: string;
   readonly anchorId: string;
@@ -2083,8 +2077,6 @@ function RosterSelectionSection({
   readonly onRemove: (id: SelectionOccurrenceId) => void;
   readonly onPreviewChoice: PreviewChoiceHandler;
   readonly onSelect: (id: SelectionOccurrenceId) => void;
-  readonly onView: (id: SelectionOccurrenceId) => void;
-  readonly viewedSelectionId?: SelectionOccurrenceId | undefined;
 }) {
   if (selections.length === 0) return null;
   // `containsAttention` is deliberately only a routing signal here. A role can
@@ -2122,14 +2114,16 @@ function RosterSelectionSection({
         onPreviewChoice={onPreviewChoice}
         presentation="row"
         onSelect={onSelect}
-        onView={onView}
-        viewedSelectionId={viewedSelectionId}
       />
     </section>
   );
 }
 
 type RosterSelectionPresentation = "combined" | "row" | "options" | "card";
+type RosterSelectionItemPresentation = Exclude<
+  RosterSelectionPresentation,
+  "row"
+>;
 
 function RosterTopLevelSelectionList({
   roleKnown,
@@ -2141,8 +2135,6 @@ function RosterTopLevelSelectionList({
   autoCollapseWhenRequirementsMet = false,
   presentation = "combined",
   onSelect,
-  onView,
-  viewedSelectionId,
   onAddChild,
   onRename,
   onSetAmount,
@@ -2159,8 +2151,6 @@ function RosterTopLevelSelectionList({
   readonly autoCollapseWhenRequirementsMet?: boolean;
   readonly presentation?: RosterSelectionPresentation;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
-  readonly onView?: ((id: SelectionOccurrenceId) => void) | undefined;
-  readonly viewedSelectionId?: SelectionOccurrenceId | undefined;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -2188,29 +2178,211 @@ function RosterTopLevelSelectionList({
         </p>
       )}
       <ul className="roster-top-level-selection-list">
-        {selections.map((selection) => (
-          <RosterSelectionItem
-            key={selection.occurrence.id}
-            session={session}
-            selectionModel={selection}
-            selectionCanAddAnother={selectionCanAddAnother}
-            topLevel
-            collapsible={collapsible}
-            initiallyOpen={initiallyOpen}
-            autoCollapseWhenRequirementsMet={autoCollapseWhenRequirementsMet}
-            presentation={presentation}
-            onSelect={onSelect}
-            onView={onView}
-            viewed={viewedSelectionId === selection.occurrence.id}
-            onAddChild={onAddChild}
-            onRename={onRename}
-            onSetAmount={onSetAmount}
-            onRemove={onRemove}
-            onPreviewChoice={onPreviewChoice}
-          />
-        ))}
+        {selections.map((selection) =>
+          presentation === "row" ? (
+            <RosterUnitRow
+              key={selection.occurrence.id}
+              session={session}
+              selectionModel={selection}
+              onSelect={onSelect}
+            />
+          ) : (
+            <RosterSelectionItem
+              key={selection.occurrence.id}
+              session={session}
+              selectionModel={selection}
+              selectionCanAddAnother={selectionCanAddAnother}
+              topLevel
+              collapsible={collapsible}
+              initiallyOpen={initiallyOpen}
+              autoCollapseWhenRequirementsMet={
+                autoCollapseWhenRequirementsMet
+              }
+              presentation={presentation}
+              onAddChild={onAddChild}
+              onRename={onRename}
+              onSetAmount={onSetAmount}
+              onRemove={onRemove}
+              onPreviewChoice={onPreviewChoice}
+            />
+          ),
+        )}
       </ul>
     </>
+  );
+}
+
+interface RosterSelectionDisplayName {
+  readonly sourceName: string;
+  readonly annotatedName: string;
+  readonly incomplete: boolean;
+}
+
+/** Resolves the same effective display name for list, editor, and card views. */
+function useRosterSelectionDisplayName(
+  session: LocalRosterSession,
+  selectionModel: RosterWorkspaceSelection,
+): RosterSelectionDisplayName {
+  const selection = selectionModel.occurrence;
+  const sourceName = selection.name ?? "Unnamed selection";
+  const annotation = useMemo(
+    () => inspectLocalRosterSelectionAnnotation(session, selection.id),
+    [session, selection.id],
+  );
+  const evaluatedName = useMemo(
+    () => inspectLocalRosterSelectionName(session, selection.id, sourceName),
+    [session, selection.id, sourceName],
+  );
+  const displayName =
+    evaluatedName.ok && evaluatedName.value.value !== undefined
+      ? evaluatedName.value.value
+      : sourceName;
+  const annotationValue = annotation.ok ? annotation.value.value : undefined;
+  return {
+    sourceName,
+    annotatedName:
+      annotationValue === undefined || annotationValue === ""
+        ? displayName
+        : `${displayName} (${annotationValue})`,
+    incomplete:
+      !evaluatedName.ok ||
+      evaluatedName.value.completeness === "incomplete" ||
+      !annotation.ok ||
+      annotation.value.completeness === "incomplete",
+  };
+}
+
+/**
+ * One compact army-list row; editing and reading remain in their dedicated
+ * panels rather than competing as actions on every unit.
+ */
+function RosterUnitRow({
+  session,
+  selectionModel,
+  onSelect,
+}: {
+  readonly session: LocalRosterSession;
+  readonly selectionModel: RosterWorkspaceSelection;
+  readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
+}) {
+  const selection = selectionModel.occurrence;
+  const { annotatedName, incomplete } = useRosterSelectionDisplayName(
+    session,
+    selectionModel,
+  );
+  const choice = localRosterSelectionChoice(session, selection.id);
+  const promotedModels = selectionModel.selections.filter((child) => {
+    const childChoice = localRosterSelectionChoice(
+      session,
+      child.occurrence.id,
+    );
+    return (
+      choice?.kind === "selectionEntry" &&
+      choice.type === "unit" &&
+      childChoice?.kind === "selectionEntry" &&
+      childChoice.type === "model"
+    );
+  });
+  const composition =
+    promotedModels.length === 0
+      ? undefined
+      : createModelComposition(session, promotedModels);
+  const childChoices = inspectLocalRosterChildChoices(session, selection.id);
+  const selectedRoles = childChoices.ok
+    ? childChoices.value.direct
+        .filter(
+          ({ choice: childChoice, selected }) =>
+            selected.length > 0 &&
+            isLocalRosterSingletonDesignationChoice(session, childChoice),
+        )
+        .map(({ choice: childChoice }) => ({
+          key: selectionChoiceKey(childChoice),
+          name: selectionChoiceLabel(childChoice),
+        }))
+    : [];
+  const roleChoiceKeys = new Set(
+    childChoices.ok
+      ? childChoices.value.direct
+          .filter(({ choice: childChoice }) =>
+            isLocalRosterSingletonDesignationChoice(session, childChoice),
+          )
+          .map(({ choice: childChoice }) => selectionChoiceKey(childChoice))
+      : [],
+  );
+  const selectedOptions =
+    composition === undefined
+      ? selectedUpgradeSummary(
+          session,
+          selectionModel.selections,
+          roleChoiceKeys,
+        )
+      : [];
+  const attentionLabel = selectionModel.attention
+    ? "Known violation"
+    : selectionModel.containsAttention
+      ? "Needs attention"
+      : undefined;
+  return (
+    <li
+      className="roster-unit-row"
+      id={selectionAnchor(selection.id)}
+      data-occurrence-id={selection.id}
+      data-active={selectionModel.active ? "true" : undefined}
+      data-attention={
+        selectionModel.attention
+          ? "violation"
+          : selectionModel.containsAttention
+            ? "descendant"
+            : undefined
+      }
+      data-display-completeness={incomplete ? "incomplete" : "complete"}
+    >
+      <button
+        type="button"
+        className="roster-unit-row-disclosure"
+        aria-expanded={selectionModel.active}
+        aria-controls="selected-unit-options-panel"
+        aria-label={`Configure ${annotatedName}`}
+        onClick={() => onSelect?.(selection.id)}
+      >
+        <span className="roster-unit-row-copy">
+          <span className="roster-unit-row-title">
+            <strong>{annotatedName}</strong>
+            <span className="roster-unit-row-pills">
+              {selectedRoles.map((role) => (
+                <span className="unit-row-pill" key={role.key}>
+                  {role.name}
+                </span>
+              ))}
+              {attentionLabel !== undefined && (
+                <span className="unit-row-pill" data-attention="true">
+                  {attentionLabel}
+                </span>
+              )}
+            </span>
+          </span>
+          {composition !== undefined ? (
+            <UnitCompositionSummary
+              unitName={annotatedName}
+              composition={composition}
+              compact
+            />
+          ) : (
+            selectedOptions.length > 0 && (
+              <span className="unit-row-selected-options">
+                {formatSelectedChoiceSummary(selectedOptions)}
+              </span>
+            )
+          )}
+        </span>
+        <span className="roster-unit-row-trailing">
+          <SelectionCostTotals costs={selectionModel.costs} />
+          <span className="roster-unit-row-chevron" aria-hidden="true">
+            &#8250;
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -2292,8 +2464,16 @@ function RosterUnitOptionsPanel({
   readonly viewed: boolean;
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
+  const removeUnit = () => {
+    onClose();
+    onRemove(selectionModel.occurrence.id);
+    queueMicrotask(() =>
+      document.getElementById("selected-roster-heading")?.focus(),
+    );
+  };
   return (
     <section
+      id="selected-unit-options-panel"
       className="selected-unit-options"
       aria-label={`Unit options for ${name}`}
       aria-labelledby="selected-unit-options-heading"
@@ -2312,7 +2492,18 @@ function RosterUnitOptionsPanel({
           >
             View unit card
           </button>
-          <button type="button" aria-label={`Close options for ${name}`} onClick={onClose}>
+          <button
+            type="button"
+            aria-label={`Remove ${name}`}
+            onClick={removeUnit}
+          >
+            Remove unit
+          </button>
+          <button
+            type="button"
+            aria-label={`Close options for ${name}`}
+            onClick={onClose}
+          >
             Close
           </button>
         </div>
@@ -2451,9 +2642,6 @@ function RosterSelectionItem({
   autoCollapseWhenRequirementsMet = false,
   collapseChildren = false,
   presentation = "combined",
-  onSelect,
-  onView,
-  viewed = false,
   embedded = false,
   hideOccurrence = false,
   allowRemove = true,
@@ -2482,11 +2670,8 @@ function RosterSelectionItem({
    * attention.
    */
   readonly collapseChildren?: boolean;
-  /** Selects the compact row, edits it, or renders its read-only unit card. */
-  readonly presentation?: RosterSelectionPresentation;
-  readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
-  readonly onView?: ((id: SelectionOccurrenceId) => void) | undefined;
-  readonly viewed?: boolean;
+  /** Renders the combined editor, focused options, or read-only unit card. */
+  readonly presentation?: RosterSelectionItemPresentation;
   /** Omits the duplicate occurrence row and stable anchor inside a panel. */
   readonly embedded?: boolean;
   /** Lets the panel heading replace only its top selection's row. */
@@ -2536,31 +2721,11 @@ function RosterSelectionItem({
     ...knownSelectionAmountBounds(session, selection.id),
     ...amountBounds,
   ];
-  const annotation = useMemo(
-    () => inspectLocalRosterSelectionAnnotation(session, selection.id),
-    [session, selection.id],
-  );
-  const name = selection.name ?? "Unnamed selection";
-  // A catalogue `name` modifier refines the displayed name — the corpus uses it
-  // for Crusade rank suffixes such as "(Battle-hardened)". It runs on whatever
-  // the occurrence is currently called, so a user rename composes with it.
-  const evaluatedName = useMemo(
-    () => inspectLocalRosterSelectionName(session, selection.id, name),
-    [session, selection.id, name],
-  );
-  const displayName =
-    evaluatedName.ok && evaluatedName.value.value !== undefined
-      ? evaluatedName.value.value
-      : name;
-  const nameIncomplete =
-    !evaluatedName.ok || evaluatedName.value.completeness === "incomplete";
-  const annotationValue = annotation.ok ? annotation.value.value : undefined;
-  const annotatedName =
-    annotationValue === undefined || annotationValue === ""
-      ? displayName
-      : `${displayName} (${annotationValue})`;
-  const annotationIncomplete =
-    !annotation.ok || annotation.value.completeness === "incomplete";
+  const {
+    sourceName: name,
+    annotatedName,
+    incomplete: displayNameIncomplete,
+  } = useRosterSelectionDisplayName(session, selectionModel);
   // Only direct model children of a collapsible army card move into the reading
   // surface. Recursing would flatten automatic sub-units, while promoting
   // upgrades merely because they carry a profile would turn the unit card back
@@ -2661,8 +2826,7 @@ function RosterSelectionItem({
     setupRequirementState,
     selectionModel.containsAttention,
   ]);
-  const bodyVisible =
-    presentation !== "row" && (!collapsible || cardOpen);
+  const bodyVisible = !collapsible || cardOpen;
   // This summary intentionally counts only direct children whose materialized
   // catalogue type is exactly `model`. Unresolved choices stay in the editing
   // tree rather than being guessed into a squad composition.
@@ -2682,22 +2846,12 @@ function RosterSelectionItem({
       aria-current={!embedded && selectionModel.active ? "true" : undefined}
       data-attention={selectionModel.attention ? "violation" : undefined}
       data-display-completeness={
-        nameIncomplete || annotationIncomplete ? "incomplete" : "complete"
+        displayNameIncomplete ? "incomplete" : "complete"
       }
     >
       {!hideOccurrence && <div className="selection-occurrence">
         <span className="selection-occurrence-heading">
-          {presentation === "row" ? (
-            <button
-              type="button"
-              className="unit-card-select"
-              aria-pressed={selectionModel.active}
-              aria-label={`Configure ${annotatedName}`}
-              onClick={() => onSelect?.(selection.id)}
-            >
-              <strong>{annotatedName}</strong>
-            </button>
-          ) : collapsible ? (
+          {collapsible ? (
             <button
               ref={cardToggleRef}
               type="button"
@@ -2731,17 +2885,6 @@ function RosterSelectionItem({
             </a>
           )}
           {topLevel && <SelectionCostTotals costs={selectionModel.costs} />}
-          {presentation === "row" && (
-            <button
-              type="button"
-              className="unit-card-view"
-              aria-expanded={viewed}
-              aria-controls="selected-unit-card-view"
-              onClick={() => onView?.(selection.id)}
-            >
-              View
-            </button>
-          )}
           {allowRemove && (
             <button
               type="button"
@@ -3002,7 +3145,7 @@ function RosterSelectionItem({
               session={session}
               choice={choice}
               selection={selection}
-              displayNameIncomplete={nameIncomplete || annotationIncomplete}
+              displayNameIncomplete={displayNameIncomplete}
             />
           )}
           {promotedModels.length > 0 && (
@@ -3267,7 +3410,55 @@ interface UnitComposition {
     readonly key: string;
     readonly name: string;
     readonly amount: number;
+    readonly loadout: readonly SelectedChoiceSummary[];
   }[];
+}
+
+interface SelectedChoiceSummary {
+  readonly key: string;
+  readonly name: string;
+  readonly amount: number;
+}
+
+/** Collects selected upgrade occurrences without inferring equipment by name. */
+function selectedUpgradeSummary(
+  session: LocalRosterSession,
+  selections: readonly RosterWorkspaceSelection[],
+  excludedChoiceKeys: ReadonlySet<string> = new Set(),
+): readonly SelectedChoiceSummary[] {
+  const entries = new Map<string, SelectedChoiceSummary>();
+  const visit = (selection: RosterWorkspaceSelection): void => {
+    const choice = localRosterSelectionChoice(
+      session,
+      selection.occurrence.id,
+    );
+    if (
+      choice?.kind === "selectionEntry" &&
+      choice.type === "upgrade" &&
+      !excludedChoiceKeys.has(selectionChoiceKey(choice))
+    ) {
+      const key = selectionChoiceKey(choice);
+      const existing = entries.get(key);
+      entries.set(key, {
+        key,
+        name: selectionChoiceLabel(choice),
+        amount:
+          (existing?.amount ?? 0) +
+          rosterSelectionAmount(selection.occurrence),
+      });
+    }
+    for (const child of selection.selections) visit(child);
+  };
+  for (const selection of selections) visit(selection);
+  return [...entries.values()];
+}
+
+function formatSelectedChoiceSummary(
+  choices: readonly SelectedChoiceSummary[],
+): string {
+  return choices
+    .map(({ amount, name }) => (amount > 1 ? `${amount}× ${name}` : name))
+    .join(" · ");
 }
 
 /**
@@ -3275,9 +3466,9 @@ interface UnitComposition {
  *
  * Repeated occurrences and one occurrence with an amount override are the two
  * legal roster shapes for multiple models. Both count through the roster-model
- * helper. Grouping keys come from the exact materialized model choice rather
- * than a player rename or display-only name modifier, so the rows describe
- * catalogue model types without inventing loadout text.
+ * helper. Grouping keys come from the exact materialized model and selected
+ * upgrade choices rather than player renames or profile-name guesses, so two
+ * models of one type remain separate when their selected loadouts differ.
  */
 function createModelComposition(
   session: LocalRosterSession,
@@ -3285,10 +3476,16 @@ function createModelComposition(
 ): UnitComposition {
   const entries = new Map<
     string,
-    { key: string; name: string; amount: number }
+    {
+      key: string;
+      name: string;
+      amount: number;
+      loadout: readonly SelectedChoiceSummary[];
+    }
   >();
   let total = 0;
-  for (const { occurrence } of models) {
+  for (const model of models) {
+    const occurrence = model.occurrence;
     const amount = rosterSelectionAmount(occurrence);
     const choice = localRosterSelectionChoice(session, occurrence.id);
     const name =
@@ -3299,12 +3496,20 @@ function createModelComposition(
       choice === undefined
         ? `occurrence:${occurrence.id}`
         : selectionChoiceKey(choice);
+    const loadout = selectedUpgradeSummary(session, model.selections);
+    const loadoutKey = loadout
+      .map(({ key: choiceKey, amount: choiceAmount }) =>
+        `${choiceKey}:${choiceAmount}`,
+      )
+      .join("|");
+    const compositionKey = `${key}:${loadoutKey}`;
     total += amount;
-    const existing = entries.get(key);
-    entries.set(key, {
-      key,
+    const existing = entries.get(compositionKey);
+    entries.set(compositionKey, {
+      key: compositionKey,
       name,
       amount: (existing?.amount ?? 0) + amount,
+      loadout,
     });
   }
   return {
@@ -3316,10 +3521,32 @@ function createModelComposition(
 function UnitCompositionSummary({
   unitName,
   composition,
+  compact = false,
 }: {
   readonly unitName: string;
   readonly composition: UnitComposition;
+  readonly compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <span
+        className="unit-composition unit-composition-compact"
+        role="region"
+        aria-label={`Unit composition for ${unitName}`}
+      >
+        {composition.entries.map((entry) => (
+          <span className="unit-composition-line" key={entry.key}>
+            <span>
+              {entry.amount}× {entry.name}
+            </span>
+            {entry.loadout.length > 0 && (
+              <span>{formatSelectedChoiceSummary(entry.loadout)}</span>
+            )}
+          </span>
+        ))}
+      </span>
+    );
+  }
   return (
     <section
       className="unit-composition"
@@ -3329,8 +3556,13 @@ function UnitCompositionSummary({
         {composition.entries.map((entry) => (
           <li key={entry.key}>
             <span aria-hidden="true">&bull;</span>
-            <span>
-              {entry.amount}&times; {entry.name}
+            <span className="unit-composition-copy">
+              <span>
+                {entry.amount}&times; {entry.name}
+              </span>
+              {entry.loadout.length > 0 && (
+                <span>{formatSelectedChoiceSummary(entry.loadout)}</span>
+              )}
             </span>
           </li>
         ))}

@@ -39,13 +39,17 @@ describe("phone-width layout contracts", () => {
   });
 
   it("gives unit selection and options the full usable phone width", () => {
-    // Sharing a row with cost, View, and Remove would squeeze the unit-select
-    // control at 320 px. The selected-unit panel must also collapse back to one
-    // column rather than becoming a third persistent desktop pane.
-    expect(styles).toMatch(
-      /@media \(max-width: 560px\) \{[\s\S]*?\.selection-occurrence \{\n {4}grid-template-columns: minmax\(0, 1fr\);/u,
+    // The unit row owns one full-width disclosure; View and Remove move into
+    // the selected-unit panel instead of squeezing the row at 320 px. That
+    // panel must also collapse back to one column rather than becoming a third
+    // persistent desktop pane.
+    expect(styles).toContain(
+      ".roster-unit-row-disclosure {\n  display: grid;\n" +
+        "  grid-template-columns: minmax(0, 1fr) auto;",
     );
-    expect(styles).toContain(".unit-card-select {\n  display: block;\n  width: 100%;");
+    expect(styles).toMatch(
+      /@media \(max-width: 560px\) \{[\s\S]*?\.selected-unit-panel-heading button \{\n {4}min-height: 44px;/u,
+    );
     expect(styles).toMatch(
       /@media \(max-width: 850px\) \{[\s\S]*?\.selected-roster-pane\[data-options-open="true"\] \{\n {4}grid-template-columns: 1fr;/u,
     );

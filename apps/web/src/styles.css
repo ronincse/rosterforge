@@ -1858,6 +1858,144 @@ h1 {
   min-width: 0;
 }
 
+/* Army units are a scan-first list. The single disclosure row owns selection;
+   the adjacent inspector owns editing, viewing, and destructive actions. */
+.roster-selection-section[data-section="army"]
+  > .roster-top-level-selection-list {
+  display: block;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(60, 60, 67, 0.16);
+  border-radius: 12px;
+}
+
+.roster-unit-row {
+  scroll-margin-top: 84px;
+  background: transparent;
+}
+
+.roster-unit-row + .roster-unit-row {
+  border-top: 1px solid rgba(60, 60, 67, 0.12);
+}
+
+.roster-unit-row[data-active="true"] {
+  background: rgba(36, 93, 72, 0.1);
+}
+
+.roster-unit-row[data-attention] {
+  box-shadow: inset 3px 0 0 #9a4a3f;
+}
+
+.roster-unit-row-disclosure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 11px 14px 11px 16px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roster-unit-row-disclosure:hover {
+  background: rgba(36, 93, 72, 0.06);
+}
+
+.roster-unit-row-disclosure:focus-visible {
+  position: relative;
+  outline: 3px solid rgba(36, 93, 72, 0.52);
+  outline-offset: -3px;
+}
+
+.roster-unit-row-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.roster-unit-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roster-unit-row-title > strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-unit-row-pills {
+  display: inline-flex;
+  flex: 0 1 auto;
+  gap: 5px;
+  min-width: 0;
+}
+
+.unit-row-pill {
+  padding: 2px 6px;
+  color: var(--forest);
+  background: rgba(36, 93, 72, 0.09);
+  border-radius: 999px;
+  font-size: 0.53rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.unit-row-pill[data-attention="true"] {
+  color: #853b32;
+  background: #f5ded9;
+}
+
+.unit-composition-compact,
+.unit-row-selected-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
+.unit-composition-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+}
+
+.unit-composition-line > span + span {
+  color: #66736a;
+}
+
+.roster-unit-row-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--forest);
+}
+
+.roster-unit-row-trailing .selection-cost-totals {
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.roster-unit-row-chevron {
+  color: #718078;
+  font-size: 1.65rem;
+  font-weight: 400;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
 .roster-selection-section[data-section="army"] +
   .roster-selection-section[data-section="army"] {
   padding-top: 14px;
@@ -2396,27 +2534,6 @@ h1 {
   content: "\25BE";
 }
 
-.unit-card-select {
-  display: block;
-  width: 100%;
-  padding: 4px 0;
-  color: inherit;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.unit-card-select:focus-visible {
-  outline: 2px solid var(--forest);
-  outline-offset: 3px;
-}
-
-.selection-occurrence-actions > .unit-card-view {
-  color: var(--forest);
-  border-color: #9aaca1;
-}
-
 .selection-card-children {
   display: grid;
   gap: 8px;
@@ -2453,6 +2570,15 @@ h1 {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 5px;
   line-height: 1.35;
+}
+
+.unit-composition-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.unit-composition-copy > span + span {
+  color: #66736a;
 }
 
 .selection-card-body {
@@ -3459,7 +3585,26 @@ footer {
 
   .selected-unit-panel-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .selected-unit-panel-heading button {
+    min-height: 44px;
+  }
+
+  .roster-unit-row-disclosure {
+    gap: 8px;
+    padding-right: 10px;
+  }
+
+  .roster-unit-row-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .roster-unit-row-title > strong {
+    white-space: normal;
   }
 
   .app-shell {

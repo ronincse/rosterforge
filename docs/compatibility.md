@@ -208,11 +208,17 @@
   selected but cannot be removed below that minimum. Surplus occurrences remain
   removable, unresolved bounds stay permissive, and grouped replacement
   weapons retain their ordinary deselect-or-replace controls
-- Compact selectable army rows with recursive cost and exact model composition,
-  automatic focus for a newly added army unit, a dedicated options region that
-  reuses the existing edit controls, and a separate read-only full unit-card
-  View. Catalogue placement remains reader-controlled; configuration is never
+- Compact grouped army rows with one disclosure target, recursive cost, exact
+  model/loadout composition, structurally recognized designation/status pills,
+  and automatic focus for a newly added army unit. A dedicated options region
+  reuses the existing edit controls and owns read-only full-card viewing and
+  destructive removal, so rows carry no competing View/Remove controls.
+  Catalogue placement remains reader-controlled; configuration is never
   focused as an army unit
+- Required configuration cards collapse when a supported choice completes
+  their known required child bounds, return focus to the disclosure, and reopen
+  for supported attention. Optional-only or incomplete bounds do not cause an
+  automatic collapse
 - Page-information actions visually attached to concrete root, direct-child,
   repeatable-model, and grouped catalogue choice controls. They expose
   source-authored rules, profiles, info groups, and human-readable source

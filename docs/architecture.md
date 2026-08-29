@@ -525,14 +525,22 @@ does not rewrite durable roster occurrence order. A role with no
 entries renders nothing, so a roster without configuration shows its units
 rather than an empty heading.
 
-Army units render as compact selectable rows. The always-visible row carries
-the projection's recursive cost and exact direct-model composition; selecting
-it mounts the existing mutation controls in one dedicated options surface, and
-a separate `View` action mounts a read-only complete card below the builder.
-The renderer has presentation modes, not separate editing implementations, so
-required upgrades, grouped replacements, and repeatable model quantities keep
-one mutation path. Configuration remains in the full-width setup step and can
-never become the selected army unit.
+An open required configuration card collapses when its known child-choice
+requirements transition from unsatisfied to satisfied. Optional-only and
+incomplete requirements do not trigger the transition, and supported attention
+reopens the owning card. Focus returns to the card disclosure when completing a
+choice removes the clicked control from the document.
+
+Army units render as compact selectable rows grouped by battlefield role. Each
+row has one disclosure control and carries the projection's recursive cost,
+exact direct-model composition and selected upgrade identity, plus structurally
+recognized designation and attention pills. Selecting it mounts the existing
+mutation controls in one dedicated options surface. That inspector owns the
+read-only `View unit card` and destructive `Remove unit` actions; neither is
+duplicated on every army row. The renderer has presentation modes, not separate
+editing implementations, so required upgrades, grouped replacements, and
+repeatable model quantities keep one mutation path. Configuration remains in
+the full-width setup step and can never become the selected army unit.
 
 The outer builder has at most two columns. With the catalogue open those are
 roster and catalogue, and the options surface stacks inside the roster pane.
