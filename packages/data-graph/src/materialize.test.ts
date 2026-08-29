@@ -75,6 +75,68 @@ describe("BattleScribe shared selection materialization", () => {
     }
   });
 
+  it("allows a finite link overlay to repeat its parent definition", () => {
+    const parsed = parseBattleScribeJson(
+      new TextEncoder().encode(
+        JSON.stringify({
+          catalogue: {
+            id: "finite-overlay-catalogue",
+            name: "Finite Overlay Catalogue",
+            revision: 1,
+            battleScribeVersion: "2.03",
+            sharedSelectionEntries: [
+              {
+                id: "finite-overlay-definition",
+                name: "Warlord",
+                type: "upgrade",
+              },
+            ],
+            entryLinks: [
+              {
+                id: "finite-overlay-root",
+                name: "Warlord",
+                type: "selectionEntry",
+                targetId: "finite-overlay-definition",
+                entryLinks: [
+                  {
+                    id: "finite-overlay-child",
+                    name: "Warlord",
+                    type: "selectionEntry",
+                    targetId: "finite-overlay-definition",
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      ),
+      { source: provenance("finite-overlay.json") },
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const graph = resolveBattleScribeDataGraph([parsed.value]);
+    expect(graph.ok).toBe(true);
+    if (!graph.ok) return;
+
+    const materialization = materializeBattleScribeSelections(graph.value);
+
+    expect(materialization.ok).toBe(true);
+    if (!materialization.ok) return;
+    const root = onlyDocument(materialization.value).entryLinks[0];
+    expect(root).toMatchObject({
+      kind: "selectionEntry",
+      definitionId: "finite-overlay-definition",
+      entryLinks: [
+        {
+          kind: "selectionEntry",
+          definitionId: "finite-overlay-definition",
+          entryLinks: [],
+        },
+      ],
+    });
+    expect(materialization.diagnostics).toEqual([]);
+  });
+
   it("materializes rule and profile info links in definition-first order", () => {
     const materialization = materializedFixture();
     const entry = onlyDocument(materialization.value).entryLinks[0];

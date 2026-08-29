@@ -29,6 +29,8 @@ import {
 } from "@rosterforge/evaluation";
 import { objectId } from "@rosterforge/foundation";
 import {
+  importLocalBattleScribeFiles,
+  indexReverseConsumerSelectionTargets,
   pinGitHubRepository,
   planBattleScribeDependencyClosure,
   summarizeBattleScribeRepositoryDocument,
@@ -43,7 +45,10 @@ import {
   type SelectionOccurrenceId,
 } from "@rosterforge/roster-model";
 
-import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
+import {
+  prepareImportedCatalogueLibrary,
+  prepareLocalCatalogueLibrary,
+} from "./catalogue-library.js";
 import {
   addLocalRosterChildSelection,
   addLocalRosterRootSelection,
@@ -123,7 +128,7 @@ describe.skipIf(realDataDirectory === undefined)(
         const pinnedSource = pinGitHubRepository({
           owner: "BSData",
           repository: "wh40k-11e",
-          revision: "54c189f4fd01878351fab05586d3b38d9c7f6ddc",
+          revision: "04c62fcd041b3808c39d5c46fd677c704027b979",
         });
         expect(pinnedSource.ok).toBe(true);
         if (!pinnedSource.ok) {
@@ -556,50 +561,150 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(
           result.value.contexts.roots.expandedEntryLinks,
         ).toBeLessThanOrEqual(250_000);
-        const graphDiagnosticSummary = Object.fromEntries(
-          [...new Set(
-            result.diagnostics
-              .filter(
-                ({ code }) => code !== "BS_PROJECTION_INVALID_ATTRIBUTE",
-              )
-              .map(({ code }) => code),
-          )].map((code) => [
-            code,
-            result.diagnostics.filter(
-              (diagnostic) => diagnostic.code === code,
-            ).length,
-          ]),
+        expect(result.diagnostics).toEqual([]);
+      },
+      120_000,
+    );
+
+    it(
+      "composes every selectable focused repository closure without diagnostics",
+      async () => {
+        if (realDataDirectory === undefined) {
+          throw new Error("The integration data directory is not configured.");
+        }
+        const imported = await importLocalBattleScribeFiles(
+          realJsonFiles(realDataDirectory),
+          {
+            batchId: "real-bsdata-json-focused-closure-audit",
+            importedAt: "2026-08-29T00:00:00.000Z",
+          },
         );
-        const missingReferences = result.diagnostics.filter(
-          ({ code }) => code === "BS_GRAPH_MISSING_REFERENCE",
-        );
-        expect(graphDiagnosticSummary).toEqual({
-          BS_GRAPH_DUPLICATE_ID: 3,
-          BS_GRAPH_MISSING_REFERENCE: 34,
-          BS_MATERIALIZATION_ENTRY_LINK_CYCLE: 2,
+        expect(imported.ok).toBe(true);
+        if (!imported.ok) return;
+
+        const pinnedSource = pinGitHubRepository({
+          owner: "BSData",
+          repository: "wh40k-11e",
+          revision: "04c62fcd041b3808c39d5c46fd677c704027b979",
         });
-        expect(
-          missingReferences.reduce(
-            (total, { details }) =>
-              total + Number(details?.occurrenceCount ?? 0),
-            0,
+        expect(pinnedSource.ok).toBe(true);
+        if (!pinnedSource.ok) return;
+        const summaries = imported.value.documents.map((document) =>
+          summarizeBattleScribeRepositoryDocument(
+            document.source.filename,
+            document,
           ),
-        ).toBe(114);
-        expect(
-          missingReferences.filter(
-            ({ details }) => details?.kind === "defaultSelectionEntry",
-          ),
-        ).toHaveLength(31);
-        expect(
-          missingReferences.filter(
-            ({ details }) => details?.kind === "costType",
-          ),
-        ).toHaveLength(3);
-        expect(
-          result.diagnostics.filter(
-            ({ code }) => code === "BS_PROJECTION_INVALID_ATTRIBUTE",
-          ),
-        ).toEqual([]);
+        );
+        const repositoryIndex = {
+          source: pinnedSource.value,
+          documents: summaries,
+        };
+        const knownRepositoryCostTypeIds = new Set(
+          summaries.flatMap(({ costTypeIds }) => costTypeIds),
+        );
+        const knownRepositorySelectionTargetIdsBySource =
+          indexReverseConsumerSelectionTargets(repositoryIndex);
+        const selectable = summaries.filter(
+          ({ kind, library }) => kind === "catalogue" && library !== true,
+        );
+        const diagnosticRows: Array<{
+          readonly catalogue: string;
+          readonly code: string;
+          readonly kind: string;
+          readonly message: string;
+          readonly target: string;
+        }> = [];
+
+        for (const summary of selectable) {
+          const closure = planBattleScribeDependencyClosure(
+            repositoryIndex,
+            summary.path,
+          );
+          expect(closure.ok).toBe(true);
+          if (!closure.ok) continue;
+          const closurePaths = new Set(
+            closure.value.files.map(({ document }) => document.path),
+          );
+          const files = imported.value.files.filter(({ source }) =>
+            closurePaths.has(source.filename),
+          );
+          const documents = imported.value.documents.filter(({ source }) =>
+            closurePaths.has(source.filename),
+          );
+          const selectedDocument = documents.find(
+            ({ source }) => source.filename === summary.path,
+          );
+          expect(selectedDocument).toBeDefined();
+          if (selectedDocument === undefined) continue;
+          const focused = prepareImportedCatalogueLibrary(
+            {
+              ...imported.value,
+              files,
+              documents,
+            },
+            closure.diagnostics,
+            { catalogueDocuments: [selectedDocument] },
+            {
+              knownRepositoryCostTypeIds,
+              knownRepositorySelectionTargetIdsBySource,
+            },
+          );
+          expect(focused.ok).toBe(true);
+          for (const diagnostic of focused.diagnostics) {
+            diagnosticRows.push({
+              catalogue: summary.name,
+              code: diagnostic.code,
+              kind:
+                typeof diagnostic.details?.kind === "string"
+                  ? diagnostic.details.kind
+                  : "",
+              message: diagnostic.message,
+              target:
+                typeof diagnostic.details?.targetId === "string"
+                  ? diagnostic.details.targetId
+                  : typeof diagnostic.details?.id === "string"
+                    ? diagnostic.details.id
+                    : "",
+            });
+          }
+        }
+
+        const diagnosticSummary = [...diagnosticRows.reduce(
+          (groups, row) => {
+            const key = `${row.code}\u0000${row.kind}\u0000${row.target}`;
+            const current = groups.get(key);
+            groups.set(key, {
+              catalogues: new Set([
+                ...(current?.catalogues ?? []),
+                row.catalogue,
+              ]),
+              code: row.code,
+              kind: row.kind,
+              target: row.target,
+              diagnostics: (current?.diagnostics ?? 0) + 1,
+              messages: new Set([...(current?.messages ?? []), row.message]),
+            });
+            return groups;
+          },
+          new Map<
+            string,
+            {
+              readonly catalogues: ReadonlySet<string>;
+              readonly code: string;
+              readonly kind: string;
+              readonly target: string;
+              readonly diagnostics: number;
+              readonly messages: ReadonlySet<string>;
+            }
+          >(),
+        ).values()].map(({ catalogues, messages, ...summary }) => ({
+          ...summary,
+          catalogues: catalogues.size,
+          uniqueMessages: messages.size,
+        }));
+
+        expect(selectable).toHaveLength(36);
+        expect(diagnosticSummary).toEqual([]);
       },
       120_000,
     );
@@ -2701,14 +2806,7 @@ describe.skipIf(realDataDirectory === undefined)(
         );
         expect(result.ok).toBe(true);
         if (!result.ok) return;
-        expect(diagnosticCodeCounts(result.diagnostics)).toEqual({
-          BS_GRAPH_MISSING_REFERENCE: 4,
-        });
-        expect(
-          result.diagnostics
-            .filter(({ code }) => code === "BS_GRAPH_MISSING_REFERENCE")
-            .map(({ details }) => details?.kind),
-        ).toEqual(["costType", "costType", "costType", "costType"]);
+        expect(result.diagnostics).toEqual([]);
         const catalogue = result.value.catalogues.find(
           ({ name }) => name === "Xenos - Drukhari",
         );

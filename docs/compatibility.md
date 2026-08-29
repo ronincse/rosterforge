@@ -974,13 +974,15 @@ after measurement.
 
 The measured result retained all 46 imports, exposed 36 non-library catalogue
 choices, rendered 823 DOM elements, and produced no browser-console warnings or
-errors. Its 65 issues were the expected one invalid projected attribute, two
-duplicate-ID groups, 60 grouped missing-reference diagnostics representing 147
-source occurrences, and two entry-link cycles. Whole-repository import remains
-a supported compatibility path, but its heap cost is too high to make it the
-default acquisition design. Repository acquisition should load a selected
-catalogue's pinned dependency closure and retain the all-repository path for
-explicit diagnostics and compatibility testing.
+errors. At that inspection point it also surfaced 65 developer diagnostics.
+The August 29 exact-corpus audit classified those source shapes: named orphan
+costs and unavailable defaults defer until their containing choice is used;
+reverse-consumer selectors are repository-known rather than missing; local
+category aliases and profile-owned characteristic IDs are scoped; and the two
+Chaos Warlord overlays are finite rather than cyclic. Whole-repository import
+and every one of the 36 focused selectable closures now compose with zero load
+diagnostics at corpus revision
+`04c62fcd041b3808c39d5c46fd677c704027b979`.
 
 The first headless acquisition boundary now supports GitHub repositories pinned
 to exact full commit SHAs. It can list a bounded recursive commit tree, retain
@@ -1017,10 +1019,11 @@ Metadata JSON is limited to 32 MiB per record and 32 MiB total. Writes account
 for replacement and evict least-recently-used pinned revisions before storing a
 report that would cross the total. Reads touch a separate
 `pinned-repository-metadata-lru` sidecar rather than rewriting a payload accepted
-at up to 32 MiB. Existing version-1 reports migrate at access time zero;
-malformed legacy reports are removed, and malformed later sidecars clear only
-this re-downloadable database. The measured pinned report is 181,985 bytes, so
-the default can retain 184 reports of that size. Neither cache uses `navigator.storage.estimate()`. The result is
+at up to 32 MiB. Payload schema version 3 retains 35,492 bounded
+selection-target IDs for the pinned 46-document repository; versions 1 and 2
+are quiet misses and rebuild from verified bytes. The resulting report remains
+below 2 MiB and one maximally accepted report still fits. Neither cache uses
+`navigator.storage.estimate()`. The result is
 origin-wide and approximate, and current browsers do not promise that its
 reported remainder is writable, so it cannot safely drive eviction or refuse a
 write. Approximate quota-management UI remains deferred.
@@ -1082,9 +1085,10 @@ A read-only orchestration proof against the same external checkout indexed all
 seven-file Imperial Knights closure entirely from cache. The focused closure
 retained 7,521,360 source bytes. Serializing the bounded metadata-cache entry
 produced 181,985 bytes for the then-current 46 document summaries, 109 catalogue
-links, and one diagnostic, comfortably below the 32 MiB browser limit. Metadata
-cache version 2 additionally carries bounded cost-type ID summaries and rejects
-older records so they are rebuilt from verified bytes. The current exact-empty
+links, and one diagnostic. Metadata schema version 2 added bounded cost-type
+summaries. Version 3 now adds 35,492 recursively collected selection-target
+IDs, remains below 2 MiB, and quietly rebuilds older payloads from verified
+bytes. The current exact-empty
 `defaultCostLimit` sentinel produces no projection diagnostic. Acquisition
 completeness here means every planned source was verified and ingested, not that
 all projected BattleScribe behavior is supported or legal.
@@ -1116,12 +1120,14 @@ generic-extension, multiple-repeat, and modifier-group repeat execution remains
 unsupported even when the source shape is preserved.
 
 Selecting all 46 documents together now composes without truncating
-materialization. Repository-wide typed reference candidates support observed
-shared cost types and reverse references from shared definitions, while
-effective entry/info links are limited to the source document's
-catalogue/game-system closure. Equal IDs in unrelated catalogues therefore do
-not make a roster definition ambiguous. The corpus still has two duplicate-ID
-groups that can coexist in a resolution closure and two real entry-link cycles.
+materialization or load diagnostics. Repository-wide typed reference candidates
+support observed shared cost types and reverse references from shared
+definitions, while effective entry/info links are limited to the source
+document's catalogue/game-system closure. Catalogue-local category aliases
+shadow imported copies; characteristic IDs repeat safely under distinct profile
+types. Two Chaos Knights Warlord overlays reuse one terminal definition through
+distinct link-local children, which materialize finitely while definition-owned
+self-cycles and multi-definition cycles remain diagnosed.
 
 Observed selector strings are preserved but no longer diagnosed as missing
 IDs. Constraint scopes include `model`, `unit`, and `root-entry`; condition and

@@ -1,15 +1,109 @@
 import { describe, expect, it } from "vitest";
 
+import { parseBattleScribeJson } from "@rosterforge/battlescribe-data";
 import { objectId, sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
 
 import {
+  indexReverseConsumerSelectionTargets,
   planBattleScribeDependencyClosure,
+  summarizeBattleScribeRepositoryDocument,
   type BattleScribeRepositoryDocumentSummary,
   type BattleScribeRepositoryIndex,
 } from "./dependency-closure.js";
 import { pinGitHubRepository } from "./pinned-github.js";
 
 describe("BattleScribe repository dependency closure planning", () => {
+  it("summarizes nested selection targets for repository-wide diagnostics", () => {
+    const parsed = parseBattleScribeJson(
+      new TextEncoder().encode(
+        JSON.stringify({
+          catalogue: {
+            id: "summary-catalogue",
+            name: "Summary Catalogue",
+            revision: 1,
+            battleScribeVersion: "2.03",
+            selectionEntries: [
+              {
+                id: "root-entry",
+                name: "Root Entry",
+                type: "unit",
+                selectionEntryGroups: [
+                  {
+                    id: "nested-group",
+                    name: "Nested Group",
+                    entryLinks: [
+                      {
+                        id: "nested-link",
+                        name: "Nested Link",
+                        type: "selectionEntry",
+                        targetId: "shared-entry",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            sharedSelectionEntries: [
+              { id: "shared-entry", name: "Shared Entry", type: "upgrade" },
+            ],
+          },
+        }),
+      ),
+      { source: syntheticSource },
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const summary = summarizeBattleScribeRepositoryDocument(
+      "summary.json",
+      parsed.value,
+    );
+
+    expect(new Set(summary.selectionTargetIds)).toEqual(
+      new Set([
+        "root-entry",
+        "nested-group",
+        "nested-link",
+        "shared-entry",
+      ]),
+    );
+  });
+
+  it("indexes selection targets only for catalogues that consume a source", () => {
+    const source = document(
+      "source-library.json",
+      "catalogue",
+      "source-library",
+      [],
+    );
+    const consumer = {
+      ...document("consumer.json", "catalogue", "consumer", [
+        "source-library",
+      ]),
+      selectionTargetIds: [objectId("consumer-selection")],
+    };
+    const unrelated = {
+      ...document("unrelated.json", "catalogue", "unrelated", []),
+      selectionTargetIds: [objectId("unrelated-selection")],
+    };
+
+    const indexed = indexReverseConsumerSelectionTargets(
+      repositoryIndex([
+        document("system.json", "gameSystem", "system", []),
+        source,
+        consumer,
+        unrelated,
+      ]),
+    );
+
+    expect(indexed.get("source-library.json")).toEqual(
+      new Set(["consumer-selection"]),
+    );
+    expect(indexed.get("source-library.json")).not.toContain(
+      "unrelated-selection",
+    );
+  });
+
   it("plans the game system and transitive catalogues in declaration order", () => {
     const gameSystem = document("system.json", "gameSystem", "system", []);
     const root = document("root.json", "catalogue", "root", ["library-a", "library-b"]);
@@ -180,6 +274,7 @@ function document(
     name: id,
     ...(kind === "catalogue" ? { gameSystemId: objectId("system") } : {}),
     costTypeIds: [],
+    selectionTargetIds: [],
     catalogueLinks: targets.map((target) => ({
       targetId: objectId(target),
       name: target,

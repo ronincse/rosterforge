@@ -7,6 +7,7 @@ import {
 import {
   acquirePinnedBattleScribeDependencyClosure,
   buildPinnedBattleScribeRepositoryIndex,
+  indexReverseConsumerSelectionTargets,
   listPinnedGitHubRepositoryFiles,
   pinGitHubRepository,
   type BattleScribeRepositoryDocumentSummary,
@@ -284,6 +285,8 @@ export async function acquireRemoteCatalogue(
       knownRepositoryCostTypeIds: new Set(
         sourceIndex.report.index.documents.flatMap(({ costTypeIds }) => costTypeIds),
       ),
+      knownRepositorySelectionTargetIdsBySource:
+        indexReverseConsumerSelectionTargets(sourceIndex.report.index),
     },
   );
   if (!prepared.ok) return prepared;

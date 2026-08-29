@@ -1,7 +1,10 @@
 import type {
   BattleScribeDocumentKind,
   CatalogueLinkProjection,
+  EntryLinkProjection,
   ParsedBattleScribeDocument,
+  SelectionEntryGroupProjection,
+  SelectionEntryProjection,
 } from "@rosterforge/battlescribe-data";
 
 import {
@@ -30,6 +33,7 @@ export interface BattleScribeRepositoryDocumentSummary {
   readonly gameSystemId?: ObjectId;
   readonly library?: boolean;
   readonly costTypeIds: readonly ObjectId[];
+  readonly selectionTargetIds: readonly ObjectId[];
   readonly catalogueLinks: readonly RepositoryCatalogueLinkSummary[];
   readonly source?: SourceFileProvenance;
 }
@@ -37,6 +41,29 @@ export interface BattleScribeRepositoryDocumentSummary {
 export interface BattleScribeRepositoryIndex {
   readonly source: PinnedGitHubRepository;
   readonly documents: readonly BattleScribeRepositoryDocumentSummary[];
+}
+
+/**
+ * Maps each dependency path to selection IDs owned by catalogues that consume
+ * it. These reverse-consumer facts refine focused-closure diagnostics without
+ * authorizing the dependency planner to fetch undeclared catalogues.
+ */
+export function indexReverseConsumerSelectionTargets(
+  index: BattleScribeRepositoryIndex,
+): ReadonlyMap<string, ReadonlySet<ObjectId>> {
+  const mutable = new Map<string, Set<ObjectId>>();
+  for (const consumer of index.documents) {
+    if (consumer.kind !== "catalogue") continue;
+    const plan = planBattleScribeDependencyClosure(index, consumer.path);
+    if (!plan.ok) continue;
+    for (const { document } of plan.value.files) {
+      if (document.path === consumer.path) continue;
+      const known = mutable.get(document.path) ?? new Set<ObjectId>();
+      for (const id of consumer.selectionTargetIds) known.add(id);
+      mutable.set(document.path, known);
+    }
+  }
+  return mutable;
 }
 
 export type BattleScribeDependencyRole =
@@ -74,9 +101,47 @@ export function summarizeBattleScribeRepositoryDocument(
     costTypeIds: document.projection.costTypes.flatMap(({ id }) =>
       id === undefined ? [] : [id],
     ),
+    selectionTargetIds: selectionTargetIds(document),
     catalogueLinks: document.projection.catalogueLinks.map(summarizeCatalogueLink),
     source: document.source,
   };
+}
+
+interface SelectionTargetContainer {
+  readonly selectionEntries: readonly SelectionEntryProjection[];
+  readonly selectionEntryGroups: readonly SelectionEntryGroupProjection[];
+  readonly entryLinks: readonly EntryLinkProjection[];
+}
+
+function selectionTargetIds(
+  document: ParsedBattleScribeDocument,
+): readonly ObjectId[] {
+  const ids = new Set<ObjectId>();
+  const visit = (container: SelectionTargetContainer): void => {
+    for (const entry of container.selectionEntries) {
+      if (entry.id !== undefined) ids.add(entry.id);
+      visit(entry);
+    }
+    for (const group of container.selectionEntryGroups) {
+      if (group.id !== undefined) ids.add(group.id);
+      visit(group);
+    }
+    for (const link of container.entryLinks) {
+      if (link.id !== undefined) ids.add(link.id);
+      visit(link);
+    }
+  };
+
+  visit(document.projection);
+  for (const entry of document.projection.sharedSelectionEntries) {
+    if (entry.id !== undefined) ids.add(entry.id);
+    visit(entry);
+  }
+  for (const group of document.projection.sharedSelectionEntryGroups) {
+    if (group.id !== undefined) ids.add(group.id);
+    visit(group);
+  }
+  return [...ids];
 }
 
 export function planBattleScribeDependencyClosure(

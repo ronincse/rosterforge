@@ -10,6 +10,7 @@ import type {
   CategoryEntryProjection,
   CategoryLinkProjection,
   CharacteristicProjection,
+  CharacteristicTypeProjection,
   ConditionGroupProjection,
   ConditionProjection,
   ConstraintProjection,
@@ -106,6 +107,10 @@ export interface BattleScribeDataGraph {
 /** Repository-level facts that refine diagnostics without changing resolution. */
 export interface ResolveBattleScribeDataGraphOptions {
   readonly knownRepositoryCostTypeIds?: ReadonlySet<ObjectId>;
+  readonly knownRepositorySelectionTargetIdsBySource?: ReadonlyMap<
+    string,
+    ReadonlySet<ObjectId>
+  >;
 }
 
 const lexicalConstraintScopes = new Set([
@@ -677,23 +682,38 @@ function referencesForProfile(
   objectsById: ReadonlyMap<ObjectId, readonly BattleScribeGraphObject[]>,
   diagnostics: Diagnostic[],
 ): readonly BattleScribeGraphReference[] {
+  const profileTypeReferences = targetReference(
+    "profileType",
+    profile,
+    document,
+    profile.typeId,
+    ["profileType"],
+    objectsById,
+    diagnostics,
+    "@typeId",
+  );
+  const profileTypeTargets = profileTypeReferences[0]?.targets.filter(
+    ({ kind }) => kind === "profileType",
+  );
+  const containedCharacteristicTypes =
+    profileTypeTargets?.length === 1
+      ? new Set(
+          (profileTypeTargets[0]?.source as ProfileTypeProjection)
+            .characteristicTypes,
+        )
+      : undefined;
+  // Characteristic IDs are lexical to a profile type. Restricting a uniquely
+  // typed profile prevents an identical ID in another schema from becoming an
+  // artificial global ambiguity.
   return [
-    ...targetReference(
-      "profileType",
-      profile,
-      document,
-      profile.typeId,
-      ["profileType"],
-      objectsById,
-      diagnostics,
-      "@typeId",
-    ),
+    ...profileTypeReferences,
     ...profile.characteristics.flatMap((characteristic) =>
       referencesForCharacteristic(
         characteristic,
         document,
         objectsById,
         diagnostics,
+        containedCharacteristicTypes,
       ),
     ),
     ...referencesForPublicationLinks(
@@ -710,6 +730,7 @@ function referencesForCharacteristic(
   document: ParsedBattleScribeDocument,
   objectsById: ReadonlyMap<ObjectId, readonly BattleScribeGraphObject[]>,
   diagnostics: Diagnostic[],
+  containedCharacteristicTypes?: ReadonlySet<ProjectedBattleScribeNode>,
 ): readonly BattleScribeGraphReference[] {
   return targetReference(
     "characteristicType",
@@ -720,6 +741,7 @@ function referencesForCharacteristic(
     objectsById,
     diagnostics,
     "@typeId",
+    containedCharacteristicTypes,
   );
 }
 
@@ -957,13 +979,21 @@ function targetReference(
   objectsById: ReadonlyMap<ObjectId, readonly BattleScribeGraphObject[]>,
   _diagnostics: Diagnostic[],
   pathSuffix = "@targetId",
+  allowedTargets?: ReadonlySet<ProjectedBattleScribeNode>,
 ): readonly BattleScribeGraphReference[] {
   if (targetId === undefined) {
     return [];
   }
-  const targets = (objectsById.get(targetId) ?? []).filter((target) =>
+  const expectedTargets = (objectsById.get(targetId) ?? []).filter((target) =>
     expectedKinds.includes(target.kind),
   );
+  const containedTargets = allowedTargets === undefined
+    ? []
+    : expectedTargets.filter((target) => allowedTargets.has(target.source));
+  // A contained candidate wins when one exists. Keeping outside-only
+  // candidates lets the profile-containment inspector distinguish a genuine
+  // mismatch from a missing target instead of erasing useful evidence.
+  const targets = containedTargets.length > 0 ? containedTargets : expectedTargets;
   const projectedNodes = new Set(
     (objectsById.get(targetId) ?? []).map(({ source: targetSource }) =>
       targetSource.node
@@ -1152,10 +1182,21 @@ function duplicateObjectsInResolutionScopes(
       }
     }
     for (const entries of byId.values()) {
-      if (entries.length < 2) {
+      const localEntries = entries.filter(
+        ({ document }) => document === source,
+      );
+      // A catalogue-local definition shadows same-ID imports. This keeps an
+      // intentional local override from looking ambiguous while still
+      // diagnosing collisions between two imported definitions.
+      const localKinds = new Set(localEntries.map(({ kind }) => kind));
+      const candidates = entries.filter(
+        (entry) =>
+          entry.document === source || !localKinds.has(entry.kind),
+      );
+      if (candidates.length < 2 || !hasAmbiguousDuplicate(candidates)) {
         continue;
       }
-      const key = entries
+      const key = candidates
         .map(
           (entry) =>
             `${entry.kind}:${entry.source.source.sourceId}:${entry.source.path.join("/")}`,
@@ -1164,11 +1205,31 @@ function duplicateObjectsInResolutionScopes(
         .join("|");
       if (!emitted.has(key)) {
         emitted.add(key);
-        duplicates.push(entries);
+        duplicates.push(candidates);
       }
     }
   }
   return duplicates;
+}
+
+function hasAmbiguousDuplicate(
+  entries: readonly BattleScribeGraphObject[],
+): boolean {
+  if (!entries.every(({ kind }) => kind === "characteristicType")) {
+    return true;
+  }
+
+  const owners = new Set<ProfileTypeProjection>();
+  for (const entry of entries) {
+    const owner = entry.document.projection.profileTypes.find(({ characteristicTypes }) =>
+      characteristicTypes.includes(entry.source as CharacteristicTypeProjection),
+    );
+    if (owner === undefined || owners.has(owner)) return true;
+    owners.add(owner);
+  }
+  // Characteristic IDs are interpreted inside their profile type. Reusing an
+  // ID in two distinct profile-type schemas is therefore not a collision.
+  return false;
 }
 
 function indexDocuments(
@@ -1202,11 +1263,24 @@ function missingReferenceDiagnostics(
     ) {
       continue;
     }
-    if (isKnownRepositoryZeroCostReference(reference, options)) {
+    if (isNonBlockingCostReference(reference, options)) {
       // Focused repository closures intentionally omit unrelated catalogues.
-      // A verified repository index can prove that a zero-value legacy cost's
-      // definition survives outside that closure. Keep the unresolved reference
-      // available to later evaluation, but do not mislabel it as repository-missing.
+      // Named costs remain self-describing even when their global total type is
+      // absent; selected occurrences still diagnose incomplete aggregation.
+      // A verified repository index also proves legacy zero-cost definitions
+      // that merely live outside this focused dependency closure.
+      continue;
+    }
+    if (reference.kind === "defaultSelectionEntry") {
+      // A default is consulted only when its containing group is initialized.
+      // Keep the unresolved reference here; the initialization report names an
+      // unavailable requested default if that group is actually selected.
+      continue;
+    }
+    if (isKnownRepositorySelectionReference(reference, options)) {
+      // Condition and repeat selectors sometimes name faction-owned entries
+      // outside the selected catalogue's authored dependency closure. Preserve
+      // the unresolved edge without calling a repository-known target missing.
       continue;
     }
     const key = [
@@ -1222,14 +1296,28 @@ function missingReferenceDiagnostics(
   return [...groups.values()].map(missingReferenceDiagnostic);
 }
 
-function isKnownRepositoryZeroCostReference(
+function isNonBlockingCostReference(
   reference: BattleScribeGraphReference,
   options: ResolveBattleScribeDataGraphOptions,
 ): boolean {
   return (
     reference.kind === "costType" &&
-    (reference.source as CostProjection).value === 0 &&
-    options.knownRepositoryCostTypeIds?.has(reference.targetId) === true
+    (((reference.source as CostProjection).name?.length ?? 0) > 0 ||
+      ((reference.source as CostProjection).value === 0 &&
+        options.knownRepositoryCostTypeIds?.has(reference.targetId) === true))
+  );
+}
+
+function isKnownRepositorySelectionReference(
+  reference: BattleScribeGraphReference,
+  options: ResolveBattleScribeDataGraphOptions,
+): boolean {
+  return (
+    (reference.kind === "conditionChild" ||
+      reference.kind === "repeatChild") &&
+    options.knownRepositorySelectionTargetIdsBySource
+      ?.get(reference.sourceDocument.source.filename)
+      ?.has(reference.targetId) === true
   );
 }
 

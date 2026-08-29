@@ -260,13 +260,13 @@ or tree-incompatible records fall back to sequential indexing. Storage failures
 remain warnings when verified acquisition succeeds.
 
 Metadata JSON is limited to 32 MiB per record and 32 MiB total. The pinned
-46-document report is 181,985 bytes, so the default bound can retain 184 reports
-of that size while still allowing one maximally accepted report. Database
-version 2 adds `pinned-repository-metadata-lru`; reads touch that small sidecar
-instead of rewriting as much as 32 MiB. Version-1 records migrate with access
-time zero, malformed legacy records are discarded, and malformed later
-accounting clears only this re-downloadable metadata database. The adapter never
-touches local roster drafts.
+46-document report stays below 2 MiB after adding 35,492 bounded
+selection-target IDs, while still allowing one maximally accepted report.
+Database version 2 adds `pinned-repository-metadata-lru`; reads touch that small
+sidecar instead of rewriting as much as 32 MiB. Payload schema version 3 adds
+selection-target summaries; versions 1 and 2 are quiet misses and rebuild from
+verified bytes. Malformed later accounting clears only this re-downloadable
+metadata database. The adapter never touches local roster drafts.
 
 `navigator.storage.estimate()` is not used as a preflight guard. Its usage
 and quota are origin-wide estimates rather than a per-database or guaranteed
@@ -281,7 +281,8 @@ product features.
 `summarizeBattleScribeRepositoryDocument` creates the small metadata record
 needed for closure planning from an accepted parsed document. The summary
 retains exact root IDs, game-system IDs, catalogue-link target IDs and order,
-plus source locations for link diagnostics. `planBattleScribeDependencyClosure`
+declared cost types, recursively identified selection targets, plus source
+locations for link diagnostics. `planBattleScribeDependencyClosure`
 requires an explicit selected catalogue path, places its exact game system
 first, and traverses catalogue links depth-first in declaration order. Missing,
 ambiguous, cross-system, or wrong-kind targets produce an `incomplete` plan;
@@ -1098,15 +1099,19 @@ rules, profiles, references, modifiers, and publication links participate in
 the same recursive indexing without cloning the retained source tree.
 
 Duplicate-ID diagnostics are emitted only for occurrences that can coexist in
-at least one document closure. Missing-reference diagnostics group equal
-source-document, reference-kind, and target-ID occurrences while retaining the
-first source location, occurrence count, and up to 25 exact occurrence paths.
-Pinned repository summaries retain declared cost-type IDs as bounded metadata.
-Remote focused acquisition passes that verified repository-wide set to graph
-resolution, allowing it to distinguish a zero-valued cost defined outside the
-downloaded closure from an ID absent from the repository. This option refines
-diagnostics only: the graph reference remains unresolved, source bytes remain
-unchanged, and nonzero or repository-absent references remain warnings.
+at least one document closure after local same-kind definitions shadow imports;
+characteristic types use their parent profile type as an additional scope.
+Missing-reference diagnostics group equal source-document, reference-kind, and
+target-ID occurrences while retaining the first source location, occurrence
+count, and up to 25 exact occurrence paths. Named costs and group defaults stay
+as unresolved graph references but defer diagnostics until selected cost
+evaluation or group initialization.
+
+Pinned repository summaries retain declared cost-type and selection-target IDs
+as bounded metadata. Remote focused acquisition derives reverse-consumer facts,
+allowing graph resolution to recognize a condition or repeat target owned by a
+catalogue that consumes the reference's source dependency. These options refine
+diagnostics only: the focused closure and original source remain unchanged.
 BattleScribe lexical selectors such as `parent`, `force`, `roster`, `self`,
 `model`, `unit`, `root-entry`, `any`, `upgrade`, and the default sentinel
 `none` remain projected strings and are not treated as object references.

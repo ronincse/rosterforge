@@ -231,6 +231,109 @@ describe("BattleScribe data graph resolution", () => {
     );
   });
 
+  it("scopes characteristic-type IDs to their resolved profile type", () => {
+    const parsed = parseJsonDocument("profile-scoped-characteristics.json", {
+      gameSystem: {
+        id: "profile-scoped-system",
+        name: "Profile Scoped System",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        profileTypes: [
+          {
+            id: "profile-type-a",
+            name: "Type A",
+            characteristicTypes: [
+              { id: "shared-characteristic-id", name: "Description" },
+            ],
+          },
+          {
+            id: "profile-type-b",
+            name: "Type B",
+            characteristicTypes: [
+              { id: "shared-characteristic-id", name: "Description" },
+            ],
+          },
+        ],
+        selectionEntries: [
+          {
+            id: "profile-owner",
+            name: "Profile Owner",
+            type: "upgrade",
+            profiles: [
+              {
+                id: "profile-a",
+                name: "Profile A",
+                typeId: "profile-type-a",
+                characteristics: [
+                  { typeId: "shared-characteristic-id", name: "Description" },
+                ],
+              },
+              {
+                id: "profile-b",
+                name: "Profile B",
+                typeId: "profile-type-b",
+                characteristics: [
+                  { typeId: "shared-characteristic-id", name: "Description" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const graph = resolveBattleScribeDataGraph([parsed.value]);
+
+    expect(graph.ok).toBe(true);
+    if (!graph.ok) return;
+    expect(
+      graph.value.references
+        .filter(({ kind }) => kind === "characteristicType")
+        .map(({ targets }) => targets.map(({ id }) => id)),
+    ).toEqual([["shared-characteristic-id"], ["shared-characteristic-id"]]);
+    expect(
+      graph.diagnostics.filter(({ code }) => code === "BS_GRAPH_DUPLICATE_ID"),
+    ).toEqual([]);
+  });
+
+  it("does not diagnose a catalogue-local definition shadowing an import", () => {
+    const system = parseJsonDocument("shadow-system.json", {
+      gameSystem: {
+        id: "shadow-system",
+        name: "Shadow System",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        categoryEntries: [{ id: "shadow-category", name: "Imported Name" }],
+      },
+    });
+    const catalogue = parseJsonDocument("shadow-catalogue.json", {
+      catalogue: {
+        id: "shadow-catalogue",
+        name: "Shadow Catalogue",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        gameSystemId: "shadow-system",
+        gameSystemRevision: 1,
+        categoryEntries: [{ id: "shadow-category", name: "Local Name" }],
+      },
+    });
+    expect(system.ok).toBe(true);
+    expect(catalogue.ok).toBe(true);
+    if (!system.ok || !catalogue.ok) return;
+
+    const graph = resolveBattleScribeDataGraph([
+      system.value,
+      catalogue.value,
+    ]);
+
+    expect(graph.ok).toBe(true);
+    expect(
+      graph.diagnostics.filter(({ code }) => code === "BS_GRAPH_DUPLICATE_ID"),
+    ).toEqual([]);
+  });
+
   it("detects catalogue-link cycles without resolving dependencies recursively", () => {
     const graph = resolvedProjectionGraph();
 
@@ -595,6 +698,119 @@ describe("BattleScribe data graph resolution", () => {
         }),
       }),
     ]);
+  });
+
+  it("defers unavailable named costs and group defaults until they are used", () => {
+    const parsed = parseJsonDocument("deferred-selection-references.json", {
+      gameSystem: {
+        id: "deferred-selection-system",
+        name: "Deferred Selection System",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        selectionEntryGroups: [
+          {
+            id: "deferred-group",
+            name: "Deferred Group",
+            defaultSelectionEntryId: "unavailable-default",
+            selectionEntries: [
+              {
+                id: "named-orphan-cost",
+                name: "Named Orphan Cost",
+                type: "upgrade",
+                costs: [
+                  {
+                    name: "Self-described Counter",
+                    typeId: "unavailable-cost-type",
+                    value: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const graph = resolveBattleScribeDataGraph([parsed.value]);
+
+    expect(graph.ok).toBe(true);
+    if (!graph.ok) return;
+    expect(
+      graph.value.references
+        .filter(
+          ({ kind }) =>
+            kind === "defaultSelectionEntry" || kind === "costType",
+        )
+        .map(({ kind, targetId }) => [kind, targetId]),
+    ).toEqual([
+      ["defaultSelectionEntry", "unavailable-default"],
+      ["costType", "unavailable-cost-type"],
+    ]);
+    expect(
+      graph.diagnostics.filter(
+        ({ code }) => code === "BS_GRAPH_MISSING_REFERENCE",
+      ),
+    ).toEqual([]);
+  });
+
+  it("quiets repository-known external condition targets only with proof", () => {
+    const parsed = parseJsonDocument("external-condition-target.json", {
+      gameSystem: {
+        id: "external-condition-system",
+        name: "External Condition System",
+        revision: 1,
+        battleScribeVersion: "2.03",
+        selectionEntries: [
+          {
+            id: "condition-owner",
+            name: "Condition Owner",
+            type: "upgrade",
+            modifiers: [
+              {
+                type: "set",
+                field: "hidden",
+                value: false,
+                conditions: [
+                  {
+                    type: "instanceOf",
+                    field: "selections",
+                    scope: "ancestor",
+                    childId: "external-selection",
+                    value: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const unresolved = resolveBattleScribeDataGraph([parsed.value]);
+    const repositoryKnown = resolveBattleScribeDataGraph([parsed.value], {
+      knownRepositorySelectionTargetIdsBySource: new Map([
+        [
+          "external-condition-target.json",
+          new Set([objectId("external-selection")]),
+        ],
+      ]),
+    });
+
+    expect(unresolved.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "BS_GRAPH_MISSING_REFERENCE",
+        details: expect.objectContaining({
+          kind: "conditionChild",
+          targetId: "external-selection",
+        }),
+      }),
+    );
+    expect(repositoryKnown.ok).toBe(true);
+    expect(repositoryKnown.diagnostics).toEqual([]);
   });
 
   it("only quiets unresolved zero costs proven to exist in the repository", () => {

@@ -401,19 +401,29 @@ kind, target ID, and expected kinds. The diagnostic points to the first
 occurrence and includes `occurrenceCount`, up to 25 `occurrencePaths`, and
 `omittedOccurrenceCount`; ungrouped graph reference records retain every
 occurrence. Duplicate IDs include every indexed occurrence that can coexist in
-at least one supplied catalogue/game-system closure. Equal IDs confined to
-unrelated catalogues remain indexed but do not emit a false ambiguity warning.
+at least one supplied catalogue/game-system closure after catalogue-local
+same-kind definitions shadow imports. Characteristic-type IDs are scoped to
+their containing profile type, so equal IDs in distinct schemas are not global
+collisions. Equal IDs confined to unrelated catalogues remain indexed but do
+not emit a false ambiguity warning.
 Catalogue-link cycles include the detected document ID path and point to the
 link that closes the cycle. These diagnostics are advisory for graph
 construction and do not imply roster validation has run.
 
-Focused pinned-repository acquisition also supplies the verified index's
-cost-type IDs to diagnostic resolution. An unresolved zero-valued cost whose
-target is proven to exist elsewhere in that repository remains in the graph but
-does not emit `BS_GRAPH_MISSING_REFERENCE`; it is outside the focused download,
-not absent from the source. Nonzero costs and cost-type IDs absent from the
-repository remain diagnosed. Local file imports have no repository-wide proof
-and therefore retain their ordinary missing-reference diagnostics.
+Named costs are self-describing at import time. Their unresolved cost-type
+references remain in the graph without a load warning; if a selected occurrence
+needs an absent cost type, evaluation emits the existing incomplete-cost report.
+The same deferral applies to an unavailable group default: initialization
+reports it only when that group is used. Unnamed unresolved costs remain graph
+diagnostics, except that focused pinned-repository acquisition can prove a
+zero-valued legacy type exists elsewhere in the repository.
+
+Pinned repository summaries also retain bounded selection-target IDs. A
+condition or repeat reference in a dependency is not called missing when a
+catalogue that transitively consumes that dependency owns an expected target.
+This reverse-consumer proof refines diagnostics only: it does not fetch the
+consumer, resolve the reference inside the focused graph, or change local-file
+behavior.
 
 An ID retained by the generic tree but absent from the typed object index is an
 unprojected target, not a missing reference. The graph reference exposes it
@@ -461,6 +471,11 @@ definition chain. Info-group cycle diagnostics include the repeated group
 chain and leave the recursive link unresolved with reason `cycle`. A missing
 `targetId` uses the missing-target code and preserves the distinction through
 the `missingTargetId` reason.
+
+A link-local child may repeat its parent link's definition because the child
+overlay is a distinct, finite occurrence. Definition-owned edges still close a
+cycle immediately, so true self-cycles and multi-definition cycles remain
+diagnosed and bounded.
 
 An unknown info-link type remains unresolved with reason `unsupportedType`.
 A known rule/profile link whose ID exists only in an unprojected generic

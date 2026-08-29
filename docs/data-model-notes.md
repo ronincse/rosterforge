@@ -153,8 +153,10 @@ Typed reference candidates remain repository-wide because observed shared
 definitions can refer to consuming catalogues and repository-level cost types.
 Entry-link and info-link materialization uses
 `reachableDocumentsByDocument`, preventing an equal ID in an unrelated
-catalogue from becoming an effective definition. Duplicate diagnostics are
-limited to object groups that can coexist in at least one such closure.
+catalogue from becoming an effective definition. Catalogue-local same-kind
+definitions shadow imports for duplicate diagnostics. Characteristic-type IDs
+are resolved inside a uniquely resolved profile type, so equal IDs under two
+different profile schemas remain distinct.
 
 An ID present only in `genericElementsById` is an unprojected target, not a
 missing target. This distinction remains important for future or extension
@@ -184,18 +186,19 @@ Equal missing references in one source document are grouped by reference kind,
 target ID, and expected kinds. The diagnostic retains the first exact source
 location, total occurrence count, up to 25 exact occurrence paths, and an
 omitted-path count. Reference records themselves remain ungrouped and preserve
-every occurrence.
+every occurrence. Named unresolved costs and unavailable group defaults defer
+their user-facing diagnostics until cost evaluation or group initialization.
+Pinned repository reverse-consumer facts can also prove that condition and
+repeat targets live in a consuming catalogue outside the focused closure.
 
 Profile types and characteristic types are indexed graph objects. A profile's
 `typeId` expects a `profileType`; each characteristic's `typeId` expects a
-`characteristicType`. Missing IDs use the normal graph diagnostic and duplicate
-targets remain ambiguous arrays. `typeName` remains supplied display text and
-is not used as a fallback resolver.
-
-Graph resolution remains global and does not enforce containment consistency.
-The separate profile-containment inspector described below reports whether
-uniquely resolved characteristic types belong to a uniquely resolved profile
-type without changing graph resolution behavior.
+`characteristicType` contained by that uniquely resolved profile type. Missing
+IDs use the normal graph diagnostic and true same-schema duplicates remain
+ambiguous arrays. `typeName` remains supplied display text and is not used as a
+fallback resolver. The separate profile-containment inspector described below
+still reports a uniquely resolved characteristic that lies outside its profile
+type.
 
 ## Category-Definition Composition
 
@@ -1091,6 +1094,9 @@ An entry link that cannot be materialized remains an
 target-kind mismatch, ambiguous target, or cycle. Candidates and the original
 link remain accessible. The materializer never chooses among duplicate targets
 and terminates recursive link chains at the unresolved cycle node.
+Definition-owned repeated targets close cycles. A distinct child owned by the
+current link overlay may reuse the same definition because that projected
+overlay tree is finite; its own definition children remain cycle-checked.
 
 Each materialized selection container exposes `materializedInfoLinks` in the
 same definition-first order as its raw `infoLinks` and

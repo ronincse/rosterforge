@@ -31,6 +31,7 @@ export interface BrowserRemoteMetadataCacheLimits {
   readonly maxDiagnostics: number;
   readonly maxCatalogueLinks: number;
   readonly maxCostTypeIds: number;
+  readonly maxSelectionTargetIds: number;
 }
 
 /**
@@ -63,8 +64,8 @@ export interface BrowserRemoteMetadataCacheMetadataRecord {
 }
 
 const recordFormat = "rosterforge.pinned-repository-metadata-cache";
-const recordVersion = 2;
-const legacyRecordVersion = 1;
+const recordVersion = 3;
+const legacyRecordVersions = new Set([1, 2]);
 const metadataFormat =
   "rosterforge.pinned-repository-metadata-cache-metadata";
 const metadataVersion = 1;
@@ -77,14 +78,16 @@ const gitShaPattern = /^[0-9a-f]{40}$/u;
 export const defaultBrowserRemoteMetadataCacheLimits: BrowserRemoteMetadataCacheLimits =
   {
     maxEntryBytes: 32 * 1024 * 1024,
-    // One maximally accepted index can fit. The pinned 46-document index is
-    // currently 181,985 bytes, so real revisions remain plentiful but bounded.
+    // One maximally accepted index can fit. The pinned 46-document index stays
+    // below 2 MiB with 35,492 selection-target IDs, so real revisions remain
+    // useful while total storage is still bounded.
     maxTotalBytes: 32 * 1024 * 1024,
     maxFiles: 4096,
     maxDocuments: 4096,
     maxDiagnostics: 100_000,
     maxCatalogueLinks: 65_536,
     maxCostTypeIds: 65_536,
+    maxSelectionTargetIds: 250_000,
   };
 
 /**
@@ -100,7 +103,9 @@ export function createBrowserRemoteCatalogueMetadataCache(
     ...defaultBrowserRemoteMetadataCacheLimits,
     ...limits,
   };
-  for (const [name, value] of Object.entries(resolvedLimits)) {
+  for (const [name, value] of Object.entries(resolvedLimits) as Array<
+    [string, number]
+  >) {
     assertPositiveInteger(value, name);
   }
   if (resolvedLimits.maxEntryBytes > resolvedLimits.maxTotalBytes) {
@@ -115,11 +120,12 @@ export function createBrowserRemoteCatalogueMetadataCache(
       if (
         isRecord(record) &&
         record.format === recordFormat &&
-        record.version === legacyRecordVersion
+        typeof record.version === "number" &&
+        legacyRecordVersions.has(record.version)
       ) {
-        // Version 1 predates repository cost-type summaries. Treating this
-        // expected schema transition as corruption would surface a false
-        // Developer warning; the verified index rebuild will replace it.
+        // Older records predate repository facts used to classify focused-
+        // closure references. A quiet miss lets the verified index rebuild
+        // without mislabelling an expected schema transition as corruption.
         return undefined;
       }
       const decoded = decodeCacheRecord(record, id, key, resolvedLimits);
@@ -239,7 +245,12 @@ function decodePayload(
     throw invalidPayload("has an invalid document collection");
   }
 
-  const counts = { diagnostics: 0, catalogueLinks: 0, costTypeIds: 0 };
+  const counts = {
+    diagnostics: 0,
+    catalogueLinks: 0,
+    costTypeIds: 0,
+    selectionTargetIds: 0,
+  };
   return {
     status: value.status,
     totalBytes: value.totalBytes,
@@ -250,9 +261,16 @@ function decodePayload(
   };
 }
 
+interface DecodeCounts {
+  diagnostics: number;
+  catalogueLinks: number;
+  costTypeIds: number;
+  selectionTargetIds: number;
+}
+
 function decodeFile(
   value: unknown,
-  counts: { diagnostics: number; catalogueLinks: number; costTypeIds: number },
+  counts: DecodeCounts,
   limits: BrowserRemoteMetadataCacheLimits,
 ): RemoteRepositoryIndexFileReport {
   if (!isRecord(value)) throw invalidPayload("contains a non-object file");
@@ -311,7 +329,7 @@ function decodeTreeFile(value: unknown): PinnedGitHubRepositoryFile {
 
 function decodeDocument(
   value: unknown,
-  counts: { diagnostics: number; catalogueLinks: number; costTypeIds: number },
+  counts: DecodeCounts,
   limits: BrowserRemoteMetadataCacheLimits,
 ): BattleScribeRepositoryDocumentSummary {
   if (
@@ -325,7 +343,9 @@ function decodeDocument(
     (value.library !== undefined && typeof value.library !== "boolean") ||
     !Array.isArray(value.catalogueLinks) ||
     !Array.isArray(value.costTypeIds) ||
-    !value.costTypeIds.every((id) => typeof id === "string")
+    !value.costTypeIds.every((id) => typeof id === "string") ||
+    !Array.isArray(value.selectionTargetIds) ||
+    !value.selectionTargetIds.every((id) => typeof id === "string")
   ) {
     throw invalidPayload("contains an invalid document summary");
   }
@@ -336,6 +356,10 @@ function decodeDocument(
   counts.costTypeIds += value.costTypeIds.length;
   if (counts.costTypeIds > limits.maxCostTypeIds) {
     throw invalidPayload("contains too many cost-type IDs");
+  }
+  counts.selectionTargetIds += value.selectionTargetIds.length;
+  if (counts.selectionTargetIds > limits.maxSelectionTargetIds) {
+    throw invalidPayload("contains too many selection-target IDs");
   }
 
   const source =
@@ -350,6 +374,7 @@ function decodeDocument(
       : { gameSystemId: value.gameSystemId as ObjectId }),
     ...(value.library === undefined ? {} : { library: value.library }),
     costTypeIds: value.costTypeIds as ObjectId[],
+    selectionTargetIds: value.selectionTargetIds as ObjectId[],
     catalogueLinks: value.catalogueLinks.map(decodeCatalogueLink),
     ...(source === undefined ? {} : { source }),
   };

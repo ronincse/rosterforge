@@ -580,10 +580,23 @@ function materializeContainer(
     ],
     entryLinks: [
       ...definition.entryLinks.map((childLink) =>
-        materializeEntryLink(childLink, definitionDocument, stack, linkDepth, context),
+        materializeEntryLink(
+          childLink,
+          definitionDocument,
+          stack,
+          linkDepth,
+          context,
+        ),
       ),
       ...(link?.entryLinks.map((childLink) =>
-        materializeEntryLink(childLink, sourceDocument, stack, linkDepth, context),
+        materializeEntryLink(
+          childLink,
+          sourceDocument,
+          stack,
+          linkDepth,
+          context,
+          true,
+        ),
       ) ?? []),
     ],
     categoryLinks: combined(definition.categoryLinks, link?.categoryLinks),
@@ -921,6 +934,7 @@ function materializeEntryLink(
   stack: readonly SelectionDefinition[],
   linkDepth: number,
   context: MaterializationContext,
+  linkOwned = false,
 ): MaterializedEntryLink {
   if (link.targetId === undefined) {
     return unresolvedLink(
@@ -981,7 +995,10 @@ function materializeEntryLink(
   }
   const definition = target.source as SelectionDefinition;
   const cycleStart = stack.indexOf(definition);
-  if (cycleStart !== -1) {
+  // Link-owned children are finite overlay syntax, so they may deliberately
+  // target the definition their parent link already materialized. Definition
+  // children remain recursive graph edges and still close cycles immediately.
+  if (cycleStart !== -1 && !linkOwned) {
     return unresolvedLink(
       link,
       sourceDocument,
