@@ -70,8 +70,9 @@ A fresh review of the current Layout, Lists and tables, Toolbars, Search fields,
 Sheets, Materials, and Accessibility guidance confirms this document's intended
 direction, with three constraints made explicit:
 
-- translucent material is a restrained navigation/transient-control layer, not
-  the content background;
+- translucent material is a restrained navigation/transient-control layer;
+  top-level army units may use a thicker standard-material card so the page
+  color carries through without turning nested editors into glass;
 - a sheet is one bounded task with one clear dismissal and retained context,
   never another persistent application column; and
 - scalable text, contrast, color-independent state, and safe-area adaptation
@@ -137,20 +138,25 @@ An open roster uses one persistent navigation/toolbar layer:
 - trailing: one prominent Add unit action and one More menu;
 - More: Save, Duplicate, Print, and other uncommon document actions.
 
-Navigation may use restrained translucency and blur so content can scroll below
-it, but glass-like material belongs only to navigation and transient controls.
-Roster rows and content groups stay on opaque standard surfaces. Do not title a
+Navigation may use restrained translucency and strong background blur so
+content can scroll below it, but clear glass is not a general content surface.
+Top-level army units are the deliberate exception: each unit owns a separate,
+high-opacity standard-material card whose blur carries through page color while
+preserving the scan boundary. Nested selections, editors, and other content
+groups stay on opaque standard surfaces. Modal overlays blur the entire
+underlying viewport while their task surface remains sharp. Do not title a
 window `RosterForge`, put destructive actions in the primary position, or keep
 parallel text-button rows for commands already in the toolbar/menu.
 
 ## Lists, rows, and controls
 
-Each battlefield role is one elevated grouped list with 16 px page margins. A
-unit row has a minimum 44 px target, 16 px horizontal padding, one inset
-separator, and no ornamental outer stroke or accent border. Its first line is
-the unit name plus semantic pills such as Warlord and trailing points/chevron.
-Its second line summarizes only selected model types and wargear. A known
-problem uses direct player language such as `Needs 4 more models`.
+Each battlefield role is one scan group with 16 px page margins. Every top-level
+unit is its own rounded material card, separated from its siblings by the shared
+spacing rhythm rather than merged by inset separators. A unit row has a minimum
+44 px target and 16 px horizontal padding. Its first line is the unit name plus
+semantic pills such as Warlord and trailing points/chevron. Its second line
+summarizes only selected model types and wargear. A known problem uses direct
+player language such as `Needs 4 more models`.
 
 Tapping the row selects it for editing. Read-only information and destructive
 removal live in the inspector, not as competing row buttons. A disclosure

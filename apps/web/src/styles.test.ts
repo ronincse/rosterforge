@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest";
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
 describe("phone-width layout contracts", () => {
+  it("does not turn the 320 px support floor into horizontal overflow", () => {
+    expect(styles).toContain("min-width: min(320px, 100%);");
+  });
+
   it("keeps diagnostic and remote-source grids shrinkable", () => {
     // jsdom does not calculate layout. Pin the declarations whose removal made
     // a real Death Guard roster 41 px wider than its 390 px browser viewport.
@@ -107,5 +111,34 @@ describe("phone-width layout contracts", () => {
     expect(styles).toContain(
       ".roster-configuration[open] .roster-configuration-chevron {\n  transform: rotate(90deg);",
     );
+  });
+
+  it("keeps glass surfaces distinct, legible, and progressively enhanced", () => {
+    // Blur is an enhancement, not the only source of separation. Pin opaque
+    // enough surfaces and borders alongside the WebKit path and accessibility
+    // fallbacks because these cards repeat throughout a phone-width roster.
+    expect(styles).toContain(
+      ".roster-workspace-nav {\n  position: sticky;\n  z-index: 5;\n  top: 0;",
+    );
+    expect(styles).toMatch(
+      /\.roster-workspace-nav \{[\s\S]*?background: rgba\(29, 68, 53, 0\.82\);[\s\S]*?-webkit-backdrop-filter: blur\(26px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(26px\) saturate\(115%\);/u,
+    );
+    expect(styles).toContain(
+      '.roster-selection-section[data-section="army"]\n' +
+        "  > .roster-top-level-selection-list {\n" +
+        "  display: grid;\n  gap: 10px;\n  overflow: visible;\n" +
+        "  background: transparent;\n  border: 0;",
+    );
+    expect(styles).toMatch(
+      /\.roster-unit-row \{[\s\S]*?background: rgba\(247, 245, 237, 0\.72\);[\s\S]*?border-radius: 14px;[\s\S]*?-webkit-backdrop-filter: blur\(18px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(18px\) saturate\(115%\);/u,
+    );
+    expect(styles).not.toContain(".roster-unit-row + .roster-unit-row");
+    expect(styles).toMatch(
+      /\.choice-preview-backdrop \{[\s\S]*?background: rgba\(19, 32, 26, 0\.7\);[\s\S]*?@supports[\s\S]*?\.choice-preview-backdrop \{[\s\S]*?-webkit-backdrop-filter: blur\(20px\) saturate\(90%\);[\s\S]*?backdrop-filter: blur\(20px\) saturate\(90%\);/u,
+    );
+    expect(styles).toContain(
+      "@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {",
+    );
+    expect(styles).toContain("@media (forced-colors: active) {");
   });
 });

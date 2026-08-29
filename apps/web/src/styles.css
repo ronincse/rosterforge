@@ -35,7 +35,9 @@ html {
 
 body {
   margin: 0;
-  min-width: 320px;
+  /* A classic vertical scrollbar reduces the layout viewport below 320 px.
+     Cap the support floor at the available width instead of widening it. */
+  min-width: min(320px, 100%);
   min-height: 100vh;
   background:
     linear-gradient(rgba(23, 63, 50, 0.035) 1px, transparent 1px),
@@ -971,10 +973,14 @@ h1 {
   gap: 1px;
   margin-top: 18px;
   padding: 4px;
-  background: #294f40;
-  border: 1px solid #1f4034;
-  border-radius: 4px;
-  box-shadow: 0 5px 14px rgba(27, 52, 43, 0.16);
+  background: rgba(29, 68, 53, 0.82);
+  border: 1px solid rgba(226, 240, 232, 0.42);
+  border-radius: 16px;
+  box-shadow:
+    0 10px 30px rgba(18, 45, 35, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(26px) saturate(115%);
+  backdrop-filter: blur(26px) saturate(115%);
 }
 
 .roster-configuration {
@@ -1102,7 +1108,7 @@ h1 {
   color: #f7f5ec;
   background: rgba(255, 255, 255, 0.04);
   border: 0;
-  border-radius: 2px;
+  border-radius: 12px;
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -1139,7 +1145,7 @@ h1 {
 .roster-workspace-nav small,
 .roster-workspace-nav button small {
   overflow: hidden;
-  color: #c8d5cf;
+  color: #d4e0da;
   font-size: 0.54rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1885,32 +1891,47 @@ button.player-header-figure {
   min-width: 0;
 }
 
-/* Army units are a scan-first list. The single disclosure row owns selection;
-   the adjacent inspector owns editing, viewing, and destructive actions. */
+/* Army units are scan-first cards. The parent deliberately has no shared
+   surface so each top-level unit can carry its own material and state; the
+   adjacent inspector still owns editing, viewing, and destructive actions. */
 .roster-selection-section[data-section="army"]
   > .roster-top-level-selection-list {
-  display: block;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(60, 60, 67, 0.16);
-  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .roster-unit-row {
-  scroll-margin-top: 84px;
-  background: transparent;
-}
+  --unit-card-elevation: 0 7px 20px rgba(31, 56, 46, 0.11);
+  --unit-card-state-shadow: 0 0 0 transparent;
+  --unit-card-attention-shadow: 0 0 0 transparent;
 
-.roster-unit-row + .roster-unit-row {
-  border-top: 1px solid rgba(60, 60, 67, 0.12);
+  overflow: hidden;
+  scroll-margin-top: 84px;
+  background: rgba(247, 245, 237, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  box-shadow:
+    var(--unit-card-elevation),
+    var(--unit-card-state-shadow),
+    var(--unit-card-attention-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  backdrop-filter: blur(18px) saturate(115%);
 }
 
 .roster-unit-row[data-active="true"] {
-  background: rgba(36, 93, 72, 0.1);
+  --unit-card-state-shadow: inset 0 0 0 1px rgba(36, 93, 72, 0.34);
+
+  background: rgba(222, 234, 226, 0.76);
+  border-color: rgba(36, 93, 72, 0.34);
 }
 
 .roster-unit-row[data-attention] {
-  box-shadow: inset 3px 0 0 #9a4a3f;
+  --unit-card-attention-shadow: inset 3px 0 0 #9a4a3f;
 }
 
 .roster-unit-row-disclosure {
@@ -2294,6 +2315,21 @@ button.player-header-figure {
    compact layouts spend the viewport on searchable results and safe areas. */
 .add-unit-sheet-backdrop {
   background: rgba(19, 32, 26, 0.56);
+}
+
+/* Backdrop blur belongs on the viewport overlay so the dialog remains sharp.
+   The darker declarations above remain the legible fallback for browsers that
+   cannot composite the content behind the modal. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .choice-preview-backdrop {
+    background: rgba(19, 32, 26, 0.38);
+    -webkit-backdrop-filter: blur(20px) saturate(90%);
+    backdrop-filter: blur(20px) saturate(90%);
+  }
+
+  .add-unit-sheet-backdrop {
+    background: rgba(19, 32, 26, 0.34);
+  }
 }
 
 .add-unit-dialog {
@@ -4112,6 +4148,53 @@ footer {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .roster-workspace-nav {
+    background: #294f40;
+    border-color: #d4e0da;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .roster-unit-row {
+    background: #f7f5ed;
+    border-color: #839087;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .roster-unit-row[data-active="true"] {
+    background: #dce9e0;
+  }
+
+  .choice-preview-backdrop,
+  .add-unit-sheet-backdrop {
+    background: rgba(19, 32, 26, 0.76);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .roster-workspace-nav,
+  .roster-unit-row {
+    color: CanvasText;
+    background: Canvas;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    forced-color-adjust: auto;
+  }
+
+  .choice-preview-backdrop,
+  .add-unit-sheet-backdrop {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 

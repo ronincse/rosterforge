@@ -490,14 +490,17 @@ underlying group projection, materialized roots, visibility, or diagnostics.
 
 The active roster workspace uses three stable destinations: `Roster`,
 `Add unit`, and `Checks`. A compact sticky navigator exposes live top-level
-selection, available-choice, and supported-issue counts. `Add unit` opens the
-existing grouped and filterable root projection as a scoped modal task; the
+selection, available-choice, and supported-issue counts. Its high-opacity
+blurred material is a presentation layer only; it does not change navigation
+state or the cost and issue projections beneath its counts. `Add unit` opens
+the existing grouped and filterable root projection as a scoped modal task; the
 catalogue is closed by default and never consumes a permanent builder column.
 The sheet is bounded and centred at regular widths and fills the viewport at
 the compact breakpoint. Compact opens and the `/` shortcut focus search;
 ordinary regular-width opens focus the explicit Close action. Escape and
-backdrop dismissal return focus to the trigger, while a successful army-root
-addition closes the sheet and focuses the new roster row. Configuration-root
+backdrop dismissal return focus to the trigger, while the shared overlay blurs
+the viewport behind the still-sharp dialog. A successful army-root addition
+closes the sheet and focuses the new roster row. Configuration-root
 additions and failed mutations retain the open sheet and its filter. Opening a
 read-only catalogue preview temporarily hides the Add unit dialog so only one
 modal is exposed, then restores the originating information action.
@@ -550,11 +553,14 @@ incomplete requirements do not trigger the transition, and supported attention
 reopens the owning card. Focus returns to the card disclosure when completing a
 choice removes the clicked control from the document.
 
-Army units render as compact selectable rows grouped by battlefield role. Each
-row has one disclosure control and carries the projection's recursive cost,
-exact direct-model composition and selected upgrade identity, plus structurally
-recognized designation and attention pills. Selecting it mounts the existing
-mutation controls in one dedicated options surface. That inspector owns the
+Army units render as compact selectable cards grouped by battlefield role. The
+group has no shared container surface: each top-level unit owns a separate,
+high-opacity blurred material while nested selection editors remain ordinary
+opaque content. Each card has one disclosure control and carries the
+projection's recursive cost, exact direct-model composition and selected
+upgrade identity, plus structurally recognized designation and attention pills.
+Selecting it mounts the existing mutation controls in one dedicated options
+surface. That inspector owns the
 read-only `View unit card` and destructive `Remove unit` actions; neither is
 duplicated on every army row. The renderer has presentation modes, not separate
 editing implementations, so required upgrades, grouped replacements, and

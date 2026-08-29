@@ -216,9 +216,10 @@
   selected but cannot be removed below that minimum. Surplus occurrences remain
   removable, unresolved bounds stay permissive, and grouped replacement
   weapons retain their ordinary deselect-or-replace controls
-- Compact grouped army rows with one disclosure target, recursive cost, exact
-  model/loadout composition, structurally recognized designation/status pills,
-  and automatic focus for a newly added army unit. A dedicated options region
+- Compact army-unit cards, individually separated on high-opacity blurred
+  material, with one disclosure target, recursive cost, exact model/loadout
+  composition, structurally recognized designation/status pills, and automatic
+  focus for a newly added army unit. A dedicated options region
   reuses the existing edit controls and owns read-only full-card viewing and
   destructive removal, so rows carry no competing View/Remove controls.
   The catalogue is available through a focused Add unit sheet; configuration
@@ -246,14 +247,16 @@
   empty result
 - At most two simultaneous desktop columns: roster list plus selected-unit
   options. Add unit is a centred regular-width modal and a full-screen compact
-  sheet; the complete unit card is a separate modal reference. All surfaces
+  sheet; the complete unit card is a separate modal reference. Their shared
+  overlay blurs the full viewport behind the sharp task surface. All surfaces
   remain without horizontal overflow at 390 px and the 320 px supported minimum
 - Validation links to nested selections focus the owning army unit before
   resolving an anchor that otherwise would not be mounted in the options
   region. Configuration links open the compact outer row and every owning card,
   then focus the exact stable selection anchor
-- Persistent Roster, Add unit, and Checks workspace navigation with live
-  counts, a two-pane roster/options desktop builder, and a browser-verified
+- Persistent Roster, Add unit, and Checks workspace navigation with live counts
+  on a high-opacity blurred material, a two-pane roster/options desktop builder,
+  and a browser-verified
   full-width mobile fallback. Add unit starts closed, preserves its search on
   dismissal, traps focus, opens search-first on compact screens or through `/`,
   and closes/focuses the new row after a successful army-unit add. At 390 px and
