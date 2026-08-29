@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (all selectable catalogue loads clean; active-roster system remains Next)
+## Current Status — 2026-08-29 (direct unit commands and references complete; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -75,9 +75,10 @@ diagnostic codes.
   groups and unresolved bounds retain their existing permissive behavior. Army
   unit rows are now compact grouped-list disclosures: each row carries exact
   model/loadout composition, structural role/status pills, recursive points,
-  and one action that focuses the dedicated options surface. Read-only View and
-  destructive Remove actions live in that inspector rather than competing on
-  every row. The catalogue is now a closed-by-default Add unit sheet rather
+  and one action that focuses the dedicated options surface. View, Duplicate,
+  and Remove are now direct sibling row commands as well as options-inspector
+  commands, so no mutation requires selecting the row first. The catalogue is
+  now a closed-by-default Add unit sheet rather
   than a permanent builder column; compact layouts use the full viewport and
   focus search, regular layouts use a centred modal and focus Close, and a
   successful army add closes the task and focuses the new row. The outer
@@ -324,6 +325,20 @@ diagnostic codes.
   complete editor remains one action away. New supported attention reopens the
   controls, and exact validation links reveal and focus hidden configuration
   targets.
+  The roster body now has one visible `Your roster` heading; the redundant
+  selected-roster/starting-force labels are gone while the exact force anchor
+  remains available to validation links. Unit duplication copies the complete
+  configured occurrence subtree, including amounts, names, model choices, and
+  loadout choices, assigns fresh IDs, and records one undoable history step.
+  Empty catalogue choices no longer advertise an information dialog, lower
+  unit-card profiles/rules/groups use the shared nested-card material, and an
+  exact unambiguous keyword category with authored rules opens a focused rule
+  dialog. Battle Size removes source ordinals only in display and presents its
+  direct points override immediately beside the standard sizes on one shared
+  inset surface. Implementation commit `ef9125f` passed 545 ordinary tests
+  (20 skipped), all 565 tests against the pinned 46-document corpus, lint,
+  typecheck, build, and diff checks; desktop and 390/320 px browser QA remained
+  overflow-free with no warning/error console output.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
   the BUILD → VALIDATE → PLAY lifecycle, the v1 and v2 acceptance definitions,
   the reference army (**2,000-point Dark Angels**, detachment, character with an
@@ -721,13 +736,13 @@ QA before classifying or implementing the discrepancy.
 | Child-model statlines are still two expansions deep | Done | direct model occurrences are partitioned from the unit's configuration children and rendered once, immediately below the unit datasheet. The model row keeps its name, amount control, statline, edit disclosure and removal action; its own wargear/options subtree starts closed unless attention requires it. Non-model children remain in the parent configure disclosure, and nested/unit-typed sub-units are deliberately not flattened |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
-| Roster duplicate is not reachable by a user | Open | `duplicateRosterSelection` and `duplicateRosterForce` exist with tests and section E marks the command set Done, which is true headlessly. Confirmed in the running app that there is **no duplicate affordance anywhere**: the saved-draft shelf offers Open and Delete only. `docs/product-vision.md` workflow step 5 is "save, reopen, **duplicate**, and revise", so v1 is incomplete by definition until this is exposed. The owner placed the newly surfaced check-coverage work ahead of duplication; keep the eventual checkpoint bounded to the saved-roster user path and exact persistence/identity behavior |
+| Whole-roster duplicate is not reachable by a user | Open | Exact configured **unit-occurrence** duplication is now Done in the active roster: the direct row/inspector command copies the entire selected subtree with fresh occurrence IDs and one Undo/Redo step. The separate saved-draft workflow still offers Open and Delete only, so `docs/product-vision.md` step 5 — "save, reopen, duplicate, and revise" — remains incomplete until whole-roster/draft duplication exposes `duplicateRosterForce` with exact persistence and identity behavior |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, and stronger inactive-unit borders are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -757,7 +772,8 @@ bounded and independently reviewable:
    inspector, picker, switch, stepper, status, and remaining command primitives
    across the active roster — **Next**. The requested dense-blur navigator,
    separate top-level unit materials, blurred modal backdrop, and roster-action
-   More menu are already delivered;
+   More menu, direct unit commands, nested reference-card material, honest info
+   affordances, and keyword-rule dialog are already delivered;
 7. bring Lists, roster creation, source acquisition, recovery, and their
    empty/error states into the same component system;
 8. reconcile datasheets, checks, save/duplicate/print, and print hierarchy with
@@ -13204,3 +13220,132 @@ evaluation completeness boundaries remain observable.
 **Complete the remaining shared active-roster component and token system.**
 The owner-requested catalogue diagnostic audit is complete and does not change
 the overhaul's existing Next priority.
+
+## Completed Assignment — Direct Unit Commands And Honest References, 2026-08-29
+
+Baseline `acd8716e5de65f42eba3c1ded56fa8365c37e83c`; resulting
+implementation commit `ef9125f` and this handoff commit on
+`codex/list-builder-ui-overhaul`. Stable `main` remains intentionally unchanged
+at `3e9d05d`. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The roster body now presents one visible `Your roster` heading. The redundant
+`Selected roster`, `Starting force`, and `Army Roster` labels were removed, but
+the source force's stable DOM anchor and identity remain available to exact
+validation links. Every army row now carries direct View, Duplicate, and Remove
+commands beside Configure; the selected-unit inspector repeats those commands.
+Removing or opening a unit no longer requires changing the active selection,
+and row removal restores focus to a neighbouring row or the roster heading.
+
+Duplicate is one atomic session command. `roster-model` copies the exact
+configured occurrence subtree immediately after its source, the web session
+copies every old-to-new materialized choice association, and the controller
+mints a fresh ID for every copied occurrence and records one history step.
+Names, quantities, selected models, equipment, and nested options therefore
+survive exactly; Undo removes the whole copy and Redo restores it.
+
+Reference presentation now follows the active-roster material contract through
+lower profile, rule, information-group, table, and stat-cell surfaces. A
+catalogue choice receives an information action only when it has substantive
+authored profiles/rules/groups or a useful unit composition/model branch, so
+empty Battle Size choices no longer open a dialog that only says there is
+nothing to show. Effective keyword chips remain plain unless their exact
+category ID resolves to one unambiguous definition with direct or linked rules;
+rule-bearing keywords open a focused modal over the covered unit card and
+restore focus to the invoking chip.
+
+Battle Size removes leading source ordinals only in that presentation. Its
+direct `Override points limit?` choice remains outside the grouped-size
+constraint domain in the DOM and mutation model, but both now sit next to one
+another on one shared nested-card surface rather than in visibly separate
+sections.
+
+### Decisions and rejected alternatives
+
+One heading won over hiding the entire force identity because exact diagnostic
+anchors still need a stable target. Direct row commands won over a select-first
+workflow because View, Remove, and exact-copy actions apply to the occurrence
+already named by the row; Configure remains the larger disclosure target.
+
+Duplication deliberately bypasses catalogue initialization and automatic
+reconciliation. Replanning would replace configured choices with defaults, and
+reconciling one sibling could make two intended copies diverge. Copying only
+the root's choice association was rejected because every descendant occurrence
+must retain its exact materialized definition. Known complete maxima disable
+Duplicate; unresolved bounds stay permissive and incomplete instead of being
+guessed.
+
+Keyword display text was rejected as a rule join key. Exact category identity
+and a unique resolved definition are required; ambiguous or rule-less keywords
+stay readable but noninteractive. Keywords and unresolved links alone were
+also rejected as evidence for a choice-info button, while a useful unit's
+planned composition remains legitimate reference content. Finally, moving the
+points override into the grouped sizes was again rejected because it would
+change authored constraint semantics; the integration is visual only.
+
+### Delegation and review
+
+A native Codex child performed an early read-only audit of duplicate-session
+semantics, row action/focus behavior, info-action classification, keyword-rule
+resolution, Battle Size display scoping, responsive controls, and test risks in
+a disposable worktree at exact baseline `acd8716`. It confirmed that the core
+duplicate command already preserved the subtree and insertion order, and found
+that the app layer must copy every descendant choice association without
+initialization or reconciliation. Codex reviewed the findings, implemented and
+tested the complete checkpoint, and accepted no delegated code. The worktree
+was verified tracked-clean and removed.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA imported the pinned Aeldari game system, primary catalogue, and
+library, then created a real roster with Strike Force, Warhost, and
+Reconnaissance. Battle Size displayed `Incursion (1000 Point limit)` and
+`Strike Force (2000 Point limit)` without source ordinals, placed Override
+immediately beside them, and exposed no empty information actions. A real Dire
+Avengers row exposed Configure, View, Duplicate, and Remove. Duplicating it
+produced two independent rows with identical `4x Dire Avenger` plus `1x Dire
+Avenger Exarch` composition and fresh occurrence IDs. The unit sheet retained
+the complete lower profiles, rules, keywords, model composition, equipment, and
+options on the shared material, while its modal blurred the entire underlying
+viewport.
+
+At 390 x 844 and 320 x 760, the three direct commands moved to their own row;
+the 320 px buttons were exactly 44 px high. Measured document widths remained
+inside the viewport (`375` at 390 and `305` at 320), and the browser warning/
+error console was empty. The viewport override was reset. The in-app preview
+remains open and the development server was deliberately left running at
+`http://127.0.0.1:5175/` for the owner.
+
+Verification:
+
+- ordinary suite — **545 passed, 20 skipped (565 total)** across 58 files;
+- complete pinned-corpus suite at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **565 passed (565)** across
+  58 files and 46 external JSON documents;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check`, and staged
+  diff checks — clean; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint changes no imported bytes, generic tree, source projection,
+evaluation semantics, validation completeness, persistence format, or print
+output. Only exact, unambiguous category definitions surface keyword rules;
+ambiguous definitions and unresolved rule links remain plain and diagnostic.
+The saved-draft shelf still lacks whole-roster duplication: this checkpoint
+exposes exact configured **unit-occurrence** duplication, not
+`duplicateRosterForce` or a new persisted draft. The full 2,000-point Dark
+Angels reference army was not rebuilt for this bounded interaction checkpoint.
+The remaining component/token consolidation, Lists/creation migration,
+whole-roster duplicate workflow, print hierarchy, installed-PWA boundary, dark
+appearance, 200% reflow, screen-reader acceptance, and final cross-mode
+acceptance remain in the roadmap.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+Consolidate legacy colors, typography, spacing, and one-off navigation, row,
+sheet, inspector, picker, switch, stepper, status, and remaining command rules
+while preserving the settled sticky identity/warning/action menu, evidence,
+card-material, radius, Add unit, Configuration, Army rules, unit-card, direct
+unit-command, honest-reference, and modal contracts.
