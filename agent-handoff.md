@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-28 (isolated list-builder overhaul underway; Add unit sheet Next)
+## Current Status — 2026-08-28 (required roles and focused dialogs complete; Add unit sheet Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -146,8 +146,15 @@ diagnostic codes.
   accessibility, and responsive conventions for the remaining overhaul.
   Required configuration cards collapse after their last known required child
   choice is satisfied, retain optional/incomplete state, return focus to their
-  disclosure, and reopen for supported attention. **The `Next` is the Add unit
-  sheet with search and grouped results.**
+  disclosure, and reopen for supported attention. Force-definition category
+  minima now enter supported validation as their own report family. The pinned
+  Aeldari Character requirement therefore appears directly in an empty roster
+  role as `0 / 1 required`, and the same violation appears in a modal problem
+  sheet opened from either persistent Checks counter. Unit View actions now
+  open a modal reference sheet with compact semantic profile tables instead of
+  inserting a long card into the roster document; Escape restores focus to the
+  invoking View button. **The `Next` is the Add unit sheet with search and
+  grouped results.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -479,7 +486,7 @@ points limit works end to end and is now pinned.
 | Item | Status | Note |
 |---|---|---|
 | Two-dimensional validity/completeness contract | Done | |
-| Structural, selection-condition, and force-constraint reports | Done | |
+| Structural, selection-condition, force-category, and force-constraint reports | Done | pinned category-link coverage is two Character minima across the 46-document corpus; wider category shapes remain incomplete |
 | Matched-play points limit | Done | pinned: `max pts` 0 → 1000 on choosing Incursion |
 | `unit`/`model`/`root-entry` constraint scopes | Done | 101 corpus constraints; reused the resolver `conditions.ts` already had |
 
@@ -661,7 +668,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated full-window roster screen and compact battlefield-role-grouped army rows are Done. Rows show exact selected model/loadout composition, structurally recognized designation/attention pills, trailing recursive points, and one inspector disclosure; View/Remove live in the focused inspector. Required setup cards also collapse on a known unsatisfied-to-satisfied transition and reopen for attention. **Next:** implement the Add unit sheet with search and grouped results, then collapse Configuration to a concise summary and apply shared visual tokens/component primitives across the active roster. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated full-window roster screen, compact battlefield-role-grouped army rows, explicit required empty roles, modal problem list, and modal compact unit references are Done. Rows show exact selected model/loadout composition, structurally recognized designation/attention pills, trailing recursive points, and one inspector disclosure; View/Remove live in the focused inspector. Required setup cards also collapse on a known unsatisfied-to-satisfied transition and reopen for attention. **Next:** implement the Add unit sheet with search and grouped results, then collapse Configuration to a concise summary and apply shared visual tokens/component primitives across the active roster. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -681,6 +688,8 @@ bounded and independently reviewable:
 3. ~~compact grouped army rows with loadout summaries, Warlord/status pills,
    trailing points, and one disclosure vocabulary~~ — done on the overhaul
    branch;
+3a. ~~surface required empty roles and move checks/unit references into compact
+   modal sheets~~ — done on the overhaul branch;
 4. an Add unit sheet with search and grouped results; close it after the first
    add — **Next**;
 5. collapse Configuration to one settings-style summary row while preserving
@@ -12168,3 +12177,104 @@ projection, make Add unit the roster-level entry point, focus search on compact
 layouts, close after the first successful add, restore focus on dismissal, and
 keep catalogue preview independent from mutation. Preserve the current exact
 cost/count controls and do not redesign the inspector in the same checkpoint.
+
+## Completed Assignment — Required Roles And Focused Reference Sheets, 2026-08-28
+
+Baseline `2361488`; resulting implementation commit `78bd60d` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+This bounded correction closes three usability gaps before the Add unit sheet.
+Force-definition category-link bounds are now preserved by projection and
+evaluated as a fourth validation family against effective category membership.
+The supported slice is the exact pinned shape: finite selection minima/maxima
+at roster scope with child selections and forces included, plus ordered direct
+numeric modifiers. Unsupported shapes, grouped modifiers, or unresolved
+membership stay incomplete rather than being guessed. A force-owned
+`primary-catalogue` identity condition is now accepted by the ordinary
+condition shape guard, which lets the authored exemption modifier run.
+
+The workspace presentation folds a positive active category minimum into the
+matching battlefield-role group even when no unit has been selected. A pinned
+Aeldari roster therefore shows **Character — 0 / 1 required** and marks that
+group as containing a known violation. Optional empty catalogue roles remain
+hidden, and the retained constraint evidence now includes Category owners and
+links back to the role heading.
+
+Both persistent Checks affordances now open one modal player-facing problem
+sheet instead of moving the page to the technical evidence below the builder.
+Each known violation has plain-language observed/limit text and retains an
+exact Review link. `View unit card` likewise opens a modal reference sheet
+instead of injecting a long surface into the roster document. Profile rows of
+the same authored type render in compact native tables with one header row,
+horizontal overflow contained inside the table wrapper, and effective-value
+annotations preserved. Escape and backdrop dismissal are supported, Tab is
+contained, and focus returns to the invoking control.
+
+Rejected alternatives were treating category minima as structural root bounds,
+guessing a missing role from category names, rendering every optional empty
+role, replacing the retained developer evidence with the modal, and copying
+New Recruit's styling or eye icon. The report family remains evaluator-owned;
+the web layer only presents its supported result.
+
+### Delegation and review
+
+A native Codex child performed an early read-only seam and accessibility audit
+from a disposable worktree at the baseline and changed no files. It identified
+the missing category-constraint report family, the safe empty-role seeding
+boundary, modal focus requirements, and the existing profile presentation seam.
+An authenticated Claude Code read-only review independently recommended the
+same fourth report family, effective-category counting, conservative unresolved
+behavior, and an early corpus measurement. Codex reviewed both findings and
+implemented the bounded result; no delegated code was accepted.
+
+### Corpus, browser, tests, and validation
+
+Across all **46** pinned JSON documents at
+`04c62fcd041b3808c39d5c46fd677c704027b979`, only **2** constraints are authored
+on force-definition category links. Both are Character minimum 1, field
+`selections`, scope `roster`, with child selections and forces included; both
+carry a direct conditional `set 0` modifier and no modifier group. The pinned
+Aeldari integration assertion now proves a configured Guardian roster with no
+Character is invalid with exactly one violated Category finding: observed 0,
+limit 1, complete.
+
+Lead browser QA used the running pinned Aeldari saved roster. The selected
+roster showed `Character`, `Contains known violation`, and `0 / 1 required`.
+The header reported one known problem; clicking it opened `Roster problems`
+with `Character: 1 more selection required`, `0 selected, limit 1`, and the
+exact role Review link. Detailed evidence reported 78 satisfied, 1 violated,
+and 3 unresolved constraint bounds, with the violation labelled `Category |
+Minimum | roster`. Guardian Defenders opened in `Unit card for Guardian
+Defenders` with compact Abilities, Unit, Ranged Weapons, and Melee Weapons
+tables. Escape closed the sheet and returned focus to `View unit card`.
+
+Verification:
+
+- focused application UI suite — **19 passed**;
+- ordinary `pnpm test` — **527 passed, 19 skipped (546)** across 58 files;
+- pinned Aeldari integration file — **18 passed** at corpus revision
+  `04c62fcd041b3808c39d5c46fd677c704027b979`;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+Wider category-bound scopes, fields, inclusion flags, shared values, and
+modifier groups remain unresolved and diagnostic. The existing selected-unit
+options surface is still inline by design; it is persistent editing content,
+not a temporary reference surface. The full 2,000-point Dark Angels reference
+army was not rebuilt interactively in this bounded correction. The Add unit
+sheet, compact Configuration summary, shared component-token migration, and
+post-hierarchy print/phone pass remain in the recorded overhaul order.
+
+### Next recommended boundary
+
+**Build the Add unit sheet**, still the single roadmap `Next`. Reuse the
+existing grouped/filterable root-choice projection, open it from a roster-level
+action with search focused on compact layouts, close it after the first
+successful add, restore focus on dismissal, and keep catalogue preview
+independent from mutation. Do not redesign Configuration or the inspector in
+the same checkpoint.
