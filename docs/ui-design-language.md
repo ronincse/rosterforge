@@ -143,8 +143,14 @@ An open roster uses one persistent navigation/toolbar layer:
 - trailing: one prominent Add unit action with its available-choice count;
 - status: a standard warning triangle and known-violation count in one compact
   44 px control, red only while a known violation exists;
-- document actions remain in their existing action row until the shared More
-  menu checkpoint absorbs Save, Duplicate, Print, and uncommon commands.
+- commands: one 44 px More control contains Undo, Redo, Save or Update draft,
+  Print / Save PDF, and Change roster setup. Its unsaved dot is paired with
+  explicit menu text; Arrow keys, Home/End, Escape, outside dismissal, and focus
+  return follow the menu-button pattern.
+
+The roster shell contributes no top padding before this layer: the navigator is
+already at the viewport edge on first render and remains `top: 0` while the
+document scrolls. Horizontal and bottom gutters still protect page content.
 
 Navigation may use restrained translucency and strong background blur so
 content can scroll below it, but clear glass is not a general content surface.
@@ -197,6 +203,16 @@ or Developer detail is replaced by the summary. A newly introduced known
 violation reopens the editor, but an already-invalid roster remains compact on
 entry and the player may deliberately close it after review. Exact report links
 open every owning disclosure and focus their stable target.
+
+A complete required Configuration root with substantive authored rules or
+profiles and no selectable descendants is reference material, not a setup
+choice. Present it in a separate read-only Army rules disclosure after
+Configuration, without Remove, Edit, or the source-only Configuration keyword.
+Required editable roots omit Remove only when subtracting that exact occurrence
+would breach a complete evaluated minimum; optional or surplus roots remain
+removable. When a setting has both an authored constrained group and a direct
+adjunct, they share one responsive row without moving the adjunct into the
+group's constraint scope.
 
 ## Search, sheets, and inspector
 

@@ -968,14 +968,34 @@ describe("App local catalogue flow", () => {
         ? null
         : document.getElementById(forceTarget.slice(1)),
     ).toBeTruthy();
-    const changeRosterSetup = screen.getByRole("button", {
+    const rosterActions = openRosterActionsMenu();
+    const changeRosterSetup = within(rosterActions).getByRole("menuitem", {
       name: "Change roster setup",
     });
     expect(changeRosterSetup).toBeTruthy();
-    const undo = screen.getByRole("button", { name: "Undo" });
-    const redo = screen.getByRole("button", { name: "Redo" });
+    const undo = within(rosterActions).getByRole("menuitem", { name: "Undo" });
+    const redo = within(rosterActions).getByRole("menuitem", { name: "Redo" });
     expect(undo).toHaveProperty("disabled", true);
     expect(redo).toHaveProperty("disabled", true);
+    const rosterActionsTrigger = screen.getByRole("button", {
+      name: /^Roster actions/u,
+    });
+    fireEvent.keyDown(rosterActionsTrigger, { key: "ArrowDown" });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(rosterActions).getByRole("menuitem", { name: "Save draft" }),
+      ),
+    );
+    fireEvent.keyDown(rosterActions, { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Roster actions" })).toBeNull();
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        rosterActionsTrigger,
+      ),
+    );
+    openRosterActionsMenu();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("menu", { name: "Roster actions" })).toBeNull();
 
     expect(screen.queryByRole("dialog", { name: "Add unit" })).toBeNull();
     const catalogueToggle = within(workspaceNavigation).getByRole("button", {
@@ -1206,8 +1226,14 @@ describe("App local catalogue flow", () => {
     expect(
       within(zeroCosts).getByText("Crusade: Experience"),
     ).toBeTruthy();
-    expect(undo).toHaveProperty("disabled", false);
-    expect(redo).toHaveProperty("disabled", true);
+    const updatedRosterActions = openRosterActionsMenu();
+    expect(
+      within(updatedRosterActions).getByRole("menuitem", { name: "Undo" }),
+    ).toHaveProperty("disabled", false);
+    expect(
+      within(updatedRosterActions).getByRole("menuitem", { name: "Redo" }),
+    ).toHaveProperty("disabled", true);
+    fireEvent.keyDown(updatedRosterActions, { key: "Escape" });
     expect(unitCardView.querySelector(".selection-datasheet")).toBeTruthy();
     const editDisclosure = unitOptions.querySelector(".selection-edit");
     expect(editDisclosure?.hasAttribute("open")).toBe(false);
@@ -1431,7 +1457,9 @@ describe("App local catalogue flow", () => {
         .getByRole("button", { name: "Special Weapon" })
         .getAttribute("aria-pressed"),
     ).toBe("false");
-    fireEvent.click(undo);
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", { name: "Undo" }),
+    );
     await waitFor(() => {
       expect(rosterSelection("selection-ui-3")).toBeTruthy();
     });
@@ -1466,7 +1494,9 @@ describe("App local catalogue flow", () => {
       }),
     ).toBeTruthy();
 
-    fireEvent.click(undo);
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", { name: "Undo" }),
+    );
     expect(rosterSelection("selection-ui-1")).toBeTruthy();
     fireEvent.click(
       within(rosterSelection("selection-ui-1") as HTMLElement).getByRole(
@@ -1479,15 +1509,23 @@ describe("App local catalogue flow", () => {
       within(selectedRoster).getAllByText("Veterans (Elite)").length,
     ).toBeGreaterThan(0);
     expect(within(workspaceNavigation).getByText("170")).toBeTruthy();
-    expect(redo).toHaveProperty("disabled", false);
+    const restoredActions = openRosterActionsMenu();
+    const restoredRedo = within(restoredActions).getByRole("menuitem", {
+      name: "Redo",
+    });
+    expect(restoredRedo).toHaveProperty("disabled", false);
 
-    fireEvent.click(redo);
+    fireEvent.click(restoredRedo);
     expect(rosterSelection("selection-ui-1")).toBeNull();
     expect(rosterSelection("selection-ui-3")).toBeNull();
     expect(rosterSelection("selection-ui-2")).toBeTruthy();
     expect(within(workspaceNavigation).getByText("80")).toBeTruthy();
 
-    fireEvent.click(changeRosterSetup);
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Change roster setup",
+      }),
+    );
     expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
     expect(document.title).toBe("Lists");
     expect(screen.getByLabelText("RosterForge home")).toBeTruthy();
@@ -2274,7 +2312,30 @@ describe("App local catalogue flow", () => {
       <constraints>
         <constraint id="configuration-battle-size-max" type="max"
           field="selections" scope="force" value="1" shared="true" />
+        <constraint id="configuration-battle-size-min" type="min"
+          field="selections" scope="force" value="1" shared="true" />
       </constraints>
+      <selectionEntryGroups>
+        <selectionEntryGroup id="configuration-battle-size-choices"
+          name="Battle Size">
+          <constraints>
+            <constraint id="configuration-battle-size-choices-min" type="min"
+              field="selections" scope="parent" value="1" shared="true" />
+            <constraint id="configuration-battle-size-choices-max" type="max"
+              field="selections" scope="parent" value="1" shared="true" />
+          </constraints>
+          <selectionEntries>
+            <selectionEntry id="configuration-incursion" name="Incursion"
+              type="upgrade" />
+            <selectionEntry id="configuration-strike-force" name="Strike Force"
+              type="upgrade" />
+          </selectionEntries>
+        </selectionEntryGroup>
+      </selectionEntryGroups>
+      <selectionEntries>
+        <selectionEntry id="configuration-override-points"
+          name="Override points limit?" type="upgrade" />
+      </selectionEntries>
     </selectionEntry>
     <selectionEntry id="configuration-detachment" name="Detachment"
       type="upgrade">
@@ -2286,7 +2347,28 @@ describe("App local catalogue flow", () => {
       <constraints>
         <constraint id="configuration-detachment-max" type="max"
           field="selections" scope="force" value="1" shared="true" />
+        <constraint id="configuration-detachment-min" type="min"
+          field="selections" scope="force" value="1" shared="true" />
       </constraints>
+    </selectionEntry>
+    <selectionEntry id="configuration-army-doctrine" name="Army Doctrine"
+      type="upgrade">
+      <categoryLinks>
+        <categoryLink id="configuration-army-doctrine-category"
+          name="Configuration"
+          targetId="initialization-category-configuration" primary="true" />
+      </categoryLinks>
+      <constraints>
+        <constraint id="configuration-army-doctrine-max" type="max"
+          field="selections" scope="force" value="1" shared="true" />
+        <constraint id="configuration-army-doctrine-min" type="min"
+          field="selections" scope="force" value="1" shared="true" />
+      </constraints>
+      <rules>
+        <rule id="configuration-army-doctrine-rule" name="Coordinated advance">
+          <description>This rule applies to the whole army.</description>
+        </rule>
+      </rules>
     </selectionEntry>
   </selectionEntries>
   <sharedSelectionEntries>`,
@@ -2323,14 +2405,23 @@ describe("App local catalogue flow", () => {
         name: "Add Disabled Automatic Root",
       }),
     );
-    // Add in the opposite order to the required workflow. Presentation must
-    // still put Battle Size before Detachment without mutating roster order.
-    fireEvent.click(
-      within(editor).getByRole("button", { name: "Add Detachment" }),
-    );
-    fireEvent.click(
-      within(editor).getByRole("button", { name: "Add Battle Size" }),
-    );
+    // The three required roots initialize automatically. Their disabled Add
+    // states prove they are already present before the player configures them.
+    expect(
+      within(editor).getByRole("button", {
+        name: "Battle Size maximum reached",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(editor).getByRole("button", {
+        name: "Detachment maximum reached",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(editor).getByRole("button", {
+        name: "Army Doctrine maximum reached",
+      }),
+    ).toBeTruthy();
     fireEvent.click(within(editor).getByRole("button", { name: "Close" }));
 
     const configuration = await screen.findByRole("group", {
@@ -2370,6 +2461,12 @@ describe("App local catalogue flow", () => {
     expect(
       within(configuration).getByText("3 settings"),
     ).toBeTruthy();
+    const armyRules = screen.getByRole("group", { name: /Army rules/u });
+    expect(within(armyRules).getAllByText("Army Doctrine")).toHaveLength(2);
+    expect(within(configuration).queryByText("Army Doctrine")).toBeNull();
+    expect(
+      within(armyRules).queryByRole("button", { name: "Remove Army Doctrine" }),
+    ).toBeNull();
     fireEvent.click(configurationSummary as HTMLElement);
     expect(configuration.hasAttribute("open")).toBe(true);
     expect(
@@ -2389,6 +2486,38 @@ describe("App local catalogue flow", () => {
       battleSizeSelection.compareDocumentPosition(detachmentSelection) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
+    expect(
+      within(configuration).queryByRole("button", {
+        name: "Remove Battle Size",
+      }),
+    ).toBeNull();
+    expect(
+      within(configuration).queryByRole("button", {
+        name: "Remove Detachment",
+      }),
+    ).toBeNull();
+    expect(
+      within(configuration).getByRole("button", {
+        name: "Remove Disabled Automatic Root",
+      }),
+    ).toBeTruthy();
+    const battleSizeCard = battleSizeSelection.closest(
+      ".roster-selection-item",
+    );
+    expect(battleSizeCard).not.toBeNull();
+    const battleSizeBody = battleSizeCard?.querySelector(
+      ".selection-card-body",
+    );
+    expect(
+      within(battleSizeCard as HTMLElement).getByRole("button", {
+        name: "Incursion",
+      }).closest(".selection-card-body"),
+    ).toBe(battleSizeBody);
+    expect(
+      within(battleSizeCard as HTMLElement).getByRole("button", {
+        name: "Override points limit?",
+      }).closest(".selection-card-body"),
+    ).toBe(battleSizeBody);
     const configurationSelectionToggle = within(configuration).getByRole(
       "button",
       { name: "Disabled Automatic Root" },
@@ -2871,7 +3000,9 @@ describe("App local catalogue flow", () => {
         name: "Use 1",
       }),
     ).toHaveProperty("disabled", true);
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", { name: "Undo" }),
+    );
     expect(within(composition).getByText("1× Required Model")).toBeTruthy();
     fireEvent.click(addRequiredModel);
 
@@ -3002,7 +3133,9 @@ describe("App local catalogue flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
     expect(screen.queryByRole("region", { name: "Unsaved roster" })).toBeNull();
     fireEvent.click(
-      screen.getByRole("button", { name: "Change roster setup" }),
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Change roster setup",
+      }),
     );
     const restoredPrompt = await screen.findByRole("region", {
       name: "Unsaved roster",
@@ -3055,7 +3188,11 @@ describe("App local catalogue flow", () => {
     });
 
     // The first save is allowed through, so a draft becomes active.
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Save draft",
+      }),
+    );
     await screen.findByText(/Saved Quota Patrol in this browser\./u);
     expect(writes()).toBe(1);
 
@@ -3075,7 +3212,11 @@ describe("App local catalogue flow", () => {
     // rearmed every time the action returned to idle.
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(writes()).toBe(afterFailure);
-    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: "Roster actions, unsaved changes",
+      }),
+    ).toBeTruthy();
   });
 
   it("saves, reopens, and confirms deletion of a browser-local draft", async () => {
@@ -3122,7 +3263,11 @@ describe("App local catalogue flow", () => {
       expect(rosterSelection("selection-draft-ui")).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Print / Save PDF" }));
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Print / Save PDF",
+      }),
+    );
     expect(printRoster).toHaveBeenCalledOnce();
     expect(printRoster).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -3146,17 +3291,31 @@ describe("App local catalogue flow", () => {
 
     // Saving is manual, so an edited roster is lost on reload until it has a
     // draft. The workspace has to say so before it is saved.
-    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: "Roster actions, unsaved changes",
+      }),
+    ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Save draft",
+      }),
+    );
     await screen.findByText("Saved Saved Patrol in this browser.");
     // ...and stop saying so once it is.
-    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Roster actions, unsaved changes",
+      }),
+    ).toBeNull();
     expect(
       screen.queryByRole("region", { name: "Saved roster drafts" }),
     ).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Update saved draft" }),
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Update saved draft",
+      }),
     ).toBeTruthy();
 
     // With a draft active the user has already asked for this roster to be
@@ -3176,7 +3335,11 @@ describe("App local catalogue flow", () => {
     });
     // The rewrite is what clears the indicator, so it also proves the
     // persisted roster is the one now on screen.
-    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Roster actions, unsaved changes",
+      }),
+    ).toBeNull();
     const saved = asStoredDraft(records.get("draft-ui"));
     expect(saved).toMatchObject({
       id: "draft-ui",
@@ -3214,7 +3377,9 @@ describe("App local catalogue flow", () => {
     expect(saved?.import.files[0]?.bytes.byteLength).toBe(0);
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Change roster setup" }),
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Change roster setup",
+      }),
     );
     expect(
       screen.queryByRole("heading", { name: "Saved Patrol" }),
@@ -3234,13 +3399,18 @@ describe("App local catalogue flow", () => {
       expect(rosterSelection("selection-draft-ui")).toBeTruthy();
     });
     expect(
-      screen.getByRole("button", { name: "Update saved draft" }),
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Update saved draft",
+      }),
     ).toBeTruthy();
 
     // The undo stack came back with the roster. Before the history was stored
     // this button was disabled after a reopen, and the amount edit above was
     // unreachable for the rest of the session.
-    const reopenedUndo = screen.getByRole("button", { name: "Undo" });
+    const reopenedUndo = within(openRosterActionsMenu()).getByRole(
+      "menuitem",
+      { name: "Undo" },
+    );
     expect(reopenedUndo.hasAttribute("disabled")).toBe(false);
     fireEvent.click(reopenedUndo);
     await waitFor(() => {
@@ -3248,7 +3418,9 @@ describe("App local catalogue flow", () => {
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Change roster setup" }),
+      within(openRosterActionsMenu()).getByRole("menuitem", {
+        name: "Change roster setup",
+      }),
     );
     const deletionShelf = screen.getByRole("region", {
       name: "Saved roster drafts",
@@ -3274,6 +3446,16 @@ function constraintStatusText(
     name: /statuses$/u,
   });
   return within(statuses).getByText(label).parentElement?.textContent ?? null;
+}
+
+function openRosterActionsMenu(): HTMLElement {
+  const trigger = screen.getByRole("button", {
+    name: /^Roster actions/u,
+  });
+  if (trigger.getAttribute("aria-expanded") !== "true") {
+    fireEvent.click(trigger);
+  }
+  return screen.getByRole("menu", { name: "Roster actions" });
 }
 
 function rosterForce(occurrenceId: string): HTMLElement | null {

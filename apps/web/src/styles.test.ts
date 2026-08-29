@@ -31,11 +31,11 @@ describe("phone-width layout contracts", () => {
   });
 
   it("keeps roster identity and the compact warning usable in the sticky bar", () => {
-    // The first track absorbs long roster and faction names while Add unit and
-    // the warning keep predictable tap targets at the 320 px support floor.
+    // The first track absorbs long roster and faction names while Add unit,
+    // warning, and More keep predictable tap targets at the support floor.
     expect(styles).toContain(
       ".roster-workspace-nav {\n  position: sticky;\n  z-index: 5;\n  top: 0;\n" +
-        "  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto 44px;",
+        "  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto 44px 44px;",
     );
     expect(styles).toContain("  margin-top: 0;\n  padding: 4px;");
     expect(styles).toMatch(
@@ -49,6 +49,12 @@ describe("phone-width layout contracts", () => {
     );
     expect(styles).toContain(
       '.roster-problems-trigger[data-problems="present"] {\n  color: #ff9b92;',
+    );
+    expect(styles).toMatch(
+      /\.roster-workspace-nav \.roster-actions-trigger \{[\s\S]*?width: 44px;[\s\S]*?min-width: 44px;/u,
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 560px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 74px 44px 44px;/u,
     );
   });
 
@@ -123,6 +129,18 @@ describe("phone-width layout contracts", () => {
     );
   });
 
+  it("starts the sticky workspace at the viewport edge and contains its menu", () => {
+    expect(styles).toContain(
+      ".roster-screen-content {\n  padding: 0 clamp(16px, 2.5vw, 40px) clamp(16px, 2.5vw, 40px);",
+    );
+    expect(styles).toMatch(
+      /\.roster-actions-popover \{[\s\S]*?right: 0;[\s\S]*?width: min\(310px, calc\(100vw - 32px\)\);[\s\S]*?max-height: min\(480px, calc\(100vh - 72px\)\);/u,
+    );
+    expect(styles).toMatch(
+      /\.roster-selection-item\[data-section="configuration"\][\s\S]*?\.selection-card-body:has\(> \.child-choice-list \+ \.child-choice-groups\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto;/u,
+    );
+  });
+
   it("keeps glass surfaces distinct, legible, and progressively enhanced", () => {
     // Blur is an enhancement, not the only source of separation. Pin opaque
     // enough surfaces and borders alongside the WebKit path and accessibility
@@ -140,7 +158,10 @@ describe("phone-width layout contracts", () => {
         "  background: transparent;\n  border: 0;",
     );
     expect(styles).toMatch(
-      /\.roster-unit-row \{[\s\S]*?background: var\(--card-material\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?-webkit-backdrop-filter: blur\(18px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(18px\) saturate\(115%\);/u,
+      /\.roster-unit-row \{[\s\S]*?background: var\(--card-material\);[\s\S]*?border: 1px solid var\(--card-material-border\);[\s\S]*?border-radius: var\(--corner-radius\);[\s\S]*?-webkit-backdrop-filter: blur\(18px\) saturate\(115%\);[\s\S]*?backdrop-filter: blur\(18px\) saturate\(115%\);/u,
+    );
+    expect(styles).toContain(
+      "--card-material-border: rgba(63, 88, 75, 0.28);",
     );
     expect(styles).not.toContain(".roster-unit-row + .roster-unit-row");
     expect(styles).toMatch(

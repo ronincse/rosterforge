@@ -239,6 +239,17 @@
   supported violation reopens the editor; initial attention does not make an
   existing roster several screens long, and a player may close invalid setup
   deliberately. The complete editor and Developer details remain mounted
+- Complete required Configuration roots with substantive authored reference
+  information and no selectable descendants render separately under read-only
+  Army rules. This source-structural classification moves Aeldari Battle Focus
+  out of setup without matching its name, suppresses edit/remove and the
+  source-only Configuration keyword, and retains exact validation-link reveal
+- Required top-level roots omit Remove only when the evaluated root-choice state
+  proves that subtracting the exact occurrence would breach a complete positive
+  minimum. Optional roots, surplus occurrences, and incomplete bounds remain
+  removable. Direct setup adjuncts remain outside sibling group constraints but
+  share their responsive visual row; Aeldari's Override points limit stays next
+  to its standard Battle Size choices
 - Page-information actions visually attached to concrete root, direct-child,
   repeatable-model, and grouped catalogue choice controls. They expose
   source-authored rules, profiles, info groups, and human-readable source
@@ -261,7 +272,10 @@
   then focus the exact stable selection anchor
 - Persistent sticky workspace navigation with roster name, chosen
   catalogue/faction, preferred live cost, Add unit count, and a compact warning
-  triangle/known-violation count on a high-opacity blurred material. The former
+  triangle/known-violation count on a high-opacity blurred material. Undo, Redo,
+  Save/Update draft, Print / Save PDF, and Change roster setup live in one
+  keyboard-operable More menu with explicit unsaved state and focus return. The
+  roster navigator begins at the viewport's top edge on initial render. The former
   large roster summary is absent; secondary costs, completeness, and source
   evidence remain in Detailed supported evidence below the builder. The
   two-pane roster/options desktop builder has a browser-verified

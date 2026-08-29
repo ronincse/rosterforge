@@ -201,16 +201,22 @@ export function RosterOverview({
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
   const [problemsOpen, setProblemsOpen] = useState(false);
+  const actionsMenuId = useId();
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [previewedChoice, setPreviewedChoice] =
     useState<BattleScribeRosterSelectionChoice>();
   const previewReturnFocus = useRef<HTMLElement | null>(null);
   const unitCardReturnFocus = useRef<HTMLElement | null>(null);
   const problemsReturnFocus = useRef<HTMLElement | null>(null);
   const catalogueReturnFocus = useRef<HTMLElement | null>(null);
+  const actionsMenu = useRef<HTMLDivElement | null>(null);
+  const actionsMenuTrigger = useRef<HTMLButtonElement | null>(null);
   const rootFilterInput = useRef<HTMLInputElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
     useState<string>();
   const [pendingConfigurationAnchor, setPendingConfigurationAnchor] =
+    useState<string>();
+  const [pendingArmyRuleAnchor, setPendingArmyRuleAnchor] =
     useState<string>();
   // One memoized projection keeps every reader-facing rule on the same
   // immutable session snapshot. Layout components consume this model; the raw
@@ -226,9 +232,42 @@ export function RosterOverview({
     [session, activeSelectionId],
   );
   const force = workspace.primaryForce;
-  const configurationGroup = workspace.selections.groups.find(
+  const rootChoiceInspection = workspace.reports.rootChoices;
+  const configurationReferenceSelectionIds = useMemo(
+    () => requiredConfigurationReferenceSelectionIds(rootChoiceInspection),
+    [rootChoiceInspection],
+  );
+  const sourceConfigurationGroup = workspace.selections.groups.find(
     ({ role }) => role.key === "configuration",
   );
+  const configurationRules =
+    sourceConfigurationGroup?.selections.filter((selection) =>
+      configurationReferenceSelectionIds.has(selection.occurrence.id),
+    ) ?? [];
+  const configurationSelections =
+    sourceConfigurationGroup?.selections.filter(
+      (selection) => !configurationRules.includes(selection),
+    ) ?? [];
+  const configurationGroup =
+    sourceConfigurationGroup === undefined || configurationSelections.length === 0
+      ? undefined
+      : {
+          ...sourceConfigurationGroup,
+          selections: configurationSelections,
+          amount: rosterSelectionsAmount(
+            configurationSelections.map(({ occurrence }) => occurrence),
+          ),
+        };
+  const configurationRulesGroup =
+    sourceConfigurationGroup === undefined || configurationRules.length === 0
+      ? undefined
+      : {
+          ...sourceConfigurationGroup,
+          selections: configurationRules,
+          amount: rosterSelectionsAmount(
+            configurationRules.map(({ occurrence }) => occurrence),
+          ),
+        };
   const hasConfiguration = configurationGroup !== undefined;
   const armyGroups = workspace.selections.groups.filter(
     ({ role }) => role.key !== "configuration",
@@ -245,7 +284,10 @@ export function RosterOverview({
     (count, group) => count + group.amount,
     0,
   );
-  const rootChoiceInspection = workspace.reports.rootChoices;
+  const nonRemovableRootSelectionIds = useMemo(
+    () => requiredRootSelectionIds(rootChoiceInspection),
+    [rootChoiceInspection],
+  );
   const rootChoiceGroups = workspace.rootChoices.groups;
   const normalizedRootFilter = rootFilter.trim().toLowerCase();
   const filteredRootChoiceGroups =
@@ -323,6 +365,18 @@ export function RosterOverview({
       }
     });
   };
+  const closeActionsMenu = (restoreFocus: boolean) => {
+    setActionsMenuOpen(false);
+    if (!restoreFocus) return;
+    queueMicrotask(() => actionsMenuTrigger.current?.focus());
+  };
+  const runRosterAction = (action: () => void) => {
+    // Dismiss the command surface before a print popup, persistence update, or
+    // history mutation can synchronously move or replace the roster beneath it.
+    setActionsMenuOpen(false);
+    action();
+    queueMicrotask(() => actionsMenuTrigger.current?.focus());
+  };
   const closeUnitCard = () => {
     setViewedSelectionId(undefined);
     const returnFocus = unitCardReturnFocus.current;
@@ -399,6 +453,19 @@ export function RosterOverview({
     };
   }, [catalogueOpen]);
   useEffect(() => {
+    if (!actionsMenuOpen) return;
+    const onMouseDown = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        !actionsMenu.current?.contains(event.target)
+      ) {
+        closeActionsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [actionsMenuOpen]);
+  useEffect(() => {
     if (activeSelectionId !== undefined && activeSelection === undefined) {
       setActiveSelectionId(undefined);
     }
@@ -446,6 +513,7 @@ export function RosterOverview({
       (selection) => selection.containsAttention,
     ) ?? false;
   const [configurationOpen, setConfigurationOpen] = useState(false);
+  const [armyRulesOpen, setArmyRulesOpen] = useState(false);
   const previousConfigurationState = useRef({
     rosterId: workspace.rosterId,
     hasConfiguration,
@@ -486,6 +554,14 @@ export function RosterOverview({
     target.focus({ preventScroll: true });
     setPendingConfigurationAnchor(undefined);
   }, [configurationOpen, pendingConfigurationAnchor, session]);
+  useEffect(() => {
+    if (!armyRulesOpen || pendingArmyRuleAnchor === undefined) return;
+    const target = document.getElementById(pendingArmyRuleAnchor);
+    if (target === null) return;
+    target.scrollIntoView?.({ block: "start" });
+    target.focus({ preventScroll: true });
+    setPendingArmyRuleAnchor(undefined);
+  }, [armyRulesOpen, pendingArmyRuleAnchor, session]);
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace)
     : undefined;
@@ -624,54 +700,139 @@ export function RosterOverview({
             {workspace.validation.available ? validationIssueCount : "—"}
           </strong>
         </button>
+        <div className="roster-actions-menu" ref={actionsMenu}>
+          <button
+            ref={actionsMenuTrigger}
+            className="roster-actions-trigger"
+            type="button"
+            aria-controls={actionsMenuId}
+            aria-expanded={actionsMenuOpen}
+            aria-haspopup="menu"
+            aria-label={
+              unsavedChanges
+                ? "Roster actions, unsaved changes"
+                : "Roster actions"
+            }
+            data-unsaved={unsavedChanges ? "true" : undefined}
+            onClick={() => setActionsMenuOpen((open) => !open)}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowDown") return;
+              event.preventDefault();
+              setActionsMenuOpen(true);
+              queueMicrotask(() => {
+                actionsMenu.current
+                  ?.querySelector<HTMLButtonElement>(
+                    '[role="menuitem"]:not(:disabled)',
+                  )
+                  ?.focus();
+              });
+            }}
+          >
+            <RosterActionsIcon />
+          </button>
+          {actionsMenuOpen && (
+            <div
+              className="roster-actions-popover"
+              id={actionsMenuId}
+              role="menu"
+              aria-label="Roster actions"
+              onKeyDown={(event) => {
+                const items = Array.from(
+                  event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                    '[role="menuitem"]:not(:disabled)',
+                  ),
+                );
+                const current = items.indexOf(
+                  document.activeElement as HTMLButtonElement,
+                );
+                const nextIndex =
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? items.length - 1
+                      : event.key === "ArrowDown"
+                        ? (current + 1 + items.length) % items.length
+                        : event.key === "ArrowUp"
+                          ? (current - 1 + items.length) % items.length
+                          : undefined;
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  closeActionsMenu(true);
+                } else if (nextIndex !== undefined) {
+                  event.preventDefault();
+                  items[nextIndex]?.focus();
+                }
+              }}
+            >
+              <div className="roster-actions-popover-heading">
+                <strong>Roster actions</strong>
+                <small data-unsaved={unsavedChanges ? "true" : undefined}>
+                  {unsavedChanges ? "Unsaved changes" : "All changes saved"}
+                </small>
+              </div>
+              <div className="roster-actions-history">
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canUndo}
+                  onClick={() => runRosterAction(onUndo)}
+                >
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canRedo}
+                  onClick={() => runRosterAction(onRedo)}
+                >
+                  Redo
+                </button>
+              </div>
+              <button
+                className="save-draft-action"
+                type="button"
+                role="menuitem"
+                disabled={isSavingDraft}
+                onClick={() => runRosterAction(onSaveDraft)}
+              >
+                {isSavingDraft
+                  ? "Saving..."
+                  : hasSavedDraft
+                    ? "Update saved draft"
+                    : "Save draft"}
+              </button>
+              <button
+                className="print-roster-action"
+                type="button"
+                role="menuitem"
+                onClick={() =>
+                  runRosterAction(() =>
+                    setPrintBlocked(
+                      !onPrintRoster(
+                        createRosterPrintViewModel(
+                          session,
+                          costResult,
+                          supportedValidation,
+                        ),
+                      ),
+                    ),
+                  )
+                }
+              >
+                Print / Save PDF
+              </button>
+              <button
+                className="change-roster-setup-action"
+                type="button"
+                role="menuitem"
+                onClick={onClear}
+              >
+                Change roster setup
+              </button>
+            </div>
+          )}
+        </div>
       </nav>
-
-      <div className="history-actions" aria-label="Roster actions">
-        <button type="button" disabled={!canUndo} onClick={onUndo}>
-          Undo
-        </button>
-        <button type="button" disabled={!canRedo} onClick={onRedo}>
-          Redo
-        </button>
-        <button
-          className="save-draft-action"
-          type="button"
-          disabled={isSavingDraft}
-          onClick={onSaveDraft}
-        >
-          {isSavingDraft
-            ? "Saving..."
-            : hasSavedDraft
-              ? "Update saved draft"
-              : "Save draft"}
-        </button>
-        {/* Saving is manual, so an unsaved roster is lost on reload, and its
-            undo history with it: a saved draft carries a trimmed history, one
-            that was never saved has nowhere to put it. Say so rather than
-            letting it look persisted. */}
-        {unsavedChanges && (
-          <span className="unsaved-changes" role="status">
-            Unsaved changes
-          </span>
-        )}
-        <button
-          className="print-roster-action"
-          type="button"
-          onClick={() =>
-            setPrintBlocked(
-              !onPrintRoster(
-                createRosterPrintViewModel(
-                  session,
-                  costResult,
-                  supportedValidation,
-                ),
-              ),
-            )
-          }
-        >
-          Print / Save PDF
-        </button>
-      </div>
       {(draftActionMessage !== undefined || isSavingDraft) && (
         <p className="draft-action-status" role="status">
           {draftActionMessage ?? "Saving roster draft..."}
@@ -696,6 +857,22 @@ export function RosterOverview({
           onToggle={() => setConfigurationOpen((open) => !open)}
           revealAnchor={pendingConfigurationAnchor}
           costLimits={configurationSummaryCostLimits}
+          session={session}
+          selectionCanAddAnother={selectionCanAddAnother}
+          onAddChild={onAddChildSelection}
+          onRename={onRenameSelection}
+          onSetAmount={onSetSelectionAmount}
+          onRemove={onRemoveSelection}
+          nonRemovableSelectionIds={nonRemovableRootSelectionIds}
+          onPreviewChoice={openChoicePreview}
+        />
+      )}
+
+      {configurationRules.length > 0 && (
+        <RosterArmyRulesSection
+          selections={configurationRules}
+          open={armyRulesOpen}
+          onToggle={() => setArmyRulesOpen((current) => !current)}
           session={session}
           selectionCanAddAnother={selectionCanAddAnother}
           onAddChild={onAddChildSelection}
@@ -893,6 +1070,14 @@ export function RosterOverview({
                   [configurationGroup],
                   decodedTargetId,
                 );
+          const armyRuleOwner =
+            decodedTargetId === undefined ||
+            configurationRulesGroup === undefined
+              ? undefined
+              : topLevelWorkspaceSelectionContainingAnchor(
+                  [configurationRulesGroup],
+                  decodedTargetId,
+                );
           if (
             decodedTargetId !== undefined &&
             ((target !== null &&
@@ -905,6 +1090,12 @@ export function RosterOverview({
             event.preventDefault();
             setConfigurationOpen(true);
             setPendingConfigurationAnchor(decodedTargetId);
+            return;
+          }
+          if (decodedTargetId !== undefined && armyRuleOwner !== undefined) {
+            event.preventDefault();
+            setArmyRulesOpen(true);
+            setPendingArmyRuleAnchor(decodedTargetId);
             return;
           }
           if (target === null && decodedTargetId !== undefined) {
@@ -956,9 +1147,6 @@ export function RosterOverview({
         </details>
       </section>
 
-      <button className="secondary-action" type="button" onClick={onClear}>
-        Change roster setup
-      </button>
     </div>
   );
 }
@@ -1305,6 +1493,24 @@ function WarningTriangleIcon() {
       <path d="M12 3.5 21 20.5H3Z" />
       <path d="M12 8.5v6" />
       <circle cx="12" cy="17.5" r="1" />
+    </svg>
+  );
+}
+
+/** Compact command glyph for the sticky roster action menu. */
+function RosterActionsIcon() {
+  return (
+    <svg
+      className="roster-actions-icon"
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      focusable="false"
+    >
+      <circle cx="5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="19" cy="12" r="1.5" />
     </svg>
   );
 }
@@ -2094,6 +2300,7 @@ function RosterConfigurationSection({
   onRename,
   onSetAmount,
   onRemove,
+  nonRemovableSelectionIds,
   onPreviewChoice,
 }: {
   readonly group: RosterWorkspaceSelectionGroup;
@@ -2122,6 +2329,8 @@ function RosterConfigurationSection({
     amount: number | undefined,
   ) => void;
   readonly onRemove: (id: SelectionOccurrenceId) => void;
+  /** Required roots whose removal would immediately violate a known minimum. */
+  readonly nonRemovableSelectionIds: ReadonlySet<SelectionOccurrenceId>;
   readonly onPreviewChoice: PreviewChoiceHandler;
 }) {
   const containsAttention = group.selections.some(
@@ -2201,6 +2410,96 @@ function RosterConfigurationSection({
           onRename={onRename}
           onSetAmount={onSetAmount}
           onRemove={onRemove}
+          allowRemove={(selection) =>
+            !nonRemovableSelectionIds.has(selection.occurrence.id)
+          }
+          onPreviewChoice={onPreviewChoice}
+        />
+      </div>
+    </details>
+  );
+}
+
+/**
+ * Required catalogue reference entries that describe the whole army.
+ *
+ * Some catalogues file these under Configuration solely so roster constraints
+ * can require one occurrence. A leaf with authored rules or profiles is not a
+ * player choice, so it stays available as read-only reference material without
+ * competing with Battle Size, Detachment, or the unit list.
+ */
+function RosterArmyRulesSection({
+  selections,
+  open,
+  onToggle,
+  session,
+  selectionCanAddAnother,
+  onAddChild,
+  onRename,
+  onSetAmount,
+  onRemove,
+  onPreviewChoice,
+}: {
+  readonly selections: readonly RosterWorkspaceSelection[];
+  readonly open: boolean;
+  readonly onToggle: () => void;
+  readonly session: LocalRosterSession;
+  readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
+  readonly onAddChild: (
+    parentId: SelectionOccurrenceId,
+    choice: BattleScribeRosterSelectionChoice,
+    childGroup?: LocalRosterChildChoiceGroup,
+  ) => void;
+  readonly onRename: (
+    id: SelectionOccurrenceId,
+    name: string | undefined,
+  ) => void;
+  readonly onSetAmount: (
+    id: SelectionOccurrenceId,
+    amount: number | undefined,
+  ) => void;
+  readonly onRemove: (id: SelectionOccurrenceId) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
+}) {
+  const names = selections.map(({ occurrence }) => ({
+    key: occurrence.id,
+    name: occurrence.name ?? "Unnamed reference",
+    amount: rosterSelectionAmount(occurrence),
+  }));
+  return (
+    <details className="roster-army-rules" aria-label="Army rules" open={open}>
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          onToggle();
+        }}
+      >
+        <span className="roster-army-rules-title">
+          <strong>Army rules</strong>
+          <small>{formatSelectedChoiceSummary(names)}</small>
+        </span>
+        <span className="roster-army-rules-meta">
+          {formatCount(selections.length, "reference")}
+          <span aria-hidden="true">&#8250;</span>
+          <span className="visually-hidden">
+            {open ? "Hide army rules" : "Show army rules"}
+          </span>
+        </span>
+      </summary>
+      <div className="roster-army-rules-body">
+        <RosterTopLevelSelectionList
+          roleKnown
+          selections={selections}
+          session={session}
+          selectionCanAddAnother={selectionCanAddAnother}
+          collapsible={false}
+          presentation="card"
+          allowRemove={() => false}
+          showKeywords={false}
+          onAddChild={onAddChild}
+          onRename={onRename}
+          onSetAmount={onSetAmount}
+          onRemove={onRemove}
           onPreviewChoice={onPreviewChoice}
         />
       </div>
@@ -2264,6 +2563,79 @@ function configurationRelevantCostLimits(
     ): total is RosterWorkspaceCost & { readonly limit: number } =>
       total.limit !== undefined && typeIds.has(total.typeId),
   );
+}
+
+/**
+ * Identifies required Configuration leaves whose roster role is explanatory.
+ *
+ * BattleScribe catalogues sometimes file an army-wide rule as Configuration so
+ * a roster-wide minimum can ensure the reference entry exists. Requiring a
+ * complete positive minimum, no selectable descendants, and substantive
+ * authored information keeps optional informational upgrades in their normal
+ * editor and avoids display-name special cases.
+ */
+function requiredConfigurationReferenceSelectionIds(
+  result: ReturnType<typeof inspectLocalRosterRootChoices>,
+): ReadonlySet<SelectionOccurrenceId> {
+  const ids = new Set<SelectionOccurrenceId>();
+  if (!result.ok) return ids;
+  for (const group of result.value.groups) {
+    for (const state of group.choices) {
+      if (
+        state.completeness !== "complete" ||
+        state.minimum === undefined ||
+        !Number.isFinite(state.minimum) ||
+        state.minimum <= 0 ||
+        directCatalogueChoices(state.choice.materialized).length > 0
+      ) {
+        continue;
+      }
+      const information = catalogueChoiceInformation(state.choice.materialized);
+      if (
+        information.profiles.length === 0 &&
+        information.rules.length === 0 &&
+        information.infoGroups.length === 0 &&
+        information.unresolved.length === 0
+      ) {
+        continue;
+      }
+      for (const selection of state.selected) ids.add(selection.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Returns exact roots whose removal would breach a complete positive minimum.
+ *
+ * Surplus occurrences stay removable and unresolved bounds stay permissive;
+ * hiding a destructive control is justified only by the same evaluated root
+ * state the Add browser and supported checks already use.
+ */
+function requiredRootSelectionIds(
+  result: ReturnType<typeof inspectLocalRosterRootChoices>,
+): ReadonlySet<SelectionOccurrenceId> {
+  const ids = new Set<SelectionOccurrenceId>();
+  if (!result.ok) return ids;
+  for (const group of result.value.groups) {
+    for (const state of group.choices) {
+      if (
+        state.completeness !== "complete" ||
+        state.minimum === undefined ||
+        !Number.isFinite(state.minimum) ||
+        state.minimum <= 0
+      ) {
+        continue;
+      }
+      const selectedAmount = rosterSelectionsAmount(state.selected);
+      for (const selection of state.selected) {
+        if (selectedAmount - rosterSelectionAmount(selection) < state.minimum) {
+          ids.add(selection.id);
+        }
+      }
+    }
+  }
+  return ids;
 }
 
 /**
@@ -2400,6 +2772,8 @@ function RosterTopLevelSelectionList({
   autoCollapseWhenRequirementsMet = false,
   revealAnchor,
   presentation = "combined",
+  allowRemove = () => true,
+  showKeywords = true,
   onSelect,
   onAddChild,
   onRename,
@@ -2418,6 +2792,10 @@ function RosterTopLevelSelectionList({
   /** Stable descendant anchor whose owning cards must be mounted and open. */
   readonly revealAnchor?: string | undefined;
   readonly presentation?: RosterSelectionPresentation;
+  /** Presentation-only root removal policy from evaluated root-choice bounds. */
+  readonly allowRemove?: (selection: RosterWorkspaceSelection) => boolean;
+  /** Army-wide reference entries do not expose their source filing category. */
+  readonly showKeywords?: boolean;
   readonly onSelect?: ((id: SelectionOccurrenceId) => void) | undefined;
   readonly onAddChild: (
     parentId: SelectionOccurrenceId,
@@ -2468,6 +2846,8 @@ function RosterTopLevelSelectionList({
               }
               revealAnchor={revealAnchor}
               presentation={presentation}
+              allowRemove={allowRemove(selection)}
+              showKeywords={showKeywords}
               onAddChild={onAddChild}
               onRename={onRename}
               onSetAmount={onSetAmount}
@@ -3117,6 +3497,7 @@ function RosterSelectionItem({
   embedded = false,
   hideOccurrence = false,
   allowRemove = true,
+  showKeywords = true,
   amountBounds = [],
   selectionCanAddAnother,
   onAddChild,
@@ -3151,6 +3532,7 @@ function RosterSelectionItem({
   /** Lets the panel heading replace only its top selection's row. */
   readonly hideOccurrence?: boolean;
   readonly allowRemove?: boolean;
+  readonly showKeywords?: boolean;
   /** Complete aggregate bounds inherited from this occurrence's parent choice. */
   readonly amountBounds?: readonly KnownSelectionAmountBound[];
   readonly selectionCanAddAnother: ReadonlyMap<SelectionOccurrenceId, boolean>;
@@ -3336,6 +3718,7 @@ function RosterSelectionItem({
       id={embedded ? undefined : selectionAnchor(selection.id)}
       tabIndex={embedded ? undefined : -1}
       data-occurrence-id={selection.id}
+      data-section={selectionModel.section}
       data-active={!embedded && selectionModel.active ? "true" : undefined}
       aria-current={!embedded && selectionModel.active ? "true" : undefined}
       data-attention={selectionModel.attention ? "violation" : undefined}
@@ -3640,6 +4023,7 @@ function RosterSelectionItem({
               choice={choice}
               selection={selection}
               displayNameIncomplete={displayNameIncomplete}
+              showKeywords={showKeywords}
             />
           )}
           {promotedModels.length > 0 && (
@@ -5100,11 +5484,13 @@ function RosterSelectionDatasheet({
   choice,
   selection,
   displayNameIncomplete,
+  showKeywords = true,
 }: {
   readonly session: LocalRosterSession;
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly selection: RosterSelection;
   readonly displayNameIncomplete: boolean;
+  readonly showKeywords?: boolean;
 }) {
   // The datasheet is the reason a player opens a unit, so it is no longer behind
   // a second click. Laziness is preserved by *mounting*: this component renders
@@ -5157,7 +5543,7 @@ function RosterSelectionDatasheet({
         </p>
       )}
 
-      {categories.ok === true && (
+      {showKeywords && categories.ok === true && (
         <SelectionKeywords inspection={categories.value} />
       )}
 

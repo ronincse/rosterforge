@@ -3185,6 +3185,36 @@ describe.skipIf(realDataDirectory === undefined)(
           selected: [{ name: "Battle Size" }],
           completeness: "complete",
         });
+        // The web presentation can distinguish the required army reference
+        // structurally: Battle Focus is a complete required Configuration root
+        // with substantive authored profiles and no selectable descendants.
+        // This evidence prevents the UI from depending on the Aeldari name.
+        const battleFocusRootState = inspectedRoots.value.groups
+          .flatMap(({ choices }) => choices)
+          .find(
+            ({ choice }) =>
+              choice.materialized.name ===
+              "Battle Focus - Agile Manoeuvres",
+          );
+        expect(battleFocusRootState).toMatchObject({
+          minimum: 1,
+          maximum: 1,
+          remaining: 0,
+          selected: [{ name: "Battle Focus - Agile Manoeuvres" }],
+          completeness: "complete",
+        });
+        expect(battleFocusRootState?.choice.materialized.profiles).toHaveLength(
+          6,
+        );
+        expect(
+          battleFocusRootState?.choice.materialized.selectionEntries,
+        ).toEqual([]);
+        expect(
+          battleFocusRootState?.choice.materialized.selectionEntryGroups,
+        ).toEqual([]);
+        expect(battleFocusRootState?.choice.materialized.entryLinks).toEqual(
+          [],
+        );
         // Catalogue rows show the first authored non-zero cost rather than a
         // wall of campaign bookkeeping. Pin the two owner-reported cases: a
         // unit's primary points cost (visibly qualified because its model-count

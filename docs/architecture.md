@@ -492,8 +492,15 @@ The active roster workspace begins with one compact sticky navigator. Its
 flexible leading destination carries the roster name, chosen catalogue/faction,
 and preferred live cost; `Add unit` retains its available-choice count, while
 supported problems collapse to a 44 px warning triangle and known-violation
-count. Zero and unavailable states remain neutral instead of impersonating an
-active warning. Its high-opacity blurred material is a presentation layer only;
+count. A sibling 44 px More trigger owns Undo, Redo, manual draft persistence,
+print/PDF, and returning to roster setup, so the document no longer mounts a
+parallel command row or trailing setup button. The menu preserves disabled
+history states, exposes unsaved state in text as well as a dot, supports
+Arrow/Home/End/Escape, dismisses outside itself, and restores trigger focus.
+The roster shell has zero top padding before the navigator, putting it at the
+viewport edge before any scroll; side and bottom gutters remain. Zero and
+unavailable states remain neutral instead of impersonating an active warning.
+Its high-opacity blurred material is a presentation layer only;
 it does not change navigation state or the cost and issue projections beneath
 its values. `Add unit` opens
 the existing grouped and filterable root projection as a scoped modal task; the
@@ -556,6 +563,24 @@ requirements transition from unsatisfied to satisfied. Optional-only and
 incomplete requirements do not trigger the transition, and supported attention
 reopens the owning card. Focus returns to the card disclosure when completing a
 choice removes the clicked control from the document.
+
+Selected Configuration roots are split once more by source structure. A root
+with a complete positive evaluated minimum, substantive authored profiles,
+rules, info groups, or unresolved information, and no selectable descendants
+is a required reference entry rather than a setup choice. It renders in a
+separate controlled Army rules disclosure with a read-only datasheet, no source
+Configuration keyword, and no edit/remove controls. Exact validation links can
+open and focus this disclosure just as they do ordinary Configuration. This
+classification never matches display names and remains conservative when root
+bounds are incomplete.
+
+Top-level Remove is suppressed only when the current root-choice inspection
+proves that subtracting that occurrence's amount would breach a complete
+positive minimum. Surplus occurrences and incomplete bounds stay removable.
+Direct adjunct choices and constrained groups keep separate mutation and bound
+semantics; when both share one Configuration parent, CSS places them in one
+responsive row and wraps them at phone width instead of moving the adjunct into
+the group's fieldset.
 
 Army units render as compact selectable cards grouped by battlefield role. The
 group has no shared container surface: each top-level unit owns a separate,
