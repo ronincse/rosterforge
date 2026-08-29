@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-28 (required roles and focused dialogs complete; Add unit sheet Next)
+## Current Status — 2026-08-28 (Add unit sheet complete; compact Configuration summary Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -77,10 +77,13 @@ diagnostic codes.
   model/loadout composition, structural role/status pills, recursive points,
   and one action that focuses the dedicated options surface. Read-only View and
   destructive Remove actions live in that inspector rather than competing on
-  every row. Catalogue placement remains
-  reader-controlled, the outer builder never becomes a permanent three-pane
-  layout, and nested validation links focus the owning unit before resolving a
-  lazy anchor. The advanced per-occurrence model editor now applies complete
+  every row. The catalogue is now a closed-by-default Add unit sheet rather
+  than a permanent builder column; compact layouts use the full viewport and
+  focus search, regular layouts use a centred modal and focus Close, and a
+  successful army add closes the task and focuses the new row. The outer
+  builder never becomes a permanent three-pane layout, and nested validation
+  links focus the owning unit before resolving a lazy anchor. The advanced
+  per-occurrence model editor now applies complete
   known selection and transparent-group minima/maxima to their observed
   aggregates, rejects new known violations, and permits monotonic recovery from
   already-invalid state; incomplete bounds remain permissive. Concrete root,
@@ -153,8 +156,7 @@ diagnostic codes.
   sheet opened from either persistent Checks counter. Unit View actions now
   open a modal reference sheet with compact semantic profile tables instead of
   inserting a long card into the roster document; Escape restores focus to the
-  invoking View button. **The `Next` is the Add unit sheet with search and
-  grouped results.**
+  invoking View button. **The `Next` is the compact Configuration summary.**
 - **Prior transfer.** The Codex-to-Claude transfer
   published by `0c7d793`/`d74e07d` is complete, and the pickup checks that
   `docs/agent-workflow.md` "Formal Lead Transfer" requires were repeated against
@@ -217,12 +219,12 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **526 passed, 19 skipped (545)**.
+  `git diff --check` all pass. `pnpm test` is **528 passed, 19 skipped (547)**.
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
   never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **545 passed**; without the variable the 19 corpus tests are skipped.
+  **547 passed**; without the variable the 19 corpus tests are skipped.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -248,15 +250,17 @@ diagnostic codes.
   goal and settled the sequencing**: this is for building a viable 40k list, so
   the list and its unit stats are the focus, and building splits into a
   choosing phase and a reading phase where the catalogue gets out of the way.
-  Section F opens with that goal. The list-first restructure is in progress as
-  four bounded rows; **battlefield-role grouping is done** — the tree now reads
+  Section F opens with that goal. The initial list-first restructure is complete
+  and the broader interface overhaul continues as bounded checkpoints;
+  **battlefield-role grouping is done** — the tree now reads
   Configuration, Character, Battleline, Vehicle and so on, from each unit's
   effective primary category. Top-level unit and direct child-model statlines
-  now take the same one unit-card expansion; upgrades and nested model wargear
-  remain behind their exact configuration disclosures. The catalogue is now a
-  reader-controlled 320–400 px desktop sidebar: it starts present on desktop,
-  can be unmounted so the roster takes the full width, and starts closed on a
-  newly opened phone-width workspace while remaining explicitly reopenable.
+  now share one modal unit-card action; upgrades and nested model wargear remain
+  behind their exact configuration disclosures. The permanent catalogue column
+  is gone. Add unit now opens a grouped, filterable task that retains search
+  state, uses a full-screen compact sheet and centred regular modal, keeps
+  catalogue preview separate, and returns the player to the roster after a
+  successful army add.
   Battlefield-role headings now signal when they contain a known violation,
   and only the exact owning selection row receives the inline `Known violation`
   marker and reciprocal link to Checks. Unresolved coverage remains separate
@@ -267,7 +271,7 @@ diagnostic codes.
   explicit `Add another` action constrained by both the aggregate group and the
   exact occurrence's effective maximum. Configuration no longer occupies an
   army-list role block: it is a default-open full-width setup disclosure before
-  the sticky navigator and roster/catalogue grid. Its sticky summary preserves
+  the sticky navigator and roster workspace. Its sticky summary preserves
   exact points capacity while setup scrolls, the whole step can be collapsed,
   and exact validation links reveal hidden configuration targets.
 - **Product definition.** `docs/product-vision.md` now carries the north star,
@@ -428,7 +432,7 @@ owner reprioritises).
 
 The first phone-width QA pass, deterministic CI performance budget, tested
 workspace presentation model, compact player header, battlefield-role grouping,
-one-click unit/model statlines, reader-controlled catalogue placement, inline
+one-click unit/model statlines, focused catalogue task, inline
 violation markers, safe group-choice controls, and report-section demotion are
 complete. Persistent limit-bearing costs, wide-screen use, readable imported
 keywords, stronger configuration separation, and safe direct-choice controls
@@ -436,10 +440,12 @@ are complete too. The selected-unit workspace, bounded per-occurrence model
 amount editor, loadout/Warlord presentation, catalogue readability pass,
 configuration cost-capacity summary, root JSON rule projection, stable unit-card
 scroll behavior, player-readable check coverage, and condition-aware live root
-maxima are complete. The owner has now reprioritised the product around the
+maxima, and the scoped Add unit sheet are complete. The owner has now
+reprioritised the product around the
 list-builder overhaul on `codex/list-builder-ui-overhaul`; the dedicated active
-roster shell and compact grouped army rows are its first two completed seams.
-**Build the Add unit sheet Next.** The remaining pinned Aeldari matched-play
+roster shell, compact grouped army rows, focused reference dialogs, and Add unit
+sheet are its completed seams. **Collapse Configuration to its compact summary
+Next.** The remaining pinned Aeldari matched-play
 coverage, roster duplication,
 and whole-roster incremental evaluation stay Open. Take the overhaul sequence
 in the dependency order stated in section F rather than treating table position
@@ -640,9 +646,9 @@ QA before classifying or implementing the discrepancy.
 | Compact points-and-problems player header; remove remaining evaluator chrome | Done | one `Roster summary` header replaces the separate cost and validation cards, the `Forces`/`Selections` metrics, and the satisfied/violated/unresolved triple; cost totals and the known-problem count lead, validity and completeness stay independent badges over a conservative two-report fold, and the violation links appear only when they point at something. Verified against a pinned Death Guard roster at 120 pts / 3 known problems |
 | Separate configuration from army units | Done (superseded) | the selected-roster tree renders two titled sections, `Configuration` first then `Army units`, consuming the projection's existing classification; empty sections render nothing, and per-section labels use the same summed-amount measure as the pane heading. Verified on a pinned Death Guard roster: Detachment/Battle Size/Force Disposition in Configuration, Lord of Contagion in Army units, 3 + 1 matching `4 top-level selections` |
 | Collapsible top-level army units with per-unit costs | Done | army cards collapse behind the unit name as the disclosure control and render their body only while open. Configuration selections start open but now collapse independently inside the outer setup step, and promoted direct model occurrences collapse independently inside a unit. Every selection card reopens when it gains supported attention. The always-visible unit row shows recursive cost plus exact total-and-type model composition |
-| Build phase and reference phase | Done | Newly added and explicitly selected army units focus one dedicated options surface that reuses the existing mutation controls; configuration never enters it. Compact rows retain cost and exact model composition, and a separate `View` opens the complete read-only card. The outer builder stays at two columns maximum: roster + catalogue while shopping, or list + options after hiding the catalogue; phone widths stack all surfaces. Nested validation links focus their owning unit before resolving lazy anchors |
+| Build phase and reference phase | Done | Newly added and explicitly selected army units focus one dedicated options surface that reuses the existing mutation controls; configuration never enters it. Compact rows retain cost and exact model composition, and a separate `View` opens the complete read-only card. The outer builder is roster list plus options at two columns maximum; the catalogue is a transient Add unit sheet and phone widths use its full viewport. Nested validation links focus their owning unit before resolving lazy anchors |
 | Headline cost against its points limit | Done | complete finite force-cost maxima are projected by exact cost-type ID, never guessed from names. Limit-bearing totals render even at zero; the player header shows used / maximum and the sticky workspace bar keeps used, maximum, and remaining capacity visible while scrolling. Live pinned Aeldari QA showed `90 / 2,000 pts` and `1,910 remaining`; Detachment Points and Enhancements retained their own source limits without displacing points from the sticky lead |
-| Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; at 1,920 px the shell measured 1,865 px, the roster 1,351 px, and the bounded catalogue 400 px. Configuration is now a full-width, default-open setup disclosure before the sticky navigator and roster/catalogue grid; its sticky summary repeats exact points capacity while setup scrolls, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration no longer inflates the army-selection count |
+| Wide-screen workspace and configuration setup | Done | the fixed 1,240 px application-shell cap was removed while viewport gutters remain; the original 1,920 px measurement was a 1,865 px shell with a 1,351 px roster and 400 px catalogue, and Add unit has since removed that catalogue column entirely. Configuration remains a full-width, default-open setup disclosure before the sticky navigator and roster workspace; its summary repeats exact capacity while setup scrolls, the whole step and each configuration selection collapse independently, validation links reveal hidden targets, and configuration does not inflate the army-selection count |
 | Imported category IDs leak into Keywords | Done | an imported materialized entry can carry category links whose definitions are outside the primary catalogue's local category view. The authored link name is now the fallback after canonical local definitions, so pinned Corsair Voidscarred renders Anhrathe/Aeldari/etc. rather than five opaque target IDs; unresolved semantics are not hidden by an ID-shape regex |
 | Legality-aware model-count controls | Done | repeatable exact model choices use visible minus/count/plus controls: plus adds a distinct occurrence, minus removes only one model, and known maxima disable plus. The advanced per-occurrence editor evaluates complete condition-aware selection and transparent-group minima/maxima against their observed aggregates; legal state cannot create a known violation, already-invalid state may make a monotonic partial repair, and incomplete bounds remain permissive/incomplete |
 | Player-facing validation messages | Done | known violations are separated from unresolved coverage, name their owners, and link to exact occurrences while retaining the full-legality boundary |
@@ -668,7 +674,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the header and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the header/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated full-window roster screen, compact battlefield-role-grouped army rows, explicit required empty roles, modal problem list, and modal compact unit references are Done. Rows show exact selected model/loadout composition, structurally recognized designation/attention pills, trailing recursive points, and one inspector disclosure; View/Remove live in the focused inspector. Required setup cards also collapse on a known unsatisfied-to-satisfied transition and reopen for attention. **Next:** implement the Add unit sheet with search and grouped results, then collapse Configuration to a concise summary and apply shared visual tokens/component primitives across the active roster. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, and closed-by-default Add unit sheet are Done. Add unit preserves the exact grouped/filterable projection and costs/counts/maxima; it is full-screen and search-first at compact width, centred and Close-first at regular width, and closes/focuses the new row after an army add. **Next:** collapse Configuration to a concise settings-style summary, then apply the shared active-roster component/token system, bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -690,13 +696,23 @@ bounded and independently reviewable:
    branch;
 3a. ~~surface required empty roles and move checks/unit references into compact
    modal sheets~~ — done on the overhaul branch;
-4. an Add unit sheet with search and grouped results; close it after the first
-   add — **Next**;
+4. ~~an Add unit sheet with search and grouped results; close it after the first
+   successful army add~~ — done on the overhaul branch;
 5. collapse Configuration to one settings-style summary row while preserving
-   all validation and details;
+   all validation and details — **Next**;
 6. apply the shared system tokens and reusable navigation, row, sheet,
-   inspector, and control primitives across the active roster; and
-7. re-run print and phone-width usability after the new hierarchy settles.
+   inspector, picker, switch, stepper, status, and More-menu primitives across
+   the active roster;
+7. bring Lists, roster creation, source acquisition, recovery, and their
+   empty/error states into the same component system;
+8. reconcile datasheets, checks, save/duplicate/print, and print hierarchy with
+   the final navigation and disclosure model;
+9. add the installed-web-app boundary: owned manifest/icons, theme metadata,
+   safe areas, service-worker/update strategy, and an honest offline contract;
+   and
+10. re-run the reference army at phone portrait/landscape, tablet, desktop, and
+    ultrawide, including 200% reflow, dark/increased-contrast/reduced-motion,
+    keyboard, screen-reader structure, and print acceptance.
 
 The shell boundary comes before row and sheet styling because those components
 must be designed for a roster screen, not for the catalogue-centred page they
@@ -12278,3 +12294,111 @@ action with search focused on compact layouts, close it after the first
 successful add, restore focus on dismissal, and keep catalogue preview
 independent from mutation. Do not redesign Configuration or the inspector in
 the same checkpoint.
+
+## Completed Assignment — Focused Add Unit Sheet And Overhaul Roadmap, 2026-08-28
+
+Baseline `6a87a7b`; resulting implementation commit `bec6f25` and this handoff
+commit on `codex/list-builder-ui-overhaul`. Stable `main` remains intentionally
+unchanged. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+The permanent catalogue column is gone. The persistent roster action now opens
+the same immutable grouped/filterable root-choice projection as a scoped Add
+unit dialog, preserving source order, category grouping, counts, source costs,
+effective maxima, exact mutation behavior, diagnostics, and filter state. The
+sheet is closed by default. It fills the viewport through the 560 px compact
+breakpoint and focuses search; above that breakpoint it is centred and focuses
+Close. `/` opens or focuses search without replacing an editable field,
+Escape/backdrop/Close contain and restore focus, and background scrolling is
+locked while the task is active.
+
+A successful army-root add closes the sheet, selects the new occurrence, and
+focuses its roster-row disclosure. Failed additions and Configuration-root
+additions leave the sheet and filter intact. Opening catalogue information
+temporarily hides the Add unit dialog so the accessibility tree and painted UI
+contain only one modal; closing the preview restores its exact information
+button. Add and information buttons now meet the 44 x 44 px touch-target floor,
+including the more-specific legacy segmented-control cascade found by live
+measurement.
+
+The branch-specific design audit is recorded in `docs/ui-design-language.md`.
+The dedicated roster shell and grouped rows are sound foundations, but the
+legacy visual vocabulary, long Configuration step, separate Lists experience,
+fragmented document actions, missing dark/high-contrast variants, and absent
+manifest/icons/service-worker boundary remain. The roadmap now carries those
+as explicit bounded checkpoints instead of implying that the active roster
+alone completes the overhaul. Current Apple Layout, Lists and tables, Toolbars,
+Search fields, Sheets, Materials, and Accessibility guidance informed the
+sheet and roadmap: material stays out of content, one sheet owns one task, and
+safe areas, scalable text, contrast, and color-independent states are acceptance
+criteria.
+
+Rejected alternatives were retaining a desktop catalogue column, rebuilding
+or filtering the root projection, clearing search on dismissal, closing after
+Configuration additions, exposing two simultaneous `aria-modal` dialogs, and
+starting the generic component/token migration inside this bounded checkpoint.
+
+### Delegation and review
+
+A native Codex child performed an early read-only seam, interaction, test, and
+accessibility audit in a disposable worktree at the exact baseline and changed
+no files. It identified the controller's successful-occurrence-ID seam, the
+need to retain Configuration additions and failed mutations, compact versus
+regular initial focus, the two-modal preview risk, the 44 px target gap, and the
+focused test locations. Codex reviewed and implemented the findings. The
+verified-clean audit worktree was removed afterward; no delegated code was
+accepted.
+
+### Browser, tests, corpus, and validation
+
+Lead browser QA used the running pinned Aeldari catalogue. At 390 px the full
+sheet focused search, stayed exactly within the viewport, exposed one modal,
+and retained its search while previewing Wraithguard. The preview temporarily
+removed Add unit from layout and returned focus to `View information for
+Wraithguard`. Searching for and adding Farseer closed the sheet and focused
+`Configure Farseer`; the live roster showed the new 65-point Character. All 170
+live root add/information controls measured at least 44 x 44 px after the cascade
+correction.
+
+Responsive measurements covered 320 x 568, 390 x 844, 430 x 932, the 560/561 px
+compact boundary, 768 x 1024 tablet, 844 x 390 compact landscape, 1440 x 1000,
+and 1920 x 1080. The 320, 390, and 430 sheets filled their viewport; the 768 px
+sheet measured 720 px wide and the desktop/ultrawide sheet remained capped at
+760 px. Document scroll widths equalled their client widths and each sheet rect
+stayed inside its viewport at every measured size. The final focus check proved
+560 px search-first, 561 px
+Close-first, 768 px Close-first, in-sheet `/` focus, and trigger restoration.
+Exact browser text-only zoom, dark appearance, and increased contrast remain
+future cross-mode acceptance rather than being inferred from narrow-width QA.
+
+Verification:
+
+- focused Add unit and responsive style suites — **25 passed** across 2 files;
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+  `git diff --check` — clean;
+- ordinary suite — **528 passed, 19 skipped (547)** across 58 files;
+- pinned 46-document corpus at
+  `04c62fcd041b3808c39d5c46fd677c704027b979` — **547 passed (547)** across
+  58 files; and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This presentation checkpoint does not alter evaluation, root visibility,
+mutation guards, imported-data semantics, validation completeness, persistent
+formats, or the remaining pinned Aeldari behavior families. Configuration is
+still a long default-open tree. The active roster still uses legacy colors,
+type, spacing, and one-off controls; Lists/creation, document workflows,
+installed-PWA behavior, dark/high-contrast appearance, exact 200% text reflow,
+screen-reader acceptance, and final print/responsive acceptance remain recorded
+in the roadmap. The full 2,000-point Dark Angels army was not rebuilt
+interactively in this bounded checkpoint; the pinned corpus and live Aeldari
+add/preview path supplied the real-data checks.
+
+### Next recommended boundary
+
+**Collapse Configuration to one settings-style summary row.** Preserve every
+configuration choice, exact points and secondary-capacity summary, validation
+link and attention state, automatic reopen behavior, and collapsed Developer
+detail. Do not begin the shared visual-token/component migration in the same
+checkpoint.
