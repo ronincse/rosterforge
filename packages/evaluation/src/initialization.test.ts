@@ -5,7 +5,11 @@ import {
   composeBattleScribeCatalogueContexts,
   resolveBattleScribeDataGraph,
 } from "@rosterforge/data-graph";
-import { sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
+import {
+  objectId,
+  sourceId,
+  type SourceFileProvenance,
+} from "@rosterforge/foundation";
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 
 import {
@@ -214,6 +218,127 @@ describe("roster selection initialization", () => {
           path: expect.arrayContaining(["constraints[0]", "constraint[0]"]),
         }),
         details: { constraintId: "modified-child-min" },
+      }),
+    ]);
+  });
+
+  it("defers a manual group's unused modifier-driven maximum", () => {
+    const graph = resolveBattleScribeDataGraph([
+      parseFixture("projection.gst"),
+      parseFixture("selection-initialization.cat"),
+    ]);
+    if (!graph.ok) throw new Error("Expected fixture graph.");
+    const contexts = composeBattleScribeCatalogueContexts(graph.value);
+    if (!contexts.ok) throw new Error("Expected fixture contexts.");
+    const context = contexts.value.catalogues.find(
+      ({ document }) =>
+        document.metadata.id === "selection-initialization",
+    );
+    const root = context?.roots.roots.find(
+      ({ materialized }) =>
+        materialized.kind !== "unresolvedEntryLink" &&
+        materialized.id === "initialization-unit",
+    );
+    if (
+      root === undefined ||
+      root.materialized.kind === "unresolvedEntryLink"
+    ) {
+      throw new Error("Expected initialization root.");
+    }
+    const manualGroup = root.materialized.selectionEntryGroups.find(
+      ({ id }) => id === "manual-group",
+    );
+    const maximum = manualGroup?.constraints.find(
+      ({ type }) => type === "max",
+    );
+    const manualOption = manualGroup?.selectionEntries[0];
+    const modifier = root.materialized.modifiers[0];
+    if (
+      manualGroup === undefined ||
+      maximum?.id === undefined ||
+      manualOption === undefined ||
+      modifier === undefined
+    ) {
+      throw new Error("Expected the manual-group modifier fixture pieces.");
+    }
+    const modifiedManualGroup = {
+      ...manualGroup,
+      modifiers: [{ ...modifier, field: maximum.id }],
+    };
+    const isolatedRoot = {
+      ...root.materialized,
+      selectionEntries: [],
+      selectionEntryGroups: [modifiedManualGroup],
+      entryLinks: [],
+      modifiers: [],
+    };
+
+    const manual = planRosterSelectionInitialization(isolatedRoot);
+    const defaulted = planRosterSelectionInitialization({
+      ...isolatedRoot,
+      selectionEntryGroups: [
+        {
+          ...modifiedManualGroup,
+          defaultSelectionEntryId: objectId("manual-option-one"),
+        },
+      ],
+    });
+    const automaticallyPlanned = planRosterSelectionInitialization({
+      ...isolatedRoot,
+      selectionEntryGroups: [
+        {
+          ...modifiedManualGroup,
+          selectionEntries: [
+            {
+              ...manualOption,
+              step: "1",
+              defaultAmount: "0",
+              modifiers: [{ ...modifier, field: "defaultAmount" }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(manual.ok).toBe(true);
+    if (!manual.ok) return;
+    expect(manual.diagnostics).toEqual([]);
+    expect(manual.value).toMatchObject({
+      completeness: "complete",
+      plannedSelectionCount: 0,
+      additions: [],
+      pendingChoices: [
+        {
+          group: { id: "manual-group" },
+          minimum: 1,
+          remaining: 1,
+          reason: "defaultDisabled",
+        },
+      ],
+    });
+    expect(defaulted.ok).toBe(true);
+    if (!defaulted.ok) return;
+    expect(defaulted.value.completeness).toBe("incomplete");
+    expect(defaulted.value.additions).toEqual([]);
+    expect(defaulted.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
+        details: { constraintId: "manual-group-max" },
+      }),
+    ]);
+    expect(automaticallyPlanned.ok).toBe(true);
+    if (!automaticallyPlanned.ok) return;
+    expect(automaticallyPlanned.value.completeness).toBe("incomplete");
+    expect(automaticallyPlanned.value.additions).toEqual([
+      expect.objectContaining({
+        quantity: 1,
+        amount: 0,
+      }),
+    ]);
+    expect(automaticallyPlanned.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
+        details: { constraintId: "manual-group-max" },
       }),
     ]);
   });

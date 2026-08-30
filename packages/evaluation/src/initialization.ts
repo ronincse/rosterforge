@@ -843,7 +843,23 @@ function planGroup(
     state,
     maxPlannedSelections,
   );
-  const bounds = selectionBounds(group, carriers, state);
+  const selected = totalDirectSelections(planned.additions);
+  const defaultId = group.defaultSelectionEntryId;
+  const defaults =
+    defaultId === undefined || defaultId === "none"
+      ? []
+      : directEntryChoices(group).filter((choice) => choice.id === defaultId);
+  const bounds = selectionBounds(group, carriers, state, {
+    // A manual group with no usable default produces no automatic occurrence,
+    // so its modifier-driven maximum cannot affect initialization. The live
+    // structural and editing paths evaluate that maximum once the parent and
+    // its conditions exist; warning here would describe an inference the
+    // initializer never attempts. If child minima or one usable default can
+    // add anything, the maximum remains required and unsupported shapes still
+    // diagnose rather than risking an invalid automatic addition.
+    deferUnusedModifiedMaximum:
+      planned.additions.length === 0 && defaults.length !== 1,
+  });
   if (!bounds.supported || bounds.minimum === 0) {
     return planned;
   }
@@ -852,12 +868,10 @@ function planGroup(
     return planned;
   }
 
-  const selected = totalDirectSelections(planned.additions);
   const remaining = Math.max(0, bounds.minimum - selected);
   if (remaining === 0) {
     return planned;
   }
-  const defaultId = group.defaultSelectionEntryId;
   if (defaultId === undefined || defaultId === "none") {
     planned.pendingChoices.push({
       group,
@@ -869,9 +883,6 @@ function planGroup(
     return planned;
   }
 
-  const defaults = directEntryChoices(group).filter(
-    (choice) => choice.id === defaultId,
-  );
   if (defaults.length !== 1) {
     const reason =
       defaults.length === 0 ? "defaultUnavailable" : "defaultAmbiguous";
@@ -1012,6 +1023,7 @@ function selectionBounds(
   options: {
     readonly requireMaximum?: boolean;
     readonly live?: LiveRosterSelectionChildInspectionContext;
+    readonly deferUnusedModifiedMaximum?: boolean;
   } = {},
 ): SelectionBounds {
   let minimum = 0;
@@ -1114,6 +1126,9 @@ function selectionBounds(
               unboundedBoundIdentity(effective, "max"),
             );
           }
+          continue;
+        }
+        if (options.deferUnusedModifiedMaximum === true) {
           continue;
         }
         supported = false;

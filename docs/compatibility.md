@@ -82,6 +82,9 @@
   sentinel, repeated ordinary occurrences, one amounted occurrence for a
   positive finite stepped entry, transparent selection-entry groups, and exact
   direct group defaults
+- Pending manual groups defer an unused modifier-driven maximum when they have
+  neither a usable default nor an automatically planned child; live inspection
+  still evaluates that maximum once the parent and its conditions exist
 - Condition-aware direct `defaultAmount` modifiers for a prospective stepped
   child at its real parent, including the pinned Incursion Points limit at 1,000
 - Empty-single-force initialization plans for visible entry roots with simple
@@ -651,8 +654,9 @@
 
 - Observed JSON local condition-group combination behavior and ordinary
   condition groups whose preserved type is `count`
-- Conditional, modified, percentage, malformed, extension-driven, or
-  non-parent selection bounds for automatic descendant initialization
+- Conditional or modified bounds needed to infer an automatic descendant
+  quantity, plus percentage, malformed, extension-driven, or non-parent
+  selection bounds for automatic descendant initialization
 - Structural bounds outside visible roots and direct parent/group selection
   counts, including conditional eligibility and nested-force roster status
 - Cost-type metadata modifiers, dynamic selection defaults, default cost

@@ -567,7 +567,7 @@ describe.skipIf(realDataDirectory === undefined)(
     );
 
     it(
-      "composes every selectable focused repository closure without diagnostics",
+      "composes and initializes every selectable focused repository closure without diagnostics",
       async () => {
         if (realDataDirectory === undefined) {
           throw new Error("The integration data directory is not configured.");
@@ -614,6 +614,12 @@ describe.skipIf(realDataDirectory === undefined)(
           readonly message: string;
           readonly target: string;
         }> = [];
+        const initializationDiagnosticRows: Array<{
+          readonly catalogue: string;
+          readonly code: string;
+          readonly message: string;
+        }> = [];
+        let initializedCatalogues = 0;
 
         for (const summary of selectable) {
           const closure = planBattleScribeDependencyClosure(
@@ -667,6 +673,45 @@ describe.skipIf(realDataDirectory === undefined)(
                     : "",
             });
           }
+          if (!focused.ok) continue;
+          const catalogue = focused.value.catalogues.find(
+            ({ context }) =>
+              context.document.metadata.id === selectedDocument.metadata.id,
+          );
+          const forceDefinition = catalogue?.context.forces.definitions[0];
+          expect(catalogue).toBeDefined();
+          expect(forceDefinition).toBeDefined();
+          if (catalogue === undefined || forceDefinition === undefined) {
+            continue;
+          }
+          initializedCatalogues += 1;
+          let automaticSelectionId = 0;
+          const created = createLocalRosterSession(
+            catalogue,
+            forceDefinition,
+            {
+              rosterId: rosterId(
+                `focused-initialization-roster-${initializedCatalogues}`,
+              ),
+              forceId: forceOccurrenceId(
+                `focused-initialization-force-${initializedCatalogues}`,
+              ),
+              name: `${catalogue.name} Initialization Audit`,
+              createSelectionId: () =>
+                selectionOccurrenceId(
+                  `focused-initialization-${initializedCatalogues}-${++automaticSelectionId}`,
+                ),
+            },
+          );
+          expect(created.ok).toBe(true);
+          if (!created.ok) continue;
+          for (const diagnostic of created.diagnostics) {
+            initializationDiagnosticRows.push({
+              catalogue: catalogue.name,
+              code: diagnostic.code,
+              message: diagnostic.message,
+            });
+          }
         }
 
         const diagnosticSummary = [...diagnosticRows.reduce(
@@ -704,7 +749,9 @@ describe.skipIf(realDataDirectory === undefined)(
         }));
 
         expect(selectable).toHaveLength(36);
+        expect(initializedCatalogues).toBe(36);
         expect(diagnosticSummary).toEqual([]);
+        expect(initializationDiagnosticRows).toEqual([]);
       },
       120_000,
     );
@@ -3226,15 +3273,13 @@ describe.skipIf(realDataDirectory === undefined)(
         // omits such a constraint from an entry's rendered list entirely — so
         // the value is no longer the complaint.
         //
-        // What remains is the *pre-existing* rule that a bound targeted by a
-        // modifier cannot drive automatic initialization. That rule is not
-        // specific to -1 and is deliberately unchanged; the diagnostic left
-        // behind is narrower and more accurate than the one it replaced.
-        expect(created.diagnostics).toEqual([
-          expect.objectContaining({
-            code: "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED",
-          }),
-        ]);
+        // The Detachments group deliberately disables its default. Its
+        // conditionally modified maximum therefore controls later live editing,
+        // not an automatic occurrence: initialization leaves one manual choice
+        // pending and has no quantity inference to withhold. The live inspector
+        // still evaluates the maximum once Battle Size and Detachment Point
+        // choices exist.
+        expect(created.diagnostics).toEqual([]);
         // Nothing objects to the value itself any more.
         expect(
           created.diagnostics.filter(({ details }) =>

@@ -1282,7 +1282,8 @@ parent-selection bounds are never converted into automatic quantities. The
 generic `automatic` property is an explicit exception: New Recruit does not
 consult it during initial creation, so that attribute alone no longer emits
 `EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED`. Modifier-controlled and
-otherwise unsupported bounds retain their existing diagnostics.
+otherwise unsupported bounds retain their existing diagnostics when an
+automatic addition depends on them.
 
 An absent group default and `defaultSelectionEntryId="none"` are ordinary
 pending user choices, not diagnostics. A modifier-controlled base minimum of
@@ -1291,6 +1292,16 @@ suppresses no unconditional addition. Optional max-only bounds are not
 inspected unless needed to cap a required default. This keeps unrelated
 conditional branches from flooding a successful add while preserving the
 planner's incomplete scope.
+
+A required group with no usable default and no automatically planned child is
+also a pending manual choice. Its modifier-controlled maximum is not consulted
+and does not emit
+`EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED`, because no
+automatic quantity could exceed it. Live structural and editing inspection
+still evaluates that maximum after the parent and its conditions exist. A
+modified minimum, a usable default, or an automatically planned child still
+requires the relevant maximum and retains the diagnostic when it cannot be
+evaluated safely.
 
 Read-only direct-child and transparent-group inspection reuses the
 unsupported-bound, modifier-controlled, and conflicting-bound diagnostics
