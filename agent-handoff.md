@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (direct unit commands and references complete; active-roster system remains Next)
+## Current Status — 2026-08-29 (all-catalogue initialization warning fix complete; active-roster system remains Next)
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -141,8 +141,13 @@ diagnostic codes.
   group. Pinned Aeldari `Detachments` is exactly max one for Incursion after a
   3 Detachment Point choice and remains unbounded at Strike Force; the former
   unresolved group bound and its compatibility diagnostic are gone. Static
-  pre-selection initialization and ancestor-carried child modifiers remain
-  conservative and diagnostic. On the isolated overhaul branch, an open roster
+  pre-selection initialization now defers a modifier-driven maximum only for a
+  pending manual group with no usable default and no automatically planned
+  child, because that maximum cannot constrain an automatic occurrence. All 36
+  pinned catalogues now create with exact-empty diagnostics; live roster paths
+  continue to evaluate the bound, while modified minima, usable defaults,
+  planned children, and ancestor-carried child modifiers remain conservative
+  and diagnostic. On the isolated overhaul branch, an open roster
   now mounts a dedicated full-window screen instead of remaining nested in the
   Lists/import shell; closing it restores the preserved library, recovery, and
   acquisition state. A durable Apple-informed web design-language contract now
@@ -432,9 +437,11 @@ Constraint `value="-1"` is **Done** as of 2026-08-24. It is BattleScribe's "no
 constraint" sentinel — `max="-1"` admits any count, `min="-1"` demands none —
 settled by observation on the New Recruit wiki, which omits such a constraint
 from an entry's rendered list entirely. It was the single widest real-data gap
-left: **34 of 36 pinned catalogues raised a `-1` complaint on an empty roster**,
-before a single unit was added. That is now zero. The detail is in the completed
-entry at the end of this file.
+left: **34 of 36 pinned catalogues originally raised a `-1` complaint on an
+empty roster**, before a single unit was added. The value complaint was removed
+then; the later modifier-maximum warning on those same manual Detachment groups
+is now also zero after the 2026-08-29 initialization checkpoint. The details are
+in the completed entries at the end of this file.
 
 The first QA presentation cleanup is **Done**, but it was a bounded subset of
 the broader Grok usability audit rather than closure of that audit. The UI now
@@ -723,7 +730,7 @@ QA before classifying or implementing the discrepancy.
 | Flatten common loadout groups and add dedicated Warlord controls | Done | the evaluator's flat inspection remains intact, while the workspace reconstructs exact materialized group ancestry so a choice-less `Wargear` wrapper becomes context around its Melee/Ranged children instead of a false empty fieldset; aggregate parent status now counts those descendant selections. One-per-roster upgrade categories with exact authored min/max-one roster constraints render as a dedicated `Roster role` toggle above loadouts, without name/ID inference, blocking invalid zero/multiple states, or auto-transferring the role |
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
-| False diagnostics after pinned catalogue selection | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; and finite link overlays no longer look cyclic. Missing unnamed costs, unproved selectors, true same-scope duplicates, and definition recursion remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console |
+| False diagnostics after pinned catalogue selection and creation | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`; all 36 catalogues also create with exact-empty initialization diagnostics. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; finite link overlays no longer look cyclic; and an unused modified maximum on a pending manual group no longer claims an automatic quantity was withheld. Missing unnamed costs, unproved selectors, true same-scope duplicates, definition recursion, modified minima, and maxima that can constrain defaults or planned children remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console; live Aeldari creation also has no warning cards or console issues |
 | Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
@@ -746,7 +753,7 @@ QA before classifying or implementing the discrepancy.
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
-| Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. **34 of 36 catalogues raised a complaint on an empty roster; now zero.** Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
+| Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. The value-specific complaint is zero, and the later false modifier-maximum warning on 34 manual Detachment groups is now zero too. Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
 | Unicode-normalised name matching | Deferred | GW exports use U+2019 while catalogues use U+0027; activate this with `.ros`/cross-tool import or another feature that actually matches external names |
 | Behaviour on a phone | Done | pinned Death Guard add/configure/amount/check path verified at 390 x 844 and 320 x 568; diagnostic grids no longer widen the page, and sticky links leave headings visible |
 
@@ -13349,3 +13356,93 @@ sheet, inspector, picker, switch, stepper, status, and remaining command rules
 while preserving the settled sticky identity/warning/action menu, evidence,
 card-material, radius, Add unit, Configuration, Army rules, unit-card, direct
 unit-command, honest-reference, and modal contracts.
+
+## Completed Assignment — Manual Group Initialization Diagnostics, 2026-08-29
+
+Baseline `46b1897af5443c4ad2373c9a88979370df68b2ee`; resulting
+implementation commit `90e9916` and this handoff commit on
+`codex/list-builder-ui-overhaul`. Stable `main` remains intentionally unchanged
+at `3e9d05d`. Codex remained the active lead, primary implementer, integrator,
+reviewer, validator, and publisher.
+
+An empty Aeldari roster no longer emits
+`EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED` for the manual
+`Detachments` group. The initializer previously inspected that group's
+modifier-driven maximum before noticing that `defaultSelectionEntryId="none"`
+and no required child meant it would add no occurrence. The warning therefore
+claimed an automatic quantity was not inferred even though the initializer
+never attempted one.
+
+`planGroup` now defers only an unused modifier-driven maximum when the group has
+no automatically planned child and not exactly one usable default. Live roster
+inspection still evaluates the maximum after its parent and conditions exist.
+A modified minimum, one usable default, or any planned child keeps the maximum
+required and retains the compatibility warning. A zero-amount stepped child
+with a `defaultAmount` modifier counts as planned because its later live probe
+can make the occurrence positive.
+
+### Decisions and rejected alternatives
+
+The decision follows the initialization action, not a source spelling, name, or
+ID. Special-casing `max="-1"`, `Detachments`, or the Aeldari IDs was rejected:
+the modifier can replace an unbounded sentinel with a finite live maximum, and
+the same authored shape is shared across most factions. Hiding the card in the
+UI was rejected because genuine modified minima and maximum-dependent automatic
+plans must remain observable. General live evaluation during creation was also
+rejected because it would broaden this checkpoint into sibling/root-order
+semantics; the existing live editing and structural paths already resolve this
+family correctly once the roster exists.
+
+### Delegation and review
+
+A native Codex child performed an early read-only root-cause, corpus, and
+negative-guard audit in a disposable worktree at exact baseline `46b1897`. It
+measured the creation warning in 34 of 36 selectable catalogues, representing
+22 unique Detachment maximum constraints, while both Titanicus catalogues were
+already clean. It independently proved that live structural inspection emits
+zero instances across all 36 and caught the zero-static-amount stepped-child
+guard before integration. Codex reviewed and incorporated the findings, wrote
+all code, and accepted no delegated code.
+
+### Browser, tests, corpus, and validation
+
+At external corpus revision
+`04c62fcd041b3808c39d5c46fd677c704027b979`, the focused repository integration
+now creates one roster for every selectable catalogue as part of its 36-closure
+audit and requires exact-empty initialization diagnostics for all 36. The
+Aeldari integration retains its four automatic roots and exact-empty diagnostic
+assertion. Synthetic tests prove the manual pending group is quiet while a
+usable default and a planned zero-amount stepped child both preserve the
+warning.
+
+Lead browser QA opened the pinned Aeldari catalogue and created a real roster.
+The exact warning code and message were absent, no warning card was present,
+the roster heading rendered, and the browser warning/error console was empty.
+The in-app preview remains available and the development server was deliberately
+left running at `http://127.0.0.1:5173/` for the owner.
+
+Verification:
+
+- focused initialization plus pinned integration run — **30 passed**;
+- ordinary suite — **546 passed, 20 skipped (566 total)** across 58 files;
+- complete pinned-corpus suite — **566 passed (566)** across 58 files and 46
+  external JSON documents;
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` — clean;
+  and
+- production build — clean except for Vite's existing large-chunk warning.
+
+### Remaining unsupported behavior
+
+This checkpoint does not evaluate arbitrary conditional bounds during static
+initialization. Modified minima, maxima that can cap an automatic default or
+planned child, ancestor-carried modifiers without live context, unsupported
+condition shapes, and the existing incomplete-validation families remain
+diagnostic. No imported bytes, generic XML/JSON tree, projection, provenance,
+persistence format, cost evaluation, or player-facing validation classification
+changed.
+
+### Next recommended boundary
+
+**Complete the remaining shared active-roster component and token system.**
+The false all-catalogue creation warning is closed without changing the
+overhaul's existing Next priority.
