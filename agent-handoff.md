@@ -59,8 +59,10 @@ The owner then requested blank empty Keywords cells and linked stat keywords
 opening a layered rule popup. `4ba0b21` implements that bounded follow-up with
 owner-specific rule matching, conservative inline suppression and visible inert
 parent dialogs. Local gates pass: 626 tests passed / 24 skipped; pinned reference
-integration two tests passed. Desktop and 390×844 browser checks passed. This
-handoff follows implementation for publication/CI confirmation on the same branch.
+integration two tests passed. Desktop and 390×844 browser checks passed.
+Implementation/handoff published through `525077d`; exact-commit CI `34392272382`
+passed every gate (verify job 64 seconds). This documentation-only confirmation
+follows on the same branch.
 Stop pending owner direction; no later engine or broader UI phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -13937,5 +13939,9 @@ no broader rule compatibility or legality claim. No new engine repair discovered
 
 User preview 5199 was restarted before this checkpoint and is retained (HTTP 200
 rechecked); saved user rosters on that origin were untouched. Temporary QA server
-5203 and reviewer worktree can be removed after publication. Stop after this
-checkpoint; do not automatically advance another roadmap item.
+5203 was stopped after checking its exact process/command; reviewer worktree is
+retained. Implementation/handoff published through
+`525077dc72e4d7e20d8fbd596e9966f94d67d963`; CI `34392272382` succeeded on that exact
+SHA (verify job 64 seconds). User preview 5199 still returned HTTP 200 after QA
+cleanup. Stop after this checkpoint; do not automatically advance another roadmap
+item.
