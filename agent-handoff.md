@@ -69,8 +69,10 @@ fields, and an eight-layer reference stack retaining parent focus/scroll.
 Selected owner reports take precedence; catalogue-only lookups are labeled and
 do not imply applicability. Local gates pass: 633 tests passed / 24 skipped;
 both pinned integration tests pass. Desktop and 390×844 Angron reference-chain
-checks passed; see `docs/qa/rich-text-references.md`. Publish/CI outcome is recorded
-in the newest assignment below. No later engine phase was started.
+checks passed; see `docs/qa/rich-text-references.md`. Implementation/handoff are
+local through `f36aedf`; publication was blocked by the approval system pending
+explicit owner confirmation of the GitHub destination. CI has not run for this
+checkpoint. No later engine phase was started.
 Stop pending owner direction; no later engine or broader UI phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -14025,6 +14027,13 @@ quota was not retried. This explains native-only review despite the prior streak
 **Handoff.** No further engine work authorized. General entry/category-description
 lookup, unavailable glossaries, full CommonMark and rule-name modifier expansion
 remain outside this bounded implementation. Review worktrees retained. User
-preview 5199 is preserved; saved user rosters were not touched. Temporary QA5205
-cleanup and publication/CI result follow below. Stop at this checkpoint pending
-owner direction.
+preview 5199 is preserved and returned HTTP 200; saved user rosters were not
+touched. Temporary QA5205 (PID 65252) was stopped only after checking its exact
+Vite command/port; endpoint shutdown was verified. Implementation and handoff
+are local through `f36aedfab53a8961ceaf886cdb5dbbd942d617be`. The approval system
+rejected a combined push request because it required explicit confirmation of
+the GitHub destination/payload; no push occurred and no CI result is claimed.
+Owner approval was requested for these verified code/docs changes to
+`https://github.com/ronincse/rosterforge.git`, branch
+`codex/list-builder-ui-overhaul`. Do not bypass that rejection. Publish and check
+exact-SHA CI only after approval; otherwise stop with the local checkpoint intact.
