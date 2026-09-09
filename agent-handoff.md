@@ -34,7 +34,13 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-08-29 (all-catalogue initialization warning fix complete; active-roster system remains Next)
+## Current Status — 2026-09-09 (audit repair RF-A01 complete; RF-A02 through RF-A04 next for this task)
+
+The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
+after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle,
+RF-A03 bounded archive decompression, and RF-A04 rule applicability follow in
+that order. RF-A05 reference-card redesign is deferred. The reported loss of
+headline points capacity after adding Impulsor is unconfirmed separate triage.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -649,7 +655,7 @@ approximate reporting remains deferred product UI.
 | Unsaved-roster recovery slot | Done | one reserved record, hidden from the shelf, offered not restored |
 | Draft byte storage | Done | bytes stored once per import batch, collected when the last draft referencing them goes |
 | Comment the public API surface | Done | the four front-door files; 42 → 81 of 668 exports. The remaining 587 are deliberate — see the note below the table |
-| Durable undo history | Done | a trimmed tail under `history:<draftId>`; 20 entries capped by a 256 KB budget, restored against one shared catalogue context |
+| Durable undo history | Done | RF-A01 repaired the controller boundary: bound combined past/future to 20 before strict draft validation, keep the current roster and 100 live steps, then apply the store's 256 KB budget. Seven new lifecycle regressions cover 20/21/100 edits, mixed undo/redo, autosave/recovery, failed and pending writes, and exact reopen |
 | Sibling-reordering UI, nested-force editing, force renaming, editable cost overrides | Deferred |
 
 **On the remaining 587 undocumented exports.** They are not a backlog item.
@@ -750,6 +756,11 @@ QA before classifying or implementing the discrepancy.
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
 | List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| Audit RF-A02 recovery lifecycle | Next for repair task | Recover currently marks the reserved slot as a named persisted draft and clears the only durable copy. Separate restoration semantics; verify reload, first save, failures, and combined long-history lifecycle |
+| Audit RF-A03 archive expansion boundary | Open, repair task | JSZip CRC checking inflates entries before metadata limits. Enforce preflight plus actual running output bounds and retain CRC/path safeguards |
+| Audit RF-A04 rule visibility | Open, repair task | Rule projections omit modifiers/groups and rendered rules lack applicability. Measure pinned semantics and add supported evaluation or explicit per-rule uncertainty |
+| Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
+| Impulsor headline points-capacity disappearance | Unconfirmed triage | Audit's 2,000-point Dark Angels journey lost headline capacity after adding Impulsor while Configuration retained Battle Size. Requires separate evaluator trace; not an RF-A04 defect and excluded from repair implementation |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -13446,3 +13457,41 @@ changed.
 **Complete the remaining shared active-roster component and token system.**
 The false all-catalogue creation warning is closed without changing the
 overhaul's existing Next priority.
+
+## Completed Assignment — RF-A01 Durable History Boundary, 2026-09-09
+
+Baseline `1e421e1f878b04b03332c80101b5caa49f358c44`; implementation `bcf089c`
+and this separate handoff commit on `codex/list-builder-ui-overhaul`.
+Primary checkout was clean, audit task idle, and both retained audit worktrees
+were preserved. Corpus remains `04c62fcd041b3808c39d5c46fd677c704027b979`.
+
+Reproduced 20-edit success versus 21/100-edit failure with
+`PERSISTENCE_DRAFT_LIMIT_EXCEEDED`; mixed history and recovery writes also
+failed. The controller now bounds the total history count before strict draft
+construction. It retains nearest past before future, preserves oldest-first
+past ordering, current roster, and the 100-step in-memory history. Existing
+256 KB store trimming remains authoritative after construction. Raising decoder
+limits or modifying live history was rejected. Success messages now refer to
+the exact snapshot written and disappear for later edits, including edits made
+during saving; failed writes remain unsaved and observable.
+
+Seven synthetic lifecycle tests cover boundaries, configured child selection,
+amount changes, 10-past/90-future trimming, manual save/update, autosave,
+recovery, exact reopen plus undo, failure and pending-save status. Before the
+fix five of the initial six tests failed for the reported defects; all seven
+final tests pass. Browser QA on isolated port 5199 used a fictional squad and
+required weapon: 23 add/duplicate/remove edits, Save draft, reload and Open
+retained the squad, equipment, 10 pts and saved state.
+
+Independent Claude plan review confirmed the two durability causes. Claude
+Opus 5 reviewed the exact RF-A01 candidate with only Read/Grep/Glob and approved
+without blockers; its ordering-comment, restored-undo, and positive-feedback
+suggestions were incorporated. Its separate late-save lifecycle finding is
+assigned to RF-A02. Source disclosure was restricted to the user-authorized
+durability files and fictional tests. No delegated code was accepted.
+
+Validation: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
+`git diff --check` passed; **553 passed / 20 skipped (573 total), 59 files**.
+Optional pinned integration: **19 passed**, all 46 documents at the recorded
+pin. Build retains only the existing large-chunk advisory. RF-A02, RF-A03 and
+RF-A04 remain authorized and will follow; no UI redesign is included.
