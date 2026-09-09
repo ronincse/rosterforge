@@ -86,6 +86,8 @@ function verifyPayload(payload: ArchivePayload, bytes: Uint8Array): void {
   if (bytes.length !== payload.expandedSize) {
     throw new Error("Archive expanded length does not match its metadata.");
   }
+  // JSZip readInt(4) and pako CRC both return signed int32, including high-bit
+  // CRCs. Keep the same representation on both sides of this integrity check.
   if (crc32(0, bytes, bytes.length, 0) !== payload.crc) {
     throw new Error("Archive CRC32 mismatch.");
   }

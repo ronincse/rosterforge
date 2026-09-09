@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sourceId } from "@rosterforge/foundation";
 import { ingestBattleScribeFile } from "./ingest.js";
+import { extractArchivePayload } from "./archive-output.js";
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 import * as rawInflate from "pako/lib/zlib/inflate.js";
 
@@ -22,6 +23,10 @@ const source = { sourceId: sourceId("archive-security"), filename: "security.cat
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("archive resource boundary", () => {
+  it("accepts a high-bit signed CRC32 without weakening integrity", () => {
+    const bytes = new TextEncoder().encode("123456789");
+    expect(extractArchivePayload({ bytes, method: "STORE", expandedSize: 9, crc: 0xcbf43926 | 0 }, 9)).toEqual(bytes);
+  });
   it("rejects declared oversized output before any decompression", async () => {
     const zip = new JSZip();
     zip.file("security.cat", "x".repeat(2 * 1024 * 1024));

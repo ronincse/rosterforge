@@ -885,6 +885,18 @@ Consequences worth knowing:
   Edits made before the recovery debounce settles are not guaranteed durable;
   recovery is never presented as an explicit named save.
 
+## Archive safety boundary (RF-A03)
+
+Metadata, paths and contents are checked before inflation.
+Both expanded and ratio ceilings also bound actual output, regardless of forged
+sizes. Exactly one GST/CAT payload is accepted; directories count toward the entry
+budget and must declare zero expanded size/CRC. Invalid lengths, trailing deflate
+bytes, CRC failures, malformed record counts and duplicate file entries fail closed.
+Metadata parsing is bounded by compressed input size, but allocates its entry list
+before the entry-count check. Legitimate bounded STORE/DEFLATE imports retain both
+original archive and extracted document bytes. No real compressed corpus is retained;
+compressed compatibility coverage uses project-owned synthetic archives.
+
 ## Deferred
 
 - Approximate origin-wide storage reporting, persistent-storage requests,

@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      // JSZip's browser stream probe is unused by metadata-only ingestion.
+      "readable-stream": fileURLToPath(new URL("./src/archive-node-stream-unavailable.ts", import.meta.url)),
       "@rosterforge/foundation": fileURLToPath(
         new URL("../../packages/foundation/src/index.ts", import.meta.url),
       ),

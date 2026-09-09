@@ -37,6 +37,14 @@ characteristic-type definitions, profile-owned modifiers, and recursive force
 entries. It does not
 resolve IDs or interpret rules.
 
+Archive metadata is read through a runtime-checked, pinned JSZip 3.10.1 adapter
+before CRC or decompression. Its complete entry list preserves duplicate names
+and original paths. A pinned pako 1.0.11 raw inflater accepts caller-owned bounded
+output windows; actual output stops at the smaller expanded/ratio limit plus one
+detection byte. CRC and exact length are then verified. Browser builds explicitly
+disable JSZip's unused Node-stream capability probe; no alternate stream extractor
+is used. Private dependency API changes require review and boundary-test reruns.
+
 Category entries additionally project the observed `profiles`, `rules`, and
 `infoLinks` collections. BattleScribe 2.03 does not declare them there, but real
 data uses all three, so they are projected rather than left to the generic node.
