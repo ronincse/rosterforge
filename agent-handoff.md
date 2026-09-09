@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (stat keyword reference follow-up complete; stopped)
+## Current Status — 2026-09-09 (rich text and nested references complete; stopped)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -63,6 +63,14 @@ integration two tests passed. Desktop and 390×844 browser checks passed.
 Implementation/handoff published through `525077d`; exact-commit CI `34392272382`
 passed every gate (verify job 64 seconds). This documentation-only confirmation
 follows on the same branch.
+The next owner-requested presentation follow-up is implemented in `d7c1d75`:
+safe source formatting, literal name/alias references throughout prose and stat
+fields, and an eight-layer reference stack retaining parent focus/scroll.
+Selected owner reports take precedence; catalogue-only lookups are labeled and
+do not imply applicability. Local gates pass: 633 tests passed / 24 skipped;
+both pinned integration tests pass. Desktop and 390×844 Angron reference-chain
+checks passed; see `docs/qa/rich-text-references.md`. Publish/CI outcome is recorded
+in the newest assignment below. No later engine phase was started.
 Stop pending owner direction; no later engine or broader UI phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -793,6 +801,8 @@ QA before classifying or implementing the discrepancy.
 | Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
 | Audit RF-A05 reference-card reading | Done — bounded checkpoint | `cda7782`: current baseline 10,527 px / 22 tables becomes 5,660 px / three tables at 390×844; stats and first weapons visible at opening. Selected-only, conservative source/loadout grouping, independent quantities, uncertainty and lazy exact details. Phone/tablet/desktop/text-scale/keyboard evidence in `docs/qa/rf-a05-reference-card.md`; no broader rule or engine semantics |
 | Stat keyword rule references | Done — bounded owner follow-up | `4ba0b21`: blank empty Keywords cells, attached-rule hyperlinks in selected stat tables, layered popup retaining unit scroll/focus. Only complete, fully covered rule groups leave the inline list; ambiguity, incomplete applicability and nested info-group scope remain conservative. No global rule inference or engine change |
+| Source formatting and prose references | Done — bounded owner follow-up | `d7c1d75`: safe bold/italic/small-cap and bounded block formatting; actual rule/profile names and aliases in the catalogue closure; selected reports preferred, source-only lookups labeled; eight-layer reference navigation. Angron and nested Warp Blades/Lethal Hits browser evidence in `docs/qa/rich-text-references.md` |
+| Broader reference lookup parity | Deferred — owner prioritization required | General lookup does not index arbitrary entry names/category descriptions or supply an absent core glossary such as Deployment. No full CommonMark, imported formatRules execution or rule-name modifier expansion added. Keep these separate from applicability/evaluation repairs; current scope is documented in `docs/compatibility.md` |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | Local condition group cost applicability | Unsupported, outside follow-up batch | Pinned Impulsor `bfb1-7512-e1a3-9fa2` has increment-10 points guarded by `localConditionGroups`. Projection is preserved, semantics are not evaluated. Its base 70 remains provisional with diagnostics; resolve semantics through separate evidence/design, not a name-specific price patch |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -13877,6 +13887,11 @@ later UI/engine phase.
 
 ## Completed Assignment — 2026-09-09: Stat keyword links and layered rules
 
+> Later extension: the 2026-09-09 rich-text assignment below adds explicitly
+> source-only name/alias lookup outside attached rules. This supersedes this
+> checkpoint's no-global-lookup presentation boundary, not its owner-specific
+> applicability or conservative inline-suppression guarantees.
+
 **State and boundary.** Clean baseline `9402de1c83c823146704db0aa9c0f2482947e3d7`,
 equal to origin on `codex/list-builder-ui-overhaul`. Implementation/design/test
 commit `4ba0b2101d69dd966de19ba6c78d667f37d3ece1`; this separate handoff records the
@@ -13945,3 +13960,71 @@ retained. Implementation/handoff published through
 SHA (verify job 64 seconds). User preview 5199 still returned HTTP 200 after QA
 cleanup. Stop after this checkpoint; do not automatically advance another roadmap
 item.
+
+## Completed Assignment — 2026-09-09: Source formatting and nested prose references
+
+**State.** Clean baseline `1e97aa79d273715d29438ef8b1fb8d2ae4f593ff`, equal to
+origin on `codex/list-builder-ui-overhaul`. Implementation/design/test commit
+`d7c1d752299456dd0dd19b8fe4ecc6119923aa6f`; this separate handoff records only the
+owner's formatting and reference-navigation follow-up. No main merge, PR, branch
+switch, unrelated edits, source-data commit or engine/persistence/print redesign.
+
+**Decision.** New Recruit's primary documentation confirms literal, case-insensitive
+name/alias matching, not inline target IDs, and `^^` small caps. Source pins and
+links are in `docs/qa/rich-text-references.md`. Additive alias/noindex projection
+retains exact generic nodes and original bytes. Bounded React-only formatting
+supports observed crossing bold/small caps and nested italic examples, as well as
+safe lists, headings and tables. No imported HTML/regex/URLs/code is executed.
+Scoped font synthesis fixes Bahnschrift's otherwise invisible italic/small-cap
+emphasis. Matching runs over visible text, not separate style spans.
+
+The catalogue closure provides real rules and substantive profiles, including
+Warp Blades' Roll/Effect fields. Actual selected reports and effective profile
+names take precedence. Ambiguity remains unlinked; source-only targets are
+explicitly labeled rather than treated as applied rules. Unmatched stat tokens
+use the same conservative fallback. Selected inline-rule suppression remains
+attached-owner-only. An eight-layer modal stack retains parents, blur, inert
+state and exact scroll/focus restoration; a close-first notice bounds cycles.
+Safety budgets and remaining formatting/reference limitations are recorded in
+architecture/compatibility and the QA document. The roadmap tracks broader lookup
+parity separately instead of implying this is complete New Recruit equivalence.
+
+**Evidence and gates.** Corpus HEAD rechecked:
+`04c62fcd041b3808c39d5c46fd677c704027b979`, all 46 JSON documents; investigation
+counted 57,180 description/characteristic fields, 27 alias arrays and 28 noindex
+nodes (26 true). Exact markup measurements and source identities are in the QA
+record. The optional two-test integration imports the pin and asserts actual
+Angron Deadly Demise formatting, selected lookup, Warp Blades alias/profile and
+absent Deployment. Both tests pass. Normal suite: 633 passed / 24 skipped (657),
+67 passed / five skipped files (72). Lint, typecheck, build and diff check pass.
+Only existing build advisory: 780.00 kB JS / 215.44 kB gzip exceeds 500 kB.
+Synthetic tests cover bytes, alias/noindex, ambiguity/scope, malformed/hostile and
+budgeted markup, formatted phrase boundaries, table/list structures, uncertain
+rules and eight-layer keyboard/focus/scroll behavior. Existing routed/base-value
+and print/persistence regressions remain green.
+
+**Browser/review.** Actual app UI on isolated origin 5205 loaded World Eaters,
+created a temporary QA roster and added Angron. Desktop and 390×844 verified
+bold/italic/small caps and Angron → Deadly Demise → Deadly Demise and Angron →
+Warp Blades → Lethal Hits reference chains. Parents stayed visible/inert; Escape
+restored trigger focus and scroll. Phone popup client/scroll width both 325 px,
+body 14.875 px; no horizontal overflow or browser warnings/errors. Viewport reset.
+Screenshots remain outside repo under `C:/CodexACLTest/rf-richtext-*.png`.
+Not physical iPhone/Safari, screen reader, OS text scaling or live New Recruit
+interaction; comparison uses owner screenshots, primary docs and pinned source.
+
+Native reviewer `markup_corpus` used isolated baseline worktree
+`C:/CodexACLTest/rf-richtext-review-20260909`. All three findings (style-run word
+boundaries, mixed keyword fallback, effective profile names) were repaired and
+re-reviewed with no remaining high-priority correctness/security concern. Lead
+reviewed actual diff and ran all tests/browser checks. External Antigravity was
+attempted in its own disposable worktree but failed on local log/auth access and
+absent login; canceled, no external review claimed. Claude's previously exhausted
+quota was not retried. This explains native-only review despite the prior streak.
+
+**Handoff.** No further engine work authorized. General entry/category-description
+lookup, unavailable glossaries, full CommonMark and rule-name modifier expansion
+remain outside this bounded implementation. Review worktrees retained. User
+preview 5199 is preserved; saved user rosters were not touched. Temporary QA5205
+cleanup and publication/CI result follow below. Stop at this checkpoint pending
+owner direction.
