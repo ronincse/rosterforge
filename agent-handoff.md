@@ -34,12 +34,13 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (audit repairs RF-A01/RF-A02 complete; RF-A03/RF-A04 next)
+## Current Status — 2026-09-09 (audit repairs RF-A01 through RF-A03 complete; RF-A04 next)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
-repaired in `7900bcc`. RF-A03 bounded archive decompression and RF-A04 rule applicability follow in
-that order. RF-A05 reference-card redesign is deferred. The reported loss of
+repaired in `7900bcc`. RF-A03 bounded archive decompression is implemented in
+`4e67051` plus browser/CRC verification; RF-A04 rule applicability is next.
+RF-A05 reference-card redesign is deferred. The reported loss of
 headline points capacity after adding Impulsor is unconfirmed separate triage.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -757,7 +758,7 @@ QA before classifying or implementing the discrepancy.
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
 | List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
-| Audit RF-A03 archive expansion boundary | Open, repair task | JSZip CRC checking inflates entries before metadata limits. Enforce preflight plus actual running output bounds and retain CRC/path safeguards |
+| Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
 | Audit RF-A04 rule visibility | Open, repair task | Rule projections omit modifiers/groups and rendered rules lack applicability. Measure pinned semantics and add supported evaluation or explicit per-rule uncertainty |
 | Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
 | Impulsor headline points-capacity disappearance | Unconfirmed triage | Audit's 2,000-point Dark Angels journey lost headline capacity after adding Impulsor while Configuration retained Battle Size. Requires separate evaluator trace; not an RF-A04 defect and excluded from repair implementation |
@@ -13529,3 +13530,45 @@ Gates all passed: lint, typecheck, test (**560 passed / 20 skipped, 580 total,
 59 files**), build and diff check. Existing large-chunk advisory only. Corpus
 pin unchanged at `04c62fcd041b3808c39d5c46fd677c704027b979`; this checkpoint changes
 no imported semantics. RF-A03 then RF-A04 remain in this authorized batch.
+
+## Completed Assignment — RF-A03 Bounded Archive Extraction, 2026-09-09
+
+Baseline `399ec62`; implementation `4e67051` (integrated native worker commit
+`3ed032e`), lead browser/CRC follow-up `f40c0e7`, then this handoff. RF-A02 CI
+`34365657113` succeeded. Selected branch unchanged; retained audit worktrees untouched.
+
+Reproduced the installed JSZip CRC pass expanding all 2,097,152 synthetic bytes
+before a 1,024-byte rejection. The adapter now reads metadata only, retains raw
+entry names and duplicate/count evidence, and performs policy checks before
+inflation. Low-level pako receives at most 16 KiB or remaining+1 output space;
+forged expanded/ratio values stop actual output at limit+1. CRC and exact lengths
+are checked afterward. STORE is bounded before copying. Disabling CRC or relying
+on declared lengths was rejected. Empty directories remain supported; nonempty
+directory records, duplicate payloads, malformed counts and trailing deflate bytes
+fail closed. Direct exact pako 1.0.11 and JSZip 3.10.1 pin already installed versions.
+
+Native archive worker used its own detached worktree; lead inspected every file,
+reran gates, added an explicit high-bit CRC regression, and verified browser use.
+Claude Opus 5 reviewed actual candidate and installed inflater internals: no
+security blockers; confirmed bounded buffers preserve back-reference history.
+It requested corpus verification and documented stricter length/trailing-byte
+acceptance. All 19 optional pinned JSON tests passed (46 documents at
+`04c62fcd041b3808c39d5c46fd677c704027b979`). This corpus has JSON, not archived
+GST/CAT, so compressed compatibility evidence is synthetic, not a real ZIP corpus.
+
+Browser port 5199: legitimate compressed fictional GST/CAT pair imported with
+zero diagnostics; safe excessive-ratio archive rejected. Initially the private
+metadata entry introduced an unused Node-stream warning; a browser-only alias
+reports that JSZip capability unavailable instead of polyfilling an unbounded
+stream path. Final fresh browser console: no warnings/errors. Production build
+has only the pre-existing large-chunk advisory. Elevated pnpm initially requested
+module purge without a TTY; normal pnpm install succeeded without dependency
+replacement or environment configuration changes.
+
+Final gates passed: lint, typecheck, **586 passed / 20 skipped (606 total), 60
+files**, build and diff check. 26 archive security tests cover zero-work preflight,
+actual forged overflow, ratio, CRC including signed high bit, lengths, malformed
+and duplicate entries, directories, truncated/empty streams, and valid multi-buffer
+STORE/DEFLATE preservation. Remaining limitation: metadata list allocation occurs
+before entry-count rejection, bounded by compressed-input limit; private dependency
+API upgrades require review. RF-A04 is next; no UI redesign was performed.
