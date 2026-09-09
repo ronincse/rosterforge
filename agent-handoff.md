@@ -34,11 +34,11 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (audit repair RF-A01 complete; RF-A02 through RF-A04 next for this task)
+## Current Status — 2026-09-09 (audit repairs RF-A01/RF-A02 complete; RF-A03/RF-A04 next)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
-after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle,
-RF-A03 bounded archive decompression, and RF-A04 rule applicability follow in
+after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
+repaired in `7900bcc`. RF-A03 bounded archive decompression and RF-A04 rule applicability follow in
 that order. RF-A05 reference-card redesign is deferred. The reported loss of
 headline points capacity after adding Impulsor is unconfirmed separate triage.
 
@@ -756,7 +756,7 @@ QA before classifying or implementing the discrepancy.
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
 | List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
-| Audit RF-A02 recovery lifecycle | Next for repair task | Recover currently marks the reserved slot as a named persisted draft and clears the only durable copy. Separate restoration semantics; verify reload, first save, failures, and combined long-history lifecycle |
+| Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Open, repair task | JSZip CRC checking inflates entries before metadata limits. Enforce preflight plus actual running output bounds and retain CRC/path safeguards |
 | Audit RF-A04 rule visibility | Open, repair task | Rule projections omit modifiers/groups and rendered rules lack applicability. Measure pinned semantics and add supported evaluation or explicit per-rule uncertainty |
 | Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
@@ -13495,3 +13495,37 @@ Validation: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
 Optional pinned integration: **19 passed**, all 46 documents at the recorded
 pin. Build retains only the existing large-chunk advisory. RF-A02, RF-A03 and
 RF-A04 remain authorized and will follow; no UI redesign is included.
+
+## Completed Assignment — RF-A02 Recovery Lifecycle, 2026-09-09
+
+Baseline `07f33b6`; implementation `7900bcc`, followed by this separate handoff
+commit. RF-A01 remote CI `34363926404` succeeded on `07f33b6`.
+Reproduced recovery becoming active draft `__recovery__` and opening a named
+draft deleting unrelated recovery. Recovery now restores as unsaved, retains
+the bounded history and source bytes, keeps beforeunload protection, and gets
+a new named ID only on a successful user save. Failed first saves keep recovery.
+Generation guards prevent late save/delete callbacks from changing a new session.
+FIFO clear checks roster ownership; epoch checks reject stale recovery timers.
+Deleting the open draft makes it unsaved; failed named autosave tries recovery.
+No persistence format changed. Treating recovery as a normal draft was rejected.
+
+Four new baseline regressions failed; all 14 controller durability tests now
+pass, plus the two FIFO tests. Coverage includes 100 edits, bounded restored
+history, two reload/restores, exact configured child/name restoration, first-save
+success/failure, foreign recovery, stale save, active deletion and failed autosave.
+Browser port 5199: unsaved fictional Repair Squad + Configured weapon (10 pts),
+recover on a fresh visit, unsaved menu and Save draft, another fresh visit still
+offers recovery, first save succeeds as a named draft. No real saved roster was
+used. Automated remount tests cover actual reload lifecycle and failed writes.
+
+Claude Opus 5 independently reviewed the combined A01/A02 candidate. Its first
+review prompted ownership, deletion, fallback, timer and diagnostic fixes plus
+three tests. Final source re-review found no blockers. Non-gating follow-ups:
+foreign recovery may incur two full decode reads on save; failed discard may
+cancel a pending recovery timer until the next edit. Source disclosure remained
+limited to authorized code and synthetic tests; no delegated code accepted.
+
+Gates all passed: lint, typecheck, test (**560 passed / 20 skipped, 580 total,
+59 files**), build and diff check. Existing large-chunk advisory only. Corpus
+pin unchanged at `04c62fcd041b3808c39d5c46fd677c704027b979`; this checkpoint changes
+no imported semantics. RF-A03 then RF-A04 remain in this authorized batch.
