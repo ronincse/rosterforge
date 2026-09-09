@@ -112,6 +112,11 @@
   ID on first successful save. Failed saves retain recovery and reload protection.
   Opening a named draft does not clear unrelated recovery; stale save callbacks
   from abandoned sessions cannot change the current draft or clear its slot
+- A failed explicit recovery discard reports failure and re-arms one ordinary
+  debounce for eligible current unsaved work, even without another edit. Retry
+  timers retain the initiating session/clear epoch; later successful save/discard
+  decisions supersede them. Successful discard does not recreate recovery until
+  a subsequent edit. Failed recovery writes do not loop or automatically retry.
 - A failed named autosave also attempts recovery after the debounce. Both writes
   can fail when storage is full; diagnostics remain observable and unsaved state
   stays true. Deleting the open draft restores unsaved status and recovery

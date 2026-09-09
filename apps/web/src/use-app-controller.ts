@@ -151,6 +151,8 @@ export function useRosterForgeAppController({
   // current when storage finishes. Edits keep the generation; navigation does not.
   const savingSequence = useRef<number | undefined>(undefined);
   const recoveryEpoch = useRef(0);
+  const recoveryTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const scheduleRecoveryRef = useRef<() => void>(() => undefined);
   useEffect(() => () => { ++importSequence.current; }, []);
   const draftListSequence = useRef(0);
   const [loadState, setLoadState] = useState<LoadState>({ kind: "idle" });
@@ -478,10 +480,20 @@ export function useRosterForgeAppController({
   }, [draftStore]);
 
   async function discardRecoverableRoster() {
-    ++recoveryEpoch.current;
+    const sequence = importSequence.current;
+    const epoch = ++recoveryEpoch.current;
     const cleared = await recoverySlot.clear();
+    // A later save/discard or session transition owns the recovery decision now.
+    if (sequence !== importSequence.current || epoch !== recoveryEpoch.current) return;
     if (cleared.ok) setRecoverableRoster(undefined);
-    else setDraftAction({ kind: "idle", message: "Recovery could not be discarded.", diagnostics: cleared.diagnostics });
+    else {
+      setDraftAction({ kind: "idle", message: "Recovery could not be discarded.", diagnostics: cleared.diagnostics });
+      // Bind one ordinary debounce to this decision now. A React state signal
+      // could render after a later successful clear in the same batch and arm
+      // under its epoch, resurrecting deliberately discarded work. The shared
+      // timer instead retains this epoch and reads the live roster when due.
+      scheduleRecoveryRef.current();
+    }
   }
 
   async function recoverUnsavedRoster() {
@@ -828,19 +840,30 @@ export function useRosterForgeAppController({
       setRosterDiagnostics(written.diagnostics);
     }
   };
-  useEffect(() => {
+  scheduleRecoveryRef.current = () => {
+    clearTimeout(recoveryTimer.current);
+    recoveryTimer.current = undefined;
     if (pendingRoster === undefined || pendingRoster === persistedRoster) {
-      return undefined;
+      return;
     }
     // Normally a named draft is already kept current. After a failed autosave,
     // also try recovery; both remain best effort if browser storage is full.
-    if (activeDraft !== undefined && autosaveBlockedRoster === undefined) return undefined;
+    if (activeDraft !== undefined && autosaveBlockedRoster === undefined) return;
     const epoch = recoveryEpoch.current;
-    const timer = setTimeout(() => {
-      if (epoch === recoveryEpoch.current) void recoveryRef.current();
+    const sequence = importSequence.current;
+    recoveryTimer.current = setTimeout(() => {
+      recoveryTimer.current = undefined;
+      if (epoch === recoveryEpoch.current && sequence === importSequence.current) void recoveryRef.current();
     }, autosaveDelayMs);
+  };
+  useEffect(() => {
+    // Edits and a failed explicit discard share one debounce. Neither failed
+    // writes nor ordinary re-renders schedule another attempt; a subsequent
+    // edit replaces the timer and unmount cancels it.
+    scheduleRecoveryRef.current();
     return () => {
-      clearTimeout(timer);
+      clearTimeout(recoveryTimer.current);
+      recoveryTimer.current = undefined;
     };
   }, [activeDraft, autosaveBlockedRoster, autosaveDelayMs, pendingRoster, persistedRoster]);
 
