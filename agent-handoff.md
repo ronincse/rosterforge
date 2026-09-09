@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (both authorized follow-ups fixed; stopped)
+## Current Status — 2026-09-09 (RF-A05 reference reading complete; stopped)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -48,7 +48,13 @@ The failed-discard latest-state protection defect is fixed in `2a0ac05` (handoff
 `5e7ffed`, CI `34374241729` passed). Impulsor headline capacity is fixed in
 `0104994`: independently known limits remain visible beside explicitly provisional
 spending. Its unsupported local-condition-group price modifier stays diagnostic.
-This bounded batch is complete; RF-A05 remains deferred until owner direction.
+That bounded repair batch is complete. The owner then authorized RF-A05 only:
+`cda7782` adds selected-reference stats/weapon-first reading, conservative grouping,
+owner-specific uncertainty and lazy exact occurrence details. At 390×844 the
+current-baseline audit squad fell from 10,527 to 5,660 px and 22 to three tables,
+with stats and first weapons visible at opening. See the newest completed entry
+and `docs/qa/rf-a05-reference-card.md`. Stop here pending further owner direction;
+no later UI or engine checkpoint was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -286,16 +292,18 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **620 passed, 22 skipped (642)**,
-  across 66 files (62 passed, four optional files skipped).
+  `git diff --check` all pass. `pnpm test` is **623 passed, 23 skipped (646)**,
+  across 68 files (63 passed, five optional files skipped).
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
-  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set, the three focused corpus
-  files pass **21 tests**, including exact zero-diagnostic catalogue creation
+  never committed. The preceding repair checkpoint's three focused corpus
+  files passed **21 tests**, including exact zero-diagnostic catalogue creation
   across all 36 selectable catalogues, occurrence-specific rule visibility, and
   the Dark Angels/Impulsor capacity regression (eight-file dependency closure).
-  This is a separate integration run, not a claim that every skipped test ran.
+  RF-A05 separately reran the reference, rule-visibility and capacity integration
+  files: **three tests passed**, including five/ten model reference grouping.
+  These are separate integration runs, not a claim that every skipped test ran.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
@@ -774,7 +782,7 @@ QA before classifying or implementing the discrepancy.
 | Remaining rule-display compatibility | Open, outside repair batch | Resolve association conditions (86 hidden-link condition leaves at the pin), cross-layer conflicting modifier precedence, parent info-group visibility, rule text/name operations and four generic catalogue-root info links using semantic evidence; do not guess or hide uncertainty |
 | Failed recovery discard strands pending protection | Done | `2a0ac05`: reproduced newer pending snapshots lost on reload despite retaining the older recovery. Shared debounce re-arms once after failed discard; session/epoch guards, successful discard, queued writes, later edits and batched operations covered. Previous non-gating characterization was insufficient |
 | Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
-| Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
+| Audit RF-A05 reference-card reading | Done — bounded checkpoint | `cda7782`: current baseline 10,527 px / 22 tables becomes 5,660 px / three tables at 390×844; stats and first weapons visible at opening. Selected-only, conservative source/loadout grouping, independent quantities, uncertainty and lazy exact details. Phone/tablet/desktop/text-scale/keyboard evidence in `docs/qa/rf-a05-reference-card.md`; no broader rule or engine semantics |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | Local condition group cost applicability | Unsupported, outside follow-up batch | Pinned Impulsor `bfb1-7512-e1a3-9fa2` has increment-10 points guarded by `localConditionGroups`. Projection is preserved, semantics are not evaluated. Its base 70 remains provisional with diagnostics; resolve semantics through separate evidence/design, not a name-specific price patch |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -13776,3 +13784,80 @@ the two original retained audit worktrees and personal saved rosters are untouch
 No confirmed unfixed defect from this two-item batch remains before RF-A05, but
 unsupported pricing/rule compatibility remains explicitly incomplete. Await owner
 direction, without treating this bounded result as whole-product certification.
+
+## Completed Assignment — 2026-09-09: RF-A05 selected reference-card readability
+
+**Boundary and state.** Owner explicitly resumed only RF-A05 after the completed
+repair batch. Actual baseline was clean `9c87d68779ed295b4ff8040e7cf90feb056e2d98`,
+equal to origin on `codex/list-builder-ui-overhaul`; bug-fix task idle, audit task
+not loaded, no concurrent implementation writer. Implementation/design/evidence
+commit: `cda7782d55cd2b64c28ec6be19ed583620b5a777`. This separate handoff commit
+updates status and roadmap. Push both to the same branch; no main merge or PR.
+
+**Decision.** Replace only the selected unit's default recursive reader with a
+UI presentation projection: stats first, selected weapons next, prose cards next,
+then keywords and exact occurrence/source disclosure. Group only complete static
+material with matching exact source/link carriers, lineage/loadout and effective
+reports. Modifier evidence, uncertain scopes, different effective values and
+selection-name annotations stay distinct. Resolve against original owners before
+grouping; never merge owner-specific report maps by shared profile identity.
+Original owners/choices and cached reports remain available, with the unchanged
+tree mounted only when requested. Independent occurrence amounts are summed;
+ancestor model amounts and attacks are never multiplied. Name-only/value-only
+deduplication, raw-source rebuilding, engine changes and aggressive info-group
+flattening were rejected because they would erase meaning or uncertainty.
+
+**Measured evidence.** Corpus pin `04c62fcd041b3808c39d5c46fd677c704027b979`:
+browser repository index 46 files, integration exact eight-file Dark Angels
+closure, no committed third-party data. Audit loadout: one Sergeant with Power
+fist/Bolt Rifle/Bolt pistol, three Intercessors, one launcher model. At 390×844,
+795 px client height: before 10,527 px / 22 tables, first Unit heading Y1,289 and
+weapon heading Y1,568; after 5,660 px / three tables, model section Y222 and
+weapons Y548. Sixteen profile groups (14 table rows plus two prose profiles),
+11 rule groups. Ten models (eight ordinary) retain exactly the same counts and
+height. Phone table values are enlarged to 14.875 px, not shrunk. Full evidence
+and qualification: `docs/qa/rf-a05-reference-card.md`.
+
+Opening wall samples 268 ms before, 274 ms after, 272 ms ten-model; tool/input
+overhead is included, no speedup claimed. Projection-only integration samples
+6.13 ms five first-call / 0.98 ms warm / 3.02 ms ten with warm runtime. Reviewer
+found repeated ancestor-subtree serialization; compact bottom-up interned
+loadout signatures replaced it. View remains read-only and selected-subtree-only.
+
+**Validation and review.** Normal lint/typecheck/test/build/diff gates pass:
+623 passed / 23 skipped (646), 63 passed / five skipped files (68). Focused
+pinned reference/rule-visibility/capacity: three tests, three files passed.
+Build only warns about the existing large chunk (768.75 kB JS, 211.52 kB gzip).
+Synthetic real imports test static repetition, distinct definitions/links,
+equal-value writes, per-owner 9 versus 6 effective values, incomplete profiles
+and rule applicability, hidden-complete omission, unknown-parent traversal and
+independent model/equipment amounts. Existing UI tests now assert lazy detail,
+grouped counts, keyboard loop, keyword-context focus, naming and routed values.
+Separate print model unchanged; its ordinary regression coverage passes.
+
+Phone/tablet/desktop browser QA completed; tablet/desktop tables fit containers.
+Temporary 200% root-text simulation found/fixed prose min-content overflow and
+was removed before final gates; no page/dialog overflow after fix. Keyboard
+section jumps focus targets; table ArrowRight scrolls; disclosure participates
+in Tab loop; Escape returns to View. Not actual iPhone/Safari, screen reader,
+installed PWA, OS text settings, dark/forced-color or physical print testing.
+
+Native reviewer `rf_a05_review` used isolated baseline worktree
+`C:/CodexACLTest/rf-a05-review-20260909`. Read-only review identified three issues:
+quadratic key construction, unavailable-parent descendant suppression, missing
+prose-inspection warning. All fixed and re-reviewed; no remaining serious
+correctness concern. Reviewer did not execute tests or browser QA independently.
+Claude's recorded exhausted quota was not retried. Lead implemented, integrated,
+reviewed actual diff, ran tests and browser QA.
+
+**Handoff/limits.** Source/link/scope-conservative grouping intentionally leaves
+some repeated rules. Dynamic/uncertain material remains separate and can still
+produce long readers. Info-group hierarchy is retained, not a general nested
+reference redesign. RF-A04 broader applicability and Impulsor provisional costs
+are unchanged; no new engine repair absorbed. Existing server 5199 preserved;
+isolated preview 5201 and clean reviewer worktree retained for inspection.
+Screenshots remain outside production in `C:/CodexACLTest/rf-a05-*.png` (specific
+paths in QA record). Other worktrees and saved user rosters were untouched.
+RF-A05 is complete locally; verify CI for the exact pushed handoff commit and
+stop. Await owner direction rather than automatically promoting/executing a
+later UI/engine phase.
