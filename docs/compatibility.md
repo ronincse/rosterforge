@@ -846,11 +846,19 @@ The bounds, in the order they bind:
   record, so `list` never reads or validates it. Only `load` does.
 - `maxHistoryEntries` caps it at **20** entries across past and future together;
   a record exceeding that is refused as `PERSISTENCE_DRAFT_LIMIT_EXCEEDED`.
+- The controller keeps the nearest past entries, then nearest future entries,
+  within that combined count before draft construction reaches the strict
+  decoder. The current roster is always retained; live history still holds 100
+  steps. Manual save, autosave, and recovery use the same bounded projection.
 - A **256 KB** budget in the browser store then trims it further, keeping the
   entries nearest the present. For a large roster that is roughly seven undo
   steps; for a small one it is the full twenty.
 - Past is filled before future, because undo is what anyone reaches for first
   after a reload.
+
+Save-success feedback belongs to the exact immutable roster snapshot written.
+Editing after a save, including during an in-flight write, removes that success
+message until the new snapshot saves; failures remain visible and unsaved.
 
 Consequences worth knowing:
 

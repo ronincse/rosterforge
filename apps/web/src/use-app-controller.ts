@@ -5,6 +5,7 @@ import type { Roster } from "@rosterforge/roster-model";
 import { success, type Diagnostic, type Result } from "@rosterforge/foundation";
 import {
   createLocalRosterDraft,
+  defaultLocalRosterDraftLimits,
   type LocalRosterDraft,
   type LocalRosterDraftHistory,
 } from "@rosterforge/persistence";
@@ -130,6 +131,8 @@ export interface DraftActionState {
   readonly targetId?: string;
   readonly message?: string;
   readonly diagnostics: readonly Diagnostic[];
+  /** A success message describes this immutable snapshot, not later edits. */
+  readonly savedRoster?: Roster;
 }
 
 const defaultDraftStore = createIndexedDbLocalRosterDraftStore();
@@ -498,15 +501,22 @@ export function useRosterForgeAppController({
    *
    * A `LocalRosterSession` also holds catalogue projections and a choice index,
    * none of which are serialisable and all of which are rebuilt on restore. The
-   * roster is the only part worth keeping. The store trims this further against
-   * its byte budget, so what comes back is a tail rather than all of it.
+   * roster is the only part worth keeping. Bound the combined past/future count
+   * before strict draft validation; the store's later byte trimming cannot
+   * rescue an envelope the decoder already rejected. Spend the shared allowance
+   * on the nearest past entries before future entries; past stays oldest-first,
+   * matching the store's policy, without changing the live 100-step history.
    */
   function draftHistory(
     history: BoundedHistory<LocalRosterSession>,
   ): LocalRosterDraftHistory {
+    const limit = defaultLocalRosterDraftLimits.maxHistoryEntries;
+    const past = history.past.slice(-limit).map(({ roster }) => roster);
     return {
-      past: history.past.map(({ roster }) => roster),
-      future: history.future.map(({ roster }) => roster),
+      past,
+      future: history.future
+        .slice(0, limit - past.length)
+        .map(({ roster }) => roster),
     };
   }
 
@@ -557,6 +567,7 @@ export function useRosterForgeAppController({
     setDraftAction({
       kind: "idle",
       message: `Saved ${draft.value.roster.name} in this browser.`,
+      savedRoster: rosterSession.roster,
       diagnostics: [...saved.diagnostics, ...listDiagnostics],
     });
   }
@@ -820,7 +831,12 @@ export function useRosterForgeAppController({
     recoverUnsavedRoster,
     discardRecoverableRoster,
     draftShelf,
-    draftAction,
+    // A completed write may describe an older snapshot if the player edited
+    // during saving. Keep its diagnostics but never imply newer edits saved.
+    draftAction: draftAction.savedRoster !== undefined &&
+      draftAction.savedRoster !== rosterSession?.roster
+      ? { kind: draftAction.kind, diagnostics: draftAction.diagnostics }
+      : draftAction,
     activeDraft,
     selectedCatalogue,
     rosterHistory,
