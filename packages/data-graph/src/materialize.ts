@@ -72,6 +72,8 @@ export interface BattleScribeMaterializationOptions {
 }
 
 export interface MaterializedSelectionContainer {
+  readonly associations: SelectionContainerProjection["associations"];
+  readonly associationLinks: SelectionContainerProjection["associationLinks"];
   readonly selectionEntries: readonly MaterializedSelectionEntry[];
   readonly selectionEntryGroups: readonly MaterializedSelectionEntryGroup[];
   readonly entryLinks: readonly MaterializedEntryLink[];
@@ -602,6 +604,8 @@ function materializeContainer(
       ) ?? []),
     ],
     categoryLinks: combined(definition.categoryLinks, link?.categoryLinks),
+    associations: combined(definition.associations, link?.associations),
+    associationLinks: combined(definition.associationLinks, link?.associationLinks),
     infoLinks: combined(definition.infoLinks, link?.infoLinks),
     infoGroups: combined(definition.infoGroups, link?.infoGroups),
     materializedInfoLinks: [

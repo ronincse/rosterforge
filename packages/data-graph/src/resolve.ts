@@ -6,6 +6,7 @@ import {
 } from "@rosterforge/foundation";
 
 import type {
+  AssociationProjection,
   BattleScribeProjection,
   CategoryEntryProjection,
   CategoryLinkProjection,
@@ -44,6 +45,7 @@ export type BattleScribeGraphObjectKind =
   | "selectionEntry"
   | "selectionEntryGroup"
   | "entryLink"
+  | "association"
   | "infoGroup"
   | "rule"
   | "profile"
@@ -56,6 +58,7 @@ export type BattleScribeReferenceKind =
   | "categoryLink"
   | "infoLink"
   | "publicationLink"
+  | "associationLink"
   | "costType"
   | "profileType"
   | "characteristicType"
@@ -222,6 +225,7 @@ function objectsForDocument(
     ...projection.publications.flatMap((publication) =>
       identifiedObject("publication", publication, document),
     ),
+    ...projection.sharedAssociations.flatMap((association) => identifiedObject("association", association, document)),
   ];
 }
 
@@ -281,6 +285,7 @@ function objectsForSelectionEntry(
 ): readonly BattleScribeGraphObject[] {
   return [
     ...identifiedObject("selectionEntry", entry, document),
+    ...entry.associations.flatMap((association) => identifiedObject("association", association, document)),
     ...entry.selectionEntries.flatMap((child) =>
       objectsForSelectionEntry(child, document),
     ),
@@ -306,6 +311,7 @@ function objectsForSelectionEntryGroup(
 ): readonly BattleScribeGraphObject[] {
   return [
     ...identifiedObject("selectionEntryGroup", group, document),
+    ...group.associations.flatMap((association) => identifiedObject("association", association, document)),
     ...group.selectionEntries.flatMap((child) =>
       objectsForSelectionEntry(child, document),
     ),
@@ -331,6 +337,7 @@ function objectsForEntryLink(
 ): readonly BattleScribeGraphObject[] {
   return [
     ...identifiedObject("entryLink", entryLink, document),
+    ...entryLink.associations.flatMap((association) => identifiedObject("association", association, document)),
     ...entryLink.selectionEntries.flatMap((child) =>
       objectsForSelectionEntry(child, document),
     ),
@@ -432,6 +439,7 @@ function referencesForDocument(
       referencesForPublicationLinks(rule.publicationLinks, document, objectsById, diagnostics),
     ),
     ...projection.rules.flatMap((rule) => referencesForModifierCarrier(rule, document, objectsById, diagnostics)),
+    ...projection.sharedAssociations.flatMap((association) => referencesForAssociation(association, document, objectsById, diagnostics)),
     ...projection.profiles.flatMap((profile) =>
       referencesForProfile(profile, document, objectsById, diagnostics),
     ),
@@ -598,6 +606,8 @@ function referencesForSelectionContainer(
   diagnostics: Diagnostic[],
 ): readonly BattleScribeGraphReference[] {
   return [
+    ...container.associationLinks.flatMap((link) => targetReference("associationLink", link, document, link.targetId, ["association"], objectsById, diagnostics)),
+    ...container.associations.flatMap((association) => referencesForAssociation(association, document, objectsById, diagnostics)),
     ...referencesForCategoryLinks(container.categoryLinks, document, objectsById, diagnostics),
     ...container.infoLinks.flatMap((infoLink) =>
       targetReference(
@@ -634,6 +644,18 @@ function referencesForSelectionContainer(
       referencesForConstraint(constraint, document, objectsById, diagnostics),
     ),
     ...referencesForModifierCarrier(container, document, objectsById, diagnostics),
+  ];
+}
+
+function referencesForAssociation(
+  association: AssociationProjection,
+  document: ParsedBattleScribeDocument,
+  objectsById: ReadonlyMap<ObjectId, readonly BattleScribeGraphObject[]>,
+  diagnostics: Diagnostic[],
+): readonly BattleScribeGraphReference[] {
+  return [
+    ...association.conditions.flatMap((condition) => referencesForCondition(condition, document, objectsById, diagnostics)),
+    ...association.conditionGroups.flatMap((group) => referencesForConditionGroup(group, document, objectsById, diagnostics)),
   ];
 }
 

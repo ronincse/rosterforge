@@ -7,6 +7,8 @@ import {
 } from "@rosterforge/foundation";
 
 import type {
+  AssociationProjection,
+  AssociationLinkProjection,
   BattleScribeProjection,
   BattleScribeRootMetadata,
   CatalogueLinkProjection,
@@ -83,6 +85,7 @@ export function projectBattleScribeDocument(
     ],
     profiles: mapContainer(located, "sharedProfiles", "profile", context, projectProfile),
     publications: mapContainer(located, "publications", "publication", context, projectPublication),
+    sharedAssociations: mapContainer(located, "sharedAssociations", "association", context, projectAssociation),
   };
 
   return success(projection, context.diagnostics);
@@ -149,6 +152,8 @@ function selectionContainer(
   context: ProjectionContext,
 ): SelectionContainerProjection {
   return {
+    associations: mapContainer(located, "associations", "association", context, projectAssociation),
+    associationLinks: mapContainer(located, "associationLinks", "associationLink", context, projectAssociationLink),
     selectionEntries: mapContainer(located, "selectionEntries", "selectionEntry", context, projectSelectionEntry),
     selectionEntryGroups: mapContainer(located, "selectionEntryGroups", "selectionEntryGroup", context, projectSelectionEntryGroup),
     entryLinks: mapContainer(located, "entryLinks", "entryLink", context, projectEntryLink),
@@ -162,6 +167,32 @@ function selectionContainer(
     modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
     modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
     publicationLinks: mapContainer(located, "publicationLinks", "publicationLink", context, projectPublicationLink),
+  };
+}
+
+function projectAssociation(located: LocatedElement, context: ProjectionContext): AssociationProjection {
+  return {
+    ...identified(located, context),
+    ...optionalNumber(located, "min", context),
+    ...optionalNumber(located, "max", context),
+    ...optionalString(located.node, "scope"),
+    ...optionalId(located.node, "childId"),
+    ...optionalString(located.node, "label"),
+    ...optionalString(located.node, "action"),
+    ...optionalBoolean(located, "hidden", context),
+    ...optionalBoolean(located, "includeChildSelections", context),
+    ...optionalBoolean(located, "includeChildForces", context),
+    ...optionalId(located.node, "defaultSelectionEntryId"),
+    conditions: mapContainer(located, "conditions", "condition", context, projectCondition),
+    conditionGroups: mapContainer(located, "conditionGroups", "conditionGroup", context, projectConditionGroup),
+  };
+}
+
+function projectAssociationLink(located: LocatedElement, context: ProjectionContext): AssociationLinkProjection {
+  return {
+    ...link(located, context),
+    ...optionalString(located.node, "type"),
+    ...optionalBoolean(located, "import", context),
   };
 }
 
@@ -444,6 +475,7 @@ function projectCondition(
   context: ProjectionContext,
 ): ConditionProjection {
   return {
+    ...optionalBoolean(located, "queryFromSelf", context),
     ...base(located, context),
     ...optionalId(located.node, "id"),
     ...optionalString(located.node, "type"),

@@ -88,6 +88,9 @@ export function battleScribeElementFromJson(
 const textChildProperties = new Set(["description", "readme"]);
 
 const collectionItemNames: Readonly<Record<string, string>> = {
+  associations: "association",
+  associationLinks: "associationLink",
+  sharedAssociations: "association",
   catalogueLinks: "catalogueLink",
   categoryEntries: "categoryEntry",
   categoryLinks: "categoryLink",

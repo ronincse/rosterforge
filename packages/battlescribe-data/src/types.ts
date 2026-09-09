@@ -184,6 +184,7 @@ export interface BattleScribeProjection extends ProjectedBattleScribeNode {
   readonly rules: readonly RuleProjection[];
   readonly profiles: readonly ProfileProjection[];
   readonly publications: readonly PublicationProjection[];
+  readonly sharedAssociations: readonly AssociationProjection[];
 }
 
 export interface CatalogueLinkProjection extends LinkBattleScribeNode {
@@ -212,6 +213,8 @@ export interface SelectionEntryGroupProjection
 }
 
 export interface SelectionContainerProjection {
+  readonly associations: readonly AssociationProjection[];
+  readonly associationLinks: readonly AssociationLinkProjection[];
   readonly selectionEntries: readonly SelectionEntryProjection[];
   readonly selectionEntryGroups: readonly SelectionEntryGroupProjection[];
   readonly entryLinks: readonly EntryLinkProjection[];
@@ -234,6 +237,27 @@ export interface EntryLinkProjection
   readonly defaultAmount?: string;
   readonly step?: string;
   readonly collective?: boolean;
+  readonly import?: boolean;
+}
+
+/** New Recruit relationship definitions; projection does not assign targets or execute effects. */
+export interface AssociationProjection extends IdentifiedBattleScribeNode {
+  readonly min?: number;
+  readonly max?: number;
+  readonly scope?: string;
+  readonly childId?: ObjectId;
+  readonly label?: string;
+  readonly action?: string;
+  readonly hidden?: boolean;
+  readonly includeChildSelections?: boolean;
+  readonly includeChildForces?: boolean;
+  readonly defaultSelectionEntryId?: ObjectId;
+  readonly conditions: readonly ConditionProjection[];
+  readonly conditionGroups: readonly ConditionGroupProjection[];
+}
+
+export interface AssociationLinkProjection extends LinkBattleScribeNode {
+  readonly type?: string;
   readonly import?: boolean;
 }
 
@@ -373,6 +397,8 @@ export interface ModifierGroupProjection extends ProjectedBattleScribeNode {
 }
 
 export interface ConditionProjection extends ProjectedBattleScribeNode {
+  /** Association filters normally query the candidate; true instead queries the source occurrence. */
+  readonly queryFromSelf?: boolean;
   readonly id?: ObjectId;
   readonly type?: string;
   readonly field?: string;
