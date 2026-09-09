@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (RF-A05 reference reading complete; stopped)
+## Current Status — 2026-09-09 (stat keyword reference follow-up complete; stopped)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -52,11 +52,16 @@ That bounded repair batch is complete. The owner then authorized RF-A05 only:
 `cda7782` adds selected-reference stats/weapon-first reading, conservative grouping,
 owner-specific uncertainty and lazy exact occurrence details. At 390×844 the
 current-baseline audit squad fell from 10,527 to 5,660 px and 22 to three tables,
-with stats and first weapons visible at opening. See the newest completed entry
-and `docs/qa/rf-a05-reference-card.md`. Stop here pending further owner direction;
-no later UI or engine checkpoint was started.
+with stats and first weapons visible at opening. See `docs/qa/rf-a05-reference-card.md`.
 Implementation and handoff were published through `b8a5710`; exact-commit CI
 `34382609543` passed every gate (verify job 54 seconds).
+The owner then requested blank empty Keywords cells and linked stat keywords
+opening a layered rule popup. `4ba0b21` implements that bounded follow-up with
+owner-specific rule matching, conservative inline suppression and visible inert
+parent dialogs. Local gates pass: 626 tests passed / 24 skipped; pinned reference
+integration two tests passed. Desktop and 390×844 browser checks passed. This
+handoff follows implementation for publication/CI confirmation on the same branch.
+Stop pending owner direction; no later engine or broader UI phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -785,6 +790,7 @@ QA before classifying or implementing the discrepancy.
 | Failed recovery discard strands pending protection | Done | `2a0ac05`: reproduced newer pending snapshots lost on reload despite retaining the older recovery. Shared debounce re-arms once after failed discard; session/epoch guards, successful discard, queued writes, later edits and batched operations covered. Previous non-gating characterization was insufficient |
 | Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
 | Audit RF-A05 reference-card reading | Done — bounded checkpoint | `cda7782`: current baseline 10,527 px / 22 tables becomes 5,660 px / three tables at 390×844; stats and first weapons visible at opening. Selected-only, conservative source/loadout grouping, independent quantities, uncertainty and lazy exact details. Phone/tablet/desktop/text-scale/keyboard evidence in `docs/qa/rf-a05-reference-card.md`; no broader rule or engine semantics |
+| Stat keyword rule references | Done — bounded owner follow-up | `4ba0b21`: blank empty Keywords cells, attached-rule hyperlinks in selected stat tables, layered popup retaining unit scroll/focus. Only complete, fully covered rule groups leave the inline list; ambiguity, incomplete applicability and nested info-group scope remain conservative. No global rule inference or engine change |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | Local condition group cost applicability | Unsupported, outside follow-up batch | Pinned Impulsor `bfb1-7512-e1a3-9fa2` has increment-10 points guarded by `localConditionGroups`. Projection is preserved, semantics are not evaluated. Its base 70 remains provisional with diagnostics; resolve semantics through separate evidence/design, not a name-specific price patch |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -13866,3 +13872,70 @@ returned HTTP 200; the final browser warning/error log was empty. This
 documentation-only CI confirmation follows the implementation/handoff commits.
 Stop and await owner direction rather than automatically promoting/executing a
 later UI/engine phase.
+
+## Completed Assignment — 2026-09-09: Stat keyword links and layered rules
+
+**State and boundary.** Clean baseline `9402de1c83c823146704db0aa9c0f2482947e3d7`,
+equal to origin on `codex/list-builder-ui-overhaul`. Implementation/design/test
+commit `4ba0b2101d69dd966de19ba6c78d667f37d3ece1`; this separate handoff records the
+owner's follow-up to RF-A05. No main merge, PR, branch switch or unrelated edits.
+
+**Decision.** Empty Keywords characteristics display blank, while non-keyword
+fallbacks and effective/base/routed/unresolved annotations are unchanged. A new
+UI-only owner index links rendered stat-table keyword tokens to attached rules
+with substantive text. Exact normalized names win; bounded numeric/dice suffixes
+and explicit Anti target/threshold forms support authored parameters. Every
+grouped profile member must resolve to the same unambiguous rule group. Global
+name lookup, arbitrary prefix matching and source/report mutation were rejected.
+Fully covered rule groups leave the main inline section only when profile,
+characteristic and visible rule reports are complete; incomplete rules keep their
+inline warning and popup warning. Prose-only/unrendered profiles cannot suppress
+a rule. The original reference model and lazy occurrence/source tree remain.
+
+The unit popup stays mounted and visibly blurred beneath the new rule sheet;
+inert and aria-hidden remove the parent from interaction and accessibility while
+the top dialog traps focus. Escape/Close restore the exact trigger and scroll.
+Underlined keyword buttons have 44 px minimum targets and the rule sheet uses
+14.875 px body text at the tested 17 px root size, with the shared corner token.
+
+**Validation.** Lint, typecheck, test, build and diff check pass. Normal suite:
+626 passed / 24 skipped (650), 65 passed / five skipped files (70). Focused helper,
+new UI and App UI: 22 tests passed in three files. Opt-in reference integration:
+two tests passed, including prior Dark Angels grouping and the new World Eaters
+Chaos Terminators case. Corpus HEAD verified as
+`04c62fcd041b3808c39d5c46fd677c704027b979`; new integration imports all 46 JSON
+documents, no third-party data committed. Existing build warning only: JS chunk
+770.98 kB / 212.27 kB gzip exceeds the 500 kB advisory threshold.
+
+Synthetic tests cover effective rather than base text, parameter forms, exact
+name precedence, preserved token punctuation, false prefix matches, ambiguous
+names, complete hidden rules, incomplete applicability, full owner coverage,
+unrendered profiles, divergent per-owner rule groups and modal focus/accessibility.
+Existing routed-value UI regression remains green; no print/persistence changes.
+
+**Browser evidence.** Isolated origin 5203 acquired the pinned 46-file index and
+World Eaters closure through the UI, created a temporary QA roster and added
+default Chaos Terminators. Desktop rendered two Rapid Fire 4 links and two empty
+accursed-weapon Keywords cells, with no repeated Rapid Fire prose below. Linked
+rule overlay left the parent mounted/visible/inert, Tab stayed on top Close,
+Escape restored Rapid Fire 4 focus and the same 82 px parent scroll. At 390×844,
+rule content measured 325 px client/scroll width (no horizontal overflow), body
+14.875 px. Desktop link measured 84.14×44 px. Browser warnings/errors: none.
+Screenshots outside repo: `C:/CodexACLTest/rf-keyword-desktop-unit.png`,
+`rf-keyword-desktop-popup.png`, `rf-keyword-phone-popup.png`. Viewport reset after
+QA. These are Chromium viewport checks, not physical iPhone/Safari, screen reader,
+OS text scaling, dark/forced-color or installed-PWA claims.
+
+**Review and limits.** Native reviewer `keyword_review` used isolated baseline
+worktree `C:/CodexACLTest/rf-keyword-review-20260909`; bounded investigation and
+candidate review found no actionable defect. Lead reviewed the diff and ran all
+tests/browser checks; reviewer did not independently execute them. External
+review was considered, but Claude's previously recorded exhausted quota was not
+retried. Nested information-group rules, unknown parameter syntax, absent text,
+ambiguous matches and divergent owner reports remain unlinked rather than guessed;
+no broader rule compatibility or legality claim. No new engine repair discovered.
+
+User preview 5199 was restarted before this checkpoint and is retained (HTTP 200
+rechecked); saved user rosters on that origin were untouched. Temporary QA server
+5203 and reviewer worktree can be removed after publication. Stop after this
+checkpoint; do not automatically advance another roadmap item.
