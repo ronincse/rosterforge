@@ -1,5 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import JSZip from "jszip";
+import { ArchiveOutputLimitError, extractArchivePayload } from "./archive-output.js";
+import { readArchiveMetadata, type ArchiveEntryMetadata } from "./archive-metadata.js";
 
 import {
   failure,
@@ -138,12 +139,9 @@ async function ingestArchive(
     ]);
   }
 
-  let archive: JSZip;
+  let entries: readonly ArchiveEntryMetadata[];
   try {
-    archive = await JSZip.loadAsync(input, {
-      checkCRC32: true,
-      createFolders: false,
-    });
+    entries = readArchiveMetadata(input);
   } catch (error: unknown) {
     return failure([
       diagnostic(
@@ -156,15 +154,15 @@ async function ingestArchive(
     ]);
   }
 
-  const files = Object.values(archive.files).filter((entry) => !entry.dir);
-  if (files.length > limits.maxArchiveEntries) {
+  const files = entries.filter((entry) => !entry.dir);
+  if (entries.length > limits.maxArchiveEntries) {
     return failure([
       diagnostic(
         "BS_ARCHIVE_ENTRY_LIMIT",
         `Archive ${source.filename} contains too many files.`,
         source,
         ["import", "security"],
-        { actualEntries: files.length, limitEntries: limits.maxArchiveEntries },
+        { actualEntries: entries.length, limitEntries: limits.maxArchiveEntries },
       ),
     ]);
   }
@@ -172,17 +170,30 @@ async function ingestArchive(
   const expectedExtension = archiveExtension === ".gstz" ? ".gst" : ".cat";
   const candidates = files.filter(
     (entry) =>
-      isSafeArchiveEntry(entry) &&
+      isSafeArchivePath(entry.name) &&
       extensionOf(entry.name) === expectedExtension,
   );
 
-  if (files.some((entry) => !isSafeArchiveEntry(entry))) {
+  if (entries.some((entry) => !isSafeArchivePath(entry.name))) {
     return failure([
       diagnostic(
         "BS_ARCHIVE_UNSAFE_PATH",
         `Archive ${source.filename} contains an unsafe path.`,
         source,
         ["import", "security"],
+      ),
+    ]);
+  }
+
+  // Directory records are never extracted, so do not accept a declared payload
+  // whose integrity would otherwise escape the selected-file CRC check.
+  if (entries.some((entry) => entry.dir && (entry._data.uncompressedSize !== 0 || entry._data.crc32 !== 0))) {
+    return failure([
+      diagnostic(
+        "BS_ARCHIVE_CONTENTS",
+        `Archive ${source.filename} contains a non-empty directory entry.`,
+        source,
+        ["import", "compatibility", "security"],
       ),
     ]);
   }
@@ -204,18 +215,13 @@ async function ingestArchive(
     throw new Error("Archive candidate invariant failed.");
   }
 
-  const archiveMetadata = (
-    candidate as JSZip.JSZipObject & {
-      readonly _data?: {
-        readonly compressedSize?: number;
-        readonly uncompressedSize?: number;
-      };
-    }
-  )._data;
-  const compressedSize = archiveMetadata?.compressedSize;
-  const expandedSize = archiveMetadata?.uncompressedSize;
+  const archiveMetadata = candidate._data;
+  const compressedSize = archiveMetadata.compressedSize;
+  const expandedSize = archiveMetadata.uncompressedSize;
+  const compressedContent = archiveMetadata.compressedContent;
+  const crc = archiveMetadata.crc32;
+  const magic = archiveMetadata.compression.magic;
   if (
-    typeof expandedSize === "number" &&
     expandedSize > limits.maxArchiveExpandedBytes
   ) {
     return failure([
@@ -230,10 +236,7 @@ async function ingestArchive(
   }
 
   if (
-    typeof compressedSize === "number" &&
-    typeof expandedSize === "number" &&
-    compressedSize > 0 &&
-    expandedSize / compressedSize > limits.maxCompressionRatio
+    expandedSize > compressedSize * limits.maxCompressionRatio
   ) {
     return failure([
       diagnostic(
@@ -245,14 +248,30 @@ async function ingestArchive(
     ]);
   }
 
-  const xmlBytes = await candidate.async("uint8array");
-  if (xmlBytes.byteLength > limits.maxArchiveExpandedBytes) {
+  // Enforce both limits on actual bytes, independently of attacker-controlled
+  // expanded-size metadata. A one-byte sentinel detects a forged overflow.
+  const ratioLimit = Math.floor(compressedSize * limits.maxCompressionRatio);
+  const outputLimit = Math.min(limits.maxArchiveExpandedBytes, ratioLimit);
+  let xmlBytes: Uint8Array;
+  try {
+    xmlBytes = extractArchivePayload({
+      bytes: compressedContent,
+      method: magic === "\u0000\u0000" ? "STORE" : "DEFLATE",
+      expandedSize,
+      crc,
+    }, outputLimit);
+  } catch (error: unknown) {
+    const overflow = error instanceof ArchiveOutputLimitError;
+    const expanded = limits.maxArchiveExpandedBytes <= ratioLimit;
     return failure([
       diagnostic(
-        "BS_ARCHIVE_EXPANDED_SIZE_LIMIT",
-        `Archive entry ${candidate.name} exceeds the expanded size limit.`,
+        overflow
+          ? expanded ? "BS_ARCHIVE_EXPANDED_SIZE_LIMIT" : "BS_ARCHIVE_COMPRESSION_RATIO_LIMIT"
+          : "BS_ARCHIVE_INVALID",
+        overflow ? `Archive entry ${candidate.name} exceeds the ${expanded ? "expanded size" : "compression ratio"} limit.` : `Could not extract archive entry ${candidate.name}.`,
         source,
-        ["import", "security"],
+        overflow ? ["import", "security"] : ["import", "parsing"],
+        overflow ? { actualBytes: error.observedBytes, limitBytes: outputLimit } : { cause: errorMessage(error) },
       ),
     ]);
   }
@@ -950,16 +969,6 @@ function isSafeArchivePath(path: string): boolean {
     !normalized.startsWith("/") &&
     !/^[A-Za-z]:\//u.test(normalized) &&
     !normalized.split("/").includes("..")
-  );
-}
-
-function isSafeArchiveEntry(entry: JSZip.JSZipObject): boolean {
-  const unsafeOriginalName = (
-    entry as JSZip.JSZipObject & { readonly unsafeOriginalName?: string }
-  ).unsafeOriginalName;
-  return (
-    isSafeArchivePath(entry.name) &&
-    (unsafeOriginalName === undefined || isSafeArchivePath(unsafeOriginalName))
   );
 }
 
