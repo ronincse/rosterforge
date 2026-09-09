@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (leader assignments and Warlord checks complete; publication pending)
+## Current Status — 2026-09-09 (leader assignments and Warlord checks published; CI green)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -80,7 +80,9 @@ second Warlord now produces the 2/1 error and attention on both units. All local
 gates pass: 640 tests passed / 24 skipped; both pinned integration tests pass.
 Desktop and 390×844 UI checks include save/reopen, detach/undo and visible Review
 navigation. Incoming leader limits and attached-unit effects remain explicitly
-incomplete. See `docs/qa/leadership.md`. Publication/CI pending below.
+incomplete. See `docs/qa/leadership.md`. Published through `9016b05`; exact-SHA CI
+`34402527313` passed every gate (verify job 53 seconds). This documentation-only
+confirmation follows the tested checkpoint on the same branch.
 Stop after this bounded checkpoint; no broader association engine phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -14129,8 +14131,10 @@ rechecked against a mounted unit row. Viewport reset. Screenshots remain outside
 repo under `C:/CodexACLTest/rf-leadership-*.png`. This is Chromium viewport QA, not
 physical iPhone/Safari or fresh interactive New Recruit execution.
 
-**Publication/stop.** Code and this handoff are ready for the authorized push and
-exact-SHA CI confirmation. User preview 5199 and its saved rosters are preserved;
+**Publication/stop.** Published through `9016b057a442891160d3cc6ade90baf2ec04af17`;
+CI `34402527313` passed every gate on that exact SHA (verify job 53 seconds).
+This documentation-only confirmation follows the tested checkpoint.
+User preview 5199 and its saved rosters are preserved;
 User preview 5199 returned HTTP 200. Temporary QA5207 (PID 56516) was stopped
 after verifying its exact Vite command and port. Review worktree is retained.
 No further phase should start without owner direction.
