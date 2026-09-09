@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (World Eaters warning repairs verified; publication pending)
+## Current Status — 2026-09-09 (World Eaters warning repairs published; CI green)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -93,7 +93,10 @@ All gates pass: 652 tests passed / 24 skipped (676), 72 passed / five skipped fi
 (77); all four pinned integration suites pass, 23 tests at `04c62fc` (46 documents).
 Browser QA covers the 430-point reproduction, attachment rule changes, save/reopen,
 detach/undo/redo and a clean fresh console. See `docs/qa/world-eaters-warnings.md`.
-This handoff is ready for publication; exact remote CI is not yet claimed.
+Published through `d27b2a6513858a2278767c2a60f6ed6a2717300c`; exact-SHA CI
+`34411560501` passed every gate (verify job 56 seconds). This documentation-only
+confirmation follows the tested checkpoint. Temporary QA5210 is stopped; the
+user preview 5199 still returns HTTP 200.
 Stop after this bounded checkpoint; broader attachment compatibility remains open.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -14223,5 +14226,8 @@ attached effects, wider/transitive association queries, required/multiple/shared
 associations, rule name/text operations and modified unlimited root results stay
 open. Attached rosters deliberately remain aggregate-incomplete. No later phase
 started. User preview 5199 (including the changed evaluation module) returns HTTP
-200 and remains running; user-origin saved rosters were untouched. Publication
-and exact CI confirmation follow this local handoff.
+200 and remains running; user-origin saved rosters were untouched. Published
+through `d27b2a6513858a2278767c2a60f6ed6a2717300c`; CI `34411560501` passed every
+gate on that exact SHA (verify job 56 seconds). Temporary QA5210 was stopped and
+its closure verified, while 5199 was rechecked HTTP 200. This documentation-only
+confirmation follows the tested checkpoint; branch was clean and synchronized.
