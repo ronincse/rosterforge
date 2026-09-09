@@ -34,12 +34,16 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (audit repairs RF-A01 through RF-A03 complete; RF-A04 next)
+## Current Status — 2026-09-09 (audit repair batch complete; RF-A04 partial compatibility)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
 repaired in `7900bcc`. RF-A03 bounded archive decompression is implemented in
-`4e67051` plus browser/CRC verification; RF-A04 rule applicability is next.
+`4e67051`/`f40c0e7`. RF-A04 `0d3bfcc`/`1fdbcde` repairs the reported Templar Vows
+case and contains unsupported applicability with per-rule uncertainty; it is not
+complete rule compatibility. All four authorized checkpoints are implemented and
+locally verified; RF-A01/A02/A03 remote CI succeeded. RF-A04 CI will be checked
+after this handoff push and reported to the owner. Do not resume UI work automatically.
 RF-A05 reference-card redesign is deferred. The reported loss of
 headline points capacity after adding Impulsor is unconfirmed separate triage.
 
@@ -279,19 +283,22 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **545 passed, 20 skipped (565)**.
+  `git diff --check` all pass. `pnpm test` is **608 passed, 21 skipped (629)**,
+  across 64 files (61 passed, three optional files skipped).
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
-  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set the complete suite is
-  **565 passed**; the focused corpus file is **19 passed**, including an exact
-  zero-diagnostic assertion for every selectable catalogue.
+  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set, the two focused corpus
+  files pass **20 tests**, including exact zero-diagnostic catalogue creation
+  across all 36 selectable catalogues and occurrence-specific rule visibility.
+  This is a separate integration run, not a claim that every skipped test ran.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** Product usability, measured against real lists. The first
+- **Active area.** The authorized correctness/durability batch is finished;
+  further UI work awaits owner direction. Prior usability evidence follows. The first
   phone-width pass is complete: a real Death Guard add/configure/amount/check
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
   and sticky workspace links leave their targets visible. The broader Grok
@@ -759,7 +766,9 @@ QA before classifying or implementing the discrepancy.
 | List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
-| Audit RF-A04 rule visibility | Open, repair task | Rule projections omit modifiers/groups and rendered rules lack applicability. Measure pinned semantics and add supported evaluation or explicit per-rule uncertainty |
+| Audit RF-A04 rule visibility | Mitigated; reported case fixed | `0d3bfcc`/`1fdbcde`: rule/link modifiers preserved, occurrence-aware Boolean visibility and explicit per-rule uncertainty; Dark Angels/Black Templars Templar Vows behavior verified. Full compatibility remains open below |
+| Remaining rule-display compatibility | Open, outside repair batch | Resolve association conditions (86 hidden-link condition leaves at the pin), cross-layer conflicting modifier precedence, parent info-group visibility, rule text/name operations and four generic catalogue-root info links using semantic evidence; do not guess or hide uncertainty |
+| Recovery failure/performance follow-ups | Open, non-gating | Independent RF-A02 review noted two full decodes when foreign recovery exists during save, and failed explicit discard can cancel a pending recovery timer until another edit. Existing durable recovery is retained; optimize/re-arm in a separate bounded checkpoint |
 | Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
 | Impulsor headline points-capacity disappearance | Unconfirmed triage | Audit's 2,000-point Dark Angels journey lost headline capacity after adding Impulsor while Configuration retained Battle Size. Requires separate evaluator trace; not an RF-A04 defect and excluded from repair implementation |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -13572,3 +13581,67 @@ and duplicate entries, directories, truncated/empty streams, and valid multi-buf
 STORE/DEFLATE preservation. Remaining limitation: metadata list allocation occurs
 before entry-count rejection, bounded by compressed-input limit; private dependency
 API upgrades require review. RF-A04 is next; no UI redesign was performed.
+
+## Completed Assignment — RF-A04 Rule Applicability And Batch Handoff, 2026-09-09
+
+Baseline `9680887`; implementation `0d3bfcc` (isolated candidate `08945f3`),
+review/compatibility follow-up `1fdbcde`, then this separate handoff commit.
+RF-A03 CI `34368091939` succeeded on `9680887`. Selected branch remains
+`codex/list-builder-ui-overhaul`; main and the retained audit worktrees are untouched.
+
+Reproduced missing rule modifier projection with a failing fictional test and
+Templar Vows appearing on a Dark Angels Intercessor in the actual browser.
+Rule and info-link projections now preserve modifiers/groups and source nodes;
+graph references include those carriers. The evaluator owns static/conditional
+Boolean visibility, using existing occurrence conditions and effective categories.
+Definition and link writes remain distinct. Conflicts, unsupported associations,
+unknown operations/attributes/scopes/repeats, and missing context remain incomplete.
+The UI hides only complete hidden rules and labels uncertain source text per rule.
+Hard-coded faction exclusions, all-uncertain suppression, profile-evaluator reuse
+and guessed cross-layer precedence were rejected. No reference-card redesign or
+navigation change was made; legality composition retains its existing narrow scope.
+
+Corpus pin was verified again: `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON
+documents. All 463 rules include 24 modified rules with 25 hidden-set modifiers,
+zero rule modifier groups. Their 36 condition leaves use primary-catalogue (23),
+force (9), ancestor (1), roster (1), model-or-unit (2); two AND condition groups.
+Raw data has 9,757 info links; the graph projects 9,753. Four catalogue-root links
+remain generic, none with modifiers. All 189 link hidden modifiers are retained
+(187 true, two false); their conditions include 86 unsupported association leaves.
+Templar Vows `f26c-4b28-aaea-40cf` uses the existing primary-catalogue identity
+condition against Black Templars `36d3-36bc-68dd-40ac`. Real Intercessor occurrences
+report hidden/complete for Dark Angels and visible/complete for Black Templars.
+This verifies the pinned interpretation, not interactive New Recruit parity.
+
+Browser port 5199 with all 46 local documents: Dark Angels unit card omits Templar
+Vows; Black Templars retains it. Both imports had zero import diagnostics and
+both final consoles had no warnings/errors. Existing incomplete roster bounds and
+the applicable initialization-modifier diagnostic were retained. UI regression
+tests additionally verify explicit source-preview, selected-rule and keyword-rule
+uncertainty. Browser automation's large-import select timeout was avoided by fresh
+tabs with the desired catalogue first; no application workaround was introduced.
+
+One native lane measured corpus and supplied the fictional fixture in a dedicated
+worktree; lead wrote/reviewed the implementation there and integrated it. Claude
+provided independent semantic plan analysis. Its final code-review response did
+not include usable findings, then its session quota was exhausted; no further
+retry, billing change or paid access was attempted. An isolated native reviewer
+reviewed the exact candidate and found numeric XML Boolean and omitted linked-base
+inheritance bugs. Lead fixed both with regressions; reviewer inspected `1fdbcde`
+and closed review without new issues. Final Claude candidate approval is unavailable.
+
+Final gates: lint, typecheck, **608 passed / 21 skipped (629 total), 64 files**,
+build, diff check. **22 focused projection/evaluator/UI tests pass**; **20 optional
+integration tests pass**, covering all pinned documents and the new real-rule test.
+Build retains only its pre-existing large-chunk advisory. Initial UI-test typings
+and an exact-optional test shape failed typecheck and were fixed before final gates.
+
+Batch outcome: RF-A01/A02 combined long-edit save/reload and unsaved recover/reload/
+first-save workflows pass, including failed first saves and configured children.
+RF-A03 is fixed at the bounded archive boundary. RF-A04 is **mitigated/partial
+compatibility**: the reported case is fixed, remaining uncertainty is explicit.
+RF-A05 remains deferred, Impulsor capacity disappearance remains separate unconfirmed
+triage, and rule/recovery follow-ups are recorded in roadmap rows. No next product
+checkpoint is authorized by this completion. Development server remains available
+on `http://127.0.0.1:5199/app/` for owner testing; temporary delegate worktrees can
+be removed after their clean-state verification, while retained audit evidence stays.
