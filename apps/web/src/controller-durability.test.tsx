@@ -147,3 +147,112 @@ describe("durable history before validation", () => {
     expect(hook.result.current.draftAction.message).toBe("Saved Durability roster in this browser.");
   });
 });
+
+describe("recovery lifecycle", () => {
+  it("preserves another roster's recovery when saving before the new debounce", async () => {
+    const env = setup(); const hook = env.mount(); await create(hook);
+    vi.useFakeTimers(); edit(hook, 1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const original = hook.result.current.rosterSession!.roster;
+    await create(hook);
+    await act(async () => { await hook.result.current.saveRosterDraft(); });
+    const recovery = await env.store.load(recoveryDraftId);
+    expect(recovery.ok && recovery.value?.roster).toEqual(original);
+  });
+
+  it("protects the open roster when its named draft is deleted", async () => {
+    const env = setup(); const hook = env.mount(); await create(hook);
+    await act(async () => { await hook.result.current.saveRosterDraft(); });
+    vi.useFakeTimers();
+    await act(async () => { await hook.result.current.deleteRosterDraft("named"); });
+    expect(hook.result.current.unsavedChanges).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(env.records.has(recoveryDraftId)).toBe(true);
+  });
+
+  it("falls back to recovery after an active draft autosave fails", async () => {
+    const env = setup(); const hook = env.mount(); await create(hook);
+    await act(async () => { await hook.result.current.saveRosterDraft(); });
+    vi.useFakeTimers(); env.failWrites();
+    for (let n = 0; n < 100; n++) edit(hook, n);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const recovery = await env.store.load(recoveryDraftId);
+    expect(recovery.ok && recovery.value?.roster).toEqual(hook.result.current.rosterSession!.roster);
+    expect(hook.result.current.unsavedChanges).toBe(true);
+  });
+
+  it.each([false, true])("retains recovered work through reload and first save (failed save: %s)", async failed => {
+    const env = setup(); const first = env.mount(); await create(first);
+    vi.useFakeTimers(); for (let n = 0; n < 100; n++) edit(first, n);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const original = first.result.current.rosterSession!.roster;
+    first.unmount(); const recovered = env.mount();
+    await act(async () => { await recovered.result.current.recoverUnsavedRoster(); });
+    expect(recovered.result.current.rosterSession?.roster).toEqual(original);
+    expect(recovered.result.current.activeDraft).toBeUndefined();
+    expect(recovered.result.current.unsavedChanges).toBe(true);
+    expect(env.records.has(recoveryDraftId)).toBe(true);
+    const guard = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(guard); expect(guard.defaultPrevented).toBe(true);
+    recovered.unmount(); const again = env.mount();
+    await act(async () => { await again.result.current.recoverUnsavedRoster(); });
+    expect(again.result.current.rosterSession?.roster).toEqual(original);
+    expect(again.result.current.rosterHistory?.past).toHaveLength(20);
+    edit(again, 200);
+    const latest = again.result.current.rosterSession!.roster;
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const updatedRecovery = await env.store.load(recoveryDraftId);
+    expect(updatedRecovery.ok && updatedRecovery.value?.roster).toEqual(latest);
+    expect(env.records.has("named")).toBe(false);
+    if (failed) env.failWrites();
+    await act(async () => { await again.result.current.saveRosterDraft(); });
+    expect(again.result.current.unsavedChanges).toBe(failed);
+    expect(env.records.has(recoveryDraftId)).toBe(failed);
+    expect(env.records.has("named")).toBe(!failed);
+    if (failed) {
+      expect(again.result.current.activeDraft).toBeUndefined();
+      expect(again.result.current.draftAction.message).toBe("The roster draft was not saved.");
+    } else {
+      expect(again.result.current.activeDraft?.id).toBe("named");
+      again.unmount(); const opened = env.mount();
+      await act(async () => { await opened.result.current.loadRosterDraft("named"); });
+      expect(opened.result.current.rosterSession?.roster).toEqual(latest);
+      expect(opened.result.current.unsavedChanges).toBe(false);
+    }
+  });
+
+  it("does not let a save from an abandoned session clear newly recovered work", async () => {
+    const env = setup(); const hook = env.mount(); await create(hook);
+    vi.useFakeTimers(); edit(hook, 1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const release = env.holdWrites(); let saving!: Promise<void>;
+    act(() => { saving = hook.result.current.saveRosterDraft(); });
+    act(() => hook.result.current.clearRoster());
+    await act(async () => { await hook.result.current.recoverUnsavedRoster(); });
+    edit(hook, 77);
+    const restored = hook.result.current.rosterSession!.roster;
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    await act(async () => { release(); await saving; });
+    expect(hook.result.current.rosterSession?.roster).toEqual(restored);
+    expect(hook.result.current.activeDraft).toBeUndefined();
+    expect(hook.result.current.unsavedChanges).toBe(true);
+    const recovery = await env.store.load(recoveryDraftId);
+    expect(recovery.ok && recovery.value?.roster).toEqual(restored);
+  });
+
+  it("keeps recovery when an ordinary named draft is opened and supports explicit discard", async () => {
+    const env = setup(); const hook = env.mount(); await create(hook);
+    await act(async () => { await hook.result.current.saveRosterDraft(); });
+    act(() => hook.result.current.clearRoster()); await create(hook);
+    vi.useFakeTimers(); edit(hook, 500);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(env.records.has(recoveryDraftId)).toBe(true);
+    await act(async () => { await hook.result.current.loadRosterDraft("named"); });
+    expect(hook.result.current.unsavedChanges).toBe(false);
+    expect(env.records.has(recoveryDraftId)).toBe(true);
+    await act(async () => { await hook.result.current.discardRecoverableRoster(); });
+    expect(env.records.has(recoveryDraftId)).toBe(false);
+    expect(env.records.has("named")).toBe(true);
+  });
+});

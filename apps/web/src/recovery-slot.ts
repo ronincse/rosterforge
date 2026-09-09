@@ -1,4 +1,4 @@
-import type { Result } from "@rosterforge/foundation";
+import { success, type Result } from "@rosterforge/foundation";
 import type { LocalRosterDraft } from "@rosterforge/persistence";
 
 import {
@@ -10,8 +10,9 @@ import {
  * Serializes the single unsaved-roster recovery slot against its own writers.
  *
  * The slot is one key (`recoveryDraftId`) with two writers that fire from
- * independent React effects: a debounced write while a roster has never been
- * saved, and a clear once it becomes a real draft. Both were fire-and-forget,
+ * independent controller paths: a debounced write while a roster has never been
+ * saved, and a clear after a successful named save (or explicit discard).
+ * Both were originally fire-and-forget,
  * and a slot write copies a whole catalogue closure, so a write already in
  * flight could finish *after* the clear and recreate the slot holding the
  * pre-save roster. Nothing is lost — the saved draft is untouched — but a later
@@ -24,8 +25,8 @@ import {
 export interface RecoverySlot {
   /** Overwrite the slot. Resolves once this write reaches the store. */
   readonly write: (draft: LocalRosterDraft) => Promise<Result<void>>;
-  /** Empty the slot, after any write requested before it has been applied. */
-  readonly clear: () => Promise<Result<void>>;
+  /** Empty after prior writes; a roster ID limits deletion to that roster's copy. */
+  readonly clear: (rosterId?: string) => Promise<Result<void>>;
 }
 
 /**
@@ -58,6 +59,15 @@ export function createRecoverySlot(store: LocalRosterDraftStore): RecoverySlot {
 
   return {
     write: (draft) => enqueue(() => store.save(draft)),
-    clear: () => enqueue(() => store.delete(recoveryDraftId)),
+    clear: (rosterId) => enqueue(async () => {
+      // Check ownership inside the same FIFO, after any pending slot write.
+      // Saving another roster must not erase an ignored recovery offer.
+      if (rosterId !== undefined) {
+        const existing = await store.load(recoveryDraftId);
+        if (!existing.ok) return existing;
+        if (existing.value?.roster.id !== rosterId) return success(undefined);
+      }
+      return store.delete(recoveryDraftId);
+    }),
   };
 }

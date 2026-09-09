@@ -147,6 +147,11 @@ export function useRosterForgeAppController({
   autosaveDelayMs = defaultAutosaveDelayMs,
 }: RosterForgeAppControllerOptions) {
   const importSequence = useRef(0);
+  // Saves belong to a session generation, not merely to whichever roster is
+  // current when storage finishes. Edits keep the generation; navigation does not.
+  const savingSequence = useRef<number | undefined>(undefined);
+  const recoveryEpoch = useRef(0);
+  useEffect(() => () => { ++importSequence.current; }, []);
   const draftListSequence = useRef(0);
   const [loadState, setLoadState] = useState<LoadState>({ kind: "idle" });
   const [draftShelf, setDraftShelf] = useState<DraftShelfState>({
@@ -160,7 +165,7 @@ export function useRosterForgeAppController({
   });
   const [activeDraft, setActiveDraft] = useState<ActiveDraft>();
   /**
-   * The exact roster last written to or read from the draft store.
+   * The exact roster last written to or read from a named draft (not recovery).
    *
    * Rosters are immutable and every command returns a new one, so identity is
    * an exact test for "has anything changed since it was persisted" — no
@@ -290,6 +295,8 @@ export function useRosterForgeAppController({
   }
 
   function selectCatalogue(key: string) {
+    ++importSequence.current;
+    setDraftAction({ kind: "idle", diagnostics: [] });
     setSelectedKey(key);
     setActiveDraft(undefined);
     setRosterHistory(undefined);
@@ -311,6 +318,8 @@ export function useRosterForgeAppController({
     });
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) {
+      ++importSequence.current;
+      setDraftAction({ kind: "idle", diagnostics: [] });
       setActiveDraft(undefined);
       setRosterHistory(createBoundedHistory(result.value));
       setPersistedRoster(undefined);
@@ -318,6 +327,8 @@ export function useRosterForgeAppController({
   }
 
   function clearRoster() {
+    ++importSequence.current;
+    setDraftAction({ kind: "idle", diagnostics: [] });
     setActiveDraft(undefined);
     setRosterHistory(undefined);
     setPersistedRoster(undefined);
@@ -467,12 +478,13 @@ export function useRosterForgeAppController({
   }, [draftStore]);
 
   async function discardRecoverableRoster() {
-    setRecoverableRoster(undefined);
-    await recoverySlot.clear();
+    ++recoveryEpoch.current;
+    const cleared = await recoverySlot.clear();
+    if (cleared.ok) setRecoverableRoster(undefined);
+    else setDraftAction({ kind: "idle", message: "Recovery could not be discarded.", diagnostics: cleared.diagnostics });
   }
 
   async function recoverUnsavedRoster() {
-    setRecoverableRoster(undefined);
     await loadRosterDraft(recoveryDraftId);
   }
 
@@ -522,6 +534,8 @@ export function useRosterForgeAppController({
 
   async function saveRosterDraft() {
     if (loadState.kind !== "loaded" || rosterSession === undefined) return;
+    const sequence = importSequence.current;
+    if (savingSequence.current === sequence) return;
     const updatedAt = now();
     const createdAt = activeDraft?.createdAt ?? updatedAt;
     const draft = createLocalRosterDraft({
@@ -549,7 +563,10 @@ export function useRosterForgeAppController({
       targetId: draft.value.id,
       diagnostics: [],
     });
+    savingSequence.current = sequence;
     const saved = await draftStore.save(draft.value);
+    if (savingSequence.current === sequence) savingSequence.current = undefined;
+    if (sequence !== importSequence.current) return;
     if (!saved.ok) {
       setAutosaveBlockedRoster(rosterSession.roster);
       setDraftAction({
@@ -563,12 +580,24 @@ export function useRosterForgeAppController({
     setAutosaveBlockedRoster(undefined);
     setActiveDraft({ id: draft.value.id, createdAt });
     setPersistedRoster(rosterSession.roster);
+    // Only a completed named save replaces recovery. Opening a draft or
+    // restoring recovery is not a write. FIFO ordering prevents an older slot
+    // write from resurrecting recovery after this successful save.
+    ++recoveryEpoch.current;
+    const cleared = await recoverySlot.clear(rosterSession.roster.id);
+    if (sequence !== importSequence.current) return;
+    if (cleared.ok) {
+      const remaining = await draftStore.load(recoveryDraftId);
+      if (sequence !== importSequence.current) return;
+      if (remaining.ok && remaining.value === undefined) setRecoverableRoster(undefined);
+    }
     const listDiagnostics = await refreshDraftShelf();
+    if (sequence !== importSequence.current) return;
     setDraftAction({
       kind: "idle",
       message: `Saved ${draft.value.roster.name} in this browser.`,
       savedRoster: rosterSession.roster,
-      diagnostics: [...saved.diagnostics, ...listDiagnostics],
+      diagnostics: [...saved.diagnostics, ...cleared.diagnostics, ...listDiagnostics],
     });
   }
 
@@ -673,11 +702,17 @@ export function useRosterForgeAppController({
       }
 
       setRosterHistory(restored.value);
-      setActiveDraft({ id: draft.id, createdAt: draft.createdAt });
-      setPersistedRoster(restored.value.present.roster);
+      const recovering = id === recoveryDraftId;
+      // The reserved recovery slot is a safety copy, never a named draft or
+      // evidence of a user save. Keep it durable until save/discard succeeds.
+      setActiveDraft(recovering ? undefined : { id: draft.id, createdAt: draft.createdAt });
+      setPersistedRoster(recovering ? undefined : restored.value.present.roster);
+      if (recovering) setRecoverableRoster(undefined);
       setDraftAction({
         kind: "idle",
-        message: `Opened ${draft.roster.name}.`,
+        message: recovering
+          ? `Recovered ${draft.roster.name}. Save a draft to keep it.`
+          : `Opened ${draft.roster.name}.`,
         diagnostics: loaded.diagnostics,
       });
     } catch (error: unknown) {
@@ -705,8 +740,10 @@ export function useRosterForgeAppController({
   }
 
   async function deleteRosterDraft(id: string) {
+    const sequence = importSequence.current;
     setDraftAction({ kind: "deleting", targetId: id, diagnostics: [] });
     const deleted = await draftStore.delete(id);
+    if (sequence !== importSequence.current) return;
     if (!deleted.ok) {
       setDraftAction({
         kind: "idle",
@@ -715,8 +752,12 @@ export function useRosterForgeAppController({
       });
       return;
     }
-    if (activeDraft?.id === id) setActiveDraft(undefined);
+    if (activeDraft?.id === id) {
+      setActiveDraft(undefined);
+      setPersistedRoster(undefined);
+    }
     const listDiagnostics = await refreshDraftShelf();
+    if (sequence !== importSequence.current) return;
     setDraftAction({
       kind: "idle",
       message: "Deleted the saved roster draft.",
@@ -781,36 +822,30 @@ export function useRosterForgeAppController({
         ? {}
         : { history: draftHistory(rosterHistory) }),
     });
-    if (!draft.ok) return;
-    await recoverySlot.write(draft.value);
+    const sequence = importSequence.current;
+    const written = draft.ok ? await recoverySlot.write(draft.value) : draft;
+    if (!written.ok && sequence === importSequence.current) {
+      setRosterDiagnostics(written.diagnostics);
+    }
   };
   useEffect(() => {
     if (pendingRoster === undefined || pendingRoster === persistedRoster) {
       return undefined;
     }
-    // An active draft is already being kept current, and a draft record is
-    // expensive to rewrite, so the slot only covers rosters nothing else saves.
-    if (activeDraft !== undefined) return undefined;
+    // Normally a named draft is already kept current. After a failed autosave,
+    // also try recovery; both remain best effort if browser storage is full.
+    if (activeDraft !== undefined && autosaveBlockedRoster === undefined) return undefined;
+    const epoch = recoveryEpoch.current;
     const timer = setTimeout(() => {
-      void recoveryRef.current();
+      if (epoch === recoveryEpoch.current) void recoveryRef.current();
     }, autosaveDelayMs);
     return () => {
       clearTimeout(timer);
     };
-  }, [activeDraft, autosaveDelayMs, pendingRoster, persistedRoster]);
+  }, [activeDraft, autosaveBlockedRoster, autosaveDelayMs, pendingRoster, persistedRoster]);
 
-  // Once the roster is persisted as a real draft the slot has nothing to
-  // recover, so it is cleared rather than left to be offered next session. The
-  // clear goes through the slot so it lands after any write already in flight
-  // rather than racing it — see `recovery-slot.ts`.
-  useEffect(() => {
-    if (persistedRoster === undefined) return;
-    void recoverySlot.clear();
-  }, [persistedRoster, recoverySlot]);
-
-  // An unsaved roster is lost on reload: saving is manual until a draft exists,
-  // and its undo history has nowhere to live until then. Say so, and make the
-  // browser ask before discarding it.
+  // Recovery is best effort, not a user save. Keep reload protection until a
+  // named draft write has actually persisted this exact roster snapshot.
   const unsavedChanges =
     rosterSession !== undefined && rosterSession.roster !== persistedRoster;
   useEffect(() => {

@@ -107,7 +107,14 @@
 - An unsaved-roster recovery slot: a single reserved record, kept current on
   the same debounce, hidden from the draft shelf, and *offered* on the next
   visit rather than reopened silently. Cleared once the roster is saved as a
-  real draft or the offer is declined
+  real draft or the offer is declined. Recovery restores as unsaved work, keeps
+  its durable safety copy through repeated visits, and receives a fresh named
+  ID on first successful save. Failed saves retain recovery and reload protection.
+  Opening a named draft does not clear unrelated recovery; stale save callbacks
+  from abandoned sessions cannot change the current draft or clear its slot
+- A failed named autosave also attempts recovery after the debounce. Both writes
+  can fail when storage is full; diagnostics remain observable and unsaved state
+  stays true. Deleting the open draft restores unsaved status and recovery
 - Debounced autosave to an **already-active** draft, so a roster the user has
   chosen to keep stays current without further clicks. A roster that has never
   been saved is never given a draft automatically: each draft embeds its own
@@ -874,9 +881,9 @@ Consequences worth knowing:
   `WEB_ROSTER_DRAFT_HISTORY_UNAVAILABLE`.
 - Records written before the history existed still load; an absent history stays
   absent rather than becoming an empty one.
-- An unsaved roster still has no history across a reload. The recovery slot
-  carries one, but a roster that has never been saved and never settled has
-  nowhere to keep it.
+- A settled unsaved roster recovers its bounded durable history across a reload.
+  Edits made before the recovery debounce settles are not guaranteed durable;
+  recovery is never presented as an explicit named save.
 
 ## Deferred
 
