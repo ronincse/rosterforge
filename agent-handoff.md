@@ -69,10 +69,11 @@ fields, and an eight-layer reference stack retaining parent focus/scroll.
 Selected owner reports take precedence; catalogue-only lookups are labeled and
 do not imply applicability. Local gates pass: 633 tests passed / 24 skipped;
 both pinned integration tests pass. Desktop and 390×844 Angron reference-chain
-checks passed; see `docs/qa/rich-text-references.md`. Implementation/handoff are
-local through `f36aedf`; publication was blocked by the approval system pending
-explicit owner confirmation of the GitHub destination. CI has not run for this
-checkpoint. No later engine phase was started.
+checks passed; see `docs/qa/rich-text-references.md`. The owner explicitly approved
+publication after the approval-system pause. Implementation/handoff were pushed
+through `b6e63d7`; exact-commit CI `34397690799` passed every gate (verify job
+60 seconds). This documentation-only confirmation follows on the same branch.
+No later engine phase was started.
 Stop pending owner direction; no later engine or broader UI phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
@@ -14035,5 +14036,9 @@ rejected a combined push request because it required explicit confirmation of
 the GitHub destination/payload; no push occurred and no CI result is claimed.
 Owner approval was requested for these verified code/docs changes to
 `https://github.com/ronincse/rosterforge.git`, branch
-`codex/list-builder-ui-overhaul`. Do not bypass that rejection. Publish and check
-exact-SHA CI only after approval; otherwise stop with the local checkpoint intact.
+`codex/list-builder-ui-overhaul`. The owner subsequently explicitly approved the
+push, resolving that boundary. Published through
+`b6e63d7d217ab3b873139b0f6654c16f0fd396d7`; CI `34397690799` passed all gates on that
+exact commit (verify job 60 seconds). Branch was synchronized and user preview
+5199 returned HTTP 200. This documentation-only confirmation follows the tested
+checkpoint; no later roadmap work was started.
