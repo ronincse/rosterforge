@@ -431,6 +431,7 @@ function referencesForDocument(
     ...projection.rules.flatMap((rule) =>
       referencesForPublicationLinks(rule.publicationLinks, document, objectsById, diagnostics),
     ),
+    ...projection.rules.flatMap((rule) => referencesForModifierCarrier(rule, document, objectsById, diagnostics)),
     ...projection.profiles.flatMap((profile) =>
       referencesForProfile(profile, document, objectsById, diagnostics),
     ),
@@ -478,6 +479,11 @@ function referencesForCategoryEntry(
         diagnostics,
       ),
     ),
+    ...entry.infoLinks.flatMap((infoLink) => referencesForModifierCarrier(infoLink, document, objectsById, diagnostics)),
+    ...entry.rules.flatMap((rule) => [
+      ...referencesForModifierCarrier(rule, document, objectsById, diagnostics),
+      ...referencesForPublicationLinks(rule.publicationLinks, document, objectsById, diagnostics),
+    ]),
     ...entry.profiles.flatMap((profile) =>
       referencesForProfile(profile, document, objectsById, diagnostics),
     ),
@@ -615,6 +621,8 @@ function referencesForSelectionContainer(
         diagnostics,
       ),
     ),
+    ...container.rules.flatMap((rule) => referencesForModifierCarrier(rule, document, objectsById, diagnostics)),
+    ...container.infoLinks.flatMap((infoLink) => referencesForModifierCarrier(infoLink, document, objectsById, diagnostics)),
     ...container.profiles.flatMap((profile) =>
       referencesForProfile(profile, document, objectsById, diagnostics),
     ),
@@ -658,6 +666,8 @@ function referencesForInfoGroup(
         diagnostics,
       ),
     ),
+    ...infoGroup.rules.flatMap((rule) => referencesForModifierCarrier(rule, document, objectsById, diagnostics)),
+    ...infoGroup.infoLinks.flatMap((infoLink) => referencesForModifierCarrier(infoLink, document, objectsById, diagnostics)),
     ...infoGroup.profiles.flatMap((profile) =>
       referencesForProfile(profile, document, objectsById, diagnostics),
     ),

@@ -220,6 +220,8 @@ function projectInfoLink(
   return {
     ...link(located, context),
     ...optionalString(located.node, "type"),
+    modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
+    modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
   };
 }
 
@@ -248,6 +250,8 @@ function projectRule(
     ...identified(located, context),
     ...optionalBoolean(located, "hidden", context),
     ...optionalChildText(located, "description"),
+    modifiers: mapContainer(located, "modifiers", "modifier", context, projectModifier),
+    modifierGroups: mapContainer(located, "modifierGroups", "modifierGroup", context, projectModifierGroup),
     publicationLinks: mapContainer(located, "publicationLinks", "publicationLink", context, projectPublicationLink),
   };
 }

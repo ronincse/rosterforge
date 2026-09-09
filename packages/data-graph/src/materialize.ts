@@ -146,6 +146,8 @@ export interface MaterializedInfoLinkBase {
 
 export interface MaterializedRuleInfoLink extends MaterializedInfoLinkBase {
   readonly kind: "ruleInfoLink";
+  // Keep definition and link modifier carriers distinct: effective visibility
+  // can depend on both, and static inheritance does not prove write precedence.
   readonly definition: RuleProjection;
   readonly description?: string;
   readonly publicationLinks: RuleProjection["publicationLinks"];

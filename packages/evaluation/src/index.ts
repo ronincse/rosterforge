@@ -47,6 +47,7 @@ export * from "./modifier-applicability.js";
 export * from "./modifier-groups.js";
 export * from "./modifiers.js";
 export * from "./repeats.js";
+export * from "./rule-visibility.js";
 export * from "./selection-default-amount.js";
 export * from "./selection-visibility.js";
 export * from "./structural-status.js";

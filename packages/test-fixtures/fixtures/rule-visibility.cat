@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fictional rule applicability cases for projection, evaluation, and UI tests.
+     Link/definition conflicts are evidence cases, not a declaration of precedence. -->
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
+  id="rule-visibility" name="Rule Visibility" revision="1"
+  battleScribeVersion="2.03" gameSystemId="system-203"
+  gameSystemRevision="0" library="false">
+  <categoryEntries>
+    <categoryEntry id="rv-keyword" name="Signal" hidden="false">
+      <infoLinks>
+        <infoLink id="rv-keyword-link" targetId="rv-shared-plain" type="rule">
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="atLeast" field="associations" scope="self"
+                  childId="any" value="1" shared="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </infoLink>
+      </infoLinks>
+    </categoryEntry>
+  </categoryEntries>
+  <selectionEntries>
+    <selectionEntry id="rv-owner" name="Signal Wardens" type="unit">
+      <categoryLinks>
+        <categoryLink id="rv-owner-category" targetId="rv-keyword"
+          name="Signal" primary="true" />
+      </categoryLinks>
+      <rules>
+        <rule id="rv-direct-visible" name="Always Available">
+          <description>A plain fictional rule.</description>
+        </rule>
+        <rule id="rv-direct-hidden" name="Archived Signal" hidden="true">
+          <description>A statically hidden fictional rule.</description>
+        </rule>
+        <rule id="rv-direct-conditional" name="Visiting Signal">
+          <description>Hidden in the matching primary catalogue.</description>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="instanceOf" field="selections"
+                  scope="primary-catalogue" childId="rule-visibility"
+                  value="1" shared="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </rule>
+        <rule id="rv-direct-grouped" name="Ordered Signals">
+          <description>Direct and nested grouped writes preserve source order.</description>
+          <modifiers><modifier type="set" field="hidden" value="true" /></modifiers>
+          <modifierGroups>
+            <modifierGroup type="and">
+              <conditionGroups>
+                <conditionGroup type="or">
+                  <conditions>
+                    <condition type="instanceOf" field="selections"
+                      scope="primary-catalogue" childId="another-catalogue"
+                      value="1" shared="true" />
+                  </conditions>
+                  <conditionGroups>
+                    <conditionGroup type="and">
+                      <conditions>
+                        <condition type="instanceOf" field="selections"
+                          scope="primary-catalogue" childId="rule-visibility"
+                          value="1" shared="true" />
+                      </conditions>
+                    </conditionGroup>
+                  </conditionGroups>
+                </conditionGroup>
+              </conditionGroups>
+              <modifiers><modifier type="set" field="hidden" value="false" /></modifiers>
+              <modifierGroups>
+                <modifierGroup type="and">
+                  <modifiers><modifier type="set" field="hidden" value="true" /></modifiers>
+                </modifierGroup>
+              </modifierGroups>
+            </modifierGroup>
+            <modifierGroup type="and">
+              <modifiers><modifier type="set" field="hidden" value="false" /></modifiers>
+            </modifierGroup>
+          </modifierGroups>
+        </rule>
+        <rule id="rv-direct-unresolved" name="Associated Signal">
+          <description>Its association condition requires explicit uncertainty.</description>
+          <modifiers>
+            <modifier type="set" field="hidden" value="true">
+              <conditions>
+                <condition type="atLeast" field="associations" scope="self"
+                  childId="any" value="1" shared="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </rule>
+        <rule id="rv-direct-invalid" name="Invalid Signal Operation">
+          <description>A numeric operation cannot safely set Boolean visibility.</description>
+          <modifiers><modifier type="increment" field="hidden" value="1" /></modifiers>
+        </rule>
+      </rules>
+      <infoLinks>
+        <infoLink id="rv-linked-conditional" targetId="rv-shared-conditional" type="rule" />
+        <infoLink id="rv-linked-unhide" targetId="rv-shared-plain" type="rule" hidden="true">
+          <modifiers>
+            <modifier type="set" field="hidden" value="false">
+              <conditions>
+                <condition type="instanceOf" field="selections"
+                  scope="primary-catalogue" childId="rule-visibility"
+                  value="1" shared="true" />
+              </conditions>
+            </modifier>
+          </modifiers>
+        </infoLink>
+        <infoLink id="rv-linked-conflict" targetId="rv-shared-hidden" type="rule">
+          <modifiers><modifier type="set" field="hidden" value="false" /></modifiers>
+        </infoLink>
+      </infoLinks>
+      <infoGroups>
+        <infoGroup id="rv-info-group" name="Relay Notes">
+          <rules>
+            <rule id="rv-group-direct-hidden" name="Silent Relay" hidden="true">
+              <description>A direct rule inside an information group.</description>
+            </rule>
+          </rules>
+          <infoLinks>
+            <infoLink id="rv-group-linked" targetId="rv-shared-conditional" type="rule" />
+          </infoLinks>
+        </infoGroup>
+      </infoGroups>
+    </selectionEntry>
+  </selectionEntries>
+  <sharedRules>
+    <rule id="rv-shared-plain" name="Shared Signal">
+      <description>A fictional rule with visibility controlled by its links.</description>
+    </rule>
+    <rule id="rv-shared-conditional" name="Home Signal" hidden="false">
+      <description>Visible only in the matching primary catalogue.</description>
+      <modifiers>
+        <modifier type="set" field="hidden" value="true">
+          <conditions>
+            <condition type="notInstanceOf" field="selections"
+              scope="primary-catalogue" childId="rule-visibility"
+              value="1" shared="true" />
+          </conditions>
+        </modifier>
+      </modifiers>
+    </rule>
+    <rule id="rv-shared-hidden" name="Definition Hidden Signal">
+      <description>The definition writes hidden=true and one link writes false.</description>
+      <modifiers><modifier type="set" field="hidden" value="true" /></modifiers>
+    </rule>
+  </sharedRules>
+</catalogue>

@@ -28,6 +28,7 @@ import {
   type RosterStructuralBoundReport,
   type RosterStructuralBoundStatus,
   type SupportedRosterValidationFinding,
+  type RosterRuleVisibilityReport,
 } from "@rosterforge/evaluation";
 import type {
   RuleProjection,
@@ -46,6 +47,7 @@ import {
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
 
 import { Detail } from "./detail-row.js";
+import { inspectLocalRule } from "./rule-inspection.js";
 import { DiagnosticList } from "./diagnostic-list.js";
 import {
   evaluateLocalRosterCosts,
@@ -5790,9 +5792,10 @@ function RosterSelectionChoiceGroup({
 type DirectRule = BattleScribeRosterSelectionChoice["rules"][number];
 type DirectProfile = BattleScribeRosterSelectionChoice["profiles"][number];
 
-type SelectionRuleDetail =
+type SelectionRuleDetail = (
   | { readonly origin: "Direct"; readonly value: DirectRule }
-  | { readonly origin: "Linked"; readonly value: MaterializedRuleInfoLink };
+  | { readonly origin: "Linked"; readonly value: Pick<MaterializedRuleInfoLink, "definition" | "link" | "hidden" | "name" | "description"> }
+) & { readonly report?: RosterRuleVisibilityReport };
 
 type SelectionProfileDetail =
   | { readonly origin: "Direct"; readonly value: DirectProfile }
@@ -5838,10 +5841,10 @@ function RosterSelectionDatasheet({
   const reports =
     characteristics.ok === true ? characteristics.value.byProfile : undefined;
   const rules: readonly SelectionRuleDetail[] = [
-    ...choice.rules.map((value) => ({ origin: "Direct" as const, value })),
+    ...choice.rules.map((value) => ({ origin: "Direct" as const, value, report: inspectLocalRule(value, session, selection) })),
     ...choice.materializedInfoLinks
       .filter(isMaterializedRuleInfoLink)
-      .map((value) => ({ origin: "Linked" as const, value })),
+      .map((value) => ({ origin: "Linked" as const, value, report: inspectLocalRule(value, session, selection) })),
   ];
   const profiles: readonly SelectionProfileDetail[] = [
     ...choice.profiles.map((value) => ({ origin: "Direct" as const, value })),
@@ -5901,6 +5904,7 @@ function RosterSelectionDatasheet({
                 key={selectionInfoGroupKey(infoGroup, index)}
                 infoGroup={infoGroup}
                 reports={reports}
+                ruleEnvironment={{ session, owner: selection }}
               />
             ))}
           </div>
@@ -6276,7 +6280,7 @@ function SelectionKeywords({
       ) : categories.length === 0 ? null : (
         <ul className="keyword-list">
           {categories.map((category) => {
-            const rules = categoryRuleDetails(session, category.id);
+            const rules = categoryRuleDetails(session, category.id, inspection.report.owner);
             return (
               <li
                 key={category.id}
@@ -6333,6 +6337,7 @@ function SelectionKeywords({
 function categoryRuleDetails(
   session: LocalRosterSession,
   categoryId: ObjectId,
+  owner: RosterSelection,
 ): readonly SelectionRuleDetail[] {
   const definitions = session.catalogue.context.categories.definitions.filter(
     ({ source }) => source.id === categoryId,
@@ -6343,6 +6348,7 @@ function categoryRuleDetails(
   const rules: SelectionRuleDetail[] = definition.source.rules.map((value) => ({
     origin: "Direct",
     value,
+    report: inspectLocalRule(value, session, owner),
   }));
   for (const link of definition.source.infoLinks) {
     const reference = session.catalogue.context.graph.references.find(
@@ -6350,7 +6356,18 @@ function categoryRuleDetails(
     );
     const target = reference?.targets.length === 1 ? reference.targets[0] : undefined;
     if (target?.kind !== "rule") continue;
-    rules.push({ origin: "Direct", value: target.source as RuleProjection });
+    const source = target.source as RuleProjection;
+    const hidden = link.hidden ?? source.hidden;
+    const name = link.name ?? source.name;
+    // Preserve the keyword's link carrier; its visibility may differ from the
+    // shared definition used by another category or occurrence.
+    const value = {
+      definition: source, link,
+      ...(hidden === undefined ? {} : { hidden }),
+      ...(name === undefined ? {} : { name }),
+      ...(source.description === undefined ? {} : { description: source.description }),
+    };
+    rules.push({ origin: "Linked", value, report: inspectLocalRule(value, session, owner) });
   }
   return rules;
 }
@@ -6671,16 +6688,21 @@ function SelectionCharacteristic({
 }
 
 function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
+  const report = rule.report ?? inspectLocalRule(rule.value);
+  if (report.status === "hidden" && report.completeness === "complete") return null;
   const name =
     rule.origin === "Direct"
       ? rule.value.name
       : (rule.value.name ?? rule.value.definition.name);
   const { description } = rule.value;
   return (
-    <article className="selection-rule">
+    <article className="selection-rule" data-completeness={report.completeness}>
       <header>
         <strong>{name ?? "Unnamed rule"}</strong>
       </header>
+      {report.completeness === "incomplete" && (
+        <p className="selection-annotation-completeness">Rule applicability unresolved. Source text is shown; this rule is not confirmed to apply.</p>
+      )}
       <p>
         {description === undefined
           ? "No description provided."
@@ -6688,6 +6710,7 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
             ? "Empty description."
             : description}
       </p>
+      {report.diagnostics.length > 0 && <details><summary>Rule applicability details</summary><DiagnosticList diagnostics={report.diagnostics} /></details>}
     </article>
   );
 }
@@ -6695,11 +6718,13 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
 function SelectionInfoGroup({
   infoGroup,
   reports,
+  ruleEnvironment,
 }: {
   readonly infoGroup: MaterializedInfoGroup;
   readonly reports:
     | ReadonlyMap<LocalRosterProfile, LocalRosterProfileCharacteristics>
     | undefined;
+  readonly ruleEnvironment?: { readonly session: LocalRosterSession; readonly owner: RosterSelection } | undefined;
 }) {
   const profiles: readonly SelectionProfileDetail[] = [
     ...infoGroup.profiles.map((value) => ({
@@ -6714,10 +6739,11 @@ function SelectionInfoGroup({
     ...infoGroup.rules.map((value) => ({
       origin: "Direct" as const,
       value,
+      report: inspectLocalRule(value, ruleEnvironment?.session, ruleEnvironment?.owner),
     })),
     ...infoGroup.materializedInfoLinks
       .filter(isMaterializedRuleInfoLink)
-      .map((value) => ({ origin: "Linked" as const, value })),
+      .map((value) => ({ origin: "Linked" as const, value, report: inspectLocalRule(value, ruleEnvironment?.session, ruleEnvironment?.owner) })),
   ];
   const nestedGroups = [
     ...infoGroup.materializedInfoGroups,
@@ -6767,6 +6793,7 @@ function SelectionInfoGroup({
                 key={selectionInfoGroupKey(nestedGroup, index)}
                 infoGroup={nestedGroup}
                 reports={reports}
+                ruleEnvironment={ruleEnvironment}
               />
             ))}
           </div>

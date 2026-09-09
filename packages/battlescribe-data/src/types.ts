@@ -255,6 +255,8 @@ export interface CategoryLinkProjection extends LinkBattleScribeNode {
 
 export interface InfoLinkProjection extends LinkBattleScribeNode {
   readonly type?: string;
+  readonly modifiers: readonly ModifierProjection[];
+  readonly modifierGroups: readonly ModifierGroupProjection[];
 }
 
 export interface InfoGroupProjection extends IdentifiedBattleScribeNode {
@@ -271,6 +273,8 @@ export interface InfoGroupProjection extends IdentifiedBattleScribeNode {
 export interface RuleProjection extends IdentifiedBattleScribeNode {
   readonly hidden?: boolean;
   readonly description?: string;
+  readonly modifiers: readonly ModifierProjection[];
+  readonly modifierGroups: readonly ModifierGroupProjection[];
   readonly publicationLinks: readonly PublicationLinkProjection[];
 }
 
