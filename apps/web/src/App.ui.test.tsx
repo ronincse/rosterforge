@@ -1262,7 +1262,9 @@ describe("App local catalogue flow", () => {
         "Infantry hold ground through coordinated formations.",
       ),
     ).toBeTruthy();
-    expect(unitCardView.parentElement?.hasAttribute("hidden")).toBe(true);
+    expect(unitCardView.parentElement?.hasAttribute("hidden")).toBe(false);
+    expect(unitCardView.parentElement?.getAttribute("aria-hidden")).toBe("true");
+    expect(unitCardView.parentElement?.hasAttribute("inert")).toBe(true);
     fireEvent.keyDown(keywordRules, { key: "Escape" });
     await waitFor(() => expect(document.activeElement).toBe(infantryKeyword));
     unitCardView = screen.getByRole("dialog", {

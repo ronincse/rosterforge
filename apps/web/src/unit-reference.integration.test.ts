@@ -1,12 +1,13 @@
 // Opt-in RF-A05 regression on the audit pin. Never embeds third-party source.
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, it } from "vitest";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, inspectLocalRosterChildChoices, localRosterRootChoices } from "./roster-session.js";
 import { createUnitReferenceModel, referenceAttribution } from "./unit-reference-model.js";
+import { createReferenceKeywordLinks, isKeywordCharacteristic } from "./reference-keywords.js";
 
 const directory = process.env.ROSTERFORGE_BSDATA_JSON_DIR;
 it.skipIf(!directory)("groups the audit's selected five and ten model Intercessor loadouts at the exact pin", async () => {
@@ -59,4 +60,29 @@ it.skipIf(!directory)("groups the audit's selected five and ten model Intercesso
   expect(larger.rules).toHaveLength(model.rules.length);
   expect(larger.profiles.filter(g => g.profile.value.typeName === "Unit").map(g => referenceAttribution(g.members))).toContain("8× Intercessor");
   console.info("RF-A05 projection measurements", { fiveColdMs: coldMs, fiveWarmMs: warmMs, tenColdMs: performance.now() - largerStart, profileGroups: model.profiles.length, ruleGroups: model.rules.length });
+}, 120_000);
+
+it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps empty melee keywords blank", async () => {
+  if (!directory) throw new Error("Corpus not configured");
+  expect(execFileSync("git", ["-c", `safe.directory=${resolve(directory).replaceAll("\\", "/")}`, "-C", directory, "rev-parse", "HEAD"], { encoding: "utf8" }).trim()).toBe("04c62fcd041b3808c39d5c46fd677c704027b979");
+  const names = readdirSync(directory).filter(name => name.endsWith(".json"));
+  const prepared = await prepareLocalCatalogueLibrary(names.map(filename => ({ filename, bytes: new Uint8Array(readFileSync(join(directory, filename))) })), { import: { batchId: "keyword-corpus", importedAt: "2026-09-09T00:00:00Z" } });
+  if (!prepared.ok) throw new Error("Import failed");
+  const catalogue = prepared.value.selectableCatalogues.find(c => c.name === "Chaos - World Eaters")!;
+  let n = 0;
+  const next = () => selectionOccurrenceId(`keyword-${++n}`);
+  const created = createLocalRosterSession(catalogue, catalogue.context.forces.definitions.find(f => f.source.name === "Army Roster")!, { rosterId: rosterId("keyword-roster"), forceId: forceOccurrenceId("keyword-force"), name: "Keyword QA", createSelectionId: next });
+  if (!created.ok) throw new Error("Create failed");
+  const unitId = next();
+  const added = addLocalRosterRootSelection(created.value, localRosterRootChoices(catalogue).find(c => c.materialized.name === "Chaos Terminators")!, { selectionId: unitId, createSelectionId: next });
+  if (!added.ok) throw new Error("Add failed");
+  const model = createUnitReferenceModel(added.value, added.value.roster.forces[0]!.selections.find(s => s.id === unitId)!);
+  const linked = createReferenceKeywordLinks(model);
+  const tokens = [...linked.profiles.values()].flatMap(columns => [...columns.values()].flat());
+  expect(tokens.filter(t => t.text.trim() === "Rapid Fire 4").length).toBeGreaterThan(0);
+  expect(tokens.filter(t => t.text.trim() === "Rapid Fire 4").every(t => t.rule?.rule.value.name === "Rapid Fire")).toBe(true);
+  expect(linked.inlineRules.some(r => r.rule.value.name === "Rapid Fire")).toBe(false);
+  expect(model.profiles.filter(p => p.profile.value.name === "Accursed weapon").length).toBeGreaterThan(0);
+  expect(model.profiles.filter(p => p.profile.value.name === "Accursed weapon").every(p => p.profile.value.characteristics.find(isKeywordCharacteristic)?.value.trim() === "")).toBe(true);
+  console.info("Keyword reference corpus", { documents: names.length, profileGroups: model.profiles.length, ruleGroups: model.rules.length, inlineRules: linked.inlineRules.length, linkedTokens: tokens.filter(t => t.rule).length });
 }, 120_000);

@@ -49,6 +49,7 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 import { Detail } from "./detail-row.js";
 import { inspectLocalRule } from "./rule-inspection.js";
 import { createUnitReferenceModel, referenceAttribution, type ReferenceMember } from "./unit-reference-model.js";
+import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
 import { DiagnosticList } from "./diagnostic-list.js";
 import {
   evaluateLocalRosterCosts,
@@ -3433,7 +3434,8 @@ function RosterUnitCardView({
   return (
     <div
       className="choice-preview-backdrop"
-      hidden={covered}
+      aria-hidden={covered || undefined}
+      inert={covered}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -3503,12 +3505,15 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
 }) {
   const model = useMemo(() => createUnitReferenceModel(session, selection), [session, selection]);
   const categories = useMemo(() => inspectLocalRosterSelectionCategories(session, selection.id), [session, selection.id]);
-  const prose = model.profiles.filter(group => group.profile.value.characteristics.some(c => c.name?.toLowerCase() === "description"));
-  const statistics = model.profiles.filter(group => !prose.includes(group));
+  const prose = useMemo(() => model.profiles.filter(group => group.profile.value.characteristics.some(c => c.name?.toLowerCase() === "description")), [model]);
+  const statistics = useMemo(() => model.profiles.filter(group => !prose.includes(group)), [model, prose]);
+  // Only tables actually render keyword links; a prose profile must not remove
+  // an inline rule just because it happens to carry a Keywords characteristic.
+  const keywordLinks = useMemo(() => createReferenceKeywordLinks(model, statistics), [model, statistics]);
   // Type labels determine reading order only, never membership or equivalence.
   const models = statistics.filter(group => group.profile.value.typeName?.toLowerCase() === "unit");
   const equipment = statistics.filter(group => !models.includes(group));
-  const tables = (groups: typeof statistics) => <SelectionProfileTables profiles={groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members } }))} reports={undefined} />;
+  const tables = (groups: typeof statistics) => <SelectionProfileTables profiles={groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members, keywords: keywordLinks.profiles.get(group) } }))} reports={undefined} onViewKeywordRules={onViewKeywordRules} />;
   return <div className="unit-reference-reader">
     <nav className="unit-reference-nav" aria-label="Unit reference sections">
       {models.length > 0 && <a href="#unit-reference-stats">Stats</a>}
@@ -3528,11 +3533,11 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
           {group.report === undefined && <p className="profile-completeness">Profile inspection unavailable; source values shown.</p>}
           <SelectionProfile profile={group.profile} report={group.report} />
         </div>)}
-        {model.rules.map((group, index) => <div key={index} className="unit-reference-group">
+        {keywordLinks.inlineRules.map((group, index) => <div key={index} className="unit-reference-group">
           <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
           <SelectionRule rule={group.rule} />
         </div>)}
-        {prose.length === 0 && model.rules.length === 0 && <p>No attached abilities or rules.</p>}
+        {prose.length === 0 && keywordLinks.inlineRules.length === 0 && <p>{model.rules.length > 0 ? "Weapon keyword rules are available from their linked names above." : "No attached abilities or rules."}</p>}
       </div>
     </section>
     {categories.ok && <SelectionKeywords session={session} inspection={categories.value} onViewRules={onViewKeywordRules} />}
@@ -5873,7 +5878,7 @@ type SelectionRuleDetail = (
 type SelectionProfileDetail = (
   | { readonly origin: "Direct"; readonly value: DirectProfile }
   | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink }
-) & { readonly reference?: { readonly report: LocalRosterProfileCharacteristics | undefined; readonly members: readonly ReferenceMember[] } };
+) & { readonly reference?: { readonly report: LocalRosterProfileCharacteristics | undefined; readonly members: readonly ReferenceMember[]; readonly keywords?: ReadonlyMap<DirectProfile["characteristics"][number], readonly ReferenceKeywordToken[]> | undefined } };
 
 function RosterSelectionDatasheet({
   session,
@@ -6532,11 +6537,13 @@ interface SelectionProfileColumn {
 function SelectionProfileTables({
   profiles,
   reports,
+  onViewKeywordRules,
 }: {
   readonly profiles: readonly SelectionProfileDetail[];
   readonly reports:
     | ReadonlyMap<LocalRosterProfile, LocalRosterProfileCharacteristics>
     | undefined;
+  readonly onViewKeywordRules?: ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void) | undefined;
 }) {
   const groups = new Map<string, SelectionProfileDetail[]>();
   for (const profile of profiles) {
@@ -6609,6 +6616,8 @@ function SelectionProfileTables({
                                 <SelectionCharacteristicValue
                                   characteristic={characteristic}
                                   report={characteristicReport}
+                                  keywords={profile.reference?.keywords?.get(characteristic)}
+                                  onViewKeywordRules={onViewKeywordRules}
                                 />
                               )}
                             </td>
@@ -6673,10 +6682,14 @@ function selectionProfileDisplayName(
 function SelectionCharacteristicValue({
   characteristic,
   report,
+  keywords,
+  onViewKeywordRules,
 }: {
   readonly characteristic: DirectProfile["characteristics"][number];
   readonly report:
     RosterProfileCharacteristicReport["characteristics"][number] | undefined;
+  readonly keywords?: readonly ReferenceKeywordToken[] | undefined;
+  readonly onViewKeywordRules?: ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void) | undefined;
 }) {
   const modified = report !== undefined && report.steps.length > 0;
   const unresolved = modified && report.value === undefined;
@@ -6695,7 +6708,13 @@ function SelectionCharacteristicValue({
       : "Set";
   return (
     <span className="selection-profile-table-value">
-      <span>{displayed === "" ? "Empty value" : displayed}</span>
+      <span>{isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : keywords?.some(token => token.rule) && onViewKeywordRules ? keywords.map((token, index) => token.rule ? <span key={index}>{token.text.match(/^\s*/)?.[0]}<button
+        type="button"
+        className="reference-keyword-link"
+        aria-haspopup="dialog"
+        aria-label={`View rules for ${token.text.trim()}`}
+        onClick={event => onViewKeywordRules({ keyword: token.text.trim(), rules: [token.rule!.rule] }, event.currentTarget)}
+      >{token.text.trim()}</button>{token.text.match(/\s*$/)?.[0]}</span> : <span key={index}>{token.text}</span>) : displayed === "" ? "Empty value" : displayed}</span>
       {changed && (
         <small>Base {report.baseValue === "" ? "empty value" : report.baseValue}</small>
       )}
@@ -6749,7 +6768,7 @@ function SelectionCharacteristic({
           "Unnamed characteristic"}
       </dt>
       <dd>
-        <span>{displayed === "" ? "Empty value" : displayed}</span>
+        <span>{isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : displayed === "" ? "Empty value" : displayed}</span>
         {changed && (
           <small>
             Base {report.baseValue === "" ? "empty value" : report.baseValue}

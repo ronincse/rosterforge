@@ -963,6 +963,18 @@ flattened or reinterpreted. Exact occurrence/source evidence and child keywords
 remain in secondary disclosure. This does not expand rule compatibility, change
 validity/completeness, or assert that equal displayed values imply equivalence.
 
+Selected stat-table Keywords are blank when empty. Nonempty tokens link only to
+unambiguous rules attached to every original profile owner, with nonempty rule
+text. Exact normalized names take precedence; numeric/dice suffixes (Rapid Fire
+4, Sustained Hits D3) and explicit Anti target/threshold forms can reference their
+attached generic rule. Unknown syntax, absent text, ambiguity and differing
+owner-rule groups stay plain. No unrelated catalogue rules are inferred.
+Complete linked rules leave the main inline section only when all their owners
+have a complete visible link; incomplete applicability remains inline and in the
+popup. Effective-value, base-value and unresolved/routed annotations remain.
+Nested information-group scope is not flattened for keyword lookup. This is
+presentation only, not additional compatibility or legality evaluation.
+
 ## Deferred
 
 - Approximate origin-wide storage reporting, persistent-storage requests,

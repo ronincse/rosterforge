@@ -257,6 +257,15 @@ in a lazily mounted **Selection & source details** disclosure. Disclosure
 summaries participate in the modal focus loop; hidden disclosure contents do not.
 The RF-A05 measurement/coverage record is `docs/qa/rf-a05-reference-card.md`.
 
+Empty stat-table Keywords cells stay blank. When an attached rule can be
+identified unambiguously, its keyword is an underlined, keyboard-accessible
+dialog trigger with a 44 px target. Move fully covered, known rule text out of
+the inline list; keep uncertain applicability visible there. The rule sheet
+overlays the still-visible blurred unit card rather than replacing it. Only the
+top sheet accepts input or is exposed to assistive technology; closing it
+restores the exact keyword focus and the existing unit scroll position. Rule
+sheet body text uses the same 0.875rem reference reading size and shared radius.
+
 ## State, motion, and accessibility
 
 - Pressed and selected rows use `--fill`; focus uses a visible `--tint` ring.

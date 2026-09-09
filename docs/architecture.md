@@ -2394,3 +2394,13 @@ The selected modal orders stat/weapon tables ahead of prose cards; the original
 recursive tree mounts only on explicit secondary disclosure. This is an
 `apps/web` presentation boundary: no durable roster, evaluator, source-preview,
 cost, or print-model semantics changed. See `docs/qa/rf-a05-reference-card.md`.
+
+`reference-keywords.ts` builds an owner-indexed presentation join from effective
+stat-table Keywords tokens to that owner's attached rule groups. Every member
+of a grouped profile must resolve to the same unambiguous rule group. Exact
+names win over bounded parameter suffixes and the explicit Anti family; this
+is not a global catalogue search or new rule evaluation. Only rules with complete
+visible reports, complete keyword values and links covering every owner leave
+the main inline list. The original model and lazy source disclosure stay intact.
+Covered unit dialogs remain mounted and visible under the rule sheet, but are
+inert and aria-hidden until the top sheet closes and restores trigger focus.

@@ -3929,6 +3929,30 @@ h1 {
 .keyword-rules-dialog {
   width: min(680px, 100%);
 }
+.keyword-rules-dialog .selection-rule > p { font-size: 0.875rem; }
+
+/* Same data/scrolling surface remains visible beneath the top rule sheet;
+   inert + aria-hidden, not display:none, removes the covered card from input. */
+.choice-preview-backdrop[inert] { pointer-events: none; }
+.reference-keyword-link {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 6px 2px;
+  min-height: 44px;
+  min-width: 44px;
+  border: 0;
+  border-radius: var(--corner-radius);
+  background: transparent;
+  box-shadow: none;
+  color: var(--forest);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.reference-keyword-link:hover { background: var(--forest-light); }
 
 .removed-keywords li {
   color: var(--muted);
