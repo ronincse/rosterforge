@@ -55,6 +55,8 @@ current-baseline audit squad fell from 10,527 to 5,660 px and 22 to three tables
 with stats and first weapons visible at opening. See the newest completed entry
 and `docs/qa/rf-a05-reference-card.md`. Stop here pending further owner direction;
 no later UI or engine checkpoint was started.
+Implementation and handoff were published through `b8a5710`; exact-commit CI
+`34382609543` passed every gate (verify job 54 seconds).
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -13858,6 +13860,9 @@ are unchanged; no new engine repair absorbed. Existing server 5199 preserved;
 isolated preview 5201 and clean reviewer worktree retained for inspection.
 Screenshots remain outside production in `C:/CodexACLTest/rf-a05-*.png` (specific
 paths in QA record). Other worktrees and saved user rosters were untouched.
-RF-A05 is complete locally; verify CI for the exact pushed handoff commit and
-stop. Await owner direction rather than automatically promoting/executing a
+RF-A05 was published through handoff `b8a57106a9e4ee9b6a4dbd0d02e47c1aac6d0ee1`;
+CI `34382609543` passed on that exact SHA (verify job 54 seconds). Both servers
+returned HTTP 200; the final browser warning/error log was empty. This
+documentation-only CI confirmation follows the implementation/handoff commits.
+Stop and await owner direction rather than automatically promoting/executing a
 later UI/engine phase.
