@@ -1494,6 +1494,21 @@ validation dimensions, but only for supported visible-root, direct-entry, and
 transparent-group bounds. Its `valid` state means no bound in that narrow scope
 is known violated. It does not claim full BattleScribe legality or block edits.
 
+## Rule Visibility Diagnostics
+
+`EVALUATION_RULE_VISIBILITY_UNRESOLVED` reports unsupported or unresolved rule
+visibility, including invalid static flags, unknown operations/attributes, missing
+occurrence context and unresolved grouped execution. Existing condition/modifier
+diagnostics are also retained. `EVALUATION_RULE_VISIBILITY_LAYER_CONFLICT` reports
+conflicting effective definition and info-link visibility without guessing their
+precedence. Both are source-located warnings with validation/compatibility impacts.
+
+Either makes the rule display report incomplete. Even when a later supported
+operation determines a Boolean result, earlier uncertainty remains incomplete.
+The UI keeps such source text visible, explicitly says applicability is unresolved,
+and places diagnostics in expandable rule details. Only hidden and complete rules
+are omitted; this report does not claim overall roster legality.
+
 ## Supported Validation Composition Diagnostics
 
 The headless supported-validation composer can emit:

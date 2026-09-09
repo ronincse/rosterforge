@@ -48,7 +48,9 @@ export interface RosterRuleVisibilityReport {
 export function evaluateRosterRuleVisibility(rule: RuleVisibilityInput, environment?: RuleVisibilityContext): RosterRuleVisibilityReport {
   const sources = "definition" in rule ? [rule.definition, rule.link] : [rule];
   const diagnostics: Diagnostic[] = [];
-  const base = rule.hidden ?? false;
+  // Callers may supply the original carriers without a materialized hidden flag.
+  // Preserve the materializer's static link-over-definition inheritance there.
+  const base = rule.hidden ?? ("definition" in rule ? rule.link.hidden ?? rule.definition.hidden : undefined) ?? false;
   const options = environment === undefined ? undefined : { effectiveCategories: effectiveRosterCategories(environment.roster, environment.context) };
   const layers = sources.map((source): RuleVisibilityLayer => {
     let hidden = base;
@@ -60,7 +62,8 @@ export function evaluateRosterRuleVisibility(rule: RuleVisibilityInput, environm
       diagnostics.push({ code: "EVALUATION_RULE_VISIBILITY_UNRESOLVED", severity: "warning", message, impacts: ["validation", "compatibility"], location: { source: at.source, path: at.path } });
     };
     const staticHidden = source.node.attributes.hidden;
-    if (staticHidden !== undefined && staticHidden !== "true" && staticHidden !== "false") unresolved(source, "This rule has an invalid static hidden value.");
+    // XML Boolean attributes also accept 1/0, as the typed projector does.
+    if (staticHidden !== undefined && !["true", "false", "1", "0"].includes(staticHidden)) unresolved(source, "This rule has an invalid static hidden value.");
 
     const apply = (modifier: RosterCharacteristicModifierSource, status: "applicable" | "notApplicable" | "unresolved", complete = true) => {
       incomplete ||= !complete;

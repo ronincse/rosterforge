@@ -897,6 +897,35 @@ before the entry-count check. Legitimate bounded STORE/DEFLATE imports retain bo
 original archive and extracted document bytes. No real compressed corpus is retained;
 compressed compatibility coverage uses project-owned synthetic archives.
 
+## Rule applicability boundary (RF-A04)
+
+Rule definitions and info links retain their own modifiers, nested modifier
+groups, source locations and generic nodes. The rule-visibility report supports
+static hidden flags and applicable Boolean `set hidden` operations using the
+existing roster-condition and grouped-execution semantics. Selected-unit and
+category rules use their actual roster owner; source previews do not invent one.
+Static link flags inherit over definition flags, including explicit false.
+Effective definition/link modifier writes are evaluated separately: conflicting
+writes remain unresolved because their cross-layer precedence is unproven.
+
+Only completely resolved hidden rules are omitted. Unsupported or unresolved
+visibility remains visible as source text with an explicit per-rule applicability
+warning and expandable source-located diagnostics. Unknown operations, conditions,
+attributes, scopes, repeats and missing owners never become confirmed applicability.
+This is a display report, not a new full-legality claim or an expansion of the
+structural/constraint validation aggregate. Name/text changes and parent info-group
+visibility are outside this repair; original data remains preserved.
+
+At `04c62fcd041b3808c39d5c46fd677c704027b979`, all 46 JSON documents contain
+463 rules, 24 with 25 direct hidden modifiers and no rule modifier groups.
+The projected graph retains 9,753 info links, including all 189 link-local hidden
+modifiers (187 true, two false). Four catalogue-root info links remain generic,
+unprojected structures; none carries modifiers. Hidden-link conditions include
+86 association leaves whose semantics remain unsupported and explicitly incomplete.
+The existing identity-only primary-catalogue condition correctly hides Templar
+Vows for a Dark Angels Intercessor and retains it for Black Templars at this pin.
+This is pinned-source evidence, not a claim of interactive New Recruit parity.
+
 ## Deferred
 
 - Approximate origin-wide storage reporting, persistent-storage requests,

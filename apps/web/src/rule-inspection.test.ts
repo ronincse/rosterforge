@@ -8,8 +8,9 @@ import { addLocalRosterRootSelection, createLocalRosterSession, localRosterRootC
 import { inspectLocalRule } from "./rule-inspection.js";
 import { objectId } from "@rosterforge/foundation";
 
-async function setup(alternate = false) {
-  const xml = new TextDecoder().decode(fixtureBytes("rule-visibility.cat"));
+async function setup(alternate = false, numericBooleans = false) {
+  const original = new TextDecoder().decode(fixtureBytes("rule-visibility.cat"));
+  const xml = numericBooleans ? original.replaceAll('hidden="true"', 'hidden="1"').replaceAll('hidden="false"', 'hidden="0"') : original;
   const prepared = await prepareLocalCatalogueLibrary([
     { filename: "projection.gst", bytes: fixtureBytes("projection.gst") },
     { filename: "rule-visibility.cat", bytes: new TextEncoder().encode(alternate ? xml.replace('id="rule-visibility"', 'id="visiting-catalogue"') : xml) },
@@ -34,6 +35,22 @@ async function setup(alternate = false) {
 }
 
 describe("rule applicability", () => {
+  it("inherits static visibility when linked inputs omit the materialized flag", async () => {
+    const { rule } = await setup();
+    const hidden = rule("rv-direct-hidden");
+    const visible = rule("rv-direct-visible");
+    if ("definition" in hidden || "definition" in visible) throw new Error("Direct fixtures required");
+    const link = { modifiers: visible.modifiers, modifierGroups: visible.modifierGroups, source: visible.source, path: visible.path, node: visible.node };
+    expect(evaluateRosterRuleVisibility({ definition: hidden, link })).toMatchObject({ status: "hidden", completeness: "complete" });
+    expect(evaluateRosterRuleVisibility({ definition: hidden, link: { ...link, hidden: false } })).toMatchObject({ status: "visible", completeness: "complete" });
+    expect(evaluateRosterRuleVisibility({ definition: visible, link: { ...link, hidden: true } })).toMatchObject({ status: "hidden", completeness: "complete" });
+  });
+  it("accepts static XML 1/0 Boolean attributes on direct and linked rules", async () => {
+    const { session, owner, rule } = await setup(false, true);
+    expect(inspectLocalRule(rule("rv-direct-hidden"), session, owner)).toMatchObject({ status: "hidden", completeness: "complete" });
+    expect(inspectLocalRule(rule("rv-linked-unhide"), session, owner)).toMatchObject({ status: "visible", completeness: "complete" });
+    expect(inspectLocalRule(rule("rv-linked-conditional"), session, owner)).toMatchObject({ status: "visible", completeness: "complete" });
+  });
   it.each([
     ["rv-direct-visible", "visible", "complete"],
     ["rv-direct-hidden", "hidden", "complete"],

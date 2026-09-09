@@ -2308,6 +2308,22 @@ successful roots, and is also bounded by one aggregate call counter. Visibility
 and materialization diagnostics are returned together in the successful
 partial result.
 
+## Rule Visibility Display Boundary
+
+Rule and info-link projections preserve direct modifiers and modifier groups
+separately. Materialized rule links retain both original carriers; graph resolution
+indexes their modifier references without flattening their behavior. The pure
+`evaluateRosterRuleVisibility` evaluator reuses occurrence-aware conditions,
+effective categories and grouped execution. Its report retains source layers,
+status, completeness and diagnostics; conflicting layer writes are unresolved.
+
+The web adapter caches reports by immutable session, owner and rule identity in
+weak maps. Selected-unit, nested info-group and category-rule displays pass the
+real owner. Source previews omit it and label conditional applicability unresolved.
+Rendering omits only completely resolved hidden rules. This minimal presentation
+change does not redesign reference cards or alter legality composition. Original
+bytes, generic nodes, source provenance and developer diagnostics remain available.
+
 ## Shared Selection Materialization Boundary
 
 `materializeBattleScribeSelections` consumes an existing data graph. Direct
