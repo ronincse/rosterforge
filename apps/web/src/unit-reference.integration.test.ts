@@ -8,6 +8,8 @@ import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, inspectLocalRosterChildChoices, localRosterRootChoices } from "./roster-session.js";
 import { createUnitReferenceModel, referenceAttribution } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic } from "./reference-keywords.js";
+import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
+import { referenceTextRuns } from "./reference-rich-text.js";
 
 const directory = process.env.ROSTERFORGE_BSDATA_JSON_DIR;
 it.skipIf(!directory)("groups the audit's selected five and ten model Intercessor loadouts at the exact pin", async () => {
@@ -84,5 +86,21 @@ it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps 
   expect(linked.inlineRules.some(r => r.rule.value.name === "Rapid Fire")).toBe(false);
   expect(model.profiles.filter(p => p.profile.value.name === "Accursed weapon").length).toBeGreaterThan(0);
   expect(model.profiles.filter(p => p.profile.value.name === "Accursed weapon").every(p => p.profile.value.characteristics.find(isKeywordCharacteristic)?.value.trim() === "")).toBe(true);
+  const angronId = next();
+  const angron = addLocalRosterRootSelection(added.value, localRosterRootChoices(catalogue).find(c => c.materialized.name === "Angron")!, { selectionId: angronId, createSelectionId: next });
+  if (!angron.ok) throw new Error("Angron failed");
+  const angronModel = createUnitReferenceModel(angron.value, angron.value.roster.forces[0]!.selections.find(s => s.id === angronId)!);
+  const index = selectedReferenceTextIndex(catalogueReferenceTextIndex(angron.value), angronModel);
+  const demise = matchTextReference(index, "Deadly Demise X", 0)!;
+  expect(demise.target.rules[0]?.value.description).toBeTruthy();
+  expect(demise.target.sourceOnly).toBe(false);
+  const warp = matchTextReference(index, "Warp Blades", 0)!;
+  expect(warp.target.profiles[0]?.profile.value.id).toBe("fbfe-9079-46e0-0cbf");
+  expect(warp.target.sourceOnly).toBe(true);
+  expect(matchTextReference(index, "Deployment", 0)).toBeUndefined();
+  const description = demise.target.rules[0]!.value.description!;
+  const runs = referenceTextRuns(description);
+  expect(runs.some(r => (r.style & 2) && r.text.includes("Example"))).toBe(true);
+  expect(runs.map(r => r.text).join("")).not.toContain("**");
   console.info("Keyword reference corpus", { documents: names.length, profileGroups: model.profiles.length, ruleGroups: model.rules.length, inlineRules: linked.inlineRules.length, linkedTokens: tokens.filter(t => t.rule).length });
 }, 120_000);

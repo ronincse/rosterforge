@@ -158,6 +158,8 @@ export interface ProjectedBattleScribeNode {
 export interface IdentifiedBattleScribeNode extends ProjectedBattleScribeNode {
   readonly id?: ObjectId;
   readonly name?: string;
+  readonly alias?: readonly string[];
+  readonly noindex?: boolean;
 }
 
 export interface LinkBattleScribeNode extends IdentifiedBattleScribeNode {

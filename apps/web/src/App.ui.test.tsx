@@ -1257,11 +1257,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(infantryKeyword);
     const keywordRules = screen.getByRole("dialog", { name: "Infantry" });
     expect(within(keywordRules).getByText("Infantry discipline")).toBeTruthy();
-    expect(
-      within(keywordRules).getByText(
-        "Infantry hold ground through coordinated formations.",
-      ),
-    ).toBeTruthy();
+    expect(keywordRules.textContent).toContain("Infantry hold ground through coordinated formations.");
     expect(unitCardView.parentElement?.hasAttribute("hidden")).toBe(false);
     expect(unitCardView.parentElement?.getAttribute("aria-hidden")).toBe("true");
     expect(unitCardView.parentElement?.hasAttribute("inert")).toBe(true);
@@ -1467,7 +1463,7 @@ describe("App local catalogue flow", () => {
     expect(weaponNode.getByText("Set by Veterans")).toBeTruthy();
     // The verb tracks the operation: the same declarer appends a keyword, and
     // calling that "set" would misdescribe the row.
-    expect(weaponNode.getByText("Heavy, Assault")).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Unit card for Veterans" }).textContent).toContain("Heavy, Assault");
     expect(weaponNode.getByText("Base Heavy")).toBeTruthy();
     expect(weaponNode.getByText("Added by Veterans")).toBeTruthy();
     // A display annotation renders in parentheses after the profile name, the

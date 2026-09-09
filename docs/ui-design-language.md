@@ -268,6 +268,15 @@ sheet body text uses the same 0.875rem reference reading size and shared radius.
 
 ## State, motion, and accessibility
 
+Reference prose uses regular body weight, with authored bold/italics/small caps
+providing emphasis. Scoped font synthesis is permitted here because the installed
+Bahnschrift face otherwise suppresses visible italic and small-cap distinctions.
+In-prose reference buttons are underlined text with inherited typography and a
+visible keyboard focus ring; unlike standalone keyword controls, they do not
+force a 44 px line height. References open above the current card, retaining its
+blurred surface, scroll and focus target. Every added surface uses the shared
+corner-radius token. Catalogue-only text carries an explicit source-only note.
+
 - Pressed and selected rows use `--fill`; focus uses a visible `--tint` ring.
 - Color is always paired with text, shape, or accessible state.
 - Present/dismiss transitions target 200 ms and become instant under

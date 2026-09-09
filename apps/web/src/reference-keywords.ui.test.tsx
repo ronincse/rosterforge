@@ -29,14 +29,14 @@ it("links attached stat keywords, leaves empty cells blank, and layers rule dial
   for (const name of ["Psychic Assassin", "Unknown", "Hidden", "Ambiguous"]) {
     expect(reader.queryByRole("button", { name: `View rules for ${name}` })).toBeNull();
   }
-  expect(reader.getByText("Must not match Psychic Assassin.")).toBeTruthy();
+  expect(card.textContent).toContain("Must not match Psychic Assassin.");
   expect(reader.getAllByText(/Rule applicability unresolved/)).toHaveLength(1);
   const trigger = reader.getByRole("button", { name: "View rules for Rapid Fire 4" });
   card.scrollTop = 180;
   trigger.focus();
   fireEvent.click(trigger);
   const rule = screen.getByRole("dialog", { name: "Rapid Fire 4" });
-  expect(within(rule).getByText("Fictional rapid fire reference.")).toBeTruthy();
+  expect(rule.textContent).toContain("Fictional rapid fire reference.");
   expect(card.isConnected).toBe(true);
   expect(card.parentElement?.hasAttribute("hidden")).toBe(false);
   expect(card.parentElement?.getAttribute("aria-hidden")).toBe("true");
@@ -44,9 +44,26 @@ it("links attached stat keywords, leaves empty cells blank, and layers rule dial
   expect(screen.getAllByRole("dialog")).toHaveLength(1);
   expect(card.scrollTop).toBe(180);
   const close = within(rule).getByRole("button", { name: "Close" });
-  close.focus();
-  fireEvent.keyDown(close, { key: "Tab" });
+  const nestedTrigger = within(rule).getByRole("button", { name: "View reference for rapid fire" });
+  nestedTrigger.focus();
+  fireEvent.keyDown(nestedTrigger, { key: "Tab" });
   expect(document.activeElement).toBe(close);
+  rule.scrollTop = 55;
+  fireEvent.click(nestedTrigger);
+  const nested = screen.getByRole("dialog", { name: "Rapid Fire" });
+  expect(rule.parentElement?.hasAttribute("inert")).toBe(true);
+  expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  fireEvent.keyDown(nested, { key: "Escape" });
+  await waitFor(() => expect(document.activeElement).toBe(nestedTrigger));
+  expect(rule.scrollTop).toBe(55);
+  // Cyclic references remain navigable but cannot accumulate unlimited sheets.
+  for (let depth = 1; depth < 8; depth++) {
+    const current = screen.getByRole("dialog", {name: depth === 1 ? "Rapid Fire 4" : "Rapid Fire"});
+    fireEvent.click(within(current).getByRole("button", {name: "View reference for rapid fire"}));
+  }
+  expect(screen.getByText("Close a reference to follow more links.")).toBeTruthy();
+  expect(within(screen.getByRole("dialog", {name:"Rapid Fire"})).queryByRole("button",{name:"View reference for rapid fire"})).toBeNull();
+  for (let depth = 7; depth > 0; depth--) fireEvent.keyDown(screen.getByRole("dialog", {name:"Rapid Fire"}), {key:"Escape"});
   fireEvent.keyDown(rule, { key: "Escape" });
   await waitFor(() => expect(document.activeElement).toBe(trigger));
   expect(card.scrollTop).toBe(180);

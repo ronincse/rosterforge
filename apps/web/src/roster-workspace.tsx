@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useContext,
   type RefObject,
 } from "react";
 
@@ -50,6 +51,9 @@ import { Detail } from "./detail-row.js";
 import { inspectLocalRule } from "./rule-inspection.js";
 import { createUnitReferenceModel, referenceAttribution, type ReferenceMember } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
+import { ReferenceRichText, ReferenceTextContext } from "./reference-rich-text.js";
+import { catalogueReferenceTextIndex, selectedReferenceTextIndex, type ReferenceTextIndex } from "./reference-text-index.js";
+import type { ReferenceProfileGroup } from "./unit-reference-model.js";
 import { DiagnosticList } from "./diagnostic-list.js";
 import {
   evaluateLocalRosterCosts,
@@ -100,6 +104,9 @@ type PreviewChoiceHandler = (
 interface KeywordRulePreview {
   readonly keyword: string;
   readonly rules: readonly SelectionRuleDetail[];
+  readonly profiles?: readonly ReferenceProfileGroup[];
+  readonly sourceOnly?: boolean;
+  readonly referenceIndex?: ReferenceTextIndex | undefined;
 }
 
 interface RosterSelectionChoiceGroupNode {
@@ -216,8 +223,10 @@ export function RosterOverview({
     useState<SelectionOccurrenceId>();
   const [viewedSelectionId, setViewedSelectionId] =
     useState<SelectionOccurrenceId>();
-  const [keywordRulePreview, setKeywordRulePreview] =
-    useState<KeywordRulePreview>();
+  const [keywordRuleStack, setKeywordRuleStack] =
+    useState<readonly { preview: KeywordRulePreview; trigger: HTMLButtonElement }[]>([]);
+  const keywordRulePreview = keywordRuleStack.at(-1)?.preview;
+  const sourceTextIndex = useMemo(() => catalogueReferenceTextIndex(session), [session]);
   const [problemsOpen, setProblemsOpen] = useState(false);
   const actionsMenuId = useId();
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
@@ -225,7 +234,6 @@ export function RosterOverview({
     useState<BattleScribeRosterSelectionChoice>();
   const previewReturnFocus = useRef<HTMLElement | null>(null);
   const unitCardReturnFocus = useRef<HTMLElement | null>(null);
-  const keywordRuleReturnFocus = useRef<HTMLElement | null>(null);
   const problemsReturnFocus = useRef<HTMLElement | null>(null);
   const catalogueReturnFocus = useRef<HTMLElement | null>(null);
   const actionsMenu = useRef<HTMLDivElement | null>(null);
@@ -421,15 +429,13 @@ export function RosterOverview({
     preview: KeywordRulePreview,
     trigger: HTMLButtonElement,
   ) => {
-    keywordRuleReturnFocus.current = trigger;
-    setKeywordRulePreview(preview);
+    setKeywordRuleStack(stack => [...stack, { preview, trigger }]);
   };
   const closeKeywordRules = () => {
-    setKeywordRulePreview(undefined);
-    const returnFocus = keywordRuleReturnFocus.current;
-    keywordRuleReturnFocus.current = null;
+    const returnFocus = keywordRuleStack.at(-1)?.trigger;
+    setKeywordRuleStack(stack => stack.slice(0, -1));
     queueMicrotask(() => {
-      if (returnFocus !== null && document.contains(returnFocus)) {
+      if (returnFocus && document.contains(returnFocus)) {
         returnFocus.focus();
       }
     });
@@ -647,6 +653,7 @@ export function RosterOverview({
     ),
   ];
   return (
+    <ReferenceTextContext.Provider value={{ index: sourceTextIndex, open: (target, trigger) => openKeywordRules({ keyword: target.name, ...target, referenceIndex: sourceTextIndex }, trigger) }}>
     <div className="roster-overview">
       <nav
         className="roster-workspace-nav"
@@ -1076,6 +1083,7 @@ export function RosterOverview({
       {previewedChoice !== undefined && (
         <CatalogueChoicePreviewDialog
           choice={previewedChoice}
+          covered={keywordRulePreview !== undefined}
           onClose={closeChoicePreview}
         />
       )}
@@ -1095,12 +1103,16 @@ export function RosterOverview({
         />
       )}
 
-      {keywordRulePreview !== undefined && (
+      {keywordRuleStack.map(({ preview }, index) => (
         <KeywordRulesDialog
-          preview={keywordRulePreview}
+          key={index}
+          preview={preview}
+          covered={index < keywordRuleStack.length - 1}
+          atDepthLimit={index >= 7}
+          onViewKeywordRules={openKeywordRules}
           onClose={closeKeywordRules}
         />
-      )}
+      ))}
 
       {problemsOpen && (
         <RosterProblemsDialog
@@ -1216,6 +1228,7 @@ export function RosterOverview({
       </section>
 
     </div>
+    </ReferenceTextContext.Provider>
   );
 }
 
@@ -3510,11 +3523,13 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
   // Only tables actually render keyword links; a prose profile must not remove
   // an inline rule just because it happens to carry a Keywords characteristic.
   const keywordLinks = useMemo(() => createReferenceKeywordLinks(model, statistics), [model, statistics]);
+  const referenceIndex = useMemo(() => selectedReferenceTextIndex(catalogueReferenceTextIndex(session), model), [session, model]);
   // Type labels determine reading order only, never membership or equivalence.
   const models = statistics.filter(group => group.profile.value.typeName?.toLowerCase() === "unit");
   const equipment = statistics.filter(group => !models.includes(group));
   const tables = (groups: typeof statistics) => <SelectionProfileTables profiles={groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members, keywords: keywordLinks.profiles.get(group) } }))} reports={undefined} onViewKeywordRules={onViewKeywordRules} />;
-  return <div className="unit-reference-reader">
+  return <ReferenceTextContext.Provider value={{ index: referenceIndex, open: (target, trigger) => onViewKeywordRules({ keyword: target.name, ...target, referenceIndex }, trigger) }}><div className="unit-reference-reader">
+    {referenceIndex.limited && <p className="reference-source-note">Some automatic reference links are unavailable because the catalogue index is too large. The source text remains available.</p>}
     <nav className="unit-reference-nav" aria-label="Unit reference sections">
       {models.length > 0 && <a href="#unit-reference-stats">Stats</a>}
       {equipment.length > 0 && <a href="#unit-reference-weapons">Weapons & equipment</a>}
@@ -3546,21 +3561,33 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
       {groups.map((infoGroup, index) => <SelectionInfoGroup key={index} infoGroup={infoGroup} reports={reports} ruleEnvironment={{ session, owner: member.owner }} />)}
       {unresolved.map((link, index) => <p key={index}>Unavailable linked information: {link.link.name ?? link.link.targetId ?? "Unnamed information"}. This information could not be loaded from the imported catalogue.</p>)}
     </section>)}
-  </div>;
+  </div></ReferenceTextContext.Provider>;
 }
 
 /** One keyword's source-authored rules, layered over the owning unit card. */
 function KeywordRulesDialog({
   preview,
   onClose,
+  covered,
+  atDepthLimit,
+  onViewKeywordRules,
 }: {
   readonly preview: KeywordRulePreview;
   readonly onClose: () => void;
+  readonly covered: boolean;
+  readonly atDepthLimit: boolean;
+  readonly onViewKeywordRules: (preview: KeywordRulePreview, trigger: HTMLButtonElement) => void;
 }) {
   const headingId = useId();
+  const parentEnvironment = useContext(ReferenceTextContext);
+  const baseIndex = preview.referenceIndex ?? parentEnvironment?.index;
+  const referenceIndex = useMemo(() => baseIndex && !preview.sourceOnly ? selectedReferenceTextIndex(baseIndex, { rules: preview.rules.map(rule => ({ rule: { ...rule, report: rule.report ?? inspectLocalRule(rule.value) }, members: [] })), profiles: preview.profiles ?? [] }) : baseIndex, [baseIndex, preview]);
   return (
+    <ReferenceTextContext.Provider value={!atDepthLimit && referenceIndex ? { index: referenceIndex, open: (target, trigger) => onViewKeywordRules({ keyword: target.name, ...target, referenceIndex }, trigger) } : undefined}>
     <div
       className="choice-preview-backdrop"
+      aria-hidden={covered || undefined}
+      inert={covered}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -3589,9 +3616,12 @@ function KeywordRulesDialog({
             Close
           </button>
         </header>
+        {preview.sourceOnly && <p className="reference-source-note">Catalogue reference — source text, not a claim that this applies to the selected unit.</p>}
+        {atDepthLimit && <p className="reference-source-note">Close a reference to follow more links.</p>}
         <section className="selection-info-section">
           <h4>Rules</h4>
           <div className="selection-rule-list">
+            {preview.profiles?.map((group, index) => <SelectionProfile key={index} profile={group.profile} report={group.report} />)}
             {preview.rules.map((rule, index) => (
               <SelectionRule key={selectionRuleKey(rule, index)} rule={rule} />
             ))}
@@ -3599,6 +3629,7 @@ function KeywordRulesDialog({
         </section>
       </section>
     </div>
+    </ReferenceTextContext.Provider>
   );
 }
 
@@ -5340,9 +5371,11 @@ function CatalogueAvailableChoice({
 function CatalogueChoicePreviewDialog({
   choice,
   onClose,
+  covered,
 }: {
   readonly choice: BattleScribeRosterSelectionChoice;
   readonly onClose: () => void;
+  readonly covered: boolean;
 }) {
   const headingId = useId();
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -5369,6 +5402,8 @@ function CatalogueChoicePreviewDialog({
   return (
     <div
       className="choice-preview-backdrop"
+      aria-hidden={covered || undefined}
+      inert={covered}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -6691,6 +6726,7 @@ function SelectionCharacteristicValue({
   readonly keywords?: readonly ReferenceKeywordToken[] | undefined;
   readonly onViewKeywordRules?: ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void) | undefined;
 }) {
+  const referenceEnvironment = useContext(ReferenceTextContext);
   const modified = report !== undefined && report.steps.length > 0;
   const unresolved = modified && report.value === undefined;
   const displayed = report?.value ?? characteristic.value;
@@ -6708,13 +6744,13 @@ function SelectionCharacteristicValue({
       : "Set";
   return (
     <span className="selection-profile-table-value">
-      <span>{isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : keywords?.some(token => token.rule) && onViewKeywordRules ? keywords.map((token, index) => token.rule ? <span key={index}>{token.text.match(/^\s*/)?.[0]}<button
+      <span>{isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : keywords && onViewKeywordRules ? keywords.map((token, index) => token.rule ? <span key={index}>{token.text.match(/^\s*/)?.[0]}<button
         type="button"
         className="reference-keyword-link"
         aria-haspopup="dialog"
         aria-label={`View rules for ${token.text.trim()}`}
-        onClick={event => onViewKeywordRules({ keyword: token.text.trim(), rules: [token.rule!.rule] }, event.currentTarget)}
-      >{token.text.trim()}</button>{token.text.match(/\s*$/)?.[0]}</span> : <span key={index}>{token.text}</span>) : displayed === "" ? "Empty value" : displayed}</span>
+        onClick={event => onViewKeywordRules({ keyword: token.text.trim(), rules: [token.rule!.rule], referenceIndex: referenceEnvironment?.index }, event.currentTarget)}
+      >{token.text.trim()}</button>{token.text.match(/\s*$/)?.[0]}</span> : <ReferenceRichText key={index} text={token.text} inlineOnly wholeReference />) : displayed === "" ? "Empty value" : <ReferenceRichText text={displayed} inlineOnly wholeReference={isKeywordCharacteristic(characteristic)} />}</span>
       {changed && (
         <small>Base {report.baseValue === "" ? "empty value" : report.baseValue}</small>
       )}
@@ -6768,7 +6804,7 @@ function SelectionCharacteristic({
           "Unnamed characteristic"}
       </dt>
       <dd>
-        <span>{isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : displayed === "" ? "Empty value" : displayed}</span>
+        {isKeywordCharacteristic(characteristic) && displayed.trim() === "" ? "" : displayed === "" ? <span>Empty value</span> : <ReferenceRichText text={displayed} />}
         {changed && (
           <small>
             Base {report.baseValue === "" ? "empty value" : report.baseValue}
@@ -6801,13 +6837,7 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
       {report.completeness === "incomplete" && (
         <p className="selection-annotation-completeness">Rule applicability unresolved. Source text is shown; this rule is not confirmed to apply.</p>
       )}
-      <p>
-        {description === undefined
-          ? "No description provided."
-          : description === ""
-            ? "Empty description."
-            : description}
-      </p>
+      {description ? <ReferenceRichText text={description} /> : <p>{description === undefined ? "No description provided." : "Empty description."}</p>}
       {report.diagnostics.length > 0 && <details><summary>Rule applicability details</summary><DiagnosticList diagnostics={report.diagnostics} /></details>}
     </article>
   );

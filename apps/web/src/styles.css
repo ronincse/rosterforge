@@ -3954,6 +3954,24 @@ h1 {
 }
 .reference-keyword-link:hover { background: var(--forest-light); }
 
+/* Imported emphasis is meaningful only if the surrounding prose is regular.
+   These are React-rendered elements, never imported HTML or CSS. */
+/* The default Windows UI face lacks italics/small caps; permit synthesis here
+   so authored emphasis is visible instead of merely having a computed style. */
+.reference-rich-text { font-size: 0.875rem; font-weight: 400; font-synthesis: weight style small-caps; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+.reference-rich-text p { margin: 0 0 0.8em; color: inherit; font: inherit; }
+.reference-rich-text p:last-child { margin-bottom: 0; }
+.reference-rich-text strong { font-weight: 700; }
+.reference-rich-text em { font-style: italic; }
+.reference-rich-text ul, .reference-rich-text ol { padding-left: 1.5em; margin: 0.5em 0; }
+.reference-rich-text [role="heading"] { font-weight: 700; margin: 0.8em 0 0.4em; }
+.reference-small-caps { font-variant-caps: small-caps; }
+.reference-prose-link { display: inline; padding: 0; border: 0; border-radius: var(--corner-radius); background: transparent; box-shadow: none; color: var(--forest); font: inherit; text-align: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.reference-prose-link:hover { background: var(--forest-light); }
+.reference-source-note { font-size: 0.8rem; }
+.reference-text-table { max-width: 100%; overflow: auto; border-radius: var(--corner-radius); }
+.reference-text-table th, .reference-text-table td { padding: 8px; white-space: normal; }
+
 .removed-keywords li {
   color: var(--muted);
 }

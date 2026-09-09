@@ -2404,3 +2404,23 @@ visible reports, complete keyword values and links covering every owner leave
 the main inline list. The original model and lazy source disclosure stay intact.
 Covered unit dialogs remain mounted and visible under the rule sheet, but are
 inert and aria-hidden until the top sheet closes and restores trigger focus.
+
+`reference-rich-text.tsx` renders a bounded, display-only formatting subset into
+React elements. It never inserts imported HTML or executes imported expressions.
+`battlescribe-data` additionally projects authored `alias` and `noindex` metadata;
+generic source trees, descriptions and original bytes remain unchanged.
+`reference-text-index.ts` caches a literal name/alias trie per catalogue session,
+restricted to the chosen catalogue's reachable document closure. Selected rule
+and profile reports overlay source-only targets, retaining owner uncertainty.
+Ambiguous targets are not chosen by traversal order. Formatting is parsed before
+matching visible phrases, allowing a link to span differently styled runs without
+inventing word boundaries at emphasis markers. Source-only links never suppress
+selected inline rules or assert applicability. The eight-layer dialog stack
+retains parent DOM, scroll, inert state and exact trigger restoration.
+
+Index construction is bounded to 8,192 names / 500,000 name characters; overflow
+disables the index rather than presenting a partially indexed name as unique.
+Rendering caps text at 32,768 characters, 512 lines, 4,096 markup tokens and 256
+links, with 160-character reference names and eight list levels. Oversized text
+remains readable as plain text. See `docs/qa/rich-text-references.md` for source
+evidence, browser checks and deliberately unsupported formatting/reference kinds.

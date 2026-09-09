@@ -12,7 +12,7 @@ export type ReferenceProfile =
   | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink };
 export type ReferenceRule = (
   | { readonly origin: "Direct"; readonly value: BattleScribeRosterSelectionChoice["rules"][number] }
-  | { readonly origin: "Linked"; readonly value: MaterializedRuleInfoLink }
+  | { readonly origin: "Linked"; readonly value: Pick<MaterializedRuleInfoLink, "definition" | "link" | "hidden" | "name" | "description"> }
 ) & { readonly report: RosterRuleVisibilityReport };
 export interface ReferenceMember {
   readonly owner: RosterSelection;

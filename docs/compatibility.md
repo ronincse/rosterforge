@@ -963,17 +963,38 @@ flattened or reinterpreted. Exact occurrence/source evidence and child keywords
 remain in secondary disclosure. This does not expand rule compatibility, change
 validity/completeness, or assert that equal displayed values imply equivalence.
 
-Selected stat-table Keywords are blank when empty. Nonempty tokens link only to
+Selected stat-table Keywords are blank when empty. Nonempty tokens first link to
 unambiguous rules attached to every original profile owner, with nonempty rule
 text. Exact normalized names take precedence; numeric/dice suffixes (Rapid Fire
 4, Sustained Hits D3) and explicit Anti target/threshold forms can reference their
 attached generic rule. Unknown syntax, absent text, ambiguity and differing
-owner-rule groups stay plain. No unrelated catalogue rules are inferred.
+owner-rule groups do not acquire an attached-rule claim. The general source-only
+reference fallback described below can offer an explicitly labeled lookup.
 Complete linked rules leave the main inline section only when all their owners
 have a complete visible link; incomplete applicability remains inline and in the
 popup. Effective-value, base-value and unresolved/routed annotations remain.
 Nested information-group scope is not flattened for keyword lookup. This is
 presentation only, not additional compatibility or legality evaluation.
+
+Reference descriptions and characteristic values now display bold, italics,
+small caps (`^^`), underline (`<ins>`), strikethrough, line breaks, simple headings,
+lists and pipe tables through a bounded React-only renderer. Nested and crossing
+emphasis observed in the corpus is supported; malformed delimiters remain text.
+This is not full CommonMark or arbitrary HTML. URLs, images, code execution and
+imported `formatRules` regular expressions are not enabled.
+
+Prose and unmatched stat-keyword tokens can open layered references using actual
+rule/profile names and authored aliases from the selected catalogue closure.
+Matching is case-insensitive, literal, longest-phrase and word-boundary checked;
+ambiguous names and `noindex` targets stay unlinked. Selected owner reports take
+precedence. Catalogue-only targets are labeled source text, not applicability.
+Names/aliases are presentation matching, not inline target-ID references. No
+missing glossary is fabricated: Deployment, for example, has no available target
+at the tested pin. Arbitrary entry names and category descriptions are not added
+to this general index; existing exact category-to-rule links remain unchanged.
+Eight nested sheets retain the underlying card and restore focus/scroll on close;
+at the cap users must close a reference before opening another. Resource limits
+and validation evidence are recorded in `docs/qa/rich-text-references.md`.
 
 ## Deferred
 

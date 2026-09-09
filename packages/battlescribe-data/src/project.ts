@@ -522,9 +522,21 @@ function base(
 function identified(located: LocatedElement, context: ProjectionContext) {
   return {
     ...base(located, context),
+    ...referenceIndexMetadata(located, context),
     ...optionalId(located.node, "id"),
     ...optionalString(located.node, "name"),
   };
+}
+
+// New Recruit's reference index uses literal authored aliases and noindex.
+// Preserve the generic node/bytes; never interpret aliases as patterns or code.
+function referenceIndexMetadata(located: LocatedElement, context: ProjectionContext) {
+  const source = located.node.jsonSource;
+  const aliases = source?.kind === "object" ? source.entries.find(entry => entry.name === "alias")?.value : undefined;
+  const alias = aliases?.kind === "array"
+    ? aliases.items.filter(item => item.kind === "string").map(item => item.value)
+    : childElements(located, "alias").flatMap(container => container.node.children.filter(child => child.kind === "element").map(child => directText(child)));
+  return { ...(alias.length ? { alias } : {}), ...optionalBoolean(located, "noindex", context) };
 }
 
 function link(located: LocatedElement, context: ProjectionContext) {
