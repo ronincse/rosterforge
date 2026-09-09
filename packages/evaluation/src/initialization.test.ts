@@ -129,6 +129,18 @@ describe("roster selection initialization", () => {
       ["auto-model", "false"],
       ["auto-upgrade", "true"],
     ]);
+
+    // A zero descendant minimum cannot require automatic additions. Positive
+    // descendant minima and unrelated unknown attributes are still diagnostic.
+    const unit = root.materialized;
+    const child = unit.selectionEntries[0]!;
+    const bound = child.constraints[0]!;
+    for (const [value, extra, warns] of [[0, {}, false], [1, {}, true], [0, { futureBehavior: "true" }, true]] as const) {
+      const changed = { ...unit, selectionEntryGroups: [], entryLinks: [], selectionEntries: [{ ...child, constraints: [{ ...bound, value, includeChildSelections: true, node: { ...bound.node, attributes: { ...bound.node.attributes, ...extra } } }] }] };
+      const result = planRosterSelectionInitialization(changed);
+      expect(result.diagnostics.some(d => d.code === "EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED")).toBe(warns);
+      if (!warns) expect(result.ok && result.value.plannedSelectionCount).toBe(0);
+    }
   });
 
   it("plans unconditional minimum children and transparent group defaults", () => {

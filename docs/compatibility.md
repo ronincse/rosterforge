@@ -1862,8 +1862,9 @@ removing an endpoint clears its edges, not the other unit. Duplicating a unit
 copies its configured selection subtree but does not duplicate roster-level
 attachments. Stale assignments remain visible and detachable, not rebound by name.
 
-Incoming association count limits, required/multi-target associations, association
-effects and association-field condition execution remain unsupported. Assignment
+Incoming association count limits, required/multi-target associations and general
+association effects remain unsupported. Direct self association conditions are
+supported by the following checkpoint; wider queries remain unsupported. Assignment
 does not imply attached buffs or full legality; a visible notice and aggregate
 incompleteness retain this distinction. In particular, incoming Leader-category
 classification for Eightbound is not inferred from the display name "Leading".
@@ -1873,5 +1874,48 @@ once across the roster, respecting child-force inclusion. Supported bounds requi
 shared counts, child selections, finite nonnegative limits, unambiguous categories,
 and no unsupported source modifiers/shapes. This repairs missing and duplicate
 Warlord checks, including an automatically required Warlord on Angron. Other
-category-owned force/cost bounds and category-definition modifiers are not newly
-supported by this repair.
+category-owned force/cost bounds are not supported. Direct definition-owned bound
+modifiers are evaluated by the following checkpoint; relevant modifier groups
+remain unsupported.
+
+## World Eaters Warning Repairs — 2026-09-09
+
+Numeric `field=associations`, `scope=self`, `shared=true` condition leaves now count
+distinct directly attached counterparts on either endpoint, matching exact source
+identity/effective categories. They count units, not model quantities, and never
+count the owner or walk the containment tree. Only the saved direct same-force
+optional single-unit definition shape is supported. Malformed leaves, stale or
+ambiguous endpoints/definitions, model targets and wider/transitive queries remain
+unresolved. Eligibility filters are not recursively re-evaluated while counting an
+existing edge; association existence does not certify assignment legality.
+Slaughterbound's Deep Strike/Scouts links are hidden while unattached and become
+visible for its matching saved Eightbound attachment. Rule name/text modifiers,
+including the Scouts name suffix, remain outside this repair.
+
+Force-owned `instanceOf`/`notInstanceOf` selection queries in `scope=force` compare
+that exact force definition, like a selected occurrence's containing-force query.
+Live root limits evaluate relevant ordinary nested modifier groups in the existing
+direct-then-group execution order with inherited applicability. Static creation
+still does not infer conditional grouped limits. Modified negative/unlimited root
+limits retain the pre-existing conservative limitation; no such grouped shape was
+needed for these World Eaters warnings.
+
+Selection min/max constraints on a uniquely resolved cost-type ID support `self`
+scope and optional child selections. They reuse the same effective cost evaluator
+as force constraints; unrelated siblings/currencies are excluded. A collection
+shares one lazy cost report per inspection. Missing/ambiguous types, malformed
+flags/children, unknown cost values/modifiers and wider cost scopes are not guessed.
+An uncertain subtotal is not a safe bound and never becomes an observed value.
+The three reported Slaughterbound Battle Honours/Weapon Modifications bounds now
+report exact zero costs, not hidden or suppressed campaign diagnostics.
+
+Category-definition direct numeric bound modifiers use ordinary applicability;
+unrelated definition modifiers/groups do not taint another bound. Groups actually
+targeting the bound remain unresolved. Static zero parent minima tolerate only
+the otherwise-unsupported descendant-count flag: either count requires no added
+selection. Modifier uncertainty, positive minima, other unknown properties and
+live checks are unchanged. This removes Angron's two inactive campaign-group
+initialization warnings without claiming campaign compatibility.
+
+See [World Eaters warning QA](qa/world-eaters-warnings.md) for measured source shapes,
+regressions, browser observations and remaining limits.

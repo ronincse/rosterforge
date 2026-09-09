@@ -11,7 +11,7 @@ import { createReferenceKeywordLinks, isKeywordCharacteristic } from "./referenc
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
 import { inspectRosterAssociationChoices } from "@rosterforge/evaluation";
-import { addLocalRosterChildSelection as addLeadershipChoice, inspectLocalRosterConstraints, setLocalRosterAssociation, removeLocalRosterSelection, duplicateLocalRosterSelection } from "./roster-session.js";
+import { addLocalRosterChildSelection as addLeadershipChoice, inspectLocalRosterConstraints, inspectLocalRosterStructuralStatus, setLocalRosterAssociation, removeLocalRosterSelection, duplicateLocalRosterSelection } from "./roster-session.js";
 
 const directory = process.env.ROSTERFORGE_BSDATA_JSON_DIR;
 it.skipIf(!directory)("groups the audit's selected five and ten model Intercessor loadouts at the exact pin", async () => {
@@ -91,6 +91,7 @@ it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps 
   const angronId = next();
   const angron = addLocalRosterRootSelection(added.value, localRosterRootChoices(catalogue).find(c => c.materialized.name === "Angron")!, { selectionId: angronId, createSelectionId: next });
   if (!angron.ok) throw new Error("Angron failed");
+  expect(angron.diagnostics).toEqual([]);
   const angronModel = createUnitReferenceModel(angron.value, angron.value.roster.forces[0]!.selections.find(s => s.id === angronId)!);
   const index = selectedReferenceTextIndex(catalogueReferenceTextIndex(angron.value), angronModel);
   const demise = matchTextReference(index, "Deadly Demise X", 0)!;
@@ -120,18 +121,34 @@ it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps 
   const checks = inspectLocalRosterConstraints(twoWarlords.value);
   if (!checks.ok) throw new Error("Check failed");
   expect(checks.value.categories.forces.flatMap(f => f.constraints).find(c => c.categoryName === "Warlord" && c.constraintType === "max")).toMatchObject({status:"violated",observed:2,limit:1,completeness:"complete"});
+  expect(checks.diagnostics.map(d => d.code)).not.toContain("EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED");
+  // Eightbound still has unsupported incoming association-count limits; this
+  // checkpoint evaluates Slaughterbound's three self-cost bounds, not those.
+  const slaughterCosts = checks.value.selections.selections.find(s => s.owner.id === slaughterId)!.constraints.filter(c => ["75bb-ded1-c86d-bdf0", "716d-91b7-d55a-1022"].includes(c.constraint.field ?? ""));
+  expect(slaughterCosts).toHaveLength(3);
+  expect(slaughterCosts.map(c => ({ status: c.status, observed: c.observed, completeness: c.completeness }))).toEqual(Array.from({ length: 3 }, () => ({ status: "satisfied", observed: 0, completeness: "complete" })));
   const source = twoWarlords.value.roster.forces[0]!.selections.find(s => s.id === slaughterId)!;
+  const associationRules = (current: typeof leadership) => createUnitReferenceModel(current, current.roster.forces[0]!.selections.find(s => s.id === slaughterId)!).rules.filter(r => r.rule.value.name === "Deep Strike" || r.rule.value.name === "Scouts");
+  expect(associationRules(twoWarlords.value)).toEqual([]);
+  const structural = inspectLocalRosterStructuralStatus(twoWarlords.value);
+  expect(structural.diagnostics.map(d => d.code)).not.toContain("EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED");
+  expect(structural.diagnostics.map(d => d.code)).not.toContain("EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED");
   const leading = inspectRosterAssociationChoices(twoWarlords.value.roster, catalogue.context, source).find(c => c.name === "Leading")!;
   expect(leading.supported).toBe(true);
   expect(leading.candidates.find(c => c.selection.id === bodyguardId)?.status).toBe("satisfied");
   const attached = setLocalRosterAssociation(twoWarlords.value, slaughterId, leading.key, bodyguardId);
   if (!attached.ok) throw new Error("Attachment failed");
   expect(attached.value.roster.associations).toEqual([{sourceId:slaughterId,targetId:bodyguardId,definitionKey:leading.key}]);
+  expect(associationRules(attached.value).map(r => r.rule.value.name)).toEqual(["Deep Strike", "Scouts"]);
+  expect(associationRules(attached.value).every(r => r.rule.report.completeness === "complete")).toBe(true);
   const copied = duplicateLocalRosterSelection(attached.value, slaughterId, next);
   expect(copied.ok).toBe(true);
   if (copied.ok) expect(copied.value.roster.associations).toEqual(attached.value.roster.associations);
   const removed = removeLocalRosterSelection(attached.value, bodyguardId, {createSelectionId: next});
   expect(removed.ok).toBe(true);
-  if (removed.ok) expect(removed.value.roster.associations).toBeUndefined();
+  if (removed.ok) {
+    expect(removed.value.roster.associations).toBeUndefined();
+    expect(associationRules(removed.value)).toEqual([]);
+  }
   console.info("Keyword reference corpus", { documents: names.length, profileGroups: model.profiles.length, ruleGroups: model.rules.length, inlineRules: linked.inlineRules.length, linkedTokens: tokens.filter(t => t.rule).length });
 }, 120_000);

@@ -1581,6 +1581,27 @@ erase known validity errors.
 
 Category-definition roster bounds reuse `EVALUATION_CATEGORY_CONSTRAINT_*`
 diagnostics, retaining actual category/constraint provenance rather than inventing
-a force-category link. Unsupported definition modifiers or malformed/unknown
+a force-category link. Unsupported targeted modifier groups or malformed/unknown
 constraint shapes remain unresolved; supported duplicate-Warlord violations keep
 their count and link back to a matching occurrence.
+
+### Direct association and self-cost queries
+
+- `EVALUATION_CONDITION_ASSOCIATION_SHAPE_UNSUPPORTED`: an association condition
+  is outside numeric self/shared direct-counterpart counting, has malformed flags
+  or contains unknown element children. Wider traversal retains the existing
+  unsupported-attribute diagnostics as well.
+- `EVALUATION_CONDITION_ASSOCIATIONS_UNRESOLVED`: an attached endpoint or direct
+  association definition cannot be resolved safely. Observed count is withheld;
+  this is not treated as an empty attachment list.
+- `EVALUATION_CONSTRAINT_COST_UNRESOLVED`: the selection's supported self-cost
+  query cannot be totaled exactly. Source-specific cost evidence remains retained;
+  no precise observation is emitted from an incomplete subtotal.
+
+Known self cost-type IDs no longer receive `EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED`.
+Malformed cost-query flags/children reuse `EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED`.
+Resolved force identity and live grouped root limits no longer produce structural
+summary warnings. Unsupported applicable shapes still do; no display filter was
+added. Static descendant min-zero initialization does not warn solely about the
+descendant flag, because it cannot require an automatic addition; other uncertainty
+and actual roster violations are retained.

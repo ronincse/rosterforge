@@ -4,6 +4,7 @@ import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
 import type { ConditionProjection, ConditionGroupProjection } from "@rosterforge/battlescribe-data";
 import { rosterDefinitionKeyForSource, type Roster, type RosterDefinitionKey, type RosterSelection } from "@rosterforge/roster-model";
 import { evaluateRosterCondition, type RosterConditionStatus } from "./conditions.js";
+import { isSupportedDirectAssociation } from "./association-shape.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 import { indexEvaluationChoices, resolveEvaluationSelection, rosterSelectionLocations, rosterMatchesCatalogueContext, type EvaluationSelectionChoice } from "./selection-context.js";
 
@@ -51,10 +52,7 @@ export function inspectRosterAssociationChoices(roster: Roster, context: BattleS
     return combine([...association.conditions.map(leaf), ...association.conditionGroups.map(g => group(g, 0))], "and");
   }
   return definition.associations.map(association => {
-    const allowed = new Set(["id", "name", "min", "max", "scope", "childId", "childName", "action", "label", "hidden", "includeChildSelections", "includeChildForces"]);
-    const invalidBoolean = ["hidden", "includeChildSelections", "includeChildForces"].some(key => association.node.attributes[key] !== undefined && !["true", "false", "1", "0"].includes(association.node.attributes[key]!));
-    const unknown = invalidBoolean || Object.keys(association.node.attributes).some(key => !allowed.has(key)) || association.node.children.some(child => child.kind === "element" && !["conditions", "conditionGroups"].includes(child.name));
-    const supported = !unknown && association.scope === "force" && association.childId === "unit" && association.action === "group" && association.min === 0 && association.max === 1 && association.includeChildSelections === true && association.includeChildForces !== true && association.hidden !== true;
+    const supported = isSupportedDirectAssociation(association);
     return {
       key: rosterDefinitionKeyForSource(association.source.sourceId, association.path),
       name: association.name ?? "Attachment",

@@ -2432,7 +2432,10 @@ projections carried through `data-graph`; original nodes/bytes remain unchanged.
 `evaluation/associations.ts` inspects the measured direct, same-force, optional
 single-unit target shape using effective categories and three-valued conditions.
 `queryFromSelf` changes only the filter leaf's owner. Unknown shapes remain
-unavailable; no association condition/effect routing is implied by eligibility.
+unavailable; no general effect routing is implied by eligibility. The shared
+`association-shape.ts` gate is also used by condition queries. Direct self counts
+resolve saved edges without recursively invoking eligibility filters; both ends
+remain ordinary separate selection occurrences.
 
 `roster-model` stores optional association edges as source occurrence ID, target
 occurrence ID and opaque definition key. Units remain separate tree occurrences;
@@ -2448,3 +2451,9 @@ validation incomplete: incoming limits and attached-unit effects are not evaluat
 Category-definition roster selection constraints are inspected once per roster,
 separately from force-category links. Exact effective category membership supplies
 the count and attention targets; no Warlord names or faction IDs are hardcoded.
+
+`cost-constraint-query.ts` supplies the common exact scoped cost observation for
+force and self-selection constraints. The constraint collection computes its cost
+report lazily once and filters it by occurrence and currency. It does not introduce
+a second calculator or depend on persistence/web code. Unknown numeric costs keep
+unbounded uncertainty rather than treating the known subtotal as a lower bound.

@@ -1,4 +1,5 @@
 import {
+  objectId,
   success,
   type Diagnostic,
   type ObjectId,
@@ -8,6 +9,9 @@ import {
 } from "@rosterforge/foundation";
 
 import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
+import { battleScribeReachableObjectsById } from "@rosterforge/data-graph";
+import { evaluateRosterBaseCosts, evaluateRosterCostsWithUnconditionalModifiers, evaluateRosterCostsWithSelectionConditions, type RosterCostReport, type RosterCostType } from "./costs.js";
+import { queryCostConstraint, type ScopedCostConstraintEvaluation } from "./cost-constraint-query.js";
 
 import {
   rosterSelectionAmount,
@@ -109,6 +113,7 @@ export interface RosterSelectionConstraintSource {
   readonly path: readonly string[];
   readonly node: {
     readonly attributes: Readonly<Record<string, string>>;
+    readonly children?: readonly { readonly kind: string }[];
   };
 }
 
@@ -141,6 +146,7 @@ export interface RosterSelectionConstraintReport<
   readonly modifierSequence?: NumericModifierSequenceReport<RosterSelectionConstraintModifier>;
   readonly constraintType?: RosterSelectionConstraintType;
   readonly scope?: EvaluationSelectionScope;
+  readonly costEvaluation?: ScopedCostConstraintEvaluation;
 }
 
 export interface RosterSelectionConstraintCollectionOptions {
@@ -166,6 +172,8 @@ export interface RosterSelectionConstraintsInRosterReport {
   readonly selections: readonly RosterSelectionConstraintsReport[];
 }
 
+/** Inspects every selected owner, sharing one lazily evaluated cost report for
+ * all self-cost constraints in this call rather than recalculating per bound. */
 export function inspectRosterSelectionConstraintsInRoster(
   roster: Roster,
   context: BattleScribeCatalogueContext,
@@ -174,13 +182,15 @@ export function inspectRosterSelectionConstraintsInRoster(
   const diagnostics: Diagnostic[] = [];
   const selections: RosterSelectionConstraintsReport[] = [];
   const inspectionScope = options.inspectionScope ?? "base";
+  const costReport = lazyCostReport(roster, context, inspectionScope);
 
   const visitSelection = (owner: RosterSelection): void => {
-    const inspected = inspectRosterSelectionConstraints(
+    const inspected = inspectSelectionConstraints(
       roster,
       context,
       owner,
       { inspectionScope },
+      costReport,
     );
     diagnostics.push(...inspected.diagnostics);
     if (inspected.ok) {
@@ -213,11 +223,23 @@ export function inspectRosterSelectionConstraintsInRoster(
   );
 }
 
+/** Inspects selection counts and resolved self-scoped cost-type bounds. */
 export function inspectRosterSelectionConstraints(
   roster: Roster,
   context: BattleScribeCatalogueContext,
   owner: RosterSelection,
   options: RosterSelectionConstraintCollectionOptions = {},
+): Result<RosterSelectionConstraintsReport> {
+  return inspectSelectionConstraints(roster, context, owner, options,
+    lazyCostReport(roster, context, options.inspectionScope ?? "base"));
+}
+
+function inspectSelectionConstraints(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  options: RosterSelectionConstraintCollectionOptions,
+  costReport: () => RosterCostReport | undefined,
 ): Result<RosterSelectionConstraintsReport> {
   const diagnostics: Diagnostic[] = [];
   const inspectionScope = options.inspectionScope ?? "base";
@@ -283,6 +305,7 @@ export function inspectRosterSelectionConstraints(
       owner,
       constraint,
       inspectionScope,
+      costReport,
     );
     diagnostics.push(...inspected.diagnostics);
     if (inspected.ok) {
@@ -311,6 +334,7 @@ export function inspectRosterSelectionConstraints(
   );
 }
 
+/** Reads a base selection-count or self-cost bound without applying modifiers. */
 export function inspectRosterSelectionConstraint<
   Constraint extends RosterSelectionConstraintSource,
 >(
@@ -328,6 +352,7 @@ export function inspectRosterSelectionConstraint<
   );
 }
 
+/** Reads a count or self-cost bound with only unconditional numeric modifiers. */
 export function inspectRosterSelectionConstraintWithUnconditionalModifiers<
   Constraint extends RosterSelectionConstraintSource,
 >(
@@ -345,6 +370,7 @@ export function inspectRosterSelectionConstraintWithUnconditionalModifiers<
   );
 }
 
+/** Reads a count or self-cost bound using supported live condition modifiers. */
 export function inspectRosterSelectionConstraintWithSelectionConditions<
   Constraint extends RosterSelectionConstraintSource,
 >(
@@ -368,6 +394,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   owner: RosterSelection,
   constraint: Constraint,
   inspectionScope: RosterSelectionConstraintInspectionScope,
+  sharedCostReport?: () => RosterCostReport | undefined,
 ): Result<RosterSelectionConstraintReport<Constraint>> {
   const diagnostics: Diagnostic[] = [];
   const catalogueMatches = rosterMatchesCatalogueContext(roster, context);
@@ -384,7 +411,17 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   const constraintType = supportedConstraintType(constraint.type);
   const scope = supportedScope(constraint.scope);
   const limit = finiteValue(constraint.value);
-  const attributes = unsupportedAttributes(constraint);
+  const attributes = [...unsupportedAttributes(constraint)];
+  const costType = selfConstraintCostType(context, constraint);
+  // Projection preserves malformed raw values; absence of a typed Boolean must
+  // not quietly turn an unknown cost traversal into a precise owner-only sum.
+  if (costType !== undefined) {
+    for (const key of ["shared", "percentValue", "includeChildSelections", "includeChildForces"]) {
+      const raw = constraint.node.attributes[key];
+      if (raw !== undefined && !["true", "false", "1", "0"].includes(raw)) attributes.push(key);
+    }
+    if (constraint.node.children?.some(child => child.kind === "element")) attributes.push("child elements");
+  }
 
   if (!catalogueMatches) {
     diagnostics.push(
@@ -410,6 +447,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     limit,
     attributes,
     diagnostics,
+    costType !== undefined,
   );
 
   const targetIds = ownerResolution.choices.flatMap((choice) => {
@@ -696,8 +734,29 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     (candidate) => candidate.status === "unresolved",
   ).length;
   const bounds = selectionAmountBounds(candidates);
-  const minimum = bounds.minimum;
-  const maximum = bounds.maximum;
+  const canInspectCost = catalogueMatches && ownerLocations.length === 1 &&
+    ownerResolution.status === "resolved" && costType?.id !== undefined &&
+    constraintType !== undefined && limit !== undefined &&
+    (limit >= 0 || isUnboundedConstraintValue(limit)) &&
+    constraint.percentValue !== true && attributes.length === 0;
+  const costReport = canInspectCost
+    ? (sharedCostReport ?? lazyCostReport(roster, context, inspectionScope))()
+    : undefined;
+  const costEvaluation = costReport !== undefined && costType?.id !== undefined
+    ? queryCostConstraint(costReport, new Set(evaluationSelectionScope(roster,
+      ownerLocations[0]!, "self", constraint.includeChildSelections === true, false)), costType.id, costType)
+    : undefined;
+  if (canInspectCost && costEvaluation?.exact !== true) {
+    diagnostics.push(constraintDiagnostic(constraint, "EVALUATION_CONSTRAINT_COST_UNRESOLVED",
+      "The selection's scoped cost could not be totaled exactly.", undefined, ["compatibility"],
+      { typeId: costType?.id, unresolvedSelections: costEvaluation?.unresolvedSelections,
+        unresolvedCosts: costEvaluation?.unresolvedCosts, modifiersWithoutBaseCost: costEvaluation?.modifiersWithoutBaseCost }));
+  }
+  // Uncertain numeric costs can be negative or modified either way; their
+  // retained subtotal is not a safe bound. Keep status and observed unresolved.
+  const minimum = costType === undefined ? bounds.minimum : costEvaluation?.exact === true ? costEvaluation.value : Number.NEGATIVE_INFINITY;
+  const maximum = costType === undefined ? bounds.maximum : costEvaluation?.exact === true ? costEvaluation.value : Number.POSITIVE_INFINITY;
+  const canObserve = canCollect || costEvaluation?.exact === true;
 
   if (unresolvedCount > 0) {
     diagnostics.push(
@@ -739,12 +798,12 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
 
   const baseStatus = baseIsUnbounded
     ? "satisfied"
-    : canCollect && constraintType !== undefined && limit !== undefined
+    : canObserve && constraintType !== undefined && limit !== undefined
       ? constraintStatus(constraintType, minimum, maximum, limit)
       : "unresolved";
   const effectiveStatus = effectiveIsUnbounded
     ? "satisfied"
-    : canCollect &&
+    : canObserve &&
     constraintType !== undefined &&
     effectiveLimit !== undefined &&
     effectiveLimit >= 0 &&
@@ -789,9 +848,31 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
       ...(modifierSequence === undefined ? {} : { modifierSequence }),
       ...(constraintType === undefined ? {} : { constraintType }),
       ...(scope === undefined ? {} : { scope }),
+      ...(costEvaluation === undefined ? {} : { costEvaluation }),
     },
     diagnostics,
   );
+}
+
+function selfConstraintCostType(context: BattleScribeCatalogueContext, constraint: RosterSelectionConstraintSource): RosterCostType | undefined {
+  if (constraint.scope !== "self" || constraint.field === undefined || constraint.field === "selections") return undefined;
+  const targets = battleScribeReachableObjectsById(context.graph, context.document, objectId(constraint.field));
+  return targets.length === 1 && targets[0]?.kind === "costType" ? targets[0].source as RosterCostType : undefined;
+}
+
+function lazyCostReport(roster: Roster, context: BattleScribeCatalogueContext, scope: RosterSelectionConstraintInspectionScope): () => RosterCostReport | undefined {
+  let evaluated = false;
+  let report: RosterCostReport | undefined;
+  return () => {
+    if (!evaluated) {
+      const result = scope === "base" ? evaluateRosterBaseCosts(roster, context)
+        : scope === "unconditionalModifiers" ? evaluateRosterCostsWithUnconditionalModifiers(roster, context)
+        : evaluateRosterCostsWithSelectionConditions(roster, context);
+      report = result.ok ? result.value : undefined;
+      evaluated = true;
+    }
+    return report;
+  };
 }
 
 function diagnoseOwner(
@@ -862,6 +943,7 @@ function diagnoseConstraintShape(
   limit: number | undefined,
   attributes: readonly string[],
   diagnostics: Diagnostic[],
+  supportedCostField: boolean,
 ): void {
   if (constraint.type === undefined) {
     diagnostics.push(shapeDiagnostic(constraint, "TYPE_MISSING", "type"));
@@ -870,7 +952,7 @@ function diagnoseConstraintShape(
   }
   if (constraint.field === undefined) {
     diagnostics.push(shapeDiagnostic(constraint, "FIELD_MISSING", "field"));
-  } else if (constraint.field !== "selections") {
+  } else if (constraint.field !== "selections" && !supportedCostField) {
     diagnostics.push(
       shapeDiagnostic(constraint, "FIELD_UNSUPPORTED", "field"),
     );

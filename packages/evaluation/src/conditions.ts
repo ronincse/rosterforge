@@ -15,6 +15,7 @@ import {
 } from "@rosterforge/data-graph";
 
 import {
+  rosterDefinitionKeyForSource,
   rosterSelectionAmount,
   type Roster,
   type RosterForce,
@@ -28,6 +29,7 @@ import {
   rosterForcesInScope,
   type EvaluationForceIdentityCandidate,
 } from "./force-context.js";
+import { isSupportedDirectAssociation } from "./association-shape.js";
 import {
   expectedCatalogueKey,
   evaluationSelectionIdentityCandidate,
@@ -36,6 +38,7 @@ import {
   indexEvaluationChoices,
   rosterMatchesCatalogueContext,
   rosterSelectionLocations,
+  resolveEvaluationSelection,
   type EffectiveCategoryIndex,
   type EvaluationSelectionChoice,
   type EvaluationSelectionIdentityCandidate,
@@ -100,6 +103,7 @@ export interface RosterSelectionConditionSource {
   readonly path: readonly string[];
   readonly node: {
     readonly attributes: Readonly<Record<string, string>>;
+    readonly children?: readonly { readonly kind: string }[];
   };
 }
 
@@ -247,6 +251,10 @@ export interface RosterConditionOptions {
   readonly prospectiveChild?: boolean;
 }
 
+/** Evaluates supported identity/count queries against this exact roster.
+ * Direct association counts use distinct stored counterparts (both endpoints),
+ * never tree descendants or model amounts. Unresolved edges remain diagnostic.
+ */
 export function evaluateRosterCondition<
   Condition extends RosterSelectionConditionSource,
 >(
@@ -314,6 +322,52 @@ export function evaluateRosterCondition<
   diagnoseIdSelectionScope(condition, idScope, diagnostics);
 
   const choices = indexEvaluationChoices(context);
+  if (condition.field === "associations" && diagnostics.length === 0) {
+    // Association queries inspect stored edges, not containment or model count.
+    // Keep this leaf independent of association eligibility: those filters may
+    // themselves contain conditions, so rechecking them here would recurse.
+    const locations = rosterSelectionLocations(roster);
+    const counterpartIds = new Set<string>();
+    let unresolved = resolveEvaluationSelection(owner as RosterSelection, choices, catalogueMatches).status !== "resolved";
+    for (const edge of roster.associations ?? []) {
+      if (edge.sourceId !== owner.id && edge.targetId !== owner.id) continue;
+      const sources = locations.filter(l => l.occurrence.id === edge.sourceId);
+      const targets = locations.filter(l => l.occurrence.id === edge.targetId);
+      const source = sources[0];
+      const target = targets[0];
+      if (sources.length !== 1 || targets.length !== 1 || !source || !target || source.force !== target.force || source === target) {
+        unresolved = true;
+        continue;
+      }
+      const definition = resolveEvaluationSelection(source.occurrence, choices, catalogueMatches);
+      const associations = definition.status === "resolved" ? definition.choices[0]!.associations.filter(a =>
+        rosterDefinitionKeyForSource(a.source.sourceId, a.path) === edge.definitionKey) : [];
+      // Only saved direct same-force group edges are currently representable.
+      // An unknown definition must not become a confident empty association.
+      const targetDefinition = resolveEvaluationSelection(target.occurrence, choices, catalogueMatches);
+      if (associations.length !== 1 || !isSupportedDirectAssociation(associations[0]!) || targetDefinition.status !== "resolved" || targetDefinition.choices[0]?.kind !== "selectionEntry" || targetDefinition.choices[0]?.type !== "unit") {
+        unresolved = true;
+        continue;
+      }
+      counterpartIds.add(edge.sourceId === owner.id ? edge.targetId : edge.sourceId);
+    }
+    const candidates = locations.filter(l => counterpartIds.has(l.occurrence.id)).map(l =>
+      evaluationSelectionIdentityCandidate(l.occurrence, choices, catalogueMatches, condition.childId, true, options.effectiveCategories));
+    const matching = candidates.filter(c => c.status === "match").map(c => c.occurrence);
+    unresolved ||= candidates.some(c => c.status === "unresolved");
+    if (unresolved) diagnostics.push(conditionDiagnostic(condition,
+      "EVALUATION_CONDITION_ASSOCIATIONS_UNRESOLVED",
+      "Some attached occurrences or association definitions could not be resolved.",
+      "field", ["resolution"], {}));
+    const minimum = matching.length;
+    const maximum = unresolved ? Number.POSITIVE_INFINITY : minimum;
+    return success({ roster, context, owner, condition, candidates, matching,
+      minimum, maximum, expected: expected!, comparison: comparison!, scope: scope!,
+      status: unresolved ? "unresolved" : comparisonStatus(comparison!, minimum, maximum, expected!),
+      completeness: unresolved ? "incomplete" : "complete",
+      ...(unresolved ? {} : { observed: minimum }),
+    }, diagnostics);
+  }
   const commonSelectionCountShape =
     comparison !== undefined &&
     condition.field === "selections" &&
@@ -434,8 +488,7 @@ export function evaluateRosterCondition<
     unsupportedAttributes(condition).length === 0;
   const canCollectForceIdentity =
     catalogueMatches &&
-    !forceOwner &&
-    selectionOwnerLocations.length === 1 &&
+    ownerLocationCount === 1 &&
     identityComparison !== undefined &&
     condition.field === "selections" &&
     scope === "force" &&
@@ -505,7 +558,7 @@ export function evaluateRosterCondition<
     : canCollectForceIdentity
       ? [
           evaluationForceIdentityCandidate(
-            selectionOwnerLocations[0]!.force,
+            forceOwner ? forceOwnerLocations[0]!.occurrence : selectionOwnerLocations[0]!.force,
             forces,
             catalogueMatches,
             condition.childId,
@@ -876,6 +929,7 @@ function diagnoseConditionShape(
   } else if (
     condition.field !== "selections" &&
     condition.field !== "forces" &&
+    condition.field !== "associations" &&
     costTypeFieldId === undefined
   ) {
     diagnostics.push(
@@ -898,6 +952,16 @@ function diagnoseConditionShape(
     (scope === "force" ||
       scope === "roster" ||
       (scope === "parent" && prospectiveChild));
+  const forceIdentityShape = condition.field === "selections" && scope === "force" && identityComparison !== undefined;
+  if (condition.field === "associations" &&
+      (forceOwner || scope !== "self" || comparison === undefined || condition.shared !== true ||
+       condition.includeChildSelections === true || condition.includeChildForces === true ||
+       condition.node.children?.some(child => child.kind === "element") ||
+       ["shared", "percentValue", "includeChildSelections", "includeChildForces"].some(key => condition.node.attributes[key] !== undefined && !["true", "false", "1", "0"].includes(condition.node.attributes[key]!)))) {
+    diagnostics.push(shapeDiagnostic(condition,
+      "EVALUATION_CONDITION_ASSOCIATION_SHAPE_UNSUPPORTED",
+      "Association counts require a selection owner, self scope, shared=true and no descendant traversal.", "field"));
+  }
   // Primary-catalogue identity is independent of the requesting occurrence.
   // Force-owned category-link modifiers use this exact shape in the pinned
   // 40K game system to exempt selected catalogues from a roster minimum.
@@ -908,6 +972,7 @@ function diagnoseConditionShape(
     forceOwner &&
     condition.field !== "forces" &&
     !supportedForceOwnerSelectionCount &&
+    !forceIdentityShape &&
     !catalogueIdentityShape
   ) {
     diagnostics.push(
@@ -972,7 +1037,7 @@ function diagnoseConditionShape(
   if (
     identityComparison !== undefined &&
     !catalogueIdentityShape &&
-    (forceOwner ||
+    ((forceOwner && !forceIdentityShape) ||
       (condition.field !== "selections" ||
         (scope !== "force" &&
           scope !== "self" &&
@@ -1467,7 +1532,7 @@ function unsupportedAttributes(
     "id",
   ]);
   return Object.keys(condition.node.attributes).filter(
-    (attribute) => !supported.has(attribute),
+    (attribute) => !supported.has(attribute) && !(condition.field === "associations" && attribute === "traverseAssociationGroup" && condition.node.attributes[attribute] === "false"),
   );
 }
 

@@ -36,6 +36,76 @@ import {
 } from "./selection-context.js";
 
 describe("roster selection constraints", () => {
+  it("counts self costs and optional descendants without including sibling occurrences", () => {
+    const context = catalogueContext();
+    const selected = choice(context, "cost-base");
+    let roster = addRootSelection(emptyRoster(context), selected, "self-owner", 2);
+    roster = addRootSelection(roster, selected, "sibling", 20);
+    const child = choice(context, "cost-child");
+    roster = successful(addRosterSelectionToSelection(roster, selectionOccurrenceId("self-owner"), {
+      id: selectionOccurrenceId("self-child"), definition: { kind: child.kind, key: projectionKey(child.occurrence), ...(child.id === undefined ? {} : { sourceId: child.id }) }, amount: 3,
+    }));
+    const owner = roster.forces[0]!.selections[0]!;
+    const source = { type: "max", field: "cost-points", scope: "self", value: 25, shared: true, source: selected.occurrence.source, path: selected.occurrence.path, node: { attributes: {} } };
+    const own = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, source));
+    expect(own).toMatchObject({ observed: 20, status: "satisfied", completeness: "complete", costEvaluation: { exact: true, value: 20 } });
+    const descendants = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, { ...source, includeChildSelections: true }));
+    expect(descendants).toMatchObject({ observed: 35, status: "violated", completeness: "complete" });
+    expect(descendants.costEvaluation?.selections.map(s => s.occurrence.id)).toEqual([owner.id, selectionOccurrenceId("self-child")]);
+    const minimum = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, { ...source, type: "min" }));
+    expect(minimum).toMatchObject({ observed: 20, status: "violated" });
+    const hiddenCurrency = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, { ...source, field: "cost-supply", value: 0 }));
+    expect(hiddenCurrency).toMatchObject({ observed: 0, status: "satisfied", completeness: "complete" });
+    for (const node of [
+      { attributes: { includeChildSelections: "future" } },
+      { attributes: { shared: "future" } },
+      { attributes: {}, children: [{ kind: "element" }] },
+    ]) {
+      const malformed = inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, { ...source, node });
+      expect(malformed.ok && malformed.value).toMatchObject({ status: "unresolved", completeness: "incomplete" });
+      expect(malformed.ok && malformed.value.observed).toBeUndefined();
+      expect(malformed.diagnostics.map(d => d.code)).toContain("EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED");
+    }
+  });
+
+  it.each(["cost-problems", "cost-no-base", "cost-duplicate", "cost-issues"])("withholds a self-cost observation for %s", id => {
+    const context = catalogueContext();
+    const selected = choice(context, id);
+    const roster = addRootSelection(emptyRoster(context), selected, "cost-owner");
+    const owner = roster.forces[0]!.selections[0]!;
+    const result = inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, {
+      type: "max", field: "cost-points", scope: "self", value: 100,
+      source: selected.occurrence.source, path: selected.occurrence.path, node: { attributes: {} },
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value).toMatchObject({ status: "unresolved", completeness: "incomplete", costEvaluation: { exact: false } });
+    expect(result.value.observed).toBeUndefined();
+    expect(result.diagnostics.some(d => d.code === "EVALUATION_CONSTRAINT_COST_UNRESOLVED")).toBe(true);
+  });
+
+  it("uses effective cost modifiers and rejects unknown fields, wider scopes and malformed amounts", () => {
+    const context = catalogueContext();
+    const selected = choice(context, "cost-modified");
+    const roster = addRootSelection(emptyRoster(context), selected, "cost-owner");
+    const owner = roster.forces[0]!.selections[0]!;
+    const source = { type: "max", field: "cost-points", scope: "self", value: 10, source: selected.occurrence.source, path: selected.occurrence.path, node: { attributes: {} } };
+    const result = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, source));
+    expect(result.costEvaluation?.exact).toBe(true);
+    expect(result.observed).toBe(result.costEvaluation?.value);
+    expect(result.observed).toBe(8);
+    for (const values of [{ field: "missing-cost" }, { scope: "force" }]) {
+      const invalid = successful(inspectRosterSelectionConstraintWithSelectionConditions(roster, context, owner, { ...source, ...values }));
+      expect(invalid.status).toBe("unresolved");
+      expect(invalid.completeness).toBe("incomplete");
+    }
+    const badOwner = { ...owner, amount: Number.NaN };
+    const invalidRoster = { ...roster, forces: [{ ...roster.forces[0]!, selections: [badOwner] }] };
+    const bad = successful(inspectRosterSelectionConstraintWithSelectionConditions(invalidRoster, context, badOwner, source));
+    expect(bad).toMatchObject({ status: "unresolved", completeness: "incomplete" });
+    expect(bad.observed).toBeUndefined();
+  });
+
   it("deduplicates rematerialized wrappers for the same projected occurrence", () => {
     const context = catalogueContext();
     const selected = choice(context, "entry-alpha");

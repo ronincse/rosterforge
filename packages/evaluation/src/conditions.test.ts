@@ -1811,6 +1811,13 @@ describe("roster selection conditions", () => {
     });
     expect(instance.diagnostics).toEqual([]);
     expect(notInstance.diagnostics).toEqual([]);
+    // A prospective root's visibility asks this same question from the force
+    // itself. Its identity must not depend on having a selected unit surrogate.
+    for (const query of [instanceOf, notInstanceOf]) {
+      const forceResult = evaluateRosterCondition(roster, context, roster.forces[0]!, query);
+      expect(forceResult.ok && forceResult.value).toMatchObject({ status: "satisfied", completeness: "complete" });
+      expect(forceResult.diagnostics).toEqual([]);
+    }
   });
 
   it("evaluates primary-catalogue identity without a roster-tree surrogate", () => {

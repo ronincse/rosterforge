@@ -29,6 +29,7 @@ import {
 
 import { effectiveRosterCategories } from "./effective-categories.js";
 import { evaluateRosterModifierApplicability } from "./modifier-applicability.js";
+import { evaluateRosterModifierGroupApplicability, collectRosterModifierGroupExecution } from "./modifier-groups.js";
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 import { evaluateNumericModifierSequence } from "./modifiers.js";
 import {
@@ -327,9 +328,9 @@ export function inspectEmptySingleForceRootChoices(
  * Static initialization cannot answer a conditional maximum because its
  * trigger may be a Battle Size or another configuration choice that does not
  * exist yet. The live catalogue and validation surfaces do have that context,
- * so they evaluate direct conditional modifiers here instead of continuing to
+ * so they evaluate direct and grouped conditional modifiers here instead of continuing to
  * advertise the source maximum or reporting the selected root as unresolved.
- * Unsupported conditions and grouped modifiers remain incomplete.
+ * Unsupported conditions, group behavior and repeats remain incomplete.
  */
 export function inspectSingleForceRootChoices(
   roster: Roster,
@@ -1042,7 +1043,12 @@ function selectionBounds(
   for (const constraint of constraints.filter(
     ({ type }) => type === "min",
   )) {
-    const unsupported = unsupportedBoundProperties(constraint);
+    // Static zero minima require no additions whether descendants are counted
+    // or not. Keep modifier uncertainty below, and never extend this exception
+    // to live checks, positive minima, other unknown properties or maxima.
+    const unsupported = unsupportedBoundProperties(constraint).filter(property =>
+      !(options.live === undefined && constraint.value === 0 && property === "includeChildSelections"),
+    );
     if (unsupported.length > 0) {
       supported = false;
       diagnoseUnsupportedBound(constraint, unsupported, state);
@@ -1391,6 +1397,32 @@ function effectiveRootBound(
   const modifierGroups = choice.modifierGroups.filter((group) =>
     modifierGroupTargetsField(group, constraintId),
   );
+  if (live !== undefined && modifierGroups.length > 0) {
+    // Live inspection has a real force/configuration, unlike static creation.
+    // Reuse inherited applicability and source order; flattening groups alone
+    // would apply Jakhals/Goremongers maxima outside their gated detachment.
+    const options = { effectiveCategories: live.effectiveCategories, prospectiveChild: true };
+    const direct = modifiers.map(modifier => evaluateRosterModifierApplicability(live.roster, live.context, live.force, modifier, options));
+    const groups = modifierGroups.map(group => evaluateRosterModifierGroupApplicability(live.roster, live.context, live.force, group, options));
+    for (const result of [...direct, ...groups]) state.diagnostics.push(...result.diagnostics);
+    if ([...direct, ...groups].some(result => !result.ok || result.value.completeness !== "complete")) {
+      markIncomplete(state);
+      return undefined;
+    }
+    const grouped = collectRosterModifierGroupExecution<(typeof modifiers)[number]>(groups.flatMap(result => result.ok ? [result.value] : []), constraintId);
+    const applicability = new Map(direct.flatMap(result => result.ok ? [[result.value.modifier, result.value] as const] : []));
+    const inherited = new Map(grouped.entries.map(entry => [entry.modifier, entry]));
+    const evaluated = evaluateNumericModifierSequence(baseValue, [...modifiers, ...grouped.modifiers], {
+      applicability: modifier => applicability.get(modifier)?.status ?? inherited.get(modifier)?.status,
+      conditionGroupsEvaluated: modifier => applicability.get(modifier)?.evaluated ?? inherited.get(modifier)?.evaluated ?? false,
+    });
+    state.diagnostics.push(...evaluated.diagnostics);
+    if (!evaluated.ok || evaluated.value.completeness !== "complete" || !Number.isSafeInteger(evaluated.value.value) || evaluated.value.value < 0) {
+      markIncomplete(state);
+      return undefined;
+    }
+    return evaluated.value.value;
+  }
   if (modifierGroups.length > 0) {
     markIncomplete(state);
     if (diagnoseUnsupported) {

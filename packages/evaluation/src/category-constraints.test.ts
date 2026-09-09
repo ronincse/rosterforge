@@ -108,6 +108,25 @@ describe("roster category constraints", () => {
       matching: [{ id: "category-selection" }],
     });
   });
+
+  it("evaluates direct category-definition modifiers without tainting unrelated bounds", () => {
+    const base = catalogueContext();
+    const category = base.categories.definitions.find(c => c.source.id === "category-unit")!;
+    const link = forceDefinition(base, "force-patrol-child").categoryLinks.find(c => c.source.constraints.length)!;
+    const template = link.source.constraints[0]!;
+    const modifier = { ...link.source.modifiers[0]!, type: "set", field: "owned-min", value: "0", conditions: [], conditionGroups: [] };
+    const owned = { ...category, source: { ...category.source, modifiers: [modifier], modifierGroups: [], constraints: [
+      { ...template, id: objectId("owned-min"), type: "min", value: 1, scope: "roster", field: "selections", shared: true, includeChildSelections: true, includeChildForces: false },
+      { ...template, id: objectId("owned-max"), type: "max", value: 1, scope: "roster", field: "selections", shared: true, includeChildSelections: true, includeChildForces: false },
+    ] } };
+    const context = { ...base, categories: { ...base.categories, definitions: base.categories.definitions.map(c => c === category ? owned : c) } };
+    const result = inspectRosterCategoryConstraintsInRoster(rosterWithChildForce(context), context);
+    if (!result.ok) throw new Error("Inspection failed");
+    expect(result.value.forces.flatMap(f => f.constraints).filter(c => c.categoryDefinition)).toMatchObject([
+      { status: "satisfied", limit: 0, completeness: "complete" },
+      { status: "satisfied", limit: 1, completeness: "complete" },
+    ]);
+  });
 });
 
 function catalogueContext(): BattleScribeCatalogueContext {

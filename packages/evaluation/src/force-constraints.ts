@@ -32,11 +32,10 @@ import {
 } from "./selection-context.js";
 import {
   evaluateRosterCostsWithSelectionConditions,
-  type RosterCostModifierGroup,
   type RosterCostType,
   type RosterSelectionConditionCostReport,
-  type RosterSelectionCostEvaluation,
 } from "./costs.js";
+import { queryCostConstraint, type ScopedCostConstraintEvaluation } from "./cost-constraint-query.js";
 import {
   isUnboundedConstraintValue,
   type RosterSelectionConstraintSource,
@@ -76,17 +75,7 @@ export type RosterForceConstraintModifierGroup =
   BattleScribeForceDefinition["source"]["modifierGroups"][number];
 export type RosterForceConstraintScope = "parent" | "force" | "roster";
 
-export interface RosterForceConstraintCostEvaluation {
-  readonly typeId: ObjectId;
-  readonly costType: RosterCostType;
-  readonly report: RosterSelectionConditionCostReport;
-  readonly selections: readonly RosterSelectionCostEvaluation[];
-  readonly value: number;
-  readonly exact: boolean;
-  readonly unresolvedSelections: number;
-  readonly unresolvedCosts: number;
-  readonly modifiersWithoutBaseCost: number;
-}
+export type RosterForceConstraintCostEvaluation = ScopedCostConstraintEvaluation<"selectionConditions">;
 
 export interface RosterForceConstraintReport<
   Constraint extends RosterForceConstraintSource =
@@ -1010,76 +999,7 @@ function evaluateForceConstraintCost(
       includeChildForces,
     ),
   );
-  const selections = report.selections.filter((selection) =>
-    occurrences.has(selection.occurrence),
-  );
-  let value = 0;
-  let unresolvedSelections = 0;
-  let unresolvedCosts = 0;
-  let modifiersWithoutBaseCost = 0;
-
-  for (const selection of selections) {
-    if (selection.status !== "resolved") {
-      unresolvedSelections += 1;
-    }
-    for (const cost of selection.costs) {
-      if (cost.status === "included" && cost.typeId === typeId) {
-        if (cost.modifierSequence.completeness === "complete") {
-          value += cost.totalValue;
-        } else {
-          unresolvedCosts += 1;
-        }
-      } else if (
-        cost.status === "excluded" &&
-        (cost.typeId === undefined || cost.typeId === typeId)
-      ) {
-        unresolvedCosts += 1;
-      }
-    }
-
-    const choice =
-      selection.status === "resolved" && selection.choices.length === 1
-        ? selection.choices[0]
-        : undefined;
-    if (
-      choice !== undefined &&
-      !choice.costs.some((cost) => cost.typeId === typeId)
-    ) {
-      modifiersWithoutBaseCost += choice.modifiers.filter(
-        (modifier) => modifier.field === typeId,
-      ).length;
-      modifiersWithoutBaseCost += choice.modifierGroups.filter((group) =>
-        modifierGroupTargetsCostType(group, typeId),
-      ).length;
-    }
-  }
-
-  return {
-    typeId,
-    costType,
-    report,
-    selections,
-    value,
-    exact:
-      unresolvedSelections === 0 &&
-      unresolvedCosts === 0 &&
-      modifiersWithoutBaseCost === 0,
-    unresolvedSelections,
-    unresolvedCosts,
-    modifiersWithoutBaseCost,
-  };
-}
-
-function modifierGroupTargetsCostType(
-  group: RosterCostModifierGroup,
-  typeId: ObjectId,
-): boolean {
-  return (
-    group.modifiers.some((modifier) => modifier.field === typeId) ||
-    group.modifierGroups.some((child) =>
-      modifierGroupTargetsCostType(child, typeId),
-    )
-  );
+  return queryCostConstraint(report, occurrences, typeId, costType);
 }
 
 function supportedConstraintType(

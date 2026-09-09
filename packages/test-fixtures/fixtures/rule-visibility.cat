@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Fictional rule applicability cases for projection, evaluation, and UI tests.
+     Transitive association traversal deliberately retains uncertainty.
      Link/definition conflicts are evidence cases, not a declaration of precedence. -->
 <catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema"
   id="rule-visibility" name="Rule Visibility" revision="1"
@@ -12,7 +13,7 @@
           <modifiers>
             <modifier type="set" field="hidden" value="true">
               <conditions>
-                <condition type="atLeast" field="associations" scope="self"
+                <condition type="atLeast" field="associations" traverseAssociationGroup="true" scope="self"
                   childId="any" value="1" shared="true" />
               </conditions>
             </modifier>
@@ -86,7 +87,7 @@
           <modifiers>
             <modifier type="set" field="hidden" value="true">
               <conditions>
-                <condition type="atLeast" field="associations" scope="self"
+                <condition type="atLeast" field="associations" traverseAssociationGroup="true" scope="self"
                   childId="any" value="1" shared="true" />
               </conditions>
             </modifier>

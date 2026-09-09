@@ -309,13 +309,16 @@ function inspectCategoryConstraint(
       : source.modifiers.filter(
           (modifier) => modifier.field === constraintId,
         );
-  const unsupportedModifiers = source.modifierGroups.length > 0 || (categoryDefinition !== undefined && source.modifiers.length > 0);
+  // Direct definition-owned modifiers use the same evaluator below as links.
+  // Only groups targeting this exact bound can make its numeric limit unknown.
+  const targetsBound = (group: (typeof source.modifierGroups)[number]): boolean => constraintId !== undefined && (group.modifiers.some(modifier => modifier.field === constraintId) || group.modifierGroups.some(targetsBound));
+  const unsupportedModifiers = source.modifierGroups.some(targetsBound);
   if (unsupportedModifiers) {
     diagnostics.push(
       categoryConstraintDiagnostic(
         constraint,
         "EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED",
-        "Grouped force-category modifiers and category-definition modifiers are preserved but not evaluated.",
+        "Groups targeting this category constraint are preserved but not evaluated.",
         { modifierGroups: source.modifierGroups.length, categoryDefinition: categoryDefinition !== undefined },
       ),
     );

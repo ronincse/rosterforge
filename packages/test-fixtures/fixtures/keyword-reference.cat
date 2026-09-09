@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Fictional stat-keyword popup cases, including uncertainty and false matches. -->
+<!-- Fictional stat-keyword popup cases, including uncertainty and false matches.
+     Transitive association traversal deliberately retains uncertainty. -->
 <catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema" id="keyword-reference" name="Keyword Reference" revision="1" battleScribeVersion="2.03" gameSystemId="system-203" gameSystemRevision="0" library="false">
   <selectionEntries><selectionEntry id="keyword-unit" name="Keyword Readers" type="unit">
     <profiles>
@@ -16,7 +17,7 @@
       <rule id="rapid" name="Rapid Fire"><description>Fictional rapid fire reference.</description></rule>
       <rule id="anti" name="Anti"><description>Fictional anti reference.</description></rule>
       <rule id="psychic" name="Psychic"><description>Must not match Psychic Assassin.</description></rule>
-      <rule id="uncertain" name="Uncertain"><description>Applicability is not confirmed.</description><modifiers><modifier type="set" field="hidden" value="true"><conditions><condition type="atLeast" field="associations" scope="self" childId="any" value="1" shared="true" /></conditions></modifier></modifiers></rule>
+      <rule id="uncertain" name="Uncertain"><description>Applicability is not confirmed.</description><modifiers><modifier type="set" field="hidden" value="true"><conditions><condition type="atLeast" field="associations" traverseAssociationGroup="true" scope="self" childId="any" value="1" shared="true" /></conditions></modifier></modifiers></rule>
       <rule id="hidden" name="Hidden" hidden="true"><description>Not applicable.</description></rule>
       <rule id="ambiguous-one" name="Ambiguous"><description>One possible definition.</description></rule>
       <rule id="ambiguous-two" name="Ambiguous"><description>Another possible definition.</description></rule>

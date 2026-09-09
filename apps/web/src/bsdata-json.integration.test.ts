@@ -4159,22 +4159,14 @@ describe.skipIf(realDataDirectory === undefined)(
               supported.value.constraints.selections.completeness,
             forces: supported.value.constraints.forces.completeness,
           }).toEqual({
-            structural: "incomplete",
+            structural: "complete",
             selections: "incomplete",
             forces: "complete",
           });
           expect(diagnosticCodeCounts(
             supported.value.structuralDiagnostics,
-          )).toEqual({
-            EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED: 1,
-            // Added when root bounds began respecting visibility. Exactly one
-            // root in this real catalogue carries a relevant bound whose
-            // visibility cannot be decided, so whether that bound applies is
-            // unknown and the status says so instead of reporting it as
-            // checked. The bound itself is still reported; only the claim of
-            // completeness changed.
-            EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED: 1,
-          });
+          // Live force identity and grouped root limits are now evaluated.
+          )).toEqual({});
           expect(
             supported.value.structural.bounds
               .filter(({ completeness }) => completeness === "incomplete")
@@ -4195,16 +4187,15 @@ describe.skipIf(realDataDirectory === undefined)(
           // rather than being guessed at.
           )).toEqual({
             EVALUATION_CONDITION_ATTRIBUTES_UNSUPPORTED: 3,
-            EVALUATION_CONDITION_FIELD_UNSUPPORTED: 3,
             EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED: 5,
-            EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED: 8,
+            EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED: 5,
             EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED: 1,
           });
           expect(
             supported.value.constraints.selections.selections.flatMap(
               ({ owner, constraints: reports }) =>
                 reports
-                  .filter(({ completeness }) => completeness === "incomplete")
+                  .filter(({ completeness }) => completeness === "complete")
                   .map(({ constraint }) => ({
                     owner: owner.name,
                     field: constraint.field,
@@ -4212,9 +4203,8 @@ describe.skipIf(realDataDirectory === undefined)(
                     type: constraint.type,
                   })),
             ),
-          // Contains rather than equals: the 2026-08-23 revision added more
-          // incomplete constraints on this unit, none of which change what these
-          // three pin.
+          // The three formerly unsupported self-cost bounds now resolve;
+          // other unsupported imported shapes still keep aggregate uncertainty.
           ).toEqual(
             expect.arrayContaining([
             {
@@ -4237,22 +4227,16 @@ describe.skipIf(realDataDirectory === undefined)(
             },
             ]),
           );
-          expect(supported.value.structuralDiagnostics).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                code:
-                  "EVALUATION_STRUCTURAL_STATUS_INACTIVE_ROOTS_UNSUPPORTED",
-              }),
-            ]),
-          );
+          expect(supported.value.structuralDiagnostics).toEqual([]);
           // The force definition's category-link minimum is the roster-wide
           // Character requirement. This configured Guardian roster has no
-          // Character, so the new fourth validation family must keep it
+          // Character or Warlord, so the category checks must keep it
           // visibly invalid even though every selected unit is structurally
           // well formed.
           expect(supported.value.status.validity).toBe("invalid");
           expect(supported.value.status.completeness).toBe("incomplete");
-          expect(supported.value.status.statusCounts.violated).toBe(1);
+          expect(supported.value.status.statusCounts.violated).toBe(2);
+          expect(supported.value.status.findings.flatMap(f => f.kind === "categoryConstraint" && f.status === "violated" ? [f.report.categoryName] : [])).toEqual(expect.arrayContaining(["Character", "Warlord"]));
           expect(
             supported.value.status.findings.find(
               ({ kind }) => kind === "categoryConstraint",

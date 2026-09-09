@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Fictional selected-reference grouping evidence. No third-party rules. -->
+<!-- Fictional selected-reference grouping evidence. No third-party rules.
+     Transitive association traversal deliberately retains uncertainty. -->
 <catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema" id="reference" name="Reference Test" revision="1" battleScribeVersion="2.03" gameSystemId="system-203" gameSystemRevision="0" library="false">
   <selectionEntries>
     <selectionEntry id="reference-squad" name="Reference Squad" type="unit">
@@ -16,7 +17,7 @@
           <rules>
             <rule id="plain" name="Plain rule"><description>Shared static fictional text.</description></rule>
             <rule id="hidden" name="Hidden rule" hidden="true"><description>Hidden text.</description></rule>
-            <rule id="uncertain-rule" name="Uncertain rule"><description>Unproven applicability stays visible.</description><modifiers><modifier type="set" field="hidden" value="true"><conditions><condition type="atLeast" field="associations" scope="self" childId="any" value="1" shared="true" /></conditions></modifier></modifiers></rule>
+            <rule id="uncertain-rule" name="Uncertain rule"><description>Unproven applicability stays visible.</description><modifiers><modifier type="set" field="hidden" value="true"><conditions><condition type="atLeast" field="associations" traverseAssociationGroup="true" scope="self" childId="any" value="1" shared="true" /></conditions></modifier></modifiers></rule>
           </rules>
           <selectionEntries>
             <selectionEntry id="reference-weapon" name="Reference weapon" type="upgrade"><profiles><profile id="weapon" name="Reference weapon" typeId="reference-weapon-type" typeName="Ranged Weapons"><characteristics><characteristic name="A" typeId="reference-attacks">2</characteristic></characteristics></profile></profiles></selectionEntry>
