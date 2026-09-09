@@ -1222,6 +1222,13 @@ unrelated cost diagnostics are not duplicated onto every force constraint. The
 generic `message` attribute is retained as non-behavioral metadata and does not
 produce an unsupported-attribute diagnostic.
 
+An unresolved cost observation does not itself make the effective limit unknown:
+`limitCompleteness` retains that separate evaluation result. A complete finite
+maximum may be displayed with an explicitly provisional total, without remaining
+arithmetic. This does not suppress `EVALUATION_FORCE_CONSTRAINT_COST_UNRESOLVED`
+or its underlying modifier/applicability diagnostics, nor change aggregate
+completeness/status. An incomplete limit stays out of capacity summaries.
+
 Ordered force-constraint collections can additionally emit unlocated context
 or roster diagnostics before child diagnostics:
 

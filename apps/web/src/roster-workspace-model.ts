@@ -45,6 +45,8 @@ export interface RosterWorkspaceCost {
   readonly value: number;
   /** Complete, finite maximum evaluated for this exact cost type. */
   readonly limit?: number;
+  /** The displayed total is provisional even though its capacity is known. */
+  readonly provisional?: true;
 }
 
 export type RosterWorkspaceCostSummary =
@@ -333,7 +335,10 @@ function workspaceCostSummary(
   const totals: RosterWorkspaceCost[] = result.value.totals.map((total) => {
     const cost = workspaceCost(total);
     const limited = limits.get(cost.typeId);
-    return limited === undefined ? cost : { ...cost, limit: limited.limit };
+    return limited === undefined ? cost : {
+      ...cost, limit: limited.limit,
+      ...(limited.provisional === true ? { provisional: true as const } : {}),
+    };
   });
   const projectedTypes = new Set(totals.map(({ typeId }) => typeId));
   for (const limited of limits.values()) {
@@ -412,8 +417,8 @@ function workspaceCostTypeOrder(
  *
  * Force constraints are the authoritative points-limit source. Names such as
  * `pts` are catalogue presentation and cannot safely identify matched-play
- * points. Incomplete, unbounded, and non-cost constraints remain in Checks and
- * are deliberately not promoted into a confident player-facing maximum.
+ * points. Unknown/unbounded limits remain in Checks. A known cap can coexist
+ * with provisional spending; that marker forbids confident remaining arithmetic.
  */
 function workspaceCostLimits(
   validation: Result<LocalRosterSupportedValidationInspection>,
@@ -430,8 +435,8 @@ function workspaceCostLimits(
       const limit = constraint.limit;
       if (
         constraint.constraintType !== "max" ||
-        constraint.completeness !== "complete" ||
-        evaluation?.exact !== true ||
+        constraint.limitCompleteness !== "complete" ||
+        evaluation === undefined ||
         limit === undefined ||
         !Number.isFinite(limit) ||
         limit < 0
@@ -445,6 +450,7 @@ function workspaceCostLimits(
           name: evaluation.costType.name ?? evaluation.typeId,
           value: evaluation.value,
           limit,
+          ...(evaluation.exact ? {} : { provisional: true as const }),
         });
       }
     }

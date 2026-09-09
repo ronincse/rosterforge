@@ -169,6 +169,7 @@ describe("roster force constraints", () => {
       inspectionScope: "unconditionalModifiers",
       baseLimit: 1,
       limit: 1,
+      limitCompleteness: "incomplete",
       baseStatus: "violated",
       status: "unresolved",
       completeness: "incomplete",
@@ -420,6 +421,8 @@ describe("roster force constraints", () => {
       baseStatus: "unresolved",
       status: "unresolved",
       completeness: "incomplete",
+      limit: 4,
+      limitCompleteness: "complete",
       minimum: 0,
       maximum: Number.POSITIVE_INFINITY,
       costEvaluation: {

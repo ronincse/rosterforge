@@ -714,6 +714,22 @@ and the manual override not to be. A pinned test builds that roster and confirms
 the effective limit moves from 0 to 1000, which is what New Recruit displays as
 "150 / 1000 pts".
 
+A known points capacity remains visible when spending is incomplete. Force
+constraint `limitCompleteness` describes the bound independently of cost
+observation; aggregate validation remains incomplete/unresolved. The UI labels
+the total provisional and withholds remaining/over-limit arithmetic, rather than
+discarding the capacity or presenting uncertain spending as exact. Genuinely
+incomplete limits remain withheld, including after a previously known limit.
+
+At pin `04c62fcd041b3808c39d5c46fd677c704027b979`, Dark Angels with Strike Force,
+Gladius Task Force and Priority Assets keeps its exact 2,000-point cap when an
+Impulsor is added. Impulsor `bfb1-7512-e1a3-9fa2` in Space Marines has a points
+increment of 10 guarded by `localConditionGroups`, whose applicability remains
+unsupported. Its displayed base 70 is provisional, not an exact price or a
+guaranteed lower bound. Both local-group and unresolved-applicability diagnostics
+remain. The focused pinned test also checks Incursion, removal and the separate
+Detachment Points budget; this is not expanded local-condition-group support.
+
 The manual `Override points limit?` path is also complete at the evaluation
 boundary. Of the corpus's 2,826 repeats, exactly one is the Army Roster
 constraint modifier: `increment max pts 1`, repeated once for every one

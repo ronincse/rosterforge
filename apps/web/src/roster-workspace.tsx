@@ -667,6 +667,8 @@ export function RosterOverview({
                   ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
                       limitBearingCost.value,
                     )} ${limitBearingCost.name} used`
+                : limitBearingCost.provisional
+                  ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(limitBearingCost.value)} ${limitBearingCost.name} provisional total, ${formatNumber(limitBearingCost.limit)} limit`
               : `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
                   limitBearingCost.value,
                 )} of ${formatNumber(limitBearingCost.limit)} ${limitBearingCost.name} used`
@@ -701,7 +703,9 @@ export function RosterOverview({
                   {formatNumber(limitBearingCost.limit)}
                 </strong>
                 <small>
-                  {limitBearingCost.value > limitBearingCost.limit
+                  {limitBearingCost.provisional
+                    ? "Provisional total"
+                    : limitBearingCost.value > limitBearingCost.limit
                     ? `${formatNumber(
                         limitBearingCost.value - limitBearingCost.limit,
                       )} over limit`
@@ -1662,7 +1666,9 @@ function RosterReportDetails({
                 </strong>
                 <span>
                   {total.name}
-                  {total.limit === undefined ? "" : " used"}
+                  {total.provisional
+                    ? " · provisional total"
+                    : total.limit === undefined ? "" : " used"}
                 </span>
               </li>
             ))}
@@ -2440,6 +2446,7 @@ function RosterConfigurationSection({
               <strong key={cost.typeId}>
                 {formatNumber(cost.value)} / {formatNumber(cost.limit)}{" "}
                 {cost.name}
+                {cost.provisional ? " · provisional total" : ""}
               </strong>
             ))}
             {containsAttention && (

@@ -2239,6 +2239,15 @@ Otherwise the force constraint remains unresolved and exposes no observed
 value. Diagnostics from unrelated cost types stay on the shared cost report
 rather than being copied into each force constraint.
 
+`limitCompleteness` separates certainty of the effective bound from certainty of
+the observed cost/count. It captures resolved owner/constraint identity, supported
+shape, and complete limit-modifier evaluation before collecting observations;
+it does not relax aggregate completeness or status. The workspace may show a
+finite complete maximum beside a provisional cost total, explicitly labelled in
+the headline, Configuration and secondary limits. It withholds remaining/over-limit
+arithmetic for that total. An incomplete bound is never promoted or recovered
+from earlier roster state, even if its numeric sequence retains a provisional value.
+
 Direct and recursively nested grouped modifiers on the owner definition are
 checked for a `field` equal to the constraint ID. The exact modifier objects
 remain attached and the unmodified result is available as `baseStatus`. Base

@@ -113,6 +113,11 @@ export interface RosterForceConstraintReport<
   readonly maximum: number;
   readonly observed?: number;
   readonly baseLimit?: number;
+  /** Completeness of the effective bound, independent of observed cost/count.
+   * A numeric limit may survive unresolved modifiers as a provisional value;
+   * only this dimension permits callers to present it as a known capacity.
+   */
+  readonly limitCompleteness: ValidationCompleteness;
   readonly limit?: number;
   readonly modifierSequence?: NumericModifierSequenceReport<RosterForceConstraintModifier>;
   readonly costEvaluation?: RosterForceConstraintCostEvaluation;
@@ -600,6 +605,16 @@ function inspectForceConstraint<
     }
   }
 
+  // Snapshot only identity, shape and limit-modifier evidence. Observing the
+  // roster below can be incomplete while the bound itself is fully known (the
+  // pinned Impulsor's provisional cost must not erase a known Battle Size cap).
+  // Keep the aggregate diagnostics/status unchanged; this is not legality.
+  const limitCompleteness =
+    diagnostics.length === 0 &&
+    (inspectionScope === "base" || modifierSequence?.completeness === "complete")
+      ? "complete"
+      : "incomplete";
+
   const canCollectForces =
     catalogueMatches &&
     locations.length === 1 &&
@@ -780,6 +795,7 @@ function inspectForceConstraint<
       maximum,
       ...(canCollect && minimum === maximum ? { observed: minimum } : {}),
       ...(limit === undefined ? {} : { baseLimit: limit }),
+      limitCompleteness,
       ...(effectiveLimit === undefined ? {} : { limit: effectiveLimit }),
       ...(modifierSequence === undefined ? {} : { modifierSequence }),
       ...(costEvaluation === undefined ? {} : { costEvaluation }),
