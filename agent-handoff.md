@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (rich text and nested references complete; stopped)
+## Current Status — 2026-09-09 (leader assignments and Warlord checks complete; publication pending)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -73,8 +73,15 @@ checks passed; see `docs/qa/rich-text-references.md`. The owner explicitly appro
 publication after the approval-system pause. Implementation/handoff were pushed
 through `b6e63d7`; exact-commit CI `34397690799` passed every gate (verify job
 60 seconds). This documentation-only confirmation follows on the same branch.
-No later engine phase was started.
-Stop pending owner direction; no later engine or broader UI phase was started.
+The owner's next bounded request is implemented in `27ba843` / `a4803fb`:
+source-authored, separately saved leader assignments and category-owned roster
+selection bounds. Slaughterbound can select an added Eightbound; Angron plus a
+second Warlord now produces the 2/1 error and attention on both units. All local
+gates pass: 640 tests passed / 24 skipped; both pinned integration tests pass.
+Desktop and 390×844 UI checks include save/reopen, detach/undo and visible Review
+navigation. Incoming leader limits and attached-unit effects remain explicitly
+incomplete. See `docs/qa/leadership.md`. Publication/CI pending below.
+Stop after this bounded checkpoint; no broader association engine phase was started.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -778,6 +785,9 @@ QA before classifying or implementing the discrepancy.
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
 | False diagnostics after pinned catalogue selection and creation | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`; all 36 catalogues also create with exact-empty initialization diagnostics. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; finite link overlays no longer look cyclic; and an unused modified maximum on a pending manual group no longer claims an automatic quantity was withheld. Missing unnamed costs, unproved selectors, true same-scope duplicates, definition recursion, modified minima, and maxima that can constrain defaults or planned children remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console; live Aeldari creation also has no warning cards or console issues |
 | Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
+| Source-authored leader assignments and mandatory Warlord conflicts | Done, bounded | `27ba843` / `a4803fb`: direct same-force optional single-unit filters, exact occurrence assignments, save/reopen and undo, endpoint cleanup, independent duplicates; category-definition roster selection bounds now detect missing/multiple Warlords including Angron plus Slaughterbound. No name/ID hardcoding. Desktop/390×844 and pinned integration verified |
+| Remaining association compatibility | Open; separate owner-authorized checkpoint | Incoming leader capacity/category classification, association-dependent effects and conditions, required/multi-target associations, shared-link choice expansion, print relationship presentation and revalidation diagnostics beyond the visible stale-assignment notice. Whole raw corpus has 449 definitions, five links, 494 association constraints, 341 association conditions and 91 association-traversing affects values. Saved assignments explicitly keep aggregate validation incomplete; do not infer Leading category membership from prose/name |
+| Other category-definition bounds | Open | This repair covers roster selection counts only. Audit category-owned force/cost bounds and definition modifiers separately; recognizing a constraint shape does not prove all owner locations are inspected |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -4121,6 +4131,11 @@ and one `associations` field.
 No open questions block work.
 
 ## Completed Assignment — Identity Scopes, 2026-08-21
+
+> Coverage correction, 2026-09-09: the "one associations constraint" statement
+> below is not current whole-corpus coverage. A full raw-tree scan at the current
+> pin finds 494 such constraints. See the leader assignments checkpoint and QA
+> record; retain this entry as historical shape-inspection evidence only.
 
 Baseline `1233fa7`; resulting implementation commit `39fdc50`.
 
@@ -14042,3 +14057,80 @@ push, resolving that boundary. Published through
 exact commit (verify job 60 seconds). Branch was synchronized and user preview
 5199 returned HTTP 200. This documentation-only confirmation follows the tested
 checkpoint; no later roadmap work was started.
+
+## Completed Assignment — 2026-09-09: Leader assignments and mandatory Warlord errors
+
+**State and commits.** Clean, synchronized baseline
+`9b7354787f58b50f157b0d461c24674e7e53abc2` on `codex/list-builder-ui-overhaul`.
+Projection worker commit `75d5f2ce91b574937e805e4e2721cfebd575b780` was reviewed and
+integrated as `27ba843`; lead implementation/tests/docs are `a4803fb`. This separate
+handoff finishes only the owner's two reported refinements. No main merge, PR,
+branch switch, unrelated edits or third-party data publication.
+
+**Decision.** Use structured association filters to select exact existing unit
+occurrences, not Leader prose/name matching or tree reparenting. The source,
+target and definition key form a separately persisted edge. Existing undo/autosave
+flows carry it; endpoint deletion prunes edges, and copied units start unattached.
+Draft decoding validates identities, uniqueness and a 1,000-edge limit per snapshot.
+The measured direct same-force min-zero/max-one unit-target shape supports nested
+AND/OR and queryFromSelf leaves; unknown/malformed shapes stay unavailable.
+
+Incoming Leader-category classification is not settled by the available source:
+Eightbound's incoming max-one constraint targets the Leader category, but
+Slaughterbound has no direct membership. Do not silently infer that its Leading
+display name establishes membership. Incoming limits, attached effects,
+association-field conditions, shared-link expansion and broader parity remain
+separate roadmap work. The options notice and aggregate incompleteness make this
+boundary visible even after an assignment is saved.
+
+The Warlord defect was a missing owner location: category-definition roster
+constraints were not inspected, although the role UI already read them. The fix
+counts effective membership once per roster, including nested required upgrades,
+honors child-force inclusion and retains real category provenance. It detects
+missing or duplicate roles without hardcoded names/IDs, auto-transferring the role,
+or blocking an otherwise editable invalid list. Both conflict units get attention;
+Review points to an existing owning row, not the hidden designation upgrade.
+
+**Corpus and validation.** Pin reverified:
+`04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON documents. Full raw-tree scan:
+448 direct associations/31 documents plus one shared definition, five links,
+398 action-group definitions, 349 named Leading, 494 association-field constraints,
+341 association-field conditions and 91 association-traversing affects values.
+This supersedes using the historical one-constraint shape count as whole-corpus
+coverage; the old identity-scopes entry and compatibility section are annotated.
+Source IDs, pinned primary documentation and unresolved semantics are recorded in
+`docs/qa/leadership.md`.
+
+All gates pass: lint, typecheck, test, build, diff check. Normal suite: 640 passed /
+24 skipped (664), 71 passed / five skipped files (76). Both optional pinned
+unit-reference integration tests pass, including real Angron + Slaughterbound
+Warlords and Slaughterbound → Eightbound assignment/copy/removal. Existing build
+advisory only: JS 790.38 kB / 218.39 kB gzip exceeds the 500 kB threshold.
+Synthetic tests cover projection, malformed/unknown filter guards, source-owner
+switching, unit-vs-model exclusion, persistence rejection/roundtrip, immutable
+edges, counts, child-force exclusion, player errors, live Review targets and undo.
+
+**Review/browser.** Native `leadership_semantics` used isolated worktree
+`C:/CodexACLTest/rf-leadership-review-20260909`, first for investigation, then a
+bounded six-file projection lane, then candidate review. The lead reviewed the
+actual diff, integrated it and ran all gates. Review findings on model candidates,
+unknown shapes/children, empty groups and malformed booleans were fixed with
+synthetic regressions. External semantic review was considered; Claude's recorded
+exhausted quota and the same-day failed Antigravity auth/log access were not retried.
+No external review is claimed; unsupported semantic conclusions stay deferred.
+
+Isolated browser origin 5207 loaded the pinned World Eaters closure through the
+app, added Angron/Slaughterbound/Eightbound, and confirmed the visible 2/1 Warlord
+error. Assignments survived save → setup → reopen; detach and Undo restored the
+same target. Desktop/390×844 controls use the shared glass/radius tokens and
+44-pixel buttons, with no horizontal overflow in the 271-pixel mobile attachment
+section. No browser warnings/errors. Review-target navigation was corrected and
+rechecked against a mounted unit row. Viewport reset. Screenshots remain outside
+repo under `C:/CodexACLTest/rf-leadership-*.png`. This is Chromium viewport QA, not
+physical iPhone/Safari or fresh interactive New Recruit execution.
+
+**Publication/stop.** Code and this handoff are ready for the authorized push and
+exact-SHA CI confirmation. User preview 5199 and its saved rosters are preserved;
+User preview 5199 returned HTTP 200. Temporary QA5207 (PID 56516) was stopped
+after verifying its exact Vite command and port. Review worktree is retained.
+No further phase should start without owner direction.
