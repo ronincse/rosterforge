@@ -688,6 +688,11 @@
 
 ## Constraint Coverage At The Pinned Commit
 
+> Historical shape-only measurement, not current whole-corpus coverage. The
+> 2026-09-09 full raw-tree scan at `04c62fcd041b3808c39d5c46fd677c704027b979`
+> finds 494 association-field constraints, not one. See the leadership boundary
+> below. Recognizing a shape does not prove every owner location is inspected.
+
 The pinned corpus holds **26,259 constraints**. Measured against the shapes the
 evaluator accepts, **25,932 (98.8%) already fit**:
 
@@ -1840,3 +1845,33 @@ rather than downloading a moving schema URL during tests.
 
 Third-party data is not committed. Normal tests use project-owned fictional
 fixtures.
+
+## Leader Assignments And Category-Owned Roster Limits — 2026-09-09
+
+Direct association definitions now expose independently stored occurrence targets
+for the measured `action=group`, `scope=force`, `childId=unit`, min-zero/max-one,
+include-child-selections shape. Supported source filters use effective categories,
+AND/OR and per-leaf `queryFromSelf`. Unit models are not mistaken for unit targets.
+Unknown attributes/children, malformed flags, unsupported filters and empty explicit
+groups do not grant eligibility. Filters have depth-32 / 4,096-node per-target
+budgets. Shared association links are indexed and preserved, but not expanded into
+selectable assignments. See [leadership QA](qa/leadership.md).
+
+Assignments retain exact occurrence identity through save/reopen and undo/redo;
+removing an endpoint clears its edges, not the other unit. Duplicating a unit
+copies its configured selection subtree but does not duplicate roster-level
+attachments. Stale assignments remain visible and detachable, not rebound by name.
+
+Incoming association count limits, required/multi-target associations, association
+effects and association-field condition execution remain unsupported. Assignment
+does not imply attached buffs or full legality; a visible notice and aggregate
+incompleteness retain this distinction. In particular, incoming Leader-category
+classification for Eightbound is not inferred from the display name "Leading".
+
+Category-owned min/max roster selection bounds now count effective membership
+once across the roster, respecting child-force inclusion. Supported bounds require
+shared counts, child selections, finite nonnegative limits, unambiguous categories,
+and no unsupported source modifiers/shapes. This repairs missing and duplicate
+Warlord checks, including an automatically required Warlord on Angron. Other
+category-owned force/cost bounds and category-definition modifiers are not newly
+supported by this repair.

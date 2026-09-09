@@ -89,6 +89,14 @@ export interface Roster {
   readonly name: string;
   readonly catalogue: RosterCatalogueReference;
   readonly forces: readonly RosterForce[];
+  readonly associations?: readonly RosterAssociation[];
+}
+
+/** An occurrence-to-occurrence assignment, never a reparented or copied unit. */
+export interface RosterAssociation {
+  readonly sourceId: SelectionOccurrenceId;
+  readonly targetId: SelectionOccurrenceId;
+  readonly definitionKey: RosterDefinitionKey;
 }
 
 export interface RosterForce {

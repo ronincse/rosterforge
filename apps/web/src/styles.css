@@ -3969,6 +3969,33 @@ h1 {
 .reference-prose-link { display: inline; padding: 0; border: 0; border-radius: var(--corner-radius); background: transparent; box-shadow: none; color: var(--forest); font: inherit; text-align: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .reference-prose-link:hover { background: var(--forest-light); }
 .reference-source-note { font-size: 0.8rem; }
+.association-options { display: grid; gap: 12px; margin-top: 16px; }
+.association-options fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  background: var(--nested-card-material);
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--nested-card-shadow);
+  backdrop-filter: blur(18px);
+}
+.association-options legend { color: var(--forest); font-weight: 800; }
+.association-options button {
+  max-width: 100%;
+  min-height: 44px;
+  margin: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--forest-light);
+  border-radius: var(--corner-radius);
+  background: var(--paper);
+  color: var(--forest);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.association-options button:disabled { opacity: 0.6; cursor: not-allowed; }
+.association-options button[aria-pressed="true"] { background: var(--forest); color: var(--paper); }
 .reference-text-table { max-width: 100%; overflow: auto; border-radius: var(--corner-radius); }
 .reference-text-table th, .reference-text-table td { padding: 8px; white-space: normal; }
 

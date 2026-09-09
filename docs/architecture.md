@@ -2424,3 +2424,27 @@ Rendering caps text at 32,768 characters, 512 lines, 4,096 markup tokens and 256
 links, with 160-character reference names and eight list levels. Oversized text
 remains readable as plain text. See `docs/qa/rich-text-references.md` for source
 evidence, browser checks and deliberately unsupported formatting/reference kinds.
+
+### Occurrence attachments and category-owned roster bounds
+
+Association definitions, filters, shared definitions and links are additive source
+projections carried through `data-graph`; original nodes/bytes remain unchanged.
+`evaluation/associations.ts` inspects the measured direct, same-force, optional
+single-unit target shape using effective categories and three-valued conditions.
+`queryFromSelf` changes only the filter leaf's owner. Unknown shapes remain
+unavailable; no association condition/effect routing is implied by eligibility.
+
+`roster-model` stores optional association edges as source occurrence ID, target
+occurrence ID and opaque definition key. Units remain separate tree occurrences;
+costs, amounts and selected equipment are never merged or copied by attaching.
+Commands retain immutable identity, clear dangling edges on removal, and leave
+duplicates unattached. The optional version-1 draft field validates endpoints,
+unique source/definition pairs, string budgets and a 1,000-edge cap per snapshot.
+It stores no source bytes. Existing session history/autosave carries the edges.
+
+The web options card rechecks source eligibility before committing an assignment
+and permits clearing stale assignments. Saved attachments explicitly keep aggregate
+validation incomplete: incoming limits and attached-unit effects are not evaluated.
+Category-definition roster selection constraints are inspected once per roster,
+separately from force-category links. Exact effective category membership supplies
+the count and attention targets; no Warlord names or faction IDs are hardcoded.

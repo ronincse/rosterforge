@@ -1,7 +1,8 @@
 /**
- * Evaluates force-category bounds against effective roster membership.
+ * Evaluates force-category links and roster-scoped category-definition counts
+ * against effective membership, including nested designation upgrades.
  *
- * These bounds live on a force definition's category links, rather than on a
+ * Force bounds live on a force definition's category links, rather than on a
  * selectable entry. The pinned 40K corpus uses them for the roster-wide
  * Character minimum, including a primary-catalogue exemption modifier. Keeping
  * this as its own report family avoids pretending the rule belongs to an
@@ -11,6 +12,7 @@
 
 import type {
   BattleScribeCatalogueContext,
+  BattleScribeCategoryDefinition,
   BattleScribeForceCategoryLink,
   BattleScribeForceDefinition,
 } from "@rosterforge/data-graph";
@@ -65,7 +67,8 @@ export interface RosterCategoryConstraintReport {
   readonly context: BattleScribeCatalogueContext;
   readonly owner: RosterForce;
   readonly definition: BattleScribeForceDefinition;
-  readonly categoryLink: BattleScribeForceCategoryLink;
+  readonly categoryLink?: BattleScribeForceCategoryLink;
+  readonly categoryDefinition?: BattleScribeCategoryDefinition;
   readonly constraint: RosterCategoryConstraintSource;
   readonly ownerResolution: EvaluationForceResolution;
   readonly categoryId?: ObjectId;
@@ -108,8 +111,9 @@ export interface RosterCategoryConstraintsInRosterReport {
  * Collects category-link bounds for every force occurrence in a roster.
  *
  * The implementation deliberately supports only the measured corpus shape:
- * finite min/max selection bounds at roster scope with child selections and
- * forces included. Any wider BattleScribe shape remains visible as incomplete
+ * finite min/max selection bounds at roster scope with child selections.
+ * Force links require child forces; category definitions honor that flag.
+ * Any wider BattleScribe shape remains visible as incomplete
  * validation rather than being guessed into a legality result.
  */
 export function inspectRosterCategoryConstraintsInRoster(
@@ -121,6 +125,7 @@ export function inspectRosterCategoryConstraintsInRoster(
   const catalogueMatches = rosterMatchesCatalogueContext(roster, context);
   const forceIndex = indexEvaluationForces(context);
   const effectiveCategories = effectiveRosterCategories(roster, context);
+  let categoryDefinitionsInspected = false;
 
   for (const { occurrence: owner } of rosterForceLocations(roster)) {
     const ownerResolution = resolveEvaluationForce(
@@ -161,6 +166,22 @@ export function inspectRosterCategoryConstraintsInRoster(
         );
         diagnostics.push(...inspected.diagnostics);
         if (inspected.ok) constraints.push(inspected.value);
+      }
+    }
+    // Category-owned roster bounds apply once, not once per force or once per
+    // selected member. They can require a selection even when none exists yet.
+    // Keep their real source distinct from force links; no synthetic link is
+    // fabricated to make a Warlord category look like a battlefield role.
+    if (definition && !categoryDefinitionsInspected) {
+      categoryDefinitionsInspected = true;
+      for (const category of context.categories.definitions) {
+        for (const constraint of category.source.constraints) {
+          if (constraint.scope !== "roster" || constraint.field !== "selections") continue;
+          const inspected = inspectCategoryConstraint(roster, context, owner, definition,
+            ownerResolution, undefined, constraint, effectiveCategories, category);
+          diagnostics.push(...inspected.diagnostics);
+          if (inspected.ok) constraints.push(inspected.value);
+        }
       }
     }
     forces.push({
@@ -212,12 +233,13 @@ function inspectCategoryConstraint(
   owner: RosterForce,
   definition: BattleScribeForceDefinition,
   ownerResolution: EvaluationForceResolution,
-  categoryLink: BattleScribeForceCategoryLink,
+  categoryLink: BattleScribeForceCategoryLink | undefined,
   constraint: RosterCategoryConstraintSource,
   effectiveCategories: ReadonlyMap<
     RosterSelection,
     readonly ObjectId[] | undefined
   >,
+  categoryDefinition?: BattleScribeCategoryDefinition,
 ): Result<RosterCategoryConstraintReport> {
   const diagnostics: Diagnostic[] = [];
   const constraintType =
@@ -231,17 +253,23 @@ function inspectCategoryConstraint(
     constraint.value >= 0
       ? constraint.value
       : undefined;
-  const categoryId =
-    categoryLink.status === "resolved" && categoryLink.targets.length === 1
-      ? categoryLink.targetId
-      : undefined;
+  const source = categoryDefinition?.source ?? categoryLink!.source;
+  const categoryTargets = categoryDefinition
+    ? context.categories.definitions.filter(c => c.source.id === source.id).length
+    : categoryLink!.targets.length;
+  const categoryId = categoryDefinition
+    ? categoryTargets === 1 ? source.id : undefined
+    : categoryLink!.status === "resolved" && categoryTargets === 1 ? categoryLink!.targetId : undefined;
   const categoryName =
-    categoryLink.targets[0]?.source.name ??
-    categoryLink.source.name ??
+    categoryDefinition?.source.name ?? categoryLink?.targets[0]?.source.name ??
+    source.name ??
     categoryId ??
     "Category";
 
-  const supportedShape =
+  const knownAttributes = new Set(["id", "type", "field", "scope", "value", "shared", "percentValue", "includeChildSelections", "includeChildForces", "comment"]);
+  const invalidBoolean = ["shared", "percentValue", "includeChildSelections", "includeChildForces"].some(key => constraint.node.attributes[key] !== undefined && !["true", "false", "1", "0"].includes(constraint.node.attributes[key]!));
+  const unknownShape = categoryDefinition !== undefined && (invalidBoolean || Object.keys(constraint.node.attributes).some(key => !knownAttributes.has(key)) || constraint.node.children.some(child => child.kind === "element"));
+  const supportedShape = !unknownShape &&
     categoryId !== undefined &&
     constraintType !== undefined &&
     scope !== undefined &&
@@ -250,7 +278,7 @@ function inspectCategoryConstraint(
     constraint.shared === true &&
     constraint.percentValue !== true &&
     constraint.includeChildSelections === true &&
-    constraint.includeChildForces === true;
+    (categoryDefinition !== undefined || constraint.includeChildForces === true);
   if (!supportedShape) {
     diagnostics.push(
       categoryConstraintDiagnostic(
@@ -258,8 +286,8 @@ function inspectCategoryConstraint(
         "EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED",
         "This force-category requirement uses a shape RosterForge does not evaluate yet.",
         {
-          categoryStatus: categoryLink.status,
-          categoryTargets: categoryLink.targets.length,
+          categoryStatus: categoryLink?.status ?? "definition",
+          categoryTargets,
           type: constraint.type,
           field: constraint.field,
           scope: constraint.scope,
@@ -268,6 +296,7 @@ function inspectCategoryConstraint(
           includeChildForces: constraint.includeChildForces,
           percentValue: constraint.percentValue,
           value: constraint.value,
+          unknownShape,
         },
       ),
     );
@@ -277,16 +306,17 @@ function inspectCategoryConstraint(
   const modifiers =
     constraintId === undefined
       ? []
-      : categoryLink.source.modifiers.filter(
+      : source.modifiers.filter(
           (modifier) => modifier.field === constraintId,
         );
-  if (categoryLink.source.modifierGroups.length > 0) {
+  const unsupportedModifiers = source.modifierGroups.length > 0 || (categoryDefinition !== undefined && source.modifiers.length > 0);
+  if (unsupportedModifiers) {
     diagnostics.push(
       categoryConstraintDiagnostic(
         constraint,
         "EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED",
-        "Grouped modifiers on force-category requirements are preserved but not evaluated.",
-        { modifierGroups: categoryLink.source.modifierGroups.length },
+        "Grouped force-category modifiers and category-definition modifiers are preserved but not evaluated.",
+        { modifierGroups: source.modifierGroups.length, categoryDefinition: categoryDefinition !== undefined },
       ),
     );
   }
@@ -329,7 +359,9 @@ function inspectCategoryConstraint(
   let minimum = 0;
   let maximum = 0;
   if (supportedShape) {
-    for (const { occurrence } of rosterSelectionLocations(roster)) {
+    const rootForces = new Set(roster.forces);
+    for (const { occurrence, force } of rosterSelectionLocations(roster)) {
+      if (categoryDefinition && constraint.includeChildForces !== true && !rootForces.has(force)) continue;
       const amount = rosterSelectionAmount(occurrence);
       const categories = effectiveCategories.get(occurrence);
       if (!Number.isFinite(amount) || amount < 0) {
@@ -366,7 +398,7 @@ function inspectCategoryConstraint(
   const status =
     modifierSequence?.ok === false ||
     modifierSequence?.value.completeness === "incomplete" ||
-    categoryLink.source.modifierGroups.length > 0
+    unsupportedModifiers
       ? "unresolved"
       : constraintStatus(
           supportedShape,
@@ -382,7 +414,8 @@ function inspectCategoryConstraint(
       context,
       owner,
       definition,
-      categoryLink,
+      ...(categoryLink ? { categoryLink } : {}),
+      ...(categoryDefinition ? { categoryDefinition } : {}),
       constraint,
       ownerResolution,
       ...(categoryId === undefined ? {} : { categoryId }),

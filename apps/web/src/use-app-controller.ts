@@ -15,6 +15,7 @@ import {
   rosterId,
   selectionOccurrenceId,
   type SelectionOccurrenceId,
+  type RosterDefinitionKey,
 } from "@rosterforge/roster-model";
 
 import {
@@ -51,6 +52,7 @@ import {
   restoreLocalRosterSessions,
   setLocalRosterSelectionAmount,
   setLocalRosterSelectionName,
+  setLocalRosterAssociation,
   type LocalRosterChildChoiceGroup,
   type LocalRosterRootChoice,
   type LocalRosterSession,
@@ -459,6 +461,13 @@ export function useRosterForgeAppController({
           selectionOccurrenceId(createEntityId("selection")),
       },
     );
+    setRosterDiagnostics(result.diagnostics);
+    if (result.ok) commitRosterSession(result.value);
+  }
+
+  function setAssociation(sourceId: SelectionOccurrenceId, key: RosterDefinitionKey, targetId: SelectionOccurrenceId | undefined) {
+    if (!rosterSession) return;
+    const result = setLocalRosterAssociation(rosterSession, sourceId, key, targetId);
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);
   }
@@ -911,6 +920,7 @@ export function useRosterForgeAppController({
     addChildSelection,
     renameSelection,
     setSelectionAmount,
+    setAssociation,
     undoRosterEdit,
     redoRosterEdit,
     saveRosterDraft,

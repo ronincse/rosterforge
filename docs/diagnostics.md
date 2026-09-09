@@ -1567,3 +1567,20 @@ type ValidationStatus = {
 
 An invalid roster may also have incomplete validation. Completeness must never
 erase known validity errors.
+
+### Attachment diagnostics
+
+- `ROSTER_ASSOCIATION_INVALID`: structural assignment has invalid/missing/self
+  endpoints, an empty definition key, or would exceed the 1,000-edge cap. No edit
+  is committed.
+- `WEB_ROSTER_ASSOCIATION_UNAVAILABLE`: the selected target is no longer a
+  supported, satisfied source-authored candidate. Clearing remains allowed.
+- `EVALUATION_ASSOCIATION_EFFECTS_UNSUPPORTED`: saved assignments exist, but
+  incoming attachment limits and association-dependent effects are not fully
+  checked. The web aggregate remains incomplete independently of known errors.
+
+Category-definition roster bounds reuse `EVALUATION_CATEGORY_CONSTRAINT_*`
+diagnostics, retaining actual category/constraint provenance rather than inventing
+a force-category link. Unsupported definition modifiers or malformed/unknown
+constraint shapes remain unresolved; supported duplicate-Warlord violations keep
+their count and link back to a matching occurrence.

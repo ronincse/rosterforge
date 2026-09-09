@@ -650,6 +650,8 @@ function workspaceRoleRequirements(
 
   for (const force of validation.value.constraints.categories.forces) {
     for (const report of force.constraints) {
+      // Secondary designations constrain the roster but are not army sections.
+      if (report.categoryDefinition) continue;
       const categoryId = report.categoryId;
       const limit = report.limit;
       if (
@@ -937,6 +939,8 @@ function supportedValidationSelectionIds(
     if (finding.status !== "violated") continue;
     if (finding.kind === "selectionConstraint") {
       selectionIds.add(finding.report.owner.id);
+    } else if (finding.kind === "categoryConstraint" && finding.report.categoryDefinition) {
+      for (const selection of finding.report.matching) selectionIds.add(selection.id);
     } else if (
       finding.kind === "structural" &&
       finding.report.kind !== "root"

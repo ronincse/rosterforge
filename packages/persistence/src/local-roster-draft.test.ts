@@ -18,6 +18,15 @@ import {
 } from "./local-roster-draft.js";
 
 describe("local roster draft codec", () => {
+  it("round-trips occurrence assignments and rejects dangling or duplicate edges", () => {
+    const edge = {sourceId:selectionOccurrenceId("selection-1"),targetId:selectionOccurrenceId("selection-2"),definitionKey:rosterDefinitionKey("source-association")};
+    const input = { id:"assignments",createdAt:"2026-09-09T00:00:00Z",updatedAt:"2026-09-09T00:00:00Z",catalogueKey:"fixture:catalogue",import:{batchId:"edges",importedAt:"2026-09-09T00:00:00Z",files:[]},roster:{...rosterFixture(),associations:[edge]} };
+    const draft=successful(createLocalRosterDraft(input));
+    const decoded=successful(decodeLocalRosterDraft(draft));
+    expect(decoded.roster.associations).toEqual([edge]);
+    expect(createLocalRosterDraft({...input,roster:{...input.roster,associations:[edge,edge]}}).ok).toBe(false);
+    expect(createLocalRosterDraft({...input,roster:{...input.roster,associations:[{...edge,targetId:selectionOccurrenceId("missing")} ]}}).ok).toBe(false);
+  });
   it("round-trips source bytes and ordered roster occurrences", () => {
     const bytes = Uint8Array.from([60, 99, 97, 116, 62]);
     const draft = successful(

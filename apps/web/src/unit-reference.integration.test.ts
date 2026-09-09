@@ -10,6 +10,8 @@ import { createUnitReferenceModel, referenceAttribution } from "./unit-reference
 import { createReferenceKeywordLinks, isKeywordCharacteristic } from "./reference-keywords.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
+import { inspectRosterAssociationChoices } from "@rosterforge/evaluation";
+import { addLocalRosterChildSelection as addLeadershipChoice, inspectLocalRosterConstraints, setLocalRosterAssociation, removeLocalRosterSelection, duplicateLocalRosterSelection } from "./roster-session.js";
 
 const directory = process.env.ROSTERFORGE_BSDATA_JSON_DIR;
 it.skipIf(!directory)("groups the audit's selected five and ten model Intercessor loadouts at the exact pin", async () => {
@@ -102,5 +104,34 @@ it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps 
   const runs = referenceTextRuns(description);
   expect(runs.some(r => (r.style & 2) && r.text.includes("Example"))).toBe(true);
   expect(runs.map(r => r.text).join("")).not.toContain("**");
+  let leadership = angron.value;
+  const slaughterId = next();
+  const bodyguardId = next();
+  for (const [name, id] of [["Slaughterbound", slaughterId], ["Eightbound", bodyguardId]] as const) {
+    const addedUnit = addLocalRosterRootSelection(leadership, localRosterRootChoices(catalogue).find(c => c.materialized.name === name)!, { selectionId: id, createSelectionId: next });
+    if (!addedUnit.ok) throw new Error(`Cannot add ${name}`);
+    leadership = addedUnit.value;
+  }
+  const childChoices = inspectLocalRosterChildChoices(leadership, slaughterId);
+  if (!childChoices.ok) throw new Error("Missing Slaughterbound choices");
+  const warlord = childChoices.value.direct.find(c => c.choice.name === "Warlord")!.choice;
+  const twoWarlords = addLeadershipChoice(leadership, slaughterId, warlord, { selectionId: next(), createSelectionId: next });
+  if (!twoWarlords.ok) throw new Error("Second Warlord failed");
+  const checks = inspectLocalRosterConstraints(twoWarlords.value);
+  if (!checks.ok) throw new Error("Check failed");
+  expect(checks.value.categories.forces.flatMap(f => f.constraints).find(c => c.categoryName === "Warlord" && c.constraintType === "max")).toMatchObject({status:"violated",observed:2,limit:1,completeness:"complete"});
+  const source = twoWarlords.value.roster.forces[0]!.selections.find(s => s.id === slaughterId)!;
+  const leading = inspectRosterAssociationChoices(twoWarlords.value.roster, catalogue.context, source).find(c => c.name === "Leading")!;
+  expect(leading.supported).toBe(true);
+  expect(leading.candidates.find(c => c.selection.id === bodyguardId)?.status).toBe("satisfied");
+  const attached = setLocalRosterAssociation(twoWarlords.value, slaughterId, leading.key, bodyguardId);
+  if (!attached.ok) throw new Error("Attachment failed");
+  expect(attached.value.roster.associations).toEqual([{sourceId:slaughterId,targetId:bodyguardId,definitionKey:leading.key}]);
+  const copied = duplicateLocalRosterSelection(attached.value, slaughterId, next);
+  expect(copied.ok).toBe(true);
+  if (copied.ok) expect(copied.value.roster.associations).toEqual(attached.value.roster.associations);
+  const removed = removeLocalRosterSelection(attached.value, bodyguardId, {createSelectionId: next});
+  expect(removed.ok).toBe(true);
+  if (removed.ok) expect(removed.value.roster.associations).toBeUndefined();
   console.info("Keyword reference corpus", { documents: names.length, profileGroups: model.profiles.length, ruleGroups: model.rules.length, inlineRules: linked.inlineRules.length, linkedTokens: tokens.filter(t => t.rule).length });
 }, 120_000);

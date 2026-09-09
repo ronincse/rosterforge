@@ -63,6 +63,7 @@ export function App(props: AppProps) {
     addChildSelection,
     renameSelection,
     setSelectionAmount,
+    setAssociation,
     undoRosterEdit,
     redoRosterEdit,
     saveRosterDraft,
@@ -122,6 +123,7 @@ export function App(props: AppProps) {
                 onAddChildSelection={addChildSelection}
                 onRenameSelection={renameSelection}
                 onSetSelectionAmount={setSelectionAmount}
+                onSetAssociation={setAssociation}
                 canUndo={(rosterHistory?.past.length ?? 0) > 0}
                 canRedo={(rosterHistory?.future.length ?? 0) > 0}
                 onUndo={undoRosterEdit}

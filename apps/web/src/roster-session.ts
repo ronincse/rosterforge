@@ -21,6 +21,7 @@ import {
   inspectEmptySingleForceRootChoices,
   inspectEmptySingleForceRosterStructuralStatus,
   inspectRosterCategoryConstraintsInRoster,
+  inspectRosterAssociationChoices,
   inspectSingleRosterSelectionChildChoices,
   inspectRosterSelectionDefaultAmount,
   inspectRosterForceConstraintsInRoster,
@@ -73,6 +74,8 @@ import {
   selectionOccurrenceId,
   setRosterSelectionAmount,
   setRosterSelectionName,
+  setRosterAssociation,
+  type RosterDefinitionKey,
   type ForceOccurrenceId,
   type Roster,
   type RosterForce,
@@ -663,6 +666,7 @@ export function inspectLocalRosterConstraints(
     ...selections.diagnostics,
     ...categories.diagnostics,
     ...forces.diagnostics,
+    ...(session.roster.associations?.length ? [{ code: "EVALUATION_ASSOCIATION_EFFECTS_UNSUPPORTED", message: "Attachments are saved, but association-dependent effects and incoming attachment limits are not fully checked.", severity: "warning" as const, impacts: ["compatibility", "validation"] as const }] : []),
   ];
   if (!selections.ok || !categories.ok || !forces.ok) {
     return failure(diagnostics);
@@ -672,7 +676,7 @@ export function inspectLocalRosterConstraints(
       completeness:
         selections.value.completeness === "complete" &&
         categories.value.completeness === "complete" &&
-        forces.value.completeness === "complete"
+        forces.value.completeness === "complete" && !session.roster.associations?.length
           ? "complete"
           : "incomplete",
       selections: selections.value,
@@ -681,6 +685,22 @@ export function inspectLocalRosterConstraints(
     },
     diagnostics,
   );
+}
+
+/** Assign an exact eligible target as one undoable session change. Clearing is
+ * always allowed, including a retained assignment whose source is now stale. */
+export function setLocalRosterAssociation(session: LocalRosterSession, sourceId: SelectionOccurrenceId, key: RosterDefinitionKey, targetId: SelectionOccurrenceId | undefined): Result<LocalRosterSession> {
+  if (targetId !== undefined) {
+    const find = (selections: readonly RosterSelection[]): RosterSelection | undefined => {
+      for (const selection of selections) { if (selection.id === sourceId) return selection; const nested = find(selection.selections); if (nested) return nested; }
+      return undefined;
+    };
+    const source = session.roster.forces.map(f => find(f.selections)).find(Boolean);
+    const choice = source && inspectRosterAssociationChoices(session.roster, session.catalogue.context, source).find(c => c.key === key);
+    if (!choice?.supported || !choice.candidates.some(c => c.selection.id === targetId && c.status === "satisfied")) return failure([{ code: "WEB_ROSTER_ASSOCIATION_UNAVAILABLE", message: "This unit is not a verified target for this attachment.", severity: "error", impacts: ["validation"] }]);
+  }
+  const result = setRosterAssociation(session.roster, sourceId, key, targetId);
+  return result.ok ? success(result.value === session.roster ? session : { ...session, roster: result.value }, result.diagnostics) : result;
 }
 
 /**
@@ -1108,7 +1128,7 @@ function inspectSupportedValidation(
   if (!status.ok) return failure(diagnostics);
   return success(
     {
-      status: status.value,
+      status: session.roster.associations?.length ? { ...status.value, completeness: "incomplete" } : status.value,
       structural: structural.value,
       constraints: constraints.value,
       structuralDiagnostics: structural.diagnostics,

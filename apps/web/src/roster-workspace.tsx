@@ -48,6 +48,7 @@ import {
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
 
 import { Detail } from "./detail-row.js";
+import { AssociationOptions, type SetAssociation } from "./association-options.js";
 import { inspectLocalRule } from "./rule-inspection.js";
 import { createUnitReferenceModel, referenceAttribution, type ReferenceMember } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
@@ -162,6 +163,7 @@ export function RosterOverview({
   onAddChildSelection,
   onRenameSelection,
   onSetSelectionAmount,
+  onSetAssociation,
   canUndo,
   canRedo,
   onUndo,
@@ -184,6 +186,7 @@ export function RosterOverview({
     id: SelectionOccurrenceId,
   ) => SelectionOccurrenceId | undefined;
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
+  readonly onSetAssociation?: SetAssociation;
   readonly onAddChildSelection: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -1024,6 +1027,7 @@ export function RosterOverview({
             <RosterUnitOptionsPanel
               session={session}
               selectionModel={activeSelection}
+              onSetAssociation={onSetAssociation}
               selectionCanAddAnother={selectionCanAddAnother}
               onAddChild={onAddChildSelection}
               onRename={onRenameSelection}
@@ -1117,6 +1121,14 @@ export function RosterOverview({
       {problemsOpen && (
         <RosterProblemsDialog
           result={supportedValidation}
+          targetForFinding={(finding) => {
+            const target = validationFindingTarget(finding);
+            if (finding.kind !== "categoryConstraint" || !finding.report.categoryDefinition) return target;
+            // A designation is a nested upgrade and may be hidden by the
+            // streamlined options view. Its owning unit row is always mounted.
+            const owner = topLevelWorkspaceSelectionContainingAnchor(armyGroups, target.slice(1));
+            return owner ? `#${selectionAnchor(owner.occurrence.id)}` : target;
+          }}
           onClose={closeProblems}
         />
       )}
@@ -2285,8 +2297,10 @@ function categoryConstraintSummaryItem(
   return constraintSummaryItem(
     "Category",
     report.categoryName,
-    report.categoryId ?? report.categoryLink.source.id ?? report.owner.id,
-    report.categoryId === undefined
+    report.categoryId ?? report.categoryLink?.source.id ?? report.owner.id,
+    report.categoryDefinition
+      ? report.matching[0] ? `#${selectionAnchor(report.matching[0].id)}` : "#selected-roster-heading"
+      : report.categoryId === undefined
       ? "#root-choices-heading"
       : `#${stableDomAnchor("roster-role", report.categoryId)}`,
     report,
@@ -3305,6 +3319,7 @@ function RosterUnitOptionsPanel({
   onDuplicate,
   canDuplicate,
   viewed,
+  onSetAssociation,
 }: {
   readonly session: LocalRosterSession;
   readonly selectionModel: RosterWorkspaceSelection;
@@ -3329,6 +3344,7 @@ function RosterUnitOptionsPanel({
   readonly onDuplicate: () => SelectionOccurrenceId | undefined;
   readonly canDuplicate: boolean;
   readonly viewed: boolean;
+  readonly onSetAssociation?: SetAssociation | undefined;
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
   const removeUnit = () => {
@@ -3384,6 +3400,7 @@ function RosterUnitOptionsPanel({
           </button>
         </div>
       </div>
+      {onSetAssociation && <AssociationOptions session={session} selection={selectionModel.occurrence} onSet={onSetAssociation} />}
       <ul className="roster-top-level-selection-list selected-unit-options-list">
         <RosterSelectionItem
           session={session}
@@ -3636,9 +3653,11 @@ function KeywordRulesDialog({
 /** Player-facing problem summary opened from the roster's persistent counters. */
 function RosterProblemsDialog({
   result,
+  targetForFinding,
   onClose,
 }: {
   readonly result: ReturnType<typeof inspectLocalRosterSupportedValidation>;
+  readonly targetForFinding: (finding: SupportedRosterValidationFinding) => string;
   readonly onClose: () => void;
 }) {
   const findings = result.ok
@@ -3692,7 +3711,7 @@ function RosterProblemsDialog({
                   <span>{validationFindingObservation(finding)}</span>
                 </div>
                 <a
-                  href={validationFindingTarget(finding)}
+                  href={targetForFinding(finding)}
                   onClick={onClose}
                 >
                   Review
@@ -3770,6 +3789,11 @@ function validationFindingTarget(
   finding: SupportedRosterValidationFinding,
 ): string {
   if (finding.kind === "categoryConstraint") {
+    if (finding.report.categoryDefinition) {
+      return finding.report.matching[0]
+        ? `#${selectionAnchor(finding.report.matching[0].id)}`
+        : "#selected-roster-heading";
+    }
     return finding.report.categoryId === undefined
       ? "#root-choices-heading"
       : `#${stableDomAnchor("roster-role", finding.report.categoryId)}`;

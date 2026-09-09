@@ -378,6 +378,22 @@ function decodeRoster(
   if (kind !== "catalogue") {
     invalid([...path, "catalogue", "kind"], "Roster catalogue kind is invalid.");
   }
+  const forces = requiredArray(record.forces, [...path, "forces"]).map(
+    (force, index) => decodeForce(force, [...path, "forces", String(index)], 1, state),
+  );
+  const pairs = new Set<string>();
+  const associations = record.associations === undefined ? undefined : requiredArray(record.associations, [...path, "associations"]).map((value, index) => {
+    if (index >= 1000) invalid([...path, "associations"], "Too many roster assignments.");
+    const at = [...path, "associations", String(index)];
+    const edge = requiredRecord(value, at);
+    const sourceId = requiredString(edge.sourceId, [...at, "sourceId"], state);
+    const targetId = requiredString(edge.targetId, [...at, "targetId"], state);
+    const definitionKey = requiredString(edge.definitionKey, [...at, "definitionKey"], state);
+    const pair = JSON.stringify([sourceId, definitionKey]);
+    if (sourceId === targetId || !state.selectionIds.has(sourceId) || !state.selectionIds.has(targetId) || pairs.has(pair)) invalid(at, "Assignment endpoints or source/definition identity are invalid.");
+    pairs.add(pair);
+    return { sourceId: selectionOccurrenceId(sourceId), targetId: selectionOccurrenceId(targetId), definitionKey: rosterDefinitionKey(definitionKey) };
+  });
   return {
     id: rosterId(requiredString(record.id, [...path, "id"], state)),
     name: requiredString(record.name, [...path, "name"], state),
@@ -385,10 +401,8 @@ function decodeRoster(
       kind: "catalogue",
       ...decodeDefinitionBase(catalogue, [...path, "catalogue"], state),
     },
-    forces: requiredArray(record.forces, [...path, "forces"]).map(
-      (force, index) =>
-        decodeForce(force, [...path, "forces", String(index)], 1, state),
-    ),
+    forces,
+    ...(associations?.length ? { associations } : {}),
   };
 }
 

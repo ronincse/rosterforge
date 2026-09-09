@@ -25,6 +25,7 @@
  * allowed at all is a question for `evaluation`.
  */
 
+import { pruneRosterAssociations } from "./associations.js";
 import {
   failure,
   success,
@@ -425,7 +426,7 @@ export function replaceRosterSelectionDefinition(
 /**
  * Removes a force and everything beneath it.
  *
- * Nothing cascades: a selection elsewhere that only made sense alongside
+ * Dangling assignment edges are removed; no other selection cascades. A selection elsewhere that only made sense alongside
  * this force is left in place. Whether what remains is still legal is a
  * question for `evaluation`, not for this package.
  */
@@ -437,10 +438,10 @@ export function removeRosterForce(
   if (!update.found) {
     return failure([missingForceOccurrenceDiagnostic(id)]);
   }
-  return success({ ...roster, forces: update.forces });
+  return success(pruneRosterAssociations({ ...roster, forces: update.forces }));
 }
 
-/** Removes a selection and its descendants. Nothing else cascades. */
+/** Removes a selection, its descendants, and dangling assignment edges. Other units remain. */
 export function removeRosterSelection(
   roster: Roster,
   id: SelectionOccurrenceId,
@@ -449,7 +450,7 @@ export function removeRosterSelection(
   if (!update.found) {
     return failure([missingSelectionOccurrenceDiagnostic(id)]);
   }
-  return success({ ...roster, forces: update.forces });
+  return success(pruneRosterAssociations({ ...roster, forces: update.forces }));
 }
 
 /**

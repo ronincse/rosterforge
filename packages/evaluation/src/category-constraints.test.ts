@@ -7,11 +7,12 @@ import {
   type BattleScribeCatalogueContext,
   type BattleScribeForceDefinition,
 } from "@rosterforge/data-graph";
-import { sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
+import { objectId, sourceId, type SourceFileProvenance } from "@rosterforge/foundation";
 import {
   addRosterChildForce,
   addRosterForce,
   addRosterSelectionToForce,
+  addRosterSelectionToSelection,
   createRoster,
   forceOccurrenceId,
   rosterDefinitionKeyForSource,
@@ -25,6 +26,39 @@ import { inspectRosterCategoryConstraintsInRoster } from "./category-constraints
 import type { EvaluationSelectionChoice } from "./selection-context.js";
 
 describe("roster category constraints", () => {
+  it("checks category-owned roster bounds once and counts nested designations", () => {
+    const base = catalogueContext();
+    const category = base.categories.definitions.find(c => c.source.id === "category-unit")!;
+    const template = forceDefinition(base, "force-patrol-child").categoryLinks.flatMap(c => c.source.constraints)[0]!;
+    const owned = { ...category, source: { ...category.source, modifiers: [], modifierGroups: [], constraints: [
+      { ...template, id: objectId("designation-min"), type: "min", value: 1, scope: "roster", field: "selections", shared: true, includeChildSelections: true, includeChildForces: false },
+      { ...template, id: objectId("designation-max"), type: "max", value: 1, scope: "roster", field: "selections", shared: true, includeChildSelections: true, includeChildForces: false },
+    ] } };
+    const context = { ...base, categories: { ...base.categories, definitions: base.categories.definitions.map(c => c === category ? owned : c) } };
+    const reports = (roster: Roster) => {
+      const result = inspectRosterCategoryConstraintsInRoster(roster, context);
+      if (!result.ok) throw new Error("Inspection failed");
+      return result.value.forces.flatMap(f => f.constraints).filter(c => c.categoryDefinition);
+    };
+    const empty = rosterWithChildForce(context);
+    expect(reports(empty).map(r => r.status)).toEqual(["violated", "satisfied"]);
+    const one = addSelection(empty, choice(context, "entry-alpha"));
+    expect(reports(one).map(r => r.status)).toEqual(["satisfied", "satisfied"]);
+    const parent = one.forces[0]!.selections[0]!;
+    const two = successful(addRosterSelectionToSelection(one, parent.id, { id: selectionOccurrenceId("nested-designation"), definition: parent.definition }));
+    expect(reports(two)).toHaveLength(2);
+    expect(reports(two)[1]).toMatchObject({ status: "violated", observed: 2, completeness: "complete" });
+    expect(reports(two)[1]!.matching.map(s => s.id)).toEqual([parent.id, "nested-designation"]);
+    expect(reports(one)[1]!.observed).toBe(1);
+    const childOnly = successful(addRosterSelectionToForce(empty, forceOccurrenceId("force-child"), { id: selectionOccurrenceId("child-designation"), definition: parent.definition }));
+    expect(reports(childOnly)[0]).toMatchObject({ status: "violated", observed: 0 });
+    for (const attributes of [{ percentValue: "garbage" }, { includeChildForces: "garbage" }, { futureBehavior: "true" }]) {
+      const malformed = { ...context, categories: { ...context.categories, definitions: context.categories.definitions.map(c => c !== owned ? c : { ...c, source: { ...c.source, constraints: c.source.constraints.map(bound => ({ ...bound, node: { ...bound.node, attributes: { ...bound.node.attributes, ...attributes } } })) } }) } };
+      const result = inspectRosterCategoryConstraintsInRoster(two, malformed);
+      if (!result.ok) throw new Error("Inspection failed");
+      expect(result.value.forces.flatMap(f => f.constraints).filter(c => c.categoryDefinition).map(c => c.status)).toEqual(["unresolved", "unresolved"]);
+    }
+  });
   it("reports and satisfies a roster-wide category minimum", () => {
     const context = catalogueContext();
     const empty = rosterWithChildForce(context);
