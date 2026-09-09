@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (failed-discard follow-up fixed; capacity trace next)
+## Current Status — 2026-09-09 (both authorized follow-ups fixed; stopped)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -44,10 +44,11 @@ case and contains unsupported applicability with per-rule uncertainty; it is not
 complete rule compatibility. All four authorized checkpoints are implemented and
 locally verified; RF-A01/A02/A03 remote CI succeeded and RF-A04 CI `34370611001`
 passed on `269f96c`. The owner accepted that batch and authorized only two follow-ups.
-The failed-discard latest-state protection defect is fixed in `2a0ac05`; Impulsor
-headline capacity is next. Do not resume UI work automatically.
-RF-A05 reference-card redesign is deferred. The reported loss of
-headline points capacity after adding Impulsor is unconfirmed separate triage.
+The failed-discard latest-state protection defect is fixed in `2a0ac05` (handoff
+`5e7ffed`, CI `34374241729` passed). Impulsor headline capacity is fixed in
+`0104994`: independently known limits remain visible beside explicitly provisional
+spending. Its unsupported local-condition-group price modifier stays diagnostic.
+This bounded batch is complete; RF-A05 remains deferred until owner direction.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -285,22 +286,23 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **618 passed, 21 skipped (639)**,
-  across 64 files (61 passed, three optional files skipped).
+  `git diff --check` all pass. `pnpm test` is **620 passed, 22 skipped (642)**,
+  across 66 files (62 passed, four optional files skipped).
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
   `04c62fcd041b3808c39d5c46fd677c704027b979`, 46 JSON files, gitignored and
-  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set, the two focused corpus
-  files pass **20 tests**, including exact zero-diagnostic catalogue creation
-  across all 36 selectable catalogues and occurrence-specific rule visibility.
+  never committed. With `ROSTERFORGE_BSDATA_JSON_DIR` set, the three focused corpus
+  files pass **21 tests**, including exact zero-diagnostic catalogue creation
+  across all 36 selectable catalogues, occurrence-specific rule visibility, and
+  the Dark Angels/Impulsor capacity regression (eight-file dependency closure).
   This is a separate integration run, not a claim that every skipped test ran.
   **The revision moved on 2026-08-23**, from
   `54c189f4fd01878351fab05586d3b38d9c7f6ddc`, and every pinned measurement was
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** Only the authorized failed-discard and headline-capacity
-  follow-ups; further UI work awaits owner direction. Prior usability evidence follows. The first
+- **Active area.** Both authorized failed-discard and headline-capacity
+  follow-ups are complete; stop here. Further UI work awaits owner direction. Prior usability evidence follows. The first
   phone-width pass is complete: a real Death Guard add/configure/amount/check
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
   and sticky workspace links leave their targets visible. The broader Grok
@@ -773,7 +775,8 @@ QA before classifying or implementing the discrepancy.
 | Failed recovery discard strands pending protection | Done | `2a0ac05`: reproduced newer pending snapshots lost on reload despite retaining the older recovery. Shared debounce re-arms once after failed discard; session/epoch guards, successful discard, queued writes, later edits and batched operations covered. Previous non-gating characterization was insufficient |
 | Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
 | Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
-| Impulsor headline points-capacity disappearance | Unconfirmed triage | Audit's 2,000-point Dark Angels journey lost headline capacity after adding Impulsor while Configuration retained Battle Size. Requires separate evaluator trace; not an RF-A04 defect and excluded from repair implementation |
+| Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
+| Local condition group cost applicability | Unsupported, outside follow-up batch | Pinned Impulsor `bfb1-7512-e1a3-9fa2` has increment-10 points guarded by `localConditionGroups`. Projection is preserved, semantics are not evaluated. Its base 70 remains provisional with diagnostics; resolve semantics through separate evidence/design, not a name-specific price patch |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -13696,3 +13699,80 @@ JSON integration tests pass across all 46 documents at verified corpus commit
 `04c62fcd041b3808c39d5c46fd677c704027b979`. Impulsor capacity investigation remains
 in the authorized batch. RF-A05, broader rule support and performance work remain
 excluded; no whole-project readiness conclusion is made.
+
+## Completed Assignment — Impulsor Capacity Follow-up, 2026-09-09
+
+Baseline `5e7ffed` (failed-discard handoff, exact CI `34374241729` success),
+implementation/tests/architecture/compatibility/diagnostics `0104994`, followed
+by this separate handoff. Selected branch remains `codex/list-builder-ui-overhaul`;
+no branch switch, merge, PR, unrelated writes or new audit. The authorized two-item
+follow-up batch ends here. RF-A01/A02/A03 remain fixed for demonstrated failures;
+RF-A04 remains mitigated/compatibility-incomplete; RF-A05 is not resumed.
+
+**Reproduced and traced.** Live actual App at port 5200, running this checkout,
+used the pinned Dark Angels closure: Strike Force, Gladius Task Force, Priority
+Assets, Captain/Warlord/Fire Discipline and audit equipment (105), configured
+Intercessor Squad (80). Before Impulsor, header was 185 / 2,000; after adding its
+base 70, header showed 255 used without capacity. Configuration choices did not
+change, and Detachment Points stayed 3 / 3. An independent native lane reduced
+this to default Captain + Intercessors: 160 / 2,000 became 230 without capacity.
+The force limit/modifier sequence remained complete at 2,000; its cost observation
+was incomplete with one unresolved cost. No currency replacement/config mutation.
+
+**Owning layer and fix.** Workspace projection required both aggregate constraint
+completeness and exact observed spending before promoting a cap. Evaluation now
+exposes independent `limitCompleteness`, captured after identity/shape/limit
+modifiers and before observation. Workspace consumes that evidence, preserves the
+main cost report's provisional value, and labels it in headline/Configuration/
+secondary limits; remaining and over-limit arithmetic is withheld. Aggregate
+validation, cost diagnostics and modifier reports remain unchanged. Rejected:
+hard-coded points, Impulsor special cases, stale remembered limits, using the
+partial exact-cost subtotal as the displayed price, or guessing local-group
+semantics. This is a capacity presentation correction, not full price support.
+
+At verified pin `04c62fcd041b3808c39d5c46fd677c704027b979`, Space Marines Impulsor
+`bfb1-7512-e1a3-9fa2`, third modifier, targets points `51b2-306e-1021-d207` with
+increment 10 under local-group applicability. Diagnostics remain
+`EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED` and
+`EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED`. Displayed 70 is provisional,
+not an exact price or guaranteed lower bound. Added an explicit roadmap limitation;
+the historical local-group projection correction did not claim runtime support.
+
+**Regression and review.** Before implementation, synthetic header and new
+force-bound assertions failed; unknown-limit control already passed. Final
+focused suite: 10 passed (eight force-constraint, two UI); UI journeys cover
+add/remove, undo/redo, conditional size change, source-ordered currencies,
+save/reopen, provisional Configuration/secondary labels, and no stale unknown cap.
+The new optional pinned test checks 160→230 points, 2,000→1,000 capacity,
+configuration immutability, independent Detachment budget, preserved diagnostics,
+and removal restoring exact spending. All 21 selected optional tests passed
+across three files; original corpus coverage uses all 46 documents, new scenario
+uses its exact eight-file closure. No third-party data was committed/downloaded.
+
+Native reviewer inspected the actual candidate against `5e7ffed`, identified
+unqualified secondary/Configuration totals, then approved the corrected diff and
+expanded assertions. Lead reran checks and browser work; reviewer did not claim
+independent test/browser execution. Claude's known exhausted window remained
+unavailable; no retry, billing/auth changes or external payload was sent.
+
+**Browser and gates.** Final browser observed 255 / 2,000 provisional, removal
+185 / 2,000 with 1,815 remaining, undo/redo restoring those exact respective
+states, Incursion 255 / 1,000 provisional, and a fresh saved-draft reopen retaining
+the configured Captain, Intercessors, Impulsor and 3 / 3 Detachment budget.
+Header and Configuration both qualify the reopened total. The final fresh-visit
+browser console has no warnings/errors (ordinary Vite/React debug/info only).
+Earlier hook edits produced development-only Fast Refresh errors; fresh visits
+were used after the final implementation rather than treating that stale HMR
+session as runtime evidence. Unsupported checks and the
+unconfigured Impulsor sponson requirement remain; no full legality claim.
+Lint, typecheck, test **620 passed / 22 skipped (642), 66 files**, build and diff
+check passed; only the existing production large-chunk advisory remains.
+
+The original user-testing server on port 5199 is preserved (HTTP 200 confirmed).
+Isolated QA server 5200 was stopped, and its gitignored injected-failure harness
+was removed; the failure coverage is committed in controller tests. The new delegate worktree at
+`C:/CodexACLTest/rf-discard-followup-20260909` retains its reproduction evidence;
+the two original retained audit worktrees and personal saved rosters are untouched.
+No confirmed unfixed defect from this two-item batch remains before RF-A05, but
+unsupported pricing/rule compatibility remains explicitly incomplete. Await owner
+direction, without treating this bounded result as whole-product certification.
