@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (leader assignments and Warlord checks published; CI green)
+## Current Status — 2026-09-09 (World Eaters warning repairs verified; publication pending)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -83,7 +83,18 @@ navigation. Incoming leader limits and attached-unit effects remain explicitly
 incomplete. See `docs/qa/leadership.md`. Published through `9016b05`; exact-SHA CI
 `34402527313` passed every gate (verify job 53 seconds). This documentation-only
 confirmation follows the tested checkpoint on the same branch.
-Stop after this bounded checkpoint; no broader association engine phase was started.
+The next owner-reported World Eaters warning checkpoint is implemented in
+`b176c06`: direct self association counts resolve Slaughterbound rule visibility,
+exact force identity and live grouped root limits resolve structural warnings,
+known self-cost fields resolve the three campaign-cost bounds, and exact-target
+category modifier handling removes blanket false warnings. Static zero descendant
+minima also no longer warn while adding Angron. No diagnostic display suppression.
+All gates pass: 652 tests passed / 24 skipped (676), 72 passed / five skipped files
+(77); all four pinned integration suites pass, 23 tests at `04c62fc` (46 documents).
+Browser QA covers the 430-point reproduction, attachment rule changes, save/reopen,
+detach/undo/redo and a clean fresh console. See `docs/qa/world-eaters-warnings.md`.
+This handoff is ready for publication; exact remote CI is not yet claimed.
+Stop after this bounded checkpoint; broader attachment compatibility remains open.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -786,10 +797,12 @@ QA before classifying or implementing the discrepancy.
 | Catalogue cost, count, and control readability | Done | root units show one authored source cost, a compact selected/maximum counter, a plus-only add segment, and a larger category disclosure; detachment and costed upgrade choices show their own source currency. Dynamic values are visibly qualified as `base`. The sticky budget prefers a finite-limit currency authored on addable army roots by exact cost-type ID, so roster Points remain primary even when Detachment Points are declared first; Detachment Points stay visible with Configuration and other roster limits. Configuration presents Battle Size before Detachment without changing stored roster order. Import provenance and materializer reason codes stay behind explicit disclosures rather than competing with player actions |
 | Condition-aware root repetition maxima in the add catalogue | Done | supported direct conditional modifiers evaluate against the current single-force roster while static pre-roster initialization stays conservative. Pinned Incursion limits are Dire Avengers 2 (base 3) and Guardian Defenders 4 (base 6); the catalogue counter and structural validation consume the same effective maxima, and unresolved applicability still withholds rather than guesses |
 | False diagnostics after pinned catalogue selection and creation | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`; all 36 catalogues also create with exact-empty initialization diagnostics. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; finite link overlays no longer look cyclic; and an unused modified maximum on a pending manual group no longer claims an automatic quantity was withheld. Missing unnamed costs, unproved selectors, true same-scope duplicates, definition recursion, modified minima, and maxima that can constrain defaults or planned children remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console; live Aeldari creation also has no warning cards or console issues |
-| Remaining pinned Aeldari matched-play check coverage | Open | classify and close the remaining valid-but-incomplete families independently: one relevant root has unresolved visibility, and selected units retain unsupported association attributes/fields plus hidden Crusade Battle Honours and Weapon Modifications constraint fields. The selected Detachments modifier-driven bound is done: owner-local live evaluation proves max one for Incursion with a 3 Detachment Point choice and unbounded for Strike Force. Measure each remaining shape and use Reference Behavior QA where semantics are not settled; do not suppress a diagnostic merely because it is campaign-oriented or technically phrased |
+| Remaining pinned Aeldari matched-play check coverage | Open; narrowed in b176c06 | Guardian Defenders structural inspection and its three self-cost bounds now resolve. Remaining exact constraint diagnostics: five unsupported fields, five constraint attributes, three condition attributes and one numeric applicability warning. Classify each remaining shape independently; do not suppress campaign diagnostics. Selected Detachments live bounds remain done |
 | Source-authored leader assignments and mandatory Warlord conflicts | Done, bounded | `27ba843` / `a4803fb`: direct same-force optional single-unit filters, exact occurrence assignments, save/reopen and undo, endpoint cleanup, independent duplicates; category-definition roster selection bounds now detect missing/multiple Warlords including Angron plus Slaughterbound. No name/ID hardcoding. Desktop/390×844 and pinned integration verified |
-| Remaining association compatibility | Open; separate owner-authorized checkpoint | Incoming leader capacity/category classification, association-dependent effects and conditions, required/multi-target associations, shared-link choice expansion, print relationship presentation and revalidation diagnostics beyond the visible stale-assignment notice. Whole raw corpus has 449 definitions, five links, 494 association constraints, 341 association conditions and 91 association-traversing affects values. Saved assignments explicitly keep aggregate validation incomplete; do not infer Leading category membership from prose/name |
-| Other category-definition bounds | Open | This repair covers roster selection counts only. Audit category-owned force/cost bounds and definition modifiers separately; recognizing a constraint shape does not prove all owner locations are inspected |
+| Remaining association compatibility | Open; separate owner-authorized checkpoint | Direct numeric self/shared counterpart conditions done in b176c06. Incoming leader capacity/category classification, general association effects, wider/transitive conditions, required/multi-target associations, shared-link choice expansion, print relationship presentation and broader revalidation remain open. Whole raw corpus has 449 definitions, five links, 494 association constraints, 341 association conditions and 91 association-traversing affects values. Saved assignments still keep aggregate validation incomplete; do not infer Leading membership from prose/name |
+| Other category-definition bounds | Open | Roster selection counts and direct definition-owned numeric modifiers are supported; relevant modifier groups and category-owned force/cost bounds remain open. Other owner locations need independent evidence |
+| World Eaters normal-use warnings | Done; b176c06 | Direct association rule queries, force-owned force identity, live grouped root bounds, known self-cost constraints, category modifier relevance and static zero-descendant-minimum initialization. Reported 430-point scenario has zero unresolved structural/constraint bounds. Actual missing configuration violations remain |
+| Modified unlimited root bounds | Open; pre-existing conservative limitation | Live modified negative/unlimited root results can remain incomplete even for the authored -1 sentinel. No grouped shape needed by this World Eaters repair uses it; settle with dedicated source evidence and tests rather than expanding this checkpoint |
 | Selected group choices re-add themselves instead of deselecting | Done | each concrete choice keeps one stable name-only label and communicates state through its filled `aria-pressed` styling; clicking a selected choice removes it. Legitimate repeated entries retain a separate `Add another` control while aggregate and exact effective capacity remain. Existing accidental duplicates are removed newest-first, one undoable configured subtree at a time |
 | Selected direct choices require scrolling to Remove | Done | direct entry and entry-link quick choices now use the same stable name-only toggle: clicking a selected choice removes the newest exact occurrence. Legitimate repeats retain a separate `Add another` action while direct and effective exact maxima have capacity. Pinned Corsair Voidscarred's max-one Mistshield toggled from the same button and correctly exposed no add-another action |
 | Required direct wargear can be stripped from a model | Done | a selected direct `upgrade` with a complete positive minimum is disabled only when removing the newest occurrence would breach that minimum. Pinned Dark Reaper Close combat weapons and the regular model's Reaper Launcher are protected; the Exarch's grouped Reaper Launcher remains replaceable. Surplus copies remain removable and incomplete bounds remain permissive |
@@ -811,7 +824,7 @@ QA before classifying or implementing the discrepancy.
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
 | Audit RF-A04 rule visibility | Mitigated; reported case fixed | `0d3bfcc`/`1fdbcde`: rule/link modifiers preserved, occurrence-aware Boolean visibility and explicit per-rule uncertainty; Dark Angels/Black Templars Templar Vows behavior verified. Full compatibility remains open below |
-| Remaining rule-display compatibility | Open, outside repair batch | Resolve association conditions (86 hidden-link condition leaves at the pin), cross-layer conflicting modifier precedence, parent info-group visibility, rule text/name operations and four generic catalogue-root info links using semantic evidence; do not guess or hide uncertainty |
+| Remaining rule-display compatibility | Open, outside repair batch | Direct self association conditions done in b176c06; wider queries remain. Cross-layer conflicting modifier precedence, parent info-group visibility, rule text/name operations (including Scouts suffix) and four generic catalogue-root info links still need semantic evidence; do not guess or hide uncertainty |
 | Failed recovery discard strands pending protection | Done | `2a0ac05`: reproduced newer pending snapshots lost on reload despite retaining the older recovery. Shared debounce re-arms once after failed discard; session/epoch guards, successful discard, queued writes, later edits and batched operations covered. Previous non-gating characterization was insufficient |
 | Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
 | Audit RF-A05 reference-card reading | Done — bounded checkpoint | `cda7782`: current baseline 10,527 px / 22 tables becomes 5,660 px / three tables at 390×844; stats and first weapons visible at opening. Selected-only, conservative source/loadout grouping, independent quantities, uncertainty and lazy exact details. Phone/tablet/desktop/text-scale/keyboard evidence in `docs/qa/rf-a05-reference-card.md`; no broader rule or engine semantics |
@@ -14062,6 +14075,11 @@ checkpoint; no later roadmap work was started.
 
 ## Completed Assignment — 2026-09-09: Leader assignments and mandatory Warlord errors
 
+> Boundary update: the later World Eaters warning checkpoint `b176c06` supports
+> direct self association-condition counts and direct category-definition numeric
+> modifiers. Those limited unsupported statements below are superseded; incoming
+> limits, general effects and wider queries remain unsupported.
+
 **State and commits.** Clean, synchronized baseline
 `9b7354787f58b50f157b0d461c24674e7e53abc2` on `codex/list-builder-ui-overhaul`.
 Projection worker commit `75d5f2ce91b574937e805e4e2721cfebd575b780` was reviewed and
@@ -14138,3 +14156,72 @@ User preview 5199 and its saved rosters are preserved;
 User preview 5199 returned HTTP 200. Temporary QA5207 (PID 56516) was stopped
 after verifying its exact Vite command and port. Review worktree is retained.
 No further phase should start without owner direction.
+
+## Completed Assignment — 2026-09-09: World Eaters warning families
+
+**State/commits.** Clean synchronized baseline
+`d474d6904735bf3d23bdb3cb3676d17f73e1a3e2` on `codex/list-builder-ui-overhaul`.
+Implementation/tests/compatibility/QA documentation:
+`b176c06df4fe69d2c3b63847b05b099e207c591b`. This separate handoff records the
+checkpoint. No main merge, PR, source-data edits or unrelated work.
+
+**Decision.** Implement the measured semantics rather than filtering diagnostic
+cards: direct saved association counterpart counts (both directions, distinct
+occurrences, never model quantities), exact force-owner identity, inherited live
+root modifier-group applicability/order, and exact scoped self-cost observations
+shared with the existing cost engine. Category bounds only inherit uncertainty
+from relevant groups; direct definition modifiers use the existing evaluator.
+The browser additionally exposed two older Angron min-zero descendant warnings;
+static zero cannot require additions under either count, so only that traversal
+warning is deferred. Modified/live/positive/unknown requirements stay guarded.
+Name-based campaign suppression, self-counting, tree merging, a second cost engine
+and blanket completeness claims were rejected.
+
+**Evidence.** Reverified corpus `04c62fcd041b3808c39d5c46fd677c704027b979`, all 46
+JSON documents. Raw scan: 3,958 self-cost constraints in 31 documents; 1,319 each
+Battle Honours max and Weapon Modifications min/max, plus one descendant-count
+Battle Honours variant. World Eaters baseline: 11 force-owned root-visibility
+queries unresolved; three inactive roots/five suppressed-bound diagnostics.
+341 raw association leaves is the whole-corpus count, not newly supported count.
+Exact source IDs and pinned New Recruit documentation are in
+`docs/qa/world-eaters-warnings.md`. Guardian Defenders now has complete structural
+inspection and three resolved self-cost bounds; remaining unsupported categories
+are recorded in the roadmap. Its old one-violation expectation also missed the
+previous checkpoint's newly checked Warlord minimum; regression now pins both
+missing Character and Warlord rather than weakening validation.
+
+**Validation/review.** Full gates green: lint, typecheck, test, build, diff check.
+Normal suite 652 passed / 24 skipped (676), 72 passed / five skipped files (77).
+Four opt-in pinned suites: 23 passed (19 corpus, one rule visibility, one capacity,
+two unit-reference). Build retains only its existing size advisory: JS 794.89 kB /
+219.58 kB gzip, threshold 500 kB. Tests retain uncertainty using explicitly
+unsupported transitive association queries, not now-supported direct counts.
+Malformed flags/children, stale definitions, model endpoints, uncertain cost sums,
+group gating and zero versus positive descendant minima have regression coverage.
+
+Native `world_eaters_diagnostics` used isolated
+`C:/CodexACLTest/rf-world-eaters-warnings-20260909` at the explicit baseline,
+investigated, supplied a bounded four-file cost lane, then independently reviewed
+the integrated primary candidate. Lead reviewed actual diffs, integrated with
+patches and reran all gates. Review caught stale-edge and malformed-cost false
+completeness risks; both repaired and re-reviewed clear. External Claude review
+was rejected before launch because private-source disclosure was not authorized
+for this task; no source was sent and native review continued. Worktree retained.
+
+Browser origin 5210 reproduced Angron + Slaughterbound at 430 points: no reported
+warning cards, 51 satisfied/three violated/zero unresolved structural bounds,
+28 satisfied/one violated/zero unresolved constraints. Remaining errors were
+unselected Detachment/Battle Size/Force Disposition and the unconfigured points
+limit. Attaching Eightbound toggled the two rules; save/reload/reopen, detach,
+Undo and Redo worked. Re-adding Angron emitted no initialization warning. Fresh
+tab console had zero warnings/errors. Actual viewport 518x893, not device/Safari
+or interactive New Recruit parity testing. Development-only Vite missing-file
+cache errors were cleared by restarting the isolated QA server before final QA.
+
+**Remaining/stop.** Incoming attachment capacity/category classification, general
+attached effects, wider/transitive association queries, required/multiple/shared
+associations, rule name/text operations and modified unlimited root results stay
+open. Attached rosters deliberately remain aggregate-incomplete. No later phase
+started. User preview 5199 (including the changed evaluation module) returns HTTP
+200 and remains running; user-origin saved rosters were untouched. Publication
+and exact CI confirmation follow this local handoff.
