@@ -2373,3 +2373,24 @@ with an unresolved resource-limit node and `truncated: true`.
 The original materializer remains independently available and materializes
 each supplied document's direct roots. The composed visible-root materializer
 does not replace it.
+
+## Selected-unit reference projection (RF-A05)
+
+`apps/web/src/unit-reference-model.ts` projects only the viewed selected subtree.
+It resolves profiles and rule applicability using each original owner before
+grouping. The representative retains its owner-specific report; members retain
+original owners/choices, and the immutable session retains cached per-owner
+reports. A shared profile object is never used to join reports across owners.
+
+Complete static material groups by exact source object/link identity, selected
+lineage/loadout and effective values. Modifier evidence, incomplete results and
+dynamic selection naming isolate occurrences, even if final text happens to
+match. Bottom-up interned loadout signatures avoid serializing entire ancestor
+subtrees for every profile. Information groups retain their existing hierarchy
+and owner-aware renderer. Unavailable parents retain resolved descendants under
+unknown, occurrence-specific scope with a visible warning.
+
+The selected modal orders stat/weapon tables ahead of prose cards; the original
+recursive tree mounts only on explicit secondary disclosure. This is an
+`apps/web` presentation boundary: no durable roster, evaluator, source-preview,
+cost, or print-model semantics changed. See `docs/qa/rf-a05-reference-card.md`.

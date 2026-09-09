@@ -3755,6 +3755,50 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
+.unit-reference-reader {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.unit-reference-reader h4 { margin: 0 0 10px; }
+.unit-reference-reader > section { scroll-margin-top: 12px; min-width: 0; }
+.unit-reference-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.unit-reference-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--nested-card-border);
+  border-radius: var(--corner-radius);
+  background: var(--nested-card-material);
+  color: var(--forest);
+}
+.unit-reference-attribution {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.unit-reference-group > .unit-reference-attribution { margin: 0 0 6px; }
+.unit-reference-group { min-width: 0; overflow-wrap: anywhere; }
+.unit-reference-reader .selection-profile dl { grid-template-columns: minmax(0, 1fr); }
+.unit-reference-reader .selection-profile-table-scroll { border-radius: var(--corner-radius); }
+.unit-reference-reader table { font-size: 0.875rem; }
+.unit-reference-reader table thead th { font-size: 0.8rem; }
+.unit-reference-reader table tbody th { font-size: 0.875rem; }
+.unit-reference-reader table tbody th small { font-size: 0.75rem; }
+.unit-reference-reader .selection-rule > p,
+.unit-reference-reader .selection-profile dd { font-size: 0.875rem; }
+.unit-reference-reader table th:first-child { min-width: 150px; }
+.unit-reference-quantity-note { margin: 0; font-size: 0.8rem; }
+.unit-reference-occurrences { margin-top: 20px; }
+.unit-reference-occurrences > summary { cursor: pointer; min-height: 44px; padding: 12px; }
+.unit-card-view-dialog .selected-unit-panel-heading { flex-direction: row; align-items: flex-start; }
+.unit-card-view-dialog .selected-unit-panel-heading > div { min-width: 0; }
+.unit-card-view-dialog .selected-unit-panel-heading button { flex-shrink: 0; }
+
 .selection-profile header,
 .selection-rule header,
 .selection-info-group > header {

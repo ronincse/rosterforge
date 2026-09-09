@@ -1238,7 +1238,8 @@ describe("App local catalogue flow", () => {
       within(updatedRosterActions).getByRole("menuitem", { name: "Redo" }),
     ).toHaveProperty("disabled", true);
     fireEvent.keyDown(updatedRosterActions, { key: "Escape" });
-    expect(unitCardView.querySelector(".selection-datasheet")).toBeTruthy();
+    expect(unitCardView.querySelector(".unit-reference-reader")).toBeTruthy();
+    expect(unitCardView.querySelector(".unit-card-view-list")).toBeNull();
     const editDisclosure = unitOptions.querySelector(".selection-edit");
     expect(editDisclosure?.hasAttribute("open")).toBe(false);
     // Effective keywords include one the catalogue only grants by modifier.
@@ -1285,7 +1286,7 @@ describe("App local catalogue flow", () => {
     ).toBeTruthy();
     expect(within(unitCardView).getByText("Shared Tactics")).toBeTruthy();
     expect(within(unitCardView).getByText("Advance together.")).toBeTruthy();
-    expect(within(unitCardView).getByText("Info groups")).toBeTruthy();
+    expect(within(unitCardView).getByRole("heading", { name: /Additional information/ })).toBeTruthy();
     expect(within(unitCardView).getByText("Fieldcraft")).toBeTruthy();
     expect(within(unitCardView).getByText("Forward Observer")).toBeTruthy();
     // An unsupported increment leaves the info-group profile's effective value
@@ -1318,7 +1319,9 @@ describe("App local catalogue flow", () => {
     expect(
       unitCardView.querySelector(".selection-rule header small"),
     ).toBeNull();
-    const developerDetails = within(unitCardView)
+    fireEvent.click(within(unitCardView).getByText("Selection & source details"));
+    const exactOccurrences = unitCardView.querySelector(".unit-card-view-list") as HTMLElement;
+    const developerDetails = within(exactOccurrences)
       .getByText("Developer details")
       .closest("details");
     expect(developerDetails).toBeTruthy();
@@ -1327,6 +1330,7 @@ describe("App local catalogue flow", () => {
         "minimal.cat, minimal.gst",
       ),
     ).toBeTruthy();
+    fireEvent.click(within(unitCardView).getByText("Selection & source details"));
     // Renaming is editing, so it moved behind `Edit selection` with the rest.
     fireEvent.click(within(unitOptions).getByText("Edit selection"));
     fireEvent.change(
@@ -1917,6 +1921,9 @@ describe("App local catalogue flow", () => {
       name: "Unit card for Infantry Squad",
     });
     expect(scrollIntoView).not.toHaveBeenCalled();
+    // The exact selected tree is still available, but no longer the default
+    // reading surface. Mount it only when provenance/occurrences are requested.
+    fireEvent.click(within(unitCard).getByText("Selection & source details"));
     const selectedDoctrine = unitCard.querySelector(
       '[data-occurrence-id="selection-ui-group-2"]',
     );
@@ -2858,7 +2865,17 @@ describe("App local catalogue flow", () => {
     });
     expect(
       within(unitCard).getAllByText("Required Model profile"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+    expect(within(unitCard).getAllByText("2× Required Model").length).toBeGreaterThan(0);
+    const sourceDetails = within(unitCard).getByText("Selection & source details");
+    sourceDetails.focus();
+    fireEvent.keyDown(sourceDetails, { key: "Tab" });
+    expect(document.activeElement).toBe(within(unitCard).getByRole("button", { name: "Close unit card for Initialization Unit" }));
+    fireEvent.click(sourceDetails);
+    expect(unitCard.querySelector(".unit-card-view-list")).toBeTruthy();
+    expect(within(unitCard).getAllByText("Required Model profile")).toHaveLength(3);
+    fireEvent.click(sourceDetails);
+    expect(unitCard.querySelector(".unit-card-view-list")).toBeNull();
     expect(
       within(unitOptions).queryByText("Default Option", {
         selector: "strong",
@@ -2908,7 +2925,7 @@ describe("App local catalogue flow", () => {
     // composition summary and independent unit card intact.
     fireEvent.click(modelToggles[0]!);
     expect(modelToggles[0]?.getAttribute("aria-expanded")).toBe("false");
-    expect(within(unitCard).getAllByText("Required Model profile")).toHaveLength(2);
+    expect(within(unitCard).getAllByText("Required Model profile")).toHaveLength(1);
     expect(within(composition).getByText("2× Required Model")).toBeTruthy();
 
     fireEvent.click(

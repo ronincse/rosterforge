@@ -240,6 +240,23 @@ An effective keyword is button-styled only when its exact resolved category has
 an attached rule, and its rule popup temporarily covers the unit-card modal so
 only one modal remains exposed to assistive technology.
 
+## Selected-unit reference reading (RF-A05)
+
+The selected reference is a reading projection, not the internal occurrence
+tree. Lead with model stats, then selected weapons/equipment, then full-width
+ability and rule cards. Provide keyboard-accessible section jumps and native
+comparison tables with focusable local horizontal scrolling on compact screens.
+Use 0.875rem for reference values/body text, 0.8rem column labels and 0.75rem
+row attribution rather than shrinking text to reduce the measured card height.
+
+Group only proven equivalent selected material, retaining quantities and bearer
+labels. Different source/link carriers, selected lineage/loadout, effective
+values or modifier evidence remain distinct. Uncertain material is not a
+deduplication opportunity. Exact occurrences, child keywords and provenance stay
+in a lazily mounted **Selection & source details** disclosure. Disclosure
+summaries participate in the modal focus loop; hidden disclosure contents do not.
+The RF-A05 measurement/coverage record is `docs/qa/rf-a05-reference-card.md`.
+
 ## State, motion, and accessibility
 
 - Pressed and selected rows use `--fill`; focus uses a visible `--tint` ring.

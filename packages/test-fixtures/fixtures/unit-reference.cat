@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fictional selected-reference grouping evidence. No third-party rules. -->
+<catalogue xmlns="http://www.battlescribe.net/schema/catalogueSchema" id="reference" name="Reference Test" revision="1" battleScribeVersion="2.03" gameSystemId="system-203" gameSystemRevision="0" library="false">
+  <selectionEntries>
+    <selectionEntry id="reference-squad" name="Reference Squad" type="unit">
+      <selectionEntries>
+        <selectionEntry id="reference-model" name="Reference Model" type="model">
+          <profiles>
+            <profile id="conditional" name="Conditional Model" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics><modifiers><modifier type="set" field="characteristic-move" value="9"><conditions><condition type="atLeast" field="selections" scope="self" childId="any" value="2" /></conditions></modifier></modifiers></profile>
+            <profile id="static" name="Reference Model" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics></profile>
+            <profile id="different-source" name="Reference Model" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics></profile>
+            <profile id="modified" name="Enhanced Model" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics><modifiers><modifier type="increment" field="characteristic-move" value="1" /></modifiers></profile>
+            <profile id="same-value-write" name="Same Value" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics><modifiers><modifier type="set" field="characteristic-move" value="6" /></modifiers></profile>
+            <profile id="uncertain" name="Uncertain Model" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics><modifiers><modifier type="increment" field="characteristic-move" value="1" scope="unproven-scope" /></modifiers></profile>
+          </profiles>
+          <rules>
+            <rule id="plain" name="Plain rule"><description>Shared static fictional text.</description></rule>
+            <rule id="hidden" name="Hidden rule" hidden="true"><description>Hidden text.</description></rule>
+            <rule id="uncertain-rule" name="Uncertain rule"><description>Unproven applicability stays visible.</description><modifiers><modifier type="set" field="hidden" value="true"><conditions><condition type="atLeast" field="associations" scope="self" childId="any" value="1" shared="true" /></conditions></modifier></modifiers></rule>
+          </rules>
+          <selectionEntries>
+            <selectionEntry id="reference-weapon" name="Reference weapon" type="upgrade"><profiles><profile id="weapon" name="Reference weapon" typeId="reference-weapon-type" typeName="Ranged Weapons"><characteristics><characteristic name="A" typeId="reference-attacks">2</characteristic></characteristics></profile></profiles></selectionEntry>
+          </selectionEntries>
+          <infoGroups><infoGroup id="reference-info" name="Scoped information"><rules><rule id="scoped" name="Scoped rule"><description>This stays attached to its group and owner.</description></rule></rules></infoGroup></infoGroups>
+          <infoLinks><infoLink id="missing" targetId="absent" type="rule" name="Missing rule" /><infoLink id="link-one" targetId="shared-profile" type="profile" /><infoLink id="link-two" targetId="shared-profile" type="profile" /><infoLink id="rule-link-one" targetId="shared-rule" type="rule" /><infoLink id="rule-link-two" targetId="shared-rule" type="rule" /></infoLinks>
+        </selectionEntry>
+      </selectionEntries>
+    </selectionEntry>
+  </selectionEntries>
+  <sharedProfiles><profile id="shared-profile" name="Shared linked profile" typeId="profile-type-unit" typeName="Unit"><characteristics><characteristic name="Move" typeId="characteristic-move">6</characteristic></characteristics></profile></sharedProfiles>
+  <sharedRules><rule id="shared-rule" name="Shared linked rule"><description>Distinct carriers remain distinct.</description></rule></sharedRules>
+</catalogue>

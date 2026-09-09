@@ -947,6 +947,22 @@ The existing identity-only primary-catalogue condition correctly hides Templar
 Vows for a Dark Angels Intercessor and retains it for Black Templars at this pin.
 This is pinned-source evidence, not a claim of interactive New Recruit parity.
 
+## Selected-reference grouping (RF-A05)
+
+Selected reference cards group proven-equivalent static material, not imported
+definitions or roster selections. Source/link identity, selected scope/loadout,
+effective characteristics, naming, visibility and completeness remain distinct.
+Modifier-bearing or uncertain material stays owner-specific. Quantities sum the
+group members' own selection amounts; descendant equipment is never multiplied
+by ancestor model counts and profile characteristics are never scaled.
+
+Only complete hidden rules are omitted, using the existing RF-A04 report for the
+actual owner. Incomplete rules retain applicability warnings/diagnostics. Missing
+profile inspections label source fallbacks. Nested information groups are not
+flattened or reinterpreted. Exact occurrence/source evidence and child keywords
+remain in secondary disclosure. This does not expand rule compatibility, change
+validity/completeness, or assert that equal displayed values imply equivalence.
+
 ## Deferred
 
 - Approximate origin-wide storage reporting, persistent-storage requests,

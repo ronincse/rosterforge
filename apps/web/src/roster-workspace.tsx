@@ -48,6 +48,7 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 
 import { Detail } from "./detail-row.js";
 import { inspectLocalRule } from "./rule-inspection.js";
+import { createUnitReferenceModel, referenceAttribution, type ReferenceMember } from "./unit-reference-model.js";
 import { DiagnosticList } from "./diagnostic-list.js";
 import {
   evaluateLocalRosterCosts,
@@ -3428,6 +3429,7 @@ function RosterUnitCardView({
   readonly onClose: () => void;
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
+  const [showOccurrences, setShowOccurrences] = useState(false);
   return (
     <div
       className="choice-preview-backdrop"
@@ -3466,7 +3468,11 @@ function RosterUnitCardView({
             Close
           </button>
         </div>
-        <ul className="roster-top-level-selection-list unit-card-view-list">
+        <SelectedUnitReference session={session} selection={selectionModel.occurrence} onViewKeywordRules={onViewKeywordRules} />
+        <details className="unit-reference-occurrences" open={showOccurrences}>
+          <summary onClick={event => { event.preventDefault(); setShowOccurrences(value => !value); }}>Selection & source details</summary>
+          <p>Exact selected occurrences, quantities, keywords and source provenance. Repeated information is expanded here.</p>
+        {showOccurrences && <ul className="roster-top-level-selection-list unit-card-view-list">
           <RosterSelectionItem
             session={session}
             selectionModel={selectionModel}
@@ -3482,10 +3488,60 @@ function RosterUnitCardView({
             onRemove={onRemove}
             onViewKeywordRules={onViewKeywordRules}
           />
-        </ul>
+        </ul>}
+        </details>
       </section>
     </div>
   );
+}
+
+/** Fast reading surface; the recursive occurrence tree is mounted only on demand. */
+function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
+  readonly session: LocalRosterSession;
+  readonly selection: RosterSelection;
+  readonly onViewKeywordRules: (preview: KeywordRulePreview, trigger: HTMLButtonElement) => void;
+}) {
+  const model = useMemo(() => createUnitReferenceModel(session, selection), [session, selection]);
+  const categories = useMemo(() => inspectLocalRosterSelectionCategories(session, selection.id), [session, selection.id]);
+  const prose = model.profiles.filter(group => group.profile.value.characteristics.some(c => c.name?.toLowerCase() === "description"));
+  const statistics = model.profiles.filter(group => !prose.includes(group));
+  // Type labels determine reading order only, never membership or equivalence.
+  const models = statistics.filter(group => group.profile.value.typeName?.toLowerCase() === "unit");
+  const equipment = statistics.filter(group => !models.includes(group));
+  const tables = (groups: typeof statistics) => <SelectionProfileTables profiles={groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members } }))} reports={undefined} />;
+  return <div className="unit-reference-reader">
+    <nav className="unit-reference-nav" aria-label="Unit reference sections">
+      {models.length > 0 && <a href="#unit-reference-stats">Stats</a>}
+      {equipment.length > 0 && <a href="#unit-reference-weapons">Weapons & equipment</a>}
+      {(prose.length > 0 || model.rules.length > 0) && <a href="#unit-reference-rules">Abilities & rules</a>}
+    </nav>
+    {models.length > 0 && <section id="unit-reference-stats" tabIndex={-1}><h4>Model stats</h4>{tables(models)}</section>}
+    {equipment.length > 0 && <section id="unit-reference-weapons" tabIndex={-1}><h4>Selected weapons & equipment</h4>{tables(equipment)}</section>}
+    <p className="unit-reference-quantity-note">Quantities describe selected entries, not multiplied attacks or other profile values.</p>
+    {model.unavailableOwners.map(owner => <p key={owner.id}>Information unavailable for {owner.name ?? "an unnamed selection"}. Its resolved selected descendants are shown separately; source scope is unconfirmed.</p>)}
+    {model.displayNotes.map(note => <div key={note.owner.id}><strong>{note.name}</strong>{note.incomplete && <p>Some display naming is unresolved for this selection.</p>}</div>)}
+    <section id="unit-reference-rules" tabIndex={-1} className="selection-info-section">
+      <h4>Abilities & rules</h4>
+      <div className="selection-rule-list">
+        {prose.map((group, index) => <div key={index} className="unit-reference-group">
+          <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
+          {group.report === undefined && <p className="profile-completeness">Profile inspection unavailable; source values shown.</p>}
+          <SelectionProfile profile={group.profile} report={group.report} />
+        </div>)}
+        {model.rules.map((group, index) => <div key={index} className="unit-reference-group">
+          <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
+          <SelectionRule rule={group.rule} />
+        </div>)}
+        {prose.length === 0 && model.rules.length === 0 && <p>No attached abilities or rules.</p>}
+      </div>
+    </section>
+    {categories.ok && <SelectionKeywords session={session} inspection={categories.value} onViewRules={onViewKeywordRules} />}
+    {model.supplementary.map(({ member, groups, unresolved, reports }) => <section className="selection-info-section" key={member.owner.id}>
+      <h4>Additional information · {member.label}</h4>
+      {groups.map((infoGroup, index) => <SelectionInfoGroup key={index} infoGroup={infoGroup} reports={reports} ruleEnvironment={{ session, owner: member.owner }} />)}
+      {unresolved.map((link, index) => <p key={index}>Unavailable linked information: {link.link.name ?? link.link.targetId ?? "Unnamed information"}. This information could not be loaded from the imported catalogue.</p>)}
+    </section>)}
+  </div>;
 }
 
 /** One keyword's source-authored rules, layered over the owning unit card. */
@@ -3706,9 +3762,19 @@ function trapDialogFocus(
 ): void {
   const focusable = Array.from(
     container.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      'summary, button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
-  );
+  ).filter(element => {
+    // Native disclosure summaries participate in Tab order, but their closed
+    // contents do not. Avoid trapping focus on an invisible provenance link.
+    if (element.closest("[hidden]")) return false;
+    let child: Element = element;
+    for (let parent = element.parentElement; parent && parent !== container; parent = parent.parentElement) {
+      if (parent instanceof HTMLDetailsElement && !parent.open && child !== parent.querySelector(":scope > summary")) return false;
+      child = parent;
+    }
+    return true;
+  });
   const first = focusable[0];
   const last = focusable.at(-1);
   if (first === undefined || last === undefined) return;
@@ -5804,9 +5870,10 @@ type SelectionRuleDetail = (
   | { readonly origin: "Linked"; readonly value: Pick<MaterializedRuleInfoLink, "definition" | "link" | "hidden" | "name" | "description"> }
 ) & { readonly report?: RosterRuleVisibilityReport };
 
-type SelectionProfileDetail =
+type SelectionProfileDetail = (
   | { readonly origin: "Direct"; readonly value: DirectProfile }
-  | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink };
+  | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink }
+) & { readonly reference?: { readonly report: LocalRosterProfileCharacteristics | undefined; readonly members: readonly ReferenceMember[] } };
 
 function RosterSelectionDatasheet({
   session,
@@ -6487,7 +6554,7 @@ function SelectionProfileTables({
         return (
           <section className="selection-profile-table-group" key={key}>
             <h5>{typeName}</h5>
-            <div className="selection-profile-table-scroll">
+            <div className="selection-profile-table-scroll" tabIndex={groupedProfiles.some(p => p.reference) ? 0 : undefined} role={groupedProfiles.some(p => p.reference) ? "region" : undefined} aria-label={groupedProfiles.some(p => p.reference) ? `${typeName} profiles, scroll horizontally for all characteristics` : undefined}>
               <table>
                 <thead>
                   <tr>
@@ -6499,7 +6566,9 @@ function SelectionProfileTables({
                 </thead>
                 <tbody>
                   {groupedProfiles.map((profile, index) => {
-                    const report = reports?.get(profile.value);
+                    // A grouped row owns its representative's report. Shared
+                    // source objects can have different results in other owners.
+                    const report = profile.reference ? profile.reference.report : reports?.get(profile.value);
                     return (
                       <tr
                         key={selectionProfileKey(profile, index)}
@@ -6507,6 +6576,9 @@ function SelectionProfileTables({
                       >
                         <th scope="row">
                           {selectionProfileDisplayName(profile, report)}
+                          {profile.reference && <small className="unit-reference-attribution">{referenceAttribution(profile.reference.members)}</small>}
+                          {profile.reference && report === undefined && <small>Profile inspection unavailable; source values shown.</small>}
+                          {report?.completeness === "incomplete" && <small>Some display behavior is unresolved; values are not a complete result.</small>}
                           {report?.visibility.status === "hidden" && (
                             <small>Hidden by catalogue</small>
                           )}
