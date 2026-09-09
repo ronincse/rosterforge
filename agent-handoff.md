@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (audit repair batch complete; RF-A04 partial compatibility)
+## Current Status — 2026-09-09 (failed-discard follow-up fixed; capacity trace next)
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -42,8 +42,10 @@ repaired in `7900bcc`. RF-A03 bounded archive decompression is implemented in
 `4e67051`/`f40c0e7`. RF-A04 `0d3bfcc`/`1fdbcde` repairs the reported Templar Vows
 case and contains unsupported applicability with per-rule uncertainty; it is not
 complete rule compatibility. All four authorized checkpoints are implemented and
-locally verified; RF-A01/A02/A03 remote CI succeeded. RF-A04 CI will be checked
-after this handoff push and reported to the owner. Do not resume UI work automatically.
+locally verified; RF-A01/A02/A03 remote CI succeeded and RF-A04 CI `34370611001`
+passed on `269f96c`. The owner accepted that batch and authorized only two follow-ups.
+The failed-discard latest-state protection defect is fixed in `2a0ac05`; Impulsor
+headline capacity is next. Do not resume UI work automatically.
 RF-A05 reference-card redesign is deferred. The reported loss of
 headline points capacity after adding Impulsor is unconfirmed separate triage.
 
@@ -283,7 +285,7 @@ diagnostic codes.
   judgment-based targets, not quotas; the lead remains primary implementer and
   sole integrator, validator, handoff author, publisher, and CI owner.
 - **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and
-  `git diff --check` all pass. `pnpm test` is **608 passed, 21 skipped (629)**,
+  `git diff --check` all pass. `pnpm test` is **618 passed, 21 skipped (639)**,
   across 64 files (61 passed, three optional files skipped).
   The production build retains only Vite's existing large-chunk warning.
 - **Pinned corpus.** `E:\GitHub\wh40k-11e` at commit
@@ -297,8 +299,8 @@ diagnostic codes.
   re-derived. Older entries below still cite the old hash on purpose: they
   record what was true when they were written. Only this block tracks the
   current one.
-- **Active area.** The authorized correctness/durability batch is finished;
-  further UI work awaits owner direction. Prior usability evidence follows. The first
+- **Active area.** Only the authorized failed-discard and headline-capacity
+  follow-ups; further UI work awaits owner direction. Prior usability evidence follows. The first
   phone-width pass is complete: a real Death Guard add/configure/amount/check
   path fits 390 px and the 320 px supported minimum without horizontal overflow,
   and sticky workspace links leave their targets visible. The broader Grok
@@ -768,7 +770,8 @@ QA before classifying or implementing the discrepancy.
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
 | Audit RF-A04 rule visibility | Mitigated; reported case fixed | `0d3bfcc`/`1fdbcde`: rule/link modifiers preserved, occurrence-aware Boolean visibility and explicit per-rule uncertainty; Dark Angels/Black Templars Templar Vows behavior verified. Full compatibility remains open below |
 | Remaining rule-display compatibility | Open, outside repair batch | Resolve association conditions (86 hidden-link condition leaves at the pin), cross-layer conflicting modifier precedence, parent info-group visibility, rule text/name operations and four generic catalogue-root info links using semantic evidence; do not guess or hide uncertainty |
-| Recovery failure/performance follow-ups | Open, non-gating | Independent RF-A02 review noted two full decodes when foreign recovery exists during save, and failed explicit discard can cancel a pending recovery timer until another edit. Existing durable recovery is retained; optimize/re-arm in a separate bounded checkpoint |
+| Failed recovery discard strands pending protection | Done | `2a0ac05`: reproduced newer pending snapshots lost on reload despite retaining the older recovery. Shared debounce re-arms once after failed discard; session/epoch guards, successful discard, queued writes, later edits and batched operations covered. Previous non-gating characterization was insufficient |
+| Redundant recovery decoding | Open, performance follow-up | RF-A02 review noted two full decodes when foreign recovery exists during save. Intentionally excluded from the correctness follow-up |
 | Audit RF-A05 reference-card reading | Deferred to UI overhaul | Audit Intercessor card at 390x844 contained 22 tables and 11,173 px scroll height, with Unit stats after about 1,935 px. Grouping and reading-order redesign are excluded from this repair batch |
 | Impulsor headline points-capacity disappearance | Unconfirmed triage | Audit's 2,000-point Dark Angels journey lost headline capacity after adding Impulsor while Configuration retained Battle Size. Requires separate evaluator trace; not an RF-A04 defect and excluded from repair implementation |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -13508,6 +13511,10 @@ RF-A04 remain authorized and will follow; no UI redesign is included.
 
 ## Completed Assignment — RF-A02 Recovery Lifecycle, 2026-09-09
 
+> Follow-up: the non-gating failed-discard characterization below is superseded
+> by the 2026-09-09 Failed Recovery Discard entry. Older durable recovery was
+> retained, but newer pending edits were demonstrably left unprotected.
+
 Baseline `07f33b6`; implementation `7900bcc`, followed by this separate handoff
 commit. RF-A01 remote CI `34363926404` succeeded on `07f33b6`.
 Reproduced recovery becoming active draft `__recovery__` and opening a named
@@ -13645,3 +13652,47 @@ triage, and rule/recovery follow-ups are recorded in roadmap rows. No next produ
 checkpoint is authorized by this completion. Development server remains available
 on `http://127.0.0.1:5199/app/` for owner testing; temporary delegate worktrees can
 be removed after their clean-state verification, while retained audit evidence stays.
+
+## Completed Assignment — Failed Recovery Discard Follow-up, 2026-09-09
+
+Baseline `269f96c`, clean and synchronized after fetch; code/tests/compatibility
+`2a0ac05`, followed by this handoff. Previous repair CI `34370611001` succeeded.
+No other active task was found writing the primary checkout. The two old delegate
+worktrees had been removed with owner approval; retained audit evidence was preserved.
+
+An isolated native reproduction lane established two latest-state loss cases:
+durable snapshot 1 + pending 2 recovered 1 after failed discard; held write 2 +
+pending 3 + queued failed clear recovered 2. Both successful-discard controls
+passed. Lead integrated the four cases and reran them: 18 passed / two failed
+including the existing FIFO tests. Recovery was prioritized over capacity because
+this confirmed current protection loss, not merely theoretical timer behavior.
+
+The clear increments its epoch before storage; on failure the old timer was invalid
+and no scheduling dependency changed. The fix shares one replaceable debounce
+between normal edits and failed clears, retaining the initiating session and epoch
+at timer creation and reading the live roster when due. Failed writes do not retry.
+Successful discard stays discarded until another edit. No format, storage ownership,
+FIFO or redundant-decoding optimization changed. The initial React-state reschedule
+design was rejected after independent review produced a failing same-batch
+failure-then-success resurrection test; the shared-timer replacement passes it.
+
+Final focused suite: 26 passing tests (24 controller, two FIFO), including the
+original RF-A01/A02 long-history lifecycle, ten new cases, queued writes, failed
+re-arm writes/no loop, later save/discard/session supersession and subsequent edits.
+Native reviewer inspected the actual final primary diff and approved. Claude's
+previously exhausted session window had not reset, so it was not retried; no
+provider/auth/billing configuration changed or external payload was sent.
+
+Actual App browser QA on isolated port 5200 used a fictional Repair Squad and a
+temporary injected-delete-failure wrapper: failure message and recovery offer
+remained, a fresh visit recovered the configured weapon/squad at 10 pts as unsaved,
+and console warnings/errors were empty. Pending-write races/remounts were verified
+with controlled timers in tests, not claimed as browser fault-injection parity.
+Temporary harness: `apps/web/.cache/recovery-followup.html` (gitignored, not shipped).
+
+All gates passed: lint, typecheck, 618 passed / 21 skipped (639 total), 64 files,
+build and diff check. Existing build-size advisory only. The 19 optional pinned
+JSON integration tests pass across all 46 documents at verified corpus commit
+`04c62fcd041b3808c39d5c46fd677c704027b979`. Impulsor capacity investigation remains
+in the authorized batch. RF-A05, broader rule support and performance work remain
+excluded; no whole-project readiness conclusion is made.
