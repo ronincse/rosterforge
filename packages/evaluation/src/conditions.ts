@@ -30,6 +30,7 @@ import {
   type EvaluationForceIdentityCandidate,
 } from "./force-context.js";
 import { isSupportedDirectAssociation } from "./association-shape.js";
+import { isSelectionGroupCountTarget, selectionGroupCountCandidate, selectionGroupCountTargetStatus } from "./selection-count-membership.js";
 import {
   expectedCatalogueKey,
   evaluationSelectionIdentityCandidate,
@@ -437,7 +438,7 @@ export function evaluateRosterCondition<
   const typedScopeTypes = typedSelectionTypes(scope);
   const idScopeTarget =
     idScope.status === "supported" ? idScope.targetId : undefined;
-  const relativeScope =
+  let relativeScope =
     selectionOwnerLocation !== undefined &&
     (typedScopeTypes !== undefined || idScopeTarget !== undefined) &&
     (canCollectSelectionCounts ||
@@ -458,6 +459,11 @@ export function evaluateRosterCondition<
             options.effectiveCategories,
           )
       : { unresolved: false };
+  // An omitted group is not a durable containing occurrence. Until group-valued
+  // scope traversal is modeled, do not misreport its missing wrapper as zero.
+  if (idScopeTarget !== undefined && isSelectionGroupCountTarget(context, idScopeTarget)) {
+    relativeScope = { unresolved: true };
+  }
   if (relativeScope.unresolved) {
     diagnostics.push(
       conditionDiagnostic(
@@ -532,16 +538,26 @@ export function evaluateRosterCondition<
           relativeScope.occurrence,
           options.prospectiveChild === true,
         );
-  const selectionCandidates = selectionOccurrences.map((occurrence) =>
-    evaluationSelectionIdentityCandidate(
+  const groupTargetStatus = canCollectSelectionCounts && condition.childId !== undefined
+    ? selectionGroupCountTargetStatus(context, condition.childId) : undefined;
+  const numericGroupTarget = groupTargetStatus === undefined ? undefined : condition.childId;
+  if (groupTargetStatus === "unresolved") diagnostics.push(conditionDiagnostic(
+    condition, "EVALUATION_CONDITION_CANDIDATES_UNRESOLVED",
+    "The queried selection group target is missing or ambiguous.", "childId", ["resolution"], {},
+  ));
+  const selectionCandidates = selectionOccurrences.map((occurrence) => {
+    const candidate = evaluationSelectionIdentityCandidate(
       occurrence,
       choices,
       catalogueMatches,
       condition.childId,
       condition.shared === true,
       options.effectiveCategories,
-    ),
-  );
+    );
+    return numericGroupTarget === undefined ? candidate : selectionGroupCountCandidate(
+      candidate, roster, context, numericGroupTarget, condition.shared === true,
+    );
+  });
   const forces = indexEvaluationForces(context);
   const forceCandidates = canCollectForces
     ? rosterForcesInScope(
@@ -615,7 +631,7 @@ export function evaluateRosterCondition<
     costEvaluation?.value ??
     selectionBounds.minimum + nonSelectionMinimum;
   const maximum =
-    costEvaluation === undefined
+    groupTargetStatus === "unresolved" ? Number.POSITIVE_INFINITY : costEvaluation === undefined
       ? selectionBounds.maximum +
         nonSelectionMinimum +
         nonSelectionUnresolved
@@ -638,7 +654,7 @@ export function evaluateRosterCondition<
     );
   }
 
-  const status =
+  const status = groupTargetStatus === "unresolved" ? "unresolved" :
     (canCollectSelectionCounts || canCollectForces) &&
     !relativeScope.unresolved &&
     comparison !== undefined &&
@@ -662,6 +678,7 @@ export function evaluateRosterCondition<
           )
         : "unresolved";
   const canReportObserved =
+    groupTargetStatus !== "unresolved" &&
     !relativeScope.unresolved &&
     (canCollectSelections ||
       canCollectForces ||

@@ -848,6 +848,13 @@ nearest typed selection because an owner or ancestor definition is unavailable
 or ambiguously typed. The evaluator does not skip that occurrence and search
 farther upward.
 
+This scope diagnostic also covers group-valued numeric scopes whose transparent
+container has no supported durable occurrence traversal. Numeric group-target
+queries use `EVALUATION_CONDITION_CANDIDATES_UNRESOLVED` for missing/ambiguous
+authored member placement or dangling/ambiguous group links (the latter points
+to `@childId`). An empty resolved group remains a complete zero. These diagnostics
+preserve existing codes and do not suppress source graph diagnostics.
+
 ID-valued selection-count scopes are resolved only within the selected
 catalogue's reachable graph. The nearest matching owner-or-ancestor occurrence
 is the named container: false or absent `includeChildSelections` queries direct

@@ -1455,7 +1455,22 @@ selection entries, selection-entry groups, entry links, and category entries.
 It then starts at the nearest owner-or-ancestor occurrence whose effective
 local or shared identities contain that ID. A missing graph target or a target
 of another kind remains unresolved with a source-located diagnostic; it is not
-treated as an empty scope.
+treated as an empty scope. Group-valued scopes are explicitly unresolved: a
+transparent group has no durable containing occurrence. Recognizing its source
+kind does not establish scope traversal.
+
+Numeric `field=selections` conditions additionally use
+`selection-count-membership.ts` for group targets. The actual selected parent
+chooses a cached authored child frontier, traversing only transparent groups and
+stopping at concrete entries. Both flattened and explicitly persisted group
+wrappers count concrete carriers once; each persisted wrapper's own placement
+is checked. Ambiguous paths must agree, and missing placement or dangling group
+links retain uncertainty. Group links can be queried by their occurrence ID;
+shared queries also recognize their definition ID. These IDs are added only to
+numeric candidate evidence, never to generic `instanceOf` identity. Repeats and
+modifier consumers reuse the condition query. Occurrence indexing is O(n) once
+per immutable roster; template-frontier and target lookups are weakly cached by
+immutable parent/context rather than rebuilding transitive group ancestry.
 
 The same owner API supports shared force-definition counts for
 `field="forces"` in `roster` scope. This form requires explicit `shared="true"`

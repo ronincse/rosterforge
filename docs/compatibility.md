@@ -1743,13 +1743,31 @@ evaluation.
 
 All 1,044 observed ID-valued condition scopes query numeric selection counts.
 Their targets resolve to 1,028 selection entries, ten selection-entry groups,
-and six entry links, so the nearest effective owner-or-ancestor interpretation
-supports their scope shape. The named occurrence is a container: the 214
+and six entry links. **Correction, 2026-09-10:** recognizing a group's source
+kind did not actually resolve its omitted durable wrapper. The ten group-valued
+scopes (and links to such scopes) now remain explicitly unresolved rather than
+returning complete zero. Entry-valued scopes retain their existing behavior.
+The named entry occurrence is a container: the 214
 conditions with absent or false `includeChildSelections` inspect its direct
 children, while the 830 explicit-true conditions include all descendants.
 Category-entry scope IDs are supported by the same identity model and covered
 synthetically. Missing targets and IDs that resolve to force entries or other
 object kinds remain incomplete instead of producing an exact zero count.
+
+Numeric selection-count conditions targeting a transparent group now count its
+concrete selected carriers in the authored placement beneath their actual
+parent. Nested groups, linked/shared groups, separate occurrences and explicit
+amounts are supported without counting wrappers or descendant equipment twice.
+Parent/force/child traversal still bounds the candidate collection. Numeric
+membership does not broaden `instanceOf`, category identity or association edges.
+Missing/ambiguous placement and dangling group links remain incomplete; an
+actually empty, resolved group can still yield exact zero. Constraints and
+non-cost modifiers using these conditions inherit the repair, as do numeric
+repeats. Existing dedicated structural group-bound aggregation is unchanged.
+Pinned measurement: 340 numeric group-target conditions across 27/46 documents,
+109 target IDs (317 definition-target uses, 23 group-link-target uses); 31 repeat
+queries also name groups. There are 13 identity predicates naming groups, which
+are deliberately not reinterpreted as numeric membership.
 
 The pinned game system contains 301 constraints. Common compatible shapes use
 `type="min"` or `type="max"`, `field="selections"`, and parent, force, or roster
