@@ -15,7 +15,6 @@ import {
 } from "@rosterforge/data-graph";
 
 import {
-  rosterDefinitionKeyForSource,
   rosterSelectionAmount,
   type Roster,
   type RosterForce,
@@ -29,7 +28,7 @@ import {
   rosterForcesInScope,
   type EvaluationForceIdentityCandidate,
 } from "./force-context.js";
-import { isSupportedDirectAssociation } from "./association-shape.js";
+import { rosterAssociationReach } from "./association-graph.js";
 import { isSelectionGroupCountTarget, selectionGroupCountCandidate, selectionGroupCountTargetStatus } from "./selection-count-membership.js";
 import {
   expectedCatalogueKey,
@@ -361,33 +360,10 @@ export function evaluateRosterCondition<
     // Association queries inspect stored edges, not containment or model count.
     // Keep this leaf independent of association eligibility: those filters may
     // themselves contain conditions, so rechecking them here would recurse.
-    const locations = rosterSelectionLocations(roster);
-    const counterpartIds = new Set<string>();
-    let unresolved = resolveEvaluationSelection(owner as RosterSelection, choices, catalogueMatches).status !== "resolved";
-    for (const edge of roster.associations ?? []) {
-      if (edge.sourceId !== owner.id && edge.targetId !== owner.id) continue;
-      const sources = locations.filter(l => l.occurrence.id === edge.sourceId);
-      const targets = locations.filter(l => l.occurrence.id === edge.targetId);
-      const source = sources[0];
-      const target = targets[0];
-      if (sources.length !== 1 || targets.length !== 1 || !source || !target || source.force !== target.force || source === target) {
-        unresolved = true;
-        continue;
-      }
-      const definition = resolveEvaluationSelection(source.occurrence, choices, catalogueMatches);
-      const associations = definition.status === "resolved" ? definition.choices[0]!.associations.filter(a =>
-        rosterDefinitionKeyForSource(a.source.sourceId, a.path) === edge.definitionKey) : [];
-      // Only saved direct same-force group edges are currently representable.
-      // An unknown definition must not become a confident empty association.
-      const targetDefinition = resolveEvaluationSelection(target.occurrence, choices, catalogueMatches);
-      if (associations.length !== 1 || !isSupportedDirectAssociation(associations[0]!) || targetDefinition.status !== "resolved" || targetDefinition.choices[0]?.kind !== "selectionEntry" || targetDefinition.choices[0]?.type !== "unit") {
-        unresolved = true;
-        continue;
-      }
-      counterpartIds.add(edge.sourceId === owner.id ? edge.targetId : edge.sourceId);
-    }
-    const candidates = locations.filter(l => counterpartIds.has(l.occurrence.id)).map(l =>
-      evaluationSelectionIdentityCandidate(l.occurrence, choices, catalogueMatches, condition.childId, true, options.effectiveCategories));
+    const reach = rosterAssociationReach(roster, context, owner as RosterSelection);
+    let unresolved = reach.unresolved || resolveEvaluationSelection(owner as RosterSelection, choices, catalogueMatches).status !== "resolved";
+    const candidates = reach.selections.map(occurrence =>
+      evaluationSelectionIdentityCandidate(occurrence, choices, catalogueMatches, condition.childId, true, options.effectiveCategories));
     const matching = candidates.filter(c => c.status === "match").map(c => c.occurrence);
     unresolved ||= candidates.some(c => c.status === "unresolved");
     if (unresolved) diagnostics.push(conditionDiagnostic(condition,

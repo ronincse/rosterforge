@@ -20,6 +20,7 @@ import {
 } from "./selection-context.js";
 
 import { collectAffectsRoutedSelectionModifiers } from "./affects-routing.js";
+import { evaluateRoutedApplicability } from "./routed-applicability.js";
 
 import {
   evaluateRosterModifierApplicability,
@@ -453,11 +454,12 @@ export function evaluateRosterSelectionCategories<
     primaryKnown = false;
   }
   for (const contribution of routed.contributions) {
-    const evaluated = evaluateRosterModifierApplicability(
+    const evaluated = evaluateRoutedApplicability(
       roster,
       context,
       contribution.declaredBy,
       contribution.modifier,
+      contribution.groupPath,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {
@@ -616,6 +618,7 @@ function collectAffectsRoutedCategoryModifiers(
     contributions.push({
       modifier,
       grouped: entry.grouped,
+      ...(entry.groupPath === undefined ? {} : {groupPath: entry.groupPath}),
       origin: "affects",
       declaredBy: entry.declaredBy,
     });
@@ -626,6 +629,7 @@ function collectAffectsRoutedCategoryModifiers(
 interface InboundCategoryContribution {
   readonly modifier: RosterCategoryModifierSource;
   readonly grouped: boolean;
+  readonly groupPath?: readonly number[];
   readonly origin: RosterCategoryStepOrigin;
   readonly declaredBy: RosterSelection;
 }

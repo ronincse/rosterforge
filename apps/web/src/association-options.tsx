@@ -32,7 +32,7 @@ export function AssociationOptions({session, selection, onSet}: {readonly sessio
       const candidates = choice.candidates.filter(c => c.status !== "unsatisfied");
       return <fieldset key={choice.key}><legend>{choice.name}</legend>
         {!choice.supported ? <p>This attachment format is not supported yet.</p> : <>
-          <p>Choose one unit from your roster.</p>
+          <p>{choice.declaration.min === 1 ? "Required: choose one unit from your roster." : "Optional: choose up to one unit from your roster."} {!existing && choice.declaration.min === 1 && "No target selected."}</p>
           {candidates.map((candidate, index) => <button type="button" key={candidate.selection.id} disabled={candidate.status !== "satisfied"} aria-pressed={existing?.targetId === candidate.selection.id} onClick={() => onSet(selection.id, choice.key, existing?.targetId === candidate.selection.id ? undefined : candidate.selection.id)}>
             {candidate.selection.name ?? "Unnamed unit"} · squad {index + 1}{candidate.status === "unresolved" ? " — eligibility unverified" : ""}
           </button>)}
@@ -45,6 +45,6 @@ export function AssociationOptions({session, selection, onSet}: {readonly sessio
     {saved.filter(a => !choices.some(c => c.key === a.definitionKey)).map(a => <p key={a.definitionKey}>Attachment definition unavailable. <button type="button" onClick={() => onSet(selection.id, a.definitionKey, undefined)}>Detach</button></p>)}
     {incoming.map(a => <p key={a.sourceId + a.definitionKey}>Attached: {names.get(a.sourceId) ?? "unavailable unit"}</p>)}
     {sourceLinks > 0 && <p>Some linked attachment definitions are not supported yet.</p>}
-    <p className="reference-source-note">Attachments are saved separately. Attached-unit effects and incoming leader limits are not fully checked.</p>
+    <p className="reference-source-note">Attachments keep units separate. Supported incoming limits and shared effects are checked; any remaining uncertainty appears in roster checks.</p>
   </section>;
 }

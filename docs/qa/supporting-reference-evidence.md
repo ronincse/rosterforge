@@ -1,7 +1,9 @@
 # Supporting reference evidence — 2026-09-10
 
-Investigation only; checkpoint3 implementation and RosterForge browser acceptance
-remain outstanding. The ordinary UI roadmap stays paused.
+Historical investigation; checkpoint3's supported implementation and bounded
+RosterForge browser acceptance are now recorded in `supporting-acceptance.md`.
+The full army remains blocked by a new failure in `reference-army-replay.md`.
+The ordinary UI roadmap stays paused.
 
 ## Catalogue and public editor
 
@@ -57,7 +59,7 @@ Assignment click rerendered before checkbox postcheck, causing one locator timeo
 subsequent unit/roster/profile inspections explicitly confirmed the new state.
 This was not the separate RosterForge renderer crash.
 
-Still to implement/verify: source-driven A/B eligibility, incoming and outgoing
+Outstanding at the end of this historical investigation: source-driven A/B eligibility, incoming and outgoing
 bounds, retargeting, target deletion, duplicate/history/save/reopen, exact effect
 provenance and idempotence, unrelated profiles, enhancement-group limits, and
 the full reference army. No required-shape gate or `.group` production code was

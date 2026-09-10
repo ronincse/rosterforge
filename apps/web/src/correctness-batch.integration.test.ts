@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { type Result } from "@rosterforge/foundation";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
+import { inspectRosterAssociationChoices } from "@rosterforge/evaluation";
+import { createUnitReferenceModel } from "./unit-reference-model.js";
+import { inspectLocalRosterConstraints, setLocalRosterAssociation } from "./roster-session.js";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, localRosterRootChoices, setLocalRosterSelectionAmount, duplicateLocalRosterSelection, removeLocalRosterSelection } from "./roster-session.js";
 
@@ -12,7 +15,7 @@ const evidence = process.env.ROSTERFORGE_CORRECTNESS_SNAPSHOTS;
 const revisions = { frozen: "04c62fcd041b3808c39d5c46fd677c704027b979", "current-upstream": "5b261ec423d5d017bb733c4f3c0a760b085d5ca5" };
 function ok<T>(r: Result<T>): T { if (!r.ok) throw new Error(JSON.stringify(r.diagnostics)); return r.value; }
 
-for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`counts Intercessor carriers and prices repeated Knights/Impulsors on ${dataset} ${revision}`, async () => {
+async function snapshotCatalogue(dataset: string, revision: string) {
   if (evidence === undefined) throw new Error("Snapshots not configured");
   const manifest = JSON.parse(readFileSync(join(evidence, `${dataset}-manifest.json`), "utf8")) as { commit: string; documents: { path: string; bytes: number; sha256: string; gitBlob: string; id: string; gameSystemId?: string; catalogueLinks: { targetId: string }[] }[] };
   expect(manifest.commit).toBe(revision);
@@ -29,6 +32,11 @@ for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence 
   });
   const library = ok(await prepareLocalCatalogueLibrary(files, { import: { batchId: `count-${dataset}`, importedAt: "2026-09-10T00:00:00Z" } }));
   const catalogue = library.selectableCatalogues.find(c => c.id === "470a-6daa-9014-12df")!;
+  return catalogue;
+}
+
+for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`counts Intercessor carriers and prices repeated Knights/Impulsors on ${dataset} ${revision}`, async () => {
+  const catalogue = await snapshotCatalogue(dataset, revision);
   let n = 0; const next = () => selectionOccurrenceId(`count-${++n}`);
   let session = ok(createLocalRosterSession(catalogue, catalogue.context.forces.definitions.find(f => f.source.id === "bb9d-299a-ed60-2d8a")!, { rosterId: rosterId("count"), forceId: forceOccurrenceId("force"), name: "Group count", createSelectionId: next }));
   const unitId = next();
@@ -82,4 +90,50 @@ for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence 
   const preceding = dataset === "frozen" ? 4 : 3;
   for (let n = 0; n <= preceding; n++) add(impulsor);
   expect(prices(impulsor)).toEqual([...Array<number>(preceding).fill(70), 80]);
+}, 30000);
+
+for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`keeps Supporting gates and connected effects live on ${dataset} ${revision}`, async () => {
+  const catalogue = await snapshotCatalogue(dataset, revision);
+  let n = 0; const next = () => selectionOccurrenceId(`support-${++n}`);
+  let session = ok(createLocalRosterSession(catalogue, catalogue.context.forces.definitions.find(f => f.source.id === "bb9d-299a-ed60-2d8a")!, {rosterId:rosterId("support"),forceId:forceOccurrenceId("force"),name:"Supporting",createSelectionId:next}));
+  const roots = localRosterRootChoices(catalogue);
+  const add = (name: string) => {
+    const root = roots.find(c => c.materialized.name === name)!;
+    expect(root).toBeDefined();
+    const id = next();
+    session = ok(addLocalRosterRootSelection(session, root, {selectionId:id,createSelectionId:next}));
+    return id;
+  };
+  const lieutenant = add("Lieutenant"), body = add("Intercessor Squad"), captain = add("Captain"), unrelated = add("Captain");
+  const selection = (id: typeof lieutenant) => session.roster.forces[0]!.selections.find(s => s.id === id)!;
+  const association = (id: typeof lieutenant) => inspectRosterAssociationChoices(session.roster, catalogue.context, selection(id))[0]!;
+  const supporting = association(lieutenant);
+  expect(supporting).toMatchObject({supported:true,declaration:{min:1,max:1}});
+  const required = () => ok(inspectLocalRosterConstraints(session)).selections.selections.find(s => s.owner.id === lieutenant)!.constraints.find(c => c.constraint.associationName && c.constraintType === "min")!;
+  expect(required()).toMatchObject({status:"violated",observed:0,limit:1,completeness:"complete"});
+  const keywords = (id: typeof lieutenant) => createUnitReferenceModel(session, selection(id)).profiles.filter(p => /Weapons$/.test(p.profile.value.typeName ?? "")).flatMap(p => p.report!.report.characteristics.filter(c => c.characteristic.name === "Keywords").map(c => c.value));
+  const expectBuff = (id: typeof lieutenant, active: boolean) => {
+    const values = keywords(id); expect(values.length).toBeGreaterThan(0);
+    for (const value of values) expect((value?.match(/Lethal Hits/g) ?? []).length).toBe(active ? 1 : 0);
+  };
+  expectBuff(lieutenant,false); expectBuff(body,false);
+  session = ok(setLocalRosterAssociation(session, lieutenant, supporting.key, body));
+  expect(required()).toMatchObject({status:"satisfied",observed:1,limit:1});
+  expectBuff(lieutenant,true); expectBuff(body,true); expectBuff(captain,false);
+  session = ok(setLocalRosterAssociation(session,captain,association(captain).key,body));
+  expectBuff(captain,true); expectBuff(unrelated,false); expectBuff(captain,true);
+  const beforeDuplicate = new Set(session.roster.forces[0]!.selections.map(s=>s.id));
+  session = ok(duplicateLocalRosterSelection(session,lieutenant,next));
+  const duplicate = session.roster.forces[0]!.selections.find(s=>!beforeDuplicate.has(s.id))!.id;
+  expect(session.roster.associations).toHaveLength(2);
+  expect(ok(inspectLocalRosterConstraints(session)).selections.selections.find(s=>s.owner.id===duplicate)!.constraints.find(c=>c.constraint.associationName && c.constraintType==="min")).toMatchObject({status:"violated",observed:0});
+  session = ok(removeLocalRosterSelection(session,duplicate));
+  session = ok(setLocalRosterAssociation(session,lieutenant,supporting.key,undefined));
+  expect(required()).toMatchObject({status:"violated",observed:0});
+  expectBuff(lieutenant,false); expectBuff(body,false); expectBuff(captain,false);
+  session = ok(setLocalRosterAssociation(session,lieutenant,supporting.key,body));
+  session = ok(removeLocalRosterSelection(session,body));
+  expect(session.roster.associations ?? []).toHaveLength(0);
+  expect(required()).toMatchObject({status:"violated",observed:0});
+  expectBuff(lieutenant,false); expectBuff(captain,false);
 }, 30000);

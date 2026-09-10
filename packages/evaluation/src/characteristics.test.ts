@@ -759,7 +759,7 @@ describe("affects-routed characteristic modifiers", () => {
 });
 
 describe("affects traversal", () => {
-  it("reaches a direct child entry but not a group member without `group`", () => {
+  it("does not confuse association groups with authored selection-entry groups", () => {
     const setup = traversalSetup();
 
     const direct = successful(
@@ -789,9 +789,10 @@ describe("affects traversal", () => {
       baseValue: '6"',
       value: '6"',
     });
-    // `self.entries.group` adds group traversal, so Save reaches both.
+    // `.group` expands association connectivity, not authored containment.
+    // This roster has no saved associations; the authored group needs recursive.
     expect(direct.characteristics[1]).toMatchObject({ value: "2+" });
-    expect(grouped.characteristics[1]).toMatchObject({ value: "2+" });
+    expect(grouped.characteristics[1]).toMatchObject({ value: "4+" });
   });
 
   it("clears a known value when a later routed step cannot be applied", () => {
@@ -1099,8 +1100,8 @@ describe("affects traversal", () => {
       evaluateRosterProfileCharacteristics(
         setup.roster,
         setup.context,
-        setup.groupChild,
-        profile(setup.groupChoice, "profile-group-child"),
+        setup.directChild,
+        profile(setup.directChoice, "profile-direct-child"),
       ),
     );
 
@@ -1110,7 +1111,7 @@ describe("affects traversal", () => {
     // whose profile is being read. A reader shown only the changed value has no
     // way to find the source without this.
     expect(applied[0]?.declaredBy.id).toBe(setup.owner.id);
-    expect(applied[0]?.declaredBy.id).not.toBe(setup.groupChild.id);
+    expect(applied[0]?.declaredBy.id).not.toBe(setup.directChild.id);
   });
 });
 

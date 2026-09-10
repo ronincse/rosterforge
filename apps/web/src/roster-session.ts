@@ -666,7 +666,6 @@ export function inspectLocalRosterConstraints(
     ...selections.diagnostics,
     ...categories.diagnostics,
     ...forces.diagnostics,
-    ...(session.roster.associations?.length ? [{ code: "EVALUATION_ASSOCIATION_EFFECTS_UNSUPPORTED", message: "Attachments are saved, but association-dependent effects and incoming attachment limits are not fully checked.", severity: "warning" as const, impacts: ["compatibility", "validation"] as const }] : []),
   ];
   if (!selections.ok || !categories.ok || !forces.ok) {
     return failure(diagnostics);
@@ -676,7 +675,7 @@ export function inspectLocalRosterConstraints(
       completeness:
         selections.value.completeness === "complete" &&
         categories.value.completeness === "complete" &&
-        forces.value.completeness === "complete" && !session.roster.associations?.length
+        forces.value.completeness === "complete"
           ? "complete"
           : "incomplete",
       selections: selections.value,
@@ -1128,7 +1127,7 @@ function inspectSupportedValidation(
   if (!status.ok) return failure(diagnostics);
   return success(
     {
-      status: session.roster.associations?.length ? { ...status.value, completeness: "incomplete" } : status.value,
+      status: status.value,
       structural: structural.value,
       constraints: constraints.value,
       structuralDiagnostics: structural.diagnostics,

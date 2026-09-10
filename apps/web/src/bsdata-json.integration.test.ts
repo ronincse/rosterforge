@@ -16,6 +16,7 @@ import type {
 } from "@rosterforge/battlescribe-data";
 import {
   evaluateRosterCondition,
+  inspectRosterAssociationChoices,
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
   evaluateRosterProfileName,
@@ -69,6 +70,8 @@ import {
   localRosterSelectionCount,
   restoreLocalRosterSession,
   setLocalRosterSelectionAmount,
+  setLocalRosterAssociation,
+  removeLocalRosterSelection,
   type LocalRosterSession,
 } from "./roster-session.js";
 
@@ -402,8 +405,9 @@ describe.skipIf(realDataDirectory === undefined)(
           distinctValues: 126,
           supported: 2_558,
           unsupported: 4,
-          traversalOwn: 355,
-          traversalChildren: 298,
+          // 128 group-only selectors expand association roots, not children.
+          traversalOwn: 483,
+          traversalChildren: 170,
           traversalDescendants: 1_909,
           entersForces: 28,
           targetProfiles: 2_319,
@@ -2504,22 +2508,25 @@ describe.skipIf(realDataDirectory === undefined)(
           ),
         ).toMatchObject([{ status: "applied" }]);
 
-        // The whole line resolves again. Before `skipIfPresent` was supported
-        // the Lord's two appends were unapplied, and an unapplied step clears
-        // the value, so this printed nothing at all.
+        // The Lord's appends are gated by his enclosing association condition.
+        // This fixture has no target: only the separate Furnace effect applies.
         expect(keywords?.completeness).toBe("complete");
         for (const keyword of [
           "Lethal Hits",
-          "Sustained Hits 1",
-          "Lance",
           "Devastating Wounds",
         ]) {
           expect(keywords?.value ?? "").toContain(keyword);
         }
-        // Guarded appends run once, not twice.
+        const lordGate = lordRoot.materialized.modifierGroups.find(g => g.modifiers.some(m => m.value === "Sustained Hits 1"))!.conditions[0]!;
+        expect(lordGate).toMatchObject({type:"atLeast",value:"1",field:"associations",scope:"self",childId:"any",shared:true});
+        const lordOwner = occurrences.find(entry => entry.id === lordId)!;
+        const unassignedGate = evaluateRosterCondition(roster, context, lordOwner, lordGate);
+        expect(unassignedGate.ok && unassignedGate.value).toMatchObject({observed:0,status:"unsatisfied",completeness:"complete"});
+        expect(keywords?.steps.filter(step => step.declaredBy.id === lordId)).toMatchObject([{status:"notApplicable"},{status:"notApplicable"}]);
         expect(
           (keywords?.value ?? "").split("Sustained Hits 1").length - 1,
-        ).toBe(1);
+        ).toBe(0);
+        expect(keywords?.value).not.toContain("Lance");
         expect(
           keywords?.steps.filter((step) => step.status === "unapplied"),
         ).toEqual([]);
@@ -2607,6 +2614,24 @@ describe.skipIf(realDataDirectory === undefined)(
             steps.filter((step) => step.origin === "affects"),
           ),
         ).toEqual([]);
+
+        const bodyguardRoot = localRosterRootChoices(catalogue).find(c => c.materialized.definitionId === "83e8-ebb7-785a-2115")!;
+        const withBodyguard = addLocalRosterRootSelection(current.value, bodyguardRoot, {selectionId:selectionOccurrenceId("anchor-bodyguard")});
+        if (!withBodyguard.ok) throw new Error("Expected bodyguard.");
+        const leading = inspectRosterAssociationChoices(withBodyguard.value.roster, context, lordOwner)[0]!;
+        const assigned = setLocalRosterAssociation(withBodyguard.value,lordId,leading.key,selectionOccurrenceId("anchor-bodyguard"));
+        if (!assigned.ok) throw new Error("Expected eligible Leading target.");
+        const assignedGate = evaluateRosterCondition(assigned.value.roster,context,lordOwner,lordGate);
+        expect(assignedGate.ok && assignedGate.value).toMatchObject({observed:1,status:"satisfied",completeness:"complete"});
+        const readKeywords = (value: LocalRosterSession) => {
+          const evaluated = evaluateRosterProfileCharacteristics(value.roster,context,manreaperOccurrence,meleeProfile);
+          if (!evaluated.ok) throw new Error("Expected assigned profile.");
+          return evaluated.value.characteristics.find(c=>c.characteristic.name === "Keywords")!;
+        };
+        for (const keyword of ["Sustained Hits 1","Lance"]) expect(readKeywords(assigned.value).value?.split(keyword).length).toBe(2);
+        const detached = setLocalRosterAssociation(assigned.value,lordId,leading.key,undefined);
+        if (!detached.ok) throw new Error("Expected detach.");
+        expect(readKeywords(detached.value).value).toBe(keywords?.value);
       },
       120_000,
     );
@@ -2787,11 +2812,8 @@ describe.skipIf(realDataDirectory === undefined)(
           ),
         ).toMatchObject({ baseValue: "5", value: "5" });
 
-        // The same model carries an unconditional grouped
-        // `self.entries.recursive.profiles.Ranged Weapons` append, so its ranged
-        // weapon gains a keyword through the declared separator. This is the
-        // first real-data case where a routed step changes a displayed value
-        // rather than only proving that routing happened.
+        // The ranged append requires the Contagion Engines detachment. Merely
+        // flattening its group used to turn that source gate unconditional.
         const autocannon = occurrences.find((entry) => entry.id === autocannonId);
         const autocannonChoice = localRosterSelectionChoice(
           current.value,
@@ -2814,16 +2836,41 @@ describe.skipIf(realDataDirectory === undefined)(
           ({ characteristic }) => characteristic.name === "Keywords",
         );
         expect(keywords?.steps).toMatchObject([
-          { status: "applied", kind: "append", origin: "affects" },
+          { status: "notApplicable", origin: "affects" },
         ]);
+        expect(keywords?.value).toBe(keywords?.baseValue);
+        const helbruteOwner = occurrences.find(entry=>entry.id === unitId)!;
+        const gate = helbruteRoot.materialized.modifierGroups.find(g => g.modifiers.some(m=>m.value === "Assault"))!.conditions[0]!;
+        expect(gate).toMatchObject({type:"atLeast",value:"1",field:"selections",scope:"force",childId:"e58e-f981-24ed-6cd4",shared:true,includeChildSelections:true});
+        const beforeGate = evaluateRosterCondition(roster,context,helbruteOwner,gate);
+        expect(beforeGate.ok && beforeGate.value).toMatchObject({observed:0,status:"unsatisfied",completeness:"complete"});
+        let configured = current.value;
+        if (!configured.roster.forces[0]!.selections.some(s=>s.name === "Detachment")) {
+          const root = localRosterRootChoices(catalogue).find(c=>c.materialized.name === "Detachment")!;
+          const added = addLocalRosterRootSelection(configured,root,{selectionId:selectionOccurrenceId("affects-detachment")});
+          if (!added.ok) throw new Error("Expected detachment root.");
+          configured = added.value;
+        }
+        configured = chooseNamedConfiguration(configured,"Detachment","Contagion Engines","affects-engines");
+        const afterGate = evaluateRosterCondition(configured.roster,context,helbruteOwner,gate);
+        expect(afterGate.ok && afterGate.value).toMatchObject({observed:1,status:"satisfied",completeness:"complete"});
+        const readRanged = (value: LocalRosterSession) => {
+          const evaluated = evaluateRosterProfileCharacteristics(value.roster,context,autocannon,rangedProfile);
+          if (!evaluated.ok) throw new Error("Expected ranged profile.");
+          return evaluated.value.characteristics.find(c=>c.characteristic.name === "Keywords")!;
+        };
+        const enabledKeywords = readRanged(configured);
+        expect(enabledKeywords.steps).toMatchObject([{status:"applied",kind:"append",origin:"affects"}]);
         // The separator is a comma and a *non-breaking* space (U+00A0), not a
         // plain one. Reconstructing the value with `", "` fails, which is why
         // the declared `join` is used verbatim rather than normalised.
         const nonBreakingSpace = String.fromCharCode(160);
-        expect(keywords?.value).toBe(
+        expect(enabledKeywords.value).toBe(
           `${keywords?.baseValue ?? ""},${nonBreakingSpace}Assault`,
         );
-        expect(keywords?.value).not.toBe(keywords?.baseValue);
+        const withoutDetachment = removeLocalRosterSelection(configured,selectionOccurrenceId("affects-engines"));
+        if (!withoutDetachment.ok) throw new Error("Expected detachment removal.");
+        expect(readRanged(withoutDetachment.value).value).toBe(keywords?.baseValue);
       },
       120_000,
     );
@@ -4182,13 +4229,10 @@ describe.skipIf(realDataDirectory === undefined)(
           ).toEqual([]);
           expect(diagnosticCodeCounts(
             supported.value.constraintDiagnostics,
-          // The 2026-08-23 revision brought more unsupported attributes on
-          // conditions and constraints; each one keeps the report incomplete
-          // rather than being guessed at.
+          // Incoming association/group-currency bounds are now supported;
+          // the remaining source condition attributes still withhold exactness.
           )).toEqual({
             EVALUATION_CONDITION_ATTRIBUTES_UNSUPPORTED: 3,
-            EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED: 5,
-            EVALUATION_CONSTRAINT_FIELD_UNSUPPORTED: 5,
             EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED: 1,
           });
           expect(

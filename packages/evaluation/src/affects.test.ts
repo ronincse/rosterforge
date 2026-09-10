@@ -34,13 +34,12 @@ describe("battleScribe affects selector", () => {
     });
   });
 
-  it("treats group as a traversal segment in every observed position", () => {
-    // All four occur in live BSData; none appear in the pinned snapshot.
+  it("separates association reach from descendant traversal", () => {
     expect(
       parseBattleScribeAffectsSelector("group.profiles.Unit"),
     ).toMatchObject({
       supported: true,
-      traversal: "children",
+      traversal: "own",
       entersGroups: true,
       profileTypeName: "Unit",
     });
@@ -87,7 +86,7 @@ describe("battleScribe affects selector", () => {
   it("reads a bare group selector as selecting the reached occurrences", () => {
     expect(parseBattleScribeAffectsSelector("group")).toMatchObject({
       supported: true,
-      traversal: "children",
+      traversal: "own",
       target: "selections",
       entersGroups: true,
       issues: [],

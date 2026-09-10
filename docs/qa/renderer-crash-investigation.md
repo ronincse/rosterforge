@@ -1,6 +1,12 @@
 # Renderer hang investigation — 2026-09-10
 
-Status: unresolved; no production repair justified by the current evidence.
+Status: unresolved. A new interrupted run on 2026-09-10 captured a React
+development-profiling `performance.measure` cloning/OOM exception; see
+`reference-army-replay.md`. This identifies the immediate throwing operation,
+not the root cause of memory pressure or the older host-level crash. No repair
+or successful full-army acceptance is claimed.
+
+The remainder records the earlier investigation before that new trace.
 Owner continuation after this investigation changes the stopping policy:
 "Observed previously; cause unresolved; not reproduced during follow-up;
 monitor for recurrence. Not a prerequisite for continuing implementation."

@@ -40,6 +40,11 @@ function scenario(extra: Record<string, unknown> = {}, conditions: unknown[] = [
 
 const filter = {type:"instanceOf",field:"selections",scope:"self",childId:"bodyguard",value:1,shared:true};
 
+it("offers required single targets while none remains an unassigned default", () => {
+  expect(scenario({min:1,defaultSelectionEntryId:"none",sortIndex:2},[filter])).toMatchObject({supported:true,candidates:[{status:"satisfied"}]});
+  expect(scenario({min:1,defaultSelectionEntryId:"unknown"},[filter]).supported).toBe(false);
+});
+
 it("uses unit occurrences and switches only queryFromSelf leaves to the leader", () => {
   expect(scenario({},[filter]).candidates.map(c => [c.selection.id,c.status])).toEqual([["unit","satisfied"]]);
   expect(scenario({},[{...filter,childId:"source-role",queryFromSelf:true}]).candidates[0]!.status).toBe("satisfied");
@@ -52,8 +57,10 @@ it("keeps unsupported shapes and malformed filters unavailable", () => {
   }
   expect(scenario({},[],[{type:"and"}]).candidates[0]!.status).toBe("unresolved");
   expect(scenario({},[{...filter,queryFromSelf:"garbage"}]).candidates[0]!.status).toBe("unresolved");
-  expect(scenario({},[{...filter,futureChildren:[{id:"unknown"}]}]).candidates[0]!.status).toBe("unresolved");
-  expect(scenario({},[],[{type:"and",conditions:[filter],futureChildren:[{id:"unknown"}]}]).candidates[0]!.status).toBe("unresolved");
+  // Unknown raw filter structure rejects the declaration for saved-edge queries
+  // too, rather than being projected away into an apparently supported edge.
+  expect(scenario({},[{...filter,futureChildren:[{id:"unknown"}]}])).toMatchObject({supported:false,candidates:[]});
+  expect(scenario({},[],[{type:"and",conditions:[filter],futureChildren:[{id:"unknown"}]}])).toMatchObject({supported:false,candidates:[]});
 });
 
 it("counts direct attached counterparts, not the owner or the target's model amount", () => {

@@ -55,6 +55,8 @@ import {
   type RosterRepeatReport,
 } from "./repeats.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
+import { rosterAssociationReach } from "./association-graph.js";
+import { inspectRosterAssociationChoices } from "./associations.js";
 
 /**
  * BattleScribe's "no constraint" sentinel.
@@ -100,6 +102,8 @@ export type RosterSelectionConstraintModifierGroup =
   EvaluationSelectionChoice["modifierGroups"][number];
 
 export interface RosterSelectionConstraintSource {
+  /** Present only for a bound derived from an authored association min/max. */
+  readonly associationName?: string;
   readonly id?: ObjectId;
   readonly type?: string;
   readonly field?: string;
@@ -212,6 +216,11 @@ export function inspectRosterSelectionConstraintsInRoster(
     visitForce(force);
   }
 
+  const locations = rosterSelectionLocations(roster);
+  if ((roster.associations ?? []).some(edge => locations.filter(l => l.occurrence.id === edge.sourceId).length !== 1)) {
+    diagnostics.push(collectionDiagnostic("EVALUATION_ASSOCIATION_SOURCE_UNRESOLVED", "A saved attachment has a missing or ambiguous source.", {}));
+  }
+
   const completeness =
     diagnostics.length === 0 &&
     selections.every((selection) => selection.completeness === "complete")
@@ -312,9 +321,37 @@ function inspectSelectionConstraints(
       constraints.push(inspected.value);
     }
   }
+  // These are authored association attributes, not invented selection counts.
+  // Keep their source path and label while using the existing bound/violation
+  // pipeline so required attachments participate in ordinary roster status.
+  const associationChoices = choice?.associations.length ? inspectRosterAssociationChoices(roster, context, owner) : [];
+  for (const association of associationChoices) {
+    const saved = roster.associations?.filter(edge => edge.sourceId === owner.id && edge.definitionKey === association.key) ?? [];
+    const targets = [...new Set(saved.map(edge => edge.targetId))];
+    const statuses = targets.map(id => association.candidates.find(candidate => candidate.selection.id === id)?.status ?? "unresolved");
+    const eligible = statuses.filter(status => status === "satisfied").length;
+    const uncertain = statuses.includes("unresolved");
+    for (const type of ["min", "max"] as const) {
+      const limit = association.declaration[type];
+      const observed = type === "min" ? eligible : targets.length;
+      const exact = association.supported && !uncertain && limit !== undefined;
+      const status = !exact ? "unresolved" : (type === "min" ? observed < limit : observed > limit) || statuses.includes("unsatisfied") ? "violated" : "satisfied";
+      constraints.push({roster, context, owner, inspectionScope, ownerResolution,
+        constraint: {type, field: "associations", scope: "self", ...(limit === undefined ? {} : {value: limit}), associationName: association.name, source: association.declaration.source, path: association.declaration.path, node: association.declaration.node},
+        constraintType: type, scope: "self", baseStatus: status, status, completeness: exact ? "complete" : "incomplete",
+        targetIds: [], modifiers: [], modifierGroups: [], modifierApplicability: [], modifierGroupApplicability: [], repeatReports: [], candidates: [], matching: [],
+        minimum: observed, maximum: exact ? observed : Number.POSITIVE_INFINITY,
+        ...(exact ? {observed, baseLimit: limit, limit} : {}),
+      });
+    }
+    if (!association.supported || uncertain) diagnostics.push(collectionDiagnostic("EVALUATION_ASSOCIATION_BOUNDS_UNRESOLVED", `Attachment ${association.name} has unsupported bounds or an unresolved saved target.`, {occurrenceId: owner.id, definitionKey: association.key}));
+  }
+  if (choice?.associationLinks.length || (roster.associations ?? []).some(edge => edge.sourceId === owner.id && !associationChoices.some(a => a.key === edge.definitionKey))) {
+    diagnostics.push(collectionDiagnostic("EVALUATION_ASSOCIATION_DEFINITION_UNRESOLVED", "A linked or saved attachment definition is not supported.", {occurrenceId: owner.id}));
+  }
   const completeness =
     diagnostics.length === 0 &&
-    constraints.length === (choice?.constraints.length ?? 0) &&
+    constraints.length === (choice?.constraints.length ?? 0) + associationChoices.length * 2 &&
     constraints.every((constraint) => constraint.completeness === "complete")
       ? "complete"
       : "incomplete";
@@ -413,9 +450,14 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   const limit = finiteValue(constraint.value);
   const attributes = [...unsupportedAttributes(constraint)];
   const costType = selfConstraintCostType(context, constraint);
+  const associationCount = constraint.field === "associations" && constraint.scope === "self" && constraint.shared === true && constraint.includeChildSelections !== true && constraint.includeChildForces !== true && constraint.node.attributes.childId !== undefined;
+  const groupCost = costType !== undefined && constraint.scope === "root-entry" && constraint.node.attributes.traverseAssociationGroup === "true" && constraint.shared === true && constraint.node.attributes.childId === "any" && constraint.includeChildSelections === true && constraint.includeChildForces !== true;
+  for (let index = attributes.length - 1; index >= 0; index--) {
+    if ((associationCount && ["childId", "childName"].includes(attributes[index]!)) || (groupCost && ["childId", "childName", "traverseAssociationGroup"].includes(attributes[index]!)) || (associationCount && attributes[index] === "traverseAssociationGroup" && constraint.node.attributes.traverseAssociationGroup === "false")) attributes.splice(index, 1);
+  }
   // Projection preserves malformed raw values; absence of a typed Boolean must
   // not quietly turn an unknown cost traversal into a precise owner-only sum.
-  if (costType !== undefined) {
+  if (costType !== undefined || associationCount) {
     for (const key of ["shared", "percentValue", "includeChildSelections", "includeChildForces"]) {
       const raw = constraint.node.attributes[key];
       if (raw !== undefined && !["true", "false", "1", "0"].includes(raw)) attributes.push(key);
@@ -447,7 +489,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     limit,
     attributes,
     diagnostics,
-    costType !== undefined,
+    costType !== undefined || associationCount,
   );
 
   const targetIds = ownerResolution.choices.flatMap((choice) => {
@@ -455,7 +497,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     return id === undefined ? [] : [id];
   });
   const targetId =
-    ownerResolution.status === "resolved" && targetIds.length === 1
+    associationCount ? objectId(constraint.node.attributes.childId!) : ownerResolution.status === "resolved" && targetIds.length === 1
       ? targetIds[0]
       : undefined;
   if (
@@ -718,13 +760,16 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
           typedScope?.occurrence,
         )
       : [];
-  const candidates = occurrences.map((occurrence) =>
+  const associationReach = associationCount && attributes.length === 0 && catalogueMatches && ownerLocations.length === 1 && ownerResolution.status === "resolved" && constraint.percentValue !== true && constraintType !== undefined && limit !== undefined && (limit >= 0 || isUnboundedConstraintValue(limit)) ? rosterAssociationReach(roster, context, owner) : undefined;
+  const categories = associationReach ? effectiveRosterCategories(roster, context) : undefined;
+  const candidates = (associationReach?.selections ?? occurrences).map((occurrence) =>
     evaluationSelectionIdentityCandidate(
       occurrence,
       choices,
       catalogueMatches,
       targetId,
       constraint.shared === true,
+      categories,
     ),
   );
   const matching = candidates.flatMap((candidate) =>
@@ -733,7 +778,8 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   const unresolvedCount = candidates.filter(
     (candidate) => candidate.status === "unresolved",
   ).length;
-  const bounds = selectionAmountBounds(candidates);
+  const bounds = associationReach ? {minimum:matching.length,maximum:associationReach.unresolved || unresolvedCount ? Number.POSITIVE_INFINITY : matching.length,invalidAmounts:[]} : selectionAmountBounds(candidates);
+  if (associationReach?.unresolved) diagnostics.push(constraintDiagnostic(constraint, "EVALUATION_CONSTRAINT_ASSOCIATIONS_UNRESOLVED", "Some attachment endpoints or declarations are unresolved.", "field", ["resolution"], {}));
   const canInspectCost = catalogueMatches && ownerLocations.length === 1 &&
     ownerResolution.status === "resolved" && costType?.id !== undefined &&
     constraintType !== undefined && limit !== undefined &&
@@ -742,9 +788,16 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   const costReport = canInspectCost
     ? (sharedCostReport ?? lazyCostReport(roster, context, inspectionScope))()
     : undefined;
-  const costEvaluation = costReport !== undefined && costType?.id !== undefined
-    ? queryCostConstraint(costReport, new Set(evaluationSelectionScope(roster,
-      ownerLocations[0]!, "self", constraint.includeChildSelections === true, false)), costType.id, costType)
+  // Most bounds count selections: do not allocate descendant cost scopes for
+  // them. Group costs require a resolved anchor, never an exact empty fallback.
+  const costAnchor = canInspectCost ? constraint.scope === "root-entry" ? ownerLocations[0]?.root : owner : undefined;
+  const costGroup = groupCost && costAnchor ? rosterAssociationReach(roster, context, costAnchor, true) : undefined;
+  const costOccurrences = costAnchor ? (costGroup?.selections ?? [costAnchor]).flatMap(anchor => {
+    const location = locations.find(l => l.occurrence === anchor);
+    return location ? evaluationSelectionScope(roster, location, "self", constraint.includeChildSelections === true, false) : [];
+  }) : [];
+  const costEvaluation = costReport !== undefined && costType?.id !== undefined && costAnchor !== undefined && (!groupCost || costGroup !== undefined) && !costGroup?.unresolved
+    ? queryCostConstraint(costReport, new Set(costOccurrences), costType.id, costType)
     : undefined;
   if (canInspectCost && costEvaluation?.exact !== true) {
     diagnostics.push(constraintDiagnostic(constraint, "EVALUATION_CONSTRAINT_COST_UNRESOLVED",
@@ -756,7 +809,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   // retained subtotal is not a safe bound. Keep status and observed unresolved.
   const minimum = costType === undefined ? bounds.minimum : costEvaluation?.exact === true ? costEvaluation.value : Number.NEGATIVE_INFINITY;
   const maximum = costType === undefined ? bounds.maximum : costEvaluation?.exact === true ? costEvaluation.value : Number.POSITIVE_INFINITY;
-  const canObserve = canCollect || costEvaluation?.exact === true;
+  const canObserve = canCollect || (associationReach !== undefined && !associationReach.unresolved && !unresolvedCount) || costEvaluation?.exact === true;
 
   if (unresolvedCount > 0) {
     diagnostics.push(
@@ -855,7 +908,10 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
 }
 
 function selfConstraintCostType(context: BattleScribeCatalogueContext, constraint: RosterSelectionConstraintSource): RosterCostType | undefined {
-  if (constraint.scope !== "self" || constraint.field === undefined || constraint.field === "selections") return undefined;
+  // Group enhancement limits are a hidden authored currency, not a count of
+  // named options. Reuse evaluated cost items, including numeric modifiers,
+  // across the root's connected component and charge each occurrence once.
+  if (!["self", "root-entry"].includes(constraint.scope ?? "") || constraint.field === undefined || constraint.field === "selections") return undefined;
   const targets = battleScribeReachableObjectsById(context.graph, context.document, objectId(constraint.field));
   return targets.length === 1 && targets[0]?.kind === "costType" ? targets[0].source as RosterCostType : undefined;
 }

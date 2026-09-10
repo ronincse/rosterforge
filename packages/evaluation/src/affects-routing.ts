@@ -1,6 +1,7 @@
 import type { BattleScribeCatalogueContext } from "@rosterforge/data-graph";
 
 import type { Roster, RosterSelection } from "@rosterforge/roster-model";
+import { rosterAssociationReach } from "./association-graph.js";
 
 import {
   parseBattleScribeAffectsSelector,
@@ -39,6 +40,8 @@ export interface AffectsRoute {
 export interface AffectsDeclaredModifier<Modifier> {
   readonly modifier: Modifier;
   readonly grouped: boolean;
+  /** Indices of enclosing source groups, so applicability is never flattened away. */
+  readonly groupPath?: readonly number[];
 }
 
 export interface AffectsModifierSource {
@@ -247,11 +250,30 @@ export function reaches(
   if (!route.reachable) return false;
   if (selector.traversal === "own") return route.entrySteps === 0;
   if (route.entrySteps === 0) return false;
-  if (route.viaGroup && !selector.entersGroups) {
+  if (route.viaGroup) {
     // `entries` alone does not descend into groups; `recursive` does.
     if (selector.traversal !== "descendants") return false;
   }
   return selector.traversal === "descendants" || route.entrySteps === 1;
+}
+
+/** Resolves a selector against containment and, separately, association groups.
+ * Each recipient is considered once regardless of multiple paths or cycles.
+ * Incomplete incident edges withhold applicability; they never turn a failed
+ * traversal into a confident no-op. Group membership does not reparent units. */
+export function reachesAffectsTarget(roster: Roster, context: BattleScribeCatalogueContext, selector: AffectsSelector, anchor: Extract<AffectsAnchorResolution, {kind:"resolved" | "force"}>, owner: RosterSelection): {readonly reachable: boolean; readonly unresolved: boolean} {
+  const locations = rosterSelectionLocations(roster);
+  const choices = indexEvaluationChoices(context);
+  if (anchor.kind === "force") {
+    return { reachable: reaches(selector, routeFromForce(owner, locations, choices)), unresolved: forceTraversalReach(roster) !== "all" };
+  }
+  // Supported group edges cannot cross forces. Prove irrelevance before an
+  // uncertain edge on a different force can contaminate this recipient.
+  const anchorForce = locations.find(l => l.occurrence === anchor.anchor)?.force;
+  const ownerForce = locations.find(l => l.occurrence === owner)?.force;
+  if (anchorForce && ownerForce && anchorForce !== ownerForce) return {reachable:false,unresolved:false};
+  const group = selector.entersGroups ? rosterAssociationReach(roster, context, anchor.anchor, true) : {selections:[anchor.anchor],unresolved:false};
+  return { reachable: group.selections.some(member => reaches(selector, routeFromAnchor(member, owner, locations, choices))), unresolved: group.unresolved };
 }
 
 /**
@@ -350,15 +372,15 @@ export function affectsModifiers<Modifier extends AffectsModifierSource>(
       out.push({ modifier, grouped: false });
     }
   }
-  const visit = (group: AffectsModifierContainer<Modifier>): void => {
+  const visit = (group: AffectsModifierContainer<Modifier>, groupPath: readonly number[]): void => {
     for (const modifier of group.modifiers) {
       if (modifier.node.attributes["affects"] !== undefined) {
-        out.push({ modifier, grouped: true });
+        out.push({ modifier, grouped: true, groupPath });
       }
     }
-    for (const child of group.modifierGroups) visit(child);
+    group.modifierGroups.forEach((child, index) => visit(child, [...groupPath, index]));
   };
-  for (const group of choice.modifierGroups) visit(group);
+  choice.modifierGroups.forEach((group, index) => visit(group, [index]));
   return out;
 }
 
@@ -374,6 +396,7 @@ export interface AffectsRoutedSelectionModifier<
 > {
   readonly modifier: Modifier;
   readonly grouped: boolean;
+  readonly groupPath?: readonly number[];
   readonly declaredBy: RosterSelection;
   readonly selector: AffectsSelector;
 }
@@ -454,14 +477,13 @@ export function collectAffectsRoutedSelectionModifiers<
         partial = true;
         continue;
       }
-      const route =
-        anchor.kind === "force"
-          ? routeFromForce(owner, locations, choices)
-          : routeFromAnchor(anchor.anchor, owner, locations, choices);
-      if (!reaches(selector, route)) continue;
+      const reach = reachesAffectsTarget(roster, context, selector, anchor, owner);
+      if (reach.unresolved) { partial = true; continue; }
+      if (!reach.reachable) continue;
       collected.push({
         modifier: entry.modifier as unknown as Modifier,
         grouped: entry.grouped,
+        ...(entry.groupPath === undefined ? {} : {groupPath: entry.groupPath}),
         declaredBy: declarer,
         selector,
       });

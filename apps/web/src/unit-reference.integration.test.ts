@@ -122,8 +122,8 @@ it.skipIf(!directory)("links the pinned Chaos Terminator Rapid Fire 4 and keeps 
   if (!checks.ok) throw new Error("Check failed");
   expect(checks.value.categories.forces.flatMap(f => f.constraints).find(c => c.categoryName === "Warlord" && c.constraintType === "max")).toMatchObject({status:"violated",observed:2,limit:1,completeness:"complete"});
   expect(checks.diagnostics.map(d => d.code)).not.toContain("EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED");
-  // Eightbound still has unsupported incoming association-count limits; this
-  // checkpoint evaluates Slaughterbound's three self-cost bounds, not those.
+  // Keep the original self-cost regression separate from incoming attachment
+  // bounds, which are now evaluated by the Supporting checkpoint.
   const slaughterCosts = checks.value.selections.selections.find(s => s.owner.id === slaughterId)!.constraints.filter(c => ["75bb-ded1-c86d-bdf0", "716d-91b7-d55a-1022"].includes(c.constraint.field ?? ""));
   expect(slaughterCosts).toHaveLength(3);
   expect(slaughterCosts.map(c => ({ status: c.status, observed: c.observed, completeness: c.completeness }))).toEqual(Array.from({ length: 3 }, () => ({ status: "satisfied", observed: 0, completeness: "complete" })));

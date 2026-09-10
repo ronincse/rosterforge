@@ -16,12 +16,11 @@ import {
   affectsModifiers,
   collectAffectsRoutedSelectionModifiers,
   hasAffectsModifier,
-  reaches,
+  reachesAffectsTarget,
   forceTraversalReach,
   resolveAffectsAnchor,
-  routeFromForce,
-  routeFromAnchor,
 } from "./affects-routing.js";
+import { evaluateRoutedApplicability } from "./routed-applicability.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 import {
   indexEvaluationChoices,
@@ -541,11 +540,12 @@ export function evaluateRosterProfileCharacteristics<
     if (report === undefined) {
       continue;
     }
-    const evaluated = evaluateRosterModifierApplicability(
+    const evaluated = evaluateRoutedApplicability(
       roster,
       context,
       entry.declaredBy,
       entry.modifier,
+      entry.groupPath,
     );
     diagnostics.push(...evaluated.diagnostics);
     if (!evaluated.ok) {
@@ -868,11 +868,12 @@ export function evaluateRosterProfileName<
   if (routed.partial) lost = true;
   for (const entry of routed.modifiers) {
     if (entry.modifier.field !== nameField) continue;
-    const evaluated = evaluateRosterModifierApplicability(
+    const evaluated = evaluateRoutedApplicability(
       roster,
       context,
       entry.declaredBy,
       entry.modifier,
+      entry.groupPath,
       { effectiveCategories },
     );
     diagnostics.push(...evaluated.diagnostics);
@@ -1120,11 +1121,12 @@ function evaluateSelectionTextField<
       }
       if (!categories.includes(entry.selector.filterId)) continue;
     }
-    const evaluated = evaluateRosterModifierApplicability(
+    const evaluated = evaluateRoutedApplicability(
       roster,
       context,
       entry.declaredBy,
       entry.modifier,
+      entry.groupPath,
       { effectiveCategories },
     );
     diagnostics.push(...evaluated.diagnostics);
@@ -1526,6 +1528,7 @@ function collectAffectsRoutedModifiers(
   readonly modifiers: readonly {
     readonly modifier: RosterCharacteristicModifierSource;
     readonly grouped: boolean;
+    readonly groupPath?: readonly number[];
     readonly declaredBy: RosterSelection;
   }[];
   readonly partial: boolean;
@@ -1552,6 +1555,7 @@ function collectAffectsRoutedModifiers(
   const collected: {
     readonly modifier: RosterCharacteristicModifierSource;
     readonly grouped: boolean;
+    readonly groupPath?: readonly number[];
     readonly declaredBy: RosterSelection;
   }[] = [];
   let partial = false;
@@ -1604,11 +1608,9 @@ function collectAffectsRoutedModifiers(
         partial = true;
         continue;
       }
-      const route =
-        anchor.kind === "force"
-          ? routeFromForce(owner, locations, choices)
-          : routeFromAnchor(anchor.anchor, owner, locations, choices);
-      if (!reaches(selector, route)) {
+      const reach = reachesAffectsTarget(roster, context, selector, anchor, owner);
+      if (reach.unresolved) { partial = true; continue; }
+      if (!reach.reachable) {
         continue;
       }
       if (selector.filterId !== undefined) {
@@ -1628,6 +1630,7 @@ function collectAffectsRoutedModifiers(
       collected.push({
         modifier: entry.modifier,
         grouped: entry.grouped,
+        ...(entry.groupPath === undefined ? {} : {groupPath: entry.groupPath}),
         declaredBy: declarer,
       });
     }

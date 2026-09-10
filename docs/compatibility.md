@@ -1648,9 +1648,10 @@ The editor labels it association-group traversal; the current pinned A corpus
 has 763 modifier occurrences using it. The isolated reference app propagates a
 Supporting Lieutenant's weapon effects through the associated Intercessor to
 its separately attached Captain, and removes them when the Lieutenant detaches.
-Current production `entersGroups` routing is not evidence of that behavior being
-supported. Correcting it coherently with required Supporting, limits and lifecycle
-is outstanding checkpoint3 work, not part of numeric transparent-group counting.
+Checkpoint3 now routes the supported connected group separately from containment,
+preserves enclosing source conditions and checks required/incoming/group bounds.
+This is independent of numeric transparent-group counting; broader unsupported
+query families and numeric operations still withhold completeness.
 See `docs/qa/supporting-reference-evidence.md`.
 
 One question stays open, and is not worth an experiment: what an embedded ID
@@ -1871,7 +1872,7 @@ fixtures.
 ## Leader Assignments And Category-Owned Roster Limits — 2026-09-09
 
 Direct association definitions now expose independently stored occurrence targets
-for the measured `action=group`, `scope=force`, `childId=unit`, min-zero/max-one,
+for the measured `action=group`, `scope=force`, `childId=unit`, min-zero-or-one/max-one,
 include-child-selections shape. Supported source filters use effective categories,
 AND/OR and per-leaf `queryFromSelf`. Unit models are not mistaken for unit targets.
 Unknown attributes/children, malformed flags, unsupported filters and empty explicit
@@ -1884,12 +1885,23 @@ removing an endpoint clears its edges, not the other unit. Duplicating a unit
 copies its configured selection subtree but does not duplicate roster-level
 attachments. Stale assignments remain visible and detachable, not rebound by name.
 
-Incoming association count limits, required/multi-target associations and general
-association effects remain unsupported. Direct self association conditions are
-supported by the following checkpoint; wider queries remain unsupported. Assignment
-does not imply attached buffs or full legality; a visible notice and aggregate
-incompleteness retain this distinction. In particular, incoming Leader-category
-classification for Eightbound is not inferred from the display name "Leading".
+Required min1/max1 with defaultSelectionEntryId `none` is supported: absence is
+still a minimum violation. Neutral sortIndex metadata does not alter filters.
+Direct self/shared association min/max constraints count distinct matching
+counterparts by identity/effective category, never model quantities or labels.
+Missing or ambiguous saved targets, unknown raw filter collections, shared links,
+multi-target/default shapes outside this boundary remain incomplete.
+
+Supported affects `.group` selectors reach the connected saved group while
+preserving independent units, descendants and original declarer provenance.
+Enclosing group conditions and unknown raw behavior remain applicable gates;
+detachment/retargeting recomputes effects from authored base profiles. Cycle-safe
+traversal deduplicates paths and has a 4,096-work budget. Group-cost constraints
+support resolved currencies at root-entry with shared/any/child-selection
+traversal and traverseAssociationGroup=true; values use evaluated scoped costs.
+Unsupported numeric operations (including divide), unknown currencies or group
+edges remain unresolved. This does not certify every association query or rule.
+See [Supporting acceptance](qa/supporting-acceptance.md).
 
 Category-owned min/max roster selection bounds now count effective membership
 once across the roster, respecting child-force inclusion. Supported bounds require
@@ -1906,7 +1918,7 @@ Numeric `field=associations`, `scope=self`, `shared=true` condition leaves now c
 distinct directly attached counterparts on either endpoint, matching exact source
 identity/effective categories. They count units, not model quantities, and never
 count the owner or walk the containment tree. Only the saved direct same-force
-optional single-unit definition shape is supported. Malformed leaves, stale or
+optional/required single-unit definition shape is supported. Malformed leaves, stale or
 ambiguous endpoints/definitions, model targets and wider/transitive queries remain
 unresolved. Eligibility filters are not recursively re-evaluated while counting an
 existing edge; association existence does not certify assignment legality.

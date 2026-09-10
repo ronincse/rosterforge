@@ -1585,9 +1585,20 @@ erase known validity errors.
   is committed.
 - `WEB_ROSTER_ASSOCIATION_UNAVAILABLE`: the selected target is no longer a
   supported, satisfied source-authored candidate. Clearing remains allowed.
-- `EVALUATION_ASSOCIATION_EFFECTS_UNSUPPORTED`: saved assignments exist, but
-  incoming attachment limits and association-dependent effects are not fully
-  checked. The web aggregate remains incomplete independently of known errors.
+- `EVALUATION_ASSOCIATION_EFFECTS_UNSUPPORTED`: historical blanket warning,
+  superseded by scoped association evaluation on 2026-09-10.
+- `EVALUATION_ASSOCIATION_BOUNDS_UNRESOLVED`: unsupported declaration or an
+  unresolved saved target prevents exact outgoing min/max evaluation.
+- `EVALUATION_ASSOCIATION_DEFINITION_UNRESOLVED`: a linked or saved declaration
+  cannot be evaluated; retained data is not silently discarded.
+- `EVALUATION_ASSOCIATION_SOURCE_UNRESOLVED`: a saved edge has a missing or
+  ambiguous source occurrence.
+- `EVALUATION_CONSTRAINT_ASSOCIATIONS_UNRESOLVED`: an unreadable incident edge
+  prevents an exact incoming count. Group currencies reuse scoped cost
+  uncertainty; routed effects reuse characteristic/category uncertainty.
+
+Required outgoing bounds preserve the association source/path and label their
+derived min/max separately. Known violations remain distinct from incompleteness.
 
 Category-definition roster bounds reuse `EVALUATION_CATEGORY_CONSTRAINT_*`
 diagnostics, retaining actual category/constraint provenance rather than inventing

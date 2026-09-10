@@ -57,9 +57,9 @@ export interface AffectsSelector {
   readonly target: AffectsSelectorTarget;
   readonly explicitSelf: boolean;
   /**
-   * True when the selector carries an explicit `group` segment, which enters
-   * selection-entry groups. Without one, a `children` traversal reaches only
-   * the owner's direct child entries.
+   * True when the selector carries an explicit `group` segment: expand the
+   * anchor through group-action associations. This is not containment in an
+   * authored selection-entry group (confirmed by nr-editor and reference QA).
    */
   readonly entersGroups: boolean;
   /**
@@ -138,7 +138,7 @@ export function parseBattleScribeAffectsSelector(
   }
   const traversal: AffectsSelectorTraversal = recursive
     ? "descendants"
-    : entries || entersGroups
+    : entries
       ? "children"
       : "own";
 

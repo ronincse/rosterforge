@@ -12,6 +12,7 @@ export interface RosterAssociationChoice {
   readonly key: RosterDefinitionKey;
   readonly name: string;
   readonly supported: boolean;
+  readonly declaration: EvaluationSelectionChoice["associations"][number];
   readonly candidates: readonly { selection: RosterSelection; status: RosterConditionStatus }[];
 }
 
@@ -21,8 +22,9 @@ export interface RosterAssociationChoice {
  * membership is reused across the candidate walk; no source nodes are mutated. */
 export function inspectRosterAssociationChoices(roster: Roster, context: BattleScribeCatalogueContext, owner: RosterSelection): readonly RosterAssociationChoice[] {
   const locations = rosterSelectionLocations(roster);
-  const location = locations.find(l => l.occurrence.id === owner.id);
-  if (!location || !rosterMatchesCatalogueContext(roster, context)) return [];
+  const owners = locations.filter(l => l.occurrence.id === owner.id);
+  const location = owners[0];
+  if (owners.length !== 1 || location?.occurrence !== owner || !rosterMatchesCatalogueContext(roster, context)) return [];
   const choices = indexEvaluationChoices(context);
   const resolved = resolveEvaluationSelection(owner, choices, true);
   if (resolved.status !== "resolved") return [];
@@ -41,6 +43,8 @@ export function inspectRosterAssociationChoices(roster: Roster, context: BattleS
       if (raw !== undefined && raw !== "true" && raw !== "false") return "unresolved";
       const attributes = { ...condition.node.attributes };
       delete attributes.queryFromSelf;
+      // Editor ordering metadata is not an executable eligibility predicate.
+      delete attributes.sortIndex;
       const result = evaluateRosterCondition(roster, context, raw === "true" ? owner : target,
         { ...condition, node: { ...condition.node, attributes } }, { effectiveCategories });
       return result.ok ? result.value.status : "unresolved";
@@ -57,10 +61,11 @@ export function inspectRosterAssociationChoices(roster: Roster, context: BattleS
       key: rosterDefinitionKeyForSource(association.source.sourceId, association.path),
       name: association.name ?? "Attachment",
       supported,
+      declaration: association,
       candidates: supported ? locations.filter(l => l.force === location.force && l.occurrence.id !== owner.id).flatMap(({ occurrence: target }) => {
         const targetDefinition = resolveEvaluationSelection(target, choices, true);
         if (targetDefinition.status !== "resolved" || targetDefinition.choices[0]?.kind !== "selectionEntry" || targetDefinition.choices[0]?.type !== "unit") return [];
-        return [{ selection: target, status: candidateStatus(association, target) }];
+        return [{ selection: target, status: locations.filter(l => l.occurrence.id === target.id).length === 1 ? candidateStatus(association, target) : "unresolved" as const }];
       }) : [],
     };
   });

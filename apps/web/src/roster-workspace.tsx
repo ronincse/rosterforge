@@ -2327,8 +2327,9 @@ function constraintSummaryItem(
       ownerId,
       report.constraint.source.sourceId,
       ...report.constraint.path,
+      report.constraintType,
     ]),
-    ownerName,
+    ownerName: "associationName" in report.constraint ? `${ownerName} — ${report.constraint.associationName}` : ownerName,
     ownerId,
     ownerKind,
     target,
@@ -3817,6 +3818,8 @@ function validationFindingKey(
     finding.kind,
     finding.report.constraint.source.sourceId,
     ...finding.report.constraint.path,
+    finding.report.owner.id,
+    finding.report.constraintType,
   ]);
 }
 

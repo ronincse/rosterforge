@@ -2452,13 +2452,24 @@ evidence, browser checks and deliberately unsupported formatting/reference kinds
 
 Association definitions, filters, shared definitions and links are additive source
 projections carried through `data-graph`; original nodes/bytes remain unchanged.
-`evaluation/associations.ts` inspects the measured direct, same-force, optional
-single-unit target shape using effective categories and three-valued conditions.
+`evaluation/associations.ts` inspects direct, same-force, optional or required
+single-unit targets using effective categories and three-valued conditions.
 `queryFromSelf` changes only the filter leaf's owner. Unknown shapes remain
 unavailable; no general effect routing is implied by eligibility. The shared
 `association-shape.ts` gate is also used by condition queries. Direct self counts
 resolve saved edges without recursively invoking eligibility filters; both ends
-remain ordinary separate selection occurrences.
+remain ordinary separate selection occurrences. Required min/max attributes
+become provenance-labelled bound reports in `constraints.ts`; `none` is an empty
+default, not satisfaction. Incoming bounds count distinct direct counterparts.
+
+`association-graph.ts` caches structural connectivity per immutable roster/context,
+without calling eligibility or category evaluation (which would create recursion).
+It deduplicates paths, bounds work, and marks malformed incident edges unresolved.
+`affects-routing.ts` separately combines that connected group with authored
+containment traversal. `.group` never means an authored selection-entry group.
+`routed-applicability.ts` retains enclosing modifier-group gates at the declarer;
+unknown raw envelopes withhold effects. Evaluated group-cost bounds sum scoped
+descendants once via the existing currency evaluator, not names or base costs.
 
 `roster-model` stores optional association edges as source occurrence ID, target
 occurrence ID and opaque definition key. Units remain separate tree occurrences;
@@ -2469,8 +2480,9 @@ unique source/definition pairs, string budgets and a 1,000-edge cap per snapshot
 It stores no source bytes. Existing session history/autosave carries the edges.
 
 The web options card rechecks source eligibility before committing an assignment
-and permits clearing stale assignments. Saved attachments explicitly keep aggregate
-validation incomplete: incoming limits and attached-unit effects are not evaluated.
+and permits clearing stale assignments. Required targets and incoming/group bounds
+participate in existing checks. Unsupported shapes/links remain incomplete; a
+supported saved edge alone no longer forces a blanket unsupported warning.
 Category-definition roster selection constraints are inspected once per roster,
 separately from force-category links. Exact effective category membership supplies
 the count and attention targets; no Warlord names or faction IDs are hardcoded.
