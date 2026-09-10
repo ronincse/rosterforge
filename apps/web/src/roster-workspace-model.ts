@@ -45,7 +45,7 @@ export interface RosterWorkspaceCost {
   readonly value: number;
   /** Complete, finite maximum evaluated for this exact cost type. */
   readonly limit?: number;
-  /** The displayed total is provisional even though its capacity is known. */
+  /** The displayed spending is uncertain, independently of capacity. */
   readonly provisional?: true;
 }
 
@@ -335,7 +335,13 @@ function workspaceCostSummary(
   const totals: RosterWorkspaceCost[] = result.value.totals.map((total) => {
     const cost = workspaceCost(total);
     const limited = limits.get(cost.typeId);
-    return limited === undefined ? cost : {
+    // Without a resolved capacity there is no per-currency exactness witness
+    // from the constraint report. Keep the cost report's uncertainty visible;
+    // absence of a limit must not upgrade an incomplete total to exact spending.
+    return limited === undefined ? {
+      ...cost,
+      ...(result.value.completeness === "incomplete" ? { provisional: true as const } : {}),
+    } : {
       ...cost, limit: limited.limit,
       ...(limited.provisional === true ? { provisional: true as const } : {}),
     };

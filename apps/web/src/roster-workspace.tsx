@@ -671,6 +671,8 @@ export function RosterOverview({
                   armyTopLevelSelectionCount,
                   "army selection",
                 )}`
+              : limitBearingCost.provisional
+                ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(limitBearingCost.value)} ${limitBearingCost.name} provisional total${limitPending ? ", limit pending" : limitBearingCost.limit === undefined ? "" : `, ${formatNumber(limitBearingCost.limit)} limit`}`
               : limitPending
                 ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
                     limitBearingCost.value,
@@ -679,8 +681,6 @@ export function RosterOverview({
                   ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
                       limitBearingCost.value,
                     )} ${limitBearingCost.name} used`
-                : limitBearingCost.provisional
-                  ? `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(limitBearingCost.value)} ${limitBearingCost.name} provisional total, ${formatNumber(limitBearingCost.limit)} limit`
               : `${workspace.name}, ${workspace.catalogueName}; ${formatNumber(
                   limitBearingCost.value,
                 )} of ${formatNumber(limitBearingCost.limit)} ${limitBearingCost.name} used`
@@ -701,12 +701,16 @@ export function RosterOverview({
             ) : limitPending ? (
               <>
                 <strong>{formatNumber(limitBearingCost.value)}</strong>
-                <small>{limitBearingCost.name}; limit pending</small>
+                <small className={limitBearingCost.provisional ? "roster-nav-provisional" : undefined}>
+                  {limitBearingCost.provisional ? "Provisional total" : `${limitBearingCost.name}; limit pending`}
+                </small>
               </>
             ) : limitBearingCost.limit === undefined ? (
               <>
                 <strong>{formatNumber(limitBearingCost.value)}</strong>
-                <small>{limitBearingCost.name} used</small>
+                <small className={limitBearingCost.provisional ? "roster-nav-provisional" : undefined}>
+                  {limitBearingCost.provisional ? "Provisional total" : `${limitBearingCost.name} used`}
+                </small>
               </>
             ) : (
               <>
@@ -714,7 +718,7 @@ export function RosterOverview({
                   {formatNumber(limitBearingCost.value)} /{" "}
                   {formatNumber(limitBearingCost.limit)}
                 </strong>
-                <small>
+                <small className={limitBearingCost.provisional ? "roster-nav-provisional" : undefined}>
                   {limitBearingCost.provisional
                     ? "Provisional total"
                     : limitBearingCost.value > limitBearingCost.limit

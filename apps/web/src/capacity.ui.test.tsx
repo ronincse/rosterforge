@@ -52,6 +52,7 @@ it("preserves capacity through provisional costs, edit history, size changes and
   add("Carrier");
   expect(nav().getByText("70 / 1,500")).toBeTruthy();
   expect(nav().getByText("Provisional total")).toBeTruthy();
+  expect(nav().getByText("Provisional total").className).toContain("roster-nav-provisional");
   expect(nav().queryByText(/remaining|over limit/)).toBeNull();
   action("Undo");
   expect(nav().getByText("0 / 1,500")).toBeTruthy();
@@ -81,4 +82,6 @@ it("withholds a genuinely unresolved limit instead of retaining the prior capaci
   add("Large battle");
   add("Carrier");
   expect(nav().queryByText(/1,500|2,500/)).toBeNull();
+  expect(nav().getByText("Provisional total").className).toContain("roster-nav-provisional");
+  expect(nav().getByRole("link", { name: /70 Points provisional total/ })).toBeTruthy();
 });

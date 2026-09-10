@@ -4609,9 +4609,14 @@ footer {
     gap: 7px;
   }
 
-  .roster-nav-budget small,
+  /* Uncertainty qualifies the number itself, even when routine captions are hidden. */
+  .roster-nav-budget small:not(.roster-nav-provisional),
   .add-unit-trigger small {
     display: none;
+  }
+
+  .roster-nav-budget .roster-nav-provisional {
+    font-size: 0.6rem;
   }
 
   .add-unit-trigger strong {

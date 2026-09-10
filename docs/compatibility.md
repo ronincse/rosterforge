@@ -725,6 +725,10 @@ observation; aggregate validation remains incomplete/unresolved. The UI labels
 the total provisional and withholds remaining/over-limit arithmetic, rather than
 discarding the capacity or presenting uncertain spending as exact. Genuinely
 incomplete limits remain withheld, including after a previously known limit.
+The compact header retains visible provisional text at phone widths, separately
+from the known-violation count. Without a resolved per-currency capacity witness,
+an incomplete cost report conservatively keeps the displayed spending provisional.
+This presentation containment does not resolve the underlying cost modifiers.
 
 At pin `04c62fcd041b3808c39d5c46fd677c704027b979`, Dark Angels with Strike Force,
 Gladius Task Force and Priority Assets keeps its exact 2,000-point cap when an
