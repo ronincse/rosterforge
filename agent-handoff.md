@@ -34,7 +34,26 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (crash investigated; cause unresolved)
+## Current Status — 2026-09-10 (pricing browser accepted; Supporting next)
+
+**New owner direction supersedes crash-first stopping instructions.** Historical
+renderer failure: observed previously; cause unresolved; not reproduced during
+follow-up; monitor for recurrence. It is not a prerequisite for implementation.
+No claim that it is fixed or external. Capture any recurrence and mark that run
+failed/interrupted; unaffected work can continue without substituting engine
+success for browser acceptance. Preserve all prior evidence. Current selected
+branch starts this continuation clean at654bb4e, upstream equal, no competing
+active primary writer. Fresh audit origin5242 is authorized; protect existing
+tabs, armies/storage and preview servers. Bounded pricing browser A/B now passes
+5/10/5composition, threeKnights, deletion/duplicate/undo/redo/save/reopen; see
+`docs/qa/local-group-pricing.md`. Next: required Supporting, incoming/outgoing
+bounds, association-group effects/constraints/lifecycle, then full-army ledger.
+Owner now explicitly authorizes minimum scoped source/diffs/tests/sanitized
+evidence to authenticated Claude Code for independent review. No secrets,
+personal armies or wholesale third-party data. StarCraft: The Miniatures Game
+is the intended near-term next compatibility pilot using the previously discussed
+community data; fixes stay generic, but no StarCraft import/source/implementation,
+acquisition change or hypothetical new abstraction belongs in this batch.
 
 The owner authorized a new correctness batch against frozen data A `04c62fc`
 and captured snapshot B `5b261ec`, without changing the permanent pin. Checkpoint
@@ -53,7 +72,7 @@ Checkpoint 1 exact-SHA CI `34527599165` passed `b59c7b2`. Checkpoint 2 implement
 `160667f` supports bounded preceding-copy local groups: Knights 240/240/260 on A/B;
 Impulsor 70/70/70/70/80 on A, 70/70/70/80 on B. All gates pass: 671 pass /26 skip,
 six pinned suites 26 pass; final independent condition/review tests 50 pass.
-**Real-browser acceptance remains blocked:** own 5240 tab showed a crash screen
+**Historical browser failure:** own 5240 tab showed a crash screen
 on the first Knights addition after saved Intercessor 1/3/1. The failed tab was
 not reloaded, but did not survive turn-end browser cleanup; its live heap is lost.
 A separate actual-App jsdom diagnostic completed the same actions in 2.92s;
@@ -63,8 +82,8 @@ browser remove/add cycles, save/reopen and model edits passing on unchanged code
 the independent 240-edit test plateaus near 458 MiB. Host logs establish an
 unresponsive page, not an OOM or application exception. No causal fix is claimed.
 See `docs/qa/renderer-crash-investigation.md`; all normal gates rerun green
-(671 pass /26 skip, 12.74s). Next: obtain a reproducible renderer failure/trace,
-then finish
+(671 pass /26 skip, 12.74s). The owner now defers dedicated crash investigation.
+Continue the authorized batch:
 local-pricing browser acceptance, required Supporting/effects and dense-army
 replay/ledger. No Supporting production repair or full-army acceptance is claimed.
 Supporting min1 and transitive association-group effects were observed in a
@@ -878,10 +897,10 @@ QA before classifying or implementing the discrepancy.
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
-| Local condition group cost applicability | Implemented; browser acceptance blocked | `160667f`: bounded repeats1 parent/candidate/anchor semantics; A/B Knights240/240/260, Impulsor A fifth80/B fourth80, history/save/reopen synthetic UI. Unsupported variants remain incomplete. First real Knights addition crashed; engine and jsdom passes are not browser acceptance |
-| Renderer crash during reference-army additions | Next — unresolved; not reproduced in follow-up | Original own5240 tab became unresponsive then showed crash screen; no recovered cause/stack, failed tab auto-closed at turn end. `68d6b44`: fresh browser51 remove/add cycles, save/reopen/model-edit replay pass; independent240 edits plateau near458MiB. No production fix justified. Preserve a recurrence/trace and distinguish app/runtime/host before later acceptance work |
+| Local condition group cost applicability | Done — bounded browser A/B accepted | `160667f`: bounded repeats1 semantics; actual A/B at654bb4e Intercessor5/10/5 ->80/150/80; Knights240/240/260, earliest deletion, duplicate/undo/redo/save/reopen pass. Impulsor A fifth80/B fourth80 remain separate engine evidence, no illegal browser threshold forced. Unsupported variants remain incomplete |
+| Renderer crash during reference-army additions | Deferred — monitor recurrence; not an implementation prerequisite | Owner direction supersedes crash-first stop. Original failure and `68d6b44` follow-up retained; cause unresolved, not fixed or proven external. Capture recurrence/build/data/diagnostics and mark affected browser run failed/interrupted; reopen targeted investigation, continue unaffected work |
 | Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
-| Required Supporting and associated effects | Open — authorized after local groups | Required min1/max1 assignment, eligibility, incoming/outgoing limits, lifecycle and grouped Lethal Hits effects must be coherent; do not merely relax the optional gate |
+| Required Supporting and associated effects | Next — authorized implementation | Required min/max/defaultnone, eligibility, incoming/outgoing and association-group bounds, effects, mutation/history/persistence and source provenance must be coherent; no label hardcoding or assignment-only completion |
 | Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
@@ -14437,6 +14456,10 @@ ordinary UI work. Code and handoff push together; exact remote CI checked next.
 
 ## Completed Assignment — Renderer hang investigation; unresolved, 2026-09-10
 
+> Stopping policy superseded by the owner's subsequent continuation. The original
+> failure and unsuccessful reproduction evidence remain valid; dedicated crash
+> investigation is now deferred unless it recurs, not a prerequisite for work.
+
 **Authority/baseline/result.** Owner requested isolate and fix the renderer crash
 before anything else. Clean `codex/list-builder-ui-overhaul` at `e140834`, whose
 exact-SHA CI `34531191950` succeeded. Evidence-only commit `68d6b44`; no production
@@ -14479,3 +14502,43 @@ direction. Own QA tab4 ordinary5240/app explicitly marked for handoff, saved320;
 extra own scratch tab closed. Preview5240 stays running. Owner previews5199/5216,
 tabs and armies untouched. IgnoreddiagnosticHTML and isolated reviewer evidence
 retained; nothing material deleted. No PR/merge/deploy or memory edits.
+
+## Completed Assignment — Pricing browser acceptance continuation, 2026-09-10
+
+**Authority and baseline.** Explicit new owner direction defers historical crash
+investigation unless recurrence and authorizes the remaining correctness batch.
+Selected branch `codex/list-builder-ui-overhaul`, clean HEAD/upstream654bb4e;
+prior exact-SHA CI34532658224 succeeded. No other active primary writer found.
+Evidence commit4518dfc and this separate handoff; no production code changes.
+
+**Browser acceptance.** Fresh own origin5242, separate named temporary A/B armies,
+eight files each via file picker. On each immutable snapshot, selected Intercessor
+1sergeant/3ordinary/1launcher ->1/7/2 ->1/3/1 gives80/150/80. Three separateKnights
+4mace/1GreatWeaponMaster each give240/240/260; roster820. Deletefirst leaves240/240;
+undo restores, redo deletes, duplicatefirst remaining restores240/240/260. Save,
+navigateaway, reopen same named army retains composition/prices/820. Console
+warn/error empty; no renderer recurrence. Known setup violations remain visible;
+manual Intercessor quantity inference and B's two import notes remain recorded,
+not suppressed. Impulsor A fifth80/B fourth80 remains separate engine coverage;
+no illegal UI thresholds forced. See docs/qa/local-group-pricing.md.
+
+**Checks and review.** Existing A/B integration2pass2.80s, SHA256/Gitblob/revision
+checks; A04c62fc/B5b261ec unchanged. All normal gates green:671pass26skip697tests,
+74pass6skip80files,16.01s; existing802.05kB advisory unchanged. Publish notes with
+handoff and confirm exact-SHA CI. Useful next-step independent work launched
+early: authenticated Claude Code constrained Read/Grep/Glob semantic review
+completed (Sonnet5, no permission denials or mutations); native isolated corpus/
+test lane in C:/CodexACLTest/rf-supporting-review-20260910. Owner's new explicit
+Anthropic transmission authorization honored; no secrets/personal armies/datasets
+transmitted, no provider or billing changes. Lead reviews all findings; external
+review's assumption that leaf applicability suffices is contradicted by native
+source evidence: enclosing modifier-group conditions must also survive routing.
+
+**Next.** Primary lead now implements required Supporting and association-group
+effects/constraints/lifecycle, then full-army ledger and browser replay. Group
+enhancement bound is a source cost field, not label-based enhancement counting.
+Preserve optional associations and explicit unsupported completeness. Historical
+crash remains unresolved and monitored, no dedicated investigation absent recurrence.
+StarCraft next-pilot intent is recorded only in status; no StarCraft/UI overhaul/
+acquisition work. All existing owner tabs/storage/servers remain untouched;
+5242 own server running, own A/B test state retained for follow-up.
