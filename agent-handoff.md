@@ -34,20 +34,29 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (pricing browser accepted; Supporting next)
+## Current Status — 2026-09-10 (Supporting accepted; full-army replay interrupted)
 
-**New owner direction supersedes crash-first stopping instructions.** Historical
-renderer failure: observed previously; cause unresolved; not reproduced during
-follow-up; monitor for recurrence. It is not a prerequisite for implementation.
-No claim that it is fixed or external. Capture any recurrence and mark that run
-failed/interrupted; unaffected work can continue without substituting engine
-success for browser acceptance. Preserve all prior evidence. Current selected
-branch starts this continuation clean at654bb4e, upstream equal, no competing
-active primary writer. Fresh audit origin5242 is authorized; protect existing
-tabs, armies/storage and preview servers. Bounded pricing browser A/B now passes
-5/10/5composition, threeKnights, deletion/duplicate/undo/redo/save/reopen; see
-`docs/qa/local-group-pricing.md`. Next: required Supporting, incoming/outgoing
-bounds, association-group effects/constraints/lifecycle, then full-army ledger.
+**New owner direction supersedes crash-first stopping instructions, but an actual
+full-army run is now interrupted by new evidence.** At22:21:13.688UTC, own tab9
+on5242 reports a `DataCloneError`/out-of-memory while React19.2.8 development
+profiling clones `performance.measure` detail during first Knights addition.
+The DOM remains readable at615; no crash interstitial captured. Do not reload or
+retry that failed acceptance state and call it a pass. Immediate allocation site
+is known; oversized detail versus aggregate pressure and relation to the older
+host crash remain unresolved. See `docs/qa/reference-army-replay.md` and the
+retained historical investigation. Next diagnostic must be bounded and preserve
+native failures; no speculative suppression/StrictMode removal/cache rewrite.
+
+Selected branch remains `codex/list-builder-ui-overhaul`. Supporting implemented
+in `cad1cec` from42adbb7, with source-driven required/incoming bounds, evaluated
+group currencies and connected effects retaining enclosing source gates. A/B
+integration and own frozen-A browser mutation/history/save/reopen pass; unsupported
+shapes remain incomplete. All normal gates pass689/28tests; six pinned suites28pass.
+Native and authenticated Claude read-only reviews completed. See
+`docs/qa/supporting-acceptance.md`. Pricing browser A/B acceptance remains passed
+and published4518dfc/42adbb7 (exact-SHA CI34534366822 success). Full-army ledger and
+replay are only partial, not accepted. Preserve own tabs6/7/8/9 and running5242;
+owner tabs/storage/servers5199/5216/5240 remain untouched.
 Owner now explicitly authorizes minimum scoped source/diffs/tests/sanitized
 evidence to authenticated Claude Code for independent review. No secrets,
 personal armies or wholesale third-party data. StarCraft: The Miniatures Game
@@ -83,15 +92,14 @@ the independent 240-edit test plateaus near 458 MiB. Host logs establish an
 unresponsive page, not an OOM or application exception. No causal fix is claimed.
 See `docs/qa/renderer-crash-investigation.md`; all normal gates rerun green
 (671 pass /26 skip, 12.74s). The owner now defers dedicated crash investigation.
-Continue the authorized batch:
-local-pricing browser acceptance, required Supporting/effects and dense-army
-replay/ledger. No Supporting production repair or full-army acceptance is claimed.
+Earlier checkpoints have now been followed by bounded pricing/Supporting
+acceptance; dense replay/ledger remains blocked by the new allocation failure.
 Supporting min1 and transitive association-group effects were observed in a
 separate New Recruit guest session; see `docs/qa/supporting-reference-evidence.md`.
 **The ordinary UI roadmap is paused.**
-Use separate QA origin 5240; do not operate the owner's tabs, saved armies or
-preview servers 5199/5216. Claude review was approval-blocked before launch;
-isolated native review continues. This batch is not yet complete.
+Current own QA origin is5242; do not operate the owner's tabs, saved armies or
+preview servers. Earlier Claude launches were approval-blocked; this continuation's
+explicitly authorized read-only reviews succeeded. This batch is not yet complete.
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -898,10 +906,10 @@ QA before classifying or implementing the discrepancy.
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
 | Local condition group cost applicability | Done — bounded browser A/B accepted | `160667f`: bounded repeats1 semantics; actual A/B at654bb4e Intercessor5/10/5 ->80/150/80; Knights240/240/260, earliest deletion, duplicate/undo/redo/save/reopen pass. Impulsor A fifth80/B fourth80 remain separate engine evidence, no illegal browser threshold forced. Unsupported variants remain incomplete |
-| Renderer crash during reference-army additions | Deferred — monitor recurrence; not an implementation prerequisite | Owner direction supersedes crash-first stop. Original failure and `68d6b44` follow-up retained; cause unresolved, not fixed or proven external. Capture recurrence/build/data/diagnostics and mark affected browser run failed/interrupted; reopen targeted investigation, continue unaffected work |
+| Renderer crash during reference-army additions | Open — new allocation-failure evidence; full-army blocker | Own frozen-A tab9/5242 first Knights addition at22:21:13.688UTC throws DataCloneError/OOM in React19.2.8 dev logComponentRender/performance.measure. DOM615 remains readable; run failed/interrupted, no retry or substituted API pass. Immediate clone site known, pressure cause and relation to old host crash unresolved. Next bounded scalar payload/memory diagnostic must preserve native behavior/errors; see qa/reference-army-replay.md |
 | Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
-| Required Supporting and associated effects | Next — authorized implementation | Required min/max/defaultnone, eligibility, incoming/outgoing and association-group bounds, effects, mutation/history/persistence and source provenance must be coherent; no label hardcoding or assignment-only completion |
-| Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
+| Required Supporting and associated effects | Done for bounded supported shapes | cad1cec: required min1/max1/defaultnone, source eligibility, direct incoming/outgoing bounds, evaluated group currencies, connected effects and source gates. A/B integration and frozen-A browser assignment/retarget/detach/duplicate/delete/history/save/reopen verified; unknown links/multi-target shapes/transitive query families/divide remain incomplete. See qa/supporting-acceptance.md; not full catalogue or army legality |
+| Dense reference-army correctness replay | Blocked — actual browser run interrupted | Frozen-A14-unit comparison input recovered, required setup and five-unit partial ledger615 observed. First Knights addition hits new timing-clone OOM; nine units, final aggregate and full-army attachment/save/reopen remain outstanding. Do not force2000 or add historical90; passing isolated pricing/Supporting tests do not replace this run |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -14542,3 +14550,84 @@ crash remains unresolved and monitored, no dedicated investigation absent recurr
 StarCraft next-pilot intent is recorded only in status; no StarCraft/UI overhaul/
 acquisition work. All existing owner tabs/storage/servers remain untouched;
 5242 own server running, own A/B test state retained for follow-up.
+
+## Completed Assignment — Required Supporting; interrupted full-army acceptance, 2026-09-10
+
+**Authority/baseline/result.** Owner continuation explicitly authorizes remaining
+correctness work, useful scoped Anthropic review and publication on the selected
+branch; it defers crash investigation absent recurrence, not failure reporting.
+Clean42adbb7 baseline, prior exact-SHA CI34534366822 passed. Implementation
+`cad1cec` plus this separate handoff; no other model's unpushed work, no branch
+switch, PR, merge, deployment or source-pin update. Batch remains incomplete.
+
+**Decision and alternatives.** Shared shape gate now accepts min0/1,max1,default
+absent/none. None never satisfies a required minimum. Source filters/effective
+categories determine candidates; incoming constraints count distinct direct
+counterpart occurrences, not model quantities. Required min/max become labelled
+provenance-preserving reports in existing validation. Association graph has its
+own structural cache/visited/work bounds and no condition imports. `.group`
+expands connected units separately from authored containment; routed modifiers
+retain enclosing source group applicability. Group enhancement bounds consume
+evaluated source currencies, not names, base sums or inferred enhancement counts.
+Rejected warning suppression, assignment-only completion, reparenting/copying
+units, hardcoded Lieutenant/Leading/Warlord behavior and treating source gates as
+unconditional. Unsupported shapes/links/operations remain expressly incomplete.
+
+**Reviews/regressions.** Native isolated review at
+C:/CodexACLTest/rf-supporting-review-20260910 supplied eight original tests
+(baseline7fail1pass), four failing candidate edge probes and five lifecycle cases.
+Lead reviewed/integrated them; all17 pass. Native caught ambiguous saved endpoints,
+unknown raw predicate/group envelopes and unrelated-force taint. Source and
+candidate Claude Code Read/Grep/Glob reviews completed under explicit owner
+transmission authorization (actual Sonnet5, no mutations/permission denials).
+External root-anchor speculation is disproved by the required self-root invariant
+and top-level cost tests; an explicit anchor guard also prevents future empty-set
+fallback. No private armies, secrets or wholesale game files sent externally.
+Neighboring pinned tests now assert both sides of real source gates: Lord of
+Contagion has no Sustained/Lance until attached, Helbrute no Assault until
+Contagion Engines. Their old positive assertions had flattened enclosing gates.
+Furnace and category-filtered melee effects remain independently verified.
+
+**Data/tests.** A04c62fcd041b3808c39d5c46fd677c704027b979 and captured
+B5b261ec423d5d017bb733c4f3c0a760b085d5ca5 unchanged. Eight-file closures verify
+revision, size, SHA256, Git-blob SHA1 and dependencies. Source review measures
+A/B51/67 declarations,89/93 association constraints,44/45 group-cost constraints,
+101/120 group modifiers in those closures. Whole-A selector inventory2562 is
+unchanged;128 group-only selectors now classify own, giving483own/170children.
+External corpus HEAD04c62fc clean. Four A/B tests pass; all six optional suites
+28pass30.24s including46-document import/compose. Normal gates lint/typecheck/
+test/build/whitespace pass:689pass28skip717tests,75pass6skip81files,10.97s.
+Existing bundle advisory remains (808.43kB JS); no increase hidden as a clean build.
+
+**Actual browser outcomes.** Earlier pricing A/B journey remains passed. Fresh
+own frozen-A `QA Supporting A` verifies required0/1, assignment, Lieutenant own
+and Intercessor weapons, separately Leading Captain, unrelated Captain unaffected,
+detach restoring source/group base, undo/redo, retarget to duplicated bodyguard,
+incoming max2/1 violation, duplicate Lieutenant unattached, deleted-target pruning,
+undo restore, save410 and ordinary named reopen retaining exact target/effects.
+No console warning/error or renderer failure in that bounded run. Three locator
+misassumptions were inspected, not action retries; actual DOM states retained.
+See docs/qa/supporting-acceptance.md for coverage/unsupported boundaries.
+
+**Failed final replay — not acceptance.** Own tab9/5242, fresh frozen-A14-unit
+comparison from original audit input. StrikeForce2000/Gladius/PriorityAssets;
+CaptainWarlordArtificer100, Lieutenant45, power-fist Intercessors1/3/1=80 and
+1/8/1=150. FirstKnights click dispatch times out; DOM subsequently shows240 and
+total615. Console22:21:13.688UTC: DataCloneError/OOM at React19.2.8 development
+logComponentRender/performance.measure then passive-commit traversal. No crash
+interstitial captured. Failed tab not reloaded, retried or replaced by headless
+success. Independent source inspection confirms immediate cloning of formatted
+changed-props timing detail, not persistence bytes; one huge payload vs accumulated
+pressure remains unresolved. No causal repair or retrospective explanation of the
+older host crash. Partial ledger and exact stack in docs/qa/reference-army-replay.md.
+Nine units/final aggregate/complete full-army workflow remain acceptance blockers.
+
+**Handoff/publishing.** Publish code and handoff together; confirm exact pushed
+CI afterward. Own tabs6/7(pricing),8(Supporting),9(failed replay) explicitly marked
+for handoff; own5242server remains running. Existing owner tabs/storage/servers
+untouched, including5240. No material deletion or memory write. Next justified
+step is a bounded timing-payload/memory diagnostic preserving native measure and
+rethrowing errors, then a demonstrated repair and separately labelled acceptance.
+Do not erase the failed run, suppress timing errors, infer a leak, or disable
+StrictMode as a purported fix. StarCraft remains only the near-term next pilot;
+no source/import/acquisition/implementation/UI overhaul or broad audit started.
