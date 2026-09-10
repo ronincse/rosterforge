@@ -34,7 +34,20 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-09 (World Eaters warning repairs published; CI green)
+## Current Status — 2026-09-10 (correctness batch active; compact uncertainty contained)
+
+The owner authorized a new correctness batch against frozen data A `04c62fc`
+and captured snapshot B `5b261ec`, without changing the permanent pin. Checkpoint
+0 is implemented in `c08d34d`: provisional spending remains visibly qualified
+at 320/390 pixels with zero/nonzero violations and independently known capacity.
+All normal gates pass (652 tests / 24 skipped), plus one pinned capacity test.
+See `docs/qa/rf-ux-01-containment.md`. Publication/CI is pending this handoff.
+Next: transparent-group numeric counting, then evidenced local-group repeated-unit
+pricing, required Supporting plus attached effects, and full dense-army browser
+replay with a source-based cost ledger. **The ordinary UI roadmap is paused.**
+Use separate QA origin 5240; do not operate the owner's tabs, saved armies or
+preview servers 5199/5216. Claude review was approval-blocked before launch;
+isolated native review continues. This batch is not yet complete.
 
 The owner prioritized the 2026-09-06 audit repairs over UI work: RF-A01 saving
 after long edit histories is repaired in `bcf089c`; RF-A02 recovery lifecycle is
@@ -97,7 +110,8 @@ Published through `d27b2a6513858a2278767c2a60f6ed6a2717300c`; exact-SHA CI
 `34411560501` passed every gate (verify job 56 seconds). This documentation-only
 confirmation follows the tested checkpoint. Temporary QA5210 is stopped; the
 user preview 5199 still returns HTTP 200.
-Stop after this bounded checkpoint; broader attachment compatibility remains open.
+That previous checkpoint is complete; the new owner-authorized batch above
+supersedes its stop instruction. Broader attachment compatibility remains open.
 
 RosterForge reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
@@ -588,7 +602,9 @@ list-builder overhaul on `codex/list-builder-ui-overhaul`; the dedicated active
 roster shell, compact grouped army rows, focused reference dialogs, Add unit
 sheet, compact Configuration row, and requested blurred-material foundations
 are its completed seams. **Apply the complete shared active-roster
-component/token system Next.** The remaining pinned Aeldari matched-play
+component/token system only after owner reauthorization.** The 2026-09-10
+correctness batch above now takes priority and pauses the ordinary UI sequence.
+The remaining pinned Aeldari matched-play
 coverage, roster duplication,
 and whole-roster incremental evaluation stay Open. Take the overhaul sequence
 in the dependency order stated in section F rather than treating table position
@@ -823,7 +839,7 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Next | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **Next:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Deferred — paused for correctness | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **When reauthorized:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
 | Audit RF-A04 rule visibility | Mitigated; reported case fixed | `0d3bfcc`/`1fdbcde`: rule/link modifiers preserved, occurrence-aware Boolean visibility and explicit per-rule uncertainty; Dark Angels/Black Templars Templar Vows behavior verified. Full compatibility remains open below |
@@ -835,7 +851,11 @@ QA before classifying or implementing the discrepancy.
 | Source formatting and prose references | Done — bounded owner follow-up | `d7c1d75`: safe bold/italic/small-cap and bounded block formatting; actual rule/profile names and aliases in the catalogue closure; selected reports preferred, source-only lookups labeled; eight-layer reference navigation. Angron and nested Warp Blades/Lethal Hits browser evidence in `docs/qa/rich-text-references.md` |
 | Broader reference lookup parity | Deferred — owner prioritization required | General lookup does not index arbitrary entry names/category descriptions or supply an absent core glossary such as Deployment. No full CommonMark, imported formatRules execution or rule-name modifier expansion added. Keep these separate from applicability/evaluation repairs; current scope is documented in `docs/compatibility.md` |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
-| Local condition group cost applicability | Unsupported, outside follow-up batch | Pinned Impulsor `bfb1-7512-e1a3-9fa2` has increment-10 points guarded by `localConditionGroups`. Projection is preserved, semantics are not evaluated. Its base 70 remains provisional with diagnostics; resolve semantics through separate evidence/design, not a name-specific price patch |
+| RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
+| Transparent-group numeric selection counting | Next — authorized correctness batch | Reproduce Intercessor group count 0 versus selected 5/10 models; preserve authored placement without globally extending identity. Test 80/150/80, neighboring numeric consumers and both frozen datasets |
+| Local condition group cost applicability | Open — authorized after counting | Deathwing Knights repeated-unit increment and Impulsor A/B threshold drift need evidenced candidate/anchor/order semantics, complete regression coverage and honest unsupported variants |
+| Required Supporting and associated effects | Open — authorized after local groups | Required min1/max1 assignment, eligibility, incoming/outgoing limits, lifecycle and grouped Lethal Hits effects must be coherent; do not merely relax the optional gate |
+| Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -14231,3 +14251,32 @@ through `d27b2a6513858a2278767c2a60f6ed6a2717300c`; CI `34411560501` passed ever
 gate on that exact SHA (verify job 56 seconds). Temporary QA5210 was stopped and
 its closure verified, while 5199 was rechecked HTTP 200. This documentation-only
 confirmation follows the tested checkpoint; branch was clean and synchronized.
+
+## Completed Assignment — Compact provisional-cost containment, 2026-09-10
+
+Baseline `adffb03a7a4ff3affae37ed8d19aa101c9bd0b99`; implementation `c08d34d`.
+The selected branch remains `codex/list-builder-ui-overhaul`; no unrelated
+changes or unpushed work were present. The owner has authorized checkpoints
+0–4 of the new correctness batch. Only checkpoint 0 is complete here.
+
+**Decision.** Preserve the essential provisional caption rather than all small
+mobile captions or changing evaluator results. Keep known capacity independent
+of spending; a missing capacity witness retains conservative report uncertainty.
+Two new assertions failed before and pass after. Browser baseline computed
+display none/zero-sized caption at 390 pixels; candidate visibly shows the full
+74.15x12-pixel caption at 390 and 320 with zero and one known violation. Synthetic
+rosters only, own tab/origin 5240, no owner preview or saved-army changes.
+
+**Validation.** Lint/typecheck/test/build/whitespace pass. 652 tests pass /24 skip,
+72 passed /5 skipped files. Focused capacity tests 2 pass. Optional Dark Angels
+capacity test 1 pass on verified pin `04c62fcd041b3808c39d5c46fd677c704027b979`,
+eight-file closure. No data B pricing measurement claimed. Existing large-bundle
+advisory remains, main JS 795.24 kB. Evidence: `docs/qa/rf-ux-01-containment.md`.
+
+**Review/remaining.** Native reviewer in isolated adffb03 worktree identified
+transparent-path counting boundaries and is investigating local-group semantics.
+This atomic containment needed no overlapping writer. Claude invocation was
+approval-blocked before launch; no private source sent or bypass attempted.
+Counting, repeated-unit pricing, Supporting/effects and full reference replay
+remain authorized work, not completed acceptance. Ordinary UI work stays paused.
+This handoff commit accompanies the code push; exact remote CI is checked next.
