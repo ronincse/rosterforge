@@ -87,6 +87,12 @@ export type RosterConditionCandidateStatus =
   | "different"
   | "unresolved";
 
+interface ConditionSourceChild {
+  readonly kind: string;
+  readonly name?: string;
+  readonly children?: readonly ConditionSourceChild[];
+}
+
 export interface RosterSelectionConditionSource {
   readonly id?: ObjectId;
   readonly type?: string;
@@ -104,7 +110,7 @@ export interface RosterSelectionConditionSource {
   readonly path: readonly string[];
   readonly node: {
     readonly attributes: Readonly<Record<string, string>>;
-    readonly children?: readonly { readonly kind: string }[];
+    readonly children?: readonly ConditionSourceChild[];
   };
 }
 
@@ -125,6 +131,7 @@ export interface RosterSelectionConditionGroupSource {
   readonly path: readonly string[];
   readonly node: {
     readonly attributes: Readonly<Record<string, string>>;
+    readonly children?: readonly ConditionSourceChild[];
   };
 }
 
@@ -182,6 +189,35 @@ export interface RosterSelectionConditionGroupReport<
   readonly conditions: readonly RosterSelectionConditionReport[];
   readonly conditionGroups: readonly RosterSelectionConditionGroupReport[];
   readonly localConditionGroups: readonly RosterLocalConditionGroupSource[];
+  readonly localConditionReports?: readonly RosterLocalConditionReport[];
+}
+
+export interface RosterLocalConditionReport {
+  readonly group: RosterLocalConditionGroupSource;
+  readonly status: RosterConditionStatus;
+  readonly completeness: ValidationCompleteness;
+  readonly observed?: number;
+  readonly candidates: readonly { readonly occurrence: RosterSelection; readonly status: RosterConditionStatus; readonly predicates: readonly RosterSelectionConditionReport[] }[];
+  readonly diagnostics: readonly Diagnostic[];
+}
+
+// Local groups rebind self for every candidate. Cache owner lookup once per
+// immutable roster so that rebinding does not add a whole-roster scan per leaf.
+// Arrays retain duplicate-identity placements for the existing ambiguity guard.
+const conditionLocations = new WeakMap<Roster, ReadonlyMap<RosterSelection, readonly RosterSelectionLocation[]>>();
+function locationsForCondition(roster: Roster, owner: RosterSelection): readonly RosterSelectionLocation[] {
+  let index = conditionLocations.get(roster);
+  if (index === undefined) {
+    const built = new Map<RosterSelection, RosterSelectionLocation[]>();
+    for (const location of rosterSelectionLocations(roster)) {
+      const existing = built.get(location.occurrence);
+      if (existing === undefined) built.set(location.occurrence, [location]);
+      else existing.push(location);
+    }
+    index = built;
+    conditionLocations.set(roster, index);
+  }
+  return index.get(owner) ?? [];
 }
 
 
@@ -269,9 +305,7 @@ export function evaluateRosterCondition<
   const forceOwner = "forces" in owner;
   const selectionOwnerLocations = forceOwner
     ? []
-    : rosterSelectionLocations(roster).filter(
-        (location) => location.occurrence === owner,
-      );
+    : locationsForCondition(roster, owner);
   const forceOwnerLocations = forceOwner
     ? rosterForceLocations(roster).filter(
         (location) => location.occurrence === owner,
@@ -724,6 +758,10 @@ export function evaluateRosterSelectionCondition<
   return evaluateRosterCondition(roster, context, owner, condition, options);
 }
 
+/** Combines ordinary conditions and supported local preceding-copy filters.
+ * Local predicates rebind to each candidate while retaining the modifier owner
+ * as the positional anchor; unsupported local shapes retain incomplete evidence.
+ */
 export function evaluateRosterConditionGroup<
   Group extends RosterSelectionConditionGroupSource,
 >(
@@ -735,6 +773,13 @@ export function evaluateRosterConditionGroup<
 ): Result<RosterSelectionConditionGroupReport<Group>> {
   const diagnostics: Diagnostic[] = [];
   const localConditionGroups = group.localConditionGroups ?? [];
+  // Newly executable local-bearing groups must not overlook a second raw
+  // collection or an unprojected sibling predicate in their enclosing group.
+  const localEnvelopeSupported = localConditionGroups.length === 0 || conditionGroupChildrenSupported(group.node.children ?? []);
+  if (!localEnvelopeSupported) diagnostics.push(conditionGroupDiagnostic(group,
+    "EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED",
+    "The enclosing local condition group contains unsupported or duplicate source collections.",
+    undefined, { count: localConditionGroups.length }));
   const type = conditionGroupType(group.type);
   if (group.type === undefined) {
     diagnostics.push(
@@ -772,22 +817,17 @@ export function evaluateRosterConditionGroup<
       ),
     );
   }
-  const localConditionGroup = localConditionGroups[0];
-  if (localConditionGroup !== undefined) {
-    diagnostics.push({
-      ...conditionGroupDiagnostic(
-        group,
-        "EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED",
-        "Local condition groups are preserved but their combination behavior is not supported.",
-        undefined,
-        { count: localConditionGroups.length },
-      ),
-      location: {
-        source: localConditionGroup.source,
-        path: localConditionGroup.path,
-      },
+  const localConditionReports = localConditionGroups.map(local => {
+    const report = evaluateLocalPositionalGroup(roster, context, owner, local, options);
+    diagnostics.push(...report.diagnostics);
+    if (report.completeness === "incomplete") diagnostics.push({
+      ...conditionGroupDiagnostic(group, "EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED",
+        "This local condition group has unsupported shape, quantity, ordering or unresolved candidate behavior.",
+        undefined, { count: localConditionGroups.length }),
+      location: { source: local.source, path: local.path },
     });
-  }
+    return report;
+  });
   const attributes = unsupportedGroupAttributes(group);
   if (attributes.length > 0) {
     diagnostics.push(
@@ -832,13 +872,14 @@ export function evaluateRosterConditionGroup<
   const childStatuses = [
     ...conditions.map((condition) => condition.status),
     ...conditionGroups.map((child) => child.status),
+    ...localConditionReports.map((child) => child.status),
   ];
   const expectedChildren =
-    group.conditions.length + group.conditionGroups.length;
+    group.conditions.length + group.conditionGroups.length + localConditionGroups.length;
   const status =
+    !localEnvelopeSupported ||
     type === undefined ||
     expectedChildren === 0 ||
-    localConditionGroups.length > 0 ||
     childStatuses.length !== expectedChildren
       ? "unresolved"
       : combinedConditionStatus(type, childStatuses);
@@ -861,9 +902,117 @@ export function evaluateRosterConditionGroup<
       conditions,
       conditionGroups,
       localConditionGroups,
+      ...(localConditionReports.length === 0 ? {} : { localConditionReports }),
     },
     diagnostics,
   );
+}
+
+/**
+ * Bounded preceding-copy local groups: candidate predicates share one candidate,
+ * while `before` retains the original modifier anchor. NR's pinned conditions
+ * documentation defines this per-candidate filter and Nth-copy use; public
+ * editor/runtime evidence does not settle stacked quantities or repeat scaling.
+ * Keep those variants unknown instead of extrapolating a universal local grammar.
+ */
+function evaluateLocalPositionalGroup(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterConditionOwner,
+  group: RosterLocalConditionGroupSource,
+  options: RosterConditionOptions,
+): RosterLocalConditionReport {
+  const unresolved: RosterLocalConditionReport = { group, status: "unresolved", completeness: "incomplete", candidates: [], diagnostics: [] };
+  const allowed = new Set(["id", "comment", "type", "field", "scope", "value", "includeChildSelections", "includeChildForces", "repeats"]);
+  const comparison = comparisonKind(group.type);
+  const expected = group.value !== undefined && /^\d+$/.test(group.value) ? Number(group.value) : undefined;
+  const before = group.conditions.filter(c => c.type === "before");
+  const identities = group.conditions.filter(c => c.type === "instanceOf" || c.type === "notInstanceOf");
+  if ("forces" in owner || options.prospectiveChild === true || !rosterMatchesCatalogueContext(roster, context) ||
+      comparison === undefined || expected === undefined || !Number.isSafeInteger(expected) ||
+      group.scope !== "parent" || group.field !== "selections" || group.repeats !== 1 ||
+      Object.keys(group.node.attributes).some(k => !allowed.has(k)) ||
+      ["includeChildSelections", "includeChildForces"].some(k => group.node.attributes[k] !== undefined && !["true", "false"].includes(group.node.attributes[k]!)) ||
+      !localGroupChildrenSupported(group.node.children ?? []) ||
+      group.conditionGroups.length > 0 || (group.localConditionGroups?.length ?? 0) > 0 ||
+      before.length !== 1 || identities.length === 0 || identities.length > 4 || before.length + identities.length !== group.conditions.length ||
+      group.conditions.some(c => c.field !== "selections" || c.scope !== "self" || c.shared !== true || c.value !== "1" || c.percentValue === true || c.includeChildSelections === true || c.includeChildForces === true || unsupportedAttributes(c).length > 0 || c.node.children?.some(child => child.kind === "element") || ["shared", "percentValue", "includeChildSelections", "includeChildForces"].some(k => c.node.attributes[k] !== undefined && !["true", "false"].includes(c.node.attributes[k]!))) ||
+      before[0]!.childId !== objectId("any") || rosterSelectionAmount(owner) !== 1) return unresolved;
+  const anchorLocations = locationsForCondition(roster, owner);
+  const choices = indexEvaluationChoices(context);
+  const anchorResolution = resolveEvaluationSelection(owner, choices, true);
+  if (anchorLocations.length !== 1 || anchorResolution.status !== "resolved" || anchorResolution.choices[0]?.kind !== "selectionEntry" || !["unit", "model"].includes(anchorResolution.choices[0].type ?? "")) return unresolved;
+  const anchor = anchorLocations[0]!;
+  // Persisted sibling sequence is the roster's ordering contract, preserved by
+  // commands/history/storage. Never use display sorting, IDs or a same-name index.
+  // Cross-parent positional comparisons are withheld even when inclusion flags
+  // put those descendants in the candidate collection: their order is unproven.
+  const preceding = new Set<RosterSelection>();
+  let found = false;
+  for (const sibling of anchor.parent.selections) {
+    if (sibling === owner) { found = true; break; }
+    preceding.add(sibling);
+  }
+  if (!found) return unresolved;
+  const occurrences = evaluationSelectionScope(roster, anchor, "parent", group.includeChildSelections === true, group.includeChildForces === true);
+  // This is a per-candidate evaluator, not unrestricted imported computation.
+  // Bound retained reports/work per local group; four identity predicates and
+  // 4096 predicate evaluations cover the measured two-predicate corpus shape.
+  if (occurrences.length * identities.length > 4096) return unresolved;
+  const candidates: RosterLocalConditionReport["candidates"][number][] = [];
+  const diagnostics: Diagnostic[] = [];
+  let count = 0;
+  let incomplete = false;
+  for (const occurrence of occurrences) {
+    const results = identities.map(predicate => evaluateRosterCondition(roster, context, occurrence, predicate, options));
+    const predicates = results.flatMap(result => result.ok ? [result.value] : []);
+    const identity = predicates.length === identities.length ? combinedConditionStatus("and", predicates.map(p => p.status)) : "unresolved";
+    let status: RosterConditionStatus = "unsatisfied";
+    if (identity !== "unsatisfied") {
+      const candidateLocations = locationsForCondition(roster, occurrence);
+      if (candidateLocations.length !== 1 || candidateLocations[0]!.parent !== anchor.parent) status = "unresolved";
+      else if (preceding.has(occurrence)) {
+        status = identity === "unresolved" || rosterSelectionAmount(occurrence) !== 1 || predicates.some(p => p.completeness !== "complete") ? "unresolved" : "satisfied";
+      }
+    }
+    count += status === "satisfied" ? 1 : 0;
+    incomplete ||= status === "unresolved";
+    if (status === "unresolved") diagnostics.push(...results.flatMap(result => result.diagnostics));
+    candidates.push({ occurrence, status, predicates });
+  }
+  return { group, candidates, diagnostics, completeness: incomplete ? "incomplete" : "complete", status: incomplete ? "unresolved" : compare(comparison, count, expected) ? "satisfied" : "unsatisfied", ...(incomplete ? {} : { observed: count }) };
+}
+
+function localGroupChildrenSupported(children: readonly ConditionSourceChild[]): boolean {
+  // Projection reads the first collection only. A second collection or unknown
+  // element could carry an extra predicate, so neither may silently disappear
+  // when a formerly unsupported local group becomes executable.
+  const seen = new Set<string>();
+  for (const child of children) {
+    if (child.kind !== "element") continue;
+    if (child.name === undefined || seen.has(child.name)) return false;
+    seen.add(child.name);
+    const elements = (child.children ?? []).filter(c => c.kind === "element");
+    if (child.name === "conditions") {
+      if (elements.some(c => c.name !== "condition" || c.children?.some(n => n.kind === "element"))) return false;
+    } else if (!["conditionGroups", "localConditionGroups"].includes(child.name) || elements.length > 0) return false;
+  }
+  return true;
+}
+
+function conditionGroupChildrenSupported(children: readonly ConditionSourceChild[]): boolean {
+  const names: Readonly<Record<string, string>> = { conditions: "condition", conditionGroups: "conditionGroup", localConditionGroups: "localConditionGroup" };
+  const seen = new Set<string>();
+  for (const child of children) {
+    if (child.kind !== "element") continue;
+    if (child.name === undefined || names[child.name] === undefined || seen.has(child.name)) return false;
+    seen.add(child.name);
+    if (child.children?.some(c => c.kind === "element" && c.name !== names[child.name!])) return false;
+    const elements = (child.children ?? []).filter(c => c.kind === "element");
+    if (child.name === "conditions" && elements.some(c => c.children?.some(n => n.kind === "element"))) return false;
+    if (child.name === "conditionGroups" && elements.some(c => !conditionGroupChildrenSupported(c.children ?? []))) return false;
+  }
+  return true;
 }
 
 export function evaluateRosterSelectionConditionGroup<

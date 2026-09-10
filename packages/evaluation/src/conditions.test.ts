@@ -22,6 +22,7 @@ import {
   rosterDefinitionKeyForSource,
   rosterId,
   selectionOccurrenceId,
+  moveRosterSelection,
   type Roster,
 } from "@rosterforge/roster-model";
 import { fixtureBytes } from "@rosterforge/test-fixtures";
@@ -2038,6 +2039,77 @@ describe("roster selection conditions", () => {
     ]);
   });
 
+  it("filters the same local candidate by shared identity and durable before order", () => {
+    const context = catalogueContext(["projection.gst", "cost-evaluation.cat"], "cost-evaluation");
+    const base = choice(context, "cost-base");
+    let roster = addRootSelection(addRootSelection(addRootSelection(emptyRoster(context), base, "first"), choice(context, "cost-problems"), "unrelated"), base, "second");
+    roster = addRootSelection(roster, base, "third");
+    const group = positionalGroup();
+    const inspect = (r: Roster, id: string, tested = group) => successful(evaluateRosterSelectionConditionGroup(r, context, r.forces[0]!.selections.find(s => s.id === id)!, tested));
+    expect(inspect(roster, "first")).toMatchObject({ status: "unsatisfied", completeness: "complete", localConditionReports: [{ observed: 0 }] });
+    expect(inspect(roster, "second")).toMatchObject({ status: "unsatisfied", completeness: "complete", localConditionReports: [{ observed: 1 }] });
+    expect(inspect(roster, "third")).toMatchObject({ status: "satisfied", completeness: "complete", localConditionReports: [{ observed: 2 }] });
+    const moved = successful(moveRosterSelection(roster, selectionOccurrenceId("third"), 0));
+    expect(inspect(moved, "third")).toMatchObject({ status: "unsatisfied", localConditionReports: [{ observed: 0 }] });
+    expect(inspect(moved, "second")).toMatchObject({ status: "satisfied", localConditionReports: [{ observed: 2 }] });
+    const local = group.localConditionGroups![0]!;
+    const category = { ...local, conditions: local.conditions.map(c => c.type === "instanceOf" ? { ...c, childId: objectId("category-character") } : c) };
+    expect(inspect(roster, "third", { ...group, localConditionGroups: [category] })).toMatchObject({ status: "satisfied", localConditionReports: [{ observed: 2 }] });
+    const conjunction = { ...local, conditions: [...local.conditions, { ...local.conditions[1]!, childId: objectId("category-relic") }] };
+    expect(inspect(roster, "third", { ...group, localConditionGroups: [conjunction] })).toMatchObject({ status: "unsatisfied", localConditionReports: [{ observed: 0 }] });
+    expect(inspect(roster, "third", { ...group, type: "or", conditions: [syntheticCondition({ type: "notInstanceOf", scope: "self", childId: objectId("cost-base") })] })).toMatchObject({ status: "satisfied", completeness: "complete" });
+  });
+
+  it.each(["repeats", "scope", "amount", "priorAmount", "unknownAttribute", "unknownElement", "badFlag", "unknownPredicate", "duplicateContainer"])("withholds unsupported local positional variant %s", variant => {
+    const context = catalogueContext(["projection.gst", "cost-evaluation.cat"], "cost-evaluation");
+    const base = choice(context, "cost-base");
+    let roster = addRootSelection(emptyRoster(context), base, "first", variant === "priorAmount" ? 2 : 1);
+    roster = addRootSelection(roster, base, "owner", variant === "amount" ? 2 : 1);
+    const group = positionalGroup();
+    let local = group.localConditionGroups![0]!;
+    if (variant === "repeats") local = { ...local, repeats: 2 };
+    if (variant === "scope") local = { ...local, scope: "roster" };
+    if (variant === "unknownAttribute") local = { ...local, node: { ...local.node, attributes: { future: "true" } } };
+    if (variant === "unknownElement") local = { ...local, node: { ...local.node, children: [{ kind: "element", name: "future" }] } };
+    if (variant === "badFlag") local = { ...local, node: { ...local.node, attributes: { includeChildForces: "maybe" } } };
+    if (variant === "unknownPredicate") local = { ...local, node: { ...local.node, children: [{ kind: "element", name: "conditions", children: [{ kind: "element", name: "futureCondition" }] }] } };
+    if (variant === "duplicateContainer") local = { ...local, node: { ...local.node, children: [{ kind: "element", name: "conditions" }, { kind: "element", name: "conditions" }] } };
+    expect(successful(evaluateRosterSelectionConditionGroup(roster, context, roster.forces[0]!.selections[1]!, { ...group, localConditionGroups: [local] }))).toMatchObject({ status: "unresolved", completeness: "incomplete" });
+  });
+
+  it("withholds unprojected predicates and duplicate collections surrounding local groups", () => {
+    const context = catalogueContext(["projection.gst", "cost-evaluation.cat"], "cost-evaluation");
+    const roster = addRootSelection(emptyRoster(context), choice(context, "cost-base"), "owner");
+    const group = positionalGroup();
+    for (const children of [
+      [{ kind: "element", name: "conditions", children: [{ kind: "element", name: "futureCondition" }] }],
+      [{ kind: "element", name: "localConditionGroups" }, { kind: "element", name: "localConditionGroups" }],
+      [{ kind: "element", name: "conditions", children: [{ kind: "element", name: "condition", children: [{ kind: "element", name: "future" }] }] }],
+      [{ kind: "element", name: "conditionGroups", children: [{ kind: "element", name: "conditionGroup", children: [{ kind: "element", name: "future" }] }] }],
+    ]) {
+      expect(successful(evaluateRosterSelectionConditionGroup(roster, context, roster.forces[0]!.selections[0]!, {
+        ...group, node: { ...group.node, children },
+      }))).toMatchObject({ status: "unresolved", completeness: "incomplete" });
+    }
+  });
+
+  it("respects force/child boundaries and withholds unproven cross-parent positions", () => {
+    const context = catalogueContext(["projection.gst", "cost-evaluation.cat"], "cost-evaluation");
+    const base = choice(context, "cost-base");
+    let roster = addRootSelection(emptyRoster(context), base, "owner");
+    const definition = roster.forces[0]!.definition;
+    roster = successful(addRosterForce(roster, { id: forceOccurrenceId("other"), definition }));
+    roster = successful(addRosterSelectionToForce(roster, forceOccurrenceId("other"), { id: selectionOccurrenceId("elsewhere"), definition: selectionReference(base) }));
+    const group = positionalGroup();
+    const inspect = (r: Roster, tested = group) => successful(evaluateRosterSelectionConditionGroup(r, context, r.forces[0]!.selections[0]!, tested));
+    expect(inspect(roster)).toMatchObject({ completeness: "complete", localConditionReports: [{ observed: 0 }] });
+    roster = successful(addRosterChildForce(roster, forceOccurrenceId("force-1"), { id: forceOccurrenceId("nested"), definition }));
+    roster = successful(addRosterSelectionToForce(roster, forceOccurrenceId("nested"), { id: selectionOccurrenceId("nested-unit"), definition: selectionReference(base) }));
+    expect(inspect(roster)).toMatchObject({ status: "unresolved", completeness: "incomplete" });
+    const local = group.localConditionGroups![0]!;
+    expect(inspect(roster, { ...group, localConditionGroups: [{ ...local, includeChildForces: false }] })).toMatchObject({ completeness: "complete", localConditionReports: [{ observed: 0 }] });
+  });
+
   it("keeps local condition groups observable and unresolved", () => {
     const context = catalogueContext([
       "projection.gst",
@@ -2252,6 +2324,11 @@ function syntheticConditionGroup(
     path: ["catalogue", "conditionGroup"],
     node: { attributes: { type } },
   };
+}
+
+function positionalGroup(): RosterSelectionConditionGroupSource {
+  const predicate = syntheticCondition({ type: "before", scope: "self", shared: true, childId: objectId("any"), value: "1" });
+  return { ...syntheticConditionGroup("and"), localConditionGroups: [{ ...predicate, type: "atLeast", scope: "parent", value: "2", repeats: 1, includeChildSelections: true, includeChildForces: true, node: { attributes: {} }, conditions: [predicate, { ...predicate, type: "instanceOf", childId: objectId("cost-base") }], conditionGroups: [] }] };
 }
 
 function parseFixture(filename: string) {

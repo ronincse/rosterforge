@@ -6,7 +6,7 @@ import { expect, it } from "vitest";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { createRosterWorkspaceViewModel } from "./roster-workspace-model.js";
-import { addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, inspectLocalRosterRootChoices, inspectLocalRosterSupportedValidation, localRosterRootChoices, removeLocalRosterSelection } from "./roster-session.js";
+import { addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, inspectLocalRosterRootChoices, inspectLocalRosterSupportedValidation, localRosterRootChoices, removeLocalRosterSelection, setLocalRosterSelectionAmount } from "./roster-session.js";
 
 const directory = process.env.ROSTERFORGE_BSDATA_JSON_DIR;
 it.skipIf(directory === undefined)("keeps the pinned Dark Angels capacity across Impulsor and Battle Size edits", async () => {
@@ -63,11 +63,18 @@ it.skipIf(directory === undefined)("keeps the pinned Dark Angels capacity across
   inspect(160, 2000, false);
   const configuration = session.roster.forces[0]!.selections.slice(0, 3);
   const transport = add("Impulsor");
-  const model = inspect(230, 2000, true);
+  const model = inspect(230, 2000, false);
   expect(session.roster.forces[0]!.selections.slice(0, 3)).toEqual(configuration);
   expect(model.costs.activeTotals.some(c => c.name === "Detachment Points" && c.value === 3 && c.limit === 3)).toBe(true);
   choose("Battle Size", "1. Incursion (1000 Point limit)");
-  inspect(230, 1000, true);
+  inspect(230, 1000, false);
+  // One vehicle occurrence representing multiple copies has unresolved
+  // positional pricing. Preserve the independent-capacity regression here
+  // after ordinary one-copy local-group pricing becomes supported.
+  const stacked = setLocalRosterSelectionAmount(session, transport, 2, { createSelectionId: next });
+  if (!stacked.ok) throw new Error("Stacked amount failed");
+  session = stacked.value;
+  inspect(300, 1000, true);
   const removed = removeLocalRosterSelection(session, transport);
   if (!removed.ok) throw new Error("Remove failed");
   session = removed.value;

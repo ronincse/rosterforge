@@ -1078,9 +1078,17 @@ The JSON adapter also recognizes the observed, non-2.03
 condition-like attributes, scalar repeat metadata, nested conditions, generic
 nodes, JSON source objects, paths, and provenance as a separate typed extension
 collection. They are not merged into ordinary `conditions` or
-`conditionGroups`. The data graph can inspect nested condition references, but
-evaluation keeps the extension unresolved until its combination semantics are
-understood.
+`conditionGroups`. The data graph can inspect nested condition references.
+Evaluation now supports bounded preceding-copy local filters: collect the parent
+scope, rebind identity predicates to each candidate, retain the modifier owner
+for `before`, count passing candidates, then compose the local result with the
+ordinary group. Reports retain candidate and predicate evidence by reference.
+The immutable-roster weak location index avoids a full roster scan per predicate;
+work is capped at 4,096 candidate/identity evaluations per local group (at most
+four identity predicates). Evaluating every copy remains quadratic in sibling
+count; this is not an unrestricted local-query interpreter. Unsupported shapes,
+stacked copies, ambiguous locations and unproven cross-parent ordering remain
+incomplete. See `docs/qa/local-group-pricing.md` for the exact boundary.
 
 For JSON, native strings, numbers, and Booleans are converted to their
 BattleScribe lexical form only in the compatibility element view. Their native

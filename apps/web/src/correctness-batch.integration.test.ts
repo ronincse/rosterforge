@@ -6,13 +6,13 @@ import { expect, it } from "vitest";
 import { type Result } from "@rosterforge/foundation";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
-import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, localRosterRootChoices, setLocalRosterSelectionAmount } from "./roster-session.js";
+import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, localRosterRootChoices, setLocalRosterSelectionAmount, duplicateLocalRosterSelection, removeLocalRosterSelection } from "./roster-session.js";
 
 const evidence = process.env.ROSTERFORGE_CORRECTNESS_SNAPSHOTS;
 const revisions = { frozen: "04c62fcd041b3808c39d5c46fd677c704027b979", "current-upstream": "5b261ec423d5d017bb733c4f3c0a760b085d5ca5" };
 function ok<T>(r: Result<T>): T { if (!r.ok) throw new Error(JSON.stringify(r.diagnostics)); return r.value; }
 
-for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`counts Intercessor carriers and prices thresholds on ${dataset} ${revision}`, async () => {
+for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`counts Intercessor carriers and prices repeated Knights/Impulsors on ${dataset} ${revision}`, async () => {
   if (evidence === undefined) throw new Error("Snapshots not configured");
   const manifest = JSON.parse(readFileSync(join(evidence, `${dataset}-manifest.json`), "utf8")) as { commit: string; documents: { path: string; bytes: number; sha256: string; gitBlob: string; id: string; gameSystemId?: string; catalogueLinks: { targetId: string }[] }[] };
   expect(manifest.commit).toBe(revision);
@@ -54,4 +54,32 @@ for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence 
     expect(applicability.status).toBe(observed! >= 6 ? "applicable" : "notApplicable");
     expect(cost.modifierSequence.completeness).toBe("complete");
   }
+  // Repeated-unit probes use production commands without weakening game limits.
+  // These engine-only counts do not claim a legal UI roster at transport maxima.
+  function add(definition: string) {
+    const id = next();
+    session = ok(addLocalRosterRootSelection(session, localRosterRootChoices(catalogue).find(c => c.materialized.definitionId === definition)!, { selectionId: id, createSelectionId: next }));
+    return id;
+  }
+  function prices(definition: string) {
+    return ok(evaluateLocalRosterCosts(session)).selections.filter(s => s.choices.some(c => c.definitionId === definition)).map(s => {
+      const cost = s.costs.find(c => c.typeId === "51b2-306e-1021-d207")!;
+      if (cost.status !== "included") throw new Error("Repeated cost missing");
+      expect(cost.modifierSequence.completeness).toBe("complete");
+      return cost.value;
+    });
+  }
+  const knights = "a6cc-9a65-dbf1-71b0";
+  const firstKnight = add(knights);
+  expect(prices(knights)).toEqual([240]);
+  add("8da0-4570-c3c-819f"); // Unrelated intervening unit is not a matching copy.
+  add(knights);
+  session = ok(duplicateLocalRosterSelection(session, firstKnight, next));
+  expect(prices(knights)).toEqual([240, 240, 260]);
+  session = ok(removeLocalRosterSelection(session, firstKnight));
+  expect(prices(knights)).toEqual([240, 240]);
+  const impulsor = "bfb1-7512-e1a3-9fa2";
+  const preceding = dataset === "frozen" ? 4 : 3;
+  for (let n = 0; n <= preceding; n++) add(impulsor);
+  expect(prices(impulsor)).toEqual([...Array<number>(preceding).fill(70), 80]);
 }, 30000);

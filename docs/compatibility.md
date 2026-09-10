@@ -664,8 +664,8 @@
 - Characteristic modifiers owned by selection entries, entry links, info links,
   or info groups rather than by the profile itself
 
-- Observed JSON local condition-group combination behavior and ordinary
-  condition groups whose preserved type is `count`
+- Local condition groups outside the bounded preceding-copy filter described in
+  `docs/qa/local-group-pricing.md`, and ordinary groups with preserved type `count`
 - Conditional or modified bounds needed to infer an automatic descendant
   quantity, plus percentage, malformed, extension-driven, or non-parent
   selection bounds for automatic descendant initialization
@@ -1242,14 +1242,17 @@ bytes. The current exact-empty
 completeness here means every planned source was verified and ingested, not that
 all projected BattleScribe behavior is supported or legal.
 
-The pinned JSON also extends the 2.03 condition-group shape in two ways. It has
-339 `localConditionGroup` objects under ordinary `and` groups. Every local
-object uses `type="atLeast"`, `field="selections"`, and `scope="parent"`, and
-contains one nested `before` condition plus one nested `instanceOf` condition.
-It also has 59 ordinary condition groups with the unknown type `count`.
-RosterForge projects local objects and their nested conditions separately,
-retains `count` as a string, and keeps both behaviors unresolved rather than
-misclassifying local-bearing groups as empty or inventing extension semantics.
+The JSON extends the 2.03 condition-group shape. The historical 339 local-group
+measurement below is superseded by the 2026-09-10 measurement at pin `04c62fc`:
+374 local groups in 29 of 46 documents, all parent-scoped selection counts with
+one `before` and one shared `instanceOf` predicate. 373 have repeats=1; the one
+repeats=2 shape remains unsupported. Bounded repeats=1 filters now evaluate
+candidate predicates together, with `self` rebound to the candidate and `before`
+relative to the original owner in persisted sibling order. This does not infer
+gameplay from names or visual sorting. Stacked occurrences, matching descendants
+in another parent, malformed/unknown source collections and unsupported local
+grammar retain incompleteness. Unknown ordinary `count` remains unresolved.
+See `docs/qa/local-group-pricing.md` for source evidence, limits and A/B thresholds.
 
 The same corpus contains 97 selection entries or entry links with
 `defaultAmount` or `step` metadata. Eighty-nine defaults are native JSON
@@ -1639,14 +1642,16 @@ selected, both gained +2 Attacks while the `Close combat weapon` — the one mel
 profile outside that category — was unchanged. Dropping to one member removed
 the bonus, matching the modifier's own `atLeast 2` condition.
 
-Live data also carries a **`group`** traversal segment that the pinned snapshot
-does not contain at all: forms such as
-`self.entries.group.recursive.profiles.Ranged Weapons` and
-`group.recursive.group.profiles.Unit`. It is the author's way of entering
-selection-entry groups without full recursion, which independently confirms that
-groups are a traversal step rather than transparent. The parser accepts the
-keyword in any position; no pinned-corpus count changes, because no pinned
-selector uses it.
+**Correction from 2026-09-10 reference evidence:** the historical interpretation
+of the affects `group` segment as selection-entry-group traversal was wrong.
+The editor labels it association-group traversal; the current pinned A corpus
+has 763 modifier occurrences using it. The isolated reference app propagates a
+Supporting Lieutenant's weapon effects through the associated Intercessor to
+its separately attached Captain, and removes them when the Lieutenant detaches.
+Current production `entersGroups` routing is not evidence of that behavior being
+supported. Correcting it coherently with required Supporting, limits and lifecycle
+is outstanding checkpoint3 work, not part of numeric transparent-group counting.
+See `docs/qa/supporting-reference-evidence.md`.
 
 One question stays open, and is not worth an experiment: what an embedded ID
 does when it names a selection entry rather than a category. The whole corpus
@@ -1690,15 +1695,10 @@ parent-scope siblings or child-traversal flags as identity candidates.
 Unavailable or ambiguous definitions remain unresolved rather than becoming a
 known mismatch.
 
-Real JSON also contains 339 `localConditionGroups` extensions beneath ordinary
-condition groups. Each observed local group includes a non-2.03 `before`
-condition and a self-scoped identity condition. The generic ordered JSON/XML
-tree preserves this extension, but it is not projected into the ordinary
-condition-group collection; the enclosing projected group therefore remains
-empty, diagnostic, and unresolved. These 339 preserved identity conditions are
-separate from the 72 ordinary projected self-scope conditions. A further 59
-ordinary condition groups use unknown `type="count"`; they remain projected as
-unknown strings and unresolved.
+Historical local-group counts and the former empty/unresolved behavior are
+superseded by the separate typed projection and bounded preceding-copy evaluator
+above. Local identities remain separate from ordinary self-scope identities.
+The historical 59 ordinary groups with `type="count"` remain unsupported.
 
 Across all 46 pinned 11th-edition JSON documents, 3,587 conditions use
 `ancestor`, `root-entry`, or `upgrade`. The supported shape covers 3,442 of

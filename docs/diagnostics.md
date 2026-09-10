@@ -880,11 +880,14 @@ unsupported generic attribute. Child diagnostics remain in deterministic tree
 order. A group can have decisive satisfied or unsatisfied truth while remaining
 incomplete because an inspected child is incomplete.
 
-`EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED` points to the first
-projected `localConditionGroup` and retains the collection count. The enclosing
-group remains unresolved, but the local objects and their nested conditions
-stay accessible through its exact projected source object. A group containing
-only this extension does not also emit `EVALUATION_CONDITION_GROUP_EMPTY`.
+`EVALUATION_CONDITION_GROUP_LOCAL_GROUPS_UNSUPPORTED` now identifies each local
+filter outside the supported preceding-copy shape, including unresolved ordering,
+stacked quantities and the bounded evaluation budget. Unsupported enclosing raw
+collections point to the enclosing group. The original source and local candidate
+reports remain available, including relevant predicate diagnostics. Supported
+filters emit no extension warning; outer AND/OR composition keeps truth distinct
+from completeness. A group containing only this extension does not also emit
+`EVALUATION_CONDITION_GROUP_EMPTY`.
 Unknown ordinary group types such as the observed `count` continue to use
 `EVALUATION_CONDITION_GROUP_TYPE_UNSUPPORTED` and preserve the lexical type.
 
