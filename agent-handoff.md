@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (correctness batch active; group counting repaired)
+## Current Status — 2026-09-10 (pricing implemented; browser acceptance blocked)
 
 The owner authorized a new correctness batch against frozen data A `04c62fc`
 and captured snapshot B `5b261ec`, without changing the permanent pin. Checkpoint
@@ -49,9 +49,20 @@ suite 658 pass /26 skip, five existing pinned suites 24 pass, all gates green.
 Browser A normal controls reproduce the same sequence, no crash. Independent
 review found and verified two additional edge repairs; group-valued scopes stay
 explicitly unresolved. See `docs/qa/transparent-group-counting.md`.
-Next: evidenced local-group repeated-unit
-pricing, required Supporting plus attached effects, and full dense-army browser
-replay with a source-based cost ledger. **The ordinary UI roadmap is paused.**
+Checkpoint 1 exact-SHA CI `34527599165` passed `b59c7b2`. Checkpoint 2 implementation
+`160667f` supports bounded preceding-copy local groups: Knights 240/240/260 on A/B;
+Impulsor 70/70/70/70/80 on A, 70/70/70/80 on B. All gates pass: 671 pass /26 skip,
+six pinned suites 26 pass; final independent condition/review tests 50 pass.
+**Real-browser acceptance is blocked:** own 5240 tab crashed on the first Knights
+addition after saved Intercessor 1/3/1. The failed tab is preserved without reload.
+A separate actual-App jsdom diagnostic completed the same actions in 2.92s;
+it does not establish the cause or replace a browser pass. See
+`docs/qa/local-group-pricing.md`. Next: isolate the renderer failure, then finish
+local-pricing browser acceptance, required Supporting/effects and dense-army
+replay/ledger. No Supporting production repair or full-army acceptance is claimed.
+Supporting min1 and transitive association-group effects were observed in a
+separate New Recruit guest session; see `docs/qa/supporting-reference-evidence.md`.
+**The ordinary UI roadmap is paused.**
 Use separate QA origin 5240; do not operate the owner's tabs, saved armies or
 preview servers 5199/5216. Claude review was approval-blocked before launch;
 isolated native review continues. This batch is not yet complete.
@@ -860,7 +871,9 @@ QA before classifying or implementing the discrepancy.
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
-| Local condition group cost applicability | Next — authorized after counting | Deathwing Knights repeated-unit increment and Impulsor A/B threshold drift need evidenced candidate/anchor/order semantics, complete regression coverage and honest unsupported variants |
+| Local condition group cost applicability | Implemented; browser acceptance blocked | `160667f`: bounded repeats1 parent/candidate/anchor semantics; A/B Knights240/240/260, Impulsor A fifth80/B fourth80, history/save/reopen synthetic UI. Unsupported variants remain incomplete. First real Knights addition crashed; engine and jsdom passes are not browser acceptance |
+| Renderer crash during reference-army additions | Next — acceptance blocker reproduced | Own5240 A Intercessor1/3/1 then firstKnights add crashed; failed tab retained, no reload. Same actual-App jsdom actions pass under2GBcap, sampled heap496MB. Cause unestablished; distinguish app/runtime/host before retrying browser journey |
+| Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
 | Required Supporting and associated effects | Open — authorized after local groups | Required min1/max1 assignment, eligibility, incoming/outgoing limits, lifecycle and grouped Lethal Hits effects must be coherent; do not merely relax the optional gate |
 | Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -1637,6 +1650,10 @@ failure remains a retryable UI alert. This is deliberately a presentation
 export; faithful `.ros`/`.rosz` interchange remains deferred until the roster
 model carries the additional expanded profiles, rules, categories, and link
 identity required by the BattleScribe roster schema.
+
+> Superseded measurement/evaluation boundary: checkpoint2 on2026-09-10 measures
+> 374 local groups at04c62fc and implements bounded repeats1 preceding-copy filters.
+> The separate typed projection described here remains correct.
 
 The `localConditionGroups` correction is also complete. The pinned shape is 339
 `localConditionGroup` extension objects, all `atLeast`/`selections`/`parent`,
@@ -2418,6 +2435,11 @@ removed the bonus entirely, matching the modifier's own `atLeast 2` condition.
 New Recruit renders modified values in blue, which made the deltas unambiguous.
 
 ### New: the `group` traversal segment
+
+> Superseded semantic conclusion,2026-09-10: `.group` names association-group
+> traversal, not selection-entry-group traversal. Pinned editor evidence and
+> actual Lieutenant/Intercessor/Captain reference behavior disprove this claim.
+> Production correction remains checkpoint3 work; see supporting-reference-evidence.md.
 
 Live data contains a `group` segment that the pinned snapshot does not contain
 at all — nine distinct values across just Necrons and Death Guard, including
@@ -14330,3 +14352,73 @@ See `docs/qa/transparent-group-counting.md` for measured limits and evidence.
 dense reference ledger/browser replay. Owner origin5199/5216 and saved armies
 untouched; QA5240 remains separate. Code and this handoff push together; exact CI
 will be checked before claiming remote verification. Ordinary UI remains paused.
+
+## Completed Assignment — Bounded local-group pricing; browser blocker, 2026-09-10
+
+Baseline `b59c7b2ddc52000f4b40f6dde7bbe2e9c45ae169`; implementation `160667f`.
+Checkpoint 1 CI `34527599165` passed exact b59c7b2. Selected branch unchanged;
+only this lead's changes published. This is an implementation checkpoint with
+explicitly failed browser acceptance, **not completion of the authorized batch**.
+
+**Decision/source.** Local groups filter each candidate with all predicates,
+retain the original modifier owner for before, then compare the passing count.
+Public pinned NR docs describe candidate rebinding and Nth-copy pricing; the
+editor restricts before to local groups. Durable sibling order is used rather
+than visual sorting, names or a global same-unit index. The measured unit/model
+owner must be a single copy. Parent scope honors inclusion flags; matching
+cross-parent candidates, stacks, repeats=2 and unknown source grammar remain
+incomplete. Existing numeric modifier sequencing performs the authored increment.
+Raw unknown/duplicate/nested sibling predicates cannot disappear from a newly
+executable local-bearing envelope. Weak roster location caching and a 4,096
+candidate/identity budget bound each filter; all-anchor work remains quadratic.
+
+**Frozen evidence.** A `04c62fcd041b3808c39d5c46fd677c704027b979`, B captured
+`5b261ec423d5d017bb733c4f3c0a760b085d5ca5`; both eight-file closures hash/blob/size/
+dependency verified. Pinned external checkout revision verified clean. No pin,
+data, migration or source-byte changes. At A, all 46 docs: 374 local groups /29 docs,
+373 repeats=1 /1 repeats=2; thresholds 1/2/3/4 counts 89/245/36/4; 370 own-definition
+identity targets and four Soul Grinder category targets. Supersedes historical 339 count.
+Both unchanged baseline A/B tests fail at first Knight incomplete applicability;
+candidate gives Knights 240/240/260, delete-earliest 240/240, Impulsor A 70/70/70/70/80
+and B 70/70/70/80. Intercessor earlier 80/150/150/80 remains covered. Engine probes
+do not waive game/UI limits. No historical 2,000 total or missing-90 correction used.
+
+**Checks/review.** Final lint/typecheck/test/build/whitespace all pass: 671 pass /
+26 skip, 697 tests, 74 pass /6 skip, 80 files; six pinned suites 26 pass, 38.40s.
+Build retains existing bundle-size advisory 802.05 kB. Synthetic UI price 750
+after duplicate, 490 after earlier delete, undo/redo/save/reopen 750. Reviewer found
+raw unknown/duplicate container and nested-envelope false completeness; all fixed,
+final 50 tests passed across 46 condition +4 retained review tests, 3.42s. Reviewer also
+prompted relevant predicate diagnostics, budget and lookup cache. Independent
+100/300/900-root all-anchor timings 42/248/2011ms document remaining scaling.
+Claude approval-blocked before execution; no private source transmission/retry.
+
+**Browser failure and stopping condition.** Own IAB tab 2 at 5240, frozen A saved
+`QA frozen A correctness`, Intercessor 1 sergeant /3 ordinary /1 launcher, 80 pts.
+Clicked Add Deathwing Knights once after searching. Input dispatch timed out, next DOM
+read timed out, inventory confirmed `This page crashed` for 5240. No reload or
+repeat add, no application exception stack recovered. Cause remains unestablished.
+Independent isolated actual-App jsdom diagnostic imported verified A, created
+roster, used 1/3/1 controls and added first Knight in 2.92s without throw/loop/OOM;
+2 GB heap cap, sampled 496 MB after add. This is diagnostic evidence only, not an actual
+browser pass. Scratch test retained in reviewer worktree at
+`C:/CodexACLTest/rf-group-count-review-20260910/apps/web/src/local-pricing-real-review.ui.test.tsx`.
+Per owner instructions, stop at this reproduced verification blocker rather
+than reload/substitute engine results or start another unverified mechanism.
+
+**Supporting investigation retained.** In own NR guest temporary army, unassigned
+Lieutenant explicitly violates Supporting 0/1; assigning Intercessor clears it and
+adds Lethal Hits to both. Captain separately Leading that squad gains the same
+weapon additions; detaching Lieutenant removes them from Captain and Lieutenant and
+restores missing Supporting. Editor says group associations, disproving the old
+selectionEntryGroup interpretation; old entry is marked superseded. Reference
+data moving, reported updated 13h ago, exact revision unverified; not A/B parity.
+No Supporting gate/effect code changed. Incoming limits, required lifecycle,
+effect routing, enhancement-group bounds, full-army ledger/browser remain open.
+
+**Handoff.** `docs/qa/local-group-pricing.md` and
+`docs/qa/supporting-reference-evidence.md` preserve steps, source links and limits.
+Roadmap makes crash isolation Next and keeps the correctness batch incomplete.
+Owner tabs, saved armies and previews 5199/5216 were not operated; own QA 5240 still
+returns HTTP 200 and failed tab retained. No cleanup of evidence, PR, merge or
+ordinary UI work. Code and handoff push together; exact remote CI checked next.
