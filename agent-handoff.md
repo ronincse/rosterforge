@@ -34,15 +34,22 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (correctness batch active; compact uncertainty contained)
+## Current Status — 2026-09-10 (correctness batch active; group counting repaired)
 
 The owner authorized a new correctness batch against frozen data A `04c62fc`
 and captured snapshot B `5b261ec`, without changing the permanent pin. Checkpoint
 0 is implemented in `c08d34d`: provisional spending remains visibly qualified
 at 320/390 pixels with zero/nonzero violations and independently known capacity.
 All normal gates pass (652 tests / 24 skipped), plus one pinned capacity test.
-See `docs/qa/rf-ux-01-containment.md`. Publication/CI is pending this handoff.
-Next: transparent-group numeric counting, then evidenced local-group repeated-unit
+See `docs/qa/rf-ux-01-containment.md`. Pushed through `f835fbd`, exact-SHA CI
+`34525714250` passed. Checkpoint 1 is implemented in `a913a0e`: authored numeric
+group counts produce Intercessor 80/150/150/80 at 5/6/10/5 models on both A/B
+hash-verified closures. Six synthetic tests and two snapshot tests pass; full
+suite 658 pass /26 skip, five existing pinned suites 24 pass, all gates green.
+Browser A normal controls reproduce the same sequence, no crash. Independent
+review found and verified two additional edge repairs; group-valued scopes stay
+explicitly unresolved. See `docs/qa/transparent-group-counting.md`.
+Next: evidenced local-group repeated-unit
 pricing, required Supporting plus attached effects, and full dense-army browser
 replay with a source-based cost ledger. **The ordinary UI roadmap is paused.**
 Use separate QA origin 5240; do not operate the owner's tabs, saved armies or
@@ -852,8 +859,8 @@ QA before classifying or implementing the discrepancy.
 | Broader reference lookup parity | Deferred — owner prioritization required | General lookup does not index arbitrary entry names/category descriptions or supply an absent core glossary such as Deployment. No full CommonMark, imported formatRules execution or rule-name modifier expansion added. Keep these separate from applicability/evaluation repairs; current scope is documented in `docs/compatibility.md` |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
-| Transparent-group numeric selection counting | Next — authorized correctness batch | Reproduce Intercessor group count 0 versus selected 5/10 models; preserve authored placement without globally extending identity. Test 80/150/80, neighboring numeric consumers and both frozen datasets |
-| Local condition group cost applicability | Open — authorized after counting | Deathwing Knights repeated-unit increment and Impulsor A/B threshold drift need evidenced candidate/anchor/order semantics, complete regression coverage and honest unsupported variants |
+| Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
+| Local condition group cost applicability | Next — authorized after counting | Deathwing Knights repeated-unit increment and Impulsor A/B threshold drift need evidenced candidate/anchor/order semantics, complete regression coverage and honest unsupported variants |
 | Required Supporting and associated effects | Open — authorized after local groups | Required min1/max1 assignment, eligibility, incoming/outgoing limits, lifecycle and grouped Lethal Hits effects must be coherent; do not merely relax the optional gate |
 | Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
@@ -14280,3 +14287,46 @@ approval-blocked before launch; no private source sent or bypass attempted.
 Counting, repeated-unit pricing, Supporting/effects and full reference replay
 remain authorized work, not completed acceptance. Ordinary UI work stays paused.
 This handoff commit accompanies the code push; exact remote CI is checked next.
+
+## Completed Assignment — Transparent-group numeric counting, 2026-09-10
+
+Baseline `f835fbda3ed2a8f648e213be09630f11e23a7664` (semantic baseline adffb03);
+implementation `a913a0e`. Compact containment CI `34525714250` passed f835fbd.
+Current branch unchanged; only lead-owned changes published.
+
+**Decision.** Numeric counting receives authored group membership from the actual
+selected parent frontier, not global ancestor IDs or display nesting. Concrete
+entries stop transparent traversal. Explicit wrappers are validated but not
+counted; ambiguous paths must agree. Missing placements/dangling links remain
+unknown. Group-ID scopes no longer misreport absent wrappers as complete zero.
+Ordinary instanceOf/category identity and dedicated structural group bounds are
+unchanged. Cached parent frontiers, target lookups and roster occurrence index
+avoid repeated broad walks. Comments record the non-obvious invariants.
+
+**Evidence.** Independent baseline A/B tests both failed observed5/actual0complete;
+candidate passes both with 5/6/10/5 ->80/150/150/80 and authored condition evidence.
+Eight-file closures verified by revision, byte length, SHA256, Git blob SHA1 and
+dependency IDs. A `04c62fcd041b3808c39d5c46fd677c704027b979`; B captured
+`5b261ec423d5d017bb733c4f3c0a760b085d5ca5`. No permanent-pin/upstream-data changes.
+Pinned46-file measurement:340 numeric group-target leaves in27 documents,
+109 IDs;317 definition/23 link uses. Consumers205cost/48constraint/43hidden/
+19error/19associationfilter/3category/1name/2groupgates;31 repeats (22cost/9constraint).
+Ten group-valued scopes explicitly unresolved;13 group identity predicates unaltered.
+Older source-kind recognition did not prove group-scope runtime support; current
+architecture/compatibility explicitly correct that conclusion.
+
+**Checks/review.** Six synthetic tests pass; normal suite658pass/26skip,73pass/
+6skip files. All lint/typecheck/build/whitespace gates pass; existing bundle
+advisory798.10kB remains. Five existing pinned suites24pass in29.62s; newA/B2pass.
+Native isolated review exposed invalid wrapper placement and dangling-group false
+zero; both fixed and independently rerun (candidate9pass including review tests).
+Claude approval-blocked before launch, no external source transmission.
+Actual browser A normal import/create/model controls/save reproduce80/150/150/80,
+no crash. Browser default sergeant; API covers Power fist. Required setup and
+local-import metadata/init diagnostics were not hidden; not full army acceptance.
+See `docs/qa/transparent-group-counting.md` for measured limits and evidence.
+
+**Remaining.** Local-group pricing is Next, then required Supporting/effects and
+dense reference ledger/browser replay. Owner origin5199/5216 and saved armies
+untouched; QA5240 remains separate. Code and this handoff push together; exact CI
+will be checked before claiming remote verification. Ordinary UI remains paused.
