@@ -1,8 +1,9 @@
 # Repeated-copy pricing — 2026-09-10
 
-Checkpoint 2, baseline `b59c7b2`. Engine and synthetic UI implementation verified;
-**real-browser acceptance blocked by a reproduced renderer crash**. Do not mark
-this checkpoint or the complete correctness batch accepted from engine results.
+Checkpoint 2, baseline `b59c7b2`. Engine and synthetic UI implementation verified.
+Bounded real-browser pricing acceptance subsequently passes on both frozen A/B
+at `654bb4e`; see continuation below. The historical renderer failure remains
+unresolved and monitored, not retrospectively fixed. The wider batch is incomplete.
 
 ## Source-grounded boundary
 
@@ -96,7 +97,38 @@ that turn but auto-closed at turn end; it is no longer available for live heap
 inspection. See `renderer-crash-investigation.md` for the follow-up host-log and
 fresh-browser evidence. The original cause remains unresolved; no fix is claimed.
 
-Next acceptance blocker: identify the renderer failure before repeating the
-required browser journey. Supporting and the dense army are not implemented or
-accepted by this checkpoint; reference semantics already observed are retained
-in `docs/qa/supporting-reference-evidence.md`.
+The historical stop-before-retry instruction above was superseded by explicit
+owner continuation on 2026-09-10. Supporting and the dense army are not implemented
+or accepted by this pricing checkpoint; reference evidence is retained separately.
+
+## Owner-authorized browser continuation — 2026-09-10
+
+Clean selected branch `codex/list-builder-ui-overhaul`, HEAD/upstream `654bb4e`;
+no active competing primary writer found. Fresh audit-owned origin5242, own tabs6/7;
+existing owner tabs, armies, storage and servers5199/5216/5240 untouched. Ordinary
+file pickers load each immutable eight-file A/B closure. The two snapshot tests
+rerun with hash/blob/revision checks:2 pass in2.80s. No production pricing changes.
+
+Actual browser controls, independently for A and B:
+
+1. Create named disposable roster, add Intercessors. Compose1sergeant/3ordinary/
+   1launcher:5models80pts. Change to1/7/2:10models150pts; restore1/3/1:80pts.
+   Weapon summaries include the selected launcher(s), not merely a changed amount.
+2. Add three separate Knights units:240/240/260. Each contains4maceKnights and
+   1GreatWeaponMaster. Combined roster total820, with capacity still pending.
+3. Remove first Knights: remaining240/240. Undo restores240/240/260; redo deletion;
+   duplicate first remaining unit:240/240/260, total820 again. No fourth copy or
+   bypass of an army bound is used.
+4. Save draft, navigate away, reopen exact named A or B draft: all three prices,
+   selected model composition and820total survive. Browser console warn/error
+   queries empty. No hang/crash in either run.
+
+Required army configuration remains unselected in these deliberately bounded
+pricing probes, so known violations remain legitimate and visible. Intercessor
+creation initially reports unsupported automatic quantity inference; composition
+is selected manually, not silently auto-filled. B import retains two developer
+diagnostics; the prior source-acquisition comparison already distinguishes local
+closure metadata from remote metadata. These are not claims of warning-free full
+legality. Impulsor A fifth-copy/B fourth-copy thresholds remain separately verified
+engine/corpus evidence above, not forced illegal browser armies. This completes
+the requested bounded pricing browser journey, not Supporting or dense-army replay.

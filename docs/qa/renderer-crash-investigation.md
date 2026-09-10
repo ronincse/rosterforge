@@ -1,6 +1,12 @@
 # Renderer hang investigation — 2026-09-10
 
 Status: unresolved; no production repair justified by the current evidence.
+Owner continuation after this investigation changes the stopping policy:
+"Observed previously; cause unresolved; not reproduced during follow-up;
+monitor for recurrence. Not a prerequisite for continuing implementation."
+Historical observations below remain unchanged. Dedicated investigation is
+paused unless recurrence supplies new evidence; any interrupted acceptance run
+must remain recorded as failed rather than replaced by a successful retry.
 Baseline: `e1408348da5b6a4430f05abd2a34ee855cc987c1`, clean tracked tree on
 `codex/list-builder-ui-overhaul`. The owner requested crash isolation before any
 other work. Supporting, full-army acceptance and the UI roadmap remain paused.
