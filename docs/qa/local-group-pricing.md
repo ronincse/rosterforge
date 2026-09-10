@@ -91,7 +91,10 @@ operation or substitution of engine success as browser acceptance. Previous
 audit also recorded addition crashes without cause; this occurrence does not
 establish whether the defect is application, runtime, or host memory pressure.
 No application stack trace was recovered. The separate rendering diagnostic and
-local gates are recorded in the handoff. The failed tab is retained as evidence.
+local gates are recorded in the handoff. The failed tab was untouched during
+that turn but auto-closed at turn end; it is no longer available for live heap
+inspection. See `renderer-crash-investigation.md` for the follow-up host-log and
+fresh-browser evidence. The original cause remains unresolved; no fix is claimed.
 
 Next acceptance blocker: identify the renderer failure before repeating the
 required browser journey. Supporting and the dense army are not implemented or

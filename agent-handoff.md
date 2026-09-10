@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (pricing implemented; browser acceptance blocked)
+## Current Status — 2026-09-10 (crash investigated; cause unresolved)
 
 The owner authorized a new correctness batch against frozen data A `04c62fc`
 and captured snapshot B `5b261ec`, without changing the permanent pin. Checkpoint
@@ -53,11 +53,18 @@ Checkpoint 1 exact-SHA CI `34527599165` passed `b59c7b2`. Checkpoint 2 implement
 `160667f` supports bounded preceding-copy local groups: Knights 240/240/260 on A/B;
 Impulsor 70/70/70/70/80 on A, 70/70/70/80 on B. All gates pass: 671 pass /26 skip,
 six pinned suites 26 pass; final independent condition/review tests 50 pass.
-**Real-browser acceptance is blocked:** own 5240 tab crashed on the first Knights
-addition after saved Intercessor 1/3/1. The failed tab is preserved without reload.
+**Real-browser acceptance remains blocked:** own 5240 tab showed a crash screen
+on the first Knights addition after saved Intercessor 1/3/1. The failed tab was
+not reloaded, but did not survive turn-end browser cleanup; its live heap is lost.
 A separate actual-App jsdom diagnostic completed the same actions in 2.92s;
 it does not establish the cause or replace a browser pass. See
-`docs/qa/local-group-pricing.md`. Next: isolate the renderer failure, then finish
+`docs/qa/local-group-pricing.md`. Follow-up evidence `68d6b44` records 51 actual
+browser remove/add cycles, save/reopen and model edits passing on unchanged code;
+the independent 240-edit test plateaus near 458 MiB. Host logs establish an
+unresponsive page, not an OOM or application exception. No causal fix is claimed.
+See `docs/qa/renderer-crash-investigation.md`; all normal gates rerun green
+(671 pass /26 skip, 12.74s). Next: obtain a reproducible renderer failure/trace,
+then finish
 local-pricing browser acceptance, required Supporting/effects and dense-army
 replay/ledger. No Supporting production repair or full-army acceptance is claimed.
 Supporting min1 and transitive association-group effects were observed in a
@@ -872,7 +879,7 @@ QA before classifying or implementing the discrepancy.
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
 | Local condition group cost applicability | Implemented; browser acceptance blocked | `160667f`: bounded repeats1 parent/candidate/anchor semantics; A/B Knights240/240/260, Impulsor A fifth80/B fourth80, history/save/reopen synthetic UI. Unsupported variants remain incomplete. First real Knights addition crashed; engine and jsdom passes are not browser acceptance |
-| Renderer crash during reference-army additions | Next — acceptance blocker reproduced | Own5240 A Intercessor1/3/1 then firstKnights add crashed; failed tab retained, no reload. Same actual-App jsdom actions pass under2GBcap, sampled heap496MB. Cause unestablished; distinguish app/runtime/host before retrying browser journey |
+| Renderer crash during reference-army additions | Next — unresolved; not reproduced in follow-up | Original own5240 tab became unresponsive then showed crash screen; no recovered cause/stack, failed tab auto-closed at turn end. `68d6b44`: fresh browser51 remove/add cycles, save/reopen/model-edit replay pass; independent240 edits plateau near458MiB. No production fix justified. Preserve a recurrence/trace and distinguish app/runtime/host before later acceptance work |
 | Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
 | Required Supporting and associated effects | Open — authorized after local groups | Required min1/max1 assignment, eligibility, incoming/outgoing limits, lifecycle and grouped Lethal Hits effects must be coherent; do not merely relax the optional gate |
 | Dense reference-army correctness replay | Open — authorized final acceptance | Explicit immutable snapshot, per-unit source ledger, aggregate, quantities/repeats/Supporting/effects/history/persistence and real browser interaction; preserve renderer-crash evidence as a blocker if it recurs |
@@ -14355,6 +14362,11 @@ will be checked before claiming remote verification. Ordinary UI remains paused.
 
 ## Completed Assignment — Bounded local-group pricing; browser blocker, 2026-09-10
 
+> Evidence-retention correction: the failed tab was untouched during this turn,
+> but auto-closed at turn end. The next renderer investigation could recover the
+> saved draft and host log, not the failed renderer's heap. Its fresh passes do
+> not establish a fix or supersede the original failure observation.
+
 Baseline `b59c7b2ddc52000f4b40f6dde7bbe2e9c45ae169`; implementation `160667f`.
 Checkpoint 1 CI `34527599165` passed exact b59c7b2. Selected branch unchanged;
 only this lead's changes published. This is an implementation checkpoint with
@@ -14422,3 +14434,48 @@ Roadmap makes crash isolation Next and keeps the correctness batch incomplete.
 Owner tabs, saved armies and previews 5199/5216 were not operated; own QA 5240 still
 returns HTTP 200 and failed tab retained. No cleanup of evidence, PR, merge or
 ordinary UI work. Code and handoff push together; exact remote CI checked next.
+
+## Completed Assignment — Renderer hang investigation; unresolved, 2026-09-10
+
+**Authority/baseline/result.** Owner requested isolate and fix the renderer crash
+before anything else. Clean `codex/list-builder-ui-overhaul` at `e140834`, whose
+exact-SHA CI `34531191950` succeeded. Evidence-only commit `68d6b44`; no production
+code or compatibility change, no claim of repair. This separate handoff records
+the unresolved stopping point. No Supporting, pricing expansion or UI work.
+
+**Evidence and decision.** Local host logs at 21:01 UTC identify input/focus
+timeouts followed by `IAB browser page unresponsive`, then the crash interstitial.
+No recovered application stack, OOM report or renderer exit reason establishes
+cause. The prior tab was not retained across automatic turn-end cleanup; the
+superseded retention claim is marked above. Fresh own browser e140834 reopens the
+saved frozen-A Intercessor1/3/1 and adds Knights successfully. 51 remove/add cycles
+(102 edits) pass, including explicit save beyond100 history entries, ordinary
+`/app/` reopen, 5/6/10/5 model edits, save, switch away/back and firstKnights add.
+Unforced heap samples after cycles11/31/51:302/301/338MB; settled first-add189MB.
+No console warnings/errors; final saved320. This is not dense-army acceptance.
+
+**Review/limits.** Native independent work in detached
+`C:/CodexACLTest/rf-renderer-review-20260910`, no primary writes. Lead reviewed
+scratch actual-App test and performed independent actual-browser checks. Frozen
+A eight-file closure SHA256/Git-blob checked, revision04c62fc unchanged. Reviewer
+120cycles/240edits/6saves pass under2GB cap in65.11s; forced-GC post-save heap
+457.7/454.4/456.6/458.1MiB at60/80/100/120cycles, unmount93.7MiB. StrictMode12cycles
+also pass9.49s; maximum add311.8ms. No unbounded retention identified; synchronous
+no-yield test artifact rejected. No speculative cache/import rewrite warranted.
+Browser layout/GPU/real IndexedDB/HMR remain distinct from jsdom. Original
+long-lived update history unavailable. Claude approval block respected; no
+private source transfer or alternate external-provider workaround.
+
+**Validation/publication.** Lint, typecheck, full test, build and whitespace pass.
+671passed/26skipped697tests,74passed/6skipped80files,12.74s. Existing802.05kB bundle
+advisory retained. No new source grammar/corpus claim; no need to remeasure all46
+documents for documentation-only evidence. Push evidence and handoff together;
+exact-SHA CI confirmation follows. No unrelated/unpushed model changes published.
+
+**Next/stopping point.** Reproducible failing path or retained failure trace is
+needed to select and verify a causal repair; keep renderer row Next, not Done.
+Do not resume later batch work without resolving this boundary or new owner
+direction. Own QA tab4 ordinary5240/app explicitly marked for handoff, saved320;
+extra own scratch tab closed. Preview5240 stays running. Owner previews5199/5216,
+tabs and armies untouched. IgnoreddiagnosticHTML and isolated reviewer evidence
+retained; nothing material deleted. No PR/merge/deploy or memory edits.
