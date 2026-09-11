@@ -34,7 +34,37 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (current bounds / conditional creation batch)
+## Current Status — 2026-09-11 (orphan cost reference investigation)
+
+Owner-authorized follow-up completed on selected `codex/list-builder-ui-overhaul`
+from clean/upstream-equal `b1058b4`. Evidence report `a453055` establishes **Outcome B:
+source limitation, no application repair**. Complete pinned A repository:46 JSON
+documents,10 exact references to c5fb-5b9b-89f6-86c, all zero-valued costs in Space
+Marines; no definition, field/query/repeat or other match. Three distinct selected
+source entries, one occurrence each: Gladius, Captain loadout, shared Warlord.
+Remote46-document metadata also has no declaration. No acquisition/restoration
+loss or supported indirect dependency demonstrated; preserve warning and cost
+incompleteness rather than inventing resource meaning from its label or zero.
+
+Equivalent disposable local/Browse copies and save/reopen:193 selections,14 units,
+2000points,structural238/0/0,constraints378/0/0,17 Supporting weapon rows, unchanged
+loadouts/association and eight A files byte-for-byte. Ordinary Browse/load and
+normal shelf reopen verified; no repeated full manual rebuild claim. Overall
+cost coverage remains incomplete with3 source-located missing-type diagnostics.
+Read `docs/qa/orphan-cost-references.md` for exact paths and impact boundaries.
+
+Fresh lint/typecheck/test/build/diff pass:715pass30skip,79pass6skipfiles22.53s;
+optional pair25pass51.36s. Existing814.74kB advisory unchanged. Claude review hit
+quota before findings; isolated native review completed and lead verified it.
+No production/test/pin/persistence/policy changes. Existing worktrees and armies
+preserved; original5243/5244 servers stillHTTP200. Only this assignment's temporary
+5245/5246/5247 servers stopped; disposable evidence retained outside checkout.
+Report and separate handoff publish together; confirm exact pushed CI in run
+history/completion response. **Stop after this assignment.** Recommendation is
+ordinary product work with the documented source qualification **when owner
+authorizes it**, not a new evaluator repair or automatic UI/StarCraft resumption.
+
+### Accepted preceding structural / conditional creation batch
 
 Owner's two-checkpoint correctness batch is complete on selected
 `codex/list-builder-ui-overhaul`. First `4a30b9f` / handoff `c605061`: actual static
@@ -972,7 +1002,7 @@ QA before classifying or implementing the discrepancy.
 | Current reference-army descendant structural bounds | Done — `4a30b9f` | Two Warlord-linked parent descendant maxima now counted by source identity;238/0/0 structural,378/0/0 constraints in unchanged saved army. Static same-domain/dominated direct limits only; unknown/dynamic/mixed non-dominated behavior retained. qa/current-structural-bounds.md |
 | RF-GROK-03 conditional minimum initialization | Done — `9859775` | After static seeding, unique stable-sibling count queries resolve own minima; new Intercessors initialize1 sergeant/4 ordinary, launcher-present minimum3. One bounded augmentation/verification; separate occurrences, no edit refill, ambiguous/cyclic/unknown cases pending. Full new193-selection/14-unit2000 replay and save/reopen pass; qa/conditional-initialization.md |
 | Broader conditional creation dependencies | Open compatibility boundary — not next authorized work | Grouped/ancestor-carried modifiers, self/dependency cycles, dynamic automatic targets/visibility, stepped and nested automatic conditional expansion remain pending; no fixpoint or arbitrary alternative selection |
-| Reference-army missing legacy cost metadata | Open source-data qualification — no repair authorized | Three selected zero-valued `pl` costs (Gladius, Captain default loadout, Warlord) name missing type c5fb-5b9b-89f6-86c. Points2000 and structural238/0/0 + constraint378/0/0 complete; overall cost coverage remains incomplete. Do not infer a type or suppress diagnostics |
+| Reference-army missing legacy cost metadata | Investigation Done — retained source-data qualification | `a453055`: all46 pinned A documents contain10 cost references but no definition or other ID uses. Three distinct selected costs; equivalent Browse/local/reopen each2000points,238/0/0 structural,378/0/0 constraints,3 warnings. No RF loss or supported indirect dependency demonstrated. Keep aggregate cost coverage incomplete; no definition invention or suppression. qa/orphan-cost-references.md; no further repair needed for this case |
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
@@ -14908,3 +14938,62 @@ explicit remaining source-data qualification, now a roadmap row, not permission
 to broaden this batch. Own5243/5244 servers and both saved armies retained;
 owner5242 tab/storage untouched. Publish code+handoff, confirm exact pushed CI,
 then stop. No further UI/audit/acquisition/migration/governance/StarCraft work.
+
+## Completed Assignment — 2026-09-11 — Orphan cost reference impact
+
+Baseline `b1058b44dc8a8566a9fdea9de357b1dd0b82bb70`, selected branch clean and
+upstream-equal. Documentation result `a453055`; separate handoff follows. Owner
+authorized only these missing cost references, superseding the preceding stop
+for this investigation. No application code or tests changed. Existing worktrees
+and completed grok_triage retained; no concurrent writer. Native review isolated
+at `C:/CodexACLTest/rf-cost-review-20260911`, clean after review.
+
+**Decision: Outcome B.** Exact target c5fb-5b9b-89f6-86c occurs10times, all
+cost.typeId values in Space Marines, allzero, across all46 immutable A JSON
+documents. Git search of all tracked files confirms no other occurrence. No
+declaration anywhere, including unrelated catalogues; no modifiers/conditions/
+constraints/repeats reference it. Three distinct selected source costs eachonce:
+Gladius d2dc-693e-b491-b16d, loadout c6aa-b3a5-4ff3-e0d3, Warlord
+caa-f869-3cbd-b48e through Captainlink a89c-b01e-ffab-8ebb. Exact original and
+normalized source paths/occurrence IDs in `docs/qa/orphan-cost-references.md`.
+No label inference, zero-cost suppression, invented definition, metadata mixing,
+pin update or broad evaluator/reporting extension.
+
+**Path/impact evidence.** Read-only named QA draft copy, eight retained files
+verified against A byte lengths/SHA256/Gitblobs. Ordinary Browse indexed46files,
+36catalogues and loaded8-file Dark Angels closure; no target in declared-type
+metadata. Production-API harness applied equivalent193-selection army to local
+and acquired contexts (only disposable provenance keys rebound), saved/loaded
+both, then ordinary app shelf reopened each.2000points,238/0/0 structural,
+378/0/0 constraint,three exclusions/warnings bothpaths before/after; bytes equal.
+Warlord/loadouts/Supporting firstsquad and17 LethalHits rows retained. UI says
+0 known violations/some rules not checked, Coverage limited, could not evaluate
+every catalogue cost. Original5244 army/database read only; owner tabs/servers
+and original5243 savedarmy untouched. This is not a repeated manual army build.
+
+Exact-field cost/query isolation means excluded knownforeignID doesn't pollute
+points or other resolvedcurrency requirements. Missing-ID would be different.
+No authored dependency found that changes/queries these values; generic routing
+doesn't wildcard costfields. Not a universal semantic proof: unknown extensions,
+external rules or missing type metadata cannot be inferred. Type's meaning and
+full resource coverage remain unknown, so aggregate cost incompleteness stays.
+Repository existence hints are diagnostic-only and intentionally not full
+persisted definitions; no relevant restoration loss demonstrated.
+
+**Review/gates.** Claude2.1.240 constrained toRead/Grep/Glob, noagents/shell/MCP/
+Chrome, reachedsessionquota before findings; no successful Claude review claimed,
+no repeated provider retry. Native independent reviewer examined code only in
+isolatedworktree and confirmed bounded conclusion; lead checked cited code.
+Initial lint found only disposable helpers in.cache; moved them outside repo,
+did not exempt lint. Fresh clean lint/typecheck/test/build/diff pass; standard
+715pass30skip,79pass6skipfiles22.53s. Optional unchangedpair25pass51.36s, A/B
+manifests and all46/36corpus coverage. Existing814.74kB advisory remains. No
+fictional fixture needed because no mechanism changed; historical results not
+counted as newgates. Evidence/helpers retained at
+`C:/CodexACLTest/rf-cost-evidence-20260911`, no thirdparty data/army committed.
+
+**Handoff/stop.** Publish report and this handoff on selectedbranch, confirm exact
+CI. Existing5243/5244HTTP200; stopped only newtemporary5245/5246/5247servers.
+Recommendation: ordinary product work with documented source qualification when
+owner authorizes it; no specific RF correctness blocker from these references.
+No UI, StarCraft, source freshness, migrations, governance or crash work added.
