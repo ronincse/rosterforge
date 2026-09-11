@@ -245,9 +245,23 @@ only one modal remains exposed to assistive technology.
 The selected reference is a reading projection, not the internal occurrence
 tree. Lead with model stats, then selected weapons/equipment, then full-width
 ability and rule cards. Provide keyboard-accessible section jumps and native
-comparison tables with focusable local horizontal scrolling on compact screens.
-Use 0.875rem for reference values/body text, 0.8rem column labels and 0.75rem
-row attribution rather than shrinking text to reduce the measured card height.
+comparison tables at regular widths. At reference-container widths up to 44rem,
+reflow each selected profile into a card: full name and bearer attribution above
+an auto-fitting labelled value grid. Preserve authored column identities/order;
+never assume a game-specific statline or fixed column count. Long labels/values
+and interactive rule fields receive full-width space. Ordinary phone lookups
+must not require sideways scrolling. Use 1rem phone values and 0.8rem labels/
+attribution; keep desktop 0.875rem values, 0.8rem column labels and 0.75rem
+attribution. Do not shrink text to reduce measured card height.
+
+Keep one semantic table and one set of controls mounted. Explicit table roles,
+column/row headers, and aria-hidden decorative cell labels preserve relationships
+without duplicate announcements or evaluation. A per-type **Compare as table**
+preference supplies an explained, keyboard-scrollable local fallback when an
+unusual schema benefits from aligned columns; **Use profile cards** restores
+reflow. It is a reading preference, not inferred game semantics or the default
+phone escape hatch. The card is the sole vertical modal scroller; section jumps
+clear the measured sticky title, including wrapped names/enlarged text.
 
 Group only proven equivalent selected material, retaining quantities and bearer
 labels. Different source/link carriers, selected lineage/loadout, effective
@@ -256,6 +270,9 @@ deduplication opportunity. Exact occurrences, child keywords and provenance stay
 in a lazily mounted **Selection & source details** disclosure. Disclosure
 summaries participate in the modal focus loop; hidden disclosure contents do not.
 The RF-A05 measurement/coverage record is `docs/qa/rf-a05-reference-card.md`.
+RF-UX-02's current phone/fallback measurements are in
+`docs/qa/rf-ux-02-phone-reference.md`; they supersede RF-A05's phone-table layout,
+not its grouping or source-applicability contract.
 
 Empty stat-table Keywords cells stay blank. When an attached rule can be
 identified unambiguously, its keyword is an underlined, keyboard-accessible

@@ -2618,8 +2618,17 @@ h1 {
   margin-left: 18px;
 }
 
+.unit-reference-backdrop {
+  /* Only the card scrolls; two nested vertical scrollers can move its sticky
+     Close control outside the viewport when following a reference jump. */
+  overflow: clip;
+}
+
 .unit-card-view-dialog {
+  min-height: 0;
   width: min(1120px, 100%);
+  /* Section jumps must clear the sticky reference title, including text zoom. */
+  scroll-padding-top: calc(var(--reference-heading-height, 7rem) + 12px);
 }
 
 .unit-card-view-dialog .selected-unit-panel-heading {
@@ -3769,6 +3778,7 @@ h1 {
 }
 
 .unit-reference-reader {
+  container: unit-reference / inline-size;
   display: grid;
   gap: 18px;
   min-width: 0;
@@ -3805,6 +3815,95 @@ h1 {
 .unit-reference-reader .selection-rule > p,
 .unit-reference-reader .selection-profile dd { font-size: 0.875rem; }
 .unit-reference-reader table th:first-child { min-width: 150px; }
+.reference-field-label,
+.reference-table-options { display: none; }
+
+/* A single semantic table reflows, so resizing cannot duplicate readers, rule
+   buttons, IDs, or evaluation. Container width also covers zoom/narrow panels.
+   Explicit table roles in the markup preserve the header relationships. */
+@container unit-reference (max-width: 44rem) {
+  .selection-profile-table-group[data-reference] {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .selection-profile-table-group[data-reference] > h5 {
+    border-radius: var(--corner-radius);
+    border: 1px solid var(--nested-card-border);
+    font-size: 0.8rem;
+  }
+  .reference-table-options { display: flex; flex-wrap: wrap; margin: 4px 0 8px; }
+  .reference-table-options button {
+    min-height: 44px;
+    padding: 6px 10px;
+    color: var(--forest);
+    background: var(--nested-card-material);
+    border: 1px solid var(--nested-card-border);
+    border-radius: var(--corner-radius);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .reference-table-options p { margin: 4px 0; font-size: 0.875rem; }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) table,
+  .selection-profile-table-group[data-reference]:not([data-comparison]) tbody { display: block; }
+  /* Keep column headers in the accessibility tree, not display:none. */
+  .selection-profile-table-group[data-reference]:not([data-comparison]) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) tbody tr {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(4rem, 100%), 1fr));
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--nested-card-border);
+    border-radius: var(--corner-radius);
+    background: var(--nested-card-material);
+    box-shadow: var(--nested-card-shadow);
+  }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) tbody th,
+  .selection-profile-table-group[data-reference]:not([data-comparison]) td {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) tbody th {
+    grid-column: 1 / -1;
+    padding-bottom: 6px;
+  }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) .reference-field-wide,
+  .selection-profile-table-group[data-reference]:not([data-comparison]) td:has(button) { grid-column: 1 / -1; }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) tr[data-completeness="incomplete"] {
+    background: rgba(242, 231, 208, 0.42);
+  }
+  .selection-profile-table-group[data-reference]:not([data-comparison]) .reference-field-label {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .selection-profile-table-group[data-reference] tbody th small,
+  .selection-profile-table-group[data-reference] .selection-profile-table-value small {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+  .selection-profile-table-group[data-reference][data-comparison] {
+    overflow-wrap: anywhere;
+  }
+  .selection-profile-table-group[data-reference][data-comparison] table {
+    background: var(--nested-card-material);
+  }
+}
 .unit-reference-quantity-note { margin: 0; font-size: 0.8rem; }
 .unit-reference-occurrences { margin-top: 20px; }
 .unit-reference-occurrences > summary { cursor: pointer; min-height: 44px; padding: 12px; }

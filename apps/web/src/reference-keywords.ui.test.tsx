@@ -22,7 +22,9 @@ it("links attached stat keywords, leaves empty cells blank, and layers rule dial
   const card = screen.getByRole("dialog", { name: "Unit card for Keyword Readers" });
   const reader = within(card);
   const blankRow = reader.getByText("Reference blade").closest("tr")!;
-  expect(blankRow.querySelectorAll("td")[1]?.textContent).toBe("");
+  // The phone label is decorative; the actual keyword value remains empty.
+  expect(blankRow.querySelectorAll("td")[1]?.querySelector(".selection-profile-table-value")?.textContent).toBe("");
+  expect(within(blankRow).getByRole("cell", { name: "" })).toBeTruthy();
   expect(reader.queryByText("Empty value")).toBeNull();
   expect(reader.queryByText("Fictional rapid fire reference.")).toBeNull();
   expect(reader.getByRole("button", { name: "View rules for Anti-Infantry 3+" })).toBeTruthy();

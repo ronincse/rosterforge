@@ -3469,9 +3469,23 @@ function RosterUnitCardView({
 }) {
   const name = selectionModel.occurrence.name ?? "Unnamed unit";
   const [showOccurrences, setShowOccurrences] = useState(false);
+  const referenceHeading = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const heading = referenceHeading.current;
+    const dialog = heading?.parentElement;
+    if (!heading || !dialog) return;
+    // Long names and enlarged text change the sticky title's height. Keep
+    // anchor targets below it without rerendering/evaluating the reference.
+    const measure = () => dialog.style.setProperty("--reference-heading-height", `${Math.ceil(heading.getBoundingClientRect().height)}px`);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(heading);
+    return () => observer.disconnect();
+  }, []);
   return (
     <div
-      className="choice-preview-backdrop"
+      className="choice-preview-backdrop unit-reference-backdrop"
       aria-hidden={covered || undefined}
       inert={covered}
       role="presentation"
@@ -3494,7 +3508,7 @@ function RosterUnitCardView({
         aria-modal="true"
         aria-label={`Unit card for ${name}`}
       >
-        <div className="selected-unit-panel-heading">
+        <div className="selected-unit-panel-heading" ref={referenceHeading}>
           <div>
             <span className="eyebrow">Unit reference</span>
             <h3 id="selected-unit-card-heading">{name}</h3>
@@ -6614,11 +6628,10 @@ interface SelectionProfileColumn {
 /**
  * Packs profiles of the same authored type into native comparison tables.
  *
- * The old one-card-per-profile layout repeated labels around every value and
- * made a unit reference several screens tall. Tables preserve source order and
- * all effective-value annotations while giving model and weapon stats the
- * compact scan pattern players use during list building. Overflow is contained
- * by the table wrapper rather than widening the roster or dialog.
+ * Selected references reflow the same rows into labelled cards in narrow
+ * containers; an explicit comparison preference retains locally scrolling
+ * tables for schemas where cross-row alignment matters. No grouping or value
+ * interpretation belongs here. Non-reference and print paths are unchanged.
  */
 function SelectionProfileTables({
   profiles,
@@ -6631,6 +6644,9 @@ function SelectionProfileTables({
     | undefined;
   readonly onViewKeywordRules?: ((preview: KeywordRulePreview, trigger: HTMLButtonElement) => void) | undefined;
 }) {
+  // Presentation preference only: one table stays mounted, including its rule
+  // controls. Never build/evaluate a second reader for a hidden phone layout.
+  const [comparisonGroups, setComparisonGroups] = useState<ReadonlySet<string>>(new Set());
   const groups = new Map<string, SelectionProfileDetail[]>();
   for (const profile of profiles) {
     const key = profile.value.typeId ?? profile.value.typeName ?? "unspecified";
@@ -6644,30 +6660,42 @@ function SelectionProfileTables({
         const columns = selectionProfileColumns(groupedProfiles);
         const typeName =
           groupedProfiles[0]?.value.typeName ?? "Unspecified profile type";
+        const reference = groupedProfiles.some(profile => profile.reference);
         return (
-          <section className="selection-profile-table-group" key={key}>
+          <section className="selection-profile-table-group" key={key} data-reference={reference || undefined} data-comparison={comparisonGroups.has(key) || undefined}>
             <h5>{typeName}</h5>
-            <div className="selection-profile-table-scroll" tabIndex={groupedProfiles.some(p => p.reference) ? 0 : undefined} role={groupedProfiles.some(p => p.reference) ? "region" : undefined} aria-label={groupedProfiles.some(p => p.reference) ? `${typeName} profiles, scroll horizontally for all characteristics` : undefined}>
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
+            {reference && <div className="reference-table-options">
+              <button type="button" aria-label={`${comparisonGroups.has(key) ? "Use profile cards" : "Compare as table"} · ${typeName}`} aria-pressed={comparisonGroups.has(key)} onClick={() => setComparisonGroups(current => {
+                const next = new Set(current);
+                if (next.has(key)) next.delete(key); else next.add(key);
+                return next;
+              })}>{comparisonGroups.has(key) ? "Use profile cards" : "Compare as table"}</button>
+              {comparisonGroups.has(key) && <p>Table comparison keeps columns aligned for unusual schemas. Scroll within this table to see every characteristic, or use profile cards to fit the screen.</p>}
+            </div>}
+            <div className="selection-profile-table-scroll" tabIndex={reference ? 0 : undefined} role={reference ? "region" : undefined} aria-label={reference ? `${typeName} profiles` : undefined}>
+              {/* Explicit roles retain table/header relationships when narrow
+                  CSS reflows rows. Visible cell labels are decorative copies. */}
+              <table role="table" aria-label={reference ? `${typeName} profiles` : undefined}>
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th scope="col" role="columnheader">Name</th>
                     {columns.map((column) => (
-                      <th scope="col" key={column.key}>{column.label}</th>
+                      <th scope="col" role="columnheader" key={column.key}>{column.label}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {groupedProfiles.map((profile, index) => {
                     // A grouped row owns its representative's report. Shared
                     // source objects can have different results in other owners.
                     const report = profile.reference ? profile.reference.report : reports?.get(profile.value);
                     return (
                       <tr
+                        role="row"
                         key={selectionProfileKey(profile, index)}
                         data-completeness={report?.completeness}
                       >
-                        <th scope="row">
+                        <th scope="row" role="rowheader">
                           {selectionProfileDisplayName(profile, report)}
                           {profile.reference && <small className="unit-reference-attribution">{referenceAttribution(profile.reference.members)}</small>}
                           {profile.reference && report === undefined && <small>Profile inspection unavailable; source values shown.</small>}
@@ -6694,8 +6722,12 @@ function SelectionProfileTables({
                                   (candidate) =>
                                     candidate.characteristic === characteristic,
                                 );
+                          // Length only chooses breathing room, never parses a
+                          // value or omits a field. Rule controls also get a
+                          // full-width cell via CSS, regardless of game/schema.
                           return (
-                            <td key={column.key}>
+                            <td role="cell" key={column.key} className={column.label.length > 18 || (characteristicReport?.value ?? characteristic?.value ?? "").length > 24 ? "reference-field-wide" : undefined}>
+                              {reference && <span className="reference-field-label" aria-hidden="true">{column.label}</span>}
                               {characteristic === undefined ? (
                                 <span aria-label="Not provided">—</span>
                               ) : (

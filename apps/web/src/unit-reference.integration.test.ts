@@ -38,7 +38,14 @@ it.skipIf(!directory)("groups the audit's selected five and ten model Intercesso
     if (!result.ok) throw new Error("Model failed");
     session = result.value;
   }
-  addModel("Intercessor"); addModel("Intercessor"); addModel("Intercessor"); addModel("Intercessor w/ Grenade Launcher");
+  // Creation now supplies four independent ordinary models. Swap one for the
+  // launcher instead of adding three more on top of those initialized models.
+  const ordinary = unit().selections.filter(s => s.name === "Intercessor");
+  expect(ordinary).toHaveLength(4);
+  addModel("Intercessor w/ Grenade Launcher");
+  const removed = removeLocalRosterSelection(session, ordinary[0]!.id);
+  if (!removed.ok) throw new Error("Ordinary model removal failed");
+  session = removed.value;
   const sergeant = unit().selections.find(s => s.name === "Intercessor Sergeant")!;
   const choices = inspectLocalRosterChildChoices(session, sergeant.id);
   if (!choices.ok) throw new Error("Inspect failed");

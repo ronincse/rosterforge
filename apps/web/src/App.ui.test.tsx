@@ -1272,7 +1272,10 @@ describe("App local catalogue flow", () => {
         "Veteran Infantry profile (Veteran Issue)",
       ),
     ).toBeTruthy();
-    expect(within(unitCardView).getAllByText("Move")).toHaveLength(2);
+    // The card's decorative phone label is hidden from accessibility; the
+    // original column header remains the semantic label for its value.
+    expect(within(unitCardView).getByRole("columnheader", { name: "Move" })).toBeTruthy();
+    expect(unitCardView.querySelector('.reference-field-label[aria-hidden="true"]')?.textContent).toBe("Move");
     // A supported profile set replaces the displayed value and keeps the
     // source value visible as the base.
     expect(within(unitCardView).getByText("8")).toBeTruthy();
