@@ -34,7 +34,32 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-10 (Supporting accepted; full-army replay interrupted)
+## Current Status — 2026-09-11 (renderer repaired; status-scope checkpoint next)
+
+**Current owner batch RF-GROK-01/02:** RF-GROK-01 implemented in `a589236`
+from clean/upstream-equal `383ae1a`, selected `codex/list-builder-ui-overhaul`.
+Open Intercessor editor→Knights expands four raw-document byte paths in React
+timing:30,515,701 rows/517,436,577chars, before native clone OOM. Scalar editor
+props and projected provenance remove the cause; native timing/StrictMode/data
+unchanged. Exact case and Azrael pass, full14-unit frozen-A browser army2000,
+zero known violations but incomplete; history, Supporting effects, save/reopen
+and ordinary entry pass. Native1GB before fails/after passes; synthetic baseline
+265,203rows fails safely and candidate passes. Gates690pass28skip; pinned pair
+23pass; lint/typecheck/build/diff pass (existing808.53kB advisory). Independent
+native plus authenticated Claude Sonnet5 review completed. Evidence:
+`docs/qa/grok-renderer-repair.md`. Older host-only hang remains unassigned.
+
+**Next RF-GROK-02:** qualify scoped structural/constraint badges without replacing
+their results with aggregate counts; globals already consume aggregate snapshot.
+RF-GROK-03 triaged unsupported conditional minimum, no autofill implementation.
+Other Grok findings classified in roadmap, not authorized implementation.
+Own isolated QA5243 only; owner5242 tab/storage untouched. Prior own servers were
+stopped at owner request before this batch. Previous preservation/retry-deferral
+directions below are historical: new owner direction permits evidence-preserving,
+bounded causal replays. No StarCraft/acquisition/UI-overhaul work. Publish this
+checkpoint and confirm exact-SHA CI before beginning RF-GROK-02.
+
+### Historical status context (superseded by the current block above)
 
 **New owner direction supersedes crash-first stopping instructions, but an actual
 full-army run is now interrupted by new evidence.** At22:21:13.688UTC, own tab9
@@ -906,10 +931,15 @@ QA before classifying or implementing the discrepancy.
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
 | Local condition group cost applicability | Done — bounded browser A/B accepted | `160667f`: bounded repeats1 semantics; actual A/B at654bb4e Intercessor5/10/5 ->80/150/80; Knights240/240/260, earliest deletion, duplicate/undo/redo/save/reopen pass. Impulsor A fifth80/B fourth80 remain separate engine evidence, no illegal browser threshold forced. Unsupported variants remain incomplete |
-| Renderer crash during reference-army additions | Open — new allocation-failure evidence; full-army blocker | Own frozen-A tab9/5242 first Knights addition at22:21:13.688UTC throws DataCloneError/OOM in React19.2.8 dev logComponentRender/performance.measure. DOM615 remains readable; run failed/interrupted, no retry or substituted API pass. Immediate clone site known, pressure cause and relation to old host crash unresolved. Next bounded scalar payload/memory diagnostic must preserve native behavior/errors; see qa/reference-army-replay.md |
+| Renderer crash during reference-army additions | Done for demonstrated timing explosion | RF-GROK-01 `a589236`: open-editor cross-catalogue choice diff expands four raw-byte paths; narrow editing/provenance props. Before30.5M rows/OOM, after bounded native timing; Knights/Azrael/full army pass. Same1GB actual-App before fails/after passes. Older host-only hang remains unassigned, cloud allocator not directly captured; qa/grok-renderer-repair.md |
 | Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
 | Required Supporting and associated effects | Done for bounded supported shapes | cad1cec: required min1/max1/defaultnone, source eligibility, direct incoming/outgoing bounds, evaluated group currencies, connected effects and source gates. A/B integration and frozen-A browser assignment/retarget/detach/duplicate/delete/history/save/reopen verified; unknown links/multi-target shapes/transitive query families/divide remain incomplete. See qa/supporting-acceptance.md; not full catalogue or army legality |
-| Dense reference-army correctness replay | Blocked — actual browser run interrupted | Frozen-A14-unit comparison input recovered, required setup and five-unit partial ledger615 observed. First Knights addition hits new timing-clone OOM; nine units, final aggregate and full-army attachment/save/reopen remain outstanding. Do not force2000 or add historical90; passing isolated pricing/Supporting tests do not replace this run |
+| Dense reference-army correctness replay | Done — bounded frozen-A browser acceptance | RF-GROK-01:14 units2000source-derived,193selections; Knights240/240/260, earliestdelete1740/undo2000/redo1740/undo2000, Supporting detach/retarget/effects, save/reopen and cards intact. Zero known violations,236structural satisfied/2unresolved,378constraint satisfied/0unresolved; incomplete is not full army legality. No historical90 or GW1900 forcing |
+| RF-GROK-02 scoped validation wording | Next — authorized | Structural success can legitimately coexist with aggregate Character/Warlord violations. Qualify structural/constraint badges; preserve independent validity/completeness and same aggregate global snapshot. No one-number-everywhere evaluator overwrite |
+| RF-GROK-03 conditional minimum initialization | Open — triaged, implementation needs next batch | Intercessor group min5/no default; ordinary model min4 is modifier-controlled, so planner emits sergeant1/pending4/incomplete. Not ignored explicit default or renderer cause. Generic prospective complete-bound/unique-composition planning with bounded passes; see exact IDs and regression proposal in qa/grok-renderer-repair.md |
+| RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
+| RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
+| RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
 | Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -14553,6 +14583,10 @@ acquisition work. All existing owner tabs/storage/servers remain untouched;
 
 ## Completed Assignment — Required Supporting; interrupted full-army acceptance, 2026-09-10
 
+> Full-army blocker and pressure-cause uncertainty are superseded by the
+> RF-GROK-01 2026-09-11 entry. The failed historical run remains failed; new
+> candidate browser evidence establishes the repair and separate acceptance.
+
 **Authority/baseline/result.** Owner continuation explicitly authorizes remaining
 correctness work, useful scoped Anthropic review and publication on the selected
 branch; it defers crash investigation absent recurrence, not failure reporting.
@@ -14631,3 +14665,62 @@ rethrowing errors, then a demonstrated repair and separately labelled acceptance
 Do not erase the failed run, suppress timing errors, infer a leak, or disable
 StrictMode as a purported fix. StarCraft remains only the near-term next pilot;
 no source/import/acquisition/implementation/UI overhaul or broad audit started.
+
+## Completed Assignment — RF-GROK-01 renderer repair and full army, 2026-09-11
+
+**Baseline/result.** Owner's attached audit direction authorizes two separate
+checkpoints on the selected branch. Clean383ae1ae91b4a6bac607ca577924498fd1ba87b0,
+upstream equal, no concurrent writer or inherited unpushed work. Implementation
+`a5892363b704f5cf7334173d555b165c6ad398b0`; this separate handoff accompanies it.
+No reset, branch switch, PR, deployment, source-pin change or memory write.
+
+**Cause/decision.** Frozen-A open Intercessor options→AddKnights reproduced native
+React19.2.8 measure DataCloneError. One RosterSelectionEdit prop payload has
+30,515,701rows/517,436,577chars; heap238MB→3.49GB before cloning. Four old/new
+sourceDocument/definitionDocument sourceBytes/documentBytes paths explain
+30,514,820 rows exactly. Closed-editor control passes. Replace that leaf's whole
+choice with actual editable scalars; existing provenance projection crosses the
+other affected leaf boundary. Original bytes/evaluation/rules/history unchanged.
+Reject timing clearing/no-op/exception swallowing, StrictMode removal, dependency
+guessing, army caps and blanket refactor. Older host-only hang remains unassigned;
+same-path1GB failure strongly supports but does not prove Grok's allocator cause.
+
+**Review/tests.** Native isolated worktree `C:/CodexACLTest/rf-grok-review-20260911`
+derived exact byte count and wrote bounded synthetic regression, lead reviewed
+and reran. Baseline265,203rows fails/candidate passes; no OOM needed. Same frozen
+actual-App1GB cap before fails on AddKnights/after passes4.45s,406,914,288heap,
+508payloads/max15,818chars543rows/zero timing errors. Native timestamp support
+enabled before React in jsdom; measure native cloning/errors preserved. Claude
+Code authenticated Read/Grep/Glob-only Sonnet5 confirms cause and no semantic
+regression; no mutations/permission denials. Its broad session=>choice-change
+claim is refuted by shallow map copies and stable choice identity; modal/keyed
+lifecycles distinguish unproven future risks from the reproduced path.
+
+**Gates/data.** All76auditmanifestSHA256 and eight closure hashes/sizes verified.
+A04c62fc/B5b261ec immutable. Focused synthetic1pass; pinned bsdata-json+correctness
+23pass39.84s (36closures/46documents and A/B pricing/Supporting). Normal test
+690pass28skip,76pass6skipfiles,13.00s; lint/typecheck/build/diffcheck pass.
+Existing808.53kB bundle advisory retained. No behavior boundary or diagnostic code
+changed, so compatibility semantics unchanged; architecture boundary documented.
+
+**Browser.** Own5243/Chrome152 host-managed default flags/4,395,630,592heaplimit,
+Vite8.1.5/nativeReact19.2.8StrictMode. Failed state captured before closing; new
+measured candidate exact Intercessor→Knights and→Azrael pass with options open.
+Maximum near exact transition28,643chars380rows, heap216MB afterKnights. Azrael140
+full profile/weapons/abilities verified in Warlord/configured context. Complete
+ordinary14-unit army2000, ledger in qa/grok-renderer-repair.md; Knights240/240/260,
+Intercessors80/150, loadouts actually chosen. Supporting Lethal Hits attributed
+once per weapon row; detach/retarget/restore verified on ordinary uninstrumented
+entry. EarliestKnightsdelete1740/undo2000/redo1740/undo2000; save Allchanges saved,
+shelf193selections13.6MBshared, reopen2000, cards intact. Zero consolewarn/error.
+236structural satisfied/0violated/2unresolved;378constraint satisfied/0violated/
+0unresolved. Unknown Captain/Lieutenant Warlord initialization bounds remain,
+so zero known violations is not complete evaluation or full legality.
+
+**Next/scope.** RF-GROK-02 scoped badge wording next after this checkpoint's push
+and exact-SHA CI. RF-GROK-03 source triage: modifier-controlled ordinary min4,
+group min5/no default, planner sergeant1/pending4; no autofill or name-based rule.
+Generic bounded complete prospective bounds/unique composition follow-up requires
+next batch. Other Grok04–12 classified in roadmap, not implemented. Own5243 QA
+server and disposable armies only; owner5242tab/storage untouched. No material
+deletion; failed diagnostic tab closed only after scalar evidence captured.
