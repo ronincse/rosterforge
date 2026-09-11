@@ -1,5 +1,11 @@
 # Renderer hang investigation — 2026-09-10
 
+> Current update: [grok-renderer-repair.md](grok-renderer-repair.md) establishes
+> and repairs the open-editor raw-byte timing explosion, with before/after
+> evidence and full-army acceptance. The older host-only hang below remains
+> unassigned; historical deferral/stopping direction is superseded by owner
+> authorization for bounded causal replays on 2026-09-11.
+
 Status: unresolved. A new interrupted run on 2026-09-10 captured a React
 development-profiling `performance.measure` cloning/OOM exception; see
 `reference-army-replay.md`. This identifies the immediate throwing operation,

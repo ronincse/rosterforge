@@ -4485,7 +4485,10 @@ function RosterSelectionItem({
           {choice !== undefined && presentation !== "card" && (
             <>
               <RosterSelectionEdit
-                choice={choice}
+                definitionName={choice.name}
+                modelAmount={choice.kind === "selectionEntry" && choice.type === "model"}
+                defaultAmount={choice.defaultAmount}
+                step={choice.step}
                 selection={selection}
                 onRename={onRename}
                 onSetAmount={onSetAmount}
@@ -4494,7 +4497,7 @@ function RosterSelectionItem({
                   disclosure. Options-only presentation omits that datasheet,
                   so it carries the single retained copy here instead. */}
               {presentation === "options" && (
-                <ChoiceDeveloperDetails choice={choice} />
+                <ChoiceDeveloperDetails provenance={choiceDeveloperProvenance(choice)} />
               )}
             </>
           )}
@@ -5206,7 +5209,7 @@ function CatalogueChoiceInformationSections({
           </ul>
         </section>
       )}
-      <ChoiceDeveloperDetails choice={choice} />
+      <ChoiceDeveloperDetails provenance={choiceDeveloperProvenance(choice)} />
     </>
   );
 }
@@ -5270,12 +5273,14 @@ function choiceDeveloperProvenance(
   return { sources: [...sources], unresolved };
 }
 
+// Project before crossing this leaf boundary for the same byte-array timing
+// reason as RosterSelectionEdit. Source filenames and unresolved-link evidence
+// are unchanged; the disclosure never needs the enclosing imported documents.
 function ChoiceDeveloperDetails({
-  choice,
+  provenance,
 }: {
-  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly provenance: ChoiceDeveloperProvenance;
 }) {
-  const provenance = choiceDeveloperProvenance(choice);
   return (
     <details className="selection-developer-details">
       <summary>Developer details</summary>
@@ -6076,18 +6081,30 @@ function RosterSelectionDatasheet({
           </ul>
         </section>
       )}
-      <ChoiceDeveloperDetails choice={choice} />
+      <ChoiceDeveloperDetails provenance={choiceDeveloperProvenance(choice)} />
     </div>
   );
 }
 
+// Keep this leaf's props limited to editable values. A materialized choice also
+// owns source documents and their original byte arrays. Switching an open editor
+// between catalogues made React's development prop-diff formatter enumerate those
+// bytes (30.5 million rows in the pinned Intercessor -> Knights reproduction).
+// The original documents remain unchanged in the session; editing needs none of
+// that payload, and native performance measurements remain enabled.
 function RosterSelectionEdit({
-  choice,
+  definitionName,
+  modelAmount,
+  defaultAmount,
+  step,
   selection,
   onRename,
   onSetAmount,
 }: {
-  readonly choice: BattleScribeRosterSelectionChoice;
+  readonly definitionName: string | undefined;
+  readonly modelAmount: boolean;
+  readonly defaultAmount: string | undefined;
+  readonly step: string | undefined;
   readonly selection: RosterSelection;
   readonly onRename: (
     id: SelectionOccurrenceId,
@@ -6119,14 +6136,14 @@ function RosterSelectionEdit({
         <>
           <SelectionNameEditor
             selection={selection}
-            definitionName={choice.name}
+            definitionName={definitionName}
             onRename={onRename}
           />
-          {(choice.kind !== "selectionEntry" || choice.type !== "model") && (
+          {!modelAmount && (
             <SelectionAmountEditor
               selection={selection}
-              defaultAmount={choice.defaultAmount}
-              step={choice.step}
+              defaultAmount={defaultAmount}
+              step={step}
               onSetAmount={onSetAmount}
             />
           )}

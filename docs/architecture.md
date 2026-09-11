@@ -23,6 +23,13 @@ components.
 
 ## Current Slice
 
+React editing/provenance leaves receive the displayed scalar values or projected
+provenance, not whole materialized choices containing original document bytes.
+This keeps cross-catalogue editor updates from exposing megabytes of typed-array
+indices to development changed-prop timing. Original source bytes remain in the
+session unchanged; native timing and StrictMode stay enabled. See
+`docs/qa/grok-renderer-repair.md` for the measured boundary and regression.
+
 `foundation` defines stable IDs, source provenance, source locations,
 diagnostics, result values, and independent validation validity/completeness
 contracts.

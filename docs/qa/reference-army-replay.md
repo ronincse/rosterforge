@@ -1,5 +1,9 @@
 # Frozen-A comparison army replay — interrupted, 2026-09-10
 
+> Historical failed run retained. Superseded for current acceptance by the
+> 2026-09-11 causal repair and fourteen-unit browser replay in
+> [grok-renderer-repair.md](grok-renderer-repair.md). This run itself never passed.
+
 **Result: failed/interrupted browser acceptance, not a completed army.**
 Own tab9, ordinary `http://127.0.0.1:5242/app/`, temporary
 `QA reference army frozen A`, current Supporting candidate based on42adbb7.
