@@ -34,7 +34,7 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (renderer repaired; status-scope checkpoint next)
+## Current Status — 2026-09-11 (RF-GROK repair batch complete)
 
 **Current owner batch RF-GROK-01/02:** RF-GROK-01 implemented in `a589236`
 from clean/upstream-equal `383ae1a`, selected `codex/list-builder-ui-overhaul`.
@@ -49,15 +49,24 @@ and ordinary entry pass. Native1GB before fails/after passes; synthetic baseline
 native plus authenticated Claude Sonnet5 review completed. Evidence:
 `docs/qa/grok-renderer-repair.md`. Older host-only hang remains unassigned.
 
-**Next RF-GROK-02:** qualify scoped structural/constraint badges without replacing
-their results with aggregate counts; globals already consume aggregate snapshot.
+RF-GROK-01 published through `3b48ba1`, exact-SHA CI34610822255 success.
+**RF-GROK-02 implemented in `5f77d32`:** structural/constraint badges name their
+scope; globals retain aggregate snapshot, independent validity/completeness and
+provisional-cost behavior. Real frozen-A108structural pass vs2Character/Warlord
+violations, edits and320/390/1440 layouts verified; narrow labels wrap inside cards.
+Eight-case matrix plus existing focused coverage32pass; all normal gates
+698pass28skip, pinned pair23pass35.27s, lint/typecheck/build/diff pass. Existing
+808.60kB build advisory remains. Native independent review no blocker; see
+`docs/qa/grok-validation-scope.md`. Separate handoff published with code; exact
+second-checkpoint CI must be read from the completion response/run history.
 RF-GROK-03 triaged unsupported conditional minimum, no autofill implementation.
 Other Grok findings classified in roadmap, not authorized implementation.
 Own isolated QA5243 only; owner5242 tab/storage untouched. Prior own servers were
 stopped at owner request before this batch. Previous preservation/retry-deferral
 directions below are historical: new owner direction permits evidence-preserving,
-bounded causal replays. No StarCraft/acquisition/UI-overhaul work. Publish this
-checkpoint and confirm exact-SHA CI before beginning RF-GROK-02.
+bounded causal replays. No StarCraft/acquisition/UI-overhaul work. **Stop after
+this batch.** No next implementation authorized; preserve compatibility limits
+and request the next bounded assignment rather than advancing the roadmap.
 
 ### Historical status context (superseded by the current block above)
 
@@ -935,7 +944,7 @@ QA before classifying or implementing the discrepancy.
 | Broader local-group shapes and large-roster scaling | Open compatibility boundary | repeats2, stacked copy amounts, matching cross-parent order and unmeasured grammar withheld; 4096 candidate/identity work budget per group, all-anchor traversal still quadratic. Do not count source recognition as full compatibility |
 | Required Supporting and associated effects | Done for bounded supported shapes | cad1cec: required min1/max1/defaultnone, source eligibility, direct incoming/outgoing bounds, evaluated group currencies, connected effects and source gates. A/B integration and frozen-A browser assignment/retarget/detach/duplicate/delete/history/save/reopen verified; unknown links/multi-target shapes/transitive query families/divide remain incomplete. See qa/supporting-acceptance.md; not full catalogue or army legality |
 | Dense reference-army correctness replay | Done — bounded frozen-A browser acceptance | RF-GROK-01:14 units2000source-derived,193selections; Knights240/240/260, earliestdelete1740/undo2000/redo1740/undo2000, Supporting detach/retarget/effects, save/reopen and cards intact. Zero known violations,236structural satisfied/2unresolved,378constraint satisfied/0unresolved; incomplete is not full army legality. No historical90 or GW1900 forcing |
-| RF-GROK-02 scoped validation wording | Next — authorized | Structural success can legitimately coexist with aggregate Character/Warlord violations. Qualify structural/constraint badges; preserve independent validity/completeness and same aggregate global snapshot. No one-number-everywhere evaluator overwrite |
+| RF-GROK-02 scoped validation wording | Done — `5f77d32` | Structural/constraint badges explicitly scoped, aggregate globals unchanged; independent validity/completeness/provisional costs and unavailable states retained. Eight-case matrix plus real frozen-A108structural pass vs2aggregate, edits,320/390/1440 layouts; qa/grok-validation-scope.md |
 | RF-GROK-03 conditional minimum initialization | Open — triaged, implementation needs next batch | Intercessor group min5/no default; ordinary model min4 is modifier-controlled, so planner emits sergeant1/pending4/incomplete. Not ignored explicit default or renderer cause. Generic prospective complete-bound/unique-composition planning with bounded passes; see exact IDs and regression proposal in qa/grok-renderer-repair.md |
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
@@ -14724,3 +14733,50 @@ Generic bounded complete prospective bounds/unique composition follow-up require
 next batch. Other Grok04–12 classified in roadmap, not implemented. Own5243 QA
 server and disposable armies only; owner5242tab/storage untouched. No material
 deletion; failed diagnostic tab closed only after scalar evidence captured.
+
+## Completed Assignment — RF-GROK-02 scoped validation and batch stop, 2026-09-11
+
+**Baseline/result.** RF-GROK-01 published at3b48ba110012a5eeab84cf7244869f2f72e1599f,
+exact-SHA CI34610822255 success. Clean selectedbranch baseline, no other writer or
+inherited work. RF-GROK-02 implementation `5f77d32` plus this separate handoff.
+Owner's two-checkpoint batch is implemented; no unrelated roadmap work started.
+
+**Decision.** Audit screenshot's green badges belong to108passing structural
+bounds, whereas aggregate2 is Character/Warlord. Scope wording, not an evaluator
+discrepancy. Structural checks eyebrow and explicit structural validity/coverage
+badges; constraints' coverage also qualified. Same aggregate snapshot feeds
+whole-roster summaries; domain counts remain their own. Small scopedCSS wrapping
+keeps longerlabels inside320phonecards. Unavailable neverbecomes success and
+provisional costs remain independent. No hardcoded unit/category rules, repeated
+counts, diagnostic suppression, evaluator/architecture/source changes.
+
+**Validation/review.** Native isolated lane supplied eight-case matrix, reviewed
+and rerun by lead (oldcopy7fail1pass/candidate8pass). Real synthetic evaluation for
+structural-only/nonstructural-only/mixed/complete and actual rootadd/rerender2→0;
+independent structural/constraint-incomplete plus unavailable presentation mocks
+are clearly identified. Existing App tests retain real edits; stale generic
+badge matches now target aggregate summary explicitly. Focused4suites32pass7.06s;
+normal698pass28skip/77pass6skipfiles14.41s. Pinned pair23pass35.27s, A04c62fc and
+B5b261ec unchanged, all36closures/46documents covered by existing suite. Lint,
+typecheck, build, diffcheck pass;808.60kB existing chunk advisory not suppressed.
+Native source/CSS review no blocker; no independent repeat of browser measurements
+claimed. Compatibility document records presentation scope, no diagnostic codes
+or imported semantic boundaries changed.
+
+**Browser.** Normal Vite5243/React19.2.8/Chrome152/frozenA. Disposable configured
+emptyarmy:108structural satisfied0violated0unresolved vsaggregate2. AddCaptain→1;
+Warlord→0 butincomplete; addIntercessors1sergeant→structural1/aggregate1;
+clearWarlord→structural1/aggregate2. Problem modal lists exactIntercessors/Warlord.
+Desktop1440,page1425; phone390,page375; phone320,page305. Scoped completebadge
+initially endedx284.24outsideparent254.67; afterCSS ends254.67,height37.33, no
+clipping. Screenshots inspected andviewportreset. Fullsaved14army retains2000,
+zero known/incomplete withnewcopy. No consolewarn/error. Owner tabs/storage and
+existingpreviewstate untouched; ownQAserver5243 only, no failedliveheap retained.
+
+**Remaining/stop.** RF-GROK-03 source-based unsupportedconditionalminimum triage
+is recorded, noautofill. RF-GROK04–12 classifications remain roadmap items, no
+cosmetic/workflow/acquisition/StarCraft/governance changes. No acceptance blocker
+remains for the demonstrated timing repair and scoped wording; historicalhost
+hang and unobservedcloudallocator are not retrospectivelyproved. Fullrules
+compatibility remains explicitlyincomplete. Pushcode+handoff toselectedbranch,
+confirmexactSHA CI in completion response, and stop this batch.
