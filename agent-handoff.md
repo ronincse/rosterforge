@@ -34,7 +34,24 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (RF-GROK repair batch complete)
+## Current Status — 2026-09-11 (current bounds / conditional creation batch)
+
+Owner authorized two new bounded checkpoints from clean/upstream-equal `f024d9b`
+on selected `codex/list-builder-ui-overhaul`. First implemented in `4a30b9f`:
+live static descendant bounds, including redundant direct caps, now count actual
+source identities. Existing saved reference army reproduces236/0/2 structural
+before and238/0/0 after, constraints378/0/0,14units2000 unchanged. Source maxima,
+not stale planning state or zero minima; `docs/qa/current-structural-bounds.md`.
+Gates704pass30skip,78pass6skipfiles11.11s; optional pinned pair25pass34.83s;
+lint/typecheck/build/diff pass (existing809.85kB advisory). Read-only Claude
+Sonnet5 review completed; additional synthetic dominance/local/ancestor cases
+and distant-ancestor guard added by lead. Code and separate handoff publish
+together; exact CI recorded after push. Second checkpoint is **Next**: safe
+conditional Intercessor minimum initialization and full new-army browser replay.
+No initialization changes yet. Preserve saved5243 army and owner5242 tab/storage;
+no acquisition, general UI, unrelated audit or StarCraft work. Stop after batch.
+
+### Accepted preceding batch (historical; new owner direction supersedes its stop)
 
 **Current owner batch RF-GROK-01/02:** RF-GROK-01 implemented in `a589236`
 from clean/upstream-equal `383ae1a`, selected `codex/list-builder-ui-overhaul`.
@@ -945,7 +962,8 @@ QA before classifying or implementing the discrepancy.
 | Required Supporting and associated effects | Done for bounded supported shapes | cad1cec: required min1/max1/defaultnone, source eligibility, direct incoming/outgoing bounds, evaluated group currencies, connected effects and source gates. A/B integration and frozen-A browser assignment/retarget/detach/duplicate/delete/history/save/reopen verified; unknown links/multi-target shapes/transitive query families/divide remain incomplete. See qa/supporting-acceptance.md; not full catalogue or army legality |
 | Dense reference-army correctness replay | Done — bounded frozen-A browser acceptance | RF-GROK-01:14 units2000source-derived,193selections; Knights240/240/260, earliestdelete1740/undo2000/redo1740/undo2000, Supporting detach/retarget/effects, save/reopen and cards intact. Zero known violations,236structural satisfied/2unresolved,378constraint satisfied/0unresolved; incomplete is not full army legality. No historical90 or GW1900 forcing |
 | RF-GROK-02 scoped validation wording | Done — `5f77d32` | Structural/constraint badges explicitly scoped, aggregate globals unchanged; independent validity/completeness/provisional costs and unavailable states retained. Eight-case matrix plus real frozen-A108structural pass vs2aggregate, edits,320/390/1440 layouts; qa/grok-validation-scope.md |
-| RF-GROK-03 conditional minimum initialization | Open — triaged, implementation needs next batch | Intercessor group min5/no default; ordinary model min4 is modifier-controlled, so planner emits sergeant1/pending4/incomplete. Not ignored explicit default or renderer cause. Generic prospective complete-bound/unique-composition planning with bounded passes; see exact IDs and regression proposal in qa/grok-renderer-repair.md |
+| Current reference-army descendant structural bounds | Done — `4a30b9f` | Two Warlord-linked parent descendant maxima now counted by source identity;238/0/0 structural,378/0/0 constraints in unchanged saved army. Static same-domain/dominated direct limits only; unknown/dynamic/mixed non-dominated behavior retained. qa/current-structural-bounds.md |
+| RF-GROK-03 conditional minimum initialization | Next — authorized second checkpoint | Intercessor group min5/no default; ordinary model min4 is modifier-controlled, so planner emits sergeant1/pending4/incomplete. Not ignored explicit default or renderer cause. Generic prospective complete-bound/unique-composition planning with bounded steps; full new-army replay follows. |
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
@@ -14780,3 +14798,44 @@ remains for the demonstrated timing repair and scoped wording; historicalhost
 hang and unobservedcloudallocator are not retrospectivelyproved. Fullrules
 compatibility remains explicitlyincomplete. Pushcode+handoff toselectedbranch,
 confirmexactSHA CI in completion response, and stop this batch.
+
+## Completed Assignment — 2026-09-11 — Current descendant structural bounds
+
+Baseline `f024d9b364656211d49963122e94ea8d588d0afe`, clean/upstream-equal selected
+branch. Implementation `4a30b9f`; separate handoff follows. Existing worktrees and
+completed native worker preserved; no concurrent writer. Owner explicitly
+reauthorized this plus conditional initialization, superseding preceding stop.
+
+Both Captain/Lieutenant shared Warlord choices carry descendant parent max1
+`1d6a-f04f-acb6-7b66` plus equal direct max1 `ad60-fb6-5cf4-f118`, no modifiers.
+Live inspector rejected includeChildSelections, emitted initialization-worded
+diagnostic and withheld bounds. Actual selected1/0 now satisfied min0/max1.
+Classification: applicable counting capability missing in structural inspection,
+not historical initialization state. No label suppression or aggregate copying.
+Exact source IDs/paths and browser occurrence anchors in qa/current-structural-bounds.md.
+
+Use actual descendant identity membership and conservative unknown candidates;
+equal/weaker direct caps are redundant by subset proof. Non-dominated mixed
+domains, dynamic descendant bounds and unknown source properties stay incomplete.
+Resolved distant ancestors are checked for targeting modifiers; unresolved
+ancestry withholds. Creation remains unchanged. One subtree walk/applicable row;
+cached catalogue index and roster locations, no roster/source-byte copies.
+
+Pre-capability synthetic test fails unknown-vs-max1; candidate six synthetic
+tests cover linked nested duplicates, removal/history/restoration, required
+missing minimum, strict/mismatched caps, local identity and immediate/distant
+ancestor modifiers. Two immutable A/B cases verify8-file manifests and character
+restoration; configured corpus HEAD04c62fc unchanged. Optional pair25pass34.83s;
+normal704pass30skip,78pass6skipfiles11.11s, all lint/typecheck/build/diff gates pass;
+renderer timing regression retained. Existing build advisory809.85kB.
+
+Independent authenticated read-only Claude Sonnet5 review confirmed core logic;
+lead implemented suggested adversarial coverage and treated ancestor concern as
+a guard requirement. Initial review's zero-min hypothesis was disproved by source
+maxima; unrelated proposed root initialization expansion rejected as out of scope.
+Only relevant source/sanitized evidence shared, no personal armies/data wholesale.
+
+Browser existing full saved14-unit2000 on5243: before236/0/2 structural, after238/0/0;
+constraints378/0/0 unchanged, no army mutation. Complete supported checks do not
+establish universal legality. Next authorized checkpoint is conditional-minimum
+creation, then isolated full-army replay. No migrations/acquisition/UI/StarCraft.
