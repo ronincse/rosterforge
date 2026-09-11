@@ -511,7 +511,7 @@ function directBoundReport(
     readonly resolution: EvaluationSelectionResolution | undefined;
   }[],
 ): RosterStructuralDirectBoundReport {
-  const membership = childMembership(
+  const membership = inspection.membership ?? childMembership(
     children,
     (choice) => choice === inspection.choice,
   );

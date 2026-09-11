@@ -961,6 +961,14 @@ The structural report does not evaluate category eligibility, broader hidden
 state, general constraint collections, costs, or force composition, and it
 never permits or rejects an edit.
 
+Live direct-entry static descendant bounds use the cached source-identity index
+to count the actual parent's subtree, retaining unknown candidates. Shared bounds
+match definition identities across links. An equal/weaker direct maximum over
+the same identity is redundant to the descendant maximum; other mixed count
+domains and dynamic descendant bounds remain incomplete. This costs one subtree
+walk per applicable row and does not copy rosters or source bytes. Static creation
+does not gain descendant initialization from this live-only capability.
+
 `composeSupportedRosterValidation` is a headless composition boundary, not
 another evaluation pass. It consumes one structural report plus
 selection-condition, force-category, and force-condition constraint collections

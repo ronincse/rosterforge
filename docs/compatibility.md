@@ -160,6 +160,10 @@
 - Read-only aggregate structural status for supported visible-root,
   direct-entry, and transparent-group selection bounds in the browser's
   single-force roster shape, with independent validity and completeness
+- Live static direct-entry descendant bounds, shared/local source identity and
+  redundant equal/weaker direct maxima; ambiguous candidates, non-dominated mixed
+  count domains and dynamic descendant bounds remain incomplete. This does not
+  widen static initialization. See `qa/current-structural-bounds.md`.
 - Group bounds that count selections made in nested groups, so a group holding
   other groups bounds what is chosen beneath it; see "Nested Group Bounds"
 - Parent-contextual descendant resolution, known-versus-possible selected

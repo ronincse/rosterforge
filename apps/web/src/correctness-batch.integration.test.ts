@@ -8,12 +8,36 @@ import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge
 import { inspectRosterAssociationChoices } from "@rosterforge/evaluation";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
 import { inspectLocalRosterConstraints, setLocalRosterAssociation } from "./roster-session.js";
+import { inspectLocalRosterStructuralStatus, restoreLocalRosterSession } from "./roster-session.js";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterChildSelection, addLocalRosterRootSelection, chooseLocalRosterChildGroupEntry, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, localRosterRootChoices, setLocalRosterSelectionAmount, duplicateLocalRosterSelection, removeLocalRosterSelection } from "./roster-session.js";
 
 const evidence = process.env.ROSTERFORGE_CORRECTNESS_SNAPSHOTS;
 const revisions = { frozen: "04c62fcd041b3808c39d5c46fd677c704027b979", "current-upstream": "5b261ec423d5d017bb733c4f3c0a760b085d5ca5" };
 function ok<T>(r: Result<T>): T { if (!r.ok) throw new Error(JSON.stringify(r.diagnostics)); return r.value; }
+
+for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence === undefined)(`resolves current character descendant bounds on ${dataset} ${revision}`, async () => {
+  const catalogue = await snapshotCatalogue(dataset, revision);
+  let n = 0; const next = () => selectionOccurrenceId(`structural-${++n}`);
+  let session = ok(createLocalRosterSession(catalogue, catalogue.context.forces.definitions.find(f => f.source.id === "bb9d-299a-ed60-2d8a")!, {rosterId:rosterId("structural"),forceId:forceOccurrenceId("force"),name:"Structural evidence",createSelectionId:next}));
+  for (const name of ["Captain", "Lieutenant"]) {
+    const root = localRosterRootChoices(catalogue).find(r => r.materialized.name === name)!;
+    const owner = next();
+    session = ok(addLocalRosterRootSelection(session,root,{selectionId:owner,createSelectionId:next}));
+    const child = ok(inspectLocalRosterChildChoices(session,owner)).direct.find(d=>d.choice.definitionId === "caa-f869-3cbd-b48e")!.choice;
+    expect(child.constraints).toEqual(expect.arrayContaining([expect.objectContaining({id:"1d6a-f04f-acb6-7b66",type:"max",value:1,scope:"parent",shared:true,includeChildSelections:true})]));
+    const bound = () => ok(inspectLocalRosterStructuralStatus(session)).bounds.find(b=>b.kind === "direct" && b.owner.id === owner && b.choice.definitionId === child.definitionId)!;
+    expect(bound()).toMatchObject({minimum:0,maximum:1,selectedCount:0,status:"satisfied",completeness:"complete"});
+    if (name === "Captain") {
+      session = ok(addLocalRosterChildSelection(session,owner,child,{selectionId:next(),createSelectionId:next}));
+      expect(bound()).toMatchObject({selectedCount:1,status:"satisfied",completeness:"complete"});
+    }
+    // Restoration resolves the same occurrence/definition keys without rerunning
+    // creation; an already configured army is not migrated or reinitialized.
+    session = ok(restoreLocalRosterSession(catalogue,session.roster));
+    expect(bound()).toMatchObject({status:"satisfied",completeness:"complete"});
+  }
+}, 30000);
 
 async function snapshotCatalogue(dataset: string, revision: string) {
   if (evidence === undefined) throw new Error("Snapshots not configured");

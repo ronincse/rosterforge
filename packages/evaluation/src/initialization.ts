@@ -30,7 +30,7 @@ import {
 import { effectiveRosterCategories } from "./effective-categories.js";
 import { evaluateRosterModifierApplicability } from "./modifier-applicability.js";
 import { evaluateRosterModifierGroupApplicability, collectRosterModifierGroupExecution } from "./modifier-groups.js";
-import type { EvaluationSelectionChoice } from "./selection-context.js";
+import { evaluationSelectionIdentityCandidate, indexEvaluationChoices, resolveEvaluationSelection, rosterMatchesCatalogueContext, rosterSelectionLocations, type EvaluationSelectionChoice } from "./selection-context.js";
 import { evaluateNumericModifierSequence } from "./modifiers.js";
 import {
   inspectRosterSelectionConstraintWithSelectionConditions,
@@ -158,6 +158,11 @@ export interface RosterSelectionChoiceGroupInspection {
 
 export interface RosterSelectionDirectChoiceInspection {
   readonly choice: EvaluationSelectionChoice;
+  /** Live descendant counts use source identity, not only the offered direct link. */
+  readonly membership?: {
+    readonly selected: readonly RosterSelection[];
+    readonly uncertain: readonly RosterSelection[];
+  };
   readonly minimum?: number;
   readonly maximum?: number;
   readonly completeness: ValidationCompleteness;
@@ -275,6 +280,10 @@ export function inspectRosterSelectionChildChoices(
  * never escapes and the input roster remains immutable. Modifiers carried by
  * an ancestor still withhold because their cross-carrier ordering has not been
  * established by the pinned corpus.
+ * Static direct-entry descendant bounds count the actual parent's subtree by
+ * shared definition or local source identity. An equal/weaker direct maximum
+ * is redundant; mixed non-dominated scopes and dynamic descendant bounds stay
+ * incomplete. This does not widen pre-selection initialization.
  */
 export function inspectSingleRosterSelectionChildChoices(
   roster: Roster,
@@ -804,12 +813,15 @@ function inspectDirectChoice(
   live?: LiveRosterSelectionChildInspectionContext,
 ): RosterSelectionDirectChoiceInspection {
   const incompleteAtStart = state.incomplete;
+  const descendantDomain = live === undefined ? undefined : staticDescendantDomain(choice, carriers, live);
+  const countDescendants = descendantDomain !== undefined;
   const bounds = selectionBounds(
     choice,
     carriers,
     state,
     {
       requireMaximum: true,
+      countDescendants,
       ...(live === undefined ? {} : { live }),
     },
   );
@@ -818,6 +830,8 @@ function inspectDirectChoice(
   }
   return {
     choice,
+    ...(descendantDomain !== undefined && live !== undefined
+      ? { membership: descendantMembership(live, choice, descendantDomain.shared) } : {}),
     ...(bounds.supported
       ? {
           minimum: bounds.minimum,
@@ -829,6 +843,62 @@ function inspectDirectChoice(
         ? "complete"
         : "incomplete",
   };
+}
+
+function staticDescendantDomain(
+  choice: EvaluationSelectionChoice,
+  carriers: readonly EvaluationSelectionChoice[],
+  live: LiveRosterSelectionChildInspectionContext,
+): { readonly shared: boolean } | undefined {
+  // The common direct-only path needs no additional arrays or subtree walk.
+  if (!choice.constraints.some(c => c.includeChildSelections === true && isPotentialParentSelectionBound(c))) return undefined;
+  const constraints = choice.constraints.filter(isPotentialParentSelectionBound);
+  const locations = rosterSelectionLocations(live.roster).filter(l => l.occurrence === live.owner);
+  if (locations.length !== 1) return undefined;
+  const index = indexEvaluationChoices(live.context);
+  const ancestors = locations[0]!.ancestors.map(a => resolveEvaluationSelection(a, index, rosterMatchesCatalogueContext(live.roster, live.context)));
+  // A more distant selected ancestor can target this constraint too. Do not
+  // widen the old immediate-carrier blind spot into a new complete result.
+  if (ancestors.some(a => a.status !== "resolved" || a.choices.length !== 1)) return undefined;
+  const allCarriers = [...carriers, ...ancestors.flatMap(a => a.choices)];
+  const shared = constraints[0]!.shared === true;
+  const maximum = constraints.reduce((limit, c) =>
+    c.includeChildSelections === true && c.type === "max"
+      ? Math.min(limit, unboundedBoundIdentity(c.value ?? Number.POSITIVE_INFINITY, "max")) : limit,
+  Number.POSITIVE_INFINITY);
+  // One row has one count domain. A direct maximum is redundant when the
+  // same-identity descendant cap is at least as strict (direct is a subset).
+  // Other mixed domains and dynamic descendant limits remain unsupported.
+  const supported = constraints.every(c =>
+    (c.includeChildSelections === true ||
+      (c.type === "max" && maximum <= unboundedBoundIdentity(c.value ?? Number.POSITIVE_INFINITY, "max"))) &&
+    (c.shared === true) === shared &&
+    unsupportedBoundProperties(c).every(p => p === "includeChildSelections") &&
+    (c.id === undefined || !allCarriers.some(carrier => carrierTargetsField(carrier, c.id!))));
+  return supported ? { shared } : undefined;
+}
+
+function descendantMembership(
+  live: LiveRosterSelectionChildInspectionContext,
+  choice: EvaluationSelectionChoice,
+  shared: boolean,
+): NonNullable<RosterSelectionDirectChoiceInspection["membership"]> {
+  const selected: RosterSelection[] = [], uncertain: RosterSelection[] = [];
+  const index = indexEvaluationChoices(live.context);
+  const matches = rosterMatchesCatalogueContext(live.roster, live.context);
+  const target = shared ? choice.definitionId : choice.id;
+  // Visit only this parent's durable descendants, once per applicable bound
+  // row. The catalogue identity index is cached; no source bytes are copied.
+  const visit = (children: readonly RosterSelection[]): void => {
+    for (const child of children) {
+      const candidate = evaluationSelectionIdentityCandidate(child, index, matches, target, shared);
+      if (candidate.status === "match") selected.push(child);
+      if (candidate.status === "unresolved") uncertain.push(child);
+      visit(child.selections);
+    }
+  };
+  visit(live.owner.selections);
+  return { selected, uncertain };
 }
 
 function planGroup(
@@ -1023,6 +1093,7 @@ function selectionBounds(
   state: InitializationState,
   options: {
     readonly requireMaximum?: boolean;
+    readonly countDescendants?: boolean;
     readonly live?: LiveRosterSelectionChildInspectionContext;
     readonly deferUnusedModifiedMaximum?: boolean;
   } = {},
@@ -1047,6 +1118,7 @@ function selectionBounds(
     // or not. Keep modifier uncertainty below, and never extend this exception
     // to live checks, positive minima, other unknown properties or maxima.
     const unsupported = unsupportedBoundProperties(constraint).filter(property =>
+      !(options.countDescendants === true && property === "includeChildSelections") &&
       !(options.live === undefined && constraint.value === 0 && property === "includeChildSelections"),
     );
     if (unsupported.length > 0) {
@@ -1103,7 +1175,8 @@ function selectionBounds(
     for (const constraint of constraints.filter(
       ({ type }) => type === "max",
     )) {
-      const unsupported = unsupportedBoundProperties(constraint);
+      const unsupported = unsupportedBoundProperties(constraint).filter(property =>
+        !(options.countDescendants === true && property === "includeChildSelections"));
       if (unsupported.length > 0) {
         supported = false;
         diagnoseUnsupportedBound(constraint, unsupported, state);
