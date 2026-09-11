@@ -144,3 +144,8 @@ These unchanged source metadata omissions are not either repaired mechanism; no
 guessed definition or suppression. Supported points remain2,000. Blanket complete
 legality remains blocked by this qualification and broader documented boundaries.
 Scope ends here: no general audit, UI, source migration/acquisition or StarCraft.
+
+The subsequent owner-authorized [orphan-cost investigation](orphan-cost-references.md)
+verified the complete pinned repository and equivalent acquisition/import/reopen
+paths. It established a bounded source-data limitation, not an RF repair; the
+warnings and overall coverage qualification remain intentional.
