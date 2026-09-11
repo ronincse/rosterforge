@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { type Result } from "@rosterforge/foundation";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
-import { inspectRosterAssociationChoices } from "@rosterforge/evaluation";
+import { inspectRosterAssociationChoices, inspectConditionalInitializationRequirements } from "@rosterforge/evaluation";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
 import { inspectLocalRosterConstraints, setLocalRosterAssociation } from "./roster-session.js";
 import { inspectLocalRosterStructuralStatus, restoreLocalRosterSession } from "./roster-session.js";
@@ -66,10 +66,20 @@ for (const [dataset, revision] of Object.entries(revisions)) it.skipIf(evidence 
   const unitId = next();
   const root = localRosterRootChoices(catalogue).find(c => c.materialized.definitionId === "8da0-4570-c3c-819f")!;
   session = ok(addLocalRosterRootSelection(session, root, { selectionId: unitId, createSelectionId: next }));
+  const initializedModels = session.roster.forces[0]!.selections.find(s=>s.id === unitId)!.selections;
+  const initializedOrdinary = initializedModels.filter(s=>s.definition.sourceId === "420-464f-93cb-e019");
+  expect(initializedModels).toHaveLength(5);
+  expect(initializedOrdinary).toHaveLength(4);
+  expect(initializedOrdinary.every(s=>s.amount === undefined)).toBe(true);
+  // This legacy probe deliberately tests amounted edits. Remove the newly
+  // initialized independent models before constructing that representation.
+  for (const model of initializedOrdinary) session = ok(removeLocalRosterSelection(session,model.id));
   const choices = ok(inspectLocalRosterChildChoices(session, unitId)).groups.flatMap(g => g.choices);
   const ordinaryId = next();
   session = ok(addLocalRosterChildSelection(session, unitId, choices.find(c => c.id === "420-464f-93cb-e019")!, { selectionId: ordinaryId, amount: 3, createSelectionId: next }));
   session = ok(addLocalRosterChildSelection(session, unitId, choices.find(c => c.id === "d735-eafd-a8de-fa80")!, { selectionId: next(), createSelectionId: next }));
+  const prospective = ok(inspectConditionalInitializationRequirements(session.roster,catalogue.context,session.roster.forces[0]!.selections.find(s=>s.id===unitId)!,root.materialized));
+  expect(prospective.find(r=>r.choice.id === "420-464f-93cb-e019")).toMatchObject({minimum:3,maximum:8,selectedCount:3});
   const sergeant = session.roster.forces[0]!.selections.find(s => s.id === unitId)!.selections.find(s => s.definition.sourceId === "8ea3-b125-7273-5ffb")!;
   const sergeantChoices = ok(inspectLocalRosterChildChoices(session, sergeant.id));
   const weapons = sergeantChoices.groups.find(g => g.choices.some(c => c.name === "Power fist"))!;

@@ -54,14 +54,15 @@ Immutable A/B tests verify both eight-file manifests (revision, byte length,
 SHA256, Git blob and dependencies) and both character states through restoration.
 
 The unchanged saved browser army now reports structural **238 / 0 / 0**, with
-constraint **378 / 0 / 0** and unchanged 2,000 points. This is complete supported
-checking, not a universal BattleScribe or tournament-legality claim.
+constraint **378 / 0 / 0** and unchanged 2,000 points. These two domains are
+complete; aggregate coverage still retains three missing-type zero-valued `pl`
+costs. See `conditional-initialization.md`. No universal legality claim.
 
 ## Validation
 
 Final candidate gates: lint, typecheck, build, whitespace pass; normal suite
 704 passed / 30 skipped, 78 passed / 6 skipped files, 11.11s. Two optional corpus
-suites: 25 passed, 36.84s, including 36 focused closures / 46 source documents.
+suites: 25 passed, 34.83s, including 36 focused closures / 46 source documents.
 External corpus HEAD verified `04c62fcd041b3808c39d5c46fd677c704027b979`.
 Existing bundle-size advisory retained (809.85 kB); no renderer instrumentation
 or source-byte retention changes. Final review/gates and publication are recorded

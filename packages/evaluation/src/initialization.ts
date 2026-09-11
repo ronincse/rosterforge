@@ -20,6 +20,7 @@ import type {
 import {
   addRosterSelectionToSelection,
   rosterDefinitionKeyForSource,
+  rosterSelectionAmount,
   selectionOccurrenceId,
   type Roster,
   type RosterForce,
@@ -130,6 +131,117 @@ export interface RosterSelectionInitializationPlan {
   readonly completeness: ValidationCompleteness;
 }
 
+export interface ConditionalInitializationRequirement {
+  readonly choice: EvaluationSelectionChoice;
+  readonly minimum: number;
+  readonly maximum: number;
+  readonly selectedCount: number;
+  readonly constraints: EvaluationSelectionChoice["constraints"];
+}
+
+/**
+ * Resolves creation-only minima against an already statically seeded parent.
+ * Queries must name other, non-conditional direct siblings in this same parent;
+ * the temporary bound probe therefore cannot change their observed count.
+ * No dependency iteration, group-alternative selection or nested automatic
+ * reconciliation occurs here. Callers must verify the same bounds after adding
+ * the requirements and commit the entire command atomically.
+ */
+export function inspectConditionalInitializationRequirements(
+  roster: Roster,
+  context: BattleScribeCatalogueContext,
+  owner: RosterSelection,
+  choice: EvaluationSelectionChoice,
+): Result<readonly ConditionalInitializationRequirement[]> {
+  const paths: EvaluationSelectionChoice[][] = [];
+  let visited = 0;
+  const visit = (container: EvaluationSelectionChoice, path: EvaluationSelectionChoice[]): void => {
+    for (const child of directChoices(container)) {
+      visited += 1;
+      if (visited >= DEFAULT_MAX_PLANNED_SELECTIONS || path.length >= 128) { visited = DEFAULT_MAX_PLANNED_SELECTIONS; return; }
+      if (child.kind === "selectionEntryGroup") visit(child, [...path, child]);
+      else paths.push([...path, child]);
+    }
+  };
+  visit(choice, [choice]);
+  const conditional = paths.filter(path => {
+    const child = path.at(-1)!;
+    return child.constraints.some(c => c.type === "min" && c.id !== undefined && path.some(p => carrierTargetsField(p, c.id!)));
+  });
+  if (conditional.length === 0 || visited >= DEFAULT_MAX_PLANNED_SELECTIONS) return success([]);
+  const state: InitializationState = {diagnostics:[],incomplete:0};
+  const requirements: ConditionalInitializationRequirement[] = [];
+  const index = indexEvaluationChoices(context);
+  const matches = rosterMatchesCatalogueContext(roster, context);
+  const locations = rosterSelectionLocations(roster).filter(l => l.occurrence === owner);
+  if (locations.length !== 1) return success([]);
+  const ancestors = locations[0]!.ancestors.map(a => resolveEvaluationSelection(a,index,matches));
+  if (ancestors.some(a => a.status !== "resolved" || a.choices.length !== 1)) return success([]);
+  const conditionalChoices = new Set(conditional.map(path => path.at(-1)!));
+  const queryIsStable = (query: { readonly field?: string; readonly scope?: string; readonly childId?: string; readonly shared?: boolean; readonly includeChildSelections?: boolean; readonly includeChildForces?: boolean }): boolean => {
+    if (query.field !== "selections" || (query.scope !== "parent" && query.scope !== choice.definitionId) || query.childId === undefined || query.childId === "any" || query.includeChildSelections === true || query.includeChildForces === true) return false;
+    const targets = paths.filter(p => (query.shared === true ? p.at(-1)!.definitionId : p.at(-1)!.id) === query.childId);
+    if (targets.length !== 1 || conditionalChoices.has(targets[0]!.at(-1)!)) return false;
+    // The existing post-command automatic reconciler runs after this step.
+    // Do not predict a target whose automatic entry/group limit can change
+    // after these additions: that is another dependency, not a stable sibling.
+    return !targets[0]!.some(p => p.constraints.some(c =>
+      c.id !== undefined && c.node.attributes.automatic !== undefined &&
+      c.node.attributes.automatic !== "false" && c.node.attributes.automatic !== "0" &&
+      targets[0]!.some(carrier => carrierTargetsField(carrier,c.id!))));
+  };
+  for (const path of conditional) {
+    const child = path.at(-1)!;
+    const constraints = child.constraints.filter(isPotentialParentSelectionBound);
+    const ids = new Set<string | undefined>(constraints.map(c => c.id));
+    const modifiers = child.modifiers.filter(m => ids.has(m.field));
+    const shared = constraints[0]?.shared === true;
+    // Do not pick among aliases, stepped amounts, hidden alternatives, mixed
+    // count domains, ancestor-carried behavior or dependency/cycle chains.
+    if (child.kind !== "selectionEntry" || child.step !== undefined || constraints.length === 0 ||
+      constraints.some(c => unsupportedBoundProperties(c).length > 0 || (c.shared === true) !== shared) ||
+      paths.filter(p => (shared ? p.at(-1)!.definitionId : p.at(-1)!.id) === (shared ? child.definitionId : child.id)).length !== 1 ||
+      path.some(p => p.hidden === true || carrierTargetsField(p,"hidden")) ||
+      path.slice(0,-1).some(p => constraints.some(c => c.id !== undefined && carrierTargetsField(p,c.id))) ||
+      ancestors.some(a => a.choices.some(p => constraints.some(c => c.id !== undefined && carrierTargetsField(p,c.id)))) ||
+      child.modifierGroups.some(g => constraints.some(c => c.id !== undefined && modifierGroupTargetsField(g,c.id))) ||
+      modifiers.some(m => m.conditionGroups.length > 0 || !m.conditions.every(queryIsStable) || !m.repeats.every(queryIsStable))) continue;
+    const bounds = selectionBounds(child, path, state, {live:{roster,context,owner},requireMaximum:true});
+    if (!bounds.supported || bounds.minimum > bounds.maximum) continue;
+    const candidates = owner.selections.map(s => evaluationSelectionIdentityCandidate(s,index,matches,shared ? child.definitionId : child.id,shared));
+    if (candidates.some(c => c.status === "unresolved")) continue;
+    const selectedCount = candidates.filter(c => c.status === "match").reduce((sum,c) => sum + rosterSelectionAmount(c.occurrence),0);
+    if (!Number.isSafeInteger(selectedCount) || selectedCount < 0) continue;
+    // Every containing group must have a known maximum. A minimum does not
+    // choose an alternative; only this entry's own requirement can add it.
+    let safeGroups = true;
+    for (let n = 1; n < path.length - 1; n++) {
+      const groupBounds = selectionBounds(path[n]!,path.slice(0,n+1),state,{live:{roster,context,owner},requireMaximum:true});
+      if (!groupBounds.supported || groupBounds.minimum > groupBounds.maximum) safeGroups = false;
+    }
+    if (safeGroups) requirements.push({choice:child,minimum:bounds.minimum,maximum:bounds.maximum,selectedCount,constraints});
+  }
+  // Validate simultaneous quantities against each enclosing group, not merely
+  // entry maxima. This also protects two independent required sibling entries.
+  if (requirements.length === 0) return success([],state.diagnostics);
+  const inspection = inspectSingleRosterSelectionChildChoices(roster,context,owner,choice);
+  if (!inspection.ok) return success([], [...state.diagnostics,...inspection.diagnostics]);
+  for (const group of inspection.value.groups) {
+    const relevant = requirements.filter(r => group.countedChoices.includes(r.choice));
+    if (relevant.length === 0) continue;
+    const selected = owner.selections.reduce((sum,s) => {
+      const resolved = resolveEvaluationSelection(s,index,matches);
+      // Capacity must not silently drop an unresolved sibling. The earlier
+      // identity guard normally rejects it already; keep this fold fail-closed.
+      if (resolved.status !== "resolved" || resolved.choices.length !== 1) return Number.POSITIVE_INFINITY;
+      return sum + (resolved.choices.some(c => group.countedChoices.includes(c)) ? rosterSelectionAmount(s) : 0);
+    },0);
+    const added = relevant.reduce((sum,r) => sum + Math.max(0,r.minimum-r.selectedCount),0);
+    if (!Number.isFinite(selected) || group.completeness !== "complete" || group.maximum === undefined || selected + added > group.maximum) return success([],state.diagnostics);
+  }
+  return success(requirements,state.diagnostics);
+}
+
 export interface RosterSelectionChoiceGroupInspection {
   readonly group: MaterializedSelectionEntryGroup;
   /** What this group offers directly. What a caller renders as its options. */
@@ -218,7 +330,8 @@ interface InitializationState {
   incomplete: number;
 }
 
-const defaultMaxPlannedSelections = 4_096;
+/** Shared default budget for static creation and its conditional augmentation. */
+export const DEFAULT_MAX_PLANNED_SELECTIONS = 4_096;
 
 // The New Recruit initializer reads minima without consulting automatic; only
 // its later constraint-change handler tests the flag. Treating the extension
@@ -235,11 +348,11 @@ export function planRosterSelectionInitialization(
     incomplete: 0,
   };
   const requestedLimit =
-    options.maxPlannedSelections ?? defaultMaxPlannedSelections;
+    options.maxPlannedSelections ?? DEFAULT_MAX_PLANNED_SELECTIONS;
   const maxPlannedSelections =
     Number.isSafeInteger(requestedLimit) && requestedLimit >= 0
       ? requestedLimit
-      : defaultMaxPlannedSelections;
+      : DEFAULT_MAX_PLANNED_SELECTIONS;
   const plan = planChoice(choice, [], state, maxPlannedSelections);
   return success(plan, state.diagnostics);
 }
@@ -431,11 +544,11 @@ export function planEmptySingleForceRootInitialization(
     incomplete: 0,
   };
   const requestedLimit =
-    options.maxPlannedSelections ?? defaultMaxPlannedSelections;
+    options.maxPlannedSelections ?? DEFAULT_MAX_PLANNED_SELECTIONS;
   const maxPlannedSelections =
     Number.isSafeInteger(requestedLimit) && requestedLimit >= 0
       ? requestedLimit
-      : defaultMaxPlannedSelections;
+      : DEFAULT_MAX_PLANNED_SELECTIONS;
   const additions: EmptySingleForceRootInitializationAddition[] = [];
   const additionsByIdentity = new Map<
     string,

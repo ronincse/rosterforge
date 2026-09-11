@@ -737,6 +737,17 @@ unsupported bounds are not guessed. The observed New Recruit `automatic`
 constraint property does not alter initial creation: supported minima seed
 descendants whether that generic value is absent, `false`, or `true`.
 
+After static seeding of a newly added parent, the web command may perform one
+conditional-minimum augmentation and one verification. The evaluator accepts
+only direct own-bound queries of unique non-conditional siblings at that parent,
+checks combined group capacity, and never chooses an alternative from a minimum
+alone. Self/dependency cycles, dynamic automatic query targets, unknown queries, grouped/ancestor-carried modifiers
+and dynamic visibility remain pending. Every ordinary model stays an independent
+occurrence with its static equipment plan. The shared4,096 selection budget also
+bounds this augmentation; changed bounds or budget failure abort the immutable
+command. Later edits/duplicate/restore do not rerun this creation-only step.
+See `qa/conditional-initialization.md` for exact scope and verified corpus cases.
+
 After a successful root add, child add, child-group replacement, removal, or
 amount edit, `apps/web` reconciles ordinary entries whose generic constraint node
 has lexical `automatic` equal to `true` or `1`. It first groups selected

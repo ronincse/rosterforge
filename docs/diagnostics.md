@@ -1626,3 +1626,13 @@ summary warnings. Unsupported applicable shapes still do; no display filter was
 added. Static descendant min-zero initialization does not warn solely about the
 descendant flag, because it cannot require an automatic addition; other uncertainty
 and actual roster violations are retained.
+
+### Bounded conditional creation
+
+`WEB_ROSTER_CONDITIONAL_INITIALIZATION_UNSTABLE` rejects the whole new-selection
+command when conditional augmentation exceeds the shared initialization budget
+or its verified limits/quantities change. No partial roster/history is committed.
+Unsupported/ambiguous dependency shapes retain static planning diagnostics and
+pending choices. Only the exact uniquely attributable
+`EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED` warning is removed
+after its bound is resolved and verified at creation. Later edits are not refilled.

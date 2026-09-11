@@ -87,6 +87,12 @@
   still evaluates that maximum once the parent and its conditions exist
 - Condition-aware direct `defaultAmount` modifiers for a prospective stepped
   child at its real parent, including the pinned Incursion Points limit at 1,000
+- Creation-only conditional minima after static seeding: own direct bound
+  modifiers querying unique non-conditional siblings at the same parent, with
+  joint group-capacity and post-add verification. Independent occurrences and
+  player edits are preserved. Self/dependency cycles, dynamic automatic query targets, grouped/ancestor-carried
+  modifiers, dynamic visibility, ambiguous defaults, nested automatic conditional
+  expansion and unknown conditions remain pending; see `qa/conditional-initialization.md`.
 - Empty-single-force initialization plans for visible entry roots with simple
   force- or roster-scoped minima and supported unconditional numeric bound
   modifiers

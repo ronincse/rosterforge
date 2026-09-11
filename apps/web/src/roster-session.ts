@@ -29,6 +29,8 @@ import {
   inspectSingleForceRootChoices,
   planEmptySingleForceRootInitialization,
   planRosterSelectionInitialization,
+  inspectConditionalInitializationRequirements,
+  DEFAULT_MAX_PLANNED_SELECTIONS,
   rootSelectionBoundIdentity,
   selectionEntryGroupVisibilityPath,
   type EmptySingleForceRootBoundIdentity,
@@ -1697,6 +1699,9 @@ function initializeAddedSelection(
   if (!initialized) {
     return failure(state.diagnostics);
   }
+  if (!applyConditionalInitialization(state,session,selectionId,choice,planned.value.plannedSelectionCount,createSelectionId)) {
+    return failure(state.diagnostics);
+  }
   return success(
     {
       ...session,
@@ -1715,6 +1720,68 @@ interface MutableSelectionInitialization {
   >;
   readonly diagnostics: Diagnostic[];
   probeSequence: number;
+}
+
+/** One creation-only augmentation and one verification; never a refill loop. */
+function applyConditionalInitialization(
+  state: MutableSelectionInitialization,
+  session: LocalRosterSession,
+  parentId: SelectionOccurrenceId,
+  choice: BattleScribeRosterSelectionChoice,
+  alreadyPlanned: number,
+  createSelectionId: () => SelectionOccurrenceId,
+): boolean {
+  const owner = findRosterSelection(state.roster.forces,parentId);
+  if (owner === undefined) return false;
+  const requirements = inspectConditionalInitializationRequirements(state.roster,session.catalogue.context,owner,choice);
+  if (!requirements.ok || requirements.value.length === 0) return true;
+  const additions: RosterSelectionInitializationPlan["additions"][number][] = [];
+  let total = alreadyPlanned;
+  for (const requirement of requirements.value) {
+    const quantity = Math.max(0,requirement.minimum-requirement.selectedCount);
+    if (quantity === 0) continue;
+    const nested = planRosterSelectionInitialization(requirement.choice);
+    if (!nested.ok) return false;
+    state.diagnostics.push(...nested.diagnostics);
+    total += quantity * (1+nested.value.plannedSelectionCount);
+    if (!Number.isSafeInteger(total) || total > DEFAULT_MAX_PLANNED_SELECTIONS) {
+      state.diagnostics.push(conditionalInitializationDiagnostic(session,"Conditional initialization exceeds the bounded selection budget."));
+      return false;
+    }
+    additions.push({choice:requirement.choice,quantity,initialization:nested.value});
+  }
+  if (!applySelectionInitialization(state,session,parentId,{choice,additions,pendingChoices:[],plannedSelectionCount:total,completeness:"complete"},createSelectionId)) return false;
+  const updatedOwner = findRosterSelection(state.roster.forces,parentId)!;
+  const verified = inspectConditionalInitializationRequirements(state.roster,session.catalogue.context,updatedOwner,choice);
+  if (!verified.ok || requirements.value.some(before => {
+    const after = verified.value.find(r => r.choice === before.choice);
+    return after === undefined || after.minimum !== before.minimum || after.maximum !== before.maximum ||
+      after.selectedCount < after.minimum || after.selectedCount > after.maximum;
+  })) {
+    // No partially augmented roster escapes a failed verification; the caller
+    // keeps its previous immutable snapshot and history entry unchanged.
+    state.diagnostics.push(conditionalInitializationDiagnostic(session,"Conditional requirements changed during creation; choose the composition manually."));
+    return false;
+  }
+  const key = (source: { readonly sourceId: string }, path: readonly string[] | undefined) => JSON.stringify([source.sourceId,path]);
+  const resolved = new Set(requirements.value.flatMap(r => r.constraints.map(c => key(c.source,c.path))));
+  const occurrences = new Map<string,number>();
+  for (const d of state.diagnostics) {
+    if (d.code !== "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED" || d.location === undefined) continue;
+    const k = key(d.location.source,d.location.path);
+    occurrences.set(k,(occurrences.get(k) ?? 0)+1);
+  }
+  // Remove only the exact, uniquely attributable static-planning warning that
+  // this live creation step resolved. Repeated source diagnostics can belong to
+  // other nested occurrences; keep them instead of claiming those were checked.
+  const retained = state.diagnostics.filter(d => d.code !== "EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED" || d.location === undefined ||
+    !resolved.has(key(d.location.source,d.location.path)) || occurrences.get(key(d.location.source,d.location.path)) !== 1);
+  state.diagnostics.splice(0,state.diagnostics.length,...retained);
+  return true;
+}
+
+function conditionalInitializationDiagnostic(session: LocalRosterSession, message: string): Diagnostic {
+  return {code:"WEB_ROSTER_CONDITIONAL_INITIALIZATION_UNSTABLE",message,severity:"warning",impacts:["compatibility"],location:{source:session.catalogue.document.projection.source,path:session.catalogue.document.projection.path}};
 }
 
 function applySelectionInitialization(
