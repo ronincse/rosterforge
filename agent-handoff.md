@@ -36,20 +36,27 @@ Then read `git log`, `git status`, `docs/architecture.md`, and
 
 ## Current Status — 2026-09-11 (current bounds / conditional creation batch)
 
-Owner authorized two new bounded checkpoints from clean/upstream-equal `f024d9b`
-on selected `codex/list-builder-ui-overhaul`. First implemented in `4a30b9f`:
-live static descendant bounds, including redundant direct caps, now count actual
-source identities. Existing saved reference army reproduces236/0/2 structural
-before and238/0/0 after, constraints378/0/0,14units2000 unchanged. Source maxima,
-not stale planning state or zero minima; `docs/qa/current-structural-bounds.md`.
-Gates704pass30skip,78pass6skipfiles11.11s; optional pinned pair25pass34.83s;
-lint/typecheck/build/diff pass (existing809.85kB advisory). Read-only Claude
-Sonnet5 review completed; additional synthetic dominance/local/ancestor cases
-and distant-ancestor guard added by lead. Code and separate handoff publish
-together; exact CI recorded after push. Second checkpoint is **Next**: safe
-conditional Intercessor minimum initialization and full new-army browser replay.
-No initialization changes yet. Preserve saved5243 army and owner5242 tab/storage;
-no acquisition, general UI, unrelated audit or StarCraft work. Stop after batch.
+Owner's two-checkpoint correctness batch is complete on selected
+`codex/list-builder-ui-overhaul`. First `4a30b9f` / handoff `c605061`: actual static
+descendant counting resolves both character bounds; exact-SHA CI34621277621 green.
+Second `9859775`: bounded creation-only conditional minima after static seeding,
+independent model occurrences, one augmentation and verification, no later refill.
+Self/dependency cycles, dynamic automatic targets and unsupported/ambiguous
+behavior remain pending. Read-only Claude Sonnet5 reviews completed; lead added
+adversarial capacity, ancestor and automatic-target guards/tests.
+
+New frozen-A browser army `QA conditional creation` at5244:14 units/193 selections,
+source-derived2,000; structural238/0/0, constraints378/0/0. History, five/ten/five,
+Warlord missing/excess, Supporting detach/retarget, cards and save/reopen pass.
+Overall remains **incomplete** because three unchanged zero-valued `pl` costs
+reference missing type metadata. No universal-legality claim or suppression.
+Gates715pass30skip,79pass6skipfiles14.12s; pinned pair25pass40.58s; lint/typecheck/
+build/diff pass, renderer regression unchanged (existing814.74kB advisory).
+See `docs/qa/conditional-initialization.md` for ledger, scope and measurements.
+Second code and separate handoff publish together; exact CI in completion/run
+history. Preserve own5243/5244 servers, saved armies and owner5242 tab/storage.
+**Stop: no further implementation authorized.** No UI, broad audit, acquisition,
+source migration, governance expansion or StarCraft work.
 
 ### Accepted preceding batch (historical; new owner direction supersedes its stop)
 
@@ -963,7 +970,9 @@ QA before classifying or implementing the discrepancy.
 | Dense reference-army correctness replay | Done — bounded frozen-A browser acceptance | RF-GROK-01:14 units2000source-derived,193selections; Knights240/240/260, earliestdelete1740/undo2000/redo1740/undo2000, Supporting detach/retarget/effects, save/reopen and cards intact. Zero known violations,236structural satisfied/2unresolved,378constraint satisfied/0unresolved; incomplete is not full army legality. No historical90 or GW1900 forcing |
 | RF-GROK-02 scoped validation wording | Done — `5f77d32` | Structural/constraint badges explicitly scoped, aggregate globals unchanged; independent validity/completeness/provisional costs and unavailable states retained. Eight-case matrix plus real frozen-A108structural pass vs2aggregate, edits,320/390/1440 layouts; qa/grok-validation-scope.md |
 | Current reference-army descendant structural bounds | Done — `4a30b9f` | Two Warlord-linked parent descendant maxima now counted by source identity;238/0/0 structural,378/0/0 constraints in unchanged saved army. Static same-domain/dominated direct limits only; unknown/dynamic/mixed non-dominated behavior retained. qa/current-structural-bounds.md |
-| RF-GROK-03 conditional minimum initialization | Next — authorized second checkpoint | Intercessor group min5/no default; ordinary model min4 is modifier-controlled, so planner emits sergeant1/pending4/incomplete. Not ignored explicit default or renderer cause. Generic prospective complete-bound/unique-composition planning with bounded steps; full new-army replay follows. |
+| RF-GROK-03 conditional minimum initialization | Done — `9859775` | After static seeding, unique stable-sibling count queries resolve own minima; new Intercessors initialize1 sergeant/4 ordinary, launcher-present minimum3. One bounded augmentation/verification; separate occurrences, no edit refill, ambiguous/cyclic/unknown cases pending. Full new193-selection/14-unit2000 replay and save/reopen pass; qa/conditional-initialization.md |
+| Broader conditional creation dependencies | Open compatibility boundary — not next authorized work | Grouped/ancestor-carried modifiers, self/dependency cycles, dynamic automatic targets/visibility, stepped and nested automatic conditional expansion remain pending; no fixpoint or arbitrary alternative selection |
+| Reference-army missing legacy cost metadata | Open source-data qualification — no repair authorized | Three selected zero-valued `pl` costs (Gladius, Captain default loadout, Warlord) name missing type c5fb-5b9b-89f6-86c. Points2000 and structural238/0/0 + constraint378/0/0 complete; overall cost coverage remains incomplete. Do not infer a type or suppress diagnostics |
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
@@ -14839,3 +14848,63 @@ Browser existing full saved14-unit2000 on5243: before236/0/2 structural, after23
 constraints378/0/0 unchanged, no army mutation. Complete supported checks do not
 establish universal legality. Next authorized checkpoint is conditional-minimum
 creation, then isolated full-army replay. No migrations/acquisition/UI/StarCraft.
+
+## Completed Assignment — 2026-09-11 — Bounded conditional creation and full army
+
+Baseline `c605061f236747c40d72422b7ef697ebc55b5be4`, clean/upstream-equal selected
+branch; first-checkpoint CI34621277621 success. Implementation `9859775`, separate
+handoff follows. New owner batch ends here; previous next/stop statements are
+historical. Existing worktrees/owner changes preserved, no concurrent writer.
+
+**Decision.** Distinct from descendant structural counting. Intercessor's own
+min4 modifier queries launcher count under its containing unit. Static planning
+has no such parent; after supported static seeding, count is known. One bounded
+augmentation seeds4 ordinary (3 when launcher already present) as independent
+occurrences with normal equipment. Exact min/max/group IDs and source A/B evidence
+in `docs/qa/conditional-initialization.md`. No ignored explicit default claim.
+
+**Contract.** Own direct limit modifiers, unique non-conditional sibling targets,
+exact prospective parent, combined group capacities and post-add verification.
+Four bound probes for the measured ordinary min/max (two before/two after), no
+iteration/fixpoint, shared4,096 addition budget and bounded path inspection.
+Limits changing or over-budget additions fail the whole command. Later player
+edits/duplicate/restore bypass creation. Unknown/ambiguous, dependency/cycle,
+grouped/ancestor-carried, dynamic visibility/automatic targets, stepped or nested
+automatic conditional expansion remain pending. No arbitrary alternative chosen;
+no occurrence collapse, source copying, persistence or scalar-prop regression.
+
+**Evidence/review.** Pre-step-disabled synthetic baseline4fail/4pass; final11cases
+pass, including linked definitions, conflicting/unknown/ambiguous cases, joint
+capacity, atomic budget, lifecycle and dynamic automatic-target boundaries.
+Claude Code Sonnet5 read-only scoped review confirmed core semantics/atomicity;
+lead reviewed and added independent fail-closed capacity, shared budget and
+adversarial tests. Only scoped source/synthetic evidence shared, no secrets,
+personal armies or third-party datasets wholesale. No unnecessary new delegates.
+
+**Gates.** Lint/typecheck/test/build/diff pass. Normal715pass30skip,79pass6skipfiles,
+14.12s. Two optional corpus files25pass40.58s; manifests verify actual A/B8-file
+closures; all46 documents/36 selectable closures and existing Supporting/repeated
+pricing checks pass. External pin04c62fc unchanged. Renderer timing regression
+passes unchanged. Existing build advisory814.74kB retained. Earlier generated
+timing report: C:/CodexACLTest/rf-conditional-corpus-20260911.json (A/B full
+creation/pricing cases1,842.80ms/1,028.44ms including import, not microbenchmarks).
+
+**Browser.** Ordinary isolated5244/tab7, frozen A, new `QA conditional creation`.
+Final ledger in report:14units2000/193selections, Knights240/240/260 and same
+configuration/loadouts as accepted army. New Intercessors1/4, manual removal
+stays4; launcher replacement and sergeant Power fist, duplicate and5/10/5 pricing
+80/150/80. Earliest Knights delete1740, undo2000, redo1740, undo2000. Missing
+Warlord0/1 and excess2/1 remain real category violations; undo restores. Supporting
+17weapon rows each one Lethal Hits/attribution; detach removes, retarget moves,
+restore first. Knights stats/rules intact. Save/leave/reopen restores193selections,
+2000 and first-squad Supporting. Console warn/error empty. Locator mistakes
+required DOM reinspection only, no renderer failure or crash re-investigation.
+
+**Qualification/stop.** Final structural238satisfied0violated0unresolved;
+constraints378/0/0. Overall remains incomplete: three unchanged zero-valued pl
+costs (Gladius, Captain default loadout, Warlord) lack type c5fb-5b9b-89f6-86c.
+No missing point costs manufactured or metadata warnings hidden. This is an
+explicit remaining source-data qualification, now a roadmap row, not permission
+to broaden this batch. Own5243/5244 servers and both saved armies retained;
+owner5242 tab/storage untouched. Publish code+handoff, confirm exact pushed CI,
+then stop. No further UI/audit/acquisition/migration/governance/StarCraft work.
