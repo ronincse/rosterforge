@@ -943,16 +943,16 @@ describe("App local catalogue flow", () => {
       name: "Supported structural requirements",
     });
     expect(
-      within(structuralStatus).getByText("No known violations"),
+      within(structuralStatus).getByText("No known structural violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("All supported rules checked"),
+      within(structuralStatus).getByText("Supported structural checks complete"),
     ).toBeTruthy();
     const constraints = screen.getByRole("region", {
       name: "Constraint bounds",
     });
     expect(
-      within(constraints).getByText("All supported rules checked"),
+      within(constraints).getByText("Supported constraint checks complete"),
     ).toBeTruthy();
     expect(
       constraintStatusText(constraints, "Satisfied"),
@@ -1848,7 +1848,7 @@ describe("App local catalogue flow", () => {
     await waitFor(() => expect(document.activeElement).toBe(checksButton));
     expect(checksButton.hasAttribute("aria-controls")).toBe(false);
     expect(
-      within(structuralStatus).getByText("Known violations"),
+      within(structuralStatus).getByText("Known structural violations"),
     ).toBeTruthy();
     expect(
       constraintStatusText(structuralStatus, "Violated"),
@@ -1930,7 +1930,7 @@ describe("App local catalogue flow", () => {
       within(selectedDoctrine as HTMLElement).queryByText("Keywords"),
     ).toBeNull();
     expect(
-      within(structuralStatus).getByText("No known violations"),
+      within(structuralStatus).getByText("No known structural violations"),
     ).toBeTruthy();
     expect(checksButton.dataset.problems).toBe("none");
     expect(
@@ -2964,7 +2964,7 @@ describe("App local catalogue flow", () => {
     // The detailed evidence summary folds both reports into one status and
     // does so conservatively: an incomplete check makes the whole view incomplete.
     expect(
-      within(checksReport).getByText(/Some rules not checked/u),
+      within(checksReport).getByText(/known violation.*\| some rules not checked/u),
     ).toBeTruthy();
     const rosterReportDetails = screen.getByRole("region", {
       name: "Roster report details",
@@ -2984,10 +2984,10 @@ describe("App local catalogue flow", () => {
       ),
     ).toBeNull();
     expect(
-      within(structuralStatus).getByText("Known violations"),
+      within(structuralStatus).getByText("Known structural violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("Some rules not checked"),
+      within(structuralStatus).getByText("Some structural checks unresolved"),
     ).toBeTruthy();
     expect(
       constraintStatusText(structuralStatus, "Violated"),
@@ -3170,13 +3170,13 @@ describe("App local catalogue flow", () => {
       expect(problemsButton.dataset.problems).toBe("none");
     });
     expect(
-      within(checksReport).getByText(/Some rules not checked/u),
+      within(checksReport).getByText(/known violation.*\| some rules not checked/u),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("No known violations"),
+      within(structuralStatus).getByText("No known structural violations"),
     ).toBeTruthy();
     expect(
-      within(structuralStatus).getByText("Some rules not checked"),
+      within(structuralStatus).getByText("Some structural checks unresolved"),
     ).toBeTruthy();
     expect(constraintStatusText(structuralStatus, "Violated")).toBe(
       "0Violated",

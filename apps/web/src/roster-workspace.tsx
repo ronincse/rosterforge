@@ -1794,7 +1794,7 @@ function RosterStructuralStatus({
       >
         <div className="constraint-summary-heading">
           <div>
-            <p className="eyebrow">Roster status</p>
+            <p className="eyebrow">Structural checks</p>
             <h3 id="roster-structural-status-heading">
               Structural status unavailable
             </h3>
@@ -1810,6 +1810,9 @@ function RosterStructuralStatus({
   }
 
   const report = result.value.structural;
+  // This subset may pass while category, force or association checks still
+  // violate the aggregate report. Qualify both badges; never substitute the
+  // whole-roster result or count for this subsection's independent evidence.
   const diagnostics = result.value.structuralDiagnostics;
   const satisfied = countStructuralStatus(report.bounds, "satisfied");
   const violated = countStructuralStatus(report.bounds, "violated");
@@ -1830,7 +1833,7 @@ function RosterStructuralStatus({
     >
       <div className="constraint-summary-heading">
         <div>
-          <p className="eyebrow">Roster status</p>
+          <p className="eyebrow">Structural checks</p>
           <h3 id="roster-structural-status-heading">
             Supported structural requirements
           </h3>
@@ -1838,16 +1841,16 @@ function RosterStructuralStatus({
         <div className="validation-badges">
           <span className="validity-badge" data-validity={report.validity}>
             {report.validity === "valid"
-              ? "No known violations"
-              : "Known violations"}
+              ? "No known structural violations"
+              : "Known structural violations"}
           </span>
           <span
             className="completeness-badge"
             data-completeness={report.completeness}
           >
             {report.completeness === "complete"
-              ? "All supported rules checked"
-              : "Some rules not checked"}
+              ? "Supported structural checks complete"
+              : "Some structural checks unresolved"}
           </span>
         </div>
       </div>
@@ -2111,8 +2114,8 @@ function RosterConstraintSummary({
           data-completeness={report.completeness}
         >
           {report.completeness === "complete"
-            ? "All supported rules checked"
-            : "Some rules not checked"}
+            ? "Supported constraint checks complete"
+            : "Some constraint checks unresolved"}
         </span>
       </div>
 

@@ -208,6 +208,11 @@
   of actionable known problems, and retained structural and constraint detail
   cards; incomplete-but-valid reports no longer force those technical cards
   open
+- Structural and constraint badge wording explicitly names its narrower scope;
+  whole-roster problem counts retain the aggregate snapshot. Structural success
+  may coexist with category/force/association violations without implying global
+  success. Completeness remains independent, and unavailable inspection never
+  becomes success. See `docs/qa/grok-validation-scope.md`.
 - Violation-first constraint presentation with stable links to exact selection
   occurrences or the owning force, unresolved and satisfied bounds in separate
   collapsed disclosures, and separately retained Developer diagnostics;

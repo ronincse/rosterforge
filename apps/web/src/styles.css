@@ -1600,6 +1600,19 @@ h1 {
   gap: 6px;
 }
 
+/* Scoped labels are longer than the former global-sounding badges. Keep their
+   text inside the check card at narrow phone widths rather than clipping scope. */
+.constraint-summary-heading .validation-badges {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.constraint-summary-heading .completeness-badge,
+.constraint-summary-heading .validity-badge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .validity-badge {
   flex: 0 0 auto;
   padding: 6px 8px;
