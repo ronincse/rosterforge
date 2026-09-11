@@ -34,7 +34,38 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (orphan cost reference investigation)
+## Current Status — 2026-09-11 (RF-UX-02 phone reference readability)
+
+Owner explicitly resumed **RF-UX-02 only** on selected
+`codex/list-builder-ui-overhaul`, clean/upstream-equal baseline `9f372b2`.
+Implementation/design/QA commit `f73e191`: selected reference tables reflow into
+full-name/bearer cards with data-defined labelled values in narrow containers;
+desktop tables remain. Explicit local table comparison handles unusual schemas.
+One semantic table/control tree, unchanged RF-A05 model/grouping/value reader,
+no evaluator/cost/association/persistence/source changes. Measured sticky title
+clearance and one modal vertical scroller preserve section jumps and Close.
+
+Current browser A evidence: five1/3/1 and ten1/8/1 Intercessors (Power fist and
+both launcher modes), Hellblaster Standard/Supercharge, fictional six/two/one-
+field schemas. At390, baseline532/556/556px tables in273px become274/274px;
+Save/OC/damage/bearers are readable without sideways searching. Six viewport
+checks320/390/430/landscape/tablet/desktop: no page overflow or clipped data
+cells,14statistical rows/98values preserved. Keyboard/nested rules/source
+disclosure pass. 200% CSS text simulation passes reflow/jump geometry; actual
+browser zoom was unavailable, dark theme is not implemented, no screen-reader
+or visual print claim. See `docs/qa/rf-ux-02-phone-reference.md` for full evidence.
+
+Fresh gates pass: lint/typecheck/build/diff,716pass30skip,80pass6skipfiles12.83s;
+focused pinned-A reference suite2pass6.53s. Renderer timing regression unchanged.
+JS815.99kB advisory remains. Isolated native independent source/test/screenshot
+review approved; external Antigravity execution blocked for export permission,
+no payload sent. Own disposable preview5251 left available; existing owner
+servers/armies untouched. Separate handoff follows the implementation; push
+together and confirm exact-SHA CI. **Stop after RF-UX-02.** Further UI/StarCraft/
+engine/source work needs fresh owner authorization. Orphan-cost qualification
+and accepted correctness results below remain unchanged.
+
+### Accepted preceding orphan cost reference investigation
 
 Owner-authorized follow-up completed on selected `codex/list-builder-ui-overhaul`
 from clean/upstream-equal `b1058b4`. Evidence report `a453055` establishes **Outcome B:
@@ -979,7 +1010,8 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Deferred — paused for correctness | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **When reauthorized:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Deferred — further owner authorization needed | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **RF-UX-02 phone references completed separately; no blanket UI resumption. When reauthorized:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| RF-UX-02 phone reference readability | Done — bounded checkpoint | `f73e191`: single semantic table reflows into data-defined labelled cards; full names/bearers, all values/modes/uncertainty preserved, desktop comparison plus explicit local table fallback. Fresh390 evidence and320/430/landscape/tablet/desktop, fictional schemas, keyboard/text-scale/native review in `docs/qa/rf-ux-02-phone-reference.md`. Broader UI remains deferred |
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
 | Audit RF-A04 rule visibility | Mitigated; reported case fixed | `0d3bfcc`/`1fdbcde`: rule/link modifiers preserved, occurrence-aware Boolean visibility and explicit per-rule uncertainty; Dark Angels/Black Templars Templar Vows behavior verified. Full compatibility remains open below |
@@ -14997,3 +15029,71 @@ CI. Existing5243/5244HTTP200; stopped only newtemporary5245/5246/5247servers.
 Recommendation: ordinary product work with documented source qualification when
 owner authorizes it; no specific RF correctness blocker from these references.
 No UI, StarCraft, source freshness, migrations, governance or crash work added.
+
+## Completed Assignment — 2026-09-11: RF-UX-02 phone reference readability
+
+**Authority/state.** Owner resumed this single UI checkpoint, superseding the
+pause for RF-UX-02 only. Clean selected overhaul branch at
+`9f372b26b8ebe1afdbe192b638fea4d3fb7f5dab`; bug-fix task idle/completed, no active
+competing writer. Implementation `f73e1914c20f63370254450dd8a49adf701c5fe5`.
+No branch reset/main merge/PR or source updates; existing worktrees preserved.
+
+**Decision.** One semantic comparison table is also the phone card DOM. At
+44rem reference-container width or less, rows use an auto-fitting labelled
+grid with full-width names/bearers, long fields and rule controls. Desktop
+comparison remains. User-selected per-type table fallback has a local keyboard
+scroll region and explanation. Rejected fixed40k schemas, omitted fields,
+tiny text, automatic unfamiliar-type guesses, duplicate responsive readers,
+and regrouping/evaluation in the renderer. Existing characteristic reader
+retains Base/Added by/Set by, unresolved/source values, missing/blank distinctions
+and rule dialogs. ResizeObserver measures title clearance without React state
+or reevaluation; clipping the outer backdrop leaves one vertical card scroller.
+Comments record the invariants. Print's separate producer was not changed.
+
+**Evidence.** Fresh normal-file import of eight A files at
+`04c62fcd041b3808c39d5c46fd677c704027b979` on own5251 origin. Mixed Intercessors
+five1/3/1 and duplicate ten1/8/1, Sergeant Power fist, krak/frag and Hellblaster
+Standard/Supercharge reviewed before/after.390 table content532/556/556 in273px
+became274/274 each; Save3+/OC2, Power fistD2 and launcherD3/1 visible without
+sideways pan. All six widths320,390,430,844landscape,768,1440: page scrollWidth
+equals clientWidth, no clipped data cells,14rows/98values/24columnheaders.
+Larger rows trade vertical length for association/readability; no task-time or
+speedup claim. Full measurements and local image paths in
+`docs/qa/rf-ux-02-phone-reference.md`; no third-party fixture data committed.
+
+Fictional Expedition telemetry six/two fields and Signal one field preserve
+Shields/Speed/Armour/HP/Supply, strings/ranges/dice, long label/prose, missing
+cells and unresolved increments.390 local fallback766/274px, Right scroll0→40,
+return-to-cards fits. Normal keyboard jumps, visible focus, Assault overlay,
+Escape/exact trigger return and lazy source tree pass. Text17→34px was temporary
+fixture-only CSS, removed after QA: no horizontal overflow; ordinary title
+bottom231.67/target255.67, long-title567.67/591.67. Real Control-plus had no
+effect, so no browser-zoom claim. Light-only implementation, no dark-theme or
+physical screen-reader test. Very long enlarged titles still consume vertical
+space; broader cross-mode accessibility remains on the existing UI roadmap.
+
+**Review.** Dedicated native worktree
+`C:/CodexACLTest/rf-phone-reference-review-20260911` at baseline; lead copied
+candidate files for review. Reviewer found no semantic/raw-byte-prop regression,
+requested dynamic title clearance (implemented,80→300px regression), ran5tests/
+3files and inspected six matched screenshots. Approved, no remaining blocker.
+Antigravity blocked before execution because private code/screenshots require
+specific export approval; no payload sent, no retry or authentication exercise.
+No external review falsely claimed.
+
+**Gates.** Fresh lint/typecheck/test/build/diff pass.716pass30skip,80pass6skipfiles,
+12.83s. Focused lead24tests/4files; pinned A reference suite2pass6.53s,16profile
+groups atfive/ten with exact1/3/1→1/8/1. Fixed stale integration setup only: swap
+one of four initialized ordinary models for launcher. Unchanged renderer timing
+test, selected model/grouping and nested rule regressions pass. JS815.99kB /
+gzip225.60kB, CSS82.82kB /gzip14.78kB; existing large-chunk advisory remains.
+No broader engine/corpus re-audit; accepted orphan costs stay incomplete.
+
+**Handoff/stop.** Implementation and this separate handoff push together to
+selected overhaul branch; confirm exact final CI in completion response/run
+history. Own5251 preview remains available with disposable saved87-selection
+QA roster; prior owner preview servers/armies unchanged. No newly established
+underlying engine defect; unfamiliar type routing still follows existing
+Unit/Description label classification and is not general game support.
+Only RF-UX-02 complete. Do not continue Lists, Add-unit, general UI, StarCraft,
+profile classification, source acquisition or engine work without owner input.
