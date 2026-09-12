@@ -1,5 +1,16 @@
 # Architecture
 
+## Product identity and persisted compatibility
+
+ForceWright (formerly RosterForge) retains the existing application origin,
+routes and port strategy. The product rename is not a storage migration.
+Keep the `rosterforge` draft database, its version/store, recovery key, shared
+file/history prefixes, `rosterforge/local-roster-draft` format, and both
+`rosterforge-pinned-repository-*` cache databases and formats unchanged.
+Existing `@rosterforge/*` package names, controller APIs, `ROSTERFORGE_*`
+environment variables and repository URLs remain real technical identities.
+There is no installed-app manifest or service worker to rename in this slice.
+
 ## Package Direction
 
 ```text

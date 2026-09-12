@@ -58,7 +58,7 @@ property is absent. Other projected fields and the generic source node remain
 available.
 
 The optional cost-type `defaultCostLimit` has one source-compatible sentinel:
-an exact empty string means no typed default limit. RosterForge preserves those
+an exact empty string means no typed default limit. ForceWright preserves those
 source bytes and the empty generic attribute, omits the optional numeric
 projection, and does not emit `BS_PROJECTION_INVALID_ATTRIBUTE`. Non-empty
 invalid numeric values continue to use the diagnostic above.
@@ -1388,7 +1388,7 @@ it means a selected occurrence found during a scan disappeared before its
 queued adjustment ran.
 `WEB_ROSTER_AUTOMATIC_CONSTRAINT_SHARED_SELECTOR_UNSUPPORTED` means a
 selected or absent ordinary candidate's effective selector counts an occurrence
-belonging to another exact materialized choice; RosterForge does not guess
+belonging to another exact materialized choice; ForceWright does not guess
 which wrapper to add or mutate.
 `WEB_ROSTER_AUTOMATIC_CONSTRAINT_SELECTION_ID_UNAVAILABLE` means an ordinary
 candidate or group child became required but the initiating command supplied no

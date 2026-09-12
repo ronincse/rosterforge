@@ -855,8 +855,8 @@ describe("App local catalogue flow", () => {
       screen.queryByText("Catalogue library"),
     ).toBeNull();
     expect(screen.getByRole("region", { name: "Open roster" })).toBeTruthy();
-    expect(document.title).toBe("First Patrol");
-    expect(screen.queryByLabelText("RosterForge home")).toBeNull();
+    expect(document.title).toBe("First Patrol - ForceWright");
+    expect(screen.queryByLabelText("ForceWright home")).toBeNull();
     expect(
       screen.queryByRole("heading", {
         name: "Build your roster. Keep your data local.",
@@ -1558,8 +1558,8 @@ describe("App local catalogue flow", () => {
       }),
     );
     expect(screen.getByRole("region", { name: "Roster setup" })).toBeTruthy();
-    expect(document.title).toBe("Lists");
-    expect(screen.getByLabelText("RosterForge home")).toBeTruthy();
+    expect(document.title).toBe("Lists - ForceWright");
+    expect(screen.getByLabelText("ForceWright home")).toBeTruthy();
     expect(screen.getByLabelText("Replace local files")).toBeTruthy();
     expect(
       screen.getByRole("region", { name: "Saved roster drafts" }),
@@ -2978,7 +2978,7 @@ describe("App local catalogue flow", () => {
     fireEvent.click(reportDetailsSummary);
     expect(
       within(rosterReportDetails).getByText(
-        /RosterForge could not check every applicable catalogue rule/u,
+        /ForceWright could not check every applicable catalogue rule/u,
       ),
     ).toBeTruthy();
     expect(

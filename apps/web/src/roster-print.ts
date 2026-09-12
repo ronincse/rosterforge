@@ -125,13 +125,13 @@ export function renderRosterPrintDocument(
     "content=\"default-src 'none'; style-src 'unsafe-inline'\">",
     "<title>",
     escapeHtml(roster.name),
-    " - RosterForge</title>",
+    " - ForceWright</title>",
     "<style>",
     printStyles,
     "</style></head><body>",
     "<main>",
     "<header class='document-header'>",
-    "<p class='brand'>RosterForge roster summary</p>",
+    "<p class='brand'>ForceWright roster summary</p>",
     "<h1>",
     escapeHtml(roster.name),
     "</h1>",
@@ -152,7 +152,7 @@ export function renderRosterPrintDocument(
       : "<ol>" + roster.forces.map(renderPrintForce).join("") + "</ol>",
     "</section>",
     "<footer>",
-    "<strong>Scope note:</strong> This is a RosterForge presentation export, ",
+    "<strong>Scope note:</strong> This is a ForceWright presentation export, ",
     "not a BattleScribe .ros or .rosz interchange file. Costs and checks only ",
     "describe the supported evaluation scope shown above.",
     "</footer>",
@@ -322,7 +322,7 @@ function renderCostSummary(costs: RosterPrintCostStatus): string {
       "<h2>Supported costs unavailable</h2>",
       "<p>The cost report could not be produced. ",
       formatCount(costs.diagnosticCount, "diagnostic"),
-      " remain observable in RosterForge.</p></section>",
+      " remain observable in ForceWright.</p></section>",
     ].join("");
   }
 
@@ -366,7 +366,7 @@ function renderValidationSummary(
       "<h2>Supported checks unavailable</h2>",
       "<p>The supported validation report could not be produced. ",
       formatCount(validation.diagnosticCount, "diagnostic"),
-      " remain observable in RosterForge.</p></section>",
+      " remain observable in ForceWright.</p></section>",
     ].join("");
   }
 

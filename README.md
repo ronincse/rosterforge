@@ -1,8 +1,14 @@
-# RosterForge
+# ForceWright
 
-RosterForge is an open-source, local-first army list builder intended to read
+ForceWright is an open-source, local-first army list builder intended to read
 BattleScribe 2.03 community data without copying BattleScribe implementation or
 assets.
+
+Formerly RosterForge. This remains the same application and repository:
+`ronincse/rosterforge`. Internal `@rosterforge/*` packages, developer commands,
+and persisted data identities retain their existing names for compatibility.
+The accepted overhaul and correctness checkpoints are integrated into `main`;
+future work respects the owner's selected branch.
 
 This repository currently contains the first development slice:
 

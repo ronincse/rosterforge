@@ -85,6 +85,8 @@ export interface LocalRosterDraftRecordBackend {
   readonly delete: (id: string) => Promise<void>;
 }
 
+// Legacy identity is intentional: the ForceWright rebrand must reopen existing armies.
+// Keep database/store names, versions, recovery keys and record prefixes stable.
 const databaseName = "rosterforge";
 const databaseVersion = 1;
 const objectStoreName = "local-roster-drafts";

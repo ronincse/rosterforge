@@ -284,7 +284,7 @@ function inspectCategoryConstraint(
       categoryConstraintDiagnostic(
         constraint,
         "EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED",
-        "This force-category requirement uses a shape RosterForge does not evaluate yet.",
+        "This force-category requirement uses a shape ForceWright does not evaluate yet.",
         {
           categoryStatus: categoryLink?.status ?? "definition",
           categoryTargets,

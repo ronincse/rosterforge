@@ -6,7 +6,7 @@ import "./styles.css";
 
 const root = document.querySelector<HTMLElement>("#root");
 if (root === null) {
-  throw new Error("RosterForge root element was not found.");
+  throw new Error("ForceWright root element was not found.");
 }
 
 createRoot(root).render(

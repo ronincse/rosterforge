@@ -1547,12 +1547,12 @@ function ruleCoverageReasons(
     )
   ) {
     reasons.push(
-      "Some unit limits depend on roster setup in a way RosterForge cannot evaluate yet.",
+      "Some unit limits depend on roster setup in a way ForceWright cannot evaluate yet.",
     );
   }
   if (codes.has("EVALUATION_STRUCTURAL_STATUS_ROOT_VISIBILITY_UNRESOLVED")) {
     reasons.push(
-      "Some catalogue entries have conditional availability that RosterForge cannot resolve yet.",
+      "Some catalogue entries have conditional availability that ForceWright cannot resolve yet.",
     );
   }
   if (
@@ -1560,7 +1560,7 @@ function ruleCoverageReasons(
     codes.has("EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED")
   ) {
     reasons.push(
-      "Some selection limits use modifier shapes RosterForge cannot evaluate yet.",
+      "Some selection limits use modifier shapes ForceWright cannot evaluate yet.",
     );
   }
   if (
@@ -1568,7 +1568,7 @@ function ruleCoverageReasons(
     codes.has("EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED")
   ) {
     reasons.push(
-      "Some catalogue-specific limits use fields or attributes RosterForge cannot inspect yet.",
+      "Some catalogue-specific limits use fields or attributes ForceWright cannot inspect yet.",
     );
   }
   return reasons.length > 0
@@ -1723,7 +1723,7 @@ function RosterReportDetails({
 
           {header.incomplete.length > 0 && (
             <p className="player-header-incomplete">
-              {`RosterForge could not ${header.incomplete
+              {`ForceWright could not ${header.incomplete
                 .map((report) =>
                   report === "costs"
                     ? costs.available

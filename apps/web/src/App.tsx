@@ -97,7 +97,7 @@ export function App(props: AppProps) {
   useEffect(() => {
     // A browser tab represents the object the player is working on. Keep the
     // library and an open roster distinct here as well as in the visible shell.
-    document.title = activeRosterSession?.roster.name ?? "Lists";
+    document.title = `${activeRosterSession?.roster.name ?? "Lists"} - ForceWright`;
   }, [activeRosterSession?.roster.name]);
 
   return (
@@ -142,11 +142,11 @@ export function App(props: AppProps) {
       ) : (
         <>
           <header className="site-header">
-            <a className="brand" href="/" aria-label="RosterForge home">
+            <a className="brand" href="/" aria-label="ForceWright home">
               <span className="brand-mark" aria-hidden="true">
-                RF
+                FW
               </span>
-              <span>RosterForge</span>
+              <span>ForceWright</span>
             </a>
             <span className="local-badge">
               <span className="local-dot" aria-hidden="true" />
@@ -160,7 +160,7 @@ export function App(props: AppProps) {
               <h1 id="page-title">Build your roster. Keep your data local.</h1>
               <p className="hero-copy">
                 Browse a pinned community repository or open game-system and
-                catalogue files together. RosterForge verifies and reads them
+                catalogue files together. ForceWright verifies and reads them
                 in this browser.
               </p>
 

@@ -1,6 +1,6 @@
-# RosterForge UI Design Language
+# ForceWright UI Design Language
 
-This document keeps the web interface coherent while RosterForge moves from a
+This document keeps the web interface coherent while ForceWright moves from a
 catalogue-centred page to a list builder. It adapts current Apple Human
 Interface Guidelines to an accessible responsive web application; it does not
 copy Apple assets, platform chrome, another roster builder's visual design, or
@@ -12,7 +12,7 @@ continues to own component and package boundaries.
 
 ## Information architecture
 
-RosterForge has two primary screens:
+ForceWright has two primary screens:
 
 1. **Lists** — saved rosters and the path to create one. Catalogue import and
    repository acquisition are supporting actions, not the page hierarchy.
@@ -20,8 +20,9 @@ RosterForge has two primary screens:
    configuring, validating, saving, printing, and reading the roster remain in
    this context.
 
-The browser title names the current content (`Lists` or the roster name), never
-the application. An open roster must not mount the Lists hero, import controls,
+The browser title names the current content (`Lists` or the roster name),
+followed by ` - ForceWright` to identify the application. An open roster must
+not mount the Lists hero, import controls,
 repository browser, draft shelf, site header, or footer. Returning to Lists
 restores those surfaces and any pending recovery or acquisition state.
 
@@ -161,7 +162,7 @@ inset card inside its overall group. Those repeated cards use a higher-opacity
 material, border, highlight, and shallow shadow instead of adding a backdrop
 filter at every nesting level. Modal overlays blur the entire underlying
 viewport while their task surface remains sharp. Do not title a window
-`RosterForge`, put destructive actions in the primary position, or keep
+only `ForceWright`, put destructive actions in the primary position, or keep
 parallel text-button rows for commands already in the toolbar/menu.
 
 Do not repeat roster identity, points, and known-problem totals in a large card

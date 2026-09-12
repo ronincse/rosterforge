@@ -1,6 +1,6 @@
 # Product Vision
 
-> RosterForge builds a Warhammer 40,000 army from community BSData, tells you
+> ForceWright builds an army from compatible community data, tells you
 > honestly whether it is legal, and stays useful on the table when the dice come
 > out.
 
@@ -8,10 +8,17 @@ That sentence is the north star. Everything below elaborates one of its three
 clauses — *builds an army*, *tells you honestly*, *useful on the table* — and
 every roadmap decision should be judged against it.
 
-## What RosterForge is
+## What ForceWright is
 
-A modern, local-first army roster builder and tabletop reference application,
-powered by current BattleScribe-format BSData community files.
+ForceWright is a system-agnostic army roster builder and tabletop reference
+application powered by compatible BattleScribe/New Recruit-format community
+data. Warhammer 40,000 is the initial acceptance system, not an architectural
+restriction.
+
+Formerly RosterForge, it remains the same local-first application. StarCraft:
+The Miniatures Game is the intended next compatibility pilot, not an already
+supported system. This rebrand does not begin that pilot or change the concrete
+40k reference army and acceptance evidence below.
 
 The end-to-end workflow it exists to serve:
 
@@ -29,7 +36,7 @@ player at the table has done half the job.
 ## Behavioral compatibility, not cloning
 
 The goal is **behavioral** compatibility. Given equivalent BSData and equivalent
-player choices, RosterForge should reach the materially correct roster state,
+player choices, ForceWright should reach the materially correct roster state,
 costs, options, constraints, modifiers, rules, profiles, and validation result —
 unless a difference is documented deliberately.
 
@@ -43,7 +50,7 @@ Validity and evaluation completeness are independent concepts and stay that way.
 A roster with no known violations is not thereby a roster whose supported view
 is complete.
 
-When RosterForge encounters applicable BSData behavior it cannot safely
+When ForceWright encounters applicable BSData behavior it cannot safely
 interpret, it **reports evaluation as incomplete** rather than presenting a
 confidently wrong roster. A player who is told "this is legal" and discovers at
 the table that it is not has been failed worse than one who was told "I could
@@ -110,7 +117,7 @@ combination.
 
 ### v1 — BUILD + VALIDATE
 
-RosterForge is **v1 complete** when a player can import current BSData, build
+ForceWright is **v1 complete** when a player can import current BSData, build
 the reference army from zero, receive materially correct costs and legality with
 unsupported behavior explicitly reported, and save, reopen, and revise it,
 **without needing BattleScribe or New Recruit** to complete or verify the normal
@@ -118,7 +125,7 @@ workflow.
 
 ### v2 — PLAY
 
-RosterForge is **v2 complete** when that same finished roster is comfortably
+ForceWright is **v2 complete** when that same finished roster is comfortably
 usable on phone or tablet during a real game, as a reference for the rules,
 stats, weapons, abilities, and selections belonging to that exact army.
 
@@ -147,7 +154,7 @@ Three reasons, in order of weight:
    requires bringing a list in, so import cannot block v1 by construction. And a
    finished list is read on the table in v2, not exported.
 3. **The ecosystem moved.** BSData publishes catalogue data as JSON, and the
-   tools RosterForge is measured against are web-based rather than trading
+   tools ForceWright is measured against are web-based rather than trading
    BattleScribe roster files. That was the owner's 2026-08-20 reasoning and it
    still holds.
 
@@ -214,7 +221,7 @@ belongs in a non-goal or a low priority, however interesting it is.
 
 | Document | Answers |
 | --- | --- |
-| `docs/product-vision.md` | **What RosterForge is becoming** |
+| `docs/product-vision.md` | **What ForceWright is becoming** |
 | `docs/architecture.md` | **How** the software is structured |
 | `docs/compatibility.md` | **What** imported behavior is supported |
 | `agent-handoff.md` | **What remains**, and what happens next |

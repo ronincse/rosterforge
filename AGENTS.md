@@ -1,10 +1,10 @@
-# RosterForge Engineering Rules
+# ForceWright Engineering Rules
 
 Four documents divide the work, and confusing them wastes checkpoints:
 
 | Document | Answers |
 | --- | --- |
-| `docs/product-vision.md` | **What RosterForge is becoming** — north star, acceptance, non-goals |
+| `docs/product-vision.md` | **What ForceWright is becoming** — north star, acceptance, non-goals |
 | `docs/architecture.md` | **How** the software is structured |
 | `docs/compatibility.md` | **What** imported behavior is supported |
 | `agent-handoff.md` | **What remains**, and what happens next |
@@ -242,7 +242,7 @@ or data-format discrepancies to the capable non-lead frontier model — Claude
 when Codex leads, the Codex CLI when Claude leads. New Recruit is a moving
 reference:
 record data and version evidence, and never classify a difference as a
-RosterForge defect until the active lead distinguishes catalogue drift,
+ForceWright defect until the active lead distinguishes catalogue drift,
 intentional differences, known unsupported behavior, roadmap work, and an
 actual behavioral defect.
 

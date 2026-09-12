@@ -1068,7 +1068,7 @@ and validation evidence are recorded in `docs/qa/rich-text-references.md`.
   same type; base evaluation preserves both, excludes that occurrence/type from
   totals, and marks completeness incomplete
 - Exact BattleScribe parity for transitively imported roots and for catalogues
-  reachable through more than one enabled path; RosterForge currently traverses
+  reachable through more than one enabled path; ForceWright currently traverses
   enabled links depth-first, exposes the first path, and deduplicates the source
   document
 - Whether categories should eventually participate in selectable-root or
@@ -1089,7 +1089,7 @@ and validation evidence are recorded in `docs/qa/rich-text-references.md`.
 - Exact BattleScribe eligibility beyond direct projected hierarchy, including
   category, hidden, constraint, and modifier behavior
 - Exact BattleScribe parity for child-modifier execution order and failure
-  semantics inside a modifier group. RosterForge uses direct owner modifiers,
+  semantics inside a modifier group. ForceWright uses direct owner modifiers,
   then top-level groups in source order, with each group's direct children
   before nested groups
 
@@ -1310,7 +1310,7 @@ constraint surface. The generic JSON/XML node retains each value: 88 are `true`,
 selection bounds and one is a self-scoped custom-field maximum.
 
 New Recruit 35.66 settles two different behaviors. Its initial-selection path
-reads ordinary minima without consulting `automatic`, so RosterForge does
+reads ordinary minima without consulting `automatic`, so ForceWright does
 the same for otherwise supported bounds whether the value is absent, `false`, or
 `true`. Its later handler subscribes to both selection-query changes and
 effective-limit changes, enqueues work only for `automatic: true`, and clamps a
@@ -1333,7 +1333,7 @@ become visible under the same trigger that raises the minimum; the T'au Pulse
 carbine is already visible. Specialisms is a shared group reached through three
 Crucible organism wrappers.
 
-RosterForge implements the selected and absent ordinary-entry branches and the
+ForceWright implements the selected and absent ordinary-entry branches and the
 direct-child selection-entry-group branch. A successful root/child add,
 child-group replacement, removal, or amount edit first clamps complete selected
 ordinary violations under their exact parent. It next evaluates visible
@@ -1349,7 +1349,7 @@ caller-generated occurrence IDs. The synthetic test proves source-order fill,
 reverse trim, direct-choice priority, unchanged prior sessions, and a
 source-located missing-ID warning.
 
-After groups settle, RosterForge walks visible absent ordinary direct and
+After groups settle, ForceWright walks visible absent ordinary direct and
 transparent-group choices, evaluates an ephemeral occurrence against the
 condition-aware effective minimum, and adds one real occurrence for a complete
 positive deficit. Internal probe IDs and temporary group occurrences never
@@ -1359,7 +1359,7 @@ Genestealer Cults case raises Specialisms from zero to one and selects Burrowing
 Claws at amount one beneath Node Organism [Crucible].
 
 The runtime group algorithm also has nested-group and unit-typed sub-unit
-branches outside the measured corpus shape. RosterForge diagnoses and withholds
+branches outside the measured corpus shape. ForceWright diagnoses and withholds
 those repairs, as well as conflicting or unsatisfiable visible child bounds.
 A missing occurrence-ID factory and an absent ordinary selector that already
 counts another exact materialized wrapper are source-located compatibility
@@ -1793,7 +1793,7 @@ characteristic-ID fields, negative `-1` limits, and an observed generic
 17 target selections and nine target the points cost type; five use parent,
 15 force, and six roster scope. The standalone inspector supports only
 non-negative selection counts in self, parent, force, and roster scope.
-RosterForge intentionally does not reinterpret `-1` as zero, infinity, or a
+ForceWright intentionally does not reinterpret `-1` as zero, infinity, or a
 disabled bound because that sentinel meaning is not established by the source
 shape. The values remain projected and produce incomplete source-located
 diagnostics. This is a closed compatibility decision, not an open modeling
@@ -1823,7 +1823,7 @@ operations comprise 2,865 `increment`, 1,167 `set`, four `decrement`, and two
 unsupported `multiply` values. The corpus includes 14 group-level conditions,
 three group-level condition groups, one nested group, one group-level repeat,
 1,187 child-modifier condition lists, 234 child condition groups, and 2,687
-child repeats. Most groups also carry an inert `comment` string. RosterForge
+child repeats. Most groups also carry an inert `comment` string. ForceWright
 preserves all of these; supported numeric children execute in the documented
 order, while the two unknown operations and group-level repeat remain
 incomplete and source-located.

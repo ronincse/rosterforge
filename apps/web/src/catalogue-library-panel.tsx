@@ -134,7 +134,7 @@ function CatalogueDataFreshnessNote({
       <p className="catalogue-data-freshness" data-freshness="unknown">
         Imported {formatTimestamp(freshness.importedAt)}. This data comes from
         the community BSData project and <strong>may be out of date</strong> —
-        RosterForge could not reach GitHub to check.
+        ForceWright could not reach GitHub to check.
       </p>
     );
   }
