@@ -1,5 +1,19 @@
 # Compatibility
 
+## Experimental StarCraft pilot
+
+The `codex/starcraft-pilot` branch registers StarCraft community data at
+`99261754e0449bbaaa04e6890e1625b144f9ece1` through the existing pinned acquisition
+path. This is not a full-support declaration or a change to 40k's source pin.
+All three factions download/create; selected Terran and Protoss save/reopen
+passes. The unchanged engine has unreported unsupported authored-error and
+category-definition scopes, lacks default purchase-budget enforcement, and
+does not produce the source-intended Marines reinforcement transition.
+XML escape display and profile metadata also need bounded work. Terran costs
+remain incomplete for five genuinely absent source cost types. See
+[`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
+manifest, actual versus intended ledgers, classifications, and coverage limits.
+
 ## Implemented
 
 - Uncompressed BattleScribe 2.03-style `.gst` and `.cat` XML ingestion
