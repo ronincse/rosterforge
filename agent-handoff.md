@@ -1,4 +1,4 @@
-# RosterForge — Agent Handoff And Work Order
+# ForceWright — Agent Handoff And Work Order
 
 The shared status and work-order document for every model working on this
 repository. `AGENTS.md` governs *how* to work. This file records *what is done,
@@ -34,7 +34,32 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (RF-UX-02 phone reference readability)
+## Current Status — 2026-09-11 (ForceWright integration and rebrand)
+
+ForceWright is the current product name (formerly RosterForge). Owner-authorized
+integration fast-forwarded existing `main` from
+`3e9d05dea6215454c2fb02de2eeeac305adffd72` to accepted overhaul
+`69b209518bd53d31b5adf948b35f02acfa8a734e`: 82 commits, zero main-only commits,
+merge base equal to old main, identical accepted tree. Both histories remain;
+the old overhaul branch is retained as a reference, not an assumed work target.
+`main` is the canonical integrated development baseline. Future feature tasks
+respect the owner's selected branch; no blanket direct-to-main policy is added.
+
+The bounded rename changes product text and current direction only. Existing
+storage/schema/cache identities, internal packages/APIs, environment variables,
+source pins and game semantics remain unchanged. No storage migration.
+Known UI, accessibility and compatibility work below remains open; orphan
+cost references remain an accepted source-data qualification with incomplete
+cost coverage. StarCraft: The Miniatures Game is the intended next compatibility
+pilot, not supported or started by this assignment.
+
+Integration gates: 716 passed / 30 optional skipped, 80 passed / 6 skipped files;
+pinned checks: 27 passed / 3 files, no skips. Rename validation and exact
+publishing details are recorded in the newest completion entry.
+Earlier branch-specific/stop directions below are historical and superseded
+for this assignment. After this checkpoint, stop and await a bounded owner task.
+
+### Accepted RF-UX-02 status (historical; integrated into main)
 
 Owner explicitly resumed **RF-UX-02 only** on selected
 `codex/list-builder-ui-overhaul`, clean/upstream-equal baseline `9f372b2`.
@@ -284,19 +309,17 @@ user preview 5199 still returns HTTP 200.
 That previous checkpoint is complete; the new owner-authorized batch above
 supersedes its stop instruction. Broader attachment compatibility remains open.
 
-RosterForge reads BattleScribe 2.03 community data and builds matched-play
+ForceWright reads BattleScribe 2.03 community data and builds matched-play
 rosters. It is a pnpm/TypeScript monorepo; `docs/architecture.md` owns package
 layering and evaluator boundaries, `docs/compatibility.md` owns the exhaustive
 record of what is and is not supported, and `docs/diagnostics.md` owns
 diagnostic codes.
 
-- **Branch.** Stable `main` remains at `3e9d05d`, where CI is green. The owner
-  requested that the major interface overhaul proceed on the isolated
-  `codex/list-builder-ui-overhaul` branch so an overreaching design can be
-  abandoned without destabilising the product. Push each verified checkpoint
-  to that branch, but do not merge it to `main` or open a pull request without
-  the owner's explicit review. See `AGENTS.md` "Publishing" for the remaining
-  external-write rules.
+- **Branch (current).** The accepted overhaul is integrated into `main`.
+  Preserve `codex/list-builder-ui-overhaul` as historical reference. Future work
+  follows the owner's selected branch. The former direction to push only to
+  the overhaul branch and prohibit integration is superseded by the explicit
+  ForceWright assignment; historical checkpoint entries remain below.
 - **Commit attribution.** Every commit must now end with a `Co-Authored-By:`
   trailer naming the model that wrote it; `AGENTS.md` "Publishing" holds the
   exact strings. Git authors every commit as the owner's account, so this
@@ -769,7 +792,7 @@ scroll behavior, player-readable check coverage, condition-aware live root
 maxima, the scoped Add unit sheet, and the compact Configuration summary are
 complete. The owner has now
 reprioritised the product around the
-list-builder overhaul on `codex/list-builder-ui-overhaul`; the dedicated active
+list-builder overhaul (now integrated into `main`); the dedicated active
 roster shell, compact grouped army rows, focused reference dialogs, Add unit
 sheet, compact Configuration row, and requested blurred-material foundations
 are its completed seams. **Apply the complete shared active-roster
@@ -1010,7 +1033,8 @@ QA before classifying or implementing the discrepancy.
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
 | Violations shown in place on the row that is wrong | Done | battlefield-role headings use `containsAttention` only to signal a problem below them; exact selection rows use `attention` for a visible `Known violation` link to the retained Checks section. Ancestors are never mislabeled as the owner, root/force findings stay in the sticky warning and detailed checks rather than being guessed onto a role, unresolved/incomplete coverage never marks a row, and the warning/report counts remain authoritative when several findings share one owner |
 | Report sections demoted below the list | Done | the checks heading and all exact anchors stay visible below the builder, while structural status, constraint bounds, diagnostics and full evidence share one quiet disclosure. Clean complete reports start collapsed; unavailable, invalid or incomplete reports open themselves, and a changed known-violation count reopens evidence after a manual close. Validity, completeness and unsupported behavior remain explicit |
-| List-builder UI overhaul | Deferred — further owner authorization needed | **Owner-prioritised on 2026-08-28 and isolated on `codex/list-builder-ui-overhaul`.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **RF-UX-02 phone references completed separately; no blanket UI resumption. When reauthorized:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| List-builder UI overhaul | Deferred — further owner authorization needed | **Owner-prioritised on 2026-08-28; accepted checkpoints integrated into `main` on 2026-09-11.** The dedicated roster screen, compact grouped army rows, required empty roles, focused problem/reference dialogs, closed-by-default Add unit sheet, compact Configuration settings row, blurred navigator/unit-card/modal-backdrop material foundation, separate inset nested-option/reference cards, one shared 14 px exposed-corner rule, simplified sticky roster identity/warning hierarchy, top-edge sticky action menu, protected required setup roots, separate Army rules reference, unified Battle Size choices, stronger inactive-unit borders, one-heading roster body, honest choice-info affordances, rule-bearing keyword dialogs, and direct View/Duplicate/Remove unit commands are Done. Configuration retains its full editor while summarizing selected values, exact primary/setup capacities, and known attention. **RF-UX-02 phone references completed separately; no blanket UI resumption. When reauthorized:** complete the remaining shared active-roster component/token system, then bring Lists/creation into it, reconcile document workflows, add the installed-PWA boundary, and complete cross-mode accessibility/print acceptance. Re-run the reference army after each bounded checkpoint |
+| ForceWright integration and product rename | Done | Accepted 82-commit overhaul fast-forwarded into existing main; product text renamed without storage migration. Same-origin legacy saved/recovery and new-army paths verified; see `docs/qa/forcewright-rebrand.md`. The old branch is a retained reference, not the default work target. No release or StarCraft pilot claim |
 | RF-UX-02 phone reference readability | Done — bounded checkpoint | `f73e191`: single semantic table reflows into data-defined labelled cards; full names/bearers, all values/modes/uncertainty preserved, desktop comparison plus explicit local table fallback. Fresh390 evidence and320/430/landscape/tablet/desktop, fictional schemas, keyboard/text-scale/native review in `docs/qa/rf-ux-02-phone-reference.md`. Broader UI remains deferred |
 | Audit RF-A02 recovery lifecycle | Complete | `7900bcc`: recovery stays unsaved and durable through repeated reload; first named save uses fresh ID; failures, stale callbacks, foreign recovery ownership and active-draft deletion covered. Combined long-history lifecycle passes |
 | Audit RF-A03 archive expansion boundary | Complete | `4e67051`/`f40c0e7`: metadata-first rejection, bounded raw inflate with actual expanded/ratio ceiling, retained CRC/path/length checks; 26 archive security tests, browser imports and all pinned JSON integration pass |
@@ -1038,7 +1062,7 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
-| Print-output usability pass | Open | the escaped print/save-PDF view model includes nested selections, per-selection costs, totals, and supported checks, but no later checkpoint has tested reader hierarchy, pagination, or representative table use |
+| Print-output usability pass | Open | The escaped print/save-PDF model includes nested selections, costs and supported checks. ForceWright rebrand smoke verified generated document branding, but the ten currency totals spill beyond their card in the reference-army preview. Reader hierarchy, currency wrapping, pagination and representative table use still need a bounded usability pass; no physical print claim. See `docs/qa/forcewright-rebrand.md` |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. The value-specific complaint is zero, and the later false modifier-maximum warning on 34 manual Detachment groups is now zero too. Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
@@ -15097,3 +15121,76 @@ underlying engine defect; unfamiliar type routing still follows existing
 Unit/Description label classification and is not general game support.
 Only RF-UX-02 complete. Do not continue Lists, Add-unit, general UI, StarCraft,
 profile classification, source acquisition or engine work without owner input.
+
+## Completed Assignment — 2026-09-11: ForceWright integration and rebrand
+
+**Authority and baseline.** Owner explicitly authorized integrating accepted
+history into existing main, switching safely, committing and pushing the rename.
+Original checkout was clean at `69b209518bd53d31b5adf948b35f02acfa8a734e` on
+`codex/list-builder-ui-overhaul`; related UI task idle and bug-fix task not loaded.
+Dedicated main worktree `C:/CodexACLTest/forcewright-integration-20260911` avoided
+switching underneath existing preview servers. No existing changes or worktrees
+were stashed, discarded, copied into a commit or deleted.
+
+**Integration.** Fetched old main `3e9d05dea6215454c2fb02de2eeeac305adffd72`,
+accepted overhaul `69b209518bd53d31b5adf948b35f02acfa8a734e`, merge base old main,
+82 ahead / zero behind. Fast-forward-only main preserves both ancestors and
+identical accepted tree; no squash/rebase/cherry-pick/history rewrite. Existing
+feature CI34652905428 passed; published integration's main CI34662910641 passed.
+No PR/ruleset/protection required; no hooks/Pages/deployments or deploy workflow.
+A fresh fetch before push confirmed target had not moved. Old branch retained.
+
+**Rename.** Implementation/QA commit `5f39e5a` follows the integration, with this
+separate handoff commit next. Player-facing header/accessibility, FW monogram,
+content-first title suffix, metadata, uncertainty/network copy and print text
+now say ForceWright. Current README/vision/design/architecture/compatibility/
+diagnostics/engineering prose updated. Vision explicitly system-agnostic, with
+40k as initial acceptance and StarCraft as intended future pilot only. Original
+40k reference army preserved. Root private name forcewright; pinned pnpm frozen
+install requires no lockfile/dependency changes. Rejected blanket replacement,
+package/API rename, storage migration and a new logo/theme/PWA system.
+
+**Compatibility.** Same disposable5261 origin/profile, pre-rename adapter seeded
+saved and recovery copies from a QA-only reference draft. Normal old UI showed
+both. Renamed adapter's full snapshot exactly matched saved/recovery roster
+hashes, all eight source IDs/byte hashes, formats, names and3past/0future history;
+193 selections,14,282,159bytes. Normal renamed recovery/save, saved open/edit/
+autosave/reload/reopen and persisted Undo pass. First squad5→6→5 retained1/3/1
+loadouts and80→150→80; army2000→2070→2000. Lieutenant attachment and17Lethal Hits
+reference additions remain. New ForceWright army created through setup, Azrael
+added, saved/reloaded/reopened at140points. No namespace replacement or owner
+army access. Both cache implementations, DB/store/schema/key/version literals,
+@rosterforge scopes, controller names, ROSTERFORGE envs and source pins unchanged.
+Technical/historical old-name occurrences are intentional, classified in
+`docs/qa/forcewright-rebrand.md`; append-only history and actual URLs retained.
+
+**Review and checks.** Native independent reviewer in dedicated disposable
+worktree approved full candidate diff/history/identity boundaries; lead reviewed
+and reran checks. A bounded text/identity change suited native review without
+additional external export/provider setup. Pre-normal716pass30skip,80pass6skip
+files19.96s; renamed same counts18.83s. Lint/typecheck/build/diff pass, frozen
+install unchanged. Pre-pinned27pass/3files39.72s; final combined76pass/9files40.35s,
+no skips:27pinned plus renderer safety, reference-phone, print, draft/recovery/
+controller durability. Corpus HEAD verified04c62fcd041b3808c39d5c46fd677c704027b979;
+existing A/B manifest/hash checks execute with original env names. No new corpus
+inventory claimed. JS816.01kB/gzip225.61kB, CSS82.82kB; existing bundle advisory.
+
+**Browser and limits.**390x844 phone reference screenshot readable, client/scroll
+width both375 excluding scrollbar. Saved/recovery/new paths and known-warning
+presentation pass. Production print document rendered from saved test army shows
+ForceWright title/header/footer; normal menu invoked but no inspectable in-app
+popup, so read-only fixture used to inspect generated HTML. No physical print or
+pagination claim. Existing currency-row overflow recorded in open print row.
+Orphan cost references remain qualified source data and incomplete costs.
+Other UI/accessibility/game-compatibility limitations remain open; no product
+release or blanket overhaul completion claim.
+
+**Publishing/stop.** Publish rename and handoff together to main after final
+fetch/ancestry/whitespace checks; confirm actual final-SHA CI in completion
+response/run history. Main is canonical; future tasks respect owner-selected
+branch. Original E:/GitHub/rosterforge checkout remains untouched on old branch
+for existing servers, so future work must use current main deliberately. Own
+integration worktree contains only ignored QA fixtures/build/dependencies after
+commit; reviewer worktree retains candidate evidence. No StarCraft branch or
+pilot, repository/folder/domain migration, deployment, release, package publish,
+source update or governance expansion. Stop at this bounded assignment.
