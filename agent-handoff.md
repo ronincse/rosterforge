@@ -34,7 +34,40 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (ForceWright integration and rebrand)
+## Current Status — 2026-09-11 (experimental StarCraft pilot)
+
+Owner-authorized first pilot checkpoint on isolated `codex/starcraft-pilot`,
+from fetched/CI-green main `bac89b7ed92b088d270e0287c4893ff47d53d04e`.
+Source/tests `be1494d16c9904065b9c54373d600da6c0541979`; report/compatibility
+`d0967b3ef31f1e4e655e0f467d045985bafea24b`. Only production change is an
+additional experimental source at `99261754e0449bbaaa04e6890e1625b144f9ece1`;
+40k source and all engine/persistence/reference code remain unchanged.
+
+Normal browser acquisition/create succeeds for all three factions; Terran and
+Protoss configure/save/reopen pass with documented compatibility gaps. Marines
+reinforcement remains six/230 instead of source-intended nine/240; typed-unit
+condition traversal cause established, reference semantics still unverified.
+Protoss negative Core, two factions, and Gas210 above default200 produce no
+violation; missing-faction/negative-Core/Gas API probes return valid/complete.
+Authored errors, parent-scoped category definitions and default budgets need
+explicit support or incompleteness. XML entity text and metadata-based reference
+classification/formatting remain gaps. Source itself declares system13 but
+ships12, and has five absent cost types on Marines/Marauders. See
+`docs/qa/starcraft-pilot-baseline.md`; do not interpret a successful import as
+legal-army support. Roadmap G records the dependencies.
+
+Final local lint/typecheck/test/build/diff pass:720pass31optionalSkip,
+81pass7skipFiles17.37s. Configured corpus28pass/4files/no skips41.57s
+(27existing40k +1StarCraft reproduction); pinned A HEAD/hash manifests verified.
+Native independent source/report/ledger review approved; Claude executable
+failed to launch, no successful external review claimed. Build816.41kB advisory
+remains. Push only this pilot branch and verify exact final-SHA CI; publication
+result is in the completion response/run history. Existing checkouts, branches,
+servers, tabs and armies preserved. Own5271 preview and three diagnostic drafts
+remain in the isolated origin. **Stop here.** No engine fixes, main merge, PR,
+updater, release or next phase is authorized by completion of the pilot.
+
+### Accepted integration/rebrand status (historical; pilot now started separately)
 
 ForceWright is the current product name (formerly RosterForge). Owner-authorized
 integration fast-forwarded existing `main` from
@@ -1122,6 +1155,22 @@ rules independently in components. Reference Behavior QA remains required when
 the loadout/Warlord work depends on New Recruit behavior. Do not interleave the
 low-priority automatic shapes, deferred acquisition/matching work, or
 whole-roster incremental evaluation unless new evidence changes their priority.
+
+### G. Experimental StarCraft capability gaps
+
+These findings are recorded, not authorization to implement the next phase.
+The pilot report supplies exact source/app identities, scenarios and severity.
+
+| Item | Status | Note |
+| --- | --- | --- |
+| Experimental pinned source and baseline report | Done on pilot only | Three factions direct-download/create; selected Terran/Protoss save/reopen, Zerg reference smoke; no full support claim |
+| SC-01/02 validation completeness and authored requirements | Next after owner assignment | Force add-error modifiers and parent-scoped category definitions can be silently omitted; diagnose first, then generic execution and repair cases |
+| SC-03/07 default budgets, limit queries and resource summary | Open | Separate Minerals/Gas purchase limits from signed composition allowances; defaultCostLimit retained but unused; no editable budget control; limit:: queries unsupported |
+| SC-04 typed-unit Reinforce conditions | Open | Container-only observation gives count0, Marines6/230 instead of source-intended9/240; settle reference semantics before bounded repair |
+| SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
+| SC-06 profile metadata and reference classification | Open | kind/order/longText/annotation and seven format rules retained but not executed; ability profiles routed to equipment; no arbitrary regex execution |
+| SC-08 source-aware freshness | Open | Inherited default-source0/BSData copy is 40k-specific; bind to provenance without an updater |
+| SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
 
 ### Open questions needing the owner
 
@@ -15194,3 +15243,80 @@ integration worktree contains only ignored QA fixtures/build/dependencies after
 commit; reviewer worktree retains candidate evidence. No StarCraft branch or
 pilot, repository/folder/domain migration, deployment, release, package publish,
 source update or governance expansion. Stop at this bounded assignment.
+
+## Completed Assignment — 2026-09-11: experimental StarCraft baseline pilot
+
+**Authority/baseline.** Owner explicitly authorized source registration, isolated
+branch/worktree, controlled unchanged-engine experiments and report only.
+Fetched origin/main `bac89b7ed92b088d270e0287c4893ff47d53d04e`, CI34663443701
+success. No newer main discarded. Dedicated worktree
+`C:/CodexACLTest/forcewright-starcraft-pilot`, branch `codex/starcraft-pilot`.
+Existing main integration and old overhaul checkouts untouched; no competing
+active Codex writer. Standard Git metadata permissions required narrow approved
+fetch/worktree/commit execution; no ACL or history rewrite.
+
+**Changes/decision.** Source/tests `be1494d16c9904065b9c54373d600da6c0541979`;
+report/compatibility `d0967b3ef31f1e4e655e0f467d045985bafea24b`; this handoff is
+separate. Append one experimental loicmusy/StarcraftTMG-NR source using existing
+source panel/controller and secure acquisition. Current default tip resolved
+once to `99261754e0449bbaaa04e6890e1625b144f9ece1`, unchanged from owner's
+historical value. Rejected second downloader, UI redesign, broad engine repair,
+source normalization and updater. No inherited package/storage/environment/pin
+identity changed. 40k definition asserted byte-for-property in regression.
+
+**Data/evidence.** Four data files839159bytes; three nonlibrary catalogues, no
+catalogue links, each closure one catalogue+GST. Catalogue revision13 declares
+system13, actualGST12. Zero unresolved targetId links/missing profile or
+characteristic type IDs; five missing cost-type IDs each referenced twice at
+zero on Marines/Marauders. Source metadata qualification, not an invented cost.
+143entries53groups98modifiers(no modifier groups)109conditions20conditionGroups,
+135constraints32automatic,248profiles28rules735costs;12force error modifiers;
+10profile types and7format rules. Immutable byte/blob/SHA256 manifest in report;
+original bytes, screenshots and logs outside tracked tree at
+`C:/CodexACLTest/starcraft-pilot-evidence/`.
+
+**Browser.** Own fresh5271origin, in-app Chromium, served verified pilot cwd.
+All factions direct Browse/index/load/create:0import diagnostics, roots21/22/27,
+categories17/17/18,one force each. Cached metadata reuse shown. No state injection.
+Terran base160/6,Shield180/6,Reinforce230/6 Core-2,remove180/6;duplicate360/12
+and normal save/reopen. One Marine occurrence amount6 per squad. Protoss Daelaam,
+Zealots+Leg180,Stalker+Path190,Sentries130:500Minerals incidental, not game-size
+conversion. Normal save/reopen14selections;Forge30Gas later. Two faction choices,
+negative Core with two Zealots,and7Forge210Gas all zero violations/all checked;
+removed excess choices to repair balances. Zerglings180/Core-1,twelve independent
+models, reference/save smoke only; force-link Faction requirement differs.
+Phone390/320 anddesktop1440 screenshots inspected; no320horizontal page overflow,
+values wrap, ability profiles misclassified, entities literal, root profile
+attribution1xunit doesn't state model count. No physical device/dark/screenreader/
+installed-app/print/full-faction/NR parity claim. Console warn/error capture empty.
+
+**Findings.** Lead and independent reviewer verified unit scope excludes direct
+children when includeChildSelections omitted: Reinforce count0 means6/230.
+Source-intended9/240 is not an independently verified NR result. Authored error
+fields have no validation execution path; parent category definitions skipped
+without incompleteness; default budgets retained but unused. Optional hashed
+production-API reproduction corroborates Protoss valid/complete at missing
+faction6/0/0,negativeCore20/0/0,Gas21013/0/0. Terran missing-type diagnostics
+properly make costs incomplete. XML processEntities=false explains literal
+quot/apos strings; metadata generic retention is not supported classification.
+Known inherited freshnesssource0 assumption recorded, not expanded into this
+registration checkpoint. RoadmapG lists every next capability/dependency.
+
+**Review/gates.** Native reviewer isolated at
+`C:/CodexACLTest/starcraft-pilot-review`, no edits/services; reviewed full candidate,
+report and ledgers, approved no blockers. Applied report-link wording suggestion.
+Claude constrained read-only launch failed StandardOutputEncoding before usable
+review; no provider installation/auth exercise. Lead inspected diff and verified
+citations. Final lint/typecheck/test/build/diff pass720/31tests81/7files17.37s;
+source-focused10pass2files4.09s. Configured28pass4files41.57s,no skips:
+27existing40k plus1StarCraft gap reproduction. ROSTERFORGE_BSDATA_JSON_DIR pinnedA
+HEAD04c62fcd041b3808c39d5c46fd677c704027b979; unchanged correctness A/B manifests
+execute. Normal suite includes renderer timing/safety, persistence/recovery,
+phone reference. BuildCSS82.82kB,JS816.41kB/gzip225.80kB; existing advisory.
+New optional reproduction is clearly not support acceptance; skips unconfigured.
+
+**Publication/stop.** Push own three commits only to codex/starcraft-pilot after
+checks; confirm exact final-SHA CI in completion response/run history. No main
+push, PR, merge, release/deploy or data update. Own5271preview and diagnostic
+drafts retained; all older origins/worktrees/source checkouts preserved. Stop
+after this first baseline; implementation sequence awaits owner assignment.
