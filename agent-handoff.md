@@ -61,8 +61,9 @@ Final local lint/typecheck/test/build/diff pass:720pass31optionalSkip,
 (27existing40k +1StarCraft reproduction); pinned A HEAD/hash manifests verified.
 Native independent source/report/ledger review approved; Claude executable
 failed to launch, no successful external review claimed. Build816.41kB advisory
-remains. Push only this pilot branch and verify exact final-SHA CI; publication
-result is in the completion response/run history. Existing checkouts, branches,
+remains. Published checkpoint `ddb3a2e968963fc89a1f1d246d9d06a7b2ba2811`
+passed CI34668661561 (verify success). The documentation-only CI receipt follows;
+its final-SHA CI is in the completion response/run history. Existing checkouts, branches,
 servers, tabs and armies preserved. Own5271 preview and three diagnostic drafts
 remain in the isolated origin. **Stop here.** No engine fixes, main merge, PR,
 updater, release or next phase is authorized by completion of the pilot.
@@ -15320,3 +15321,10 @@ checks; confirm exact final-SHA CI in completion response/run history. No main
 push, PR, merge, release/deploy or data update. Own5271preview and diagnostic
 drafts retained; all older origins/worktrees/source checkouts preserved. Stop
 after this first baseline; implementation sequence awaits owner assignment.
+
+**CI receipt.** Published checkpoint
+`ddb3a2e968963fc89a1f1d246d9d06a7b2ba2811` completed CI34668661561 successfully,
+including every verify step. This receipt changes documentation only; same
+source/test implementation and local gates. Remote main verified unchanged at
+bac89b7, original checkout clean at69b2095. Final receipt commit CI is confirmed
+in the completion response rather than recursively changing its own identity.

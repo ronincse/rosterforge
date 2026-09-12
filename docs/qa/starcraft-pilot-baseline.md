@@ -296,5 +296,12 @@ manifest arithmetic, engine ledgers and scope qualifications. Its source-card
 wording suggestion was applied: no reference to a report that the card cannot
 open. Review did not rerun the lead's gates or claim New Recruit verification.
 
+Publication verification: checkpoint commit
+`ddb3a2e968963fc89a1f1d246d9d06a7b2ba2811` passed
+[CI run 34668661561](https://github.com/ronincse/rosterforge/actions/runs/34668661561)
+with the `verify` job successful (lint, typecheck, standard tests, build and
+whitespace). This receipt is a documentation-only follow-up; its own final CI
+result is recorded in the completion response. Main remained at the baseline.
+
 Stop here: source registration, baseline evidence and plan only. No main push,
 merge, PR, deployment, updater, data correction or broad semantic implementation.
