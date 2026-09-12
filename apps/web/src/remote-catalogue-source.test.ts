@@ -14,6 +14,7 @@ import {
 
 import {
   acquireRemoteCatalogue,
+  defaultRemoteCatalogueSources,
   indexRemoteCatalogueSource,
   type RemoteCatalogueMetadataCache,
   type RemoteCatalogueMetadataCacheEntry,
@@ -22,6 +23,44 @@ import {
 } from "./remote-catalogue-source.js";
 
 describe("remote catalogue source", () => {
+  it("keeps the existing 40k definition and registers an independent experimental StarCraft pin", () => {
+    expect(defaultRemoteCatalogueSources[0]).toEqual({
+      id: "bsdata-wh40k-11e-04c62fc",
+      title: "Warhammer 40,000 11th Edition",
+      gameSystem: "Warhammer 40,000",
+      description: "Community-maintained BSData pinned to an immutable Git commit.",
+      repository: { owner: "BSData", repository: "wh40k-11e", revision: "04c62fcd041b3808c39d5c46fd677c704027b979" },
+      estimatedIndexBytes: 69_647_926,
+    });
+    const pilot = defaultRemoteCatalogueSources[1]!;
+    expect(pilot.repository).toEqual({ owner: "loicmusy", repository: "StarcraftTMG-NR", revision: "99261754e0449bbaaa04e6890e1625b144f9ece1" });
+    expect(pilot.title).toMatch(/StarCraft.*experimental/u);
+    expect(pilot.description).toMatch(/Experimental/u);
+    expect(new Set(defaultRemoteCatalogueSources.map(source => source.id)).size).toBe(defaultRemoteCatalogueSources.length);
+    for (const source of defaultRemoteCatalogueSources) expect(pinGitHubRepository(source.repository).ok).toBe(true);
+  });
+
+  it("isolates shared byte and metadata caches when switching registered sources", async () => {
+    const fixture = await sourceFixture();
+    const cache = new MemoryByteCache();
+    const metadataCache = new MemoryMetadataCache();
+    for (const source of defaultRemoteCatalogueSources) {
+      const fetcher = fixtureFetch(fixture, source);
+      const first = await indexRemoteCatalogueSource(source, { importedAt, fetch: fetcher, cache, metadataCache });
+      expect(first.ok).toBe(true);
+      if (!first.ok) throw new Error("Expected source index");
+      expect(first.value.metadataCacheStatus).toBe("miss");
+      expect(fetcher).toHaveBeenCalledTimes(3);
+      const acquired = await acquireRemoteCatalogue(first.value, "minimal.cat", { importedAt, batchId: source.id, fetch: fetcher, cache });
+      expect(acquired.ok).toBe(true);
+      if (!acquired.ok) throw new Error("Expected source closure");
+      expect(acquired.value.closure.source).toMatchObject(source.repository);
+      expect(fetcher).toHaveBeenCalledTimes(3);
+      const repeat = await indexRemoteCatalogueSource(source, { importedAt, fetch: fetcher, cache, metadataCache });
+      expect(repeat.ok && repeat.value.metadataCacheStatus).toBe("hit");
+      expect(fetcher).toHaveBeenCalledTimes(4);
+    }
+  });
   it("indexes, caches, and composes a pinned catalogue closure with download provenance", async () => {
     const fixture = await sourceFixture();
     const fetcher = fixtureFetch(fixture);
@@ -469,8 +508,8 @@ async function externalCostTypeFixture(): Promise<SourceFixture> {
   };
 }
 
-function fixtureFetch(fixture: SourceFixture) {
-  const pinned = pinGitHubRepository(sourceDefinition.repository);
+function fixtureFetch(fixture: SourceFixture, definition = sourceDefinition) {
+  const pinned = pinGitHubRepository(definition.repository);
   if (!pinned.ok) throw new Error("Expected the test source to be pinned.");
 
   return vi.fn<RepositoryFetch>(async (url) => {

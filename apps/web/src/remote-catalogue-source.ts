@@ -38,6 +38,7 @@ export interface RemoteCatalogueSourceDefinition {
   readonly estimatedIndexBytes?: number;
 }
 
+/** Immutable browse choices; registering a source does not imply engine support. */
 export const defaultRemoteCatalogueSources: readonly RemoteCatalogueSourceDefinition[] =
   [
     {
@@ -54,6 +55,20 @@ export const defaultRemoteCatalogueSources: readonly RemoteCatalogueSourceDefini
       // Measured from the pinned revision's JSON files. Keep this moving with
       // the revision: it is what the browse warning quotes before downloading.
       estimatedIndexBytes: 69_647_926,
+    },
+    {
+      id: "loicmusy-starcraft-tmg-9926175",
+      title: "StarCraft: The Miniatures Game (experimental)",
+      gameSystem: "StarCraft: The Miniatures Game",
+      description:
+        "Experimental community data compatibility pilot. Known gaps affect costs, requirements, and reference display.",
+      repository: {
+        owner: "loicmusy",
+        repository: "StarcraftTMG-NR",
+        revision: "99261754e0449bbaaa04e6890e1625b144f9ece1",
+      },
+      // Sum of the three catalogues and game system at this immutable pin.
+      estimatedIndexBytes: 839_159,
     },
   ];
 
