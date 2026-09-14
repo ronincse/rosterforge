@@ -36,6 +36,18 @@ Then read `git log`, `git status`, `docs/architecture.md`, and
 
 ## Current Status — 2026-09-11 (experimental StarCraft pilot)
 
+**2026-09-14 SC-01 implemented; SC-02 is next in the authorized batch.**
+Pilot `codex/starcraft-pilot`, code39b200920c2caa8d9f4dcd18297082392885e556 from
+clean c5a04c9. Force-owned direct authored errors now enter aggregate validation;
+negative Core invalidates and repair clears. Unknown applicability/source stays
+incomplete. Gates737pass31skip82/7files10.45s; configured28pass4files/no skips34.63s;
+lint/typecheck/build/diff pass. Native review approved after nested-source guard;
+Claude launch unavailable. Main and both source pins unchanged. Browser acceptance
+follows SC-02 in this batch; no further capabilities authorized. Focused evidence:
+`docs/qa/starcraft-validation-errors.md`.
+
+### Historical accepted pilot baseline (pre-repair)
+
 Owner-authorized first pilot checkpoint on isolated `codex/starcraft-pilot`,
 from fetched/CI-green main `bac89b7ed92b088d270e0287c4893ff47d53d04e`.
 Source/tests `be1494d16c9904065b9c54373d600da6c0541979`; report/compatibility
@@ -1165,7 +1177,8 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | Item | Status | Note |
 | --- | --- | --- |
 | Experimental pinned source and baseline report | Done on pilot only | Three factions direct-download/create; selected Terran/Protoss save/reopen, Zerg reference smoke; no full support claim |
-| SC-01/02 validation completeness and authored requirements | Next after owner assignment | Force add-error modifiers and parent-scoped category definitions can be silently omitted; diagnose first, then generic execution and repair cases |
+| SC-01 authored requirements | Implemented; batch browser acceptance pending | Direct force add-error conditions, signed static resource queries, explicit validation findings; unknown source/applicability incomplete; code39b2009 |
+| SC-02 parent category requirements | Next, authorized in current batch | Implement bounded force/category ownership and min/max repair cases; preserve Zerg link distinction |
 | SC-03/07 default budgets, limit queries and resource summary | Open | Separate Minerals/Gas purchase limits from signed composition allowances; defaultCostLimit retained but unused; no editable budget control; limit:: queries unsupported |
 | SC-04 typed-unit Reinforce conditions | Open | Container-only observation gives count0, Marines6/230 instead of source-intended9/240; settle reference semantics before bounded repair |
 | SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
@@ -15328,3 +15341,29 @@ including every verify step. This receipt changes documentation only; same
 source/test implementation and local gates. Remote main verified unchanged at
 bac89b7, original checkout clean at69b2095. Final receipt commit CI is confirmed
 in the completion response rather than recursively changing its own identity.
+
+## Completed Assignment — 2026-09-14: SC-01 authored conditional errors
+
+Owner authorized SC-01/02 only on pilot. Baselinec5a04c9 clean/upstream-equal,
+mainbac89b7 unchanged; code39b200920c2caa8d9f4dcd18297082392885e556, handoff separate.
+Explicit authoredError input is mandatory in validation composition and retains
+force/modifier provenance. Force/roster static cost queries now accept force owners.
+No labels, resource IDs or prose interpreted. Unknown relevant costs/source/operations,
+repeats/groups remain incomplete; unrelated orphan currencies do not taint exact
+queries. Rejected constraint disguise, budget enforcement and recursive cost shortcut.
+Native review found nested source envelope omission; recursive guard now precedes
+active/inactive decisions. Corrected candidate approved; Claude launch unavailable.
+
+Synthetic positive/zero/negative/repair/restoration, multiple messages, malformed
+source and unknown costs pass. Existing force-cost assertion now observes10, with
+force-vs-roster10/20 coverage. Frozen StarCraft regression now invalidates Core-1 and
+repairs; SC02 failure assertions remain only until next checkpoint. Full737pass31skip,
+82/7files10.45s; configured28pass4files34.63s,no skips (27existing40k+1StarCraft),
+40kHEAD04c62fcd and four StarCraft hashes verified. Lint/typecheck/build/diff pass;
+JS819.81kB existing advisory. Historical report preserved; focused QA report added.
+
+Code pushed pilot after gates; initial handoff write failed on Windows default text
+encoding, corrected using explicit UTF-8 immediately. No source/history lost.
+Browser acceptance follows SC02 as requested. Continue only SC02, then stop.
+No main/PR/pin/budgets/reinforcement/XML/reference/freshness changes. Exact CI tracked
+in run history/final report; preview5271 and saved diagnostic armies preserved.
