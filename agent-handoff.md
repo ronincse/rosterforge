@@ -34,42 +34,52 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-14 (SC-03/07 supported budget batch complete)
+## Current Status — 2026-09-14 (SC-04 fixed for evidenced shape)
 
-Owner-authorized SC-03/07 complete on `codex/starcraft-pilot` from
-81a15e2cee6f7bc54544904d3492e5093fb98c50. Storage commit
-8a38e999d7f134e8b3327c25ec9d324b88ef927c; evaluation/controls/QA commit
-ac112e91a0c6b511cfaebb5ddca4798a55856984; this handoff is separate.
-Positive visible source defaults, explicit player zero and -1/no-limit overrides,
-reset, exact-ID limit queries, evaluated-cost budget findings and independent
-resource summaries now work through ordinary immutable history/save/recovery.
-SC-01 authored errors and SC-02 parent-category requirements remain intact.
+Owner-authorized SC-04 complete on `codex/starcraft-pilot`, clean/upstream-equal
+baseline92c4c1408919fb05b052025c5bb2e12b59dc03be. Implementation/tests/evidence:
+6372abd35931551f999974154b904e9dde9e0bd4; this handoff is separate.
+Numeric unit-selection conditions count the resolved unit's direct children when
+traversal is omitted/false, descendants when true, excluding the unit container.
+Both automatic model-bound and conditional price modifiers consume this one leaf.
+Unit repeats preserve raw flag/envelope evidence. Other typed scopes, identity
+predicates, direct-cost queries and typed-constraint traversal are unchanged.
 
-Source-zero and creation-hidden positive activation remain unverified; all seven
-StarCraft source-zero counters now carry explicit incompleteness without false
-maximum-zero violations. Dynamic/cyclic limits, unsupported query scopes and
-unknown envelopes remain unresolved. Known restrictions coexist with budgets;
-40k Battle Size/points capacity and the nine separately tracked category-owned
-force/cost requirements are preserved. No full-legality claim.
+Pinned and browser Marines160/6 -> Shield180/6 -> Reinforce240/9 -> removal180/6
+pass. Shield contribution20/30/20, additional Core-1, exact model bounds6/9/6
+and one amounted model occurrence verified. Reverse order, independent squads,
+duplication/later edits, coherent undo/redo, saved-source reconstruction and
+new-tab recovery pass. Marauders with Foam2/170 -> reinforced4/320 ->2/170 also
+passes browser smoke. Normal17fictional tests protect locality, flags, unknown
+envelopes/targets, failure immutability and automatic versus ordinary manual edits.
 
-Protoss Gas210/default200 -> override210 -> reset200, independent Minerals and
-actual Deployment Maps threshold2000/1000/reset, save/reopen override and reset,
-undo/redo and selected-hidden-map retention pass. Terran160/100 over-budget and
-new-tab recovery pass; Zerg180/180 smoke passes. Three separate saved armies at
-http://127.0.0.1:5275; server deliberately remains running for owner testing.
-Desktop1440, phone390, focused320 and problem dialog/focus checks pass; console
-warnings/errors empty. Existing5271/5273 origins, armies and servers preserved.
+Three saved test squads at http://127.0.0.1:5277:9/240 Shield+Reinforce,
+6/180 Shield,6/160 base; disposable Minerals limit575, exact total580. Two known
+problems:5over budget and Core-1 supply. All seven source-zero budget activations
+remain explicitly unresolved. Desktop1440/phone390 controls and problem dialog
+readable; no phone horizontal overflow; keyboard/focus and console checks pass.
+Server5277 deliberately remains running for owner testing; earlier servers,
+saved armies/origins and tabs preserved. See `docs/qa/starcraft-reinforcement.md`.
 
-Final normal suite818pass31optionalSkip85/7files25.46s; configured28pass4files,
-no skips52.22s (27existing40k+1StarCraft). Lint/typecheck/build/diff pass;
-JS831.83kB existing advisory. Native independent review approved corrected
-candidate; Claude launcher unavailable. Source pins and main unchanged.
-See `docs/qa/starcraft-resource-budgets.md` for semantics, evidence and limits.
-Exact final pushed-SHA CI is confirmed in the completion response/run history.
+Final gates835pass31optionalSkip86/7files11.99s, configured28pass4files/no skips
+28.73s (27existing40k+1expandedStarCraft), final pinned ledger1pass1.18s.
+Lint/typecheck/build/diff pass; JS833.17kB existing advisory. Native independent
+candidate and evidence review approved; Claude launcher unavailable this session,
+not retried. StarCraft99261754/40k04c62fcd and snapshot manifests unchanged;
+mainbac89b7 and old UI checkout69b2095 remain clean. Final pushed-SHA CI is
+confirmed in completion response/run history.
 
-**Stop after this batch.** No next implementation is authorized. The budget
-activation follow-up needs controlled reference evidence; SC-04/05/06/08 and
-other roadmap items remain open. No main merge/push, PR, source update or deploy.
+SC01/02 and SC03/07 accepted behavior remain intact. Initial Marines creation
+still emits the conservative initialization-modifier warning; the reinforcement
+command has no diagnostics and existing automatic reconciliation supplies the
+correct final state. Orphan cost types, revision mismatch, zero/hidden budget
+activation, dynamic limits and reference/XML/freshness gaps remain. Review also
+found an inherited typed-constraint unresolved-container-to-zero hole; separately
+tracked below, not altered by this numeric condition repair.
+
+**Stop after SC-04.** No next phase, broad audit, budget expansion, XML/reference/
+freshness work, source update, main merge/push, PR or deployment is authorized.
+Await a bounded owner assignment; this checkpoint does not imply full legality.
 
 ### Historical accepted pilot baseline (pre-repair)
 
@@ -1207,7 +1217,8 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | Category-owned force/cost bounds beyond SC-02 | Open, separate owner assignment | Nine previously omitted40k source bounds now unresolved in pinned Guardian context; seven base -1, activation not established; no category-owned cost/force execution |
 | SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; unresolved source activation remains explicit |
 | SC-03/07 source-default activation and dynamic limits | Open; next budget evidence boundary, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
-| SC-04 typed-unit Reinforce conditions | Open | Container-only observation gives count0, Marines6/230 instead of source-intended9/240; settle reference semantics before bounded repair |
+| SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
+| Typed-constraint unresolved containing scope | Open, separate bounded owner assignment | Inherited constraints.ts can leave canObserve true after nearest typed container is unresolved and produce observed0; numeric condition SC04 has the proper uncertainty guard, constraint traversal was intentionally unchanged |
 | SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
 | SC-06 profile metadata and reference classification | Open | kind/order/longText/annotation and seven format rules retained but not executed; ability profiles routed to equipment; no arbitrary regex execution |
 | SC-08 source-aware freshness | Open | Inherited default-source0/BSData copy is 40k-specific; bind to provenance without an updater |
@@ -15450,6 +15461,9 @@ Next recommendation SC03/07 only after owner assignment. Stop here.
 
 ## Completed Assignment — 2026-09-14: SC-03/07 budgets, limit queries and durable controls
 
+> Historical SC04 six-model/230 assertions below are superseded by the SC04
+> completion entry. Budget acceptance and its remaining boundaries are unchanged.
+
 **Baseline and ownership.** Owner selected only `codex/starcraft-pilot`, baseline
 81a15e2cee6f7bc54544904d3492e5093fb98c50. Clean pilot state recorded before writes;
 main remains bac89b7ed92b088d270e0287c4893ff47d53d04e, original UI checkout clean
@@ -15549,3 +15563,110 @@ closure parity claim. Architecture/compatibility/diagnostics and focused QA upda
 historical baseline Gas gap is explicitly superseded. Push pilot only, confirm
 exact final-SHA CI in completion response/run history. No main/PR/merge/deployment,
 pin update, multiforce expansion or next phase. Stop; keep test server5275 running.
+
+## Completed Assignment — 2026-09-14: SC-04 numeric unit conditions and reinforcement lifecycle
+
+**Baseline/result.** Owner selected only codex/starcraft-pilot. Fetched and
+verified clean/upstream-equal92c4c1408919fb05b052025c5bb2e12b59dc03be; preserved
+all worktrees and no other active Codex writer observed. Code/tests/QA commit
+6372abd35931551f999974154b904e9dde9e0bd4; this handoff is separate. Mainbac89b7
+and UI69b2095 clean, source pins/snapshots unchanged. No reset/merge/stash/PR.
+
+**Evidence and decision.** Frozen four-file StarCraft hashes match original
+manifest: GST500146bytes, Terran112172, Protoss92542, Zerg134299. Source99261754
+unchanged; system12/catalogue declaration13 and orphan types preserved. Current
+baseline reproduced six models/230; corrected pinned expected9 failed with6.
+Initial fictional test syntax repaired, then8fail1pass exposed actual count/
+container/quantity issues before production change. Source Marine min/max6 are
+automatic and set9 by an omitted-flag/shared unit count of Reinforce. Same leaf
+sets Shield20->30; Reinforce50/Core-1 remains independent from base160/Core-1.
+
+Targeted ordinary New Recruit comparison observed160/6,180/6,240/9,180/6 and
+Shield20/30/20 with Core2/1/2 including Terran Armed Forces. Existing installed
+StarCraft surface said last update7days; exact installed closure/Terran revision/
+runtime build not captured. No immutable parity claim or fictional true/false
+NR claim; earlier directory-chooser limitation was not a reason to repeat setup.
+Standing owner authorization allowed disposable reference army. Pinned editor
+Query.vue028526ee exposes typed Unit and separate child traversal controls.
+Chosen bounded interpretation: numeric unit selection queries count the resolved
+unit's child collection, false/omitted direct and true descendants, never its
+container. Existing nearest typed occurrence/self behavior and identity matching
+remain; prospective nested-unit/general typed-scope expansion not established.
+
+Rejected making every typed query recursive, defaulting all omitted flags true,
+name/ID special cases, separate quantity/pricing patches and a second reconciler.
+Shared helper also serves existing ID-valued scope without changing it. Numeric
+unit conditions alone select it; cost modifiers and bound modifiers share that
+condition leaf. Direct cost-field queries, typed constraints, identity predicates
+and other typed scopes retain previous behavior. Numeric unit repeats adapt via
+that leaf and retain raw flags/children rather than erasing unsupported evidence.
+Missing/ambiguous query target, malformed flags, unknown envelopes and unresolved
+nearest-unit locations stay incomplete. Ambiguous definitions can still establish
+a containing type when all candidates agree; no stronger ambiguity claim made.
+
+**Survey/impact.** SC4documents16unit numeric selection conditions:10Terran6Zerg,
+allomitted/sharedtrue. Pinned40k46JSON:180numeric unit selection conditions
+(167true9omitted4false),2identity conditions,1direct-cost condition,69constraints
+(68true1false),7numeric repeats(alltrue). The latter inherit count change; other
+channels intentionally unchanged. Omitted model counts in Aeldari/Space/Dark
+Angels and explicitfalse Chaos choices inspected. Reviewer found inherited typed
+constraint unresolved-container canObserve/zero hole; new roadmap row records it,
+separate from nine40k category-owned force/cost bounds. No broad format audit.
+
+**Implementation/lifecycle.** Existing automatic reconciler changes one Marine
+occurrence amount6/9/6 and retains IDs/equipment, without new mutation code.
+Actual bounds base6/effective9/observed9 satisfied for both min/max; actual
+condition0/1/0 unsatisfied/satisfied/unsatisfied complete. Initial root-add warning
+EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED remains conservative;
+reinforcement command diagnostics[]. Existing ten-pass limit/failure policy remains;
+failed duplicate-ID add returns failure without changing original tree. No new
+trimming policy for distinct equipment. Nonautomatic deliberate removal remains
+unfilled; generic tests and configured40k checks protect it. Source bytes never
+rewritten; history stores coherent command+derived state. Repeated reevaluation
+never duplicates models or increments prices. Exact Minerals remains usable
+alongside unrelated orphan resource incompleteness and seven unknown defaults.
+
+**Browser.** Fresh5277 pinnedBrowse/Terran/load/create/ArmedForces. Marines both
+orders,6/160,Shield6/180,Reinforce9/240,removal6/180; reinforced first9/210 then
+Shield9/240. Second squad stays6/160. Duplicate9/240, edits to original/copy
+independent; final9/240+6/180+6/160 =580, Core-1 with faction. Undo/redo restores
+whole quantity/equipment/price action. Disposable575limit gives exact5over and
+independent Core problem. New-tab recovery restores9/6/6, choices and575limit;
+original test tab closed after recovery, saved normally. Leave via Change roster
+setup then shelfOpen restores same12selected occurrences/580/575. Source-file
+rebuild/decode and history also verified in pinned API. Marauder+Foam2/170 ->
+4/320 (150+130+40) ->2/170; temporary Marauders removed, saved3Marine states retained.
+
+Desktop1440x900 and390x844 phone actual screenshots inspected; model9, disabled
+plus and selected upgrades readable, keyboard minus clamps back9 per automatic
+source bound. Phonewidth375/375 no pageoverflow; problemdialog showsbudget+Core,
+Closefocusreturns. Consolewarnings/errors[]. Reference Marine/C14/Strike retains
+1xMarines bearer, literal entities and old abilityclassification; composition9
+is correct but noSC05/06/fullreference claim. Shieldchip explicitly20Mineralsbase;
+evaluatedcontribution30 asserted. Viewportreset;5277server left running;5275/5273/
+5271 and older saved data preserved. No physical-device/screen-reader/fullgame/
+repeatfull40kmanual acceptance. Local evidence filenames in focused QA report.
+
+**Review/gates.** Lead owned implementation/integration/browser/publication;
+one native reviewer in dedicated detached starcraft-reinforcement-review atbaseline.
+Claude unavailable in this session; no retries/install/billing or externalapproval
+claim. Early design review kept scope narrow. Candidate blocker unknown child
+behavior fixed before applicability decisions; unit-repeat raw source evidence
+retained. Added present/absent trigger, ambiguous target, malformed repeat and
+correct allocation comment. Corrected candidate and final evidence approved.
+Final17fictional tests1file1.11s; normal835pass31optionalSkip86/7files11.99s.
+Configured28pass4files28.73s,noskips,27existing40k+1expandedStarCraft; finaladded
+condition/diagnostic ledger1pass1.18s. Lint/typecheck/build/diffpass. Build188modules,
+JS833.17kB/gzip230.54,CSS83.38kB/gzip14.87,existingadvisory. Configured40kHEAD
+04c62fcd041b3808c39d5c46fd677c704027b979 and correctness A/B unchanged.
+Five/ten/five/repeated costs,Supporting/connected,structural/category/force,
+conditionalinitialization/no arbitraryrefill,BattleSize/budgets/orphans,renderer
+reference/phone/history/persistence regressions pass. Focusedreport/architecture/
+compatibility/diagnostics updated; historical failure preserved and superseded.
+
+**Publication/stop.** Publish own implementation+handoff only to pilot; exactfinal
+CI in completionresponse/runhistory. SC04 fixed for evidenced shape. Remaining
+sourcezero/hiddenpositive/dynamicbudget,orphancost/revision,SC05XML,SC06metadata,
+SC08freshness,unknownnestedprospectiveunit and typedconstraint issues stayopen.
+No mainmerge/push,PR,deploy,pinchange,budgetexpansion or nextphase. Stop; leave5277
+available for owner testing.
