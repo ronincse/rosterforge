@@ -1,6 +1,6 @@
 /**
- * Evaluates force-category links and roster-scoped category-definition counts
- * against effective membership, including nested designation upgrades.
+ * Evaluates force-category links and category-definition counts at roster or
+ * parent-force scope against effective membership, including nested upgrades.
  *
  * Force bounds live on a force definition's category links, rather than on a
  * selectable entry. The pinned 40K corpus uses them for the roster-wide
@@ -60,7 +60,7 @@ export type RosterCategoryConstraintStatus =
   | "violated"
   | "unresolved";
 export type RosterCategoryConstraintType = "min" | "max";
-export type RosterCategoryConstraintScope = "roster";
+export type RosterCategoryConstraintScope = "roster" | "parent";
 
 export interface RosterCategoryConstraintReport {
   readonly roster: Roster;
@@ -108,11 +108,12 @@ export interface RosterCategoryConstraintsInRosterReport {
 }
 
 /**
- * Collects category-link bounds for every force occurrence in a roster.
+ * Collects category-link and category-definition bounds for roster forces.
  *
  * The implementation deliberately supports only the measured corpus shape:
- * finite min/max selection bounds at roster scope with child selections.
- * Force links require child forces; category definitions honor that flag.
+ * finite shared min/max selection bounds. Roster bounds retain the original
+ * descendant traversal. Parent bounds count the owning force roots by default,
+ * optionally their descendant selections, without crossing into child forces.
  * Any wider BattleScribe shape remains visible as incomplete
  * validation rather than being guessed into a legality result.
  */
@@ -168,21 +169,20 @@ export function inspectRosterCategoryConstraintsInRoster(
         if (inspected.ok) constraints.push(inspected.value);
       }
     }
-    // Category-owned roster bounds apply once, not once per force or once per
-    // selected member. They can require a selection even when none exists yet.
-    // Keep their real source distinct from force links; no synthetic link is
-    // fabricated to make a Warlord category look like a battlefield role.
-    if (definition && !categoryDefinitionsInspected) {
-      categoryDefinitionsInspected = true;
+    // Roster definitions apply once; parent definitions apply once per force
+    // category context, even with zero selected members. Multiple links never
+    // create duplicate definition findings. The source owner remains distinct.
+    if (definition) {
       for (const category of context.categories.definitions) {
         for (const constraint of category.source.constraints) {
-          if (constraint.scope !== "roster" || constraint.field !== "selections") continue;
+          if (constraint.scope !== "parent" && categoryDefinitionsInspected) continue;
           const inspected = inspectCategoryConstraint(roster, context, owner, definition,
             ownerResolution, undefined, constraint, effectiveCategories, category);
           diagnostics.push(...inspected.diagnostics);
           if (inspected.ok) constraints.push(inspected.value);
         }
       }
+      categoryDefinitionsInspected = true;
     }
     forces.push({
       roster,
@@ -246,7 +246,7 @@ function inspectCategoryConstraint(
     constraint.type === "min" || constraint.type === "max"
       ? constraint.type
       : undefined;
-  const scope = constraint.scope === "roster" ? "roster" : undefined;
+  const scope = constraint.scope === "roster" || constraint.scope === "parent" ? constraint.scope : undefined;
   const baseLimit =
     constraint.value !== undefined &&
     Number.isFinite(constraint.value) &&
@@ -268,8 +268,12 @@ function inspectCategoryConstraint(
 
   const knownAttributes = new Set(["id", "type", "field", "scope", "value", "shared", "percentValue", "includeChildSelections", "includeChildForces", "comment"]);
   const invalidBoolean = ["shared", "percentValue", "includeChildSelections", "includeChildForces"].some(key => constraint.node.attributes[key] !== undefined && !["true", "false", "1", "0"].includes(constraint.node.attributes[key]!));
-  const unknownShape = categoryDefinition !== undefined && (invalidBoolean || Object.keys(constraint.node.attributes).some(key => !knownAttributes.has(key)) || constraint.node.children.some(child => child.kind === "element"));
-  const supportedShape = !unknownShape &&
+  const unknownShape = invalidBoolean || Object.keys(constraint.node.attributes).some(key => !knownAttributes.has(key)) || constraint.node.children.some(child => child.kind === "element");
+  const parentLinks = categoryDefinition && scope === "parent"
+    ? definition.categoryLinks.filter(link => link.targetId === categoryId) : [];
+  const parentContextKnown = !categoryDefinition || scope !== "parent" ||
+    (parentLinks.length > 0 && parentLinks.every(link => link.status === "resolved" && link.targets.length === 1));
+  const supportedShape = !unknownShape && parentContextKnown &&
     categoryId !== undefined &&
     constraintType !== undefined &&
     scope !== undefined &&
@@ -277,8 +281,9 @@ function inspectCategoryConstraint(
     constraint.field === "selections" &&
     constraint.shared === true &&
     constraint.percentValue !== true &&
-    constraint.includeChildSelections === true &&
-    (categoryDefinition !== undefined || constraint.includeChildForces === true);
+    (scope === "parent"
+      ? constraint.includeChildForces !== true
+      : constraint.includeChildSelections === true && (categoryDefinition !== undefined || constraint.includeChildForces === true));
   if (!supportedShape) {
     diagnostics.push(
       categoryConstraintDiagnostic(
@@ -297,6 +302,7 @@ function inspectCategoryConstraint(
           percentValue: constraint.percentValue,
           value: constraint.value,
           unknownShape,
+          parentContextKnown,
         },
       ),
     );
@@ -309,23 +315,26 @@ function inspectCategoryConstraint(
       : source.modifiers.filter(
           (modifier) => modifier.field === constraintId,
         );
-  // Direct definition-owned modifiers use the same evaluator below as links.
-  // Only groups targeting this exact bound can make its numeric limit unknown.
+  // At roster scope, direct definition-owned modifiers use the link evaluator.
+  // Only modifier groups targeting this exact bound affect its uncertainty.
   const targetsBound = (group: (typeof source.modifierGroups)[number]): boolean => constraintId !== undefined && (group.modifiers.some(modifier => modifier.field === constraintId) || group.modifierGroups.some(targetsBound));
-  const unsupportedModifiers = source.modifierGroups.some(targetsBound);
+  // Parent ownership is newly bounded to static limits. Reusing force-owned
+  // condition context for a category-relative modifier would guess its scope.
+  const unsupportedParentModifiers = scope === "parent" && modifiers.length > 0;
+  const unsupportedModifiers = source.modifierGroups.some(targetsBound) || unsupportedParentModifiers;
   if (unsupportedModifiers) {
     diagnostics.push(
       categoryConstraintDiagnostic(
         constraint,
-        "EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED",
-        "Groups targeting this category constraint are preserved but not evaluated.",
+        unsupportedParentModifiers ? "EVALUATION_CATEGORY_CONSTRAINT_PARENT_MODIFIERS_UNSUPPORTED" : "EVALUATION_CATEGORY_CONSTRAINT_MODIFIER_GROUPS_UNSUPPORTED",
+        "Grouped limits and parent-category limit modifiers are preserved but not evaluated.",
         { modifierGroups: source.modifierGroups.length, categoryDefinition: categoryDefinition !== undefined },
       ),
     );
   }
 
   const modifierApplicability: RosterModifierApplicabilityReport<RosterCategoryConstraintModifier>[] = [];
-  for (const modifier of modifiers) {
+  for (const modifier of unsupportedParentModifiers ? [] : modifiers) {
     const evaluated = evaluateRosterModifierApplicability(
       roster,
       context,
@@ -342,7 +351,7 @@ function inspectCategoryConstraint(
   const modifierSequence =
     baseLimit === undefined
       ? undefined
-      : evaluateNumericModifierSequence(baseLimit, modifiers, {
+      : evaluateNumericModifierSequence(baseLimit, unsupportedParentModifiers ? [] : modifiers, {
           applicability: (modifier) => {
             const report = applicabilityByModifier.get(modifier);
             return report?.evaluated === true ? report.status : undefined;
@@ -363,8 +372,11 @@ function inspectCategoryConstraint(
   let maximum = 0;
   if (supportedShape) {
     const rootForces = new Set(roster.forces);
+    const directSelections = new Set(owner.selections);
     for (const { occurrence, force } of rosterSelectionLocations(roster)) {
-      if (categoryDefinition && constraint.includeChildForces !== true && !rootForces.has(force)) continue;
+      if (scope === "parent") {
+        if (force !== owner || (constraint.includeChildSelections !== true && !directSelections.has(occurrence))) continue;
+      } else if (categoryDefinition && constraint.includeChildForces !== true && !rootForces.has(force)) continue;
       const amount = rosterSelectionAmount(occurrence);
       const categories = effectiveCategories.get(occurrence);
       if (!Number.isFinite(amount) || amount < 0) {

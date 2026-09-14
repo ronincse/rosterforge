@@ -1644,3 +1644,9 @@ after its bound is resolved and verified at creation. Later edits are not refill
 
 Existing condition and cost-query diagnostics accompany unknown applicability.
 Authored errors are a separate validation finding kind, not constraint diagnostics.
+
+- `EVALUATION_CATEGORY_CONSTRAINT_PARENT_MODIFIERS_UNSUPPORTED`: parent category
+  limit modifiers are retained without execution; the bound is unresolved.
+- `EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED` now also records skipped
+  category-definition force/cost scopes, parent context uncertainty, unsupported
+  shared/traversal flags and retained unknown source shapes. It is not a violation.

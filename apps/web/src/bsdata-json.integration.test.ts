@@ -4232,9 +4232,25 @@ describe.skipIf(realDataDirectory === undefined)(
           // Incoming association/group-currency bounds are now supported;
           // the remaining source condition attributes still withhold exactness.
           )).toEqual({
+            EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED: 9,
             EVALUATION_CONDITION_ATTRIBUTES_UNSUPPORTED: 3,
             EVALUATION_NUMERIC_MODIFIER_APPLICABILITY_UNRESOLVED: 1,
           });
+          // Previously omitted category-owned force/cost bounds now remain
+          // explicitly incomplete; this checkpoint does not execute them.
+          const categoryPending = supported.value.constraints.categories.forces.flatMap(f => f.constraints).filter(c => c.completeness === "incomplete");
+          expect(categoryPending.every(c => c.status === "unresolved")).toBe(true);
+          expect(categoryPending.map(c => [c.categoryName, c.constraint.field, c.constraint.scope, c.constraint.value])).toEqual([
+            ["Faction: Tyranids", "51b2-306e-1021-d207", "force", -1],
+            ["Faction: Drukhari", "51b2-306e-1021-d207", "force", -1],
+            ["Faction: Astra Militarum", "51b2-306e-1021-d207", "roster", -1],
+            ["Faction: Imperial Knights", "selections", "force", -1],
+            ["Faction: Heretic Astartes", "51b2-306e-1021-d207", "force", -1],
+            ["Faction: Legiones Daemonica", "51b2-306e-1021-d207", "force", -1],
+            ["Faction: Adeptus Mechanicus", "51b2-306e-1021-d207", "force", -1],
+            ["Crucible", "selections", "force", 3],
+            ["3DP Detachment", "selections", "force", 1],
+          ]);
           expect(
             supported.value.constraints.selections.selections.flatMap(
               ({ owner, constraints: reports }) =>

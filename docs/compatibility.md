@@ -7,7 +7,7 @@ The `codex/starcraft-pilot` branch registers StarCraft community data at
 path. This is not a full-support declaration or a change to 40k's source pin.
 All three factions download/create; selected Terran and Protoss save/reopen
 passes. Force-owned direct `add` error modifiers now participate in validation;
-parent category-definition scopes remain pending in this intermediate checkpoint.
+static shared parent-category selection bounds are also evaluated.
 The engine lacks default purchase-budget enforcement and
 does not produce the source-intended Marines reinforcement transition.
 XML escape display and profile metadata also need bounded work. Terran costs
@@ -34,6 +34,31 @@ modifiers, repeated errors, other operations and other ownership locations are
 not supported by this force-error channel. Grouped force errors are retained as
 unresolved unless their own complete leaf conditions are false. No default budget
 or `limit::` query behavior is added. See `qa/starcraft-validation-errors.md`.
+
+### Parent category requirements (SC-02)
+
+Static `field="selections"`, `scope="parent"`, `shared="true"` finite nonnegative
+min/max bounds are supported on category definitions and force-category links.
+A definition-owned requirement is inspected once per owning force/category
+context, requiring resolved links to that unique category definition. It counts
+effective category members in the force's direct selections; explicit
+`includeChildSelections=true` admits descendants in the same force. Each selected
+occurrence contributes its amount, including distinct links to a shared entry.
+Unrelated categories and other forces do not contribute. Definition and link
+sources remain separate, with stable findings and independent min/max status.
+
+Parent `shared=false`/omitted, child-force traversal, percent limits, unknown
+source attributes/flags, missing or ambiguous category/context, and parent limit
+modifiers remain incomplete. Parent modifiers are retained without execution;
+the displayed limit is the authored base, not a verified effective limit.
+Roster-scoped category behavior retains its preceding support. Category-owned
+force/cost bounds are now explicitly diagnosed instead of silently skipped;
+these broader scopes and sentinel/modifier behavior remain withheld.
+
+Pinned browser/API checks cover Protoss and Terran definition-owned faction
+requirements and Zerg's distinct force-link requirement. This is not general
+multi-force support or a full StarCraft validation claim. Budget210/200 and
+Marines reinforcement6/230 remain documented gaps.
 
 ## Implemented
 

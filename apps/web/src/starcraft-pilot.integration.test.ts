@@ -1,4 +1,4 @@
-// Optional reproduction of the experimental pilot, not a support acceptance test.
+// Optional pinned validation regression plus explicit remaining pilot reproductions.
 // Download the four immutable files listed in docs/qa/starcraft-pilot-baseline.md
 // into ROSTERFORGE_STARCRAFT_PILOT_DIR. Source bytes are never rewritten.
 import { createHash } from "node:crypto";
@@ -22,7 +22,7 @@ function ok<T>(result: Result<T>): T {
   return result.value;
 }
 
-it.skipIf(!directory)("reproduces the frozen StarCraft baseline gaps without claiming compatibility", async () => {
+it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserves unrelated pilot gaps", async () => {
   if (!directory) throw new Error("Pilot data not configured");
   const library = ok(await prepareLocalCatalogueLibrary(files.map(([filename, hash]) => {
     const bytes = new Uint8Array(readFileSync(join(directory, filename)));
@@ -71,12 +71,17 @@ it.skipIf(!directory)("reproduces the frozen StarCraft baseline gaps without cla
   };
   const missingFaction = validation(protoss);
   protoss = addRoot(protoss, "Daelaam").session;
+  expect(validation(protoss)).toMatchObject({ validity: "valid", counts: { violated: 0 } });
+  const extraFaction = addRoot(protoss, "Khalai");
+  expect(validation(extraFaction.session)).toMatchObject({ validity: "invalid", counts: { violated: 1 } });
+  protoss = ok(removeLocalRosterSelection(extraFaction.session, extraFaction.id));
+  expect(validation(protoss)).toMatchObject({ validity: "valid", counts: { violated: 0 } });
   protoss = addRoot(protoss, "Zealots").session;
   const positive = ledger(protoss);
   const second = addRoot(protoss, "Zealots"); protoss = second.session;
   const negative = ledger(protoss);
   const negativeValidation = validation(protoss);
-  expect(missingFaction).toMatchObject({ validity: "valid", completeness: "complete" });
+  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "complete", counts: { violated: 1 } });
   expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "complete" });
   expect(ok(inspectLocalRosterSupportedValidation(protoss)).status.findings.filter(f => f.kind === "authoredError").map(f => f.report.message)).toEqual(["Not enough Core Supply."]);
   expect(negative.totals.find(t => t.id === "472f-46af-8e02-bfbf")?.value).toBe(-1);
@@ -88,6 +93,26 @@ it.skipIf(!directory)("reproduces the frozen StarCraft baseline gaps without cla
   const gasValidation = validation(protoss);
   expect(gasOverBudget.totals.find(t => t.id === "1719-6214-392e-e53f")?.value).toBe(210);
   expect(gasValidation).toMatchObject({ validity: "valid", completeness: "complete" });
+  for (const name of ["Terran", "Zerg"]) {
+    let s = create(name);
+    const bounds = (session: LocalRosterSession) => ok(inspectLocalRosterSupportedValidation(session)).status.categoryConstraints.forces.flatMap(f => f.constraints).filter(c => c.categoryName === "Faction");
+    expect(bounds(s).map(c => c.status)).toEqual(["violated", "satisfied"]);
+    expect(bounds(s).every(c => name === "Zerg" ? c.categoryLink !== undefined && c.categoryDefinition === undefined : c.categoryDefinition !== undefined)).toBe(true);
+    const factionId = bounds(s)[0]!.categoryId;
+    const choices = localRosterRootChoices(s.catalogue).filter(c => c.materialized.categoryLinks.some(link => link.targetId === factionId));
+    expect(choices.length).toBeGreaterThan(0);
+    const addFaction = (base: LocalRosterSession, index: number) => {
+      const id = next();
+      return { id, session: ok(addLocalRosterRootSelection(base, choices[index]!, { selectionId: id, createSelectionId: next })) };
+    };
+    // Faction and unit names can coincide. Use the exact category-qualified
+    // choice, never a name lookup that silently selects a different source.
+    const first = addFaction(s, 0); s = first.session;
+    expect(bounds(s).map(c => c.status)).toEqual(["satisfied", "satisfied"]);
+    const second = addFaction(s, choices.length - 1);
+    expect(bounds(second.session).map(c => ({ status: c.status, observed: c.observed }))).toEqual([{ status: "satisfied", observed: 2 }, { status: "violated", observed: 2 }]);
+    expect(bounds(ok(removeLocalRosterSelection(second.session, second.id))).map(c => c.status)).toEqual(["satisfied", "satisfied"]);
+  }
   const report = JSON.stringify({ base, shieldOnly, reinforced, models: models.map(s => ({ id:s.id, amount:s.amount })), removed, missingFaction, positive, negative, negativeValidation, repaired, gasOverBudget, gasValidation }, null, 2);
   console.log(report);
   // Explicit opt-in artifact path keeps ordinary and corpus test runs read-only.

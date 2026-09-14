@@ -2541,3 +2541,14 @@ query static signed costs without recursively evaluating cost modifiers; relevan
 modified or unresolved costs remain unknown. This keeps evaluation deterministic
 and prevents a validation/cost recursion. Error report provenance retains the
 original modifier and force occurrence, allowing stable problem keys/navigation.
+
+### Parent category constraints
+
+`category-constraints.ts` retains separate source provenance for definition-owned
+and force-category-link bounds. Parent definitions are collected once per force,
+independent of selected members; a uniquely resolved force-category context is
+required. Counting uses effective membership and immutable occurrence amounts,
+with explicit root/descendant selection filtering inside that force. Roster
+bounds retain once-per-roster collection. Unsupported definition scopes are
+reported rather than skipped. Newly admitted parent bounds are static: category-
+relative modifier semantics and child-force traversal remain withheld.
