@@ -1,3 +1,4 @@
+import { ResourceBudgets } from "./resource-budgets.js";
 import {
   useEffect,
   useId,
@@ -164,6 +165,7 @@ export function RosterOverview({
   onRenameSelection,
   onSetSelectionAmount,
   onSetAssociation,
+  onSetResourceBudget,
   canUndo,
   canRedo,
   onUndo,
@@ -187,6 +189,7 @@ export function RosterOverview({
   ) => SelectionOccurrenceId | undefined;
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
   readonly onSetAssociation?: SetAssociation;
+  readonly onSetResourceBudget?: (typeId: import("@rosterforge/foundation").ObjectId, value: number | undefined) => void;
   readonly onAddChildSelection: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -922,6 +925,8 @@ export function RosterOverview({
           local page and try again.
         </p>
       )}
+
+      {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} />}
 
       {configurationGroup !== undefined && (
         <RosterConfigurationSection
@@ -3756,6 +3761,10 @@ function RosterProblemsDialog({
 function validationFindingMessage(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "resourceBudget") {
+    const resource = finding.report.resource;
+    return `${resource.definitions[0]?.name?.trim() ?? resource.typeId}: ${finding.status === "violated" ? "resource budget exceeded" : "resource budget could not be checked"}`;
+  }
   if (finding.kind === "authoredError") return finding.report.message;
   if (finding.kind === "categoryConstraint") {
     const { categoryName, constraintType, limit, observed, minimum } =
@@ -3789,6 +3798,10 @@ function validationFindingMessage(
 function validationFindingObservation(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "resourceBudget") {
+    const { resource, value, exact } = finding.report;
+    return `${formatNumber(value)} ${exact ? "total" : "provisional total"}; ${resource.effective.kind === "finite" ? `limit ${formatNumber(resource.effective.value)}` : "limit unresolved"}`;
+  }
   if (finding.kind === "authoredError") return finding.status === "violated" ? "Catalogue requirement not met" : "Requirement could not be checked";
   if (finding.kind === "categoryConstraint") {
     const { observed, minimum, maximum, limit } = finding.report;
@@ -3812,6 +3825,7 @@ function validationFindingObservation(
 function validationFindingTarget(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "resourceBudget") return "#resource-budgets-heading";
   if (finding.kind === "categoryConstraint") {
     if (finding.report.categoryDefinition) {
       return finding.report.matching[0]
@@ -3832,6 +3846,7 @@ function validationFindingTarget(
 function validationFindingKey(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "resourceBudget") return JSON.stringify([finding.kind, finding.report.resource.typeId]);
   if (finding.kind === "structural") return structuralBoundKey(finding.report);
   if (finding.kind === "authoredError") return JSON.stringify([finding.kind, finding.report.owner.id, finding.report.modifier.source.sourceId, ...finding.report.modifier.path]);
   return JSON.stringify([

@@ -8,8 +8,9 @@ path. This is not a full-support declaration or a change to 40k's source pin.
 All three factions download/create; selected Terran and Protoss save/reopen
 passes. Force-owned direct `add` error modifiers now participate in validation;
 static shared parent-category selection bounds are also evaluated.
-The engine lacks default purchase-budget enforcement and
-does not produce the source-intended Marines reinforcement transition.
+Supported default purchase budgets and explicit player limits now participate
+in validation and limit queries. Zero/creation-hidden default activation remains
+unverified. The engine does not produce the source-intended Marines reinforcement transition.
 XML escape display and profile metadata also need bounded work. Terran costs
 remain incomplete for five genuinely absent source cost types. See
 [`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
@@ -32,8 +33,53 @@ costs do not turn a known resource query into an unknown one.
 Messages are plain React text, never executable semantics. Grouped error
 modifiers, repeated errors, other operations and other ownership locations are
 not supported by this force-error channel. Grouped force errors are retained as
-unresolved unless their own complete leaf conditions are false. No default budget
-or `limit::` query behavior is added. See `qa/starcraft-validation-errors.md`.
+unresolved unless their own complete leaf conditions are false. SC-01 does not define resource-budget semantics; the following SC-03/07 section
+records that separate contract. See `qa/starcraft-validation-errors.md`.
+
+
+### Resource budgets and limit queries (SC-03/07)
+
+`resolveRosterResourceLimits` supplies one exact-ID, saved-context configuration
+model. Supported source defaults are positive finite declarations with explicit
+or omitted false base hidden state; -1 means unbounded in budget metadata only.
+Missing/exact-empty defaults are absent. Source zero and creation-hidden positive
+default activation are unverified and remain unresolved. No name, leading space,
+or inferred game-size ratio classifies a resource. Hidden resources with explicit
+player limits are checked. Source declarations/bytes are never edited.
+
+Player overrides are finite nonnegative values (including a real maximum zero)
+or -1 for no configured limit. Reset removes the override and restores the saved
+source state. Invalid/ambiguous identities and unknown dynamic limit behavior are
+qualified; a value cannot bypass an unresolved identity or dynamic dependency.
+Seven StarCraft source-zero counters now contribute explicit incompleteness,
+without false maximum-zero violations; accepted supply/faction findings remain
+independent. This is not a claim that those counters are purchase budgets.
+
+Supported `limit::<exact-cost-id>` leaves use roster scope, childId=any,
+shared=true, finite numeric comparisons and false/absent descendant flags. They
+read the effective configuration value, never spent costs. Explicit/default -1
+is retained as the numeric sentinel for queries, never Infinity. Missing limits,
+unknown IDs/scopes/grammar, percentages, traversal, and dynamic limit expressions
+remain unresolved. Dependencies are limits -> conditions -> evaluated costs ->
+budget validation; limits never execute conditions or costs. Cycles/unknown limit
+modifiers remain diagnosed rather than recursively evaluated.
+
+Budget findings use the existing modified-cost evaluator and per-currency exact
+queries. Below/at a known maximum satisfy; above violates. Relevant uncertain
+costs or limits make the check incomplete, with no remaining arithmetic from a
+partial signed subtotal. Unrelated orphan currencies do not taint a known total.
+Force/category restrictions retain their own provenance and still apply; player
+budgets cannot remove them. Equal numeric values are not evidence of duplicate
+source identity. Existing 40k Battle Size and Detachment Points bounds remain.
+
+Normal immutable history, draft/recovery decoding, and saved-source reopening
+preserve overrides. Old drafts omit the optional field. Malformed values,
+duplicate IDs, unknown override entry fields, and oversized arrays fail decoding
+for present/past/future snapshots. Enter/Apply commits text; reset removes it and
+returns focus to the input. Source-dependent hidden selections remain stored.
+A small resource summary exposes both independent purchase limits, neutral totals,
+provisional spending, and unknown/inactive limits; configuration shows default
+versus override and reset. See [focused evidence](qa/starcraft-resource-budgets.md).
 
 ### Parent category requirements (SC-02)
 
@@ -801,8 +847,8 @@ the total provisional and withholds remaining/over-limit arithmetic, rather than
 discarding the capacity or presenting uncertain spending as exact. Genuinely
 incomplete limits remain withheld, including after a previously known limit.
 The compact header retains visible provisional text at phone widths, separately
-from the known-violation count. Without a resolved per-currency capacity witness,
-an incomplete cost report conservatively keeps the displayed spending provisional.
+from the known-violation count. The resource-budget inspection also supplies a per-currency exactness witness
+for currencies without a force capacity, isolating unrelated orphan costs.
 This presentation containment does not resolve the underlying cost modifiers.
 
 At pin `04c62fcd041b3808c39d5c46fd677c704027b979`, Dark Angels with Strike Force,

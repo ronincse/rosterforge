@@ -1650,3 +1650,31 @@ Authored errors are a separate validation finding kind, not constraint diagnosti
 - `EVALUATION_CATEGORY_CONSTRAINT_SHAPE_UNSUPPORTED` now also records skipped
   category-definition force/cost scopes, parent context uncertainty, unsupported
   shared/traversal flags and retained unknown source shapes. It is not a violation.
+
+## Resource budgets (SC-03/07)
+
+- `ROSTER_MODEL_INVALID_RESOURCE_BUDGET`: immutable command rejects invalid IDs,
+  duplicates, unknown fields, nonfinite values, negatives other than budget -1,
+  or more than 1000 overrides. No state is changed. Draft decoding rejects the
+  same malformed shapes through its ordinary invalid-record diagnostic, including
+  past/future history. No NaN/Infinity is serialized as a valid budget.
+- `EVALUATION_RESOURCE_LIMIT_ID_MISSING`: source resource lacks an exact identity.
+- `EVALUATION_RESOURCE_LIMIT_INVALID`: malformed nonempty numeric metadata or an
+  invalid effective player value; it is not silently treated as an absent limit.
+- `EVALUATION_RESOURCE_LIMIT_UNRESOLVED`: missing/ambiguous identity, context
+  mismatch, unverified zero/creation-hidden source activation, or unsupported
+  dynamic limit/envelope behavior. Cyclic limit expressions are never executed.
+- `EVALUATION_CONDITION_LIMIT_SHAPE_UNSUPPORTED`: unsupported `limit::` grammar,
+  scope, target, flags, comparison, percent, traversal, or extension.
+- `EVALUATION_CONDITION_LIMIT_UNRESOLVED`: the limit leaf has no supported numeric
+  effective value. This qualifies the leaf independently of its enclosing tree.
+- `EVALUATION_RESOURCE_BUDGET_COST_CONTEXT_MISMATCH`: supplied evaluated costs are
+  not from the exact roster/context/scope. Completeness is withheld even if all
+  budgets are absent or unbounded.
+- `WEB_ROSTER_RESOURCE_BUDGET_UNAVAILABLE`: the application cannot uniquely resolve
+  the requested resource; it refuses the edit while allowing reset of stale data.
+
+Known budget violations are explicit `resourceBudget` findings with exact cost
+identity and retained source/player provenance. Their `findingCounts` channel is
+separate from structural, authored-error, and force/category/selection bounds.
+Unknown relevant costs/limits are unresolved without an invented known violation.

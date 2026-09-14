@@ -1,3 +1,4 @@
+import { resolveRosterResourceLimits } from "./resource-limits.js";
 import {
   objectId,
   success,
@@ -341,6 +342,35 @@ export function evaluateRosterCondition<
     );
   }
   diagnoseOwner(owner, ownerLocationCount, condition, diagnostics);
+  if (condition.field?.startsWith("limit::")) {
+    // A roster limit is a configuration scalar, never a cost subtotal. Validate
+    // the actual query leaf before bypassing occurrence collection below.
+    const typeId = condition.field.slice("limit::".length);
+    const resource = resolveRosterResourceLimits(roster, context).resources.find(item => item.typeId === typeId);
+    const state = resource?.effective;
+    const flagsValid = ["shared", "percentValue", "includeChildSelections", "includeChildForces"].every(key =>
+      condition.node.attributes[key] === undefined || ["true", "false", "1", "0"].includes(condition.node.attributes[key]!));
+    if (!typeId || typeId.includes("::") || scope !== "roster" || condition.childId !== "any" || condition.shared !== true ||
+        comparison === undefined || expected === undefined || condition.percentValue === true ||
+        condition.includeChildSelections === true || condition.includeChildForces === true || !flagsValid ||
+        unsupportedAttributes(condition).length > 0 || condition.node.children?.some(child => child.kind === "element")) {
+      diagnostics.push(shapeDiagnostic(condition, "EVALUATION_CONDITION_LIMIT_SHAPE_UNSUPPORTED",
+        "Limit queries require an exact cost ID, roster scope, any target, shared=true, finite comparison, and no traversal or extensions.", "field"));
+    }
+    const observed = state?.kind === "finite" || state?.kind === "unbounded" ? state.value : undefined;
+    if (observed === undefined) diagnostics.push(shapeDiagnostic(condition, "EVALUATION_CONDITION_LIMIT_UNRESOLVED",
+      "The queried resource limit is absent, ambiguous, invalid, or unsupported.", "field"));
+    const complete = diagnostics.length === 0;
+    return success({ roster, context, owner, condition,
+      status: complete && observed !== undefined && comparison !== undefined && expected !== undefined
+        ? (compare(comparison, observed, expected) ? "satisfied" : "unsatisfied") : "unresolved",
+      completeness: complete ? "complete" : "incomplete", candidates: [], matching: [],
+      minimum: complete ? observed! : Number.NEGATIVE_INFINITY, maximum: complete ? observed! : Number.POSITIVE_INFINITY,
+      ...(complete ? { observed: observed! } : {}), ...(expected === undefined ? {} : { expected }),
+      ...(comparison === undefined ? {} : { comparison }), ...(scope === undefined ? {} : { scope }),
+    }, diagnostics);
+  }
+
   diagnoseConditionShape(
     condition,
     comparison,

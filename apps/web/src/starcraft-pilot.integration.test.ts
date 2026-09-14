@@ -1,3 +1,4 @@
+import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
 // Optional pinned validation regression plus explicit remaining pilot reproductions.
 // Download the four immutable files listed in docs/qa/starcraft-pilot-baseline.md
 // into ROSTERFORGE_STARCRAFT_PILOT_DIR. Source bytes are never rewritten.
@@ -5,10 +6,10 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import type { Result } from "@rosterforge/foundation";
+import { objectId, type Result } from "@rosterforge/foundation";
 import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge/roster-model";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
-import { addLocalRosterChildSelection, addLocalRosterRootSelection, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, inspectLocalRosterSupportedValidation, localRosterRootChoices, removeLocalRosterSelection, type LocalRosterSession } from "./roster-session.js";
+import { addLocalRosterChildSelection, addLocalRosterRootSelection, createLocalRosterSession, evaluateLocalRosterCosts, inspectLocalRosterChildChoices, inspectLocalRosterSupportedValidation, localRosterRootChoices, removeLocalRosterSelection, setLocalRosterResourceBudget, type LocalRosterSession } from "./roster-session.js";
 
 const directory = process.env.ROSTERFORGE_STARCRAFT_PILOT_DIR;
 const files = [
@@ -81,18 +82,40 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   const second = addRoot(protoss, "Zealots"); protoss = second.session;
   const negative = ledger(protoss);
   const negativeValidation = validation(protoss);
-  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "complete", counts: { violated: 1 } });
-  expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "complete" });
+  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "incomplete", counts: { violated: 1 } });
+  expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "incomplete" });
   expect(ok(inspectLocalRosterSupportedValidation(protoss)).status.findings.filter(f => f.kind === "authoredError").map(f => f.report.message)).toEqual(["Not enough Core Supply."]);
   expect(negative.totals.find(t => t.id === "472f-46af-8e02-bfbf")?.value).toBe(-1);
   protoss = ok(removeLocalRosterSelection(protoss, second.id));
   const repaired = ledger(protoss);
-  expect(validation(protoss)).toMatchObject({ validity: "valid", completeness: "complete" });
+  expect(validation(protoss)).toMatchObject({ validity: "valid", completeness: "incomplete" });
   for (let i = 0; i < 7; i++) protoss = addRoot(protoss, "Forge").session;
   const gasOverBudget = ledger(protoss);
   const gasValidation = validation(protoss);
   expect(gasOverBudget.totals.find(t => t.id === "1719-6214-392e-e53f")?.value).toBe(210);
-  expect(gasValidation).toMatchObject({ validity: "valid", completeness: "complete" });
+  expect(gasValidation).toMatchObject({ validity: "invalid", completeness: "incomplete" });
+  const gasId = objectId("1719-6214-392e-e53f");
+  const mineralId = objectId("5bcf-897a-a5c9-d0e8");
+  const resource = (s: LocalRosterSession, id = gasId) => inspectRosterResourceBudgets(s.roster, s.catalogue.context).resources.find(b => b.resource.typeId === id)!;
+  expect(resource(protoss)).toMatchObject({ value:210, exact:true, status:"violated", resource:{effective:{kind:"finite",value:200}} });
+  const gasOverride = ok(setLocalRosterResourceBudget(protoss, gasId, 210));
+  expect(resource(gasOverride).status).toBe("satisfied");
+  expect(resource(ok(setLocalRosterResourceBudget(gasOverride, gasId, undefined))).status).toBe("violated");
+  expect(resource(gasOverride, mineralId).resource.effective).toEqual({kind:"finite",value:2000});
+  // Exercise the actual saved-source Deployment Maps leaf, independently of
+  // unsupported parent/default-selection behavior surrounding it.
+  const gst = [...protoss.catalogue.context.graph.reachableDocumentsByDocument.get(protoss.catalogue.context.document)!].find(d => d.metadata.kind === "gameSystem")!;
+  const maps = gst.projection.sharedSelectionEntries.find(e => e.id === "d444-6767-cbfc-bf56")!;
+  const camp = maps.selectionEntryGroups[0]!.selectionEntries[0]!;
+  const leaf = camp.modifiers.flatMap(m => m.conditions).find(c => c.field === `limit::${mineralId}`)!;
+  expect(leaf).toBeDefined();
+  const checkLeaf = (s: LocalRosterSession) => ok(evaluateRosterCondition(s.roster,s.catalogue.context,s.roster.forces[0]!,leaf));
+  expect(checkLeaf(protoss)).toMatchObject({observed:2000,status:"satisfied",completeness:"complete"});
+  const small = ok(setLocalRosterResourceBudget(gasOverride,mineralId,1000));
+  expect(checkLeaf(small)).toMatchObject({observed:1000,status:"unsatisfied",completeness:"complete"});
+  expect(resource(small).resource.effective).toEqual({kind:"finite",value:210});
+  expect(checkLeaf(ok(setLocalRosterResourceBudget(small,mineralId,undefined))).observed).toBe(2000);
+  expect(inspectRosterResourceBudgets(protoss.roster,protoss.catalogue.context).resources.filter(b=>b.resource.effective.kind === "unresolved")).toHaveLength(7);
   for (const name of ["Terran", "Zerg"]) {
     let s = create(name);
     const bounds = (session: LocalRosterSession) => ok(inspectLocalRosterSupportedValidation(session)).status.categoryConstraints.forces.flatMap(f => f.constraints).filter(c => c.categoryName === "Faction");

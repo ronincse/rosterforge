@@ -1,5 +1,10 @@
 # StarCraft authored requirements repair
 
+**Historical SC-01/02 report:** its 210-Gas no-violation observation is superseded
+by SC-03/07. See [resource budgets](starcraft-resource-budgets.md). Earlier
+complete verdicts now carry independent unresolved default-activation evidence;
+SC-01/02 known findings and repairs are preserved.
+
 Historical baseline: `c5a04c9b0c88f748faca765f79e614c1e416bf34` on
 `codex/starcraft-pilot`, clean and upstream-equal after fetch. Remote main remains
 `bac89b7ed92b088d270e0287c4893ff47d53d04e`. Original checkout and main worktree

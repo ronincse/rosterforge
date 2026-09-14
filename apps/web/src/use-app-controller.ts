@@ -1,3 +1,5 @@
+import type { ObjectId } from "@rosterforge/foundation";
+import { setLocalRosterResourceBudget } from "./roster-session.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { BattleScribeForceDefinition } from "@rosterforge/data-graph";
@@ -345,6 +347,13 @@ export function useRosterForgeAppController({
         ? createBoundedHistory(session)
         : commitBoundedHistory(history, session),
     );
+  }
+
+  function setResourceBudget(typeId: ObjectId, value: number | undefined) {
+    if (rosterSession === undefined) return;
+    const result = setLocalRosterResourceBudget(rosterSession, typeId, value);
+    setRosterDiagnostics(result.diagnostics);
+    if (result.ok) commitRosterSession(result.value);
   }
 
   function undoRosterEdit() {
@@ -920,6 +929,7 @@ export function useRosterForgeAppController({
     addChildSelection,
     renameSelection,
     setSelectionAmount,
+    setResourceBudget,
     setAssociation,
     undoRosterEdit,
     redoRosterEdit,

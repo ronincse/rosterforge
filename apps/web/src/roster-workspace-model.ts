@@ -332,15 +332,15 @@ function workspaceCostSummary(
     };
   }
   const limits = workspaceCostLimits(validation);
+  const resources = new Map(validation.ok ? validation.value.status.resourceBudgets.resources.map(item => [item.resource.typeId, item]) : []);
   const totals: RosterWorkspaceCost[] = result.value.totals.map((total) => {
     const cost = workspaceCost(total);
     const limited = limits.get(cost.typeId);
-    // Without a resolved capacity there is no per-currency exactness witness
-    // from the constraint report. Keep the cost report's uncertainty visible;
-    // absence of a limit must not upgrade an incomplete total to exact spending.
+    // The budget inspection supplies per-currency exactness even when no
+    // default limit exists. An unrelated orphan currency cannot taint it.
     return limited === undefined ? {
       ...cost,
-      ...(result.value.completeness === "incomplete" ? { provisional: true as const } : {}),
+      ...((resources.get(total.typeId)?.exact ?? result.value.completeness === "complete") ? {} : { provisional: true as const }),
     } : {
       ...cost, limit: limited.limit,
       ...(limited.provisional === true ? { provisional: true as const } : {}),
@@ -421,7 +421,9 @@ function workspaceCostTypeOrder(
 /**
  * Finds the tightest complete maximum for every evaluated force-cost type.
  *
- * Force constraints are the authoritative points-limit source. Names such as
+ * Force restrictions and configurable budgets retain separate provenance.
+ * This summary displays their tightest known cap; the resource editor shows
+ * the configured budget independently and cannot bypass a force restriction. Names such as
  * `pts` are catalogue presentation and cannot safely identify matched-play
  * points. Unknown/unbounded limits remain in Checks. A known cap can coexist
  * with provisional spending; that marker forbids confident remaining arithmetic.
@@ -460,6 +462,15 @@ function workspaceCostLimits(
         });
       }
     }
+  }
+  for (const budget of validation.value.status.resourceBudgets.resources) {
+    const state = budget.resource.effective;
+    if (state.kind !== "finite") continue;
+    const typeId = budget.resource.typeId;
+    const existing = limits.get(typeId);
+    if (existing !== undefined && existing.limit <= state.value) continue;
+    limits.set(typeId, { typeId, name: budget.resource.definitions[0]?.name ?? typeId,
+      value: budget.value, limit: state.value, ...(budget.exact ? {} : { provisional: true as const }) });
   }
   return limits;
 }

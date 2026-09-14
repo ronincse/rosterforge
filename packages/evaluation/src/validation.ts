@@ -1,3 +1,4 @@
+import type { RosterResourceBudget, RosterResourceBudgetsReport } from "./resource-budgets.js";
 /**
  * Folds the validation reports into the one answer the UI shows.
  *
@@ -50,6 +51,7 @@ export type SupportedRosterValidationStatus =
   RosterStructuralBoundStatus;
 
 export type SupportedRosterValidationFinding =
+  | { readonly kind: "resourceBudget"; readonly status: SupportedRosterValidationStatus; readonly report: RosterResourceBudget }
   | { readonly kind: "authoredError"; readonly status: SupportedRosterValidationStatus; readonly report: RosterAuthoredErrorReport }
   | {
       readonly kind: "structural";
@@ -79,6 +81,7 @@ export interface SupportedRosterValidationStatusCounts {
 }
 
 export interface SupportedRosterValidationFindingCounts {
+  readonly resourceBudgets: number;
   readonly authoredErrors: number;
   readonly structural: number;
   readonly selectionConstraints: number;
@@ -93,6 +96,7 @@ export interface SupportedRosterValidationReport
   readonly categoryConstraints: RosterCategoryConstraintsInRosterReport;
   readonly forceConstraints: RosterForceConstraintsInRosterReport;
   readonly authoredErrors: RosterAuthoredErrorsReport;
+  readonly resourceBudgets: RosterResourceBudgetsReport;
   readonly findings: readonly SupportedRosterValidationFinding[];
   readonly statusCounts: SupportedRosterValidationStatusCounts;
   readonly findingCounts: SupportedRosterValidationFindingCounts;
@@ -100,7 +104,8 @@ export interface SupportedRosterValidationReport
 
 /**
  * Composes structural, selection-, category-, and force-constraint reports
- * and an authored-error report into a roster verdict. Callers must supply all reports; this function only folds inputs.
+ * and authored-error/resource-budget reports into a roster verdict. Callers must
+ * supply all reports for the same immutable roster/context; this only folds inputs.
  *
  * Fails rather than composing when the reports did not come from the same
  * roster and catalogue context objects, or when the constraint reports
@@ -122,17 +127,20 @@ export function composeSupportedRosterValidation(
   categoryConstraints: RosterCategoryConstraintsInRosterReport,
   forceConstraints: RosterForceConstraintsInRosterReport,
   authoredErrors: RosterAuthoredErrorsReport,
+  resourceBudgets: RosterResourceBudgetsReport,
 ): Result<SupportedRosterValidationReport> {
-  const diagnostics = compositionDiagnostics(
+  const diagnostics = [...compositionDiagnostics(
     structural,
     selectionConstraints,
     categoryConstraints,
     forceConstraints,
-  );
+  )];
   if ((authoredErrors.roster !== structural.roster || authoredErrors.context !== structural.context)) {
     return failure([validationDiagnostic(structural, "EVALUATION_SUPPORTED_VALIDATION_INPUT_MISMATCH", "Authored errors must retain the same roster and catalogue context objects.")]);
   }
   if (diagnostics.length > 0) return failure(diagnostics);
+  if (resourceBudgets.roster !== structural.roster || resourceBudgets.context !== structural.context) return failure([validationDiagnostic(structural, "EVALUATION_SUPPORTED_VALIDATION_INPUT_MISMATCH", "Resource budgets must retain the same roster and catalogue context objects.")]);
+  diagnostics.push(...resourceBudgets.diagnostics);
 
   const structuralItems = structural.bounds.map((report) => ({
     kind: "structural" as const,
@@ -168,6 +176,7 @@ export function composeSupportedRosterValidation(
       })),
   );
   const items = [
+    ...resourceBudgets.resources.filter(report => report.active).map(report => ({ kind: "resourceBudget" as const, status: report.status, report })),
     ...structuralItems,
     ...selectionItems,
     ...categoryItems,
@@ -188,9 +197,11 @@ export function composeSupportedRosterValidation(
     categoryConstraints,
     forceConstraints,
     authoredErrors,
+    resourceBudgets,
     findings,
     statusCounts,
     findingCounts: {
+      resourceBudgets: countFindings(findings, "resourceBudget"),
       authoredErrors: countFindings(findings, "authoredError"),
       structural: countFindings(findings, "structural"),
       selectionConstraints: countFindings(
@@ -205,6 +216,7 @@ export function composeSupportedRosterValidation(
         ? "invalid"
         : "valid",
     completeness:
+      resourceBudgets.completeness === "complete" &&
       authoredErrors.completeness === "complete" &&
       structural.completeness === "complete" &&
       selectionConstraints.completeness === "complete" &&
@@ -212,7 +224,7 @@ export function composeSupportedRosterValidation(
       forceConstraints.completeness === "complete"
         ? "complete"
         : "incomplete",
-  });
+  }, diagnostics);
 }
 
 /**

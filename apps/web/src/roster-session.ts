@@ -1,3 +1,5 @@
+import { resolveRosterResourceLimits, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
+import { setRosterResourceBudget } from "@rosterforge/roster-model";
 import type {
   BattleScribeCategoryDefinition,
   BattleScribeForceDefinition,
@@ -1127,6 +1129,7 @@ function inspectSupportedValidation(
     constraints.value.categories,
     constraints.value.forces,
     authoredErrors.value,
+    inspectRosterResourceBudgets(session.roster, session.catalogue.context, (() => { const costs = evaluateLocalRosterCosts(session); return costs.ok ? costs.value : undefined; })()),
   );
   diagnostics.push(...status.diagnostics);
   if (!status.ok) return failure(diagnostics);
@@ -2242,4 +2245,14 @@ function countSelections(selections: readonly RosterSelection[]): number {
       countSelections(selection.selections),
     0,
   );
+}
+
+/** Commits budget configuration without automatic selection reconciliation.
+ * A changed limit may hide a selected mission; retaining it makes that choice
+ * reviewable and keeps history/source/tree identity intact. */
+export function setLocalRosterResourceBudget(session: LocalRosterSession, typeId: ObjectId, value: number | undefined): Result<LocalRosterSession> {
+  const resource = resolveRosterResourceLimits(session.roster, session.catalogue.context).resources.find(item => item.typeId === typeId);
+  if (value !== undefined && resource?.definitions.length !== 1) return failure([{ code: "WEB_ROSTER_RESOURCE_BUDGET_UNAVAILABLE", message: "This resource identity could not be resolved uniquely.", severity: "error", impacts: ["validation"] }]);
+  const result = setRosterResourceBudget(session.roster, typeId, value);
+  return result.ok ? success(result.value === session.roster ? session : { ...session, roster: result.value }, result.diagnostics) : result;
 }

@@ -5149,3 +5149,13 @@ footer {
 .catalogue-data-freshness strong {
   color: var(--text);
 }
+
+/* Budget editors wrap within the existing roster configuration width. */
+.resource-budgets { margin-block: 0.75rem; min-width: 0; }
+.resource-budget-totals { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; }
+.resource-budget-totals p { margin: 0; overflow-wrap: anywhere; }
+.resource-budget-editor { margin-block: 1rem; min-width: 0; }
+.resource-budget-editor label, .resource-budget-editor small { display: block; overflow-wrap: anywhere; }
+.resource-budget-inputs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+.resource-budget-inputs input { width: 8rem; min-width: 0; max-width: 100%; }
+.resource-budget-inputs button { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }

@@ -11,6 +11,31 @@ Existing `@rosterforge/*` package names, controller APIs, `ROSTERFORGE_*`
 environment variables and repository URLs remain real technical identities.
 There is no installed-app manifest or service worker to rename in this slice.
 
+## Resource budget configuration
+
+`roster-model` stores optional `resourceBudgetOverrides` as exact cost IDs plus
+finite numbers; the budget-only -1 sentinel means no limit. Its pure command
+preserves force/selection/source identities and returns the original roster for
+no-ops. The normal draft decoder validates the optional field in present and all
+history snapshots. Reset removes the record, restoring the saved-source default.
+No storage format/version, database identity, association, or imported bytes change.
+
+`evaluation/resource-limits.ts` resolves source/override/effective states from
+roster+catalogue context. It imports neither conditions nor costs/constraints.
+Conditions consume supported limit scalars; costs consume conditions. Downstream
+`resource-budgets.ts` queries a matching evaluated cost report with exact resource
+isolation. Validation composition requires this sixth report and checks immutable
+roster/context identity. The web session reuses its memoized evaluated-cost report.
+Unknown dynamic limit behavior stays unresolved, so cyclic dependencies cannot
+recurse. Source-default zero/creation-hidden activation remains explicitly qualified.
+
+The web controller commits limits through ordinary bounded history and recovery.
+Budget changes deliberately do not reconcile/remove now-hidden selected options.
+The existing workspace capacity summary combines the tightest known budget and
+force cap for display, while the resource editor names its independent configured
+budget. Restrictions remain separate by provenance. Editor leaves receive scalar
+names, values, and state labels; original document bytes stay outside React props.
+
 ## Package Direction
 
 ```text

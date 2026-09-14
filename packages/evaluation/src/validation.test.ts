@@ -58,6 +58,7 @@ describe("supported roster validation composition", () => {
       categoryReport(roster, context, [], "complete"),
       forces,
       { roster, context, errors: [], completeness: "complete" },
+      { roster, context, resources: [], completeness: "complete", diagnostics: [] },
     );
 
     expect(composed.ok).toBe(true);
@@ -113,6 +114,7 @@ describe("supported roster validation composition", () => {
       categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
       { roster, context, errors: [], completeness: "complete" },
+      { roster, context, resources: [], completeness: "complete", diagnostics: [] },
     );
 
     expect(composed.ok).toBe(true);
@@ -147,6 +149,7 @@ describe("supported roster validation composition", () => {
       categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
       { roster, context, errors: [], completeness: "complete" },
+      { roster, context, resources: [], completeness: "complete", diagnostics: [] },
     );
 
     expect(composed.ok).toBe(true);
@@ -173,6 +176,7 @@ describe("supported roster validation composition", () => {
       categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
       { roster: {} as Roster, context, errors: [], completeness: "complete" },
+      { roster, context, resources: [], completeness: "complete", diagnostics: [] },
     );
     expect(result.ok).toBe(false);
     expect(result.diagnostics[0]?.code).toBe("EVALUATION_SUPPORTED_VALIDATION_INPUT_MISMATCH");
@@ -201,6 +205,7 @@ describe("supported roster validation composition", () => {
         "unconditionalModifiers",
       ),
       { roster, context, errors: [], completeness: "complete" },
+      { roster, context, resources: [], completeness: "complete", diagnostics: [] },
     );
 
     expect(composed.ok).toBe(false);
