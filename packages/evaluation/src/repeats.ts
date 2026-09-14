@@ -36,6 +36,7 @@ export interface RosterRepeatSource {
   readonly path: readonly string[];
   readonly node: {
     readonly attributes: Readonly<Record<string, string>>;
+    readonly children?: RosterSelectionConditionSource["node"]["children"];
   };
 }
 
@@ -255,7 +256,13 @@ function repeatCondition(
       : { includeChildForces: repeat.includeChildForces }),
     source: repeat.source,
     path: repeat.path,
-    node: { attributes: {} },
+    // Unit repeats share the numeric count leaf. Retain its raw boolean and
+    // envelope evidence so adaptation cannot erase unsupported source behavior.
+    node: repeat.scope === "unit" ? {
+      attributes: Object.fromEntries(Object.entries(repeat.node.attributes).filter(([key]) =>
+        ["shared", "percentValue", "includeChildSelections", "includeChildForces"].includes(key))),
+      ...(repeat.node.children === undefined ? {} : { children: repeat.node.children }),
+    } : { attributes: {} },
   };
 }
 

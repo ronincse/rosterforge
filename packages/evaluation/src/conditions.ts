@@ -35,6 +35,7 @@ import {
   expectedCatalogueKey,
   evaluationSelectionIdentityCandidate,
   evaluationSelectionScope,
+  evaluationSelectionChildren,
   evaluationSelectionsInForces,
   indexEvaluationChoices,
   rosterMatchesCatalogueContext,
@@ -409,12 +410,33 @@ export function evaluateRosterCondition<
       ...(unresolved ? {} : { observed: minimum }),
     }, diagnostics);
   }
+  // SC-04 establishes numeric unit queries over the containing unit's children.
+  // Keep malformed traversal flags unresolved rather than interpreting them as false.
+  const unitCount = comparison !== undefined && condition.field === "selections" && scope === "unit";
+  const unitFlagsValid = !unitCount || ["shared", "percentValue", "includeChildSelections", "includeChildForces"].every(key =>
+    condition.node.attributes[key] === undefined || ["true", "false", "1", "0"].includes(condition.node.attributes[key]!));
+  if (!unitFlagsValid) diagnostics.push(conditionDiagnostic(condition,
+    "EVALUATION_CONDITION_UNIT_FLAGS_UNSUPPORTED",
+    "A numeric unit query has an unsupported boolean flag.", "scope", ["compatibility"], {}));
+  const unitEnvelopeValid = !unitCount || !condition.node.children?.some(child => child.kind === "element");
+  if (!unitEnvelopeValid) diagnostics.push(conditionDiagnostic(condition,
+    "EVALUATION_CONDITION_UNIT_ENVELOPE_UNSUPPORTED",
+    "A numeric unit query contains unsupported child behavior.", "scope", ["compatibility"], {}));
+  const unitTargetObjects = unitCount && condition.childId !== undefined &&
+    !["any", "unit", "model", "upgrade", "model-or-unit"].includes(condition.childId)
+    ? battleScribeReachableObjectsById(context.graph, context.document, condition.childId) : undefined;
+  const unitTargetValid = unitTargetObjects === undefined || (unitTargetObjects.length === 1 &&
+    ["selectionEntry", "selectionEntryGroup", "entryLink", "categoryEntry"].includes(unitTargetObjects[0]!.kind));
+  if (!unitTargetValid) diagnostics.push(conditionDiagnostic(condition,
+    "EVALUATION_CONDITION_UNIT_TARGET_UNRESOLVED",
+    "The numeric unit query target is missing, ambiguous or unsupported.", "childId", ["resolution"], {}));
   const commonSelectionCountShape =
     comparison !== undefined &&
     condition.field === "selections" &&
     condition.childId !== undefined &&
     expected !== undefined &&
     condition.percentValue !== true &&
+    unitFlagsValid && unitEnvelopeValid && unitTargetValid &&
     unsupportedAttributes(condition).length === 0;
   const canCollectSelectionCounts =
     catalogueMatches &&
@@ -560,6 +582,12 @@ export function evaluateRosterCondition<
       ? "forces" in selectionOwnerLocation!.parent
         ? []
         : [selectionOwnerLocation!.parent]
+    : unitCount
+      // Bound and price modifiers share this leaf. Identity predicates, cost-field
+      // queries and other typed scopes retain their existing candidate semantics.
+      // Frozen StarCraft's 16 omitted-flag queries target direct sibling choices;
+      // true explicitly widens that child collection, not every unit in the force.
+      ? evaluationSelectionChildren(relativeScope.occurrence, condition.includeChildSelections === true)
     : idScopeTarget !== undefined
       ? relativeScope.occurrence === undefined
         ? []

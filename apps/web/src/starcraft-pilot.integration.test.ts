@@ -2,6 +2,9 @@ import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterfo
 // Optional pinned validation regression plus explicit remaining pilot reproductions.
 // Download the four immutable files listed in docs/qa/starcraft-pilot-baseline.md
 // into ROSTERFORGE_STARCRAFT_PILOT_DIR. Source bytes are never rewritten.
+import { createLocalRosterDraft, decodeLocalRosterDraft } from "@rosterforge/persistence";
+import { createBoundedHistory, commitBoundedHistory, undoBoundedHistory, redoBoundedHistory } from "./history.js";
+import { duplicateLocalRosterSelection, restoreLocalRosterSession } from "./roster-session.js";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -39,14 +42,15 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   };
   const addRoot = (session: LocalRosterSession, name: string) => {
     const id = next();
-    return { id, session: ok(addLocalRosterRootSelection(session, localRosterRootChoices(session.catalogue).find(c => c.materialized.name === name)!, { selectionId: id, createSelectionId: next })) };
+    const result = addLocalRosterRootSelection(session, localRosterRootChoices(session.catalogue).find(c => c.materialized.name === name)!, { selectionId: id, createSelectionId: next });
+    return { id, session: ok(result), diagnostics: result.diagnostics.map(d=>d.code) };
   };
   const ledger = (session: LocalRosterSession) => {
     const result = evaluateLocalRosterCosts(session);
     const costs = ok(result);
     return { totals: costs.totals.map(t => ({ id: t.typeId, value: t.value })), completeness: costs.completeness, diagnostics: result.diagnostics.map(d => ({ code: d.code, details: d.details })) };
   };
-  let terran = create("Terran");
+  let terran = addRoot(create("Terran"), "Terran Armed Forces").session;
   const marine = addRoot(terran, "Marines"); terran = marine.session;
   const base = ledger(terran);
   const children = ok(inspectLocalRosterChildChoices(terran, marine.id));
@@ -54,16 +58,61 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   terran = ok(addLocalRosterChildSelection(terran, marine.id, shield, { selectionId: next(), createSelectionId: next }));
   const shieldOnly = ledger(terran);
   const reinforceId = next();
-  terran = ok(addLocalRosterChildSelection(terran, marine.id, children.direct.find(c => c.choice.name === "Reinforce")!.choice, { selectionId: reinforceId, createSelectionId: next }));
+  const reinforcementResult = addLocalRosterChildSelection(terran, marine.id, children.direct.find(c => c.choice.name === "Reinforce")!.choice, { selectionId: reinforceId, createSelectionId: next });
+  terran = ok(reinforcementResult);
+  expect(reinforcementResult.diagnostics.some(d=>d.code.includes("RECONCILIATION_STALLED") || d.code.includes("RECONCILIATION_LIMIT"))).toBe(false);
+  const reinforcedSession = terran;
   const reinforced = ledger(terran);
   const models = terran.roster.forces[0]!.selections.find(s => s.id === marine.id)!.selections.filter(s => s.name === "Marine");
-  // These assertions pin the demonstrated failure; they are not expected rules.
+  // SC-04 acceptance retains the original reproduction with corrected expectations.
   expect(models).toHaveLength(1);
-  expect(models[0]!.amount).toBe(6);
-  expect(reinforced.totals.find(t => t.id === "5bcf-897a-a5c9-d0e8")?.value).toBe(230);
+  expect(models[0]!.amount).toBe(9);
+  expect(reinforced.totals.find(t => t.id === "5bcf-897a-a5c9-d0e8")?.value).toBe(240);
   terran = ok(removeLocalRosterSelection(terran, reinforceId));
   const removed = ledger(terran);
   expect(removed.totals.find(t => t.id === "5bcf-897a-a5c9-d0e8")?.value).toBe(180);
+
+  // Observe durable amounted models, modified bounds, and each independent cost
+  // contribution. Matching an aggregate alone could hide offsetting mistakes.
+  const mineralIdSC = objectId("5bcf-897a-a5c9-d0e8");
+  const coreIdSC = objectId("472f-46af-8e02-bfbf");
+  const unit = (s: LocalRosterSession, id = marine.id) => s.roster.forces[0]!.selections.find(x=>x.id===id)!;
+  const model = (s: LocalRosterSession, id = marine.id) => unit(s,id).selections.filter(x=>x.definition.sourceId === "535b-1f2b-6421-d932");
+  const mineral = (s: LocalRosterSession) => ok(evaluateLocalRosterCosts(s)).totals.find(t=>t.typeId===mineralIdSC)!.value;
+  const contributions = (s: LocalRosterSession) => ok(evaluateLocalRosterCosts(s)).selections.flatMap(x=>x.costs).filter(c=>c.status==="included" && c.typeId===mineralIdSC).map(c=>({name:c.occurrence.name,base:c.status==="included"?c.baseValue:undefined,value:c.value}));
+  expect(base.totals.find(t=>t.id===mineralIdSC)?.value).toBe(160);
+  expect(shieldOnly.totals.find(t=>t.id===mineralIdSC)?.value).toBe(180);
+  expect(contributions(reinforcedSession)).toEqual(expect.arrayContaining([{name:"Marines",base:160,value:160},{name:"Reinforce",base:50,value:50},{name:"Combat Shield",base:20,value:30}]));
+  expect(contributions(terran)).toContainEqual({name:"Combat Shield",base:20,value:20});
+  expect(reinforced.totals.find(t=>t.id===coreIdSC)?.value).toBe(1);
+  expect(removed.totals.find(t=>t.id===coreIdSC)?.value).toBe(2);
+  expect(model(terran)).toHaveLength(1);expect(model(terran)[0]!.amount).toBe(6);
+  const actualCondition=children.direct.find(c=>c.choice.name==="Marine")!.choice.modifiers[0]!.conditions[0]!;
+  const conditionLedger=[marine.session,reinforcedSession,terran].map(s=>{const r=ok(evaluateRosterCondition(s.roster,s.catalogue.context,model(s)[0]!,actualCondition));return {observed:r.observed,status:r.status,completeness:r.completeness};});
+  expect(conditionLedger).toEqual([{observed:0,status:"unsatisfied",completeness:"complete"},{observed:1,status:"satisfied",completeness:"complete"},{observed:0,status:"unsatisfied",completeness:"complete"}]);
+  const boundsSC = ok(inspectLocalRosterSupportedValidation(reinforcedSession)).constraints.selections.selections.flatMap(s=>s.constraints).filter(c=>c.owner.id===model(reinforcedSession)[0]!.id);
+  expect(boundsSC.filter(c=>c.constraint.id?.startsWith("1c8b-f6de-f59b-aa24")).map(c=>({base:c.constraint.value,limit:c.limit,observed:c.observed,status:c.status}))).toEqual([{base:6,limit:9,observed:9,status:"satisfied"},{base:6,limit:9,observed:9,status:"satisfied"}]);
+  const history=commitBoundedHistory(createBoundedHistory(reinforcedSession),terran);
+  expect(undoBoundedHistory(history).present).toBe(reinforcedSession);
+  expect(redoBoundedHistory(undoBoundedHistory(history)).present).toBe(terran);
+  const secondMarine=addRoot(terran,"Marines");terran=secondMarine.session;
+  const addChildSC=(s:LocalRosterSession,id:typeof marine.id,name:string)=>{const view=ok(inspectLocalRosterChildChoices(s,id));const c=[...view.direct.map(x=>x.choice),...view.groups.flatMap(x=>x.choices)].find(x=>x.name===name)!;return ok(addLocalRosterChildSelection(s,id,c,{selectionId:next(),createSelectionId:next}));};
+  terran=addChildSC(terran,secondMarine.id,"Reinforce");expect(mineral(terran)).toBe(390);
+  terran=addChildSC(terran,secondMarine.id,"Combat Shield");expect(mineral(terran)).toBe(420);
+  expect(model(terran)[0]!.amount).toBe(6);expect(model(terran,secondMarine.id)[0]!.amount).toBe(9);
+  terran=ok(duplicateLocalRosterSelection(terran,secondMarine.id,next));
+  const copy=terran.roster.forces[0]!.selections.filter(x=>x.name==="Marines").find(x=>x.id!==marine.id && x.id!==secondMarine.id)!;
+  expect(model(terran,copy.id)[0]!.amount).toBe(9);expect(mineral(terran)).toBe(660);
+  terran=ok(removeLocalRosterSelection(terran,copy.selections.find(x=>x.definition.sourceId==="6beb-c060-9e77-4256")!.id));
+  expect(model(terran,copy.id)[0]!.amount).toBe(6);expect(model(terran,secondMarine.id)[0]!.amount).toBe(9);expect(mineral(terran)).toBe(600);
+  terran=ok(setLocalRosterResourceBudget(terran,mineralIdSC,599));
+  expect(inspectRosterResourceBudgets(terran.roster,terran.catalogue.context).resources.find(r=>r.resource.typeId===mineralIdSC)).toMatchObject({value:600,exact:true,status:"violated"});
+  const draft=ok(createLocalRosterDraft({id:"sc04",createdAt:"2026-09-14T00:00:00Z",updatedAt:"2026-09-14T00:00:00Z",catalogueKey:terran.catalogue.key,roster:terran.roster,history:{past:[reinforcedSession.roster],future:[]},import:{batchId:library.importReport.batchId,importedAt:library.importReport.importedAt,files:library.importReport.files.map(({source,sourceBytes})=>({filename:source.filename,bytes:sourceBytes,sourceId:source.sourceId,sourceKind:source.kind}))}}));
+  const decoded=ok(decodeLocalRosterDraft(structuredClone(draft)));
+  const reopenedLibrary=ok(await prepareLocalCatalogueLibrary(decoded.import.files,{import:{batchId:decoded.import.batchId,importedAt:decoded.import.importedAt}}));
+  const reopened=ok(restoreLocalRosterSession(reopenedLibrary.selectableCatalogues.find(c=>c.key===decoded.catalogueKey)!,decoded.roster));
+  expect(reopened.roster).toEqual(terran.roster);expect(mineral(reopened)).toBe(600);expect(decoded.history!.past[0]).toEqual(reinforcedSession.roster);
+  const idsBefore=JSON.stringify(reopened.roster);for(let i=0;i<5;i++){expect(mineral(reopened)).toBe(600);inspectLocalRosterSupportedValidation(reopened);}expect(JSON.stringify(reopened.roster)).toBe(idsBefore);
 
   let protoss = create("Protoss");
   const validation = (session: LocalRosterSession) => {
@@ -136,7 +185,7 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
     expect(bounds(second.session).map(c => ({ status: c.status, observed: c.observed }))).toEqual([{ status: "satisfied", observed: 2 }, { status: "violated", observed: 2 }]);
     expect(bounds(ok(removeLocalRosterSelection(second.session, second.id))).map(c => c.status)).toEqual(["satisfied", "satisfied"]);
   }
-  const report = JSON.stringify({ base, shieldOnly, reinforced, models: models.map(s => ({ id:s.id, amount:s.amount })), removed, missingFaction, positive, negative, negativeValidation, repaired, gasOverBudget, gasValidation }, null, 2);
+  const report = JSON.stringify({ initializationDiagnostics:marine.diagnostics, reinforcementDiagnostics:reinforcementResult.diagnostics.map(d=>d.code), conditionLedger, base, shieldOnly, reinforced, models: models.map(s => ({ id:s.id, amount:s.amount })), removed, missingFaction, positive, negative, negativeValidation, repaired, gasOverBudget, gasValidation }, null, 2);
   console.log(report);
   // Explicit opt-in artifact path keeps ordinary and corpus test runs read-only.
   if (process.env.ROSTERFORGE_STARCRAFT_PILOT_REPORT) writeFileSync(process.env.ROSTERFORGE_STARCRAFT_PILOT_REPORT, report);

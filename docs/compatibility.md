@@ -10,12 +10,36 @@ passes. Force-owned direct `add` error modifiers now participate in validation;
 static shared parent-category selection bounds are also evaluated.
 Supported default purchase budgets and explicit player limits now participate
 in validation and limit queries. Zero/creation-hidden default activation remains
-unverified. The engine does not produce the source-intended Marines reinforcement transition.
+unverified. Numeric unit-selection conditions now drive the evidenced Marines6/9/6 reinforcement
+and Shield20/30/20 transition through existing automatic reconciliation.
 XML escape display and profile metadata also need bounded work. Terran costs
 remain incomplete for five genuinely absent source cost types. See
 [`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
 manifest, actual versus intended ledgers, classifications, and coverage limits.
 
+
+### Reinforcement and numeric unit scopes (SC-04)
+
+Numeric `field="selections", scope="unit"` conditions query the resolved nearest
+containing unit's child collection: false/omitted direct children, true descendants,
+excluding the container. Exact/shared/link-local identity and actual occurrence
+context remain authoritative. This fixes both automatic model-bound modifiers
+and condition-dependent upgrade costs through one shared leaf. Numeric unit
+repeats inherit that count and preserve raw flags/envelopes during adaptation.
+Unknown child behavior, malformed booleans, missing/ambiguous target IDs or
+unresolved nearest-unit locations remain incomplete. Typed identities, direct cost-field
+queries, constraint traversal and other typed scopes are not generalized.
+
+Pinned Marines pass6/160 ->6/180 Shield ->9/240 Reinforce ->6/180 removal, with
+Shield20/30/20 and additional Core-1 independently verified. Existing automatic
+reconciliation retains amounted-model identity and equipment; history, duplication,
+save/open and recovery pass. Its conservative initialization-modifier warning is
+retained; the completed reinforcement command has no reconciliation diagnostic.
+Marauders2/170 Foam ->4/320 ->2/170 also passed browser smoke. This is support for
+the evidenced shape, not complete StarCraft legality or full New Recruit parity.
+Source pins, seven unverified zero/hidden budget activations, orphan cost types,
+XML/reference/freshness gaps and nine40k category bounds remain unchanged. See
+[SC-04 evidence and limitations](qa/starcraft-reinforcement.md).
 
 ### Authored requirements (SC-01)
 
@@ -104,7 +128,7 @@ these broader scopes and sentinel/modifier behavior remain withheld.
 Pinned browser/API checks cover Protoss and Terran definition-owned faction
 requirements and Zerg's distinct force-link requirement. This is not general
 multi-force support or a full StarCraft validation claim. Budget210/200 and
-Marines reinforcement6/230 remain documented gaps.
+Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
 
 ## Implemented
 

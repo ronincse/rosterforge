@@ -466,12 +466,7 @@ export function evaluationSelectionScope(
     // queried. False means direct children; true widens to all descendants.
     // Counting the container itself made all 214 direct-only ID-scoped
     // conditions in the pinned 46-file corpus inert.
-    return typedScope === undefined
-      ? []
-      : selectionsInTree(
-          typedScope.selections,
-          includeChildSelections,
-        );
+    return evaluationSelectionChildren(typedScope, includeChildSelections);
   }
   if (
     scope === "unit" ||
@@ -495,6 +490,18 @@ export function evaluationSelectionScope(
     includeChildSelections,
     includeChildForces,
   );
+}
+
+/** Queries a resolved container's child collection in occurrence order.
+ * False means direct children; true includes descendants, never the container.
+ * Direct traversal reuses the child array; descendant traversal allocates arrays
+ * while retaining immutable occurrence identities.
+ */
+export function evaluationSelectionChildren(
+  container: RosterSelection | undefined,
+  includeChildSelections: boolean,
+): readonly RosterSelection[] {
+  return container === undefined ? [] : selectionsInTree(container.selections, includeChildSelections);
 }
 
 export function evaluationSelectionTree(

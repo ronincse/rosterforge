@@ -1,5 +1,10 @@
 # StarCraft compatibility pilot baseline
 
+> Historical reproduction: SC01/02 repaired authored/faction requirements,
+> SC03/07 repaired supported budgets, and [SC04](starcraft-reinforcement.md)
+> now verifies Marines6/9/6 and160/180/240/180. Original failed observations below
+> are preserved as baseline evidence, not current acceptance expectations.
+
 ## Result and boundary
 
 ForceWright can directly download this StarCraft snapshot, create all three

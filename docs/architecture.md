@@ -36,6 +36,19 @@ force cap for display, while the resource editor names its independent configure
 budget. Restrictions remain separate by provenance. Editor leaves receive scalar
 names, values, and state labels; original document bytes stay outside React props.
 
+## Numeric unit selection context
+
+The shared selection-context child-collection helper retains occurrence identities
+and source order; direct traversal reuses the existing array, recursive traversal
+allocates descendant arrays. Numeric unit-selection conditions use it after the
+nearest typed occurrence resolves. This is separate from testing the container's
+identity or querying its direct cost fields. Both model-bound and cost modifiers
+consume the same condition leaf, and numeric repeats retain raw flags/children
+when adapting to it. No React arithmetic, second reconciler, storage migration,
+or cost/validation recursion is introduced. Existing immutable automatic commands
+and normal history/save/recovery own derived quantity changes. See the SC04 QA
+report for evidence and the intentionally unchanged typed-scope boundaries.
+
 ## Package Direction
 
 ```text

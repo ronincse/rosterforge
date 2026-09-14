@@ -1678,3 +1678,17 @@ Known budget violations are explicit `resourceBudget` findings with exact cost
 identity and retained source/player provenance. Their `findingCounts` channel is
 separate from structural, authored-error, and force/category/selection bounds.
 Unknown relevant costs/limits are unresolved without an invented known violation.
+
+## Numeric unit selection queries (SC-04)
+
+- `EVALUATION_CONDITION_UNIT_FLAGS_UNSUPPORTED`: a numeric unit query has a malformed boolean flag; no complete false/zero fallback.
+- `EVALUATION_CONDITION_UNIT_ENVELOPE_UNSUPPORTED`: a numeric unit query contains an unsupported child element; no applicability is invented even when its known trigger is absent.
+- `EVALUATION_CONDITION_UNIT_TARGET_UNRESOLVED`: the exact target is missing, ambiguous or not a supported selection/group/link/category identity.
+
+These retain the query source/path and keep completeness incomplete. Unit repeat
+adaptation preserves the same raw evidence for these guards. Existing
+`EVALUATION_CONDITION_SCOPE_CANDIDATES_UNRESOLVED` continues to qualify an
+unresolvable containing unit. Initial root creation may still report
+`EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED`; existing post-edit
+automatic reconciliation supplies the evidenced final Marine quantity without
+suppressing that conservative initialization-stage diagnostic.
