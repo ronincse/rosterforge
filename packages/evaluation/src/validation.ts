@@ -1,5 +1,5 @@
 /**
- * Folds the four validation reports into the one answer the UI shows.
+ * Folds the validation reports into the one answer the UI shows.
  *
  * The two dimensions stay independent, which is the rule the rest of the
  * evaluator is built around. `validity` says whether the roster breaks a
@@ -22,6 +22,8 @@ import {
   type ValidationStatus,
 } from "@rosterforge/foundation";
 
+import type { RosterAuthoredErrorReport, RosterAuthoredErrorsReport } from "./authored-errors.js";
+
 import type {
   RosterCategoryConstraintReport,
   RosterCategoryConstraintsInRosterReport,
@@ -42,12 +44,13 @@ import type {
 
 /**
  * Structural bounds and constraints share one status vocabulary so
- * findings from all four sources can sit in a single list.
+ * findings from all report sources can sit in a single list.
  */
 export type SupportedRosterValidationStatus =
   RosterStructuralBoundStatus;
 
 export type SupportedRosterValidationFinding =
+  | { readonly kind: "authoredError"; readonly status: SupportedRosterValidationStatus; readonly report: RosterAuthoredErrorReport }
   | {
       readonly kind: "structural";
       readonly status: SupportedRosterValidationStatus;
@@ -76,6 +79,7 @@ export interface SupportedRosterValidationStatusCounts {
 }
 
 export interface SupportedRosterValidationFindingCounts {
+  readonly authoredErrors: number;
   readonly structural: number;
   readonly selectionConstraints: number;
   readonly categoryConstraints: number;
@@ -88,6 +92,7 @@ export interface SupportedRosterValidationReport
   readonly selectionConstraints: RosterSelectionConstraintsInRosterReport;
   readonly categoryConstraints: RosterCategoryConstraintsInRosterReport;
   readonly forceConstraints: RosterForceConstraintsInRosterReport;
+  readonly authoredErrors: RosterAuthoredErrorsReport;
   readonly findings: readonly SupportedRosterValidationFinding[];
   readonly statusCounts: SupportedRosterValidationStatusCounts;
   readonly findingCounts: SupportedRosterValidationFindingCounts;
@@ -95,9 +100,9 @@ export interface SupportedRosterValidationReport
 
 /**
  * Composes structural, selection-, category-, and force-constraint reports
- * into a roster verdict.
+ * and an authored-error report into a roster verdict. Callers must supply all reports; this function only folds inputs.
  *
- * Fails rather than composing when the four did not come from the same
+ * Fails rather than composing when the reports did not come from the same
  * roster and catalogue context objects, or when the constraint reports
  * were produced at the wrong inspection scope. Both are caller mistakes
  * that would otherwise yield a confident answer about a roster nobody
@@ -105,7 +110,7 @@ export interface SupportedRosterValidationReport
  *
  * `validity` turns invalid on a structural failure or any violated bound.
  * An `unresolved` bound does not: the evaluator could not decide, which is
- * not the same as deciding against. Completeness is taken from the four
+ * not the same as deciding against. Completeness is taken from the
  * inputs' own completeness flags, never inferred from the status counts.
  *
  * `findings` is everything that is not `satisfied`, so it carries violated
@@ -116,6 +121,7 @@ export function composeSupportedRosterValidation(
   selectionConstraints: RosterSelectionConstraintsInRosterReport,
   categoryConstraints: RosterCategoryConstraintsInRosterReport,
   forceConstraints: RosterForceConstraintsInRosterReport,
+  authoredErrors: RosterAuthoredErrorsReport,
 ): Result<SupportedRosterValidationReport> {
   const diagnostics = compositionDiagnostics(
     structural,
@@ -123,6 +129,9 @@ export function composeSupportedRosterValidation(
     categoryConstraints,
     forceConstraints,
   );
+  if ((authoredErrors.roster !== structural.roster || authoredErrors.context !== structural.context)) {
+    return failure([validationDiagnostic(structural, "EVALUATION_SUPPORTED_VALIDATION_INPUT_MISMATCH", "Authored errors must retain the same roster and catalogue context objects.")]);
+  }
   if (diagnostics.length > 0) return failure(diagnostics);
 
   const structuralItems = structural.bounds.map((report) => ({
@@ -163,6 +172,7 @@ export function composeSupportedRosterValidation(
     ...selectionItems,
     ...categoryItems,
     ...forceItems,
+    ...authoredErrors.errors.map(report => ({ kind: "authoredError" as const, status: report.status, report })),
   ];
   const findings = items.filter(
     ({ status }) => status !== "satisfied",
@@ -177,9 +187,11 @@ export function composeSupportedRosterValidation(
     selectionConstraints,
     categoryConstraints,
     forceConstraints,
+    authoredErrors,
     findings,
     statusCounts,
     findingCounts: {
+      authoredErrors: countFindings(findings, "authoredError"),
       structural: countFindings(findings, "structural"),
       selectionConstraints: countFindings(
         findings,
@@ -193,6 +205,7 @@ export function composeSupportedRosterValidation(
         ? "invalid"
         : "valid",
     completeness:
+      authoredErrors.completeness === "complete" &&
       structural.completeness === "complete" &&
       selectionConstraints.completeness === "complete" &&
       categoryConstraints.completeness === "complete" &&

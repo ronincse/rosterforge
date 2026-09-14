@@ -399,10 +399,12 @@ export function evaluateRosterCondition<
         (scope === "force" ||
           scope === "roster" ||
           (scope === "parent" && options.prospectiveChild === true))));
+  // A force owns roster/force resource checks just as it owns selection checks.
+  // Keep relative selection scopes out: parent/self would name a different domain.
   const canCollectSelectionCosts =
     catalogueMatches &&
-    !forceOwner &&
-    selectionOwnerLocations.length === 1 &&
+    ((!forceOwner && selectionOwnerLocations.length === 1) ||
+      (forceOwner && forceOwnerLocations.length === 1 && (scope === "force" || scope === "roster"))) &&
     comparison !== undefined &&
     costTypeFieldId !== undefined &&
     supportedSelectionCountScope &&
@@ -1094,6 +1096,7 @@ function diagnoseConditionShape(
     (scope === "force" ||
       scope === "roster" ||
       (scope === "parent" && prospectiveChild));
+  const supportedForceOwnerCost = forceOwner && costTypeFieldId !== undefined && comparison !== undefined && (scope === "force" || scope === "roster");
   const forceIdentityShape = condition.field === "selections" && scope === "force" && identityComparison !== undefined;
   if (condition.field === "associations" &&
       (forceOwner || scope !== "self" || comparison === undefined || condition.shared !== true ||
@@ -1114,6 +1117,7 @@ function diagnoseConditionShape(
     forceOwner &&
     condition.field !== "forces" &&
     !supportedForceOwnerSelectionCount &&
+    !supportedForceOwnerCost &&
     !forceIdentityShape &&
     !catalogueIdentityShape
   ) {
@@ -1121,7 +1125,7 @@ function diagnoseConditionShape(
       shapeDiagnostic(
         condition,
         "EVALUATION_CONDITION_OWNER_KIND_UNSUPPORTED",
-        "Force-owned conditions support force counts or selection counts in force or roster scope.",
+        "Force-owned conditions support force counts, or selection counts and static resource totals in force or roster scope.",
         "field",
       ),
     );

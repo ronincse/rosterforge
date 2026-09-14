@@ -3756,6 +3756,7 @@ function RosterProblemsDialog({
 function validationFindingMessage(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "authoredError") return finding.report.message;
   if (finding.kind === "categoryConstraint") {
     const { categoryName, constraintType, limit, observed, minimum } =
       finding.report;
@@ -3788,6 +3789,7 @@ function validationFindingMessage(
 function validationFindingObservation(
   finding: SupportedRosterValidationFinding,
 ): string {
+  if (finding.kind === "authoredError") return finding.status === "violated" ? "Catalogue requirement not met" : "Requirement could not be checked";
   if (finding.kind === "categoryConstraint") {
     const { observed, minimum, maximum, limit } = finding.report;
     const selected = observed ?? (minimum === maximum ? minimum : undefined);
@@ -3831,6 +3833,7 @@ function validationFindingKey(
   finding: SupportedRosterValidationFinding,
 ): string {
   if (finding.kind === "structural") return structuralBoundKey(finding.report);
+  if (finding.kind === "authoredError") return JSON.stringify([finding.kind, finding.report.owner.id, finding.report.modifier.source.sourceId, ...finding.report.modifier.path]);
   return JSON.stringify([
     finding.kind,
     finding.report.constraint.source.sourceId,

@@ -1487,7 +1487,7 @@ describe("roster selection conditions", () => {
     ]);
   });
 
-  it("evaluates supported count conditions for an exact force owner", () => {
+  it("evaluates supported count and static cost conditions for an exact force owner", () => {
     const context = catalogueContext([
       "projection.gst",
       "cost-evaluation.cat",
@@ -1530,7 +1530,7 @@ describe("roster selection conditions", () => {
       owner,
       selectionSource,
     );
-    const unsupported = evaluateRosterCondition(
+    const costs = evaluateRosterCondition(
       roster,
       context,
       owner,
@@ -1542,8 +1542,8 @@ describe("roster selection conditions", () => {
 
     expect(evaluated.ok).toBe(true);
     expect(selections.ok).toBe(true);
-    expect(unsupported.ok).toBe(true);
-    if (!evaluated.ok || !selections.ok || !unsupported.ok) {
+    expect(costs.ok).toBe(true);
+    if (!evaluated.ok || !selections.ok || !costs.ok) {
       return;
     }
     expect(evaluated.diagnostics).toEqual([]);
@@ -1560,12 +1560,14 @@ describe("roster selection conditions", () => {
       observed: 1,
       matching: [roster.forces[0]?.selections[0]],
     });
-    expect(unsupported.value.status).toBe("unresolved");
-    expect(unsupported.diagnostics).toEqual([
-      expect.objectContaining({
-        code: "EVALUATION_CONDITION_OWNER_KIND_UNSUPPORTED",
-      }),
-    ]);
+    expect(costs.value).toMatchObject({ status: "satisfied", completeness: "complete", observed: 10 });
+    expect(costs.diagnostics).toEqual([]);
+    const withSecondForce = successful(addRosterForce(roster, { id: forceOccurrenceId("other-force"), definition: owner.definition }));
+    const twoForces = successful(addRosterSelectionToForce(withSecondForce, forceOccurrenceId("other-force"), { id: selectionOccurrenceId("other-selection"), definition: roster.forces[0]!.selections[0]!.definition }));
+    const query = condition(selectionSource, { field: "cost-points", shared: false });
+    expect(successful(evaluateRosterCondition(twoForces, context, twoForces.forces[0]!, query)).observed).toBe(10);
+    expect(successful(evaluateRosterCondition(twoForces, context, twoForces.forces[0]!, condition(query, { scope: "roster" }))).observed).toBe(20);
+
   });
 
   it("uses shared definition identity for linked selections", () => {

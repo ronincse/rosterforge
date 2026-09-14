@@ -8,6 +8,7 @@ import type {
 } from "@rosterforge/data-graph";
 import {
   composeSupportedRosterValidation,
+  inspectRosterAuthoredErrors,
   evaluateRosterCostsWithSelectionConditions,
   evaluateRosterProfileAnnotation,
   evaluateRosterProfileCharacteristics,
@@ -1115,8 +1116,9 @@ function inspectSupportedValidation(
 ): Result<LocalRosterSupportedValidationInspection> {
   const structural = inspectLocalRosterStructuralStatus(session);
   const constraints = inspectLocalRosterConstraints(session);
-  const diagnostics = [...structural.diagnostics, ...constraints.diagnostics];
-  if (!structural.ok || !constraints.ok) {
+  const authoredErrors = inspectRosterAuthoredErrors(session.roster, session.catalogue.context);
+  const diagnostics = [...structural.diagnostics, ...constraints.diagnostics, ...authoredErrors.diagnostics];
+  if (!structural.ok || !constraints.ok || !authoredErrors.ok) {
     return failure(diagnostics);
   }
   const status = composeSupportedRosterValidation(
@@ -1124,6 +1126,7 @@ function inspectSupportedValidation(
     constraints.value.selections,
     constraints.value.categories,
     constraints.value.forces,
+    authoredErrors.value,
   );
   diagnostics.push(...status.diagnostics);
   if (!status.ok) return failure(diagnostics);

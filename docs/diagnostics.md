@@ -1636,3 +1636,11 @@ Unsupported/ambiguous dependency shapes retain static planning diagnostics and
 pending choices. Only the exact uniquely attributable
 `EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED` warning is removed
 after its bound is resolved and verified at creation. Later edits are not refilled.
+
+### Authored force requirements
+
+- `EVALUATION_AUTHORED_ERROR_OWNER_UNRESOLVED`: force source cannot be uniquely resolved; authored requirement coverage is incomplete.
+- `EVALUATION_AUTHORED_ERROR_SHAPE_UNSUPPORTED`: a potentially applicable error has unsupported operation, text, group, repeat, scope or extension; it remains unresolved.
+
+Existing condition and cost-query diagnostics accompany unknown applicability.
+Authored errors are a separate validation finding kind, not constraint diagnostics.

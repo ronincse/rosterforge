@@ -2529,3 +2529,15 @@ force and self-selection constraints. The constraint collection computes its cos
 report lazily once and filters it by occurrence and currency. It does not introduce
 a second calculator or depend on persistence/web code. Unknown numeric costs keep
 unbounded uncertainty rather than treating the known subtotal as a lower bound.
+
+### Authored error composition
+
+`authored-errors.ts` inspects force-owned error modifiers once per actual force
+occurrence using `modifier-applicability.ts` and the existing condition query
+engine. Its report is an explicit `authoredError` validation finding; it is never
+cast into a numeric constraint. The web session passes this report to validation
+composition and renders source messages as ordinary escaped text. Conditions
+query static signed costs without recursively evaluating cost modifiers; relevant
+modified or unresolved costs remain unknown. This keeps evaluation deterministic
+and prevents a validation/cost recursion. Error report provenance retains the
+original modifier and force occurrence, allowing stable problem keys/navigation.

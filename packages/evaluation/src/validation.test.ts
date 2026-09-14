@@ -57,6 +57,7 @@ describe("supported roster validation composition", () => {
       selections,
       categoryReport(roster, context, [], "complete"),
       forces,
+      { roster, context, errors: [], completeness: "complete" },
     );
 
     expect(composed.ok).toBe(true);
@@ -111,6 +112,7 @@ describe("supported roster validation composition", () => {
       ),
       categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
+      { roster, context, errors: [], completeness: "complete" },
     );
 
     expect(composed.ok).toBe(true);
@@ -144,6 +146,7 @@ describe("supported roster validation composition", () => {
       selections,
       categoryReport(roster, context, [], "complete"),
       forceReport(roster, context, [], "complete"),
+      { roster, context, errors: [], completeness: "complete" },
     );
 
     expect(composed.ok).toBe(true);
@@ -159,6 +162,20 @@ describe("supported roster validation composition", () => {
       },
     });
     expect(composed.value.selectionConstraints).toBe(selections);
+  });
+
+  it("rejects an authored-error report from another roster", () => {
+    const roster = {} as Roster;
+    const context = fixtureContext();
+    const result = composeSupportedRosterValidation(
+      structuralReport(roster, context, [], "valid", "complete"),
+      selectionReport(roster, context, [], "complete"),
+      categoryReport(roster, context, [], "complete"),
+      forceReport(roster, context, [], "complete"),
+      { roster: {} as Roster, context, errors: [], completeness: "complete" },
+    );
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics[0]?.code).toBe("EVALUATION_SUPPORTED_VALIDATION_INPUT_MISMATCH");
   });
 
   it("rejects mismatched source reports and unsupported scopes", () => {
@@ -183,6 +200,7 @@ describe("supported roster validation composition", () => {
         "complete",
         "unconditionalModifiers",
       ),
+      { roster, context, errors: [], completeness: "complete" },
     );
 
     expect(composed.ok).toBe(false);

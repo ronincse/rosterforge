@@ -6,13 +6,34 @@ The `codex/starcraft-pilot` branch registers StarCraft community data at
 `99261754e0449bbaaa04e6890e1625b144f9ece1` through the existing pinned acquisition
 path. This is not a full-support declaration or a change to 40k's source pin.
 All three factions download/create; selected Terran and Protoss save/reopen
-passes. The unchanged engine has unreported unsupported authored-error and
-category-definition scopes, lacks default purchase-budget enforcement, and
+passes. Force-owned direct `add` error modifiers now participate in validation;
+parent category-definition scopes remain pending in this intermediate checkpoint.
+The engine lacks default purchase-budget enforcement and
 does not produce the source-intended Marines reinforcement transition.
 XML escape display and profile metadata also need bounded work. Terran costs
 remain incomplete for five genuinely absent source cost types. See
 [`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
 manifest, actual versus intended ledgers, classifications, and coverage limits.
+
+
+### Authored requirements (SC-01)
+
+Direct force-definition modifiers with `field="error"`, `type="add"`, nonempty
+text and no modifier scope, repeat or behavior extension are evaluated once per
+force occurrence. Supported ordinary conditions and nested condition groups use
+the existing applicability engine. Force owners now support static resource
+queries in `force`/`roster` scope with explicit descendant flags, exact resource
+IDs and signed amounts. A definitely true complete query adds one known problem;
+a definitely false complete query is inactive. Unknown applicability, missing or
+ambiguous queried metadata, queried-type cost modifiers and unsupported shapes
+remain incomplete without an invented violation. Other currencies' incomplete
+costs do not turn a known resource query into an unknown one.
+
+Messages are plain React text, never executable semantics. Grouped error
+modifiers, repeated errors, other operations and other ownership locations are
+not supported by this force-error channel. Grouped force errors are retained as
+unresolved unless their own complete leaf conditions are false. No default budget
+or `limit::` query behavior is added. See `qa/starcraft-validation-errors.md`.
 
 ## Implemented
 

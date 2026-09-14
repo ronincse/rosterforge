@@ -53,3 +53,5 @@ export * from "./selection-visibility.js";
 export * from "./structural-status.js";
 export * from "./validation.js";
 export * from "./associations.js";
+
+export * from "./authored-errors.js";

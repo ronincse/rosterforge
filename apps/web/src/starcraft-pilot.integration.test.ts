@@ -77,10 +77,12 @@ it.skipIf(!directory)("reproduces the frozen StarCraft baseline gaps without cla
   const negative = ledger(protoss);
   const negativeValidation = validation(protoss);
   expect(missingFaction).toMatchObject({ validity: "valid", completeness: "complete" });
-  expect(negativeValidation).toMatchObject({ validity: "valid", completeness: "complete" });
+  expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "complete" });
+  expect(ok(inspectLocalRosterSupportedValidation(protoss)).status.findings.filter(f => f.kind === "authoredError").map(f => f.report.message)).toEqual(["Not enough Core Supply."]);
   expect(negative.totals.find(t => t.id === "472f-46af-8e02-bfbf")?.value).toBe(-1);
   protoss = ok(removeLocalRosterSelection(protoss, second.id));
   const repaired = ledger(protoss);
+  expect(validation(protoss)).toMatchObject({ validity: "valid", completeness: "complete" });
   for (let i = 0; i < 7; i++) protoss = addRoot(protoss, "Forge").session;
   const gasOverBudget = ledger(protoss);
   const gasValidation = validation(protoss);
