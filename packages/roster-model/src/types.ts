@@ -90,6 +90,18 @@ export interface Roster {
   readonly catalogue: RosterCatalogueReference;
   readonly forces: readonly RosterForce[];
   readonly associations?: readonly RosterAssociation[];
+  readonly resourceBudgetOverrides?: readonly RosterResourceBudgetOverride[];
+}
+
+/**
+ * Player limits keyed by exact cost-type identity in this roster's catalogue.
+ * Absence restores the source default; zero is an explicit zero maximum. The
+ * budget-only sentinel -1 means unbounded, not a rule for signed selection costs
+ * or source constraints. Values otherwise must be finite and nonnegative.
+ */
+export interface RosterResourceBudgetOverride {
+  readonly typeId: ObjectId;
+  readonly value: number;
 }
 
 /** An occurrence-to-occurrence assignment, never a reparented or copied unit. */

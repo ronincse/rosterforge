@@ -33,6 +33,7 @@ import {
   selectionOccurrenceId,
   type Roster,
   type RosterForce,
+  type RosterResourceBudgetOverride,
   type RosterForceDefinitionReference,
   type RosterSelection,
   type RosterSelectionDefinitionReference,
@@ -381,6 +382,9 @@ function decodeRoster(
   const forces = requiredArray(record.forces, [...path, "forces"]).map(
     (force, index) => decodeForce(force, [...path, "forces", String(index)], 1, state),
   );
+  const resourceBudgetOverrides = decodeResourceBudgetOverrides(
+    record.resourceBudgetOverrides, [...path, "resourceBudgetOverrides"], state,
+  );
   const pairs = new Set<string>();
   const associations = record.associations === undefined ? undefined : requiredArray(record.associations, [...path, "associations"]).map((value, index) => {
     if (index >= 1000) invalid([...path, "associations"], "Too many roster assignments.");
@@ -403,7 +407,42 @@ function decodeRoster(
     },
     forces,
     ...(associations?.length ? { associations } : {}),
+    ...(resourceBudgetOverrides?.length ? { resourceBudgetOverrides } : {}),
   };
+}
+
+/**
+ * The same check covers present and history rosters. Limit the array before
+ * allocating decoded records; each snapshot has its own exact-ID namespace.
+ * Unknown override fields are rejected because silently discarding a future
+ * limit mode could change the meaning of a saved player's budget.
+ */
+function decodeResourceBudgetOverrides(
+  value: unknown,
+  path: readonly string[],
+  state: DecodeState,
+): readonly RosterResourceBudgetOverride[] | undefined {
+  if (value === undefined) return undefined;
+  const entries = requiredArray(value, path);
+  if (entries.length > 1000) invalid(path, "Too many resource budget overrides.");
+  const identities = new Set<string>();
+  return Array.from(entries, (value, index) => {
+    const at = [...path, String(index)];
+    const entry = requiredRecord(value, at);
+    if (Object.keys(entry).some((key) => key !== "typeId" && key !== "value")) {
+      invalid(at, "Resource budget override fields are unsupported.");
+    }
+    const typeId = requiredString(entry.typeId, [...at, "typeId"], state);
+    if (!typeId.trim().length || identities.has(typeId)) {
+      invalid([...at, "typeId"], "Resource budget identity must be nonempty and unique.");
+    }
+    if (typeof entry.value !== "number" || !Number.isFinite(entry.value) ||
+        (entry.value < 0 && entry.value !== -1)) {
+      invalid([...at, "value"], "Resource budget must be finite and nonnegative or -1.");
+    }
+    identities.add(typeId);
+    return { typeId: objectId(typeId), value: entry.value };
+  });
 }
 
 /**

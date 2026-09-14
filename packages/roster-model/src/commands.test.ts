@@ -20,6 +20,7 @@ import {
   replaceRosterSelectionDefinition,
   renameRoster,
   setRosterForceName,
+  setRosterResourceBudget,
   setRosterSelectionAmount,
   setRosterSelectionName,
 } from "./commands.js";
@@ -29,6 +30,7 @@ import {
   rosterId,
   rosterSelectionAmount,
   selectionOccurrenceId,
+  type Roster,
   type RosterForceDefinitionReference,
   type RosterSelectionDefinitionReference,
 } from "./types.js";
@@ -1273,3 +1275,79 @@ function successful<T>(result: {
   }
   return result.value;
 }
+
+
+describe("resource budget overrides", () => {
+  const gas = objectId("resource-gas");
+  const minerals = objectId("resource-minerals");
+
+  it("edits independent exact IDs without rewriting source references or selections", () => {
+    const initial = successful(addRosterForce(emptyRoster(), {
+      id: forceOccurrenceId("budget-force"), definition: forceDefinition("budget-definition"),
+    }));
+    const withGas = successful(setRosterResourceBudget(initial, gas, 210));
+    const withBoth = successful(setRosterResourceBudget(withGas, minerals, 2000));
+    const changed = successful(setRosterResourceBudget(withBoth, gas, 220));
+    expect(changed.resourceBudgetOverrides).toEqual([
+      { typeId: gas, value: 220 }, { typeId: minerals, value: 2000 },
+    ]);
+    expect(withGas.resourceBudgetOverrides).toEqual([{ typeId: gas, value: 210 }]);
+    expect(initial.resourceBudgetOverrides).toBeUndefined();
+    expect(changed.catalogue).toBe(initial.catalogue);
+    expect(changed.forces).toBe(initial.forces);
+    expect(changed.id).toBe(initial.id);
+    expect(changed.resourceBudgetOverrides?.[1]).toBe(withBoth.resourceBudgetOverrides?.[1]);
+    expect(successful(setRosterResourceBudget(withGas, gas, 210))).toBe(withGas);
+    expect(successful(setRosterResourceBudget(initial, gas, undefined))).toBe(initial);
+    const otherArmy = emptyRoster();
+    expect(otherArmy.resourceBudgetOverrides).toBeUndefined();
+  });
+
+  it("stores zero and budget-only -1 explicitly, then removes each override on reset", () => {
+    const initial = emptyRoster();
+    const zero = successful(setRosterResourceBudget(initial, gas, 0));
+    const unlimited = successful(setRosterResourceBudget(zero, minerals, -1));
+    expect(unlimited.resourceBudgetOverrides).toEqual([
+      { typeId: gas, value: 0 }, { typeId: minerals, value: -1 },
+    ]);
+    const resetGas = successful(setRosterResourceBudget(unlimited, gas, undefined));
+    expect(resetGas.resourceBudgetOverrides).toEqual([{ typeId: minerals, value: -1 }]);
+    const resetAll = successful(setRosterResourceBudget(resetGas, minerals, undefined));
+    expect(Object.hasOwn(resetAll, "resourceBudgetOverrides")).toBe(false);
+    expect(resetAll).toEqual(initial);
+    expect(successful(setRosterResourceBudget(zero, objectId(" resource-gas"), 2.5))
+      .resourceBudgetOverrides).toHaveLength(2);
+  });
+
+  it.each([NaN, Infinity, -Infinity, -2, -0.5, null, "200"])(
+    "rejects malformed entered limit %s", (value) => {
+      expect(setRosterResourceBudget(emptyRoster(), gas, value as number)).toMatchObject({
+        ok: false, diagnostics: [{ code: "ROSTER_MODEL_INVALID_RESOURCE_BUDGET" }],
+      });
+    },
+  );
+
+  it.each(["", " ", "a".repeat(4097), null, 2])("rejects malformed entered identity", (id) => {
+    expect(setRosterResourceBudget(emptyRoster(), id as typeof gas, 1).ok).toBe(false);
+  });
+
+  it.each([
+    null, {}, [null], [undefined], new Array(1),
+    [{ typeId: gas, value: NaN }], [{ typeId: gas, value: -2 }],
+    [{ typeId: gas, value: 2, mode: "future" }],
+    [{ typeId: gas, value: 2 }, { typeId: gas, value: 3 }],
+    Array.from({ length: 1001 }, (_, i) => ({ typeId: objectId(`resource-${i}`), value: 1 })),
+  ].map((overrides) => ({ overrides })))("refuses to silently repair malformed existing overrides", ({ overrides }) => {
+    const malformed = { ...emptyRoster(), resourceBudgetOverrides: overrides } as Roster;
+    expect(setRosterResourceBudget(malformed, gas, undefined).ok).toBe(false);
+    expect(setRosterResourceBudget(malformed, minerals, 10).ok).toBe(false);
+  });
+
+  it("permits updates and resets at the record cap but refuses another identity", () => {
+    const roster: Roster = { ...emptyRoster(), resourceBudgetOverrides:
+      Array.from({ length: 1000 }, (_, i) => ({ typeId: objectId(`resource-${i}`), value: 1 })) };
+    expect(setRosterResourceBudget(roster, objectId("resource-0"), 2).ok).toBe(true);
+    expect(setRosterResourceBudget(roster, objectId("resource-0"), undefined).ok).toBe(true);
+    expect(setRosterResourceBudget(roster, gas, 2).ok).toBe(false);
+  });
+});

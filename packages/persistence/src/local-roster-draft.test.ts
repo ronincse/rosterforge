@@ -512,3 +512,82 @@ function diagnosticCode(result: {
 }): string | undefined {
   return result.diagnostics[0]?.code;
 }
+
+
+describe("resource budget draft persistence", () => {
+  const gas = objectId("fictional-gas");
+  const minerals = objectId("fictional-minerals");
+  const overrides = [{ typeId: gas, value: 0 }, { typeId: minerals, value: -1 }];
+
+  it("round-trips explicit overrides and reset history while retaining imported bytes and associations", () => {
+    const raw = rawDraft();
+    const associations = [{
+      sourceId: selectionOccurrenceId("selection-1"), targetId: selectionOccurrenceId("selection-2"),
+      definitionKey: rosterDefinitionKey("fictional-association"),
+    }];
+    const initial = { ...raw.roster, associations };
+    const adjusted = { ...initial, resourceBudgetOverrides: overrides };
+    const draft = successful(createLocalRosterDraft({ ...raw, roster: adjusted,
+      history: { past: [initial], future: [{ ...adjusted, resourceBudgetOverrides: [{ typeId: gas, value: 210.5 }] }] },
+    }));
+    const loaded = successful(decodeLocalRosterDraft(draft));
+    expect(loaded.roster.resourceBudgetOverrides).toEqual(overrides);
+    expect(loaded.roster.resourceBudgetOverrides).not.toBe(overrides);
+    expect(loaded.roster.resourceBudgetOverrides?.[0]).not.toBe(overrides[0]);
+    expect(loaded.roster.forces).toEqual(raw.roster.forces);
+    expect(loaded.roster.catalogue).toEqual(raw.roster.catalogue);
+    expect(loaded.roster.id).toBe(raw.roster.id);
+    expect(loaded.roster.associations).toEqual(associations);
+    expect(loaded.import.files[0]?.bytes).toEqual(raw.import.files[0]?.bytes);
+    expect(Object.hasOwn(loaded.history!.past[0]!, "resourceBudgetOverrides")).toBe(false);
+    expect(loaded.history?.future[0]?.resourceBudgetOverrides).toEqual([{ typeId: gas, value: 210.5 }]);
+    const reset = successful(createLocalRosterDraft({ ...raw, roster: initial,
+      history: { past: [adjusted], future: [] },
+    }));
+    expect(Object.hasOwn(reset.roster, "resourceBudgetOverrides")).toBe(false);
+    expect(reset.history?.past[0]?.resourceBudgetOverrides).toEqual(overrides);
+    expect(JSON.parse(JSON.stringify(overrides))).toEqual(overrides);
+  });
+
+  it("keeps older drafts and histories without overrides compatible", () => {
+    const raw = rawDraft();
+    const decoded = successful(decodeLocalRosterDraft({ ...raw, history: { past: [raw.roster], future: [] } }));
+    expect(Object.hasOwn(decoded.roster, "resourceBudgetOverrides")).toBe(false);
+    expect(Object.hasOwn(decoded.history!.past[0]!, "resourceBudgetOverrides")).toBe(false);
+    const empty = successful(decodeLocalRosterDraft({ ...raw, roster: { ...raw.roster, resourceBudgetOverrides: [] } }));
+    expect(Object.hasOwn(empty.roster, "resourceBudgetOverrides")).toBe(false);
+  });
+
+  const malformed = [
+    null, {}, [null], [undefined], new Array(1),
+    [{ typeId: gas }], [{ typeId: gas, value: null }], [{ typeId: gas, value: "200" }],
+    ...[NaN, Infinity, -Infinity, -2, -0.1].map((value) => [{ typeId: gas, value }]),
+    ...["", " ", "a".repeat(4097), null, 2].map((typeId) => [{ typeId, value: 1 }]),
+    [{ typeId: gas, value: 1, mode: "future" }],
+    [{ typeId: gas, value: 1 }, { typeId: gas, value: 1 }],
+    Array.from({ length: 1001 }, (_, i) => ({ typeId: `cost-${i}`, value: 1 })),
+  ];
+  it.each(malformed.map((resourceBudgetOverrides) => ({ resourceBudgetOverrides })))("rejects malformed present and both history directions", ({ resourceBudgetOverrides }) => {
+    const raw = rawDraft();
+    const roster = { ...raw.roster, resourceBudgetOverrides };
+    expect(decodeLocalRosterDraft({ ...raw, roster }).ok).toBe(false);
+    for (const key of ["past", "future"] as const) {
+      const result = decodeLocalRosterDraft({ ...raw,
+        history: { past: [], future: [], [key]: [roster] },
+      });
+      expect(result).toMatchObject({ ok: false, diagnostics: [expect.objectContaining({
+        details: expect.objectContaining({ path: expect.arrayContaining(["history", key, "0", "resourceBudgetOverrides"]) }),
+      })] });
+    }
+  });
+
+  it("accepts the bounded maximum with IDs unique within each snapshot", () => {
+    const raw = rawDraft();
+    const roster = { ...raw.roster, resourceBudgetOverrides:
+      Array.from({ length: 1000 }, (_, i) => ({ typeId: `cost-${i}`, value: 1 })) };
+    const decoded = successful(decodeLocalRosterDraft({ ...raw, roster,
+      history: { past: [roster], future: [roster] },
+    }));
+    expect(decoded.roster.resourceBudgetOverrides).toHaveLength(1000);
+  });
+});

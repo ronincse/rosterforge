@@ -30,6 +30,7 @@ import {
   failure,
   success,
   type Diagnostic,
+  type ObjectId,
   type Result,
 } from "@rosterforge/foundation";
 
@@ -296,6 +297,60 @@ export function addRosterSelectionToSelection(
     return failure([missingSelectionDiagnostic(parentId)]);
   }
   return success({ ...roster, forces: update.forces });
+}
+
+/**
+ * Sets a player resource limit without copying source data or the roster tree.
+ * Reset removes the override so evaluation can resolve the saved source default.
+ * No-op edits retain roster identity, and malformed existing overrides fail
+ * rather than being silently repaired by an unrelated edit. This structural
+ * command cannot establish whether a cost type resolves in the catalogue.
+ */
+export function setRosterResourceBudget(
+  roster: Roster,
+  typeId: ObjectId,
+  value: number | undefined,
+): Result<Roster> {
+  const invalidBudget = (): Result<Roster> => failure([
+    structuralDiagnostic(
+      "ROSTER_MODEL_INVALID_RESOURCE_BUDGET",
+      "Resource budgets require unique nonempty cost-type IDs and finite nonnegative limits or -1.",
+      { kind: "resourceBudget" },
+    ),
+  ]);
+  const validId = (id: unknown): id is ObjectId =>
+    typeof id === "string" && id.trim().length > 0 && id.length <= 4096;
+  const validValue = (limit: unknown): limit is number =>
+    typeof limit === "number" && Number.isFinite(limit) && (limit >= 0 || limit === -1);
+  if (!validId(typeId) || (value !== undefined && !validValue(value))) return invalidBudget();
+  const existing = roster.resourceBudgetOverrides;
+  if (existing !== undefined) {
+    if (!Array.isArray(existing) || existing.length > 1000) return invalidBudget();
+    const identities = new Set<string>();
+    for (const entry of existing) {
+      if (entry === null || typeof entry !== "object" ||
+          Object.keys(entry).some((key) => key !== "typeId" && key !== "value") ||
+          !validId(entry.typeId) || !validValue(entry.value) || identities.has(entry.typeId)) {
+        return invalidBudget();
+      }
+      identities.add(entry.typeId);
+    }
+  }
+  const index = existing?.findIndex((entry) => entry.typeId === typeId) ?? -1;
+  if (value === undefined) {
+    if (index === -1) return success(roster);
+    const remaining = existing!.filter((entry) => entry.typeId !== typeId);
+    if (remaining.length) return success({ ...roster, resourceBudgetOverrides: remaining });
+    const { resourceBudgetOverrides: removed, ...reset } = roster;
+    void removed;
+    return success(reset);
+  }
+  if (index !== -1 && existing![index]!.value === value) return success(roster);
+  if (index === -1 && existing?.length === 1000) return invalidBudget();
+  const resourceBudgetOverrides = [...(existing ?? [])];
+  if (index === -1) resourceBudgetOverrides.push({ typeId, value });
+  else resourceBudgetOverrides[index] = { typeId, value };
+  return success({ ...roster, resourceBudgetOverrides });
 }
 
 /**
