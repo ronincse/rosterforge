@@ -34,17 +34,31 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-11 (experimental StarCraft pilot)
+## Current Status — 2026-09-14 (SC-01/02 complete on pilot)
 
-**2026-09-14 SC-01 implemented; SC-02 is next in the authorized batch.**
-Pilot `codex/starcraft-pilot`, code39b200920c2caa8d9f4dcd18297082392885e556 from
-clean c5a04c9. Force-owned direct authored errors now enter aggregate validation;
-negative Core invalidates and repair clears. Unknown applicability/source stays
-incomplete. Gates737pass31skip82/7files10.45s; configured28pass4files/no skips34.63s;
-lint/typecheck/build/diff pass. Native review approved after nested-source guard;
-Claude launch unavailable. Main and both source pins unchanged. Browser acceptance
-follows SC-02 in this batch; no further capabilities authorized. Focused evidence:
-`docs/qa/starcraft-validation-errors.md`.
+Owner-authorized SC-01/02 batch complete on `codex/starcraft-pilot`.
+SC-01 code39b200920c2caa8d9f4dcd18297082392885e556, handoffeab0663 (CI34858488003
+success); SC-02 code491d6c837c82763a65d224078778988aebcb8752, final handoff separate.
+Force-owned direct add-error modifiers now produce explicit findings; static
+shared parent-category min/max bounds count actual owning-force members.
+Protoss/Terran browser missing/one/two/remove faction and negative-Core/repair
+pass; Protoss saved negative state reopens with same problem. Zerg's distinct
+force-link requirement and ordinary twelve-model Zergling state pass. Three
+SC validation armies saved at5273; server deliberately remains running for owner.
+Existing5271 and all earlier worktrees/origins preserved. Native independent
+review approved; Claude launcher unavailable. Source pins/main unchanged.
+
+Final gates750pass31optionalSkip83/7files12.10s; configured28pass4files/no skips36.70s
+(27existing40k+1StarCraft), lint/typecheck/build/diff pass. Build820.22kB advisory.
+Nine previously skipped category-owned40k force/cost bounds are now unresolved,
+not invented violations; exact shape expectations added. Parent limit modifiers,
+sharedfalse/omitted, child-force traversal, category cost/force scopes remain
+withheld. Existing orphan cost qualifications and independent validity/completeness
+remain. See `docs/qa/starcraft-validation-errors.md` and compatibility boundaries.
+
+**Stop after this batch.** Recommended next bounded owner assignment is SC-03/07
+budgets/limit queries/resource summary. No automatic implementation, main merge,
+PR, reinforcement/XML/reference/freshness/source update or deployment authorized.
 
 ### Historical accepted pilot baseline (pre-repair)
 
@@ -1177,8 +1191,9 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | Item | Status | Note |
 | --- | --- | --- |
 | Experimental pinned source and baseline report | Done on pilot only | Three factions direct-download/create; selected Terran/Protoss save/reopen, Zerg reference smoke; no full support claim |
-| SC-01 authored requirements | Implemented; batch browser acceptance pending | Direct force add-error conditions, signed static resource queries, explicit validation findings; unknown source/applicability incomplete; code39b2009 |
-| SC-02 parent category requirements | Next, authorized in current batch | Implement bounded force/category ownership and min/max repair cases; preserve Zerg link distinction |
+| SC-01 authored requirements | Done on pilot | Direct force add-error conditions and signed static queries; browser negative/repair/save reopen; unknown shapes incomplete; code39b2009 |
+| SC-02 parent category requirements | Done on pilot | Static shared parent min/max; Protoss/Terran definitions and distinct Zerg force link pass; parent modifiers/nonshared/child forces withheld; code491d6c8 |
+| Category-owned force/cost bounds beyond SC-02 | Open, separate owner assignment | Nine previously omitted40k source bounds now unresolved in pinned Guardian context; seven base -1, activation not established; no category-owned cost/force execution |
 | SC-03/07 default budgets, limit queries and resource summary | Open | Separate Minerals/Gas purchase limits from signed composition allowances; defaultCostLimit retained but unused; no editable budget control; limit:: queries unsupported |
 | SC-04 typed-unit Reinforce conditions | Open | Container-only observation gives count0, Marines6/230 instead of source-intended9/240; settle reference semantics before bounded repair |
 | SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
@@ -15367,3 +15382,52 @@ encoding, corrected using explicit UTF-8 immediately. No source/history lost.
 Browser acceptance follows SC02 as requested. Continue only SC02, then stop.
 No main/PR/pin/budgets/reinforcement/XML/reference/freshness changes. Exact CI tracked
 in run history/final report; preview5271 and saved diagnostic armies preserved.
+
+## Completed Assignment — 2026-09-14: SC-02 parent category requirements and batch acceptance
+
+Baselineeab0663853e2cfc77797a927507c8905e0d26d29 clean/upstream-equal, SC-01 CI
+34858488003 success. Code491d6c837c82763a65d224078778988aebcb8752; this final handoff
+separate. Static shared parent selection min/max counts effective membership by
+actual owning-force occurrence, roots unless descendant selections explicit.
+Unique force-category context required; definition provenance is separate from
+force-link provenance. No selected-member-triggered requirement or label logic.
+Parent modifiers withheld rather than guessing relative category semantics;
+review's provisional-limit concern fixed by preserving authored base unexecuted.
+Nonshared, parent childforces, percent/unknown shapes and broader category scopes
+remain incomplete. Rejected blanket-parent-incomplete because measured static
+shape supports exact counting; rejected blanket multi-force or budget expansion.
+
+13 synthetic cases cover min/max/both/exactone, amounts/repeated shared aliases,
+unrelated categories, nested/force domains, ambiguity, unknown membership and
+unsupported flags/modifiers. Frozen Protoss/Terran/Zerg zero/one/two/remove tests
+pass; Terran same-name hiddenunit/faction trap fixed via exact source choice in
+test. Browser fresh5273 normal Browse/load/create for all three: Protoss1/0/1/0
+faction violations; Daelaam+twoZealots320/Core-1 gives one authored error, normal
+save/reload/Open retains it, removal160/Core1 clears. Terran1/0/1/0 faction;
+fourMarines640/Core-1 gives one error, removefourth480/Core0 clears while genuine
+cost incompleteness remains. Zerg missing1 then Swarm+Zerglings180/Core2,12models,
+0known violations, force-link0/1->1/1. Phone390 anddesktop1440 problem readability
+pass; viewportreset, consolewarn/errorsempty. No NewRecruit/fulllegality claim.
+Three saved armies retained; user explicitly requested server left running5273.
+Original5271 diagnostics and ownerworktrees remain untouched.
+
+Final750pass31skip83/7files12.10s; configured28pass4files36.70s,no skips,27existing40k
+and1StarCraft; lint/typecheck/build/diff pass. Final small parent-modifier refusal
+also focused16pass2files1.08s, fullsuite rerun afterwards. Existing build advisory
+820.22kB/gzip226.81. Pinned40k04c62fcd and StarCraft99261754 hashes unchanged.
+Reference14-unit/2000 mechanisms, repeated pricing, Supporting/connected effects,
+structural/category/force, orphan costs, conditional creation, renderer timing,
+persistence/recovery pass existing tests; no repeat full40k manual browser claim.
+
+Nine previously skipped category force/cost bounds now produce unresolved shape
+diagnostics in Guardian context: six currency bounds, ImperialKnights/Crucible/
+3DP selections; eightforce/oneroster, sevenbase-1. Exactfixtureexpectations added;
+no claim their activation is established and no duplicate supported force channel
+found in bounded reviewer check. Existing known violations preserved. Roadmap row
+records separate future source-driven follow-up. Historical pilot baseline intact;
+focused report, architecture/compatibility/diagnostics updated. Isolated native
+review approved SC02 and follow-up; externalClaude unavailable (one check, no retries).
+
+Publish only pilot code+handoff; exact final CI confirmed in completion response.
+No main/PR/data/budget/reinforcement/XML/metadata/freshness/deployment changes.
+Next recommendation SC03/07 only after owner assignment. Stop here.
