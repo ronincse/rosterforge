@@ -1109,6 +1109,7 @@ EVALUATION_CONSTRAINT_ATTRIBUTES_UNSUPPORTED
 EVALUATION_CONSTRAINT_MODIFIERS_UNSUPPORTED
 EVALUATION_CONSTRAINT_MODIFIER_GROUP_UNSUPPORTED
 EVALUATION_CONSTRAINT_EFFECTIVE_VALUE_NEGATIVE_UNSUPPORTED
+EVALUATION_CONSTRAINT_SCOPE_UNRESOLVED
 EVALUATION_CONSTRAINT_CANDIDATES_UNRESOLVED
 ```
 
@@ -1692,3 +1693,8 @@ unresolvable containing unit. Initial root creation may still report
 `EVALUATION_INITIALIZATION_CONSTRAINT_MODIFIERS_UNSUPPORTED`; existing post-edit
 automatic reconciliation supplies the evidenced final Marine quantity without
 suppressing that conservative initialization-stage diagnostic.
+
+`EVALUATION_CONSTRAINT_SCOPE_UNRESOLVED` reports an unknown typed or ID-valued
+containing context, including missing/conflicting definitions and unknown entry
+types in constraint resolution. It withholds exact observed counts and keeps
+completeness incomplete. A known absent matching ancestor does not emit it.

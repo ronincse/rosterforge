@@ -356,12 +356,15 @@ export function typedSelectionTypes(
  *
  * Shared by condition and constraint scope resolution: `unit`, `model`,
  * `model-or-unit`, and `upgrade` all name a containing entry by its type.
+ * Constraint callers require known source types before skipping a location; the
+ * optional strict flag leaves other consumers' established behavior unchanged.
  */
 export function nearestTypedSelection(
   owner: RosterSelectionLocation,
   choices: EvaluationChoiceIndex,
   catalogueMatches: boolean,
   types: readonly string[],
+  requireKnownType = false,
 ): TypedSelectionScopeResolution {
   for (const occurrence of [owner.occurrence, ...owner.ancestors]) {
     const resolution = resolveEvaluationSelection(
@@ -369,6 +372,11 @@ export function nearestTypedSelection(
       choices,
       catalogueMatches,
     );
+    if (requireKnownType && resolution.choices.some(choice =>
+      choice.kind === "selectionEntry" &&
+      (choice.type === undefined || !["unit", "model", "upgrade"].includes(choice.type)))) {
+      return { unresolved: true };
+    }
     const typedStates = resolution.choices.map(
       (choice) =>
         choice.kind === "selectionEntry" &&

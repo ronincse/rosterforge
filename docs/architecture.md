@@ -2229,6 +2229,13 @@ display parity.
 
 ## Constraint Inspection Boundary
 
+Container resolution is separate from an empty candidate collection. Constraint
+callers require known entry types in the nearest ancestor-or-self walk; unknown
+context emits a scope diagnostic and withholds an exact count (0..Infinity).
+Known absence remains exact zero. Typed constraint traversal still includes its
+container, unlike numeric unit-condition child queries. Other resolver consumers
+retain their existing type-evidence policy. See `qa/typed-constraint-uncertainty.md`.
+
 `inspectRosterSelectionConstraint` inspects one projected constraint owned by
 one exact roster selection occurrence. It supports non-negative `min` and `max`
 limits for `field="selections"` in selection-owned `self`, `parent`, `force`,

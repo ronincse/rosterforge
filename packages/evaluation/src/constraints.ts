@@ -456,8 +456,8 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     if ((associationCount && ["childId", "childName"].includes(attributes[index]!)) || (groupCost && ["childId", "childName", "traverseAssociationGroup"].includes(attributes[index]!)) || (associationCount && attributes[index] === "traverseAssociationGroup" && constraint.node.attributes.traverseAssociationGroup === "false")) attributes.splice(index, 1);
   }
   // Projection preserves malformed raw values; absence of a typed Boolean must
-  // not quietly turn an unknown cost traversal into a precise owner-only sum.
-  if (costType !== undefined || associationCount) {
+  // not quietly turn unknown traversal into a precise count or owner-only sum.
+  if (costType !== undefined || associationCount || constraint.field === "selections") {
     for (const key of ["shared", "percentValue", "includeChildSelections", "includeChildForces"]) {
       const raw = constraint.node.attributes[key];
       if (raw !== undefined && !["true", "false", "1", "0"].includes(raw)) attributes.push(key);
@@ -732,6 +732,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
           choices,
           catalogueMatches,
           typedScopeTypes,
+          true,
         )
       : scope === "identity"
         ? nearestIdentitySelection(
@@ -744,13 +745,19 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
             undefined,
           )
         : undefined;
-  const typedScopeUsable =
-    !needsContainer ||
-    (typedScope !== undefined &&
-      !typedScope.unresolved &&
-      typedScope.occurrence !== undefined);
+  // Known absence is an exact empty scope. Unknown location/type is not: an
+  // empty fallback array is only an implementation detail, never count evidence.
+  const scopeResolved = !needsContainer || typedScope?.unresolved === false;
+  const canCountSelections = canCollect && scopeResolved;
+  if (canCollect && !scopeResolved) {
+    diagnostics.push(constraintDiagnostic(
+      constraint, "EVALUATION_CONSTRAINT_SCOPE_UNRESOLVED",
+      "The constraint's containing selection could not be resolved.",
+      "scope", ["resolution"], { scope: constraint.scope },
+    ));
+  }
   const occurrences =
-    canCollect && typedScopeUsable
+    canCountSelections
       ? evaluationSelectionScope(
           roster,
           ownerLocations[0] as RosterSelectionLocation,
@@ -808,8 +815,8 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
   // Uncertain numeric costs can be negative or modified either way; their
   // retained subtotal is not a safe bound. Keep status and observed unresolved.
   const minimum = costType === undefined ? bounds.minimum : costEvaluation?.exact === true ? costEvaluation.value : Number.NEGATIVE_INFINITY;
-  const maximum = costType === undefined ? bounds.maximum : costEvaluation?.exact === true ? costEvaluation.value : Number.POSITIVE_INFINITY;
-  const canObserve = canCollect || (associationReach !== undefined && !associationReach.unresolved && !unresolvedCount) || costEvaluation?.exact === true;
+  const maximum = costType === undefined ? (canCountSelections || associationReach !== undefined ? bounds.maximum : Number.POSITIVE_INFINITY) : costEvaluation?.exact === true ? costEvaluation.value : Number.POSITIVE_INFINITY;
+  const canObserve = canCountSelections || (associationReach !== undefined && !associationReach.unresolved && !unresolvedCount) || costEvaluation?.exact === true;
 
   if (unresolvedCount > 0) {
     diagnostics.push(
@@ -895,7 +902,7 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
       matching,
       minimum,
       maximum,
-      ...(minimum === maximum ? { observed: minimum } : {}),
+      ...(canObserve && minimum === maximum ? { observed: minimum } : {}),
       ...(limit === undefined ? {} : { baseLimit: limit }),
       ...(effectiveLimit === undefined ? {} : { limit: effectiveLimit }),
       ...(modifierSequence === undefined ? {} : { modifierSequence }),
@@ -1140,8 +1147,9 @@ function supportedConstraintType(
  *
  * `unit`, `model`, `model-or-unit`, and `upgrade` name a containing entry by its
  * type; `root-entry` names the top-level selection. They resolve through the
- * same nearest-typed-ancestor walk conditions already use, so a constraint and a
- * condition written with the same scope agree.
+ * same ancestor-or-self walk as conditions, with strict type evidence here.
+ * Consumers retain their own counting domains: typed constraints include the
+ * container, unlike numeric unit conditions over its child collection.
  *
  * `ancestor` stays out: it names a chain rather than one containing occurrence,
  * and it does not appear on any corpus constraint.

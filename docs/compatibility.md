@@ -18,6 +18,16 @@ remain incomplete for five genuinely absent source cost types. See
 manifest, actual versus intended ledgers, classifications, and coverage limits.
 
 
+### Constraint uncertainty safeguard
+
+Typed selection-count constraints and ID-valued containing scopes distinguish
+known empty from unresolved context. Missing/conflicting definitions or unknown
+entry types withhold finite-bound status and exact observed counts. Known absent
+ancestors remain complete zero; supported traversal/counting semantics are unchanged.
+Malformed count flags and unknown child envelopes remain incomplete. An unbounded
+sentinel may be satisfied/incomplete without a count. See
+[`qa/typed-constraint-uncertainty.md`](qa/typed-constraint-uncertainty.md).
+
 ### Reinforcement and numeric unit scopes (SC-04)
 
 Numeric `field="selections", scope="unit"` conditions query the resolved nearest
