@@ -34,28 +34,40 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-14 (constraint safeguard complete; SC-05 authorized)
+## Current Status — 2026-09-14 (A and SC-05 complete; stop)
 
-Owner accepted SC-04 and authorized two bounded checkpoints: A typed-constraint
-uncertainty, then B XML text handling (SC-05). A reproduced and is repaired in
-fa8ea58 from clean/fetched/upstream-equal dcf3480. Unknown containing context no
-longer reports complete observed0; known empty scopes remain exact. Strict source
-type evidence applies only to constraint callers; no traversal generalization.
-See docs/qa/typed-constraint-uncertainty.md and newest completion entry.
+Owner accepted SC-04 and authorized only A typed-constraint uncertainty and B
+SC-05 XML values. Both are complete on `codex/starcraft-pilot`. A code fa8ea58,
+handoff 4962ece, exact CI 34920532400 green. B code 887b3769bb98a642b60c022233a8c4bf7cab2417
+from clean/upstream-equal 4962ece; this separate handoff follows. Unknown constraint
+context remains incomplete; known empty counts stay exact, without new traversal.
 
-A gates: lint/typecheck/build/diff pass; 871pass31optionalSkip,87/7files12.02s;
-configured28pass4files/no skips33.61s. Native independent review approved; Claude
-launcher already unavailable this session, no retry. Main, old UI checkout,
-StarCraft99261754 and40k04c62fcd/A/B pins unchanged. Existing servers/tabs/armies
-preserved. New isolated origin5279 started before XML repair for disposable QA;
-5277 remains available with accepted SC04 army. Leave servers running.
+SC-05 decodes one XML reference layer in ordinary text/attributes before projection,
+keeps CDATA/comments/PI and JSON/player strings separate, and rejects unsupported/
+malformed references. General entity expansion remains off. Original source bytes,
+archive protections and rendering safety remain. Metadata payload 4 rebuilds old
+summaries from verified bytes. Exact source/path XML-ID aliases preserve legacy
+restore identities; saved labels are never guessed or rewritten. Old escaped
+budget IDs without paths stay unresolved. Frozen StarCraft has no encoded IDs;
+its old copied Raynor label is intentionally retained while rebuilt references
+and new names are decoded. See docs/qa/starcraft-xml-text.md.
 
-Only SC-05 is next: parsed XML values, narrowly justified derived metadata cache
-compatibility, preserved source bytes and safe rendering, pre-repair draft/browser
-acceptance. No other roadmap implementation, main push, PR, merge or deployment.
-SC01/02/03/04/07 accepted behavior remains; orphan cost types, source revision mismatch,
-zero/hidden-default activation, dynamic budgets, profile semantics and freshness
-remain qualified. Stop after SC05 publication and exact-final CI.
+Final gates lint/typecheck/build/diff pass; normal 919 passed/32 optional skips,89 passed/7 skipped files,11.82s.
+All seven configured integration files:32 passed/no skips,38.50s (30 existing40k +2 StarCraft).
+Independent isolated native review approved code/tests/report; installed Claude
+launcher unavailable, no retry or external-review claim. Fresh/warm Browse,
+complete local XML import, old/new save/reopen, Marines6/160->6/180->9/240->6/180,
+squad independence, budget/faction/supply findings and Protoss4/8-inch text pass.
+Desktop/phone inspected. Print generated-output tests pass; no pagination claim.
+
+Publish own code plus handoff only to pilot; exact-final CI receipt belongs in the
+completion response/run history. Main bac89b7, UI69b2095, StarCraft99261754 and
+40k04c62fcd/A/B pins unchanged. Old worktrees/tabs/armies/servers preserved.
+Leave5279 running for owner testing (127.0.0.1 Terran and localhost Protoss/Zerg);
+5277 and prior previews remain. Stop after publication/CI. No further roadmap
+implementation, main push, PR, merge, deployment or source update is authorized.
+SC-06, SC-08, orphan types/revision mismatch, source-zero/hidden/dynamic budgets,
+nine40k category bounds and unsupported traversal remain qualified.
 
 ### Historical accepted pilot baseline (pre-repair)
 
@@ -1195,7 +1207,8 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-03/07 source-default activation and dynamic limits | Open; next budget evidence boundary, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
 | SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
 | Typed-constraint unresolved containing scope | Done — checkpoint A | fa8ea58 propagates unknown location/type into incomplete unresolved counts, preserves known empty and existing traversal; 36 fictional tests and configured corpus pass; qa/typed-constraint-uncertainty.md |
-| SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
+| SC-05 XML predefined/numeric entity display | Done on pilot — checkpoint B | 887b376 decodes once before projection with bounded XML-only adapter, preserved CDATA/bytes/security, metadata4 rebuild and legacy exact-path ID compatibility; old copied/player labels remain literal; qa/starcraft-xml-text.md |
+| Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Open | kind/order/longText/annotation and seven format rules retained but not executed; ability profiles routed to equipment; no arbitrary regex execution |
 | SC-08 source-aware freshness | Open | Inherited default-source0/BSData copy is 40k-specific; bind to provenance without an updater |
 | SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
@@ -15679,3 +15692,92 @@ Architecture/compatibility/diagnostics and focused report updated. Main,sourcepi
 worktrees,oldtabs/armies/servers preserved. New5279origin ready for pre-XML baseline.
 Publish pilot only and confirm CI. Next authorized boundary is SC05 only; no other
 roadmap work or integration. Historical SC04 report remains intact.
+
+## Completed Assignment — 2026-09-14: SC-05 XML reference values (B)
+
+**Baseline and result.** Baseline4962ece84ffb6891aac8e99248675807edd096ee was
+clean and upstream-equal after fetch. Implementation/tests/evidence:
+887b3769bb98a642b60c022233a8c4bf7cab2417; this separate handoff follows. A was
+completed and published first as fa8ea58 +4962ece, with CI34920532400 green.
+No concurrent writer or reset of newer work; main and UI checkouts preserved.
+
+**Decision.** Frozen99261754 contains escaped Raynor name attributes and C14/
+Protoss characteristic text. Fictional ingestion/projection tests reproduced
+35 failures and6 passes before the fix. Fresh5279 browser reproduced the escaped
+faction and Marine12-inch text and saved a disposable pre-repair army. Installed
+fast-xml-parser5.8.0, its source/options/validator and W3C XML1.0 were inspected.
+Enabling general processing alone did not meet the numeric/reference contract.
+Kept processEntities:false; explicit CDATA context plus an internal XML-only
+adapter decodes ordinary text/attributes during ordered-node conversion.
+
+Exactly five predefined entities and valid decimal/hex XML1.0 Char references
+decode once. Output ampersands are never scanned again. CDATA/comments/PI payloads
+bypass decoding. Reference spellings have an explicit36-character resource bound.
+Malformed/unsupported references fail BS_XML_REFERENCE_INVALID or the earlier
+syntax diagnostic; character ranges are checked before character creation.
+Rejected dependency upgrades, raw XML replacement, HTML vocabulary/decoders,
+per-game fixes and decoding persisted/player text. Existing whitespace and PI
+representation remain; no new full XML conformance claim.
+
+**Security and compatibility.** Original archive/source/document bytes, hashes,
+locations, immutable keys and archive size/path/bounded-inflate/CRC protections
+are unchanged. The declaration precheck remains, including conservative rejection
+inside comments/CDATA. Custom/external/parameter entities remain prohibited.
+Maintainer advisories informed small regressions, not an installed-vulnerability
+claim. Actual React reference rendering keeps encoded dangerous-looking text
+inert while retaining allowed formatting. No new HTML/regex execution privilege.
+
+Derived metadata payload3 ->4 rebuilds older summaries from verified cached bytes
+without clearing byte caches or drafts. Legacy XML ID spelling matches only the
+same source/path/kind in restore and structural checks. Three fictional saved
+source/history round trips preserve bytes, IDs, names and budget behavior; new
+add/remove still works and wrong identity fails. Saved source-fallback and player
+names are indistinguishable, so copied escapes remain unchanged. Legacy escaped
+budget IDs lack path evidence and remain unresolved. Both limits are in the
+roadmap. All four frozen StarCraft files have no escaped IDs, so its identities
+and budgets need no alias or migration.
+
+**Browser.** Isolated127.0.0.1:5279 pre-repair draft reopens with9 Marines/240,
+limit235 and5 over. C14 now shows12 inches; the literal player name and old copied
+Raynor label persist, including another update/reopen. New Raynor faction choices,
+configuration and saved name decode correctly. Category-qualified selection plus
+the pinned ID test distinguishes the same-name Core unit. Marines retain
+6/160 -> Shield6/180 -> Reinforce9/240 -> removal6/180. A second squad remains
+6/160. Saved final9/240 +6/160 =400 with limit395 reopens5 over, with6 satisfied
+structural and12 satisfied constraint bounds.
+
+Freshlocalhost:5279 Browse loads Protoss with0 diagnostics. Daelaam +Sentries2/130
+show full Restoration4-inch, GuardianShield4-inch and ForceField8-inch/it's text,
+including after save/reopen. Repeat Browse reports warm metadata. Zerglings12/180
+initialize; missing Faction and Core Supply problems persist. Normal four-file
+local XML import has0 diagnostics, and the previously saved Protoss reopens its
+own source context afterwards. Desktop1440x900 and phone390x844 screenshots were
+inspected; Marine page width375/scrollWidth375, no page overflow. Viewport reset.
+Print output was inspected in tests; live print invoked no controllable IAB output
+tab, so no PDF/pagination claim. Leave5279 and old5277/5275/5273/5271 running.
+
+**Review and validation.** A bounded native reviewer in the detached isolated
+starcraft-uncertainty-xml-review worktree approved code, final tests and report.
+The lead owned implementation/integration/browser/gates/docs/publication. Claude's
+installed launcher was already unavailable; no retries, reinstall or external
+review claim. Review challenged PI context, numeric failures, cache versions,
+structural aliases and legacy budgets; valid range endpoints were added. Final
+report wording corrections were applied.
+
+Focused XML/draft tests:45 pass,2 files,1.11s. Final normal gates all pass:
+919 tests passed,32 optional skips;89 passed/7 skipped files,11.82s. Build189 modules,
+JS834.96kB/gzip231.15, CSS83.38kB/gzip14.87; existing chunk advisory only.
+All seven configured integration files:32 pass,0 skips,38.50s (30 existing40k,
+2 StarCraft). Initial concurrent run timed out the new full-source test at its
+5-second default; matching the existing30-second corpus allowance passed with
+assertions unchanged. Pricing, Supporting, initialization, budgets, persistence/
+recovery, reference grouping, renderer timing, capacity, Dark Angels switching
+and rule visibility remain covered. All StarCraft hashes,40k HEAD
+04c62fcd041b3808c39d5c46fd677c704027b979 and correctness A/B manifests unchanged.
+
+**Handoff and stop.** Architecture, compatibility, diagnostics and SC-05 report
+updated. Historical baseline observations remain with a supersession note.
+Publish only to pilot and confirm exact-final CI. Stop after these two checkpoints.
+SC-06/08, additional budgets, generalized queries, nine40k category bounds, source
+corrections and main integration remain outside authorization. Orphan cost types,
+revision mismatch and other unsupported behavior stay qualified.
