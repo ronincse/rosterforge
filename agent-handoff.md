@@ -34,52 +34,28 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-14 (SC-04 fixed for evidenced shape)
+## Current Status — 2026-09-14 (constraint safeguard complete; SC-05 authorized)
 
-Owner-authorized SC-04 complete on `codex/starcraft-pilot`, clean/upstream-equal
-baseline92c4c1408919fb05b052025c5bb2e12b59dc03be. Implementation/tests/evidence:
-6372abd35931551f999974154b904e9dde9e0bd4; this handoff is separate.
-Numeric unit-selection conditions count the resolved unit's direct children when
-traversal is omitted/false, descendants when true, excluding the unit container.
-Both automatic model-bound and conditional price modifiers consume this one leaf.
-Unit repeats preserve raw flag/envelope evidence. Other typed scopes, identity
-predicates, direct-cost queries and typed-constraint traversal are unchanged.
+Owner accepted SC-04 and authorized two bounded checkpoints: A typed-constraint
+uncertainty, then B XML text handling (SC-05). A reproduced and is repaired in
+fa8ea58 from clean/fetched/upstream-equal dcf3480. Unknown containing context no
+longer reports complete observed0; known empty scopes remain exact. Strict source
+type evidence applies only to constraint callers; no traversal generalization.
+See docs/qa/typed-constraint-uncertainty.md and newest completion entry.
 
-Pinned and browser Marines160/6 -> Shield180/6 -> Reinforce240/9 -> removal180/6
-pass. Shield contribution20/30/20, additional Core-1, exact model bounds6/9/6
-and one amounted model occurrence verified. Reverse order, independent squads,
-duplication/later edits, coherent undo/redo, saved-source reconstruction and
-new-tab recovery pass. Marauders with Foam2/170 -> reinforced4/320 ->2/170 also
-passes browser smoke. Normal17fictional tests protect locality, flags, unknown
-envelopes/targets, failure immutability and automatic versus ordinary manual edits.
+A gates: lint/typecheck/build/diff pass; 871pass31optionalSkip,87/7files12.02s;
+configured28pass4files/no skips33.61s. Native independent review approved; Claude
+launcher already unavailable this session, no retry. Main, old UI checkout,
+StarCraft99261754 and40k04c62fcd/A/B pins unchanged. Existing servers/tabs/armies
+preserved. New isolated origin5279 started before XML repair for disposable QA;
+5277 remains available with accepted SC04 army. Leave servers running.
 
-Three saved test squads at http://127.0.0.1:5277:9/240 Shield+Reinforce,
-6/180 Shield,6/160 base; disposable Minerals limit575, exact total580. Two known
-problems:5over budget and Core-1 supply. All seven source-zero budget activations
-remain explicitly unresolved. Desktop1440/phone390 controls and problem dialog
-readable; no phone horizontal overflow; keyboard/focus and console checks pass.
-Server5277 deliberately remains running for owner testing; earlier servers,
-saved armies/origins and tabs preserved. See `docs/qa/starcraft-reinforcement.md`.
-
-Final gates835pass31optionalSkip86/7files11.99s, configured28pass4files/no skips
-28.73s (27existing40k+1expandedStarCraft), final pinned ledger1pass1.18s.
-Lint/typecheck/build/diff pass; JS833.17kB existing advisory. Native independent
-candidate and evidence review approved; Claude launcher unavailable this session,
-not retried. StarCraft99261754/40k04c62fcd and snapshot manifests unchanged;
-mainbac89b7 and old UI checkout69b2095 remain clean. Final pushed-SHA CI is
-confirmed in completion response/run history.
-
-SC01/02 and SC03/07 accepted behavior remain intact. Initial Marines creation
-still emits the conservative initialization-modifier warning; the reinforcement
-command has no diagnostics and existing automatic reconciliation supplies the
-correct final state. Orphan cost types, revision mismatch, zero/hidden budget
-activation, dynamic limits and reference/XML/freshness gaps remain. Review also
-found an inherited typed-constraint unresolved-container-to-zero hole; separately
-tracked below, not altered by this numeric condition repair.
-
-**Stop after SC-04.** No next phase, broad audit, budget expansion, XML/reference/
-freshness work, source update, main merge/push, PR or deployment is authorized.
-Await a bounded owner assignment; this checkpoint does not imply full legality.
+Only SC-05 is next: parsed XML values, narrowly justified derived metadata cache
+compatibility, preserved source bytes and safe rendering, pre-repair draft/browser
+acceptance. No other roadmap implementation, main push, PR, merge or deployment.
+SC01/02/03/04/07 accepted behavior remains; orphan cost types, source revision mismatch,
+zero/hidden-default activation, dynamic budgets, profile semantics and freshness
+remain qualified. Stop after SC05 publication and exact-final CI.
 
 ### Historical accepted pilot baseline (pre-repair)
 
@@ -1218,7 +1194,7 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; unresolved source activation remains explicit |
 | SC-03/07 source-default activation and dynamic limits | Open; next budget evidence boundary, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
 | SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
-| Typed-constraint unresolved containing scope | Open, separate bounded owner assignment | Inherited constraints.ts can leave canObserve true after nearest typed container is unresolved and produce observed0; numeric condition SC04 has the proper uncertainty guard, constraint traversal was intentionally unchanged |
+| Typed-constraint unresolved containing scope | Done — checkpoint A | fa8ea58 propagates unknown location/type into incomplete unresolved counts, preserves known empty and existing traversal; 36 fictional tests and configured corpus pass; qa/typed-constraint-uncertainty.md |
 | SC-05 XML predefined/numeric entity display | Open | Literal quot/apos escapes reach reference/name UI; preserve source bytes and DTD/entity-declaration rejection while designing safe decoding |
 | SC-06 profile metadata and reference classification | Open | kind/order/longText/annotation and seven format rules retained but not executed; ability profiles routed to equipment; no arbitrary regex execution |
 | SC-08 source-aware freshness | Open | Inherited default-source0/BSData copy is 40k-specific; bind to provenance without an updater |
@@ -15670,3 +15646,36 @@ sourcezero/hiddenpositive/dynamicbudget,orphancost/revision,SC05XML,SC06metadata
 SC08freshness,unknownnestedprospectiveunit and typedconstraint issues stayopen.
 No mainmerge/push,PR,deploy,pinchange,budgetexpansion or nextphase. Stop; leave5277
 available for owner testing.
+
+## Completed Assignment — 2026-09-14: typed-constraint uncertainty safeguard (A)
+
+Baseline dcf348093d2b519693ed3a75b98fc49de5d6fa2c clean/upstream-equal after fetch;
+implementation/test/evidence fa8ea58; separate handoff follows. No concurrent writer.
+Small fictional ingestion/projection/roster cases reproduced the SC04 review hole:
+10fail16pass before production repair. Unknown nearest container became empty
+candidates while canObserve retained canCollect, yielding complete observed0.
+No claim that a particular real army was falsely accepted.
+
+Repair at constraint owning boundary distinguishes resolved empty/absent scope from
+unresolved context; diagnostic, range0..Infinity, absent observed and finite-bound
+unresolved status travel together. Strict type evidence is opt-in for constraints;
+missing/unsupported types cannot be skipped, agreeing ambiguous types still anchor.
+All four typed scopes and shared ID-container path covered without broadening
+traversal. Existing sentinel satisfied/incomplete remains; malformed count flags/
+child envelopes refuse through normal shape diagnostic. Rejected zero-to-one,
+forced violations, all-empty-incomplete and SC04 traversal copying.
+
+36 fictional tests protect known present/empty/absent, min/max, missing/ambiguous/
+unknown type, sentinel, identity scope, unsupported syntax and composition with
+independent known violation. Normal871pass31optionalSkip87/7files12.02s; configured
+28pass4files/no skips33.61s. Lint/typecheck/build/diff pass; JS833.52kB existing
+advisory. All four StarCraft hashes and40k A/B manifests unchanged;40kHEAD04c62fcd.
+SC04pricing/locality/history/budgets and other configured40k regressions pass.
+
+Native isolated reviewer approved after challenging observed/completeness/ranges,
+strict type evidence and sentinel. Claude launcher already unavailable in session,
+no retries and no external review claim. Lead owns code/integration/gates/docs/push.
+Architecture/compatibility/diagnostics and focused report updated. Main,sourcepins,
+worktrees,oldtabs/armies/servers preserved. New5279origin ready for pre-XML baseline.
+Publish pilot only and confirm CI. Next authorized boundary is SC05 only; no other
+roadmap work or integration. Historical SC04 report remains intact.
