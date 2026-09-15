@@ -14,6 +14,16 @@ resolution, validation, persistence, and internal failures.
 Parser and archive failures return diagnostics rather than throwing expected
 input errors. Unexpected programming failures may still throw.
 
+Malformed or unsupported XML references emit `BS_XML_REFERENCE_INVALID` with a
+`parsing` impact and source provenance. `details.valueOffset` is local to the
+parser-supplied value, not an original-file byte offset. Unknown named entities,
+invalid/forbidden/out-of-range numeric references and reference spellings longer
+than 36 characters including delimiters are rejected before character creation.
+Some malformed XML is rejected earlier as `BS_XML_INVALID`. Neither path reports
+a successful import with a replacement character. DTD/entity-declaration rejection
+and archive diagnostics remain unchanged; see [SC-05](qa/starcraft-xml-text.md).
+Failed rebuilding does not authorize deleting saved source/draft records.
+
 XML that exceeds configured element-depth or ordered-node limits is rejected
 with:
 

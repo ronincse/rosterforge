@@ -426,7 +426,10 @@ function selectionDefinitionMatches(
         choice.occurrence.path,
       ) &&
     (definition.sourceId === undefined ||
-      definition.sourceId === choice.id)
+      definition.sourceId === choice.id ||
+      // Same exact source/path as above; retain old XML spelling only for
+      // drafts written before XML value decoding. JSON has no such alias.
+      definition.sourceId === choice.occurrence.node.xmlRawId)
   );
 }
 

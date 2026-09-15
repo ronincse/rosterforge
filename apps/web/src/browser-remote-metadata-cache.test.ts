@@ -70,7 +70,7 @@ describe("browser remote catalogue metadata cache", () => {
     ).toBeUndefined();
   });
 
-  it.each([1, 2])(
+  it.each([1, 2, 3])(
     "treats metadata schema version %i as a quiet cache miss",
     async (version) => {
     const cache = createBrowserRemoteCatalogueMetadataCache(
@@ -396,7 +396,7 @@ function validRecord(overrides: Record<string, unknown> = {}): unknown {
       key.treeObjectId,
     ]),
     format: "rosterforge.pinned-repository-metadata-cache",
-    version: 3,
+    version: 4,
     key,
     payload: JSON.stringify(validEntry()),
     ...overrides,

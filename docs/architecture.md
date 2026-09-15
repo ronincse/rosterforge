@@ -85,13 +85,26 @@ contracts.
 
 `battlescribe-data` accepts untrusted `.gst`, `.cat`, `.gstz`, `.catz`, and
 BattleScribe 2.03 `.json` input. It retains original imported bytes and, for
-archives, extracted XML bytes with separate provenance. It rejects XML
+archives, extracted XML bytes with separate provenance. It rejects DTD and entity
 declarations before parsing, enforces byte, archive, XML, and JSON structural
 limits, keeps an ordered generic source representation, and creates read-only
 BattleScribe 2.03 projections for known structures, including profile-type and
 characteristic-type definitions, profile-owned modifiers, and recursive force
 entries. It does not
 resolve IDs or interpret rules.
+
+XML uses the installed fast-xml-parser with general entity processing disabled.
+An internal XML-only value adapter decodes one predefined/numeric reference layer
+in ordinary text and attributes during ordered-node conversion, before projection.
+The parser keeps CDATA distinct until conversion; its literal text then occupies
+the same ordered slot. Comments and processing-instruction payloads stay inert.
+Invalid references return `BS_XML_REFERENCE_INVALID`; emitted ampersands are never
+rescanned. Existing whitespace handling and original bytes remain unchanged.
+`OrderedXmlElement.xmlRawId`, present only when an XML ID's raw spelling changed,
+supports old draft identity matching at the exact source/path and kind. It is not
+a display label or a generic alias, and JSON never populates it. Saved roster names
+and IDs are not rewritten; old cost-type budget IDs without source paths remain
+unresolved rather than guessed. See [SC-05 contract](qa/starcraft-xml-text.md).
 
 Archive metadata is read through a runtime-checked, pinned JSZip 3.10.1 adapter
 before CRC or decompression. Its complete entry list preserves duplicate names
@@ -327,9 +340,10 @@ Metadata JSON is limited to 32 MiB per record and 32 MiB total. The pinned
 46-document report stays below 2 MiB after adding 35,492 bounded
 selection-target IDs, while still allowing one maximally accepted report.
 Database version 2 adds `pinned-repository-metadata-lru`; reads touch that small
-sidecar instead of rewriting as much as 32 MiB. Payload schema version 3 adds
-selection-target summaries; versions 1 and 2 are quiet misses and rebuild from
-verified bytes. Malformed later accounting clears only this re-downloadable
+sidecar instead of rewriting as much as 32 MiB. Payload schema version 4 retains
+selection-target summaries and requires decoded XML metadata. Versions 1, 2 and 3
+are quiet misses and rebuild derived summaries from verified cached bytes.
+Malformed later accounting clears only this re-downloadable
 metadata database. The adapter never touches local roster drafts.
 
 `navigator.storage.estimate()` is not used as a preflight guard. Its usage

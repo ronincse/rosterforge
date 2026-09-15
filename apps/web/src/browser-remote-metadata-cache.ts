@@ -64,8 +64,8 @@ export interface BrowserRemoteMetadataCacheMetadataRecord {
 }
 
 const recordFormat = "rosterforge.pinned-repository-metadata-cache";
-const recordVersion = 3;
-const legacyRecordVersions = new Set([1, 2]);
+const recordVersion = 4;
+const legacyRecordVersions = new Set([1, 2, 3]);
 const metadataFormat =
   "rosterforge.pinned-repository-metadata-cache-metadata";
 const metadataVersion = 1;
@@ -123,9 +123,9 @@ export function createBrowserRemoteCatalogueMetadataCache(
         typeof record.version === "number" &&
         legacyRecordVersions.has(record.version)
       ) {
-        // Older records predate repository facts used to classify focused-
-        // closure references. A quiet miss lets the verified index rebuild
-        // without mislabelling an expected schema transition as corruption.
+        // Earlier records lack repository facts or XML-decoded semantic names.
+        // Rebuild only this derived index from verified byte-cache entries;
+        // source payloads, immutable keys and saved drafts are not invalidated.
         return undefined;
       }
       const decoded = decodeCacheRecord(record, id, key, resolvedLimits);

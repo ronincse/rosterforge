@@ -77,6 +77,9 @@ export interface OrderedXmlElement {
   readonly attributes: OrderedXmlAttributes;
   readonly children: readonly OrderedXmlNode[];
   readonly jsonSource?: OrderedJsonValue;
+  /** Original XML id spelling only when reference decoding changed it. This is
+   * provenance for exact source/path legacy draft matching, never a display ID. */
+  readonly xmlRawId?: string;
 }
 
 export interface OrderedXmlText {

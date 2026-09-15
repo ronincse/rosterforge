@@ -369,7 +369,8 @@ function createLocalRosterRestoreContext(
  * Used to restore a saved undo history, where every snapshot resolves against
  * the same catalogue. Fails as a unit: a history with one unrestorable snapshot
  * is not a history anyone can step through, so the caller gets the diagnostics
- * rather than a silently shortened stack.
+ * rather than a silently shortened stack. Saved names/IDs are retained; exact
+ * source paths may also match the original XML ID spelling before decoding.
  */
 export function restoreLocalRosterSessions(
   catalogue: LocalCatalogueChoice,
@@ -387,6 +388,10 @@ export function restoreLocalRosterSessions(
   return success(sessions, diagnostics);
 }
 
+/** Resolve a saved roster against its rebuilt source context without rewriting
+ * names or IDs. Legacy XML spelling is accepted only at the same source path;
+ * player-owned strings never pass through the XML decoder.
+ */
 export function restoreLocalRosterSession(
   catalogue: LocalCatalogueChoice,
   roster: Roster,
@@ -403,7 +408,8 @@ function restoreWithContext(
   if (
     roster.catalogue.key !== expectedCatalogue.key ||
     (roster.catalogue.sourceId !== undefined &&
-      roster.catalogue.sourceId !== expectedCatalogue.sourceId)
+      roster.catalogue.sourceId !== expectedCatalogue.sourceId &&
+        roster.catalogue.sourceId !== catalogue.document.root.xmlRawId)
   ) {
     return failure([
       restoreDiagnostic(
@@ -445,7 +451,8 @@ function restoreWithContext(
         definition.source.path,
       ) === rootForce.definition.key &&
       (rootForce.definition.sourceId === undefined ||
-        rootForce.definition.sourceId === definition.source.id),
+        rootForce.definition.sourceId === definition.source.id ||
+        rootForce.definition.sourceId === definition.source.node.xmlRawId),
   );
   if (forceDefinitions.length !== 1) {
     return failure([
@@ -2133,7 +2140,10 @@ function selectionDefinitionMatches(
 ): boolean {
   return (
     reference.kind === choice.kind &&
-    (reference.sourceId === undefined || reference.sourceId === choice.id)
+    // Keys and kind are already exact here. Only original XML spelling from
+    // that same source/path may identify a legacy draft; never decode saved IDs.
+    (reference.sourceId === undefined || reference.sourceId === choice.id ||
+      reference.sourceId === choice.occurrence.node.xmlRawId)
   );
 }
 

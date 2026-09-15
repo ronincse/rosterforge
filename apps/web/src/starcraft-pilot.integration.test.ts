@@ -1,3 +1,4 @@
+import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
 import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
 // Optional pinned validation regression plus explicit remaining pilot reproductions.
 // Download the four immutable files listed in docs/qa/starcraft-pilot-baseline.md
@@ -189,4 +190,34 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   console.log(report);
   // Explicit opt-in artifact path keeps ordinary and corpus test runs read-only.
   if (process.env.ROSTERFORGE_STARCRAFT_PILOT_REPORT) writeFileSync(process.env.ROSTERFORGE_STARCRAFT_PILOT_REPORT, report);
+}, 30000);
+
+it.skipIf(!directory)("decodes the frozen SC-05 source values without changing source identities or bytes", async () => {
+  if (!directory) throw new Error("Pilot data not configured");
+  const inputs = files.map(([filename, hash]) => {
+    const bytes = new Uint8Array(readFileSync(join(directory, filename)));
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(hash);
+    return { filename, bytes };
+  });
+  const library = ok(await prepareLocalCatalogueLibrary(inputs, { import: { batchId: "sc05", importedAt: "2026-09-14T00:00:00Z" } }));
+  const elements = (root: OrderedXmlElement): readonly OrderedXmlElement[] => [root, ...root.children.flatMap(n => n.kind === "element" ? elements(n) : [])];
+  for (const document of library.documents) {
+    const original = inputs.find(f => f.filename === document.source.filename)!;
+    expect(document.sourceBytes).toEqual(original.bytes);
+    expect(document.documentBytes).toEqual(original.bytes);
+    // Every frozen source ID already used literal syntax, so existing army and
+    // association/source identities do not need even the legacy XML alias.
+    expect(elements(document.root).filter(e => e.xmlRawId !== undefined)).toEqual([]);
+  }
+  const terran = library.selectableCatalogues.find(c => c.name === "Terran")!;
+  const marines = localRosterRootChoices(terran).find(c => c.materialized.id === "46b6-0bfa-70ea-ba86")!.materialized;
+  expect(marines.materializedInfoLinks.filter(p => p.kind === "profileInfoLink").find(p => p.name === "C-14 Rifle")?.characteristics.find(c => c.name === "Rng")?.value).toBe('12"');
+  const raynor = localRosterRootChoices(terran).find(c => c.materialized.id === "60b3-fffd-a15a-4cea")!;
+  expect(raynor.materialized.name).toBe("Raynor's Raiders");
+  expect(raynor.materialized.occurrence.node.attributes.name).toBe("Raynor's Raiders");
+  const protoss = library.selectableCatalogues.find(c => c.name === "Protoss")!;
+  const sentries = localRosterRootChoices(protoss).find(c => c.materialized.name === "Sentries")!.materialized;
+  expect(sentries.profiles.find(p => p.id === "e1ee-c45e-2390-2106")?.characteristics[0]?.value).toBe('Use when a Friendly Unit Within 4" receives a DEBUFF. Remove all DEBUFFS from it.');
+  expect(sentries.profiles.find(p => p.id === "3bed-bc23-eac6-223a")?.characteristics[0]?.value).toBe('Set a Force Field token Within 8" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it\'s then removed.');
+  expect(library.selectableCatalogues.find(c => c.name === "Zerg")).toBeDefined();
 }, 30000);

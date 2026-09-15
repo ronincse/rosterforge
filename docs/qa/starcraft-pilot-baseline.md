@@ -4,6 +4,8 @@
 > SC03/07 repaired supported budgets, and [SC04](starcraft-reinforcement.md)
 > now verifies Marines6/9/6 and160/180/240/180. Original failed observations below
 > are preserved as baseline evidence, not current acceptance expectations.
+> [SC-05](starcraft-xml-text.md) now repairs parsed XML reference values; the
+> literal-escape observations below remain the historical pre-repair evidence.
 
 ## Result and boundary
 

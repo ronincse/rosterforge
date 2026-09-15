@@ -1,4 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { decodeXmlReferences, XmlReferenceError } from "./xml-values.js";
 import { ArchiveOutputLimitError, extractArchivePayload } from "./archive-output.js";
 import { readArchiveMetadata, type ArchiveEntryMetadata } from "./archive-metadata.js";
 
@@ -36,10 +37,13 @@ const parser = new XMLParser({
   allowBooleanAttributes: true,
   attributeNamePrefix: "",
   commentPropName: "#comment",
+  // Keep CDATA distinct until conversion so literal ampersands never decode.
+  cdataPropName: "#cdata",
   ignoreAttributes: false,
   parseAttributeValue: false,
   parseTagValue: false,
   preserveOrder: true,
+  // General/custom expansion stays disabled; conversion decodes only XML values.
   processEntities: false,
   removeNSPrefix: false,
   trimValues: false,
@@ -50,6 +54,10 @@ export interface IngestBattleScribeOptions {
   readonly limits?: Partial<IngestionLimits>;
 }
 
+/** Ingest bounded original bytes without reserialization. XML values decode one
+ * predefined/numeric reference layer; JSON values keep their authored strings.
+ * Invalid XML references return diagnostics, including inside archives.
+ */
 export async function ingestBattleScribeFile(
   input: Uint8Array,
   options: IngestBattleScribeOptions,
@@ -100,6 +108,10 @@ export function parseBattleScribeJson(
   return parseJsonDocument(input, options.source, limits);
 }
 
+/** Parse plain XML into ordered semantic values and typed projections while
+ * retaining the original bytes. DTD/custom entities remain prohibited; CDATA,
+ * comments and processing-instruction payloads are not reference-decoded.
+ */
 export function parseBattleScribeXml(
   input: Uint8Array,
   options: IngestBattleScribeOptions,
@@ -383,7 +395,16 @@ function parseXmlDocument(
     ]);
   }
 
-  const conversion = convertOrderedDocument(parsed, limits);
+  let conversion: XmlConversionResult;
+  try {
+    conversion = convertOrderedDocument(parsed, limits);
+  } catch (error: unknown) {
+    if (!(error instanceof XmlReferenceError)) throw error;
+    return failure([diagnostic(
+      "BS_XML_REFERENCE_INVALID", error.message, source, ["parsing"],
+      { valueOffset: error.offset },
+    )]);
+  }
   if (!conversion.ok) {
     return failure([
       diagnostic(
@@ -664,7 +685,10 @@ function convertOrderedNodes(
       continue;
     }
 
-    const attributes = parseAttributes(rawNode[":@"]);
+    // Processing instructions keep the parser's existing inert representation;
+    // their attribute-like payload is not XML attribute reference syntax.
+    const processingInstruction = Object.keys(rawNode).some(name => name.startsWith("?"));
+    const attributes = parseAttributes(rawNode[":@"], !processingInstruction);
     for (const [name, childValue] of Object.entries(rawNode)) {
       if (name === ":@") {
         continue;
@@ -673,7 +697,14 @@ function convertOrderedNodes(
         if (!reserveXmlNode(state, limits)) {
           break;
         }
-        nodes.push({ kind: "text", value: String(childValue) });
+        nodes.push({ kind: "text", value: decodeXmlReferences(String(childValue)) });
+        continue;
+      }
+      if (name === "#cdata") {
+        if (!reserveXmlNode(state, limits)) break;
+        // CDATA contributes literal text in the same ordered slot. Projection
+        // consumes semantic text; original lexical delimiters remain in bytes.
+        nodes.push({ kind: "text", value: commentValue(childValue) });
         continue;
       }
       if (name === "#comment") {
@@ -699,6 +730,9 @@ function convertOrderedNodes(
         kind: "element",
         name,
         attributes,
+        ...(!processingInstruction && isRecord(rawNode[":@"]) &&
+          typeof rawNode[":@"].id === "string" && rawNode[":@"].id !== attributes.id
+          ? { xmlRawId: rawNode[":@"].id } : {}),
         children: convertOrderedNodes(childValue, limits, state, childDepth),
       });
     }
@@ -723,7 +757,7 @@ function reserveXmlNode(
   return true;
 }
 
-function parseAttributes(value: unknown): OrderedXmlAttributes {
+function parseAttributes(value: unknown, decode: boolean): OrderedXmlAttributes {
   if (!isRecord(value)) {
     return {};
   }
@@ -731,7 +765,7 @@ function parseAttributes(value: unknown): OrderedXmlAttributes {
   return Object.fromEntries(
     Object.entries(value).map(([name, attributeValue]) => [
       name,
-      String(attributeValue),
+      decode ? decodeXmlReferences(String(attributeValue)) : String(attributeValue),
     ]),
   );
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createBrowserRemoteCatalogueMetadataCache, type BrowserRemoteMetadataCacheMetadataRecord } from "./browser-remote-metadata-cache.js";
 
 import { fixtureBytes } from "@rosterforge/test-fixtures";
 import {
@@ -402,9 +403,9 @@ class MemoryMetadataCache implements RemoteCatalogueMetadataCache {
   }
 }
 
-async function sourceFixture(): Promise<SourceFixture> {
+async function sourceFixture(catalogueName?: string): Promise<SourceFixture> {
   const bytesByPath = new Map([
-    ["minimal.cat", new Uint8Array(fixtureBytes("minimal.cat"))],
+    ["minimal.cat", catalogueName === undefined ? new Uint8Array(fixtureBytes("minimal.cat")) : new TextEncoder().encode(new TextDecoder().decode(fixtureBytes("minimal.cat")).replace("Synthetic Faction", catalogueName))],
     ["minimal.gst", new Uint8Array(fixtureBytes("minimal.gst"))],
   ]);
   const objectIdsByPath = new Map<string, GitObjectSha>();
@@ -547,3 +548,41 @@ function fixtureFetch(fixture: SourceFixture, definition = sourceDefinition) {
     });
   });
 }
+
+it("rebuilds pre-XML metadata from intact verified bytes, then serves a decoded warm hit", async () => {
+  const fixture = await sourceFixture("Raynor&apos;s &amp;quot; Fleet");
+  const fetcher = fixtureFetch(fixture);
+  const cache = new MemoryByteCache();
+  const records = new Map<string, unknown>();
+  const metadata = new Map<string, BrowserRemoteMetadataCacheMetadataRecord>();
+  const clear = vi.fn(async () => { records.clear(); metadata.clear(); });
+  const metadataCache = createBrowserRemoteCatalogueMetadataCache({
+    get: async id => records.get(id), getAllMetadata: async () => [...metadata.values()],
+    put: async (record, sidecar) => { records.set(sidecar.id, record); metadata.set(sidecar.id, sidecar); },
+    touch: async sidecar => { metadata.set(sidecar.id, sidecar); },
+    delete: async ids => { for (const id of ids) { records.delete(id); metadata.delete(id); } }, clear,
+  });
+  const first = await indexRemoteCatalogueSource(sourceDefinition, { importedAt, fetch: fetcher, cache, metadataCache });
+  expect(first.ok && first.value.metadataCacheStatus).toBe("miss");
+  expect(fetcher).toHaveBeenCalledTimes(3);
+  const [id, saved] = [...records.entries()][0]!;
+  const record = saved as Record<string, unknown>;
+  expect(record.version).toBe(4);
+  // Represents an old derived record only. The immutable bytes are identical.
+  records.set(id, { ...record, version: 3, payload: String(record.payload).replaceAll("Raynor's &quot; Fleet", "Raynor&apos;s &amp;quot; Fleet") });
+  const rebuilt = await indexRemoteCatalogueSource(sourceDefinition, { importedAt, fetch: fetcher, cache, metadataCache });
+  expect(rebuilt.ok).toBe(true);
+  if (!rebuilt.ok) return;
+  expect(rebuilt.value.metadataCacheStatus).toBe("miss");
+  expect(rebuilt.value.catalogues.find(d => d.kind === "catalogue")?.name).toBe("Raynor's &quot; Fleet");
+  expect(fetcher).toHaveBeenCalledTimes(4); // tree only; both verified blobs reused
+  const acquired = await acquireRemoteCatalogue(rebuilt.value, "minimal.cat", { importedAt, batchId: "xml-cache", fetch: fetcher, cache });
+  expect(acquired.ok).toBe(true);
+  expect(fetcher).toHaveBeenCalledTimes(4);
+  const warm = await indexRemoteCatalogueSource(sourceDefinition, { importedAt, fetch: fetcher, cache, metadataCache });
+  expect(warm.ok && warm.value.metadataCacheStatus).toBe("hit");
+  expect(warm.ok && warm.value.catalogues.find(d => d.kind === "catalogue")?.name).toBe("Raynor's &quot; Fleet");
+  expect(fetcher).toHaveBeenCalledTimes(5);
+  expect(clear).not.toHaveBeenCalled();
+  for (const [path, bytes] of fixture.bytesByPath) expect(await calculateGitBlobObjectId(bytes)).toBe(fixture.objectIdsByPath.get(path));
+});

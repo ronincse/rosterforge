@@ -12,11 +12,35 @@ Supported default purchase budgets and explicit player limits now participate
 in validation and limit queries. Zero/creation-hidden default activation remains
 unverified. Numeric unit-selection conditions now drive the evidenced Marines6/9/6 reinforcement
 and Shield20/30/20 transition through existing automatic reconciliation.
-XML escape display and profile metadata also need bounded work. Terran costs
+XML source values now decode once; profile metadata still needs bounded work. Terran costs
 remain incomplete for five genuinely absent source cost types. See
 [`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
 manifest, actual versus intended ledgers, classifications, and coverage limits.
 
+
+### XML reference values (SC-05)
+
+Ordinary XML text and attributes support the five predefined entities and decimal
+or lowercase-`x` hexadecimal character references in the XML 1.0 character ranges.
+Decoding occurs once before projection, including reference-bearing attributes.
+`&amp;quot;` and `&#38;quot;` become literal `&quot;`; CDATA/comments/PI payloads,
+JSON values and saved/player-authored names are not decoded. Existing whitespace
+handling is retained; this is not a new full XML conformance/normalization claim.
+
+Unknown names, malformed syntax, forbidden numeric characters and references
+longer than 36 characters including delimiters are rejected through diagnostics.
+DTD/custom/external/parameter entities remain prohibited. The existing declaration
+precheck is conservative even inside comments/CDATA. No HTML entity vocabulary,
+external resolution, new rendering privilege or imported formatting execution is
+introduced. Archive limits/CRC/path checks and original bytes are unchanged.
+
+Derived metadata schema 4 rebuilds old summaries from verified bytes without
+clearing byte caches or drafts. Old draft definitions may match the original XML
+ID spelling at the same source/path and kind. Existing copied/renamed labels are
+indistinguishable and remain untouched; profiles/rules rebuild with decoded values.
+Legacy escaped budget IDs have no path evidence and remain unresolved. None of
+the four frozen StarCraft files has an escaped ID, so its saved identities and
+budget overrides are unaffected. See [SC-05 evidence](qa/starcraft-xml-text.md).
 
 ### Constraint uncertainty safeguard
 
@@ -48,7 +72,7 @@ retained; the completed reinforcement command has no reconciliation diagnostic.
 Marauders2/170 Foam ->4/320 ->2/170 also passed browser smoke. This is support for
 the evidenced shape, not complete StarCraft legality or full New Recruit parity.
 Source pins, seven unverified zero/hidden budget activations, orphan cost types,
-XML/reference/freshness gaps and nine40k category bounds remain unchanged. See
+reference/freshness gaps and nine40k category bounds remain unchanged. See
 [SC-04 evidence and limitations](qa/starcraft-reinforcement.md).
 
 ### Authored requirements (SC-01)
