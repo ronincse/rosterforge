@@ -51,7 +51,7 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 
 import { Detail } from "./detail-row.js";
 import { AssociationOptions, type SetAssociation } from "./association-options.js";
-import { inspectLocalRule } from "./rule-inspection.js";
+import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceMember } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
 import { ReferenceRichText, ReferenceTextContext } from "./reference-rich-text.js";
@@ -6804,6 +6804,7 @@ function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
       {report.completeness === "incomplete" && (
         <p className="selection-annotation-completeness">Rule applicability unresolved. Source text is shown; this rule is not confirmed to apply.</p>
       )}
+      {ruleNameQualification(report) && <p className="selection-annotation-completeness">{ruleNameQualification(report)}</p>}
       {description ? <ReferenceRichText text={description} /> : <p>{description === undefined ? "No description provided." : "Empty description."}</p>}
       {report.diagnostics.length > 0 && <details><summary>Rule applicability details</summary><DiagnosticList diagnostics={report.diagnostics} /></details>}
     </article>

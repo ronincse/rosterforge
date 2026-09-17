@@ -49,6 +49,7 @@ export function renderArmyReferenceDocument(doc: ArmyReferenceDocument, layout: 
     ${u.keywords.length ? `<p class="keywords"><strong>Keywords:</strong> ${escape(u.keywords.join(", "))}</p>` : ""}
     ${u.memberKeywords?.length ? `<p class="keywords"><strong>Additional model / equipment keywords:</strong> ${escape(u.memberKeywords.join("; "))}</p>` : ""}
     ${u.rules.length ? `<p class="rule-references"><strong>Rule explanations:</strong> ${u.rules.map(id => `<a href="#${id}">${escape(rules.get(id)?.name ?? "Reference")} [${id.replace("rule-", "R")}]</a>`).join("; ")}</p>` : ""}
+    ${u.rules.map(id => rules.get(id)).filter(r => r?.parameterNote).map(r => `<p class="qualification">${escape(r!.name)} [${r!.anchor.replace("rule-", "R")}]: ${escape(r!.parameterNote!)}</p>`).join("")}
     ${u.notes.map(n => `<p class="qualification">${escape(n)}</p>`).join("")}</td></tr></tbody></table></article>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escape(doc.name)} - ForceWright</title><style>${styles}</style></head><body class="${layout}"><main>
     <section class="overview"><header><p class="brand">ForceWright · Army reference</p><h1>${escape(doc.name)}</h1><p>${escape([doc.system, doc.catalogue].filter(Boolean).join(" · "))}</p></header>
@@ -60,7 +61,7 @@ export function renderArmyReferenceDocument(doc: ArmyReferenceDocument, layout: 
     ${[...grouped].map(([role, entries]) => `<section class="category"><h2 class="category-title">${escape(role)}</h2>${entries.map(unit).join("")}</section>`).join("")}
     ${doc.glossary.length ? `<section class="glossary"><h2>Rules & reference glossary</h2>${doc.glossary.map(r => {
       const heading = `${escape(r.name)} [${r.anchor.replace("rule-", "R")}]`;
-      const scope = `<p class="used-by">Referenced by: ${escape(r.users.join("; "))}</p>${r.note ? `<p class="qualification">${escape(r.note)}</p>` : ""}`;
+      const scope = `<p class="used-by">Referenced by: ${escape(r.users.join("; "))}</p>${r.note ? `<p class="qualification">${escape(r.note)}</p>` : ""}${r.parameterNote ? `<p class="qualification">${escape(r.parameterNote)}</p>` : ""}`;
       // Only an individual long explanation uses a repeating header. The
       // appendix itself stays ordinary flow, not an unbreakable nested table.
       return r.text.length > 1200 ? `<article class="long-rule" id="${r.anchor}"><table class="prose"><thead><tr><th>${heading}${scope}</th></tr></thead><tbody><tr><td>${rich(r.text)}</td></tr></tbody></table></article>` : `<article id="${r.anchor}"><h3>${heading}</h3>${scope}${rich(r.text)}</article>`;

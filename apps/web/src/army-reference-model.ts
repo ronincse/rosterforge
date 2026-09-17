@@ -11,9 +11,10 @@ import { inspectLocalRosterSelectionCategories, type LocalRosterSession, type Lo
 import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceRule } from "./unit-reference-model.js";
 import { categoryRuleDetails } from "./category-rule-details.js";
 import { classifyReferenceProfile, orderReferenceProfiles } from "./reference-profile-presentation.js";
-import { inspectLocalRule } from "./rule-inspection.js";
+import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
+import { referenceConsistencyFieldNotes } from "./reference-consistency-notes.js";
 
 export interface ArmyReferenceField { readonly name: string; readonly value: string; readonly note: string; }
 export interface ArmyReferenceProfile {
@@ -21,7 +22,7 @@ export interface ArmyReferenceProfile {
   readonly fields: readonly ArmyReferenceField[]; readonly attribution: string;
   readonly notes: readonly string[]; readonly table: boolean;
 }
-export interface ArmyReferenceRule { readonly anchor: string; readonly name: string; readonly text: string; readonly note: string; readonly users: string[]; }
+export interface ArmyReferenceRule { readonly anchor: string; readonly name: string; readonly text: string; readonly note: string; readonly users: string[]; readonly parameterNote?: string; }
 export interface ArmyReferenceUnit {
   readonly anchor: string; readonly name: string; readonly role: string; readonly configuration: boolean;
   readonly composition: string; readonly options: readonly string[]; readonly costs: readonly RosterWorkspaceCost[];
@@ -54,11 +55,12 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
     const text = rule.value.description ?? "";
     const dynamic = rule.report.completeness !== "complete" || rule.report.layers.some(layer => layer.source.modifiers.length || layer.source.modifierGroups.length);
     const note = sourceOnly ? "Source reference only; applicability is not established." : rule.report.completeness !== "complete" || rule.report.status === "unresolved" ? "Rule applicability is unresolved; source description shown." : "";
+    const parameterNote = ruleNameQualification(rule.report);
     // Static identical definitions can share an explanation, but modified or
     // uncertain occurrences never borrow another owner's rule result.
-    const key = JSON.stringify([source.source.sourceId, source.path, name, text, note, dynamic ? owner : null]);
+    const key = JSON.stringify([source.source.sourceId, source.path, name, text, note, parameterNote, dynamic ? owner : null]);
     let entry = glossary.get(key);
-    if (!entry) { entry = { anchor: `rule-${glossary.size + 1}`, name, text: text.trim() ? text : "No description is available in the selected source.", note, users: [] }; glossary.set(key, entry); }
+    if (!entry) { entry = { anchor: `rule-${glossary.size + 1}`, name, text: text.trim() ? text : "No description is available in the selected source.", note, parameterNote, users: [] }; glossary.set(key, entry); }
     if (!entry.users.includes(user)) entry.users.push(user);
     return entry.anchor;
   };
@@ -73,13 +75,14 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
       if (report.visibility.status !== "visible") notes.push(report.visibility.status === "hidden" ? "Hidden by catalogue." : "Visibility unresolved.");
     }
     const name = report?.name.value ?? value.name ?? "Unnamed profile";
+    const consistency = group.members.map(member => referenceConsistencyFieldNotes(session, member.owner, group.profile, report));
     return { name: name + (report?.annotation.value ? ` (${report.annotation.value})` : ""), type: value.typeName ?? "Additional information", section: presentation.section,
       attribution: [path, referenceAttribution(group.members)].filter(Boolean).join(" · "), notes,
       table: presentation.layout === "table",
       fields: value.characteristics.map((field, index) => {
         const effective = report?.report.characteristics.find(c => c.characteristic === field);
         return { name: field.name ?? `Field ${index + 1}`, value: effective?.value ?? field.value,
-          note: effective?.completeness === "incomplete" ? "Unresolved; source value shown where effective value is unavailable." : effective && effective.value !== effective.baseValue ? (effective.baseValue.trim() ? `Modified from ${effective.baseValue}.` : "Added to an empty source value.") : "" };
+          note: [effective?.completeness === "incomplete" ? "Unresolved; source value shown where effective value is unavailable." : effective && effective.value !== effective.baseValue ? (effective.baseValue.trim() ? `Modified from ${effective.baseValue}.` : "Added to an empty source value.") : "", ...new Set(consistency.flatMap(notes => notes[index] ?? []))].filter(Boolean).join(" ") };
       }),
     };
   };

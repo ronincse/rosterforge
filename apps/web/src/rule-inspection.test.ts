@@ -5,7 +5,7 @@ import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge
 import { evaluateRosterRuleVisibility } from "@rosterforge/evaluation";
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterRootSelection, createLocalRosterSession, localRosterRootChoices } from "./roster-session.js";
-import { inspectLocalRule } from "./rule-inspection.js";
+import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { objectId } from "@rosterforge/foundation";
 
 async function setup(alternate = false, numericBooleans = false) {
@@ -35,6 +35,21 @@ async function setup(alternate = false, numericBooleans = false) {
 }
 
 describe("rule applicability", () => {
+  it("retains direct and grouped name operands without claiming an effective parameter", async () => {
+    const { rule } = await setup();
+    const source = rule("rv-direct-conditional");
+    if ("definition" in source) throw new Error("Direct fixture required");
+    const modifier = { ...source.modifiers[0]!, field: "name", type: "append", value: "D3", conditions: [], conditionGroups: [], repeats: [] };
+    delete modifier.scope;
+    const changed = { ...source, modifiers: [modifier] };
+    const note = ruleNameQualification(inspectLocalRule({ definition: source, link: changed }));
+    expect(note).toContain('link: append name "D3"');
+    expect(note).toContain("not evaluated");
+    expect(note).toContain("Effective parameter remains unverified");
+    expect(ruleNameQualification(inspectLocalRule(source))).toBe("");
+    const conditional = { ...changed, modifiers: [{ ...modifier, conditions: source.modifiers[0]!.conditions }] };
+    expect(ruleNameQualification(inspectLocalRule(conditional))).toContain("scoped/conditional");
+  });
   it("inherits static visibility when linked inputs omit the materialized flag", async () => {
     const { rule } = await setup();
     const hidden = rule("rv-direct-hidden");

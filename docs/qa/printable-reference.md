@@ -176,3 +176,39 @@ One heavily concurrent configured run had 995 passes and one existing App UI
 5000ms timeout; the final configured rerun uses at most four workers without
 changing its timeout or assertions. Both configured corpus families execute;
 the ordinary run's skips are not counted as corpus verification.
+
+## Owner-review follow-up: reference consistency (2026-09-17)
+
+The infrastructure above is accepted as a foundation, not final owner acceptance
+of paper usability. Baseline PDFs and frozen inputs remain unchanged. Follow-up
+starts from pilot `6f615c5496e298515d2162a9aa304f32574c394c`.
+
+Captain occurrence `selection-24c1843d-3935-4ca6-82a5-03ab794c4376`, entry
+`6c10-5b51-5bc0-8d2c`, profile `c1ba-2289-ba1-9cb8`, has Sv characteristic
+`450-a17e-9d5e-29da`: base/effective `3+`, complete, no applied steps. Selected
+Artificer Armour `e57e-d55a-be75-2205` declares `set 2+` and an annotation via
+`scope=model`, `self.entries.recursive.9cfd-1c32-585f-7d5c.profiles.Unit`.
+The anchor is that Captain; descendant traversal excludes the anchor itself.
+`reachesAffectsTarget` returns false without uncertainty. Screen and print both
+receive 3+; print did not discard an evaluated 2+. This is a demonstrated
+source-selector/routing consistency gap, NOT proof to change global traversal.
+The projection now gives a specific local note for this narrowly identified
+selector shape, matching selected upgrade, profile type, field and category.
+It preserves values/reports and explicitly withholds intended applicability.
+Follow-up needed: establish this selector's intended anchor semantics against
+pinned source and observed reference behavior before any engine/source repair.
+
+Impulsor `bfb1-7512-e1a3-9fa2` has Deadly Demise link
+`58e0-31f7-43d3-b1ef` (`append name D3`) and Firing Deck link
+`31bc-9145-ac64-454e` (`append name 6`). Rule inspection evaluates visibility,
+not names; there is no effective rule-name report to project. Screen and print
+now expose source-authored operands with explicit unevaluated qualification,
+including definition/link and conditional/grouped distinction. They do not
+compute or assert effective parameters. A dedicated rule-name evaluation
+boundary with conditions/precedence tests remains separate work. Armour's
+Feel No Pain append `5+` is covered by the same presentation boundary.
+
+Independent isolated trace reproduced both cases. Synthetic qualification and
+rule tests: 22 passed; frozen Dark Angels projection regression: 1 passed
+(the unrelated StarCraft test unconfigured in that targeted run). No source,
+evaluator, storage or saved-army mutation. Full final gates follow presentation.

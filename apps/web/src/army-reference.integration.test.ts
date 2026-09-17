@@ -85,6 +85,14 @@ it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without
   expect(d.resources).toContainEqual(expect.objectContaining({ value: 2000 }));
   expect(d.units.some(u => u.relationships.length > 0)).toBe(true);
   expect(d.glossary.length).toBeGreaterThan(5);
+  const captain = d.units.find(u => u.name.endsWith("Captain"))!;
+  expect(captain.profiles.flatMap(p => p.fields)).toContainEqual(expect.objectContaining({ name: "Sv", value: "3+", note: expect.stringContaining("Artificer Armour declares a source Sv modification (set 2+)") }));
+  const impulsor = d.units.find(u => u.name.endsWith("Impulsor"))!;
+  for (const [name, operand] of [["Deadly Demise", "D3"], ["Firing Deck", "6"]]) {
+    const rule = d.glossary.find(r => impulsor.rules.includes(r.anchor) && r.name === name)!;
+    expect(rule.parameterNote).toContain(`append name "${operand}"`);
+    expect(rule.parameterNote).toContain("not evaluated");
+  }
   expect(d.glossary.some(r => ["Impulsor", "Incinerator", "Keywords"].includes(r.name))).toBe(false);
   expect(d.units.flatMap(u => u.keywords)).not.toContain("e21f-8e64-c5d-7df0");
   expect(readFileSync(darkAngels!).equals(bytes)).toBe(true);
