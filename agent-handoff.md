@@ -34,7 +34,48 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-17 (printable army reference delivered; stop)
+## Current Status — 2026-09-17 (print follow-up delivered; owner review pending; stop)
+
+Bounded owner-authorized follow-up on `codex/starcraft-pilot` only, from clean
+upstream-equal `6f615c5496e298515d2162a9aa304f32574c394c`. Correctness/projection
+commit `0aac6eb`; density/presentation/tests/docs
+`35bcd474c19b53e297e1f35b02bfc702ef5b62af`; this separate handoff follows.
+Foundation is accepted; final owner acceptance of paper usability is NOT claimed.
+Publish pilot only and confirm exact-final CI; receipt in completion/Actions.
+
+Captain Sv3+ is not a print loss: source Artificer Armour set2+ routes through a
+self-descendant selector excluding its Captain anchor. Specific nearby warning
+now preserves this discrepancy without changing values or proving applicability.
+Impulsor D3/6 exist as authored name operations, not evaluated rule parameters;
+screen/print expose them explicitly as unevaluated. Separate engine boundaries
+are recorded in the roadmap; no broad engine/source repair was attempted.
+
+Compact overview now one page for frozen14-unit Dark Angels. Exact rendered
+glossary sharing retains47 scope records in25 bodies; conservative within-unit
+profile sharing retains131 P records/all213 members in104 displayed rows.
+Scope, effects, uncertainty, quantities, keywords, full prose and relationship
+mapping remain. Weighted/reflowed fields, bearer/note legends, repeated continuation
+context and verified page counters retain10.5pt body text. Both presets same facts.
+
+Final16 exact-HTML PDFs/all146 pages visually inspected: DA21/22/24/27,
+Terran3/3/4/4,Protoss2/3/4/4,stress5/6/7/7 (CompactA4/Letter,SheetsA4/Letter).
+Independent isolated reviewer covered94 DA pages, exact scalar mapping and actual
+reading tasks; lead52 SC/stress pages. No clipping/blockers; DA SheetsLetter
+p14/17/19 tails, A4 notes-only pages and stressSheetsA4p5 remain explicit limits.
+All gates pass: ordinary967pass34optionalSkip,95pass8skipFiles,21.01s;
+configured1001pass103files zeroSkip62.69s; lint/typecheck/build/diff pass.
+Existing build chunk advisory only. Claude review denied before code transfer;
+native independent review used, no external-review claim.
+
+Final evidence and settings: `docs/qa/printable-reference.md`; revised samples in
+`C:\Users\stone\Downloads\ForceWright Print Review 2026-09-17 Revised`.
+Baseline outputs untouched. Saved armies, source pins, main, other worktrees,
+storage and existing servers unchanged. Existing5291 preview preserved; normal
+preview/preset/link/close check still14units/2000points without save/edit.
+No main integration, PR, deployment, freshness/budget expansion or next phase.
+Stop here; additional work requires owner direction.
+
+### Historical foundation status (superseded by follow-up status above)
 
 Owner-authorized printable-reference checkpoint on `codex/starcraft-pilot` only.
 Baseline clean/upstream-equal `4fb397cc8b287fc8896ab68057e7bdb3e285c37e`;
@@ -1179,7 +1220,9 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
-| Print-output usability pass | Done on pilot, 86f877d | Compact/Unit sheets, current-army preview, browser print and offline HTML share selected effective facts, full rules and attributed glossary. All 213 pages of 16 Letter/A4 PDFs visually checked, including 14-unit Dark Angels, Terran, Protoss and oversized fiction. Currency wrapping and continued-page context corrected. Some short unit-sheet tails remain a paper-efficiency limitation; no physical-printer/universal-browser certification. See `docs/qa/printable-reference.md`; no main integration implied |
+| Print-output usability pass | Follow-up implemented on pilot, 35bcd47; owner acceptance pending | Foundation86f877d retained; one-page DA index, exact-body sharing47records/25bodies,131profiles/213members→104display rows, readable reflow, full attribution/uncertainty and verified page counters. All146 final pages/16PDFs visually reviewed plus independent reading tasks. Some short tails/notes-only pages remain. No full-accuracy, physical-printer/universal-browser or main-integration claim. See `docs/qa/printable-reference.md` |
+| Selected enhancement anchor consistency | Deferred — separate owner authorization/evidence required | Frozen DA Captain selection24c1843d/profilec1ba-2289-ba1-9cb8 remains Sv3+ despite selected Artificer Armour authored set2+: scope=model self.entries.recursive.Character.profiles.Unit excludes anchor. Exact IDs/trace in printable-reference QA. Establish intended selector/anchor semantics against pinned source and reference behavior before engine/source repair. Local print warning added0aac6eb; no guessed2+ |
+| Effective parameterized rule names | Deferred — separate evaluation boundary required | Impulsor Deadly Demise link58e0-31f7-43d3-b1ef append name D3 and Firing Deck31bc-9145-ac64-454e append name6 are present but rule inspection evaluates visibility only.0aac6eb exposes authored operands as unevaluated on screen/paper. Add conditions/precedence/effective-name metadata tests before asserting occurrence values; do not infer parameters from prose |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. The value-specific complaint is zero, and the later false modifier-maximum warning on 34 manual Detachment groups is now zero too. Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
@@ -15916,6 +15959,10 @@ confirm exact-final CI, leave 5281 running and stop; no main/PR/merge/deployment
 
 ## Completed Assignment — 2026-09-17: printable army reference and unit sheets
 
+> Foundation retained; paper-usability evidence and acceptance language are
+> superseded by the owner-review follow-up below. Final paper usability was not
+> owner accepted by receipt of this implementation.
+
 **Baseline/result.** Owner authorized this bounded document-output checkpoint on
 pilot only, including supplied PDF reference and alternate browser PDF rendering.
 Clean fetched baseline `4fb397cc8b287fc8896ab68057e7bdb3e285c37e`; lead implementation,
@@ -15996,3 +16043,76 @@ SC-06 format/dynamic hints, orphan costs, source revision mismatch, budgets and
 broader association/query limitations remain. No universal browser/printer/PDF
 tagging certification. Leave5291 preview running, push only pilot and confirm
 exact-final CI. Stop; no SC-08, main integration, PR, deployment or new phase.
+
+## Completed Assignment — 2026-09-17: print consistency and density follow-up
+
+**Baseline/result.** Owner-authorized bounded follow-up from clean/fetched
+`6f615c5496e298515d2162a9aa304f32574c394c` on pilot only. Correctness/projection
+`0aac6eb`, separate presentation/tests/docs
+`35bcd474c19b53e297e1f35b02bfc702ef5b62af`; this handoff is separately committed.
+Only this lead's reviewed changes are published. Exact-final CI receipt is in
+completion/Actions history. Foundation accepted; owner paper acceptance pending.
+
+**Traces and boundaries.** Captain base/effectiveSv3+, no applied steps: selected
+Armour's executable set2+ is not merely prose, but its source self-descendant
+selector excludes the anchor. Print lost no effective2+. Narrow projection note
+names upgrade/value/selector gap and withholds intended applicability; no engine
+rewrite or hardcode. Impulsor's source link-name append operands D3/6 were absent
+from presentation, not available as evaluated metadata. Shared screen/print now
+qualify authored operations, including conditional/grouped distinctions. Exact
+IDs and reproductions are in QA; two separate roadmap rows retain follow-ups.
+
+**Presentation decision.** One compact occurrence index, configuration summary
+and explicit relationships replace duplicate full loadouts/pseudo-units. Full
+selected detail remains per unit. Safe rendered explanation equality shares prose,
+never merges source/applicability; each R owner/parameter/source-only mapping stays.
+Within-unit full-field/qualification/scope/effect keys allow display aliases with
+all P/member records retained. Five-model Intercessor original owner-salted rows
+are conserved internally; paper shows concise bearer quantities. All three
+Knights240/240/260 remain separate. No multiplication of profile Damage/Attacks.
+Nested information scope, unknown fields, activation roles and real equipment
+keywords remain. Note/bearer legends remove repeated labels without hiding warning
+scope. Column weights/reflow, fragmentable full prose, short-body keeps and repeated
+context/PageXofY counters retain10.5pt body. Rejected fuzzy/name-only merging,
+evaluator-equivalence changes, prose rewriting, shrink-to-fit, second PDF engine,
+post-hoc PDF patches and arbitrary page targets.
+
+**Measurements.** Frozen DA SHA9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c
+unchanged:17roots/3setup/14army/2000points.131 original profile records and213
+profile-member records map exactly to104display rows; zero member/effect/scope/
+attribution mismatches.47rule-scope records map to25 exact rendered bodies,
+including14Oath/4DeadlyDemise copies with mappings preserved. DA overview3→1page;
+CompactA4/Letter33/36→21/22;Sheets42/44→24/27. Terran4/4/4/4→3/3/4/4;
+Protoss4/4/4/4→2/3/4/4;stress6/6/7/7→5/6/7/7. Full page distributions in QA.
+Old SheetsLetter tails7/16/30/32 reduced; newshort14/17/19 remain with Ucontext.
+A4notes-only21Compact/24Sheets and stressSheetsA4p5 remain nonblocking whitespace.
+
+**Review and gates.** Isolated native reviewer at
+`E:\GitHub\rosterforge\.codex-print-density-review` independently traced both
+accuracy questions, challenged provenance, and inspected94finalDA pages; lead
+inspected52SC/stress pages. All146finalpages visually reviewed, no clipping or
+overlap. Reading tasks find LancerDamageD6+3/P122, exactU6one+three+oneBoltRifle
+bearers, Oath's14scope mappings, authoredD3/6 qualification andCaptainwarning.
+Review corrections: quantities,nestedscope,setuprelationships,affectedPnotes,
+fallbacknotes andshortglossarykeeps. Claude2.1.240 invocation denied before
+external private-code transfer; no data sent/retry/external-review claim.
+PDF skill render/inspect workflow used. Edge154.0.4258.18, exactofflineHTML,
+networkblocked,portraitLetter/A4,scale1,CSS14mm,backgrounds/browserheadersoff.
+Finalevidence `print-reference-followup/output/pages-final-reviewed`; originals
+intact. Revised copied samples/commit/settings/hashes in separateDownloads folder.
+
+Final lint/typecheck/build/diff pass. Normal967pass34optionalSkip,95pass8skipfiles,
+21.01s; configured1001pass103files zeroSkip62.69s,maxWorkers4; focusedfinal7/7.
+Build201modules,JS1053.53kB/gzip298.72,CSS85.01kB/gzip15.20,existingchunkadvisory.
+Configured40k04c62fcd041b3808c39d5c46fd677c704027b979,correctnessA/Bsnapshots,
+StarCraft99261754/fourhashes andfrozenDA execute unchanged. No third-party samples
+committed. Existing5291preview opens/switches/links/closes normally with14units/
+2000points,noedit/save. Earlierunsaved/downloadwindowtests remain foundation
+evidence,not claimed rerun. No server restart,source/storage/saved-army changes.
+
+**Stop/unsupported.** Captain intended applicability and effective rule-name
+conditions/precedence remain explicit accuracy limits; no fullyaccurate claim.
+Existing SCformat/dynamic hints,orphan costs,source revision mismatch,association
+andbudget boundaries unchanged. No physicalprinter/universalbrowser/PDFtagging
+certification. Pushonlypilot,confirmexactfinalCI,leaveexistingservers/tabs,stop.
+No freshness,SC-08,budgetexpansion,mainintegration,PR,deployment or general audit.
