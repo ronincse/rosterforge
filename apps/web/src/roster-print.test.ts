@@ -117,15 +117,13 @@ describe("roster print export", () => {
     expect(document).toContain("Veteran &lt;Alpha&gt;");
     expect(document).not.toContain("Print <Patrol>");
     expect(document).not.toContain("Veteran <Alpha>");
-    expect(document.indexOf("print-root-first")).toBeLessThan(
-      document.indexOf("print-root-second"),
-    );
-    expect(document.indexOf("print-root-first")).toBeLessThan(
-      document.indexOf("print-child"),
-    );
-    expect(document).toContain("2.5 x Veteran &lt;Alpha&gt;");
-    expect(document).toContain("Roster occurrence ID");
-    expect(document).toContain("Catalogue source ID");
+    expect(document).not.toContain("print-root-first");
+    expect(document).not.toContain("entry-alpha");
+    expect(document).toContain("2.5× Veteran &lt;Alpha&gt;");
+    expect(document).toContain("Army index");
+    expect(document).toContain("Composition:");
+    expect(document).not.toContain("Roster occurrence ID");
+    expect(document).not.toContain("Catalogue source ID");
     expect(document).toContain("not a BattleScribe .ros or .rosz interchange file");
   });
 
@@ -205,7 +203,7 @@ describe("roster print export", () => {
     });
     expect(document).toContain("Supported costs unavailable");
     expect(document).toContain("Supported checks unavailable");
-    expect(document).toContain("1 diagnostic");
+    expect(document).toContain("not a claim of full legality");
   });
 });
 

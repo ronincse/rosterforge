@@ -240,9 +240,25 @@ materialized branches, then preserve that source hierarchy in collapsed
 disclosures. They never create a temporary roster occurrence, so they do not
 present roster-dependent names, visibility, keywords, or modified
 characteristics as effective before selection.
-`roster-print.ts` is a web-only presentation adapter: it copies roster identity
-and order plus report summaries into a serializable view, escapes all imported
-and user-authored strings, and does not mutate the roster or rerun evaluation.
+`roster-print.ts` is a web-only presentation adapter. Its ephemeral scalar
+`army-reference-model.ts` snapshot traverses all current forces, reuses the
+evaluated unit-reference model and SC-06 presentation metadata, workspace cost
+aggregation/budgets, category rules and extracted selected-loadout summaries.
+It retains effective values, separate occurrences and owner-qualified variants;
+no source objects/bytes or graphs cross into the HTML renderer or durable draft.
+The legacy identity-tree fields remain internal compatibility data, not output.
+`army-reference-html.ts` renders one snapshot as Compact or Unit sheets using
+the existing safe rich-text component, escaped plain labels, inline styles and
+system fonts. Glossary phrase lookup reuses the shared bounded dictionary but
+only imports unambiguous root shared definitions as source-only explanations;
+local rules in unselected entries are not guessed from matching prose. Selected
+attached/nested/category rules retain their owner reports regardless of location.
+`roster-print-dialog.tsx` previews an inert script-disabled document, offers an
+independent Blob HTML download and invokes the existing caller-opened print
+window. The same-origin sandbox allowance is solely for parent-owned fragment
+navigation; scripts remain forbidden by sandbox and document CSP. No source
+markup execution, external asset loading, roster mutation or storage migration.
+See `docs/qa/printable-reference.md` for browser/paper evidence and limitations.
 Existing
 dependency injection for catalogue preparation, draft storage, clocks, and
 generated IDs is accepted by the hook through `AppProps`, preserving

@@ -255,11 +255,14 @@ export interface RosterWorkspaceViewModel {
  * selection. Descendant costs are folded into each ancestor so later unit cards
  * can read one total; React memoizes the result by immutable session, keeping
  * unrelated autosave and action-state renders off this roster-sized path.
+ * `allForces` is for document snapshots: it visits every force without changing
+ * the editor's primary-force default or recomputing accounting in a renderer.
  */
 export function createRosterWorkspaceViewModel(
   session: LocalRosterSession,
   reports: RosterWorkspaceSourceReports,
   activeSelectionId?: SelectionOccurrenceId,
+  allForces = false,
 ): RosterWorkspaceViewModel {
   const primaryForce = session.roster.forces[0];
   const costs = workspaceCostSummary(
@@ -282,7 +285,11 @@ export function createRosterWorkspaceViewModel(
     reports.validation,
     categoryOrder,
   );
-  const ordered = (primaryForce?.selections ?? []).map((selection) => {
+  const roots: RosterSelection[] = [];
+  const collect = (force: RosterForce) => { roots.push(...force.selections); force.forces.forEach(collect); };
+  if (allForces) session.roster.forces.forEach(collect);
+  else roots.push(...primaryForce?.selections ?? []);
+  const ordered = roots.map((selection) => {
     const section = rootSelectionSection(session, selection, sectionByChoice);
     return {
       ...workspaceSelection(

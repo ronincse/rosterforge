@@ -129,6 +129,13 @@ ForceWright is **v2 complete** when that same finished roster is comfortably
 usable on phone or tablet during a real game, as a reference for the rules,
 stats, weapons, abilities, and selections belonging to that exact army.
 
+PLAY also includes a usable printed or saved PDF army reference with those same
+selected facts and available rule explanations, without reopening ForceWright
+or deciphering technical identifiers. Compact reference and Unit sheets share
+one snapshot; downloadable standalone HTML remains readable offline. Qualified
+or unsupported source behavior stays visible. This is presentation export,
+not roster interchange or a claim of full game-system support.
+
 ### The bar both milestones share
 
 A technically correct application that makes building or reading a normal army

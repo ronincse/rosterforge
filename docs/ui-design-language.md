@@ -318,7 +318,18 @@ deliberately updated first. New active-roster rectangles must consume
 `--corner-radius`; introducing another numeric radius requires an explicit
 design-language decision rather than a local visual adjustment.
 
-## Current guideline basis
+## Paper reference exception
+
+The print-preview controls retain the shared corner radius and modal behavior.
+The exported paper itself uses black-on-white typography, plain table borders
+and full-width prose instead of glass cards: it must work without background
+printing. Compact flows category-grouped units; Unit sheets starts each army
+unit on a fresh page. Both preserve identical selected facts, ownership,
+qualifications and glossary references. Long content continues at readable size,
+with repeated context rather than clipping or shrink-to-fit. See
+`docs/qa/printable-reference.md` for Letter/A4 pagination evidence.
+
+## Current guideline sources
 
 - [Apple HIG: Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
 - [Apple HIG: Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)

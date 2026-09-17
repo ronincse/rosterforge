@@ -608,13 +608,24 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   absent from the context, and selections absent from the materialized tree
 - Context-backed definition replacement using the same catalogue and
   availability guards as construction
-- Standalone browser print/save-PDF presentation export preserving roster,
-  catalogue, force, and selection identities; ordered nested selections;
-  explicit quantities; included per-selection costs; roster totals; and
-  supported-check validity, completeness, and status counts
-- Every printed imported or user-authored value is HTML-escaped, and the output
-  carries an explicit presentation-only scope note rather than claiming
-  BattleScribe roster-file compatibility or full legality
+- Printable army reference on the StarCraft pilot branch: Compact (default)
+  and Unit sheets share a scalar current-unsaved-army snapshot across all forces.
+  Includes setup/options, composition/loadouts, separate occurrence costs,
+  effective limits, explicit associations, selected stats/weapons/modes/full
+  abilities, owner-scoped keywords and a conservative shared-rule glossary.
+  Long/unknown schemas retain all fields. Quantities never multiply profile
+  attacks/damage; ability activation text never changes purchasing totals.
+- Preview, native Print / Save PDF and independent self-contained HTML download.
+  Visible IDs/technical trees are replaced by player-facing content and local
+  document labels. Plain labels are escaped; source descriptions use the existing
+  allowlisted rich text. Scripts and external assets are forbidden. No .ros/.rosz
+  interchange, persistent expansion or full-legality claim.
+- Unselected reference lookup includes only unambiguous shared/root definitions
+  and explicitly labels them source-only; it does not infer a local ability of
+  an unselected unit/detachment from prose. Existing formatting, missing-source,
+  dynamic metadata/budget and traversal limits stay qualified. Browser PDF
+  pagination is evidence for tested documents/settings, not physical-print or
+  universal browser acceptance. See `docs/qa/printable-reference.md`.
 - Unresolved and resource-limited entry links remain unavailable to roster
   construction, while roster-model occurrence diagnostics pass through intact
 - Read-only roster compatibility reports retaining occurrence and context

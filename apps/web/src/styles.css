@@ -5181,3 +5181,15 @@ footer {
 .reference-presentation-notes summary { cursor: pointer; }
 .reference-presentation-notes ul { padding-inline-start: 1.25rem; }
 .unit-reference-composition { font-weight: 600; }
+
+/* Print preview is a separate, inert document; app glass never reaches paper. */
+.army-print-dialog { width: min(76rem, 94vw); max-height: 94dvh; padding: 1.25rem; color: var(--text-color, #182722); background: #f8f7f1; border: 1px solid #80938a; border-radius: var(--corner-radius); }
+.army-print-dialog::backdrop { background: #20362c66; backdrop-filter: blur(12px); }
+.army-print-dialog > header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.army-print-dialog h2, .army-print-dialog header p { margin: 0 0 .5rem; }
+.army-print-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-block: .75rem; }
+.army-print-controls label { display: flex; align-items: center; gap: .5rem; }
+.army-print-dialog button, .army-print-dialog select { font: inherit; color: #183f32; border: 1px solid #80938a; border-radius: var(--corner-radius); background: #f8f7f1; padding: .5rem .75rem; }
+.army-print-dialog button:disabled { opacity: .5; }
+.army-print-dialog > p { font-size: .9rem; }
+.army-print-dialog iframe { display: block; width: 100%; height: 60dvh; border: 1px solid #80938a; border-radius: var(--corner-radius); background: white; }

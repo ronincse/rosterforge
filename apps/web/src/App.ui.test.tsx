@@ -3385,6 +3385,9 @@ describe("App local catalogue flow", () => {
         name: "Print / Save PDF",
       }),
     );
+    const printSetup = screen.getByRole("dialog", { name: "Print & export" });
+    fireEvent.load(within(printSetup).getByTitle("Printable army preview"));
+    fireEvent.click(within(printSetup).getByRole("button", { name: "Print / Save PDF" }));
     expect(printRoster).toHaveBeenCalledOnce();
     expect(printRoster).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -3403,8 +3406,9 @@ describe("App local catalogue flow", () => {
       }),
     );
     expect(screen.getByRole("alert").textContent).toContain(
-      "The browser blocked the printable roster window.",
+      "The browser blocked the printable roster window",
     );
+    fireEvent.click(within(printSetup).getByRole("button", { name: "Close" }));
 
     // Saving is manual, so an edited roster is lost on reload until it has a
     // draft. The workspace has to say so before it is saved.

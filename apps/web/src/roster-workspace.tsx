@@ -1,5 +1,8 @@
 import { orderReferenceProfiles, referenceProfileSourceKey, type ReferenceProfilePresentation } from "./reference-profile-presentation.js";
 import { ResourceBudgets } from "./resource-budgets.js";
+import { RosterPrintDialog } from "./roster-print-dialog.js";
+import { categoryRuleDetails } from "./category-rule-details.js";
+import { selectedUpgradeSummary, createModelComposition, formatSelectedChoiceSummary, selectionChoiceKey, selectionChoiceLabel, type UnitComposition } from "./selected-loadout-summary.js";
 import {
   useEffect,
   useId,
@@ -33,9 +36,6 @@ import {
   type SupportedRosterValidationFinding,
   type RosterRuleVisibilityReport,
 } from "@rosterforge/evaluation";
-import type {
-  RuleProjection,
-} from "@rosterforge/battlescribe-data";
 import type {
   Diagnostic,
   ObjectId,
@@ -223,6 +223,7 @@ export function RosterOverview({
     "close" | "search"
   >("close");
   const [printBlocked, setPrintBlocked] = useState(false);
+  const [printSnapshot, setPrintSnapshot] = useState<RosterPrintViewModel>();
   const [activeSelectionId, setActiveSelectionId] =
     useState<SelectionOccurrenceId>();
   const [pendingAddedSelectionFocus, setPendingAddedSelectionFocus] =
@@ -886,17 +887,14 @@ export function RosterOverview({
                 type="button"
                 role="menuitem"
                 onClick={() =>
-                  runRosterAction(() =>
-                    setPrintBlocked(
-                      !onPrintRoster(
-                        createRosterPrintViewModel(
-                          session,
-                          costResult,
-                          supportedValidation,
-                        ),
-                      ),
-                    ),
-                  )
+                  runRosterAction(() => {
+                    try {
+                      setPrintSnapshot(createRosterPrintViewModel(session, costResult, supportedValidation));
+                      setPrintBlocked(false);
+                    } catch {
+                      setPrintBlocked(true);
+                    }
+                  })
                 }
               >
                 Print / Save PDF
@@ -921,10 +919,10 @@ export function RosterOverview({
       <DiagnosticList diagnostics={draftActionDiagnostics} />
       {printBlocked && (
         <p className="print-roster-error" role="alert">
-          The browser blocked the printable roster window. Allow popups for this
-          local page and try again.
+          The printable reference could not be generated. Your army has not changed. Please try again.
         </p>
       )}
+      {printSnapshot && <RosterPrintDialog model={printSnapshot} onPrint={onPrintRoster} onClose={() => { setPrintSnapshot(undefined); actionsMenuTrigger.current?.focus(); }} />}
 
       {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} />}
 
@@ -4753,120 +4751,6 @@ function choiceCostDescriptionId(
   );
 }
 
-interface UnitComposition {
-  readonly total: number;
-  readonly entries: readonly {
-    readonly key: string;
-    readonly name: string;
-    readonly amount: number;
-    readonly loadout: readonly SelectedChoiceSummary[];
-  }[];
-}
-
-interface SelectedChoiceSummary {
-  readonly key: string;
-  readonly name: string;
-  readonly amount: number;
-}
-
-/** Collects selected upgrade occurrences without inferring equipment by name. */
-function selectedUpgradeSummary(
-  session: LocalRosterSession,
-  selections: readonly RosterWorkspaceSelection[],
-  excludedChoiceKeys: ReadonlySet<string> = new Set(),
-): readonly SelectedChoiceSummary[] {
-  const entries = new Map<string, SelectedChoiceSummary>();
-  const visit = (selection: RosterWorkspaceSelection): void => {
-    const choice = localRosterSelectionChoice(
-      session,
-      selection.occurrence.id,
-    );
-    if (
-      choice?.kind === "selectionEntry" &&
-      choice.type === "upgrade" &&
-      !excludedChoiceKeys.has(selectionChoiceKey(choice))
-    ) {
-      const key = selectionChoiceKey(choice);
-      const existing = entries.get(key);
-      entries.set(key, {
-        key,
-        name: selectionChoiceLabel(choice),
-        amount:
-          (existing?.amount ?? 0) +
-          rosterSelectionAmount(selection.occurrence),
-      });
-    }
-    for (const child of selection.selections) visit(child);
-  };
-  for (const selection of selections) visit(selection);
-  return [...entries.values()];
-}
-
-function formatSelectedChoiceSummary(
-  choices: readonly SelectedChoiceSummary[],
-): string {
-  return choices
-    .map(({ amount, name }) => (amount > 1 ? `${amount}× ${name}` : name))
-    .join(" · ");
-}
-
-/**
- * Folds exact promoted model occurrences into the compact unit-card summary.
- *
- * Repeated occurrences and one occurrence with an amount override are the two
- * legal roster shapes for multiple models. Both count through the roster-model
- * helper. Grouping keys come from the exact materialized model and selected
- * upgrade choices rather than player renames or profile-name guesses, so two
- * models of one type remain separate when their selected loadouts differ.
- */
-function createModelComposition(
-  session: LocalRosterSession,
-  models: readonly RosterWorkspaceSelection[],
-): UnitComposition {
-  const entries = new Map<
-    string,
-    {
-      key: string;
-      name: string;
-      amount: number;
-      loadout: readonly SelectedChoiceSummary[];
-    }
-  >();
-  let total = 0;
-  for (const model of models) {
-    const occurrence = model.occurrence;
-    const amount = rosterSelectionAmount(occurrence);
-    const choice = localRosterSelectionChoice(session, occurrence.id);
-    const name =
-      choice === undefined
-        ? occurrence.name ?? "Unnamed model"
-        : selectionChoiceLabel(choice);
-    const key =
-      choice === undefined
-        ? `occurrence:${occurrence.id}`
-        : selectionChoiceKey(choice);
-    const loadout = selectedUpgradeSummary(session, model.selections);
-    const loadoutKey = loadout
-      .map(({ key: choiceKey, amount: choiceAmount }) =>
-        `${choiceKey}:${choiceAmount}`,
-      )
-      .join("|");
-    const compositionKey = `${key}:${loadoutKey}`;
-    total += amount;
-    const existing = entries.get(compositionKey);
-    entries.set(compositionKey, {
-      key: compositionKey,
-      name,
-      amount: (existing?.amount ?? 0) + amount,
-      loadout,
-    });
-  }
-  return {
-    total,
-    entries: [...entries.values()],
-  };
-}
-
 function UnitCompositionSummary({
   unitName,
   composition,
@@ -6543,43 +6427,6 @@ function SelectionKeywords({
  * and links stay plain keywords so a convenient popup never guesses which
  * imported rule the player meant; those resolution facts remain in diagnostics.
  */
-function categoryRuleDetails(
-  session: LocalRosterSession,
-  categoryId: ObjectId,
-  owner: RosterSelection,
-): readonly SelectionRuleDetail[] {
-  const definitions = session.catalogue.context.categories.definitions.filter(
-    ({ source }) => source.id === categoryId,
-  );
-  const definition = definitions.length === 1 ? definitions[0] : undefined;
-  if (definition === undefined) return [];
-
-  const rules: SelectionRuleDetail[] = definition.source.rules.map((value) => ({
-    origin: "Direct",
-    value,
-    report: inspectLocalRule(value, session, owner),
-  }));
-  for (const link of definition.source.infoLinks) {
-    const reference = session.catalogue.context.graph.references.find(
-      (candidate) => candidate.kind === "infoLink" && candidate.source === link,
-    );
-    const target = reference?.targets.length === 1 ? reference.targets[0] : undefined;
-    if (target?.kind !== "rule") continue;
-    const source = target.source as RuleProjection;
-    const hidden = link.hidden ?? source.hidden;
-    const name = link.name ?? source.name;
-    // Preserve the keyword's link carrier; its visibility may differ from the
-    // shared definition used by another category or occurrence.
-    const value = {
-      definition: source, link,
-      ...(hidden === undefined ? {} : { hidden }),
-      ...(name === undefined ? {} : { name }),
-      ...(source.description === undefined ? {} : { description: source.description }),
-    };
-    rules.push({ origin: "Linked", value, report: inspectLocalRule(value, session, owner) });
-  }
-  return rules;
-}
 
 function SelectionProfile({
   profile,
@@ -7249,19 +7096,6 @@ function catalogueRootSourceMaximum(
     )
     .map(({ value }) => value!);
   return maxima.length === 0 ? undefined : Math.min(...maxima);
-}
-
-function selectionChoiceKey(choice: BattleScribeRosterSelectionChoice): string {
-  return JSON.stringify([
-    choice.occurrence.source.sourceId,
-    ...choice.occurrence.path,
-  ]);
-}
-
-function selectionChoiceLabel(
-  choice: BattleScribeRosterSelectionChoice,
-): string {
-  return choice.name ?? choice.id ?? "Unnamed selection";
 }
 
 /** Removes source ordering only inside the Battle Size presentation. */
