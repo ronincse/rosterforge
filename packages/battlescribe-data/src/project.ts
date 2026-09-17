@@ -309,6 +309,8 @@ function projectProfileType(
 ): ProfileTypeProjection {
   return {
     ...identified(located, context),
+    ...optionalString(located.node, "kind"),
+    ...optionalNumber(located, "sortIndex", context),
     characteristicTypes: mapContainer(
       located,
       "characteristicTypes",
@@ -325,6 +327,7 @@ function projectCharacteristicType(
 ): CharacteristicTypeProjection {
   return {
     ...identified(located, context),
+    ...optionalString(located.node, "kind"),
     ...optionalString(located.node, "defaultValue"),
   };
 }

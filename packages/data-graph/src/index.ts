@@ -5,3 +5,4 @@ export * from "./materialize.js";
 export * from "./profiles.js";
 export * from "./resolve.js";
 export * from "./visibility.js";
+export * from "./profile-presentation.js";

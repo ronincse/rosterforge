@@ -318,11 +318,14 @@ export interface ProfileProjection extends IdentifiedBattleScribeNode {
 }
 
 export interface ProfileTypeProjection extends IdentifiedBattleScribeNode {
+  readonly kind?: string;
+  readonly sortIndex?: number;
   readonly characteristicTypes: readonly CharacteristicTypeProjection[];
 }
 
 export interface CharacteristicTypeProjection
   extends IdentifiedBattleScribeNode {
+  readonly kind?: string;
   readonly defaultValue?: string;
 }
 
