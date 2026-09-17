@@ -34,7 +34,45 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-17 (SC-06 roles/order/layout delivered; stop)
+## Current Status — 2026-09-17 (printable army reference delivered; stop)
+
+Owner-authorized printable-reference checkpoint on `codex/starcraft-pilot` only.
+Baseline clean/upstream-equal `4fb397cc8b287fc8896ab68057e7bdb3e285c37e`;
+implementation, tests and acceptance docs `86f877d74e1d4cda7a44c87adc0add0870ad2dd8`.
+This separate handoff follows. Main, retired UI checkout, source pins and existing
+armies remain untouched. Publish only pilot, confirm exact-final CI and stop.
+
+Delivered Compact (default) and Unit sheets from one immutable current-unsaved-army
+snapshot, ordinary preview/Print-Save PDF, independent safe offline HTML download,
+selected effective stats/weapons/full prose/composition/loadouts, explicit
+relationships, resources/limits and conservatively attributed glossary. Reuses
+SC-06/shared reference semantics; no evaluator, persistence or source migration.
+Product vision, design language, architecture and compatibility now describe the
+paper contract. Full evidence and retained sample paths: `docs/qa/printable-reference.md`.
+
+All gates pass: normal 962 passed/34 optional skips (94 passed/8 skipped files,
+19.42s); configured 996 passed/102 files/zero skips (48.56s, maxWorkers=4).
+Lint/typecheck/build and baseline-to-result whitespace check pass. Existing large
+chunk advisory only. One earlier concurrent run timed out an existing App UI test;
+no timeout/assertion relaxation. Independent isolated native review approved after
+semantic and pagination corrections; known-unavailable Claude launcher not retried.
+
+All 213 final pages in 16 actual exported-HTML PDFs visually inspected across
+Letter/A4 and both layouts: frozen 14-unit Dark Angels, reinforced Terran,
+Protoss Sentries and oversized fictional reference. Supplied 18-page and 10-page
+New Recruit PDFs inspected as layout references, not imported game facts.
+Normal Edge unsaved Protoss flow opened populated print window and downloaded both
+HTML layouts; closing leaves 130 Minerals/unsaved state intact. Native print-dialog
+chrome unavailable: owner-authorized headless Edge rendered exact HTML for PDF QA;
+no physical print or universal-browser claim. All corpus hashes/manifests unchanged.
+
+Leave isolated http://127.0.0.1:5291/ running for acceptance; older user tabs and
+servers preserved. Remaining limits: some short continuation pages, unexecuted
+SC-06 format/dynamic hints, incomplete association validation, orphan costs and
+source revision mismatch. SC-08, more budgets, engine semantics, main integration,
+PR and deployment are not authorized. Next boundary requires owner direction.
+
+### Historical SC-06 status (superseded by printable-reference status above)
 
 Owner accepted A/SC-05 and authorized only the bounded SC-06 reference checkpoint.
 Baseline after fetch: clean/upstream-equal 0149238fbbda1f1a2990c7823b294883305c72cc.
@@ -1091,7 +1129,7 @@ QA before classifying or implementing the discrepancy.
 | False diagnostics after pinned catalogue selection and creation | Done | all 36 selectable focused closures and the 46-document import compose with zero load diagnostics at `04c62fc`; all 36 catalogues also create with exact-empty initialization diagnostics. Exact-empty optional numbers preserve raw spelling; named costs and unavailable defaults defer until selected use; reverse-consumer condition/repeat targets require repository proof; local aliases and profile-owned characteristic IDs use their real scopes; finite link overlays no longer look cyclic; and an unused modified maximum on a pending manual group no longer claims an automatic quantity was withheld. Missing unnamed costs, unproved selectors, true same-scope duplicates, definition recursion, modified minima, and maxima that can constrain defaults or planned children remain diagnostic. Live World Eaters plus Aeldari, T'au, Tyranids, Deathwatch, and Drukhari samples report ready/zero diagnostics with a clean console; live Aeldari creation also has no warning cards or console issues |
 | Remaining pinned Aeldari matched-play check coverage | Open; narrowed in b176c06 | Guardian Defenders structural inspection and its three self-cost bounds now resolve. Remaining exact constraint diagnostics: five unsupported fields, five constraint attributes, three condition attributes and one numeric applicability warning. Classify each remaining shape independently; do not suppress campaign diagnostics. Selected Detachments live bounds remain done |
 | Source-authored leader assignments and mandatory Warlord conflicts | Done, bounded | `27ba843` / `a4803fb`: direct same-force optional single-unit filters, exact occurrence assignments, save/reopen and undo, endpoint cleanup, independent duplicates; category-definition roster selection bounds now detect missing/multiple Warlords including Angron plus Slaughterbound. No name/ID hardcoding. Desktop/390×844 and pinned integration verified |
-| Remaining association compatibility | Open; separate owner-authorized checkpoint | Direct numeric self/shared counterpart conditions done in b176c06. Incoming leader capacity/category classification, general association effects, wider/transitive conditions, required/multi-target associations, shared-link choice expansion, print relationship presentation and broader revalidation remain open. Whole raw corpus has 449 definitions, five links, 494 association constraints, 341 association conditions and 91 association-traversing affects values. Saved assignments still keep aggregate validation incomplete; do not infer Leading membership from prose/name |
+| Remaining association compatibility | Open; separate owner-authorized checkpoint | Direct numeric self/shared counterpart conditions done in b176c06. Explicit print relationship presentation done in 86f877d; no expanded semantics. Incoming leader capacity/category classification, general association effects, wider/transitive conditions, required/multi-target associations, shared-link choice expansion and broader revalidation remain open. Whole raw corpus has 449 definitions, five links, 494 association constraints, 341 association conditions and 91 association-traversing affects values. Saved assignments still keep aggregate validation incomplete; do not infer Leading membership from prose/name |
 | Other category-definition bounds | Open | Roster selection counts and direct definition-owned numeric modifiers are supported; relevant modifier groups and category-owned force/cost bounds remain open. Other owner locations need independent evidence |
 | World Eaters normal-use warnings | Done; b176c06 | Direct association rule queries, force-owned force identity, live grouped root bounds, known self-cost constraints, category modifier relevance and static zero-descendant-minimum initialization. Reported 430-point scenario has zero unresolved structural/constraint bounds. Actual missing configuration violations remain |
 | Modified unlimited root bounds | Open; pre-existing conservative limitation | Live modified negative/unlimited root results can remain incomplete even for the authored -1 sentinel. No grouped shape needed by this World Eaters repair uses it; settle with dedicated source evidence and tests rather than expanding this checkpoint |
@@ -1141,7 +1179,7 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
-| Print-output usability pass | Open | The escaped print/save-PDF model includes nested selections, costs and supported checks. ForceWright rebrand smoke verified generated document branding, but the ten currency totals spill beyond their card in the reference-army preview. Reader hierarchy, currency wrapping, pagination and representative table use still need a bounded usability pass; no physical print claim. See `docs/qa/forcewright-rebrand.md` |
+| Print-output usability pass | Done on pilot, 86f877d | Compact/Unit sheets, current-army preview, browser print and offline HTML share selected effective facts, full rules and attributed glossary. All 213 pages of 16 Letter/A4 PDFs visually checked, including 14-unit Dark Angels, Terran, Protoss and oversized fiction. Currency wrapping and continued-page context corrected. Some short unit-sheet tails remain a paper-efficiency limitation; no physical-printer/universal-browser certification. See `docs/qa/printable-reference.md`; no main integration implied |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. The value-specific complaint is zero, and the later false modifier-maximum warning on 34 manual Detachment groups is now zero too. Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
@@ -15875,3 +15913,86 @@ StarCraft support is complete. SC-08 / additional budget activation / dynamic li
 general queries / nine 40k category requirements / source corrections remain outside scope.
 Orphan cost types and source revision mismatch remain qualified. Push only pilot,
 confirm exact-final CI, leave 5281 running and stop; no main/PR/merge/deployment.
+
+## Completed Assignment — 2026-09-17: printable army reference and unit sheets
+
+**Baseline/result.** Owner authorized this bounded document-output checkpoint on
+pilot only, including supplied PDF reference and alternate browser PDF rendering.
+Clean fetched baseline `4fb397cc8b287fc8896ab68057e7bdb3e285c37e`; lead implementation,
+tests and acceptance documentation `86f877d74e1d4cda7a44c87adc0add0870ad2dd8`.
+This separate handoff commit follows; exact-final push/CI receipt belongs in the
+completion response and Actions history. No other model's changes were published.
+
+**Decision and evidence.** Supplied New Recruit unit sheets (18 pages) and HTML's
+printed equivalent (10 pages) were fully inspected. Local-file HTML navigation was
+security-blocked; inspected source/styles and owner-approved PDFs instead, without
+bypassing the block. Samples are layout evidence, never game-data fixtures.
+Replaced the technical selection-tree output with shared current-selection facts,
+stats-first hierarchy and full explanations. Compact flows category/unit blocks;
+Unit sheets starts each army occurrence on a fresh page. Both derive from one
+scalar immutable snapshot, including unsaved changes and all forces. Shared loadout
+and category-rule helpers avoid independent semantics. Explicit relationship
+names retain unverified qualifiers; resource activation costs stay prose.
+
+Safe escaped standalone HTML plus existing rich-text renderer, strict CSP and no
+scripts/assets/network provide offline output. Preview/download/print are separate
+actions with readiness/failure handling; export never saves or edits the army.
+Conservative glossary identity retains owners, bearers, nested groups and uncertain
+variants. Source-only explanations come from unambiguous root shared definitions,
+not local abilities in unselected units; bounded traversal retains attached text.
+Rejected a second PDF/template engine, data-specific hardcoding, name-only merging,
+prose-derived associations, truncation/shrink-to-fit and engine/persistence changes.
+
+**Content and paper acceptance.** Frozen Dark Angels bytes remain unchanged,
+SHA256 `9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c`:
+17 roots/14 army units/2000 points, Intercessors 5/80 and 10/150, Knights
+240/240/260, explicit Lieutenant Supporting and effective weapons. Terran Marines
+9/240 with Combat Shield/Reinforce and configured Minerals225; Protoss Sentries
+2/130 with full activation fields/prose. Synthetic checks cover second force,
+nested/category rules/cycle, mixed models, uncertainty, literal unsafe-looking
+text, two modes, same-name differing units/rules and a 42-paragraph/12-field stress
+profile. No source IDs leak into the public output; missing labels are qualified.
+
+Sixteen PDFs generated from exact production HTML, Edge154.0.4258.18, portrait
+Letter/A4, scale100%, CSS14mm margins, backgrounds/browser headers off, network
+blocked. All213 final pages visually reviewed: DA Compact A4/Letter33/36,
+Sheets42/44; Terran4/4/4/4; Protoss4/4/4/4; stress6/6/7/7. Independent reviewer
+covered155 DA plus26 final stress pages; lead covered32 SC pages. Corrected
+column clipping, orphaned fields and anonymous long-schema continuation with
+weighted columns, short-field keeps and repeated owner/profile context. Some
+short unit-sheet tails and narrow wrapped SC labels remain readable, not clipped.
+All HTML/PDF/PNG samples retained outside repository at the report's evidence root;
+`pages-review6` is final real-army evidence, `pages-stress-final` final stress.
+
+Normal disposable browser restoration/unsaved Protoss creation exercises the real
+menu, layout switch, in-preview links, actual print window and both downloaded
+HTML files. Closing retains130/unsaved status. Native OS print chrome not exposed;
+owner-authorized headless path supplies PDF evidence, not a physical-print claim.
+Popup blocking/cancellation/readiness/download independence have synthetic UI tests.
+
+**Independent review.** Lead owns all implementation/integration. Native reviewer
+used isolated `E:\GitHub\rosterforge\.codex-print-review` at4fb397c; no primary
+writes or delegated publishing. Claude launcher already unavailable, not retried.
+Review corrected keyword scope, nested/category text, source-only leakage, public
+bearer attribution and pagination. Final semantic and all assigned page review
+approved with no blockers. PDF skill render/inspect loop drove paper corrections.
+
+**Gates and corpus.** Lint/typecheck/build pass. Ordinary test962pass34optionalSkip,
+94passed8skippedFiles,19.42s. Configured `pnpm test --maxWorkers=4`:996pass,
+102files,zeroSkips,48.56s. Focused final synthetic3/3pass. One earlier concurrent
+configured run995pass plus existing App UI5000ms timeout; rerun reduces concurrency,
+not assertions/timeouts. Baseline-to-result `git diff --check` passes (removed one
+new-file trailing blank line before final implementation commit). Build199modules,
+JS1043.42kB/gzip295.35,CSS85.01kB/gzip15.20; existing large-chunk advisory remains.
+Configured variables, frozen SHA and positive content assertions are in the QA
+report. 40k HEAD04c62fcd041b3808c39d5c46fd677c704027b979, StarCraft99261754 all
+four hashes and correctness A/B manifests unchanged. No third-party data committed.
+
+**Handoff/stop.** Updated product vision, design language, architecture,
+compatibility, QA report and roadmap. No new diagnostic code. Explicit print
+relationships complete presentation only, not association validation. Source-only
+lookup caps256matches/unit and32768chars/text; attached prose retained. Unexecuted
+SC-06 format/dynamic hints, orphan costs, source revision mismatch, budgets and
+broader association/query limitations remain. No universal browser/printer/PDF
+tagging certification. Leave5291 preview running, push only pilot and confirm
+exact-final CI. Stop; no SC-08, main integration, PR, deployment or new phase.
