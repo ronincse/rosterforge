@@ -2514,6 +2514,31 @@ recursive tree mounts only on explicit secondary disclosure. This is an
 `apps/web` presentation boundary: no durable roster, evaluator, source-preview,
 cost, or print-model semantics changed. See `docs/qa/rf-a05-reference-card.md`.
 
+`battlescribe-data` projects static profile-type kind/sortIndex and
+characteristic-type kind through the shared XML/JSON model. `data-graph`'s
+`profile-presentation.ts` resolves exact type identities in the defining profile's
+reachable closure, including linked and id-less/nested profiles. Its immutable
+graph-owned index and per-profile cache return scalar hint states, positional
+characteristic roles, source/path keys and notes; no evaluation semantics change.
+Multiple reachable definitions remain ambiguous, independently of duplicate-ID
+diagnostic suppression. Characteristic metadata stays scoped to its resolved type.
+
+`reference-profile-presentation.ts` performs headless classification and copied
+presentation sorting. `unit-reference-model.ts` adds these scalars to existing
+conservative groups and a source-keyed map for nested information groups, retaining
+hierarchy and owner-specific reports. React only displays the resolved metadata;
+no new document-bearing props or graph resolution are introduced at leaf boundaries.
+The fixed stats/weapons/abilities/additional hierarchy takes precedence over static
+type ordering within each section. Only absent role metadata permits legacy 40k
+label fallback. Long text and annotation fields retain all authored values and
+existing effective/base/hidden/unresolved evidence in one accessible content tree.
+Actual model composition is an independent sum, never an attack multiplier.
+
+Metadata summaries do not cache profile presentation hints. Warm verified-byte
+acquisition and saved-source restoration already re-ingest and rebuild projections,
+so this addition requires no cache, draft or database version change. Imported
+formatRule expressions remain inert. See `docs/qa/starcraft-reference-metadata.md`.
+
 `reference-keywords.ts` builds an owner-indexed presentation join from effective
 stat-table Keywords tokens to that owner's attached rule groups. Every member
 of a grouped profile must resolve to the same unambiguous rule group. Exact

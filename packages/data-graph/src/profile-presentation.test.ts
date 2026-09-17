@@ -68,3 +68,25 @@ it("projects equivalent JSON metadata without decoding JSON strings", () => {
   expect(inspect([parsed.value]).result.characteristics[0]?.value).toBe("longText");
   expect(parsed.value.sourceBytes).toEqual(new TextEncoder().encode(json));
 });
+
+it.each(['null', 'true', '{}', '[]', '42'])("does not confuse malformed JSON kind %s with absence", value => {
+  const json = `{"gameSystem":{"id":"g","name":"G","profileTypes":[{"id":"type","kind":${value},"sortIndex":null}],"sharedProfiles":[{"id":"p","typeId":"type"}]}}`;
+  const parsed = parseBattleScribeJson(new TextEncoder().encode(json), { source: { sourceId: sourceId("json"), filename:"a.json",kind:"synthetic",importedAt:"2026-09-17T00:00:00Z" } });
+  if (!parsed.ok) throw new Error('parse');
+  expect(inspect([parsed.value]).result).toMatchObject({role:{state:"malformed"},order:{state:"malformed"}});
+});
+it("keeps duplicate JSON hints malformed instead of choosing the last value", () => {
+  const json = '{"gameSystem":{"id":"g","name":"G","profileTypes":[{"id":"type","kind":"ability","kind":"weapon","sortIndex":1,"sortIndex":2}],"sharedProfiles":[{"id":"p","typeId":"type"}]}}';
+  const parsed = parseBattleScribeJson(new TextEncoder().encode(json), { source: { sourceId: sourceId("json"), filename:"a.json",kind:"synthetic",importedAt:"2026-09-17T00:00:00Z" } });
+  if (!parsed.ok) throw new Error('parse');
+  expect(inspect([parsed.value]).result).toMatchObject({role:{state:"malformed"},order:{state:"malformed"}});
+});
+it("resolves id-less nested information profiles and leaves dynamic characteristic hints unsupported", () => {
+  const schema = type('kind="ability"', '<characteristicType id="text" kind="longText"><modifiers><modifier field="kind" type="set" value="annotation"/></modifiers></characteristicType>');
+  const doc = document("base", schema + '<sharedInfoGroups><infoGroup id="outer"><infoGroups><infoGroup id="inner"><profiles><profile typeId="type"><characteristics><characteristic typeId="text">All text</characteristic></characteristics></profile></profiles></infoGroup></infoGroups></infoGroup></sharedInfoGroups>');
+  const graph = resolveBattleScribeDataGraph([doc]); if (!graph.ok) throw new Error('graph');
+  const profile = doc.projection.infoGroups[0]!.infoGroups[0]!.profiles[0]!;
+  const result = profilePresentationResolver(graph.value)(profile);
+  expect(result.role.value).toBe('ability');
+  expect(result.characteristics[0]?.state).toBe('dynamic');
+});

@@ -420,6 +420,16 @@ Catalogue-link cycles include the detected document ID path and point to the
 link that closes the cycle. These diagnostics are advisory for graph
 construction and do not imply roster validation has run.
 
+Selected-reference presentation hints have separate inspectable states:
+absent, supported, unknown, malformed, dynamic, unresolved and ambiguous.
+`profile-presentation.ts` exposes these as scalar Presentation details notes,
+not new legality diagnostics. Existing import numeric-attribute and graph-reference
+diagnostics still apply. An unsupported role/order/layout hint cannot make a
+profile applicable, hide its fields, or erase existing visibility/evaluation
+uncertainty. Unknown explicit roles do not trigger absent-metadata legacy fallback.
+Source-authored format rules are retained with an unexecuted-formatting note.
+See `qa/starcraft-reference-metadata.md` for the supported subset.
+
 Named costs are self-describing at import time. Their unresolved cost-type
 references remain in the graph without a load warning; if a selected occurrence
 needs an absent cost type, evaluation emits the existing incomplete-cost report.

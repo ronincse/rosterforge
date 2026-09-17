@@ -12,11 +12,34 @@ Supported default purchase budgets and explicit player limits now participate
 in validation and limit queries. Zero/creation-hidden default activation remains
 unverified. Numeric unit-selection conditions now drive the evidenced Marines6/9/6 reinforcement
 and Shield20/30/20 transition through existing automatic reconciliation.
-XML source values now decode once; profile metadata still needs bounded work. Terran costs
+XML source values decode once. Static profile roles/order and characteristic
+layout are supported in selected references; source-authored formatting remains deferred. Terran costs
 remain incomplete for five genuinely absent source cost types. See
 [`qa/starcraft-pilot-baseline.md`](qa/starcraft-pilot-baseline.md) for immutable
 manifest, actual versus intended ledgers, classifications, and coverage limits.
 
+
+### Declarative reference metadata (SC-06 partial)
+
+Resolved static profile kinds model/weapon/ability/tag route to stats, weapons,
+abilities and neutral additional information. Type IDs resolve in the defining
+profile's dependency closure; characteristic IDs resolve inside that type.
+Unknown, malformed, ambiguous, missing and dynamic hints stay inspectable and
+never imply applicability or army illegality. Only absent roles use the verified
+legacy Unit/Description/weapon-label fallback. Other content remains visible.
+
+Non-negative safe-integer sortIndex orders type groups within fixed semantic
+sections; valid indices precede absent/invalid ones, with first-encounter type
+ties and stable profiles within each type. Source and roster arrays are unchanged.
+longText uses full-width labeled fields; annotation stays attached reference text.
+Every field and existing effective/base/visibility evidence remains. Cost and
+Supply fields do not become purchasing semantics; tag does not imply keyword.
+Nested information groups retain authored hierarchy. Original bytes, warm caches,
+saved identities/budgets and player labels remain unchanged; no cache migration.
+
+The seven frozen format rules remain unexecuted, as do dynamic presentation hints.
+SC-06 is therefore partial, not a full-formatting or full-StarCraft claim. See
+[SC-06 evidence](qa/starcraft-reference-metadata.md).
 
 ### XML reference values (SC-05)
 

@@ -1,5 +1,7 @@
 // Selected-unit reading projection. This UI-only layer retains the original
 // owners/reports; it neither changes selections nor evaluates new game semantics.
+import { profilePresentationResolver } from "@rosterforge/data-graph";
+import { classifyReferenceProfile, referenceProfileSourceKey, type ReferenceProfilePresentation } from "./reference-profile-presentation.js";
 import type { MaterializedInfoGroup, MaterializedProfileInfoLink, MaterializedRuleInfoLink, UnresolvedMaterializedInfoLink } from "@rosterforge/data-graph";
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
 import type { RosterRuleVisibilityReport } from "@rosterforge/evaluation";
@@ -20,6 +22,7 @@ export interface ReferenceMember {
   readonly label: string;
 }
 export interface ReferenceProfileGroup {
+  readonly presentation?: ReferenceProfilePresentation | undefined;
   readonly profile: ReferenceProfile;
   readonly report: LocalRosterProfileCharacteristics | undefined;
   readonly members: readonly ReferenceMember[];
@@ -29,12 +32,14 @@ export interface ReferenceRuleGroup {
   readonly members: readonly ReferenceMember[];
 }
 export interface UnitReferenceModel {
+  readonly composition?: string;
   readonly unavailableOwners: readonly RosterSelection[];
   readonly displayNotes: readonly { owner: RosterSelection; name: string; incomplete: boolean }[];
   readonly profiles: readonly ReferenceProfileGroup[];
   readonly rules: readonly ReferenceRuleGroup[];
   readonly supplementary: readonly {
     member: ReferenceMember;
+    presentations: ReadonlyMap<string, ReferenceProfilePresentation>;
     groups: readonly MaterializedInfoGroup[];
     unresolved: readonly UnresolvedMaterializedInfoLink[];
     reports: ReadonlyMap<ReferenceProfile["value"], LocalRosterProfileCharacteristics> | undefined;
@@ -52,13 +57,15 @@ export interface UnitReferenceModel {
  * in a merged map keyed by a shared source profile.
  */
 export function createUnitReferenceModel(session: LocalRosterSession, root: RosterSelection): UnitReferenceModel {
+  const resolvePresentation = profilePresentationResolver(session.catalogue.context.graph);
+  const composition = new Map<string, number>();
   const identities = new Map<object, number>();
   const identity = (value: object): number => {
     let id = identities.get(value);
     if (id === undefined) { id = identities.size; identities.set(value, id); }
     return id;
   };
-  const profileGroups = new Map<string, { profile: ReferenceProfile; report: LocalRosterProfileCharacteristics | undefined; members: ReferenceMember[] }>();
+  const profileGroups = new Map<string, { presentation: ReferenceProfilePresentation; profile: ReferenceProfile; report: LocalRosterProfileCharacteristics | undefined; members: ReferenceMember[] }>();
   const ruleGroups = new Map<string, { rule: ReferenceRule; members: ReferenceMember[] }>();
   const supplementary: UnitReferenceModel["supplementary"][number][] = [];
   const unavailableOwners: RosterSelection[] = [];
@@ -98,6 +105,7 @@ export function createUnitReferenceModel(session: LocalRosterSession, root: Rost
     const namingIncomplete = !name.ok || name.value.completeness === "incomplete" || !annotation.ok || annotation.value.completeness === "incomplete";
     const namingDynamic = namingIncomplete || (name.ok && name.value.steps.length > 0) || (annotation.ok && annotation.value.steps.length > 0);
     if (label !== sourceName || namingIncomplete) displayNotes.push({ owner, name: label, incomplete: namingIncomplete });
+    if (choice.kind === "selectionEntry" && choice.type === "model") composition.set(label, (composition.get(label) ?? 0) + rosterSelectionAmount(owner));
     const path = [...labels, label];
     const scope = [...lineage, [identity(choice.definition), identity(choice.occurrence), loadout(owner), label, namingDynamic ? owner.id : null]];
     // The profile itself names the equipment; attribution names its selected
@@ -123,7 +131,7 @@ export function createUnitReferenceModel(session: LocalRosterSession, root: Rost
         modified ? owner.id : null]);
       const group = profileGroups.get(key);
       if (group) group.members.push(member);
-      else profileGroups.set(key, { profile, report, members: [member] });
+      else profileGroups.set(key, { profile, report, members: [member], presentation: classifyReferenceProfile(profile, resolvePresentation("definition" in profile.value ? profile.value.definition : profile.value)) });
     }
     const rules: ReferenceRule[] = [
       ...choice.rules.map(value => ({ origin: "Direct" as const, value, report: inspectLocalRule(value, session, owner) })),
@@ -139,11 +147,25 @@ export function createUnitReferenceModel(session: LocalRosterSession, root: Rost
     }
     const groups = [...choice.materializedInfoGroups, ...choice.materializedInfoLinks.filter((v): v is MaterializedInfoGroup => v.kind === "infoGroup")];
     const unresolved = choice.materializedInfoLinks.filter((v): v is UnresolvedMaterializedInfoLink => v.kind === "unresolvedInfoLink");
-    if (groups.length || unresolved.length) supplementary.push({ member, groups, unresolved, reports });
+    if (groups.length || unresolved.length) {
+      // Retain authored group hierarchy. Only scalar hints cross the additional
+      // reader boundary; each group's existing owner reports remain authoritative.
+      const presentations = new Map<string, ReferenceProfilePresentation>();
+      const collect = (group: MaterializedInfoGroup) => {
+        const nestedProfiles: ReferenceProfile[] = [
+          ...group.profiles.map(value => ({ origin: "Direct" as const, value })),
+          ...group.materializedInfoLinks.filter((link): link is MaterializedProfileInfoLink => link.kind === "profileInfoLink").map(value => ({ origin: "Linked" as const, value })),
+        ];
+        for (const profile of nestedProfiles) presentations.set(referenceProfileSourceKey(profile), classifyReferenceProfile(profile, resolvePresentation("definition" in profile.value ? profile.value.definition : profile.value)));
+        for (const nested of [...group.materializedInfoGroups, ...group.materializedInfoLinks.filter((link): link is MaterializedInfoGroup => link.kind === "infoGroup")]) collect(nested);
+      };
+      groups.forEach(collect);
+      supplementary.push({ member, groups, unresolved, reports, presentations });
+    }
     for (const child of owner.selections) visit(child, scope, path);
   };
   visit(root, [], []);
-  return { profiles: [...profileGroups.values()], rules: [...ruleGroups.values()], supplementary, unavailableOwners, displayNotes };
+  return { ...(unavailableOwners.length === 0 && composition.size > 0 ? { composition: [...composition].map(([name, count]) => `${count}× ${name}`).join("; ") } : {}), profiles: [...profileGroups.values()], rules: [...ruleGroups.values()], supplementary, unavailableOwners, displayNotes };
 }
 
 /** Selected quantities are independent, never multiplied by ancestor amounts. */

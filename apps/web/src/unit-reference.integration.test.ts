@@ -60,6 +60,13 @@ it.skipIf(!directory)("groups the audit's selected five and ten model Intercesso
   createUnitReferenceModel(session, unit());
   const warmMs = performance.now() - warmStart;
   expect(model.profiles).toHaveLength(16);
+  const legacyModels = model.profiles.filter(g => g.profile.value.typeName === "Unit");
+  const legacyWeapons = model.profiles.filter(g => ["Ranged Weapons", "Melee Weapons"].includes(g.profile.value.typeName ?? ""));
+  expect(legacyModels.length).toBeGreaterThan(0);
+  expect(legacyWeapons.length).toBeGreaterThan(0);
+  expect(legacyModels.every(g => g.presentation?.section === "model" && g.presentation.legacy)).toBe(true);
+  expect(legacyWeapons.every(g => g.presentation?.section === "weapon" && g.presentation.legacy)).toBe(true);
+
   expect(model.profiles.filter(g => g.profile.value.typeName === "Unit").map(g => referenceAttribution(g.members))).toEqual(["1× Intercessor Sergeant", "3× Intercessor", "1× Intercessor w/ Grenade Launcher"]);
   expect(model.profiles.filter(g => g.profile.value.name?.includes("grenade launcher")).map(g => g.profile.value.name)).toEqual(["➤ Astartes grenade launcher - krak", "➤ Astartes grenade launcher - frag"]);
   expect(model.profiles.find(g => g.profile.value.name === "Power fist")?.members[0]?.label).toBe("Intercessor Sergeant");

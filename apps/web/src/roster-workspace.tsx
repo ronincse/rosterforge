@@ -1,3 +1,4 @@
+import { orderReferenceProfiles, referenceProfileSourceKey, type ReferenceProfilePresentation } from "./reference-profile-presentation.js";
 import { ResourceBudgets } from "./resource-budgets.js";
 import {
   useEffect,
@@ -51,11 +52,10 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 import { Detail } from "./detail-row.js";
 import { AssociationOptions, type SetAssociation } from "./association-options.js";
 import { inspectLocalRule } from "./rule-inspection.js";
-import { createUnitReferenceModel, referenceAttribution, type ReferenceMember } from "./unit-reference-model.js";
+import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceMember } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
 import { ReferenceRichText, ReferenceTextContext } from "./reference-rich-text.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, type ReferenceTextIndex } from "./reference-text-index.js";
-import type { ReferenceProfileGroup } from "./unit-reference-model.js";
 import { DiagnosticList } from "./diagnostic-list.js";
 import {
   evaluateLocalRosterCosts,
@@ -3562,36 +3562,47 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
 }) {
   const model = useMemo(() => createUnitReferenceModel(session, selection), [session, selection]);
   const categories = useMemo(() => inspectLocalRosterSelectionCategories(session, selection.id), [session, selection.id]);
-  const prose = useMemo(() => model.profiles.filter(group => group.profile.value.characteristics.some(c => c.name?.toLowerCase() === "description")), [model]);
-  const statistics = useMemo(() => model.profiles.filter(group => !prose.includes(group)), [model, prose]);
-  // Only tables actually render keyword links; a prose profile must not remove
-  // an inline rule just because it happens to carry a Keywords characteristic.
+  const section = (name: ReferenceProfilePresentation["section"]) => orderReferenceProfiles(model.profiles.filter(group => group.presentation?.section === name));
+  const models = section("model"), equipment = section("weapon"), prose = section("ability"), additional = section("additional");
+  // Only rendered tables can suppress inline keyword rules. Long-text/annotation
+  // cards preserve their rules inline instead of losing an otherwise hidden link.
+  const statistics = useMemo(() => model.profiles.filter(group => group.presentation?.layout === "table"), [model]);
   const keywordLinks = useMemo(() => createReferenceKeywordLinks(model, statistics), [model, statistics]);
   const referenceIndex = useMemo(() => selectedReferenceTextIndex(catalogueReferenceTextIndex(session), model), [session, model]);
-  // Type labels determine reading order only, never membership or equivalence.
-  const models = statistics.filter(group => group.profile.value.typeName?.toLowerCase() === "unit");
-  const equipment = statistics.filter(group => !models.includes(group));
-  const tables = (groups: typeof statistics) => <SelectionProfileTables profiles={groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members, keywords: keywordLinks.profiles.get(group) } }))} reports={undefined} onViewKeywordRules={onViewKeywordRules} />;
+  const renderProfiles = (groups: readonly ReferenceProfileGroup[]) => {
+    // Consecutive layouts retain static type order without moving a prose-bearing
+    // model or weapon behind unrelated tables. One accessible reader is mounted.
+    const runs: { fields: boolean; groups: ReferenceProfileGroup[] }[] = [];
+    for (const group of groups) {
+      const fields = group.presentation?.layout === "fields";
+      const previous = runs.at(-1);
+      if (previous?.fields === fields) previous.groups.push(group);
+      else runs.push({ fields, groups: [group] });
+    }
+    return runs.map((run, index) => run.fields ? <div key={index} className="selection-rule-list">{run.groups.map((group, i) => <div key={i} className="unit-reference-group">
+      <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
+      {group.report === undefined && <p className="profile-completeness">Profile inspection unavailable; source values shown.</p>}
+      <SelectionProfile profile={group.profile} report={group.report} presentation={group.presentation} />
+    </div>)}</div> : <SelectionProfileTables key={index} profiles={run.groups.map(group => ({ ...group.profile, reference: { report: group.report, members: group.members, keywords: keywordLinks.profiles.get(group), presentation: group.presentation } }))} reports={undefined} onViewKeywordRules={onViewKeywordRules} />);
+  };
   return <ReferenceTextContext.Provider value={{ index: referenceIndex, open: (target, trigger) => onViewKeywordRules({ keyword: target.name, ...target, referenceIndex }, trigger) }}><div className="unit-reference-reader">
     {referenceIndex.limited && <p className="reference-source-note">Some automatic reference links are unavailable because the catalogue index is too large. The source text remains available.</p>}
     <nav className="unit-reference-nav" aria-label="Unit reference sections">
       {models.length > 0 && <a href="#unit-reference-stats">Stats</a>}
       {equipment.length > 0 && <a href="#unit-reference-weapons">Weapons & equipment</a>}
       {(prose.length > 0 || model.rules.length > 0) && <a href="#unit-reference-rules">Abilities & rules</a>}
+      {additional.length > 0 && <a href="#unit-reference-additional">Additional information</a>}
     </nav>
-    {models.length > 0 && <section id="unit-reference-stats" tabIndex={-1}><h4>Model stats</h4>{tables(models)}</section>}
-    {equipment.length > 0 && <section id="unit-reference-weapons" tabIndex={-1}><h4>Selected weapons & equipment</h4>{tables(equipment)}</section>}
-    <p className="unit-reference-quantity-note">Quantities describe selected entries, not multiplied attacks or other profile values.</p>
+    {models.length > 0 && <section id="unit-reference-stats" tabIndex={-1}><h4>Model stats</h4>{renderProfiles(models)}</section>}
+    {equipment.length > 0 && <section id="unit-reference-weapons" tabIndex={-1}><h4>Selected weapons & equipment</h4>{renderProfiles(equipment)}</section>}
+    {model.composition && <p className="unit-reference-composition">Selected model composition: {model.composition}.</p>}
+    <p className="unit-reference-quantity-note">Attribution identifies source owners, not squad size. Quantities describe selected entries, not multiplied attacks or other profile values.</p>
     {model.unavailableOwners.map(owner => <p key={owner.id}>Information unavailable for {owner.name ?? "an unnamed selection"}. Its resolved selected descendants are shown separately; source scope is unconfirmed.</p>)}
     {model.displayNotes.map(note => <div key={note.owner.id}><strong>{note.name}</strong>{note.incomplete && <p>Some display naming is unresolved for this selection.</p>}</div>)}
     <section id="unit-reference-rules" tabIndex={-1} className="selection-info-section">
       <h4>Abilities & rules</h4>
       <div className="selection-rule-list">
-        {prose.map((group, index) => <div key={index} className="unit-reference-group">
-          <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
-          {group.report === undefined && <p className="profile-completeness">Profile inspection unavailable; source values shown.</p>}
-          <SelectionProfile profile={group.profile} report={group.report} />
-        </div>)}
+        {renderProfiles(prose)}
         {keywordLinks.inlineRules.map((group, index) => <div key={index} className="unit-reference-group">
           <p className="unit-reference-attribution">{referenceAttribution(group.members)}</p>
           <SelectionRule rule={group.rule} />
@@ -3599,10 +3610,11 @@ function SelectedUnitReference({ session, selection, onViewKeywordRules }: {
         {prose.length === 0 && keywordLinks.inlineRules.length === 0 && <p>{model.rules.length > 0 ? "Weapon keyword rules are available from their linked names above." : "No attached abilities or rules."}</p>}
       </div>
     </section>
+    {additional.length > 0 && <section id="unit-reference-additional" tabIndex={-1}><h4>Additional information</h4>{renderProfiles(additional)}</section>}
     {categories.ok && <SelectionKeywords session={session} inspection={categories.value} onViewRules={onViewKeywordRules} />}
-    {model.supplementary.map(({ member, groups, unresolved, reports }) => <section className="selection-info-section" key={member.owner.id}>
+    {model.supplementary.map(({ member, groups, unresolved, reports, presentations }) => <section className="selection-info-section" key={member.owner.id}>
       <h4>Additional information · {member.label}</h4>
-      {groups.map((infoGroup, index) => <SelectionInfoGroup key={index} infoGroup={infoGroup} reports={reports} ruleEnvironment={{ session, owner: member.owner }} />)}
+      {groups.map((infoGroup, index) => <SelectionInfoGroup key={index} infoGroup={infoGroup} reports={reports} presentations={presentations} ruleEnvironment={{ session, owner: member.owner }} />)}
       {unresolved.map((link, index) => <p key={index}>Unavailable linked information: {link.link.name ?? link.link.targetId ?? "Unnamed information"}. This information could not be loaded from the imported catalogue.</p>)}
     </section>)}
   </div></ReferenceTextContext.Provider>;
@@ -5984,7 +5996,7 @@ type SelectionRuleDetail = (
 type SelectionProfileDetail = (
   | { readonly origin: "Direct"; readonly value: DirectProfile }
   | { readonly origin: "Linked"; readonly value: MaterializedProfileInfoLink }
-) & { readonly reference?: { readonly report: LocalRosterProfileCharacteristics | undefined; readonly members: readonly ReferenceMember[]; readonly keywords?: ReadonlyMap<DirectProfile["characteristics"][number], readonly ReferenceKeywordToken[]> | undefined } };
+) & { readonly reference?: { readonly presentation?: ReferenceProfilePresentation | undefined; readonly report: LocalRosterProfileCharacteristics | undefined; readonly members: readonly ReferenceMember[]; readonly keywords?: ReadonlyMap<DirectProfile["characteristics"][number], readonly ReferenceKeywordToken[]> | undefined } };
 
 function RosterSelectionDatasheet({
   session,
@@ -6572,9 +6584,11 @@ function categoryRuleDetails(
 function SelectionProfile({
   profile,
   report,
+  presentation,
 }: {
   readonly profile: SelectionProfileDetail;
   readonly report: LocalRosterProfileCharacteristics | undefined;
+  readonly presentation?: ReferenceProfilePresentation | undefined;
 }) {
   const baseName =
     profile.origin === "Direct"
@@ -6594,7 +6608,7 @@ function SelectionProfile({
       : `${displayName} (${annotation})`;
   return (
     <article
-      className="selection-profile"
+      className={presentation ? "selection-profile reference-declarative-profile" : "selection-profile"}
       {...(report === undefined
         ? {}
         : { "data-completeness": report.completeness })}
@@ -6619,6 +6633,7 @@ function SelectionProfile({
           are not a complete result.
         </p>
       )}
+      <ProfilePresentationNotes notes={presentation?.notes} />
       {characteristics.length === 0 ? (
         <p>No characteristics.</p>
       ) : (
@@ -6627,6 +6642,7 @@ function SelectionProfile({
             <SelectionCharacteristic
               key={selectionCharacteristicKey(characteristic, index)}
               characteristic={characteristic}
+              presentationRole={presentation?.characteristics[index]?.value}
               report={report?.report.characteristics.find(
                 (candidate) => candidate.characteristic === characteristic,
               )}
@@ -6667,7 +6683,7 @@ function SelectionProfileTables({
   const [comparisonGroups, setComparisonGroups] = useState<ReadonlySet<string>>(new Set());
   const groups = new Map<string, SelectionProfileDetail[]>();
   for (const profile of profiles) {
-    const key = profile.value.typeId ?? profile.value.typeName ?? "unspecified";
+    const key = profile.reference?.presentation?.typeKey ?? profile.value.typeId ?? profile.value.typeName ?? "unspecified";
     const group = groups.get(key);
     if (group === undefined) groups.set(key, [profile]);
     else group.push(profile);
@@ -6716,6 +6732,7 @@ function SelectionProfileTables({
                         <th scope="row" role="rowheader">
                           {selectionProfileDisplayName(profile, report)}
                           {profile.reference && <small className="unit-reference-attribution">{referenceAttribution(profile.reference.members)}</small>}
+                          <ProfilePresentationNotes notes={profile.reference?.presentation?.notes} />
                           {profile.reference && report === undefined && <small>Profile inspection unavailable; source values shown.</small>}
                           {report?.completeness === "incomplete" && <small>Some display behavior is unresolved; values are not a complete result.</small>}
                           {report?.visibility.status === "hidden" && (
@@ -6864,7 +6881,9 @@ function SelectionCharacteristicValue({
 function SelectionCharacteristic({
   characteristic,
   report,
+  presentationRole,
 }: {
+  readonly presentationRole?: "longText" | "annotation" | undefined;
   readonly characteristic: DirectProfile["characteristics"][number];
   readonly report:
     RosterProfileCharacteristicReport["characteristics"][number] | undefined;
@@ -6893,7 +6912,7 @@ function SelectionCharacteristic({
       ? "Added"
       : "Set";
   return (
-    <div
+    <div data-field-role={presentationRole}
       {...(report === undefined
         ? {}
         : { "data-completeness": report.completeness })}
@@ -6948,7 +6967,9 @@ function SelectionInfoGroup({
   infoGroup,
   reports,
   ruleEnvironment,
+  presentations,
 }: {
+  readonly presentations?: ReadonlyMap<string, ReferenceProfilePresentation> | undefined;
   readonly infoGroup: MaterializedInfoGroup;
   readonly reports:
     | ReadonlyMap<LocalRosterProfile, LocalRosterProfileCharacteristics>
@@ -6991,12 +7012,14 @@ function SelectionInfoGroup({
         <div className="selection-info-group-content">
           <h5>Profiles</h5>
           <div className="selection-profile-list">
-            {profiles.map((profile, index) => (
-              <SelectionProfile
-                key={selectionProfileKey(profile, index)}
-                profile={profile}
-                report={reports?.get(profile.value)}
-              />
+            {presentations ? (["model", "weapon", "ability", "additional"] as const).map(section => {
+              const selected = profiles.map(profile => ({ profile, report: reports?.get(profile.value), members: [], presentation: presentations.get(referenceProfileSourceKey(profile)) })).filter(group => (group.presentation?.section ?? "additional") === section);
+              if (selected.length === 0) return null;
+              return <section key={section}><h6>{{ model: "Model stats", weapon: "Weapons & equipment", ability: "Abilities & rules", additional: "Additional information" }[section]}</h6>
+                {orderReferenceProfiles(selected).map((group, index) => <SelectionProfile key={selectionProfileKey(group.profile, index)} profile={group.profile} report={group.report} presentation={group.presentation} />)}
+              </section>;
+            }) : profiles.map((profile, index) => (
+              <SelectionProfile key={selectionProfileKey(profile, index)} profile={profile} report={reports?.get(profile.value)} />
             ))}
           </div>
         </div>
@@ -7023,6 +7046,7 @@ function SelectionInfoGroup({
                 infoGroup={nestedGroup}
                 reports={reports}
                 ruleEnvironment={ruleEnvironment}
+                presentations={presentations}
               />
             ))}
           </div>
@@ -7290,4 +7314,10 @@ function directChoiceStatus(
     return `${selected} of ${direct.maximum} allowed`;
   }
   return selectedAmount > 0 ? selected : undefined;
+}
+
+/** Display hints never become game-legality findings. Keep unsupported source
+ * evidence inspectable without crowding each ordinary statistic. */
+function ProfilePresentationNotes({ notes }: { readonly notes: readonly string[] | undefined }) {
+  return notes && notes.length > 0 ? <details className="reference-presentation-notes"><summary>Presentation details</summary><ul>{notes.map((note, i) => <li key={i}>{note}</li>)}</ul></details> : null;
 }

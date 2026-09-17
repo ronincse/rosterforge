@@ -1,3 +1,4 @@
+import { createUnitReferenceModel } from "./unit-reference-model.js";
 import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
 import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
 // Optional pinned validation regression plus explicit remaining pilot reproductions.
@@ -63,6 +64,15 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   terran = ok(reinforcementResult);
   expect(reinforcementResult.diagnostics.some(d=>d.code.includes("RECONCILIATION_STALLED") || d.code.includes("RECONCILIATION_LIMIT"))).toBe(false);
   const reinforcedSession = terran;
+  const selectedReference = createUnitReferenceModel(terran, terran.roster.forces[0]!.selections.find(s => s.id === marine.id)!);
+  const movement = selectedReference.profiles.filter(g => g.profile.value.typeId === "ec1d-63b8-de26-1894");
+  expect(movement.map(g => g.profile.value.name)).toEqual(expect.arrayContaining(["Stimpack", "Combat Shield"]));
+  expect(movement.every(g => g.presentation?.section === "ability" && g.presentation.layout === "fields")).toBe(true);
+  expect(movement.every(g => g.presentation?.characteristics.map(c => c.value).join(",") === "longText,annotation")).toBe(true);
+  expect(selectedReference.composition).toBe("9× Marine");
+  expect(selectedReference.profiles.find(g => g.profile.value.name === "C-14 Rifle")?.presentation).toMatchObject({ section: "weapon", order: { value: 2 } });
+  expect(selectedReference.profiles.find(g => g.profile.value.name === "Marine")?.presentation).toMatchObject({ section: "model", order: { value: 1 } });
+
   const reinforced = ledger(terran);
   const models = terran.roster.forces[0]!.selections.find(s => s.id === marine.id)!.selections.filter(s => s.name === "Marine");
   // SC-04 acceptance retains the original reproduction with corrected expectations.
