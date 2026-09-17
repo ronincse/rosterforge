@@ -212,3 +212,130 @@ Independent isolated trace reproduced both cases. Synthetic qualification and
 rule tests: 22 passed; frozen Dark Angels projection regression: 1 passed
 (the unrelated StarCraft test unconfigured in that targeted run). No source,
 evaluator, storage or saved-army mutation. Full final gates follow presentation.
+
+## Owner-review follow-up: density and final paper evidence (2026-09-17)
+
+This supersedes the earlier 213-page layout evidence for the revised candidate,
+not the preserved baseline files or foundation acceptance. Final owner acceptance
+of paper usability remains pending. Correctness/projection is separate commit
+`0aac6eb`; the following presentation commit retains all scalar source records.
+
+The overview is one row per army occurrence with size, resources, meaningful
+selected upgrades and explicit relationships. Configuration stays configuration;
+full loadouts remain in the unit details. Original order and U references agree.
+Print-only profile aliases compare complete fields/notes/nested scope and
+conservative effect signatures, not names alone. Exact safe rendered explanation
+bodies are shared with all original R mappings, names, parameters, owners and
+selected/source-only qualifications. Distinct scopes, incomplete effects and
+changed values/notes remain separate. No evaluator-equivalence change.
+
+Repeated ordinary ability labels/root attribution are removed only when context
+already supplies them; unfamiliar named fields and SC phase/Effect/Cost remain.
+B bearer legends preserve equipment keywords and quantities; P records identify
+affected profiles. N legends share identical qualifications, while Captain's Sv
+and Impulsor's authored D3/6 operations stay local. Long/unknown profiles reflow
+vertically; ordinary body remains 10.5pt/1.28 Arial, not shrink-to-fit.
+
+### Final retained matrix
+
+Evidence root:
+`C:\Users\stone\.codex\visualizations\2026\08\29\01a04b68-d064-74e0-bab5-9ff1859fb65b\print-reference-followup`.
+`output` holds eight production HTML files, sixteen matching PDFs, scalar facts
+and `pdf-settings.json`. **Only `output/pages-final-reviewed` is the final PNG,
+text and page-manifest evidence**; earlier iteration folders are superseded.
+The baseline review folder and original print-reference evidence are untouched.
+
+| Document | Compact A4 before → after | Compact Letter | Sheets A4 | Sheets Letter |
+| --- | ---: | ---: | ---: | ---: |
+| Dark Angels | 33 → 21 | 36 → 22 | 42 → 24 | 44 → 27 |
+| Terran | 4 → 3 | 4 → 3 | 4 → 4 | 4 → 4 |
+| Protoss | 4 → 2 | 4 → 3 | 4 → 4 | 4 → 4 |
+| Oversized fictional | 6 → 5 | 6 → 6 | 7 → 7 | 7 → 7 |
+
+Dark Angels overview shrinks from three pages to one; Sheets also removes its
+separate mostly-empty configuration page. Compact Letter: overview p1, units
+p2–17, glossary p17–22 (p17 shared). Compact A4: overview p1, units p1–16,
+glossary p16–20, reading notes p21. Sheets A4: overview p1, units p2–19,
+glossary p19–23, reading notes p24. Shared pages are not double-counted totals.
+Sheets Letter: overview p1, units p2–22, glossary/notes p22–27 (p22 shared).
+
+The old Sheets Letter short tails on p7/16/30/32 no longer exist in those units:
+Captain now spans p2–3, Assault Intercessors p15, Redemptor p20, Gladiator p21.
+This is not a one-page-per-unit claim. Other short Letter tails remain at p14
+(Hellblaster keywords/rules), p17 (Heavy Intercessor rules) and p19 (Impulsor
+rules/parameter qualifications). U-prefixed rule context identifies their owner.
+Captain has some whitespace before its sizeable Leader block. Compact loadouts
+can continue across pages with repeated context. Final A4 reading-note pages
+are sparse but self-contained. Stress Sheets A4 p5 contains only a rule line and
+cost qualification; fresh-unit page policy remains. No arbitrary page target.
+
+Rendering: exact production HTML, headless Edge154.0.4258.18, blocked network,
+portrait Letter/A4, scale1, CSS14mm margins, backgrounds off, browser headers off,
+`preferCSSPageSize:false`. CSS-generated Page X of Y footers are visually verified;
+U/R/P/N remain document references, explicitly not page numbers. No second PDF
+engine or post-generation document patching. Existing servers were not restarted.
+
+Lead visually inspected all 27 StarCraft and 25 stress pages. Protoss Keyword
+and INSTANT no longer split mid-word; activation fields stay distinct. All42
+stress paragraphs, both weapon modes, all12 unfamiliar fields, same-name distinct
+Shield rules, literal unsafe-looking text and uncertainty survive. No clipping
+or overlapping text found. Independent Dark Angels review is recorded below.
+
+### Regression gates and browser check
+
+Final lint/typecheck/build and whitespace checks pass. Ordinary suite:967 passed,
+34 expected optional corpus skips,95 passed/8 skipped files,21.01s. Configured
+`pnpm test --maxWorkers=4`:1001 passed,103 files,zero skips,62.69s. Final focused
+artifact generation:7/7 passed. Build201 modules,JS1053.53kB/gzip298.72,
+CSS85.01kB/gzip15.20; existing chunk advisory only. The configured final run does
+not set `ROSTERFORGE_PRINT_OUTPUT`, so it does not mutate reviewed artifacts.
+Both pinned corpus families and the frozen Dark Angels SHA above execute.
+
+Focused tests preserve every original member, changed value/qualification/effect
+variants, nested information scope, setup relationships, long/fallback effect
+notes, rule anchors, exact-body sharing, differing parameters/text/markup and
+both presets' substantive facts. Source objects/bytes do not enter leaves.
+Normal existing 5291 QA copy: open preview, switch both presets, follow U14 index
+link, close; still14 units/2000 points and no save/edit. User origins/tabs remain.
+The earlier unsaved/download/native-window foundation checks remain historical
+evidence, not a claim they were repeated in this follow-up.
+
+Remaining accuracy boundaries: Captain intended selector-anchor applicability
+requires separate evidence before engine repair; rule-name conditions/precedence
+need a dedicated effective-metadata boundary. Neither is silently resolved by
+sharing or layout. Source revisions, saved armies, budgets, main and storage
+remain unchanged; no full-accuracy, universal-browser or physical-print claim.
+
+### Independent final review
+
+Isolated native reviewer at `E:\GitHub\rosterforge\.codex-print-density-review`
+reviewed all94 final Dark Angels pages (21+22+24+27), with no blocking layout
+finding. Together with lead coverage, all146 final pages were visually inspected.
+The reviewer directly checked final facts against HTML:17 selections,14 army
+units,131 original profile records →104 displayed rows, all131 unique P IDs and
+213 profile-member records represented exactly; zero mismatches in members,
+effect keys, nested scope or original attribution. All47 rule/scope records map
+to25 exact rendered bodies; fourteen Oath of Moment and four Deadly Demise
+explanations each share their body without merging occurrence mappings.
+
+Actual reading tasks passed: Lancer Laser Destroyer Damage D6+3 and its single
+bearer/P122 (Compact Letter p16, Sheets Letter p21); U6 Bolt Rifle's one Sergeant,
+three ordinary Intercessors and one B1 grenade-launcher bearer (p5 Compact/p6
+Sheets), distinct from U7's unmodified unit; Oath's fourteen U4–U17 mappings
+(Compact Letter p21/Sheets p26); Impulsor source-authored D3/6 operations and N3
+unevaluated boundary; Captain Sv3+ beside the specific selector-gap warning p2.
+These are lookup/preservation checks, not independent game-rule certification.
+
+Review findings corrected before the final gates: quantity aggregation, nested
+information scope, setup-only relationships, affected-P attribution, fallback
+effect notes and short glossary body keeps. Claude2.1.240 was available, but an
+external review invocation was denied before execution for private-code transfer
+authority; no code was sent and no retry/external-review claim is made. Native
+independent review completed the bounded lane. The PDF skill's render/inspect
+workflow drove the pagination checks and corrections.
+
+Revised owner samples are copied, not regenerated, to
+`C:\Users\stone\Downloads\ForceWright Print Review 2026-09-17 Revised`:
+Dark Angels Compact Letter, Sheets Letter, Protoss Sheets A4 and Dark Angels
+Compact HTML. `REVIEW-NOTES.md` records application/handoff commits, paper
+settings and SHA256 hashes. Original review samples remain intact and private.

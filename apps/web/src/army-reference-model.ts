@@ -7,7 +7,7 @@ import { profilePresentationResolver, type MaterializedInfoGroup } from "@roster
 import { rosterSelectionAmount, type RosterSelection } from "@rosterforge/roster-model";
 import { createRosterWorkspaceViewModel, type RosterWorkspaceCost, type RosterWorkspaceSelection } from "./roster-workspace-model.js";
 import { createModelComposition, selectedUpgradeSummary, formatSelectedChoiceSummary } from "./selected-loadout-summary.js";
-import { inspectLocalRosterSelectionCategories, type LocalRosterSession, type LocalRosterSupportedValidationInspection } from "./roster-session.js";
+import { inspectLocalRosterSelectionCategories, isLocalRosterSingletonDesignationChoice, type LocalRosterSession, type LocalRosterSupportedValidationInspection } from "./roster-session.js";
 import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceRule } from "./unit-reference-model.js";
 import { categoryRuleDetails } from "./category-rule-details.js";
 import { classifyReferenceProfile, orderReferenceProfiles } from "./reference-profile-presentation.js";
@@ -21,6 +21,10 @@ export interface ArmyReferenceProfile {
   readonly name: string; readonly type: string; readonly section: "model" | "weapon" | "ability" | "additional";
   readonly fields: readonly ArmyReferenceField[]; readonly attribution: string;
   readonly notes: readonly string[]; readonly table: boolean;
+  readonly record?: string; readonly effectKey?: string;
+  readonly effects?: readonly string[];
+  readonly scope?: string;
+  readonly members?: readonly { readonly key: string; readonly label: string; readonly amount: number }[];
 }
 export interface ArmyReferenceRule { readonly anchor: string; readonly name: string; readonly text: string; readonly note: string; readonly users: string[]; readonly parameterNote?: string; }
 export interface ArmyReferenceUnit {
@@ -30,6 +34,8 @@ export interface ArmyReferenceUnit {
   readonly keywords: readonly string[]; readonly notes: readonly string[]; readonly relationships: string[];
   readonly memberKeywords?: readonly string[];
   readonly sheetUnit?: boolean;
+  readonly overview?: string;
+  readonly highlights?: readonly string[];
 }
 export interface ArmyReferenceDocument {
   readonly name: string; readonly catalogue: string; readonly system: string;
@@ -48,6 +54,18 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
   const units: ArmyReferenceUnit[] = [];
   const byOccurrence = new Map<string, ArmyReferenceUnit>();
   const baseIndex = catalogueReferenceTextIndex(session);
+  const occurrences = new Map<RosterSelection, string>();
+  const topLevels = new Map<RosterSelection, string>();
+  workspace.selections.ordered.forEach((selected, index) => {
+    const visit = (owner: RosterSelection) => {
+      occurrences.set(owner, `S${occurrences.size + 1}`);
+      topLevels.set(owner, `U${index + 1}`);
+      owner.selections.forEach(visit);
+    };
+    visit(selected.occurrence);
+  });
+  const effectKeys = new Map<string, string>();
+  let profileCount = 0;
   const addRule = (rule: ReferenceRule, owner: string, user: string, sourceOnly = false): string | undefined => {
     if (rule.report.status === "hidden" && rule.report.completeness === "complete") return;
     const source = rule.origin === "Linked" ? rule.value.definition : rule.value;
@@ -76,7 +94,22 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
     }
     const name = report?.name.value ?? value.name ?? "Unnamed profile";
     const consistency = group.members.map(member => referenceConsistencyFieldNotes(session, member.owner, group.profile, report));
+    const record = `P${++profileCount}`;
+    const steps = report ? [...report.report.characteristics.flatMap(field => field.steps), ...report.name.steps, ...report.annotation.steps] : [];
+    // A display alias is not evaluator equivalence. Preserve carrier identity,
+    // base values and exact effect provenance internally, including inactive
+    // effects; unresolved/own-condition evidence remains isolated by record.
+    const source = "definition" in value ? value.definition : value;
+    const signature = JSON.stringify([source.source.sourceId, source.path, value.typeId,
+      report?.report.characteristics.map(field => [field.typeId, field.baseValue]),
+      steps.map(step => [step.modifier.source.sourceId, step.modifier.path, step.modifier.node.attributes, occurrences.get(step.declaredBy), step.origin, step.grouped, step.status, step.input, "output" in step ? step.output : null]),
+      !report || report.completeness !== "complete" || report.report.modifierApplicability.length || report.report.modifierGroupApplicability.length || report.visibility.modifierApplicability.length || report.visibility.modifierGroupApplicability.length ? record : null]);
+    let effectKey = effectKeys.get(signature);
+    if (!effectKey) { effectKey = `E${effectKeys.size + 1}`; effectKeys.set(signature, effectKey); }
+    const effects = [...new Set(steps.filter(step => step.status === "applied" && step.input !== step.output).map(step => `${step.modifier.type ?? "Modification"} ${step.modifier.value ?? ""} from ${topLevels.get(step.declaredBy) ?? "selected entry"} / ${step.declaredBy.name ?? session.selectionChoices.get(step.declaredBy.id)?.name ?? "selected effect"}${step.modifier.scope ? ` (scope: ${step.modifier.scope})` : ""}`))];
     return { name: name + (report?.annotation.value ? ` (${report.annotation.value})` : ""), type: value.typeName ?? "Additional information", section: presentation.section,
+      record, effectKey, effects, scope: path,
+      members: group.members.map(member => ({ key: occurrences.get(member.owner) ?? `${record}-unavailable`, label: member.label, amount: rosterSelectionAmount(member.owner) })),
       attribution: [path, referenceAttribution(group.members)].filter(Boolean).join(" · "), notes,
       table: presentation.layout === "table",
       fields: value.characteristics.map((field, index) => {
@@ -203,6 +236,17 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
     if (index.limited || references >= 256) notes.push("Automatic reference lookup reached its display limit; attached rules remain included.");
     const rootChoice = session.selectionChoices.get(root.id);
     const unit: ArmyReferenceUnit = { anchor, name: label, role: !selected.role ? "Unassigned" : selected.role.name === selected.role.key ? "Unresolved role" : selected.role.name, configuration: selected.section === "configuration", composition: model.composition ?? `${rosterSelectionAmount(root)}× ${name}`, options,
+      overview: composition.total > 0 ? `${composition.total} model${composition.total === 1 ? "" : "s"}` : `${rosterSelectionAmount(root)} selected entr${rosterSelectionAmount(root) === 1 ? "y" : "ies"}`,
+      // Highlight explicitly selected non-weapon choices with costs or rules,
+      // never guessed defaults or faction-specific option names. Full loadouts
+      // remain below even when an unfamiliar choice has no highlight metadata.
+      highlights: [...new Set(selectedUpgradeSummary(session, selected.selections, new Set(), displayLabel).filter(upgrade => {
+        const find = (node: RosterWorkspaceSelection): boolean => {
+          const choice = session.selectionChoices.get(node.occurrence.id);
+          return (displayLabel(node) === upgrade.name && Boolean(node.costs.totals.some(c => c.value !== 0) || (choice && isLocalRosterSingletonDesignationChoice(session, choice)) || choice?.rules.length || choice?.profiles.some(p => p.characteristics.some(c => c.name === "Description")))) || node.selections.some(find);
+        };
+        return find(selected);
+      }).map(upgrade => upgrade.name))],
       // Page starts follow explicit entry kind, not system-specific role names.
       // Setup upgrades stay in the reference without consuming empty sheets.
       sheetUnit: (rootChoice?.kind === "selectionEntry" && ["unit", "model"].includes(rootChoice.type ?? "")) || (!rootChoice && selected.section !== "configuration"),

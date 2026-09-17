@@ -253,6 +253,17 @@ system fonts. Glossary phrase lookup reuses the shared bounded dictionary but
 only imports unambiguous root shared definitions as source-only explanations;
 local rules in unselected entries are not guessed from matching prose. Selected
 attached/nested/category rules retain their owner reports regardless of location.
+`army-reference-sharing.ts` aliases printed rows only within one unit using full
+displayed values, qualifications, nested scope and conservative effect provenance;
+original P records and member mappings remain in the scalar snapshot. Exact safe
+rendered explanation bodies may be shared while every R anchor, owner, parameter
+qualification and source-only distinction remains explicit. Neither operation
+changes evaluator equivalence. The overview is a compact occurrence index, not a
+second loadout listing. Long prose/table continuations repeat document-local
+context; CSS page counters provide page numbers in the verified Edge pipeline.
+`reference-consistency-notes.ts` narrowly qualifies an observed self-descendant
+selector/anchor gap without changing evaluated values. Rule-name source operations
+are displayed as unevaluated metadata, not computed occurrence parameters.
 `roster-print-dialog.tsx` previews an inert script-disabled document, offers an
 independent Blob HTML download and invokes the existing caller-opened print
 window. The same-origin sandbox allowance is solely for parent-owned fragment

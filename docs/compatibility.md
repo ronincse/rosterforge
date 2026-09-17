@@ -615,6 +615,16 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   abilities, owner-scoped keywords and a conservative shared-rule glossary.
   Long/unknown schemas retain all fields. Quantities never multiply profile
   attacks/damage; ability activation text never changes purchasing totals.
+- Print-only sharing preserves every original profile/member and rule/scope
+  mapping. Rows require matching values, qualifications, scope and conservative
+  effect provenance; glossary bodies require exact safe rendered content. Same
+  names alone never establish equivalence. Compact occurrence index, bearer
+  legends, weighted/reflowed fields, local note markers and verified page counters
+  reduce repetition without changing evaluator semantics or ordinary body size.
+  A selected self-descendant enhancement can still omit its anchor profile from
+  evaluation (Captain/Artificer Armour reproduction); the printed field now states
+  this specifically. Authored rule-name operations are visible but unevaluated:
+  conditional applicability/precedence and effective parameters remain unsupported.
 - Preview, native Print / Save PDF and independent self-contained HTML download.
   Visible IDs/technical trees are replaced by player-facing content and local
   document labels. Plain labels are escaped; source descriptions use the existing

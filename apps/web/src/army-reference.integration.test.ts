@@ -10,6 +10,7 @@ import { rosterId, forceOccurrenceId, selectionOccurrenceId } from "@rosterforge
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { createLocalRosterSession, restoreLocalRosterSession, localRosterRootChoices, addLocalRosterRootSelection, addLocalRosterChildSelection, inspectLocalRosterChildChoices, evaluateLocalRosterCosts, inspectLocalRosterSupportedValidation, setLocalRosterResourceBudget, type LocalRosterSession } from "./roster-session.js";
 import { createRosterPrintViewModel, renderRosterPrintDocument } from "./roster-print.js";
+import { printedProfileRows } from "./army-reference-sharing.js";
 
 const starcraft = process.env.ROSTERFORGE_STARCRAFT_PILOT_DIR;
 const darkAngels = process.env.ROSTERFORGE_PRINT_DARK_ANGELS;
@@ -72,6 +73,7 @@ it.skipIf(!starcraft)("exports pinned reinforced Terran and Protoss facts throug
 
 it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without changing its frozen bytes", async () => {
   const bytes = readFileSync(darkAngels!);
+  expect(createHash("sha256").update(bytes).digest("hex")).toBe("9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c");
   const raw = JSON.parse(bytes.toString()) as { import: { files: { bytes: number[] | Uint8Array }[] } };
   for (const file of raw.import.files) file.bytes = new Uint8Array(file.bytes);
   const original = ok(decodeLocalRosterDraft(raw));
@@ -86,8 +88,17 @@ it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without
   expect(d.units.some(u => u.relationships.length > 0)).toBe(true);
   expect(d.glossary.length).toBeGreaterThan(5);
   const captain = d.units.find(u => u.name.endsWith("Captain"))!;
+  expect(captain.highlights).toEqual(expect.arrayContaining(["Warlord", "Artificer Armour"]));
   expect(captain.profiles.flatMap(p => p.fields)).toContainEqual(expect.objectContaining({ name: "Sv", value: "3+", note: expect.stringContaining("Artificer Armour declares a source Sv modification (set 2+)") }));
   const impulsor = d.units.find(u => u.name.endsWith("Impulsor"))!;
+  for (const unit of d.units) {
+    const rows = printedProfileRows(unit.profiles);
+    expect(rows.flatMap(row => row.records).map(record => record.record).sort()).toEqual(unit.profiles.map(record => record.record).sort());
+    expect(rows.flatMap(row => row.records).flatMap(record => record.members ?? []).sort((a, b) => a.key.localeCompare(b.key))).toEqual(unit.profiles.flatMap(record => record.members ?? []).sort((a, b) => a.key.localeCompare(b.key)));
+  }
+  const five = d.units.find(u => u.name.endsWith("Intercessor Squad") && u.overview === "5 models")!;
+  expect(five.profiles).toHaveLength(22);
+  expect(printedProfileRows(five.profiles).length).toBeLessThan(22);
   for (const [name, operand] of [["Deadly Demise", "D3"], ["Firing Deck", "6"]]) {
     const rule = d.glossary.find(r => impulsor.rules.includes(r.anchor) && r.name === name)!;
     expect(rule.parameterNote).toContain(`append name "${operand}"`);

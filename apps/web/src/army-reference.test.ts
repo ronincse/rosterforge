@@ -7,8 +7,9 @@ import { forceOccurrenceId, rosterId, selectionOccurrenceId } from "@rosterforge
 import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { createLocalRosterSession, addLocalRosterRootSelection, addLocalRosterChildSelection, localRosterRootChoices, setLocalRosterSelectionAmount, evaluateLocalRosterCosts, inspectLocalRosterSupportedValidation } from "./roster-session.js";
 import { createUnitReferenceModel, referenceAttribution } from "./unit-reference-model.js";
-import { createArmyReferenceDocument, type ArmyReferenceDocument } from "./army-reference-model.js";
+import { createArmyReferenceDocument, type ArmyReferenceDocument, type ArmyReferenceProfile } from "./army-reference-model.js";
 import { renderArmyReferenceDocument } from "./army-reference-html.js";
+import { printedExplanations, printedProfileRows } from "./army-reference-sharing.js";
 
 function ok<T>(r: Result<T>): T { if (!r.ok) throw new Error(r.diagnostics.map(d => d.code).join(",")); return r.value; }
 async function army() {
@@ -77,6 +78,68 @@ it("keeps empty and unavailable results honest", async () => {
   expect(renderArmyReferenceDocument(d)).toContain("No selections in this army");
 });
 
+it("shares only exact displayed rows with effect/qualification boundaries and exact original mappings", () => {
+  const profile: ArmyReferenceProfile = { name: "Beam - focus", type: "Weapons", section: "weapon", attribution: "1× Guard", table: true, notes: [], fields: [{ name: "Damage", value: "2", note: "" }], record: "P1", effectKey: "E1", members: [{ key: "S1", label: "Guard", amount: 1 }], effects: ["append Shield from U2"] };
+  const second = { ...profile, record: "P2", members: [{ key: "S2", label: "Guard", amount: 1 }] };
+  const third = { ...profile, record: "P3", members: [{ key: "S3", label: "Guard", amount: 1 }] };
+  const duplicateLink = { ...profile, record: "P4" };
+  const changedValue = { ...profile, record: "P5", fields: [{ name: "Damage", value: "3", note: "" }] };
+  const changedQualification = { ...profile, record: "P6", notes: ["Applicability unresolved."] };
+  const changedEffect = { ...profile, record: "P7", effectKey: "E2" };
+  const mode = { ...profile, record: "P8", name: "Beam - sweep" };
+  const originals = [profile, second, third, duplicateLink, changedValue, changedQualification, changedEffect, mode];
+  const rows = printedProfileRows(originals);
+  expect(rows).toHaveLength(5);
+  expect(rows.flatMap(row => row.records)).toEqual(originals);
+  expect(rows[0]?.records).toEqual([profile, second, third, duplicateLink]);
+  const unit = { anchor: "unit-1", name: "1. Guards", role: "Core", configuration: false, composition: "3× Guard", options: ["3× Beam"], costs: [], profiles: originals, rules: [], keywords: [], notes: [], relationships: [] };
+  const document: ArmyReferenceDocument = { name: "Mappings", system: "Fictional", catalogue: "Fictional", resources: [], status: [], units: [unit], glossary: [] };
+  const html = renderArmyReferenceDocument(document);
+  expect(html).toContain("3× Guard [P1, P2, P3, P4]"); // same bearer through duplicate link is not a fourth purchase
+  expect(html).toContain("Applicability unresolved.");
+  expect(html).toContain("Beam - sweep");
+  expect(html).toContain("Evaluated effect [P1, P2, P3, P4");
+  expect(html).not.toContain("6</span>"); // quantities do not multiply Damage
+  for (const original of originals) expect(html).toContain('&quot;record&quot;:&quot;' + original.record + '&quot;');
+  const unavailable = { ...profile };
+  delete unavailable.effectKey;
+  expect(printedProfileRows([unavailable, { ...unavailable, record: "P9" }])).toHaveLength(2);
+  const nested = ["Orders / First phase", "Orders / Second phase"].map((scope, i) => ({ ...profile, scope, record: `P${10 + i}`, attribution: `${scope} · 1× Guard` }));
+  expect(printedProfileRows(nested)).toHaveLength(2);
+  const scopedHtml = renderArmyReferenceDocument({ ...document, units: [{ ...unit, profiles: nested }, { ...unit, anchor: "unit-2", name: "2. Setup", configuration: true, profiles: [], relationships: ["Supporting: 1. Guards (unverified)"] }] });
+  expect(scopedHtml).toContain("Orders / First phase · 1× Guard [P10]");
+  expect(scopedHtml).toContain("Orders / Second phase · 1× Guard [P11]");
+  expect(scopedHtml).toContain("U2: Supporting: 1. Guards (unverified)");
+  for (const value of ["Short descriptive value", "Long description ".repeat(100)]) {
+    const fallbackHtml = renderArmyReferenceDocument({ ...document, units: [{ ...unit, profiles: [{ ...profile, table: false, fields: [{ name: "Effect", value, note: "" }] }] }] });
+    expect(fallbackHtml).toContain("Evaluated effect [P1]: append Shield from U2");
+  }
+});
+
+it("keeps every rule mapping while sharing only complete rendered explanations", () => {
+  const rules = [
+    { anchor: "rule-1", name: "Burst 2", text: "Exact **body**.", note: "", parameterNote: "Known parameter 2", users: ["1. Guards"] },
+    { anchor: "rule-2", name: "Burst 6", text: "Exact **body**.", note: "Source reference only; applicability is not established.", parameterNote: "Unevaluated source operand 6", users: ["1. Guards · selected weapon"] },
+    { anchor: "rule-3", name: "Burst 2", text: "Different condition: Exact **body**.", note: "", users: ["1. Guards"] },
+    { anchor: "rule-4", name: "Burst 2", text: "Exact *body*.", note: "", users: ["1. Guards"] },
+  ];
+  expect(printedExplanations(rules, value => value)).toHaveLength(3);
+  const unit = { anchor: "unit-1", name: "1. Guards", role: "Core", configuration: false, composition: "3× Guard", options: [], costs: [], profiles: [], rules: rules.map(rule => rule.anchor), keywords: [], notes: [], relationships: [] };
+  const doc: ArmyReferenceDocument = { name: "Scopes", system: "Fictional", catalogue: "Fictional", resources: [], status: [], units: [unit], glossary: rules };
+  const html = renderArmyReferenceDocument(doc);
+  expect(html.match(/class="explanation"/g)).toHaveLength(3);
+  for (const rule of rules) {
+    expect(html.split('id="' + rule.anchor + '"')).toHaveLength(2);
+    expect(html).toContain('href="#' + rule.anchor + '"');
+    expect(html).toContain(rule.name);
+    if (rule.parameterNote) expect(html).toContain(rule.parameterNote);
+  }
+  expect(html).toContain("Source reference only; applicability is not established.");
+  expect(html).toContain("selected weapon");
+  expect(html).toContain("Different condition");
+  expect(html.replace('class="compact"', 'class="sheets"')).toBe(renderArmyReferenceDocument(doc, "sheets"));
+});
+
 it("renders oversized unfamiliar schemas, rule variants, empty keywords and malicious source text without assets", () => {
   const prose = Array.from({ length: 42 }, (_, i) => `Paragraph ${i + 1}. **Hold formation.** *Keep the full explanation.* This fictional unit crosses rough ground, protects its allies, and resolves every selected effect in order. Do not multiply its profile values by its model count.`).join("\n\n");
   const unit = { anchor: "unit-1", name: "1. Archive Guardians", role: "Core", configuration: false, composition: "6× Guardian; 1× Captain", options: ["Captain: 1× Custom blade", "Guardians: 6× Arc rifle"], costs: [{ typeId: "energy", name: "Energy", value: 75 }], profiles: [
@@ -90,7 +153,7 @@ it("renders oversized unfamiliar schemas, rule variants, empty keywords and mali
     for (const value of ["Field 12", "Paragraph 42", "Variant one", "Variant two", "75 Energy", "90 Energy", "6× Guardian", "Arc rifle - sweep"]) expect(html).toContain(value);
     expect(html).not.toMatch(/<script|href="javascript:|Empty value|overflow:auto|overflow:hidden/);
     expect(html).toMatch(/<strong>.*?Hold formation\..*?<\/strong>/);
-    expect(html).toContain('<thead><tr><th>1. Archive Guardians · Arc rifle - focus<small>');
+    expect(html).toContain('<thead><tr><th>U1 · Arc rifle - focus');
     if (process.env.ROSTERFORGE_PRINT_OUTPUT) { mkdirSync(process.env.ROSTERFORGE_PRINT_OUTPUT, { recursive: true }); writeFileSync(join(process.env.ROSTERFORGE_PRINT_OUTPUT, `stress-${layout}.html`), html); }
   }
 });
