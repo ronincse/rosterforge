@@ -9,12 +9,19 @@ import { prepareLocalCatalogueLibrary } from "./catalogue-library.js";
 import { addLocalRosterChildSelection, addLocalRosterRootSelection, createLocalRosterSession, localRosterRootChoices, removeLocalRosterSelection, duplicateLocalRosterSelection } from "./roster-session.js";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
 function ok<T>(r: Result<T>): T { if (!r.ok) throw new Error(r.diagnostics.map(d=>d.code).join(',')); return r.value; }
-async function fixture(selector = 'self.entries.recursive.hero.profiles.Body', anchorCategory = 'hero', childCategory = 'hero', scope = 'model') {
+async function fixture(selector = 'self.entries.recursive.hero.profiles.Body', anchorCategory = 'hero', childCategory = 'hero', scope = 'model', linked = false, bearerType = 'model') {
   const body = (id: string) => `<profiles><profile id="${id}" name="Body" typeId="body" typeName="Body"><characteristics><characteristic typeId="save" name="Protection">3+</characteristic></characteristics></profile></profiles>`;
   const files = [
     ['anchor.gst', '<gameSystem id="g" name="G" revision="1" battleScribeVersion="2.03"><profileTypes><profileType id="body" name="Body"><characteristicTypes><characteristicType id="save" name="Protection"/></characteristicTypes></profileType></profileTypes><categoryEntries><categoryEntry id="hero" name="Hero"/><categoryEntry id="other" name="Other"/></categoryEntries><forceEntries><forceEntry id="f" name="Force"/></forceEntries></gameSystem>'],
-    ['anchor.cat', `<catalogue id="c" name="C" revision="1" battleScribeVersion="2.03" gameSystemId="g"><selectionEntries><selectionEntry id="bearer" name="Bearer" type="model"><categoryLinks><categoryLink id="hc" targetId="${anchorCategory}"/></categoryLinks>${body('own')}<selectionEntries><selectionEntry id="child" name="Child" type="upgrade"><categoryLinks><categoryLink id="cc" targetId="${childCategory}"/></categoryLinks>${body('descendant')}</selectionEntry><selectionEntry id="plate" name="Plate" type="upgrade"><modifiers><modifier type="set" field="save" value="2+" scope="${scope}" affects="${selector}"/></modifiers></selectionEntry></selectionEntries></selectionEntry></selectionEntries></catalogue>`]
+    ['anchor.cat', `<catalogue id="c" name="C" revision="1" battleScribeVersion="2.03" gameSystemId="g"><selectionEntries><selectionEntry id="bearer" name="Bearer" type="${bearerType}"><categoryLinks><categoryLink id="hc" targetId="${anchorCategory}"/></categoryLinks>${body('own')}<selectionEntries><selectionEntry id="child" name="Child" type="upgrade"><categoryLinks><categoryLink id="cc" targetId="${childCategory}"/></categoryLinks>${body('descendant')}</selectionEntry><selectionEntry id="plate" name="Plate" type="upgrade"><modifiers><modifier type="set" field="save" value="2+" scope="${scope}" affects="${selector}"/></modifiers></selectionEntry></selectionEntries></selectionEntry></selectionEntries></catalogue>`]
   ];
+  if (linked) {
+    const xml = files[1]![1]!;
+    const start = xml.indexOf("<selectionEntries>");
+    const end = xml.lastIndexOf("</selectionEntries>");
+    files[1]![1] = xml.slice(0,start) + "<sharedSelectionEntries>" + xml.slice(start+18,end)
+      + '</sharedSelectionEntries><entryLinks><entryLink id="bearer-link" targetId="bearer" type="selectionEntry"/></entryLinks></catalogue>';
+  }
   const library = ok(await prepareLocalCatalogueLibrary(files.map(([filename,text])=>({filename:filename!,bytes:new TextEncoder().encode(text!)})), {import:{batchId:'anchor',importedAt:'2026-09-19T00:00:00Z'}}));
   const catalogue = library.selectableCatalogues[0]!;
   let session = ok(createLocalRosterSession(catalogue,catalogue.context.forces.definitions[0]!,{rosterId:rosterId('r'),forceId:forceOccurrenceId('f'),name:'Anchor'}));
@@ -33,6 +40,10 @@ it.each([
   ['self.entries.recursive.hero.profiles.Body','other','hero','3+','2+'],
   ['self.entries.recursive.hero.profiles.Body','hero','other','2+','3+'],
   ['self.profiles.Body','hero','hero','2+','3+'],
+  ['profiles.Body','hero','hero','2+','3+'],
+  ['self.entries.hero.profiles.Body','hero','hero','2+','2+'],
+  ['entries.hero.profiles.Body','hero','hero','3+','2+'],
+  ['self.entries.recursive.hero.profiles.Other','hero','hero','3+','3+'],
 ])('routes %s without losing anchor/descendant category boundaries',async (selector,anchor,child,own,descendant)=>{
   const s=await fixture(selector,anchor,child);
   expect(values(s)).toEqual([{id:'own',value:own,complete:'complete'},{id:'descendant',value:descendant,complete:'complete'}]);
@@ -66,4 +77,11 @@ it('reconstructs the selected effect from original sources and history without s
   const reopened=ok(restoreLocalRosterSession(library.selectableCatalogues.find(c=>c.key===decoded.catalogueKey)!,decoded.roster));
   expect(values(reopened)).toEqual(values(selected));
   expect(decoded.import.files.map(f=>f.bytes)).toEqual(sources.map(f=>f.bytes));
+});
+
+it("keeps linked definition/category identity when resolving the nearest model anchor",async()=>{
+ expect(values(await fixture(undefined,undefined,undefined,"model",true)).map(v=>v.value)).toEqual(["2+","2+"]);
+});
+it("uses the nearest unit anchor under the existing typed-scope semantics",async()=>{
+ expect(values(await fixture(undefined,undefined,undefined,"unit",false,"unit")).map(v=>v.value)).toEqual(["2+","2+"]);
 });
