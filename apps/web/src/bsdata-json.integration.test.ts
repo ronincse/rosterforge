@@ -2605,15 +2605,13 @@ describe.skipIf(realDataDirectory === undefined)(
         expect(annotation.value.baseValue).toBe("");
         expect(annotation.value.value).toBe("Furnace of Plagues");
 
-        // The same screenshot shows the Lord's own Unit profile unchanged:
-        // `self.entries.recursive` names the anchor's descendants, and the
-        // anchor is not one of them.
+        // Explicit self reaches the bearer, but Furnace targets weapon types.
+        // Other reached operations on the Unit profile are conditionally inactive.
         const lord = reportFor(lordId, "Unit");
-        expect(
-          lord.characteristics.flatMap(({ steps }) =>
-            steps.filter((step) => step.origin === "affects"),
-          ),
-        ).toEqual([]);
+        const lordRouted = lord.characteristics.flatMap(({ steps }) => steps.filter(step => step.origin === "affects"));
+        expect(lordRouted.length).toBeGreaterThan(0);
+        expect(lordRouted.every(step => step.status === "notApplicable")).toBe(true);
+        expect(lord.characteristics.every(c => c.value === c.baseValue)).toBe(true);
 
         const bodyguardRoot = localRosterRootChoices(catalogue).find(c => c.materialized.definitionId === "83e8-ebb7-785a-2115")!;
         const withBodyguard = addLocalRosterRootSelection(current.value, bodyguardRoot, {selectionId:selectionOccurrenceId("anchor-bodyguard")});
