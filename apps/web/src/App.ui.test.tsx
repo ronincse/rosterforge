@@ -1269,16 +1269,15 @@ describe("App local catalogue flow", () => {
     // Profile-name groups run before the separately routed annotation.
     expect(
       within(unitCardView).getByText(
-        "Veteran Infantry profile (Veteran Issue)",
+        "Veteran Infantry profile (Veteran Issue, Veteran Issue)",
       ),
     ).toBeTruthy();
     // The card's decorative phone label is hidden from accessibility; the
     // original column header remains the semantic label for its value.
     expect(within(unitCardView).getByRole("columnheader", { name: "Move" })).toBeTruthy();
     expect(unitCardView.querySelector('.reference-field-label[aria-hidden="true"]')?.textContent).toBe("Move");
-    // A supported profile set replaces the displayed value and keeps the
-    // source value visible as the base.
-    expect(within(unitCardView).getByText("8")).toBeTruthy();
+    // The routed self set runs after the own profile set (8 -> 9); base remains 6.
+    expect(within(within(unitCardView).getByRole("row", { name: /Veteran Infantry profile/ })).getByText("9")).toBeTruthy();
     expect(within(unitCardView).getByText("Base 6")).toBeTruthy();
     expect(within(unitCardView).queryByText("6")).toBeNull();
     expect(within(unitCardView).getByText("Hold Ground")).toBeTruthy();
@@ -1289,13 +1288,13 @@ describe("App local catalogue flow", () => {
     expect(within(unitCardView).getByText("Advance together.")).toBeTruthy();
     expect(within(unitCardView).getByRole("heading", { name: /Additional information/ })).toBeTruthy();
     expect(within(unitCardView).getByText("Fieldcraft")).toBeTruthy();
-    expect(within(unitCardView).getByText("Forward Observer")).toBeTruthy();
-    // An unsupported increment leaves the info-group profile's effective value
-    // unresolved, so the source value stays visible and is labelled.
-    expect(within(unitCardView).getByText("Scout 6")).toBeTruthy();
-    expect(
-      within(unitCardView).getByText("Effective value unresolved"),
-    ).toBeTruthy();
+    expect(within(unitCardView).getByText("Forward Observer (Veteran Issue)")).toBeTruthy();
+    // The later routed set recovers the value after an unsupported own increment;
+    // historical incompleteness and the original lexical value remain visible.
+    const observer = within(unitCardView).getByText("Forward Observer (Veteran Issue)").closest("article")!;
+    expect(within(observer).getByText("9")).toBeTruthy();
+    expect(within(observer).getByText("Base Scout 6")).toBeTruthy();
+    expect(observer.dataset.completeness).toBe("incomplete");
     // A hidden profile is labelled rather than removed.
     expect(
       within(unitCardView).getByText("Hidden by this catalogue."),
@@ -1461,14 +1460,15 @@ describe("App local catalogue flow", () => {
     expect(
       weaponNode.getByText("Special Weapon profile (Veteran Issue)"),
     ).toBeTruthy();
-    expect(weaponNode.getByText("9")).toBeTruthy();
+    const weaponRow = within(weaponNode.getByRole("row", { name: /Special Weapon profile/ }));
+    expect(weaponRow.getByText("9")).toBeTruthy();
     expect(weaponNode.getByText("Base 4")).toBeTruthy();
-    expect(weaponNode.getByText("Set by Veterans")).toBeTruthy();
+    expect(weaponRow.getByText("Set by Veterans")).toBeTruthy();
     // The verb tracks the operation: the same declarer appends a keyword, and
     // calling that "set" would misdescribe the row.
     expect(screen.getByRole("dialog", { name: "Unit card for Veterans" }).textContent).toContain("Heavy, Assault");
     expect(weaponNode.getByText("Base Heavy")).toBeTruthy();
-    expect(weaponNode.getByText("Added by Veterans")).toBeTruthy();
+    expect(weaponRow.getByText("Added by Veterans")).toBeTruthy();
     // A display annotation renders in parentheses after the profile name, the
     // way New Recruit shows it.
 

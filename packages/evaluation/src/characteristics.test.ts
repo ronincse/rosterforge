@@ -698,15 +698,15 @@ describe("affects-routed characteristic modifiers", () => {
       ),
     );
 
-    // Move is set by an affects selector that also carries a scope; affects
-    // overrides scope, so the modifier applies rather than being withheld.
+    // Own-profile and explicit-self traversal writes both apply, in source order.
+    // Scope chooses the anchor; the selector independently includes that anchor.
     expect(report).toMatchObject({
       completeness: "complete",
       characteristics: [
         {
           baseValue: '6"',
-          value: '9"',
-          steps: [{ status: "applied", origin: "affects", output: '9"' }],
+          value: '1"',
+          steps: [{ status: "applied", origin: "affects", output: '9"' }, { status: "applied", origin: "affects", output: '1"' }],
         },
         // Matched case-insensitively against the declared profile type.
         { baseValue: "4+", value: "2+" },
@@ -735,7 +735,7 @@ describe("affects-routed characteristic modifiers", () => {
     expect(ability.characteristics[0]?.steps).toHaveLength(1);
   });
 
-  it("does not execute a selector that traverses beyond the owner", () => {
+  it("retains explicit self when a selector also traverses beyond the owner", () => {
     const setup = characteristicSetup("affects-owner");
 
     const report = successful(
@@ -747,14 +747,13 @@ describe("affects-routed characteristic modifiers", () => {
       ),
     );
 
-    // The recursive selector is left alone entirely: it neither applies nor
-    // appears as an unapplied step on this profile.
+    // The explicit self flag admits the anchor even when it has no descendants.
     expect(
       report.characteristics[0]?.steps.every(
         (step) => step.status === "applied",
       ),
     ).toBe(true);
-    expect(report.characteristics[0]?.value).toBe('9"');
+    expect(report.characteristics[0]?.value).toBe('1"');
   });
 });
 
@@ -1045,8 +1044,8 @@ describe("affects traversal", () => {
       ),
     );
     expect(bearer).toMatchObject({
-      value: "",
-      steps: [],
+      value: "Bearer Selection",
+      steps: [{status:"applied", origin:"affects", output:"Bearer Selection"}],
       completeness: "complete",
     });
   });
@@ -1070,7 +1069,7 @@ describe("affects traversal", () => {
     expect(characteristics.completeness).toBe("complete");
   });
 
-  it("does not let a descendant selector reach the anchor itself", () => {
+  it("lets an explicitly self-inclusive descendant selector reach the anchor", () => {
     const setup = bearerSetup();
 
     const bearer = successful(
@@ -1082,13 +1081,13 @@ describe("affects traversal", () => {
       ),
     );
 
-    // Confirmed in New Recruit: the Lord of Contagion's own Unit profile is
-    // untouched while its weapons change. `self.entries.recursive` names the
-    // anchor's descendants, and the anchor is not one of them.
+    // The older Lord of Contagion observation selected weapon profile types,
+    // so it never proved exclusion of the anchor. The editor's independent
+    // Affect Scope control establishes explicit self inclusion here.
     expect(bearer.characteristics[0]).toMatchObject({
       baseValue: '6"',
-      value: '6"',
-      steps: [],
+      value: '9"',
+      steps: [{status:"applied", origin:"affects", output:'9"'}],
     });
     expect(bearer.completeness).toBe("complete");
   });

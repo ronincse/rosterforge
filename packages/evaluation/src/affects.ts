@@ -55,6 +55,7 @@ export interface AffectsSelector {
   readonly traversal: AffectsSelectorTraversal;
   /** What the path terminates at. See {@link AffectsSelectorTarget}. */
   readonly target: AffectsSelectorTarget;
+  /** Include the resolved scope anchor independently of child traversal. */
   readonly explicitSelf: boolean;
   /**
    * True when the selector carries an explicit `group` segment: expand the

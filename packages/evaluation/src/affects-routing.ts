@@ -240,16 +240,21 @@ export function routeFromForce(
 /**
  * True when the selector's traversal reaches an occurrence sitting at `route`.
  *
+ * Explicit `self` adds the anchor independently of child traversal.
  * Verified against New Recruit on 2026-08-19: `entries` alone does not descend
  * into selection-entry groups, while `recursive` does.
  */
 export function reaches(
-  selector: { readonly traversal: string; readonly entersGroups: boolean },
+  selector: { readonly traversal: string; readonly entersGroups: boolean; readonly explicitSelf?: boolean },
   route: AffectsRoute,
 ): boolean {
   if (!route.reachable) return false;
   if (selector.traversal === "own") return route.entrySteps === 0;
-  if (route.entrySteps === 0) return false;
+  // nr-editor ComplexQuery.vue (a347b0d) exposes Affect Scope (`self`)
+  // independently of Affect child Selections (`entries`) and Recursive. `self`
+  // therefore includes the resolved anchor as well as the chosen descendants;
+  // recursion alone must not include it. Category/type filters still run later.
+  if (route.entrySteps === 0) return selector.explicitSelf === true && !route.viaGroup;
   if (route.viaGroup) {
     // `entries` alone does not descend into groups; `recursive` does.
     if (selector.traversal !== "descendants") return false;

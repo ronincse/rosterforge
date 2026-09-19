@@ -218,22 +218,19 @@ describe("roster selection category membership", () => {
     expect(report).not.toHaveProperty("primaryCategories");
   });
 
-  it("does not apply an occurrence's own affects modifier to itself", () => {
+  it("includes an occurrence explicitly selected by self alongside entries", () => {
     const report = successful(
       evaluateRosterSelectionCategories(
         ...setupArgs(categorySetup("affects-category")),
       ),
     );
 
-    // `self.entries.recursive` names descendants. The declaring occurrence is
-    // not one of them, so its own membership is untouched and still known --
-    // previously the selector was treated as unsupported behavior and cost the
-    // determination outright.
+    // The editor exposes self and child selections as independent switches.
     expect(report).toMatchObject({
       baseCategories: ["cat-infantry"],
-      categories: ["cat-infantry"],
+      categories: ["cat-infantry", "cat-battleline"],
       completeness: "complete",
-      steps: [],
+      steps: [{ status: "applied" }],
     });
   });
 });

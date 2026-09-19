@@ -621,9 +621,9 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   names alone never establish equivalence. Compact occurrence index, bearer
   legends, weighted/reflowed fields, local note markers and verified page counters
   reduce repetition without changing evaluator semantics or ordinary body size.
-  A selected self-descendant enhancement can still omit its anchor profile from
-  evaluation (Captain/Artificer Armour reproduction); the printed field now states
-  this specifically. Authored rule-name operations are visible but unevaluated:
+  Explicit self plus entries traversal includes the resolved anchor as well as
+  the selected children/descendants, retaining category and profile-type filters.
+  Captain/Artificer Armour now evaluates Sv 2+ through the shared evaluator. Authored rule-name operations are visible but unevaluated:
   conditional applicability/precedence and effective parameters remain unsupported.
 - Preview, native Print / Save PDF and independent self-contained HTML download.
   Visible IDs/technical trees are replaced by player-facing content and local

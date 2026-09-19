@@ -261,8 +261,8 @@ qualification and source-only distinction remains explicit. Neither operation
 changes evaluator equivalence. The overview is a compact occurrence index, not a
 second loadout listing. Long prose/table continuations repeat document-local
 context; CSS page counters provide page numbers in the verified Edge pipeline.
-`reference-consistency-notes.ts` narrowly qualifies an observed self-descendant
-selector/anchor gap without changing evaluated values. Rule-name source operations
+Explicit `self` now includes the resolved affects anchor independently of child
+traversal. The historical Captain-only print warning has been retired. Rule-name source operations
 are displayed as unevaluated metadata, not computed occurrence parameters.
 `roster-print-dialog.tsx` previews an inert script-disabled document, offers an
 independent Blob HTML download and invokes the existing caller-opened print

@@ -34,6 +34,16 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
+## Current Status — 2026-09-19 (shared engine batch in progress)
+
+Owner authorized two bounded engine checkpoints on pilot only. A repairs
+explicit-self selector membership; B effective rule names is next within this
+same authorization. Print layout remains accepted as baseline, owner visual
+acceptance pending. No main/PR/source/persistence changes. See
+`docs/qa/reference-engine-correctness.md`. Final batch gates/publication follow B.
+
+### Previous status (historical observations; A supersedes anchor exclusion)
+
 ## Current Status — 2026-09-17 (print follow-up delivered; owner review pending; stop)
 
 Bounded owner-authorized follow-up on `codex/starcraft-pilot` only, from clean
@@ -1221,7 +1231,7 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
 | Print-output usability pass | Follow-up implemented on pilot, 35bcd47; owner acceptance pending | Foundation86f877d retained; one-page DA index, exact-body sharing47records/25bodies,131profiles/213members→104display rows, readable reflow, full attribution/uncertainty and verified page counters. All146 final pages/16PDFs visually reviewed plus independent reading tasks. Some short tails/notes-only pages remain. No full-accuracy, physical-printer/universal-browser or main-integration claim. See `docs/qa/printable-reference.md` |
-| Selected enhancement anchor consistency | Deferred — separate owner authorization/evidence required | Frozen DA Captain selection24c1843d/profilec1ba-2289-ba1-9cb8 remains Sv3+ despite selected Artificer Armour authored set2+: scope=model self.entries.recursive.Character.profiles.Unit excludes anchor. Exact IDs/trace in printable-reference QA. Establish intended selector/anchor semantics against pinned source and reference behavior before engine/source repair. Local print warning added0aac6eb; no guessed2+ |
+| Selected enhancement anchor consistency | Repaired in authorized 2026-09-19 checkpoint A | Explicit self independently includes the resolved anchor; Captain Sv2+ now applies. See shared-engine QA. Historical reproduction: Frozen DA Captain selection24c1843d/profilec1ba-2289-ba1-9cb8 remains Sv3+ despite selected Artificer Armour authored set2+: scope=model self.entries.recursive.Character.profiles.Unit excludes anchor. Exact IDs/trace in printable-reference QA. Establish intended selector/anchor semantics against pinned source and reference behavior before engine/source repair. Local print warning added0aac6eb; no guessed2+ |
 | Effective parameterized rule names | Deferred — separate evaluation boundary required | Impulsor Deadly Demise link58e0-31f7-43d3-b1ef append name D3 and Firing Deck31bc-9145-ac64-454e append name6 are present but rule inspection evaluates visibility only.0aac6eb exposes authored operands as unevaluated on screen/paper. Add conditions/precedence/effective-name metadata tests before asserting occurrence values; do not infer parameters from prose |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
@@ -16116,3 +16126,20 @@ Existing SCformat/dynamic hints,orphan costs,source revision mismatch,associatio
 andbudget boundaries unchanged. No physicalprinter/universalbrowser/PDFtagging
 certification. Pushonlypilot,confirmexactfinalCI,leaveexistingservers/tabs,stop.
 No freshness,SC-08,budgetexpansion,mainintegration,PR,deployment or general audit.
+
+
+## Completed Assignment — 2026-09-19 selector anchor checkpoint A
+
+Baseline `2fdfbee8b84078c9f10313382ea5c1f150fa2c12`; implementation is this
+commit (resulting hash in subsequent handoff). Primary editor controls establish
+additive explicit self. No anchor-discovery/query expansion or source correction.
+Removed narrow print warning; shared Captain result is 2+, original 3+ retained.
+Bounded native review caught zero-step groups and missing-field malformed routing;
+both addressed. Missing-type typed-anchor discovery remains a separate existing
+limit; aggregate malformed-selector incompleteness is not field-level certainty.
+Normal suite reached 978 pass/1 failing UI case/34 optional skips; that UI case's
+obsolete exclusions were corrected and its entire 19-test file then passed.
+Lint/typecheck/build/whitespace pass; full configured final suite follows B.
+Frozen 14-unit print test passes with unchanged 2000 points. A/B manifests each
+verify eight hashes; all eight embedded draft sources exactly match A. Original
+army hash unchanged. Checkpoint B remains authorized; stop after final batch.

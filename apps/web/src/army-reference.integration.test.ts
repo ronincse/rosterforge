@@ -89,7 +89,7 @@ it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without
   expect(d.glossary.length).toBeGreaterThan(5);
   const captain = d.units.find(u => u.name.endsWith("Captain"))!;
   expect(captain.highlights).toEqual(expect.arrayContaining(["Warlord", "Artificer Armour"]));
-  expect(captain.profiles.flatMap(p => p.fields)).toContainEqual(expect.objectContaining({ name: "Sv", value: "3+", note: expect.stringContaining("Artificer Armour declares a source Sv modification (set 2+)") }));
+  expect(captain.profiles.flatMap(p => p.fields)).toContainEqual(expect.objectContaining({ name: "Sv", value: "2+", note: "Modified from 3+." }));
   const impulsor = d.units.find(u => u.name.endsWith("Impulsor"))!;
   for (const unit of d.units) {
     const rows = printedProfileRows(unit.profiles);

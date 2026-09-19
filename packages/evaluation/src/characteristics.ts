@@ -1581,9 +1581,15 @@ function collectAffectsRoutedModifiers(
       const value = entry.modifier.node.attributes.affects;
       if (value === undefined) continue;
       const selector = parseBattleScribeAffectsSelector(value);
-      if (!selector.supported || selector.profileTypeName === undefined) {
+      if (!selector.supported) {
+        // A malformed profile traversal cannot prove exclusion of this field.
+        // Selections-only paths remain the other collector's responsibility.
+        if (selector.segments.includes("profiles") &&
+          (entry.modifier.field === undefined || profile.characteristics.some(c => c.typeId === entry.modifier.field) ||
+           ["name", "annotation", "hidden"].includes(entry.modifier.field ?? ""))) partial = true;
         continue;
       }
+      if (selector.profileTypeName === undefined) continue;
       // `scope` names where the selector stands; `affects` names where it
       // walks. Confirmed in New Recruit, so the anchor is resolved per
       const wanted = selector.profileTypeName.toLowerCase();

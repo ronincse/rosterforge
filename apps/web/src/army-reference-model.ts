@@ -14,7 +14,6 @@ import { classifyReferenceProfile, orderReferenceProfiles } from "./reference-pr
 import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
-import { referenceConsistencyFieldNotes } from "./reference-consistency-notes.js";
 
 export interface ArmyReferenceField { readonly name: string; readonly value: string; readonly note: string; }
 export interface ArmyReferenceProfile {
@@ -93,7 +92,6 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
       if (report.visibility.status !== "visible") notes.push(report.visibility.status === "hidden" ? "Hidden by catalogue." : "Visibility unresolved.");
     }
     const name = report?.name.value ?? value.name ?? "Unnamed profile";
-    const consistency = group.members.map(member => referenceConsistencyFieldNotes(session, member.owner, group.profile, report));
     const record = `P${++profileCount}`;
     const steps = report ? [...report.report.characteristics.flatMap(field => field.steps), ...report.name.steps, ...report.annotation.steps] : [];
     // A display alias is not evaluator equivalence. Preserve carrier identity,
@@ -115,7 +113,7 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
       fields: value.characteristics.map((field, index) => {
         const effective = report?.report.characteristics.find(c => c.characteristic === field);
         return { name: field.name ?? `Field ${index + 1}`, value: effective?.value ?? field.value,
-          note: [effective?.completeness === "incomplete" ? "Unresolved; source value shown where effective value is unavailable." : effective && effective.value !== effective.baseValue ? (effective.baseValue.trim() ? `Modified from ${effective.baseValue}.` : "Added to an empty source value.") : "", ...new Set(consistency.flatMap(notes => notes[index] ?? []))].filter(Boolean).join(" ") };
+          note: [effective?.completeness === "incomplete" ? "Unresolved; source value shown where effective value is unavailable." : effective && effective.value !== effective.baseValue ? (effective.baseValue.trim() ? `Modified from ${effective.baseValue}.` : "Added to an empty source value.") : ""].filter(Boolean).join(" ") };
       }),
     };
   };
