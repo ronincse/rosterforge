@@ -34,7 +34,7 @@ import {
   type RosterStructuralBoundReport,
   type RosterStructuralBoundStatus,
   type SupportedRosterValidationFinding,
-  type RosterRuleVisibilityReport,
+  type RosterRuleReport,
 } from "@rosterforge/evaluation";
 import type {
   Diagnostic,
@@ -5875,7 +5875,7 @@ type DirectProfile = BattleScribeRosterSelectionChoice["profiles"][number];
 type SelectionRuleDetail = (
   | { readonly origin: "Direct"; readonly value: DirectRule }
   | { readonly origin: "Linked"; readonly value: Pick<MaterializedRuleInfoLink, "definition" | "link" | "hidden" | "name" | "description"> }
-) & { readonly report?: RosterRuleVisibilityReport };
+) & { readonly report?: RosterRuleReport };
 
 type SelectionProfileDetail = (
   | { readonly origin: "Direct"; readonly value: DirectProfile }
@@ -6791,10 +6791,8 @@ function SelectionCharacteristic({
 function SelectionRule({ rule }: { readonly rule: SelectionRuleDetail }) {
   const report = rule.report ?? inspectLocalRule(rule.value);
   if (report.status === "hidden" && report.completeness === "complete") return null;
-  const name =
-    rule.origin === "Direct"
-      ? rule.value.name
-      : (rule.value.name ?? rule.value.definition.name);
+  const name = report.name.value ?? (rule.origin === "Direct"
+      ? rule.value.name : (rule.value.name ?? rule.value.definition.name));
   const { description } = rule.value;
   return (
     <article className="selection-rule" data-completeness={report.completeness}>

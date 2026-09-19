@@ -100,10 +100,11 @@ it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without
   expect(five.profiles).toHaveLength(22);
   expect(printedProfileRows(five.profiles).length).toBeLessThan(22);
   for (const [name, operand] of [["Deadly Demise", "D3"], ["Firing Deck", "6"]]) {
-    const rule = d.glossary.find(r => impulsor.rules.includes(r.anchor) && r.name === name)!;
-    expect(rule.parameterNote).toContain(`append name "${operand}"`);
-    expect(rule.parameterNote).toContain("not evaluated");
+    const rule = d.glossary.find(r => impulsor.rules.includes(r.anchor) && r.name === `${name} ${operand}`)!;
+    expect(rule.parameterNote).toBe("");
   }
+  expect(d.glossary.some(r => captain.rules.includes(r.anchor) && r.name === "Feel No Pain\u00a05+" && r.note === "" && r.parameterNote === "")).toBe(true);
+  expect(d.glossary).toHaveLength(47);
   expect(d.glossary.some(r => ["Impulsor", "Incinerator", "Keywords"].includes(r.name))).toBe(false);
   expect(d.units.flatMap(u => u.keywords)).not.toContain("e21f-8e64-c5d-7df0");
   expect(readFileSync(darkAngels!).equals(bytes)).toBe(true);

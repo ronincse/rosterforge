@@ -56,13 +56,13 @@ export function createReferenceKeywordLinks(model: UnitReferenceModel, renderedP
           : label.replace(/\s+(?:\d+(?:d\d+)?|d\d+)(?:[+-]\d+)?\+?$/i, "");
         const matches = group.members.map(member => {
           const attached = byOwner.get(member.owner.id) ?? [];
-          const exact = attached.filter(rule => normalized(rule.rule.value.name ?? "") === label);
-          const candidates = exact.length ? exact : attached.filter(rule => normalized(rule.rule.value.name ?? "") === generic);
+          const exact = attached.filter(rule => normalized(rule.rule.report.name.value ?? rule.rule.value.name ?? "") === label);
+          const candidates = exact.length ? exact : attached.filter(rule => normalized(rule.rule.report.name.value ?? rule.rule.value.name ?? "") === generic);
           return candidates.length === 1 ? candidates[0] : undefined;
         });
         const rule = matches[0];
         if (!rule || matches.some(candidate => candidate !== rule)) return { text };
-        if (group.report?.completeness === "complete" && report?.completeness === "complete" && rule.rule.report.completeness === "complete" && rule.rule.report.status === "visible") {
+        if (group.report?.completeness === "complete" && report?.completeness === "complete" && rule.rule.report.name.completeness === "complete" && rule.rule.report.completeness === "complete" && rule.rule.report.status === "visible") {
           const owners = covered.get(rule) ?? new Set<string>();
           for (const member of group.members) owners.add(member.owner.id);
           covered.set(rule, owners);

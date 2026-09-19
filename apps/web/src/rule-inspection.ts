@@ -1,42 +1,50 @@
-// App adapter for pure rule visibility reports. Identity caches belong to an
+// App adapter for independent rule visibility and effective-name reports. Identity caches belong to an
 // immutable session/occurrence and never leak a report into a different roster.
-import { evaluateRosterRuleVisibility, type RuleVisibilityInput, type RosterRuleVisibilityReport } from "@rosterforge/evaluation";
+import { evaluateRosterRule, type RuleVisibilityInput, type RosterRuleReport } from "@rosterforge/evaluation";
 import type { RosterSelection } from "@rosterforge/roster-model";
 import type { LocalRosterSession } from "./roster-session.js";
 
-const cache = new WeakMap<LocalRosterSession, WeakMap<RosterSelection, WeakMap<RuleVisibilityInput, RosterRuleVisibilityReport>>>();
+const cache = new WeakMap<LocalRosterSession, WeakMap<RosterSelection, WeakMap<RuleVisibilityInput, RosterRuleReport>>>();
 
 /** Inspects one rule at its actual occurrence, or explicitly as a source-only preview. */
-export function inspectLocalRule(rule: RuleVisibilityInput, session?: LocalRosterSession, owner?: RosterSelection): RosterRuleVisibilityReport {
-  if (session === undefined || owner === undefined) return evaluateRosterRuleVisibility(rule);
+export function inspectLocalRule(rule: RuleVisibilityInput, session?: LocalRosterSession, owner?: RosterSelection): RosterRuleReport {
+  if (session === undefined || owner === undefined) return evaluateRosterRule(rule);
   let owners = cache.get(session);
   if (owners === undefined) { owners = new WeakMap(); cache.set(session, owners); }
   let rules = owners.get(owner);
   if (rules === undefined) { rules = new WeakMap(); owners.set(owner, rules); }
   let report = rules.get(rule);
   if (report === undefined) {
-    report = evaluateRosterRuleVisibility(rule, { roster: session.roster, context: session.catalogue.context, owner });
+    report = evaluateRosterRule(rule, { roster: session.roster, context: session.catalogue.context, owner });
     rules.set(rule, report);
   }
   return report;
 }
 
-/** Preserve authored name/parameter operations without pretending visibility
- * inspection evaluated them. Definition/link and grouped scope stay explicit;
- * these are source operands, never an inferred effective rule name. */
-export function ruleNameQualification(report: RosterRuleVisibilityReport): string {
+/** Qualify only unresolved names and unsupported annotations. Applied name
+ * steps remain in the report as provenance, not as unevaluated candidates. */
+export function ruleNameQualification(report: RosterRuleReport): string {
   const notes: string[] = [];
+  if (report.name.completeness === "incomplete") {
+    notes.push(report.name.value === undefined
+      ? "Effective rule name unresolved; source name shown."
+      : "Effective rule name determined; some earlier name behavior remains unresolved.");
+    const unapplied = report.name.layers.flatMap((layer, index) => layer.steps
+      .filter(step => step.status === "unapplied")
+      .map(step => `${report.name.layers.length === 1 ? "rule" : index === 0 ? "definition" : "link"}: ${step.modifier.type ?? "unknown operation"} name ${JSON.stringify(step.modifier.value ?? "[missing operand]")}`));
+    if (unapplied.length) notes.push(`Unevaluated name operations (${unapplied.join("; ")}).`);
+  }
+  const annotations: string[] = [];
   for (const [index, layer] of report.layers.entries()) {
     const carrier = report.layers.length === 1 ? "rule" : index === 0 ? "definition" : "link";
-    const visit = (container: typeof layer.source, grouped: boolean) => {
-      for (const modifier of container.modifiers) {
-        if (modifier.field !== "name" && modifier.field !== "annotation") continue;
-        const conditional = grouped || modifier.conditions.length > 0 || modifier.conditionGroups.length > 0 || modifier.repeats.length > 0 || modifier.scope !== undefined;
-        notes.push(`${carrier}${conditional ? "; scoped/conditional" : ""}: ${modifier.type ?? "unknown operation"} ${modifier.field} ${JSON.stringify(modifier.value ?? "[missing operand]")}`);
+    const visit = (container: typeof layer.source) => {
+      for (const m of container.modifiers.filter(m => m.field === "annotation")) {
+        annotations.push(`${carrier}: ${m.type ?? "unknown operation"} annotation ${JSON.stringify(m.value ?? "[missing operand]")}`);
       }
-      container.modifierGroups.forEach(group => visit({ ...layer.source, modifiers: group.modifiers, modifierGroups: group.modifierGroups }, true));
+      container.modifierGroups.forEach(g => visit({ ...layer.source, modifiers: g.modifiers, modifierGroups: g.modifierGroups }));
     };
-    visit(layer.source, false);
+    visit(layer.source);
   }
-  return notes.length ? `Source-authored rule parameter/name operations, not evaluated (${notes.join("; ")}). Effective parameter remains unverified.` : "";
+  if (annotations.length) notes.push(`Source-authored annotation operations are not evaluated (${annotations.join("; ")}).`);
+  return notes.join(" ");
 }

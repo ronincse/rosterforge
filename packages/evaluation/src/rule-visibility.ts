@@ -10,6 +10,7 @@ import { evaluateRosterModifierApplicability } from "./modifier-applicability.js
 import { collectRosterModifierGroupExecution, evaluateRosterModifierGroupApplicability, type RosterModifierGroupSource } from "./modifier-groups.js";
 
 export interface RuleVisibilitySource {
+  readonly name?: string;
   readonly hidden?: boolean;
   readonly modifiers: readonly RosterCharacteristicModifierSource[];
   readonly modifierGroups: readonly RosterModifierGroupSource<RosterCharacteristicModifierSource>[];
@@ -18,6 +19,7 @@ export interface RuleVisibilitySource {
   readonly node: { readonly attributes: Readonly<Record<string, string>> };
 }
 export type RuleVisibilityInput = RuleVisibilitySource | {
+  readonly name?: string;
   readonly definition: RuleVisibilitySource;
   readonly link: RuleVisibilitySource;
   readonly hidden?: boolean;

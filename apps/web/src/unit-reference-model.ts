@@ -4,7 +4,7 @@ import { profilePresentationResolver } from "@rosterforge/data-graph";
 import { classifyReferenceProfile, referenceProfileSourceKey, type ReferenceProfilePresentation } from "./reference-profile-presentation.js";
 import type { MaterializedInfoGroup, MaterializedProfileInfoLink, MaterializedRuleInfoLink, UnresolvedMaterializedInfoLink } from "@rosterforge/data-graph";
 import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-builder";
-import type { RosterRuleVisibilityReport } from "@rosterforge/evaluation";
+import type { RosterRuleReport } from "@rosterforge/evaluation";
 import { rosterSelectionAmount, type RosterSelection } from "@rosterforge/roster-model";
 import { inspectLocalRule } from "./rule-inspection.js";
 import { inspectLocalRosterSelectionCharacteristics, inspectLocalRosterSelectionName, inspectLocalRosterSelectionAnnotation, type LocalRosterProfileCharacteristics, type LocalRosterSession } from "./roster-session.js";
@@ -15,7 +15,7 @@ export type ReferenceProfile =
 export type ReferenceRule = (
   | { readonly origin: "Direct"; readonly value: BattleScribeRosterSelectionChoice["rules"][number] }
   | { readonly origin: "Linked"; readonly value: Pick<MaterializedRuleInfoLink, "definition" | "link" | "hidden" | "name" | "description"> }
-) & { readonly report: RosterRuleVisibilityReport };
+) & { readonly report: RosterRuleReport };
 export interface ReferenceMember {
   readonly owner: RosterSelection;
   readonly choice: BattleScribeRosterSelectionChoice;
@@ -139,8 +139,8 @@ export function createUnitReferenceModel(session: LocalRosterSession, root: Rost
     ];
     for (const rule of rules) {
       if (rule.report.status === "hidden" && rule.report.completeness === "complete") continue;
-      const unique = rule.report.completeness !== "complete" || rule.report.layers.some(layer => dynamic(layer.source));
-      const key = JSON.stringify([scope, carrier(rule.value), rule.value.name, rule.value.description, rule.report.status, unique ? owner.id : null]);
+      const unique = rule.report.name.completeness !== "complete" || rule.report.completeness !== "complete" || rule.report.layers.some(layer => dynamic(layer.source));
+      const key = JSON.stringify([scope, carrier(rule.value), rule.report.name.value, rule.value.name, rule.value.description, rule.report.status, unique ? owner.id : null]);
       const group = ruleGroups.get(key);
       if (group) group.members.push(member);
       else ruleGroups.set(key, { rule, members: [member] });

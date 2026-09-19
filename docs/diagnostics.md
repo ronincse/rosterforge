@@ -1547,6 +1547,19 @@ The UI keeps such source text visible, explicitly says applicability is unresolv
 and places diagnostics in expandable rule details. Only hidden and complete rules
 are omitted; this report does not claim overall roster legality.
 
+## Effective Rule Name Diagnostics
+
+`EVALUATION_RULE_NAME_UNRESOLVED` is a source-located warning with validation and
+compatibility impacts. It retains malformed or unsupported lexical operations,
+missing name/owner identity, unresolved group targets and unestablished definition/
+link precedence. Existing applicability diagnostics remain attached. Unapplied
+steps retain original operands, carriers and issue codes; applied steps are not
+labelled unevaluated. A known later set can recover a displayed value while the
+name report remains incomplete. Otherwise the source name is explicitly qualified
+as a fallback. Name incompleteness does not change an independently known visibility
+result or claim overall roster legality. Source-authored annotations remain outside
+this name-operation subset and retain their existing unevaluated qualification.
+
 ## Supported Validation Composition Diagnostics
 
 The headless supported-validation composer can emit:

@@ -84,7 +84,12 @@ export function selectedReferenceTextIndex(base: ReferenceTextIndex, model: Pick
     const source = rule.origin === "Linked" ? rule.value.definition : rule.value;
     if (source.noindex) continue;
     if (!rule.value.description?.trim() || (rule.report.status === "hidden" && rule.report.completeness === "complete")) continue;
-    add(names, { ...source, name: rule.value.name ?? source.name ?? "" }, { name: rule.value.name ?? source.name ?? "Rule", rules: [rule], profiles: [], sourceOnly: false });
+    // A prose mention of the original label still refers to this attached rule.
+    // Retain it as an alias to the SAME effective record; competing owners stay
+    // ambiguous instead of falling back to an unqualified catalogue definition.
+    const name = rule.report.name.value ?? rule.value.name ?? source.name ?? "Rule";
+    const aliases = [...new Set([...(source.alias ?? []), source.name, rule.value.name].filter((v): v is string => v !== undefined && v !== name))];
+    add(names, { ...source, name, alias: aliases }, { name, rules: [rule], profiles: [], sourceOnly: false });
   }
   for (const group of model.profiles) {
     const source = group.profile.origin === "Linked" ? group.profile.value.definition : group.profile.value;

@@ -262,8 +262,21 @@ changes evaluator equivalence. The overview is a compact occurrence index, not a
 second loadout listing. Long prose/table continuations repeat document-local
 context; CSS page counters provide page numbers in the verified Edge pipeline.
 Explicit `self` now includes the resolved affects anchor independently of child
-traversal. The historical Captain-only print warning has been retired. Rule-name source operations
-are displayed as unevaluated metadata, not computed occurrence parameters.
+traversal. The historical Captain-only print warning has been retired.
+`evaluation/rule-names.ts` adds an independent effective-name report beside rule
+visibility. It reuses the profile lexical step evaluator and modifier/group
+applicability, retaining source carriers, ordered steps and occurrence identity.
+Direct operations precede recursive groups within a carrier. Supported owned
+`set`/`append` uses the authored separator (default space), without another XML
+or HTML decoding pass. Multiple possibly active writing carriers, or a modified
+definition competing with an explicit static link name, retain unknown precedence.
+A later known set may recover the value while earlier uncertainty stays incomplete.
+`rule-inspection.ts` caches only by immutable session, owner and rule identity;
+unit cards, reference lookup, scalar print snapshots and glossary mappings share
+that report. Source labels remain aliases to the same record for prose lookup;
+parameterized keyword matching requires the effective label and does not merge
+different operands. Name completeness is separate from visibility completeness.
+See `docs/qa/reference-engine-correctness.md` for the bounded contract and evidence.
 `roster-print-dialog.tsx` previews an inert script-disabled document, offers an
 independent Blob HTML download and invokes the existing caller-opened print
 window. The same-origin sandbox allowance is solely for parent-owned fragment

@@ -211,6 +211,12 @@ export type RosterCharacteristicStep<
   | NotApplicableRosterCharacteristicStep<Modifier>
   | UnappliedRosterCharacteristicStep<Modifier>;
 
+/** Lexical operation evidence; the owning report carries occurrence identity. */
+export type RosterTextModifierStep<Modifier extends RosterCharacteristicModifierSource = RosterCharacteristicModifierSource> =
+  | Omit<AppliedRosterCharacteristicStep<Modifier>, "declaredBy">
+  | Omit<NotApplicableRosterCharacteristicStep<Modifier>, "declaredBy">
+  | Omit<UnappliedRosterCharacteristicStep<Modifier>, "declaredBy">;
+
 export interface UnroutedRosterCharacteristicModifier<
   Modifier extends RosterCharacteristicModifierSource =
     RosterCharacteristicModifierSource,
@@ -1315,7 +1321,12 @@ function booleanModifierValue(
   return undefined;
 }
 
-function evaluateStep<
+/** One lexical modifier step, shared by profiles and rule names. Applicability
+ * is supplied by the owning evaluator. No owner is fabricated for source previews;
+ * callers retain occurrence provenance separately. Optional operation bounds do
+ * not change the original modifier or permit unsupported expressions to execute.
+ */
+export function evaluateTextModifierStep<
   Modifier extends RosterCharacteristicModifierSource,
 >(
   input: string,
@@ -1323,9 +1334,9 @@ function evaluateStep<
   grouped: boolean,
   applicability: NumericModifierApplicability,
   origin: RosterCharacteristicStepOrigin,
-  declaredBy: RosterSelection,
+  supportedTypes?: readonly string[],
 ): {
-  readonly step: RosterCharacteristicStep<Modifier>;
+  readonly step: RosterTextModifierStep<Modifier>;
   readonly diagnostics: readonly Diagnostic[];
 } {
   if (applicability === "notApplicable") {
@@ -1335,7 +1346,6 @@ function evaluateStep<
         modifier,
         grouped,
         origin,
-        declaredBy,
         input,
       },
       diagnostics: [],
@@ -1358,7 +1368,7 @@ function evaluateStep<
     issues.push("unsupportedAttributes");
   }
 
-  const kind = characteristicKind(modifier.type);
+  const kind = supportedTypes === undefined || supportedTypes.includes(modifier.type ?? "") ? characteristicKind(modifier.type) : undefined;
   if (modifier.type === undefined) {
     issues.push("missingType");
   } else if (kind === undefined) {
@@ -1468,7 +1478,6 @@ function evaluateStep<
         modifier,
         grouped,
         origin,
-        declaredBy,
         kind,
         input,
         output,
@@ -1483,7 +1492,6 @@ function evaluateStep<
       modifier,
       grouped,
       origin,
-      declaredBy,
       input,
       issues,
       ...(kind === undefined ? {} : { kind }),
@@ -1492,6 +1500,16 @@ function evaluateStep<
       modifierDiagnostic(modifier, issue, origin),
     ),
   };
+}
+
+
+function evaluateStep<Modifier extends RosterCharacteristicModifierSource>(
+  input: string, modifier: Modifier, grouped: boolean,
+  applicability: NumericModifierApplicability, origin: RosterCharacteristicStepOrigin,
+  declaredBy: RosterSelection,
+): { readonly step: RosterCharacteristicStep<Modifier>; readonly diagnostics: readonly Diagnostic[] } {
+  const result = evaluateTextModifierStep(input, modifier, grouped, applicability, origin);
+  return { step: { ...result.step, declaredBy }, diagnostics: result.diagnostics };
 }
 
 /**
@@ -1657,8 +1675,9 @@ function declaredProfileTypeName(
   return typeof name === "string" && name !== "" ? name : undefined;
 }
 
-function currentValue<Modifier extends RosterCharacteristicModifierSource>(
-  steps: readonly RosterCharacteristicStep<Modifier>[],
+/** Last computed lexical candidate, not a claim of completeness. */
+export function currentValue<Modifier extends RosterCharacteristicModifierSource>(
+  steps: readonly RosterTextModifierStep<Modifier>[],
   baseValue: string,
 ): string {
   for (let index = steps.length - 1; index >= 0; index -= 1) {
@@ -1680,8 +1699,8 @@ function currentValue<Modifier extends RosterCharacteristicModifierSource>(
  * step ahead of one corrupts its input even though the step itself applied
  * cleanly. That case reports unknown rather than a confidently wrong number.
  */
-function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
-  steps: readonly RosterCharacteristicStep<Modifier>[],
+export function effectiveValue<Modifier extends RosterCharacteristicModifierSource>(
+  steps: readonly RosterTextModifierStep<Modifier>[],
   baseValue: string,
 ): string | undefined {
   let lastUnapplied = -1;

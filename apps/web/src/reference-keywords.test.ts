@@ -36,7 +36,7 @@ it("uses effective text, exact names before bounded parameter forms, and preserv
   expect(source.profile.value.characteristics.find(isKeywordCharacteristic)?.value).not.toBe(text);
   const rapid = model.rules.find(r => r.rule.value.name === "Rapid Fire")!;
   if (rapid.rule.origin !== "Direct") throw new Error("Expected synthetic direct rule");
-  const exact = { ...rapid, rule: { ...rapid.rule, value: { ...rapid.rule.value, name: "Rapid Fire 4" } } };
+  const exact = { ...rapid, rule: { ...rapid.rule, report: { ...rapid.rule.report, name: { ...rapid.rule.report.name, value: "Rapid Fire 4" } }, value: { ...rapid.rule.value, name: "Rapid Fire 4" } } };
   const exactGroup = withKeywords(source, "Rapid Fire 4");
   const exactTokens = [...createReferenceKeywordLinks({ ...model, profiles: [exactGroup], rules: [rapid, exact] }).profiles.get(exactGroup)!.values()][0]!;
   expect(exactTokens[0]?.rule).toBe(exact);
@@ -61,4 +61,17 @@ it("retains ambiguous, incomplete, uncovered and unrendered rules inline", async
   const divergent = createReferenceKeywordLinks({ ...model, profiles: [grouped], rules: [rapid, separate] });
   expect([...divergent.profiles.get(grouped)!.values()][0]!.some(t => t.rule)).toBe(false);
   expect(divergent.inlineRules).toEqual([rapid, separate]);
+});
+
+it("does not link a different resolved parameter or suppress uncertain names",async()=>{
+ const model=await reference();
+ const source=model.profiles[0]!;
+ const rapid=model.rules.find(r=>r.rule.value.name==="Rapid Fire")!;
+ const effective={...rapid,rule:{...rapid.rule,report:{...rapid.rule.report,name:{...rapid.rule.report.name,value:"Rapid Fire 2"}}}};
+ const group=withKeywords(source,"Rapid Fire 4");
+ const mismatched=createReferenceKeywordLinks({...model,profiles:[group],rules:[effective]});
+ expect([...mismatched.profiles.get(group)!.values()][0]![0]!.rule).toBeUndefined();
+ expect(mismatched.inlineRules).toEqual([effective]);
+ const uncertain={...rapid,rule:{...rapid.rule,report:{...rapid.rule.report,name:{...rapid.rule.report.name,completeness:"incomplete" as const}}}};
+ expect(createReferenceKeywordLinks({...model,profiles:[group],rules:[uncertain]}).inlineRules).toEqual([uncertain]);
 });

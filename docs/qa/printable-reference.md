@@ -179,6 +179,10 @@ the ordinary run's skips are not counted as corpus verification.
 
 ## Owner-review follow-up: reference consistency (2026-09-17)
 
+> Historical reproduction: the Captain anchor exclusion and unevaluated rule-name
+> observations below are superseded by the [2026-09-19 shared-engine batch](reference-engine-correctness.md).
+> Original artifacts and all other historical observations remain intact.
+
 The infrastructure above is accepted as a foundation, not final owner acceptance
 of paper usability. Baseline PDFs and frozen inputs remain unchanged. Follow-up
 starts from pilot `6f615c5496e298515d2162a9aa304f32574c394c`.

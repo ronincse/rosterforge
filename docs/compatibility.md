@@ -623,8 +623,21 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   reduce repetition without changing evaluator semantics or ordinary body size.
   Explicit self plus entries traversal includes the resolved anchor as well as
   the selected children/descendants, retaining category and profile-type filters.
-  Captain/Artificer Armour now evaluates Sv 2+ through the shared evaluator. Authored rule-name operations are visible but unevaluated:
-  conditional applicability/precedence and effective parameters remain unsupported.
+  Captain/Artificer Armour now evaluates Sv 2+ through the shared evaluator.
+- Occurrence-specific rule names support owned `set` and `append`, reusing lexical
+  profile operations and existing condition/group applicability. Source order is
+  direct modifiers then recursively ordered groups within one carrier. Explicit
+  separators (including empty and nonbreaking space) are preserved; absent join
+  means one space. Inactive operations do not write. Unknown operations/targets,
+  unsupported repeats/groups/routing and unresolved owner identity retain
+  incompleteness. Definition-only inheritance is supported without a static link
+  override; competing dynamic carriers or a modified definition plus an explicit
+  link name have unestablished precedence and remain qualified. No regex/format-rule
+  execution, combat parameter interpretation, identity rewrite or text re-decoding.
+  Impulsor Deadly Demise D3, Firing Deck 6 and selected Artificer Armour Feel No Pain
+  5+ resolve through this generic report on screen, standalone HTML and paper.
+  Distinct effective names/owners retain separate scope records when prose is shared.
+  Visibility remains an independent report. See `docs/qa/reference-engine-correctness.md`.
 - Preview, native Print / Save PDF and independent self-contained HTML download.
   Visible IDs/technical trees are replaced by player-facing content and local
   document labels. Plain labels are escaped; source descriptions use the existing

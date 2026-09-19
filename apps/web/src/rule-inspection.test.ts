@@ -35,20 +35,19 @@ async function setup(alternate = false, numericBooleans = false) {
 }
 
 describe("rule applicability", () => {
-  it("retains direct and grouped name operands without claiming an effective parameter", async () => {
+  it("evaluates direct name operands and qualifies unresolved conditional operands", async () => {
     const { rule } = await setup();
     const source = rule("rv-direct-conditional");
     if ("definition" in source) throw new Error("Direct fixture required");
     const modifier = { ...source.modifiers[0]!, field: "name", type: "append", value: "D3", conditions: [], conditionGroups: [], repeats: [] };
     delete modifier.scope;
     const changed = { ...source, modifiers: [modifier] };
-    const note = ruleNameQualification(inspectLocalRule({ definition: source, link: changed }));
-    expect(note).toContain('link: append name "D3"');
-    expect(note).toContain("not evaluated");
-    expect(note).toContain("Effective parameter remains unverified");
+    const report = inspectLocalRule({ definition: source, link: changed });
+    expect(report.name.value).toBe(`${source.name} D3`);
+    expect(ruleNameQualification(report)).toBe("");
     expect(ruleNameQualification(inspectLocalRule(source))).toBe("");
     const conditional = { ...changed, modifiers: [{ ...modifier, conditions: source.modifiers[0]!.conditions }] };
-    expect(ruleNameQualification(inspectLocalRule(conditional))).toContain("scoped/conditional");
+    expect(ruleNameQualification(inspectLocalRule(conditional))).toContain("Effective rule name unresolved");
   });
   it("inherits static visibility when linked inputs omit the materialized flag", async () => {
     const { rule } = await setup();

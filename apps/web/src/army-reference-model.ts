@@ -68,9 +68,9 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
   const addRule = (rule: ReferenceRule, owner: string, user: string, sourceOnly = false): string | undefined => {
     if (rule.report.status === "hidden" && rule.report.completeness === "complete") return;
     const source = rule.origin === "Linked" ? rule.value.definition : rule.value;
-    const name = rule.value.name ?? source.name ?? "Unnamed rule";
+    const name = rule.report.name.value ?? rule.value.name ?? source.name ?? "Unnamed rule";
     const text = rule.value.description ?? "";
-    const dynamic = rule.report.completeness !== "complete" || rule.report.layers.some(layer => layer.source.modifiers.length || layer.source.modifierGroups.length);
+    const dynamic = rule.report.name.completeness !== "complete" || rule.report.completeness !== "complete" || rule.report.layers.some(layer => layer.source.modifiers.length || layer.source.modifierGroups.length);
     const note = sourceOnly ? "Source reference only; applicability is not established." : rule.report.completeness !== "complete" || rule.report.status === "unresolved" ? "Rule applicability is unresolved; source description shown." : "";
     const parameterNote = ruleNameQualification(rule.report);
     // Static identical definitions can share an explanation, but modified or

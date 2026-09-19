@@ -9,12 +9,12 @@ import { createLocalRosterDraftStore, type StoredRecord } from "./browser-drafts
 
 afterEach(cleanup);
 
-async function open() {
+async function open(nameModifiers = "") {
   const records = new Map<string, StoredRecord>();
   const draftStore = createLocalRosterDraftStore({ getAll: async () => [...records.values()], get: async id => records.get(id), put: async r => { records.set(r.id, r); }, delete: async id => { records.delete(id); } });
   let next = 0;
   render(<App draftStore={draftStore} createEntityId={kind => `${kind}-${++next}`} />);
-  fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), { target: { files: ["projection.gst", "rule-visibility.cat"].map(name => ({ name, type: "application/xml", arrayBuffer: async () => new Uint8Array(readFileSync(resolve("packages/test-fixtures/fixtures", name))).buffer })) } });
+  fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), { target: { files: ["projection.gst", "rule-visibility.cat"].map(name => ({ name, type: "application/xml", arrayBuffer: async () => new TextEncoder().encode(readFileSync(resolve("packages/test-fixtures/fixtures", name), "utf8").replace('name="Always Available">', 'name="Always Available">' + nameModifiers)).buffer })) } });
   await screen.findByRole("heading", { name: "Rule Visibility" });
   fireEvent.click(screen.getByRole("button", { name: "Create roster" }));
   fireEvent.click(screen.getByRole("button", { name: /Add unit, / }));
@@ -44,4 +44,13 @@ it("source-only previews identify conditional rule applicability as unconfirmed"
   expect(screen.getAllByText("Home Signal").length).toBeGreaterThan(0);
   expect(screen.getAllByText(/Rule applicability unresolved/).length).toBeGreaterThan(0);
   expect(screen.queryByText("Archived Signal")).toBeNull();
+});
+
+it("renders evaluated dangerous-looking names as literal text through the actual unit card", async () => {
+  await open('<modifiers><modifier type="append" field="name" value="&lt;img src=x onerror=alert(1)&gt; &amp;quot;"/></modifiers>');
+  fireEvent.click(screen.getByRole("button", { name: "Add Signal Wardens" }));
+  fireEvent.click(screen.getByRole("button", { name: "View unit card for Signal Wardens" }));
+  const card=screen.getByRole("dialog", {name:"Unit card for Signal Wardens"});
+  expect(within(card).getByText('Always Available <img src=x onerror=alert(1)> &quot;')).toBeTruthy();
+  expect(card.querySelector('img, script, [onerror]')).toBeNull();
 });

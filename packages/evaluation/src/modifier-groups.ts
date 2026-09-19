@@ -118,13 +118,15 @@ export function evaluateRosterModifierGroupApplicability<
   );
 }
 
+/** Collects ordered group operations, retaining inherited applicability. A predicate
+ * lets callers retain malformed targets as uncertainty without losing their order. */
 export function collectRosterModifierGroupExecution<
   Modifier extends RosterModifierApplicabilitySource,
 >(
   reports: readonly RosterModifierGroupApplicabilityReport<
     RosterModifierGroupSource<Modifier>
   >[],
-  field: string,
+  field: string | ((modifier: Modifier) => boolean),
 ): RosterModifierGroupExecution<Modifier> {
   const entries: RosterModifierGroupExecutionEntry<Modifier>[] = [];
 
@@ -144,7 +146,7 @@ export function collectRosterModifierGroupExecution<
         : inheritModifierApplicability(conditionalStatus, "unresolved");
 
     for (const modifier of report.modifierApplicability) {
-      if (modifier.modifier.field !== field) {
+      if (typeof field === "string" ? modifier.modifier.field !== field : !field(modifier.modifier)) {
         continue;
       }
       entries.push({
