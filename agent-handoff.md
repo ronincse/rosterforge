@@ -34,17 +34,25 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-19 (shared engine batch in progress)
+## Current Status — 2026-09-19 (shared engine batch delivered; stop)
 
-Owner authorized two bounded engine checkpoints on pilot only. A repairs
-explicit-self selector membership; B effective rule names is next within this
-same authorization. Print layout remains accepted as baseline, owner visual
-acceptance pending. No main/PR/source/persistence changes. See
-`docs/qa/reference-engine-correctness.md`. Final batch gates/publication follow B.
+Implementation A `5ed0c17` (test follow-ups `0b4115a`, `02e369e`, `cbca162`),
+B `ebdbc4d`; this separate handoff follows. All gates pass: normal 1,023 pass /
+34 optional skips; configured 1,057 pass / zero skips / 105 files (53.26s).
 
-### Previous status (historical observations; A supersedes anchor exclusion)
+The two authorized engine checkpoints are complete from pilot baseline
+`2fdfbee8b84078c9f10313382ea5c1f150fa2c12`. Explicit self includes the resolved
+selector anchor: selected Artificer Armour gives Captain Sv 2+ (base 3+).
+Shared occurrence rule names now resolve Impulsor Deadly Demise D3 / Firing Deck 6
+and Armour Feel No Pain 5+. Competing carrier/static-link precedence stays unknown.
+See `docs/qa/reference-engine-correctness.md` and the final entry for gates,
+review, lifecycle and PDF evidence. Publish only pilot and confirm exact-final CI;
+receipt belongs in the completion response/Actions. Stop after these checkpoints.
+No main, PR, deployment, source update, migration or next StarCraft capability.
+Final print-layout owner acceptance remains pending. Isolated server 5293 stays
+running with the disposable saved test army; existing origins/servers remain intact.
 
-## Current Status — 2026-09-17 (print follow-up delivered; owner review pending; stop)
+### Historical 2026-09-17 status (anchor/name conclusions superseded above)
 
 Bounded owner-authorized follow-up on `codex/starcraft-pilot` only, from clean
 upstream-equal `6f615c5496e298515d2162a9aa304f32574c394c`. Correctness/projection
@@ -1213,7 +1221,7 @@ QA before classifying or implementing the discrepancy.
 | Audit RF-A05 reference-card reading | Done — bounded checkpoint | `cda7782`: current baseline 10,527 px / 22 tables becomes 5,660 px / three tables at 390×844; stats and first weapons visible at opening. Selected-only, conservative source/loadout grouping, independent quantities, uncertainty and lazy exact details. Phone/tablet/desktop/text-scale/keyboard evidence in `docs/qa/rf-a05-reference-card.md`; no broader rule or engine semantics |
 | Stat keyword rule references | Done — bounded owner follow-up | `4ba0b21`: blank empty Keywords cells, attached-rule hyperlinks in selected stat tables, layered popup retaining unit scroll/focus. Only complete, fully covered rule groups leave the inline list; ambiguity, incomplete applicability and nested info-group scope remain conservative. No global rule inference or engine change |
 | Source formatting and prose references | Done — bounded owner follow-up | `d7c1d75`: safe bold/italic/small-cap and bounded block formatting; actual rule/profile names and aliases in the catalogue closure; selected reports preferred, source-only lookups labeled; eight-layer reference navigation. Angron and nested Warp Blades/Lethal Hits browser evidence in `docs/qa/rich-text-references.md` |
-| Broader reference lookup parity | Deferred — owner prioritization required | General lookup does not index arbitrary entry names/category descriptions or supply an absent core glossary such as Deployment. No full CommonMark, imported formatRules execution or rule-name modifier expansion added. Keep these separate from applicability/evaluation repairs; current scope is documented in `docs/compatibility.md` |
+| Broader reference lookup parity | Deferred — owner prioritization required | General lookup does not index arbitrary entry names/category descriptions or supply an absent core glossary such as Deployment. No full CommonMark or imported formatRules execution. Bounded owned rule-name set/append is now supported; broader routed operations and uncertain carrier precedence remain separate. Keep these separate from applicability/evaluation repairs; current scope is documented in `docs/compatibility.md` |
 | Impulsor headline points-capacity disappearance | Done | `0104994`: cost observation incompleteness incorrectly hid a fully evaluated limit. Independent `limitCompleteness` preserves current known capacities; headline, Configuration and secondary limits label provisional totals and withhold remaining arithmetic. Tests cover edit history, size, currency coexistence, persistence and genuinely unknown limits; live Dark Angels reproduction verified |
 | RF-UX-01 compact provisional status | Done | `c08d34d`: actual 320/390-pixel rendering retains provisional text with zero/nonzero violations and independently known capacity; unknown capacity cannot erase cost-report uncertainty. No pricing repair implied |
 | Transparent-group numeric selection counting | Done | `a913a0e`: actual-parent authored frontier counts concrete carriers through nested/link/shared groups; missing/ambiguous placement stays incomplete. A/B 5/6/10/5 ->80/150/150/80, browser A passes, 340 numeric condition and31 repeat consumers measured; group-valued scopes remain unresolved |
@@ -1231,8 +1239,8 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
 | Print-output usability pass | Follow-up implemented on pilot, 35bcd47; owner acceptance pending | Foundation86f877d retained; one-page DA index, exact-body sharing47records/25bodies,131profiles/213members→104display rows, readable reflow, full attribution/uncertainty and verified page counters. All146 final pages/16PDFs visually reviewed plus independent reading tasks. Some short tails/notes-only pages remain. No full-accuracy, physical-printer/universal-browser or main-integration claim. See `docs/qa/printable-reference.md` |
-| Selected enhancement anchor consistency | Repaired in authorized 2026-09-19 checkpoint A | Explicit self independently includes the resolved anchor; Captain Sv2+ now applies. See shared-engine QA. Historical reproduction: Frozen DA Captain selection24c1843d/profilec1ba-2289-ba1-9cb8 remains Sv3+ despite selected Artificer Armour authored set2+: scope=model self.entries.recursive.Character.profiles.Unit excludes anchor. Exact IDs/trace in printable-reference QA. Establish intended selector/anchor semantics against pinned source and reference behavior before engine/source repair. Local print warning added0aac6eb; no guessed2+ |
-| Effective parameterized rule names | Deferred — separate evaluation boundary required | Impulsor Deadly Demise link58e0-31f7-43d3-b1ef append name D3 and Firing Deck31bc-9145-ac64-454e append name6 are present but rule inspection evaluates visibility only.0aac6eb exposes authored operands as unevaluated on screen/paper. Add conditions/precedence/effective-name metadata tests before asserting occurrence values; do not infer parameters from prose |
+| Selected enhancement anchor consistency | Done — 2026-09-19 checkpoint A | Primary editor controls establish additive explicit self; shared Captain Sv 2+ now applies with Artificer Armour. Category/profile filters and implicit-self exclusions remain. Missing/ambiguous context stays unresolved; no typed-query expansion. See `docs/qa/reference-engine-correctness.md`; old print reproduction is historical. |
+| Effective parameterized rule names | Bounded support done — 2026-09-19 checkpoint B | Shared owned set/append with conditions/groups and provenance resolves Impulsor D3/6 and Armour 5+. Distinct labels/owners survive shared glossary bodies. Dynamic definition/link competition and modified-definition/static-link precedence remain qualified; routed name operations, unsupported repeats/groups, annotations and imported formatting are not newly supported. |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
 | Load catalogues directly from BSData | Deferred | owner wants this eventually; the pinned-source browser already does a fixed revision |
 | Constraint `value="-1"` | Done | BattleScribe's "no constraint" sentinel, settled by observation on the New Recruit wiki rather than inferred. 48 corpus constraints across 22 files, all of them modifier targets. The value-specific complaint is zero, and the later false modifier-maximum warning on 34 manual Detachment groups is now zero too. Selection constraints, force constraints, initialization, and the constraint summary all honour it; any other negative still withholds |
@@ -16056,6 +16064,9 @@ exact-final CI. Stop; no SC-08, main integration, PR, deployment or new phase.
 
 ## Completed Assignment — 2026-09-17: print consistency and density follow-up
 
+> Captain applicability and rule-name conclusions below are superseded by the
+> 2026-09-19 shared-engine assignment. Layout evidence remains historical and intact.
+
 **Baseline/result.** Owner-authorized bounded follow-up from clean/fetched
 `6f615c5496e298515d2162a9aa304f32574c394c` on pilot only. Correctness/projection
 `0aac6eb`, separate presentation/tests/docs
@@ -16143,3 +16154,96 @@ Lint/typecheck/build/whitespace pass; full configured final suite follows B.
 Frozen 14-unit print test passes with unchanged 2000 points. A/B manifests each
 verify eight hashes; all eight embedded draft sources exactly match A. Original
 army hash unchanged. Checkpoint B remains authorized; stop after final batch.
+
+
+## Completed Assignment — 2026-09-19 shared reference engine batch A/B
+
+**Baseline and resulting commits.** Clean fetched/upstream-equal pilot
+`2fdfbee8b84078c9f10313382ea5c1f150fa2c12`. A `5ed0c17`, focused test follow-ups
+`0b4115a`, `02e369e`, `cbca162`; B `ebdbc4d`. This separate handoff commit is the
+final publication unit; its exact hash and CI receipt belong in the completion
+response/Actions. Fetch immediately before publication still found upstream at
+2fdfbee. Main remains bac89b7, retired UI checkout 69b2095; UI task was idle and
+other worktrees preserved. Only this lead's verified commits are published.
+
+**A decision.** Explicit self was parsed but lost by entries reachability. The
+immutable nr-editor ComplexQuery controls independently select scope inclusion,
+affect-self, child entries and recursion. The smallest generic repair includes
+the resolved anchor only when explicit self is present, still applying category/
+profile filters. Zero-entry transparent groups are not that anchor. Captain
+Artificer Armour now applies Sv 2+ from base 3+ in shared evaluation; its narrow
+print warning is retired. No global implicit-self inclusion, prose interpreter,
+source correction or broader typed query support. Prior Lord of Contagion Unit
+exclusion did not establish self exclusion: its weapon filter already excludes
+Unit. Historical report/entry marked superseded, not rewritten. Survey: 2,072
+entries selectors / 2,058 explicit self / 64 model-scoped profiles.Unit in A.
+Fictional tests cover linked/category identities, nearest unit/model, absent/
+ambiguous identity, malformed scope/traversal, duplicate isolation and lifecycle.
+
+**B decision.** Shared rule-name report reuses lexical profile steps and condition/
+group applicability; supports owned set/append, source-order direct then recursive
+groups, authored join/default space, independent visibility/name completeness and
+original provenance/identity. Inactive operations do not write; unknowns do not
+become complete. Known later set can recover a value but not completeness. Modified
+definition plus static link name, or two possibly active writing carriers, retains
+unestablished precedence even for equal candidates. Impulsor Deadly Demise D3 /
+Firing Deck 6 and selected Armour Feel No Pain NBSP 5+ resolve completely. No
+parameter rolling/inference, JSON/XML second decoding, regex or imported format
+execution. Screen/lookup/HTML/PDF share results, source labels remain aliases to
+the same record, and different effective operands retain distinct glossary scopes.
+Baseline worktree probe fails all three new rule-label expectations; final actual-
+army test passes. No production changes made in the review worktree.
+
+**Review.** Native isolated review caught zero-step group routing, malformed
+selector completeness, group missing-field ordering and recovered-name
+qualification; repaired/tested. Authenticated Claude Code 2.1.240 tools-disabled
+safe-mode/plan review completed with Claude Opus 5 on curated code/diffs/fictional
+tests only. Static-link/dynamic-definition conflict was its material accepted
+finding; guard and tests added. Unresolved diagnostics improved. Claimed accepted
+owned affects/unrendered qualification were checked and disproved; existing code
+rejects/renders them. No personal draft, dataset or secrets sent. Earlier
+acknowledgement-only invocation is not counted as review. Lead reviewed integration
+and ran all gates. Full disposition and evidence: `docs/qa/reference-engine-correctness.md`.
+
+**Acceptance.** Eight hashes each in frozen 40k A/B manifests verified; recorded
+army's eight embedded sources match A. Unchanged draft SHA-256
+9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c.
+Disposable adapter-seeded copy on 127.0.0.1:5293 opened normally: 17 roots / three
+setup / 14 units / 2,000 points. Captain selected 100 points/2+; remove enhancement
+80 points/3+, army1,980 and FNP gone; undo/redo/add restore correctly. Duplicate
+15 units/2,100 remains independent when original loses Armour; undo returns original
+configuration. Reload/Open/Update saved draft preserve 14/2,000/2+/5+; Impulsor
+D3/6 complete, original prose lookup opens Firing Deck 6. Supporting/unrelated
+Lieutenant remain correct. No saved identities/bytes or source pins changed.
+New isolated server5293 and deliverable browser tab stay running; other origins,
+servers, armies and original/revised owner artifacts untouched.
+
+**PDFs.** Production pipeline regenerated only Dark Angels Letter Compact22 and
+Sheets27. All49 pages visually reviewed using PDF skill (native22, lead27).
+Captain Compactp2/Sheetsp2-3; Impulsor Compactp14/Sheetsp19; glossary Compactp19/
+Sheetsp24. All47 scope mappings retained, along with complete members/separate
+same-name costs. No clipping/overlap/truncation/glyph blocker; existing short
+Sheets14/17/19 tails and paragraph continuations remain. No layout/CSS retuning.
+Edge154.0.4258.18, offline/network-blocked, scale1/Letter/CSS14mm/no background or
+headers. New evidence folder `engine-correctness` under the session visualizations
+root; final filenames/settings/pages in the QA report. Owner visual acceptance
+remains pending; no physical-print or universal-pagination claim.
+
+**Gates.** pnpm lint, typecheck, test, build and git diff --check pass. Normal
+1,023 passed / 34 optional skipped (97 passed / 8 skipped files;18.95s). Configured
+1,057 passed / zero skipped (105 files;53.26s,maxWorkers4). Existing large-bundle
+advisory only. Configured 40kA04c62fcd/B5b261ec manifests, StarCraft99261754/four
+hashes and frozen actual-army projection all execute. Supporting, pricing,
+initialization, budget/limit queries, persistence/recovery, Marines reinforcement,
+faction/supply, typed uncertainty, reference metadata and renderer timing remain
+protected. Added identity fixtures initially needed a discriminated-union type
+narrowing; corrected before these final gates. No weakened test or skipped failure.
+
+**Stop and limits.** Unknown rule carrier/static-link precedence, broader typed
+anchor/query behavior, routed rule names, unsupported groups/repeats, annotations
+and imported formatting remain qualified. Malformed profile selectors have
+aggregate incomplete reports, not new field-level unknown values. Source revision
+mismatch, orphan costs, association and dynamic/zero-default budget limitations
+remain. Publish only codex/starcraft-pilot and confirm exact-final CI. No main,
+PR, deployment, persistence migration, new data, print tuning or next StarCraft
+capability. Final owner print-layout acceptance remains pending. Stop here.
