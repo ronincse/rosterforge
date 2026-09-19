@@ -85,3 +85,19 @@ it("keeps linked definition/category identity when resolving the nearest model a
 it("uses the nearest unit anchor under the existing typed-scope semantics",async()=>{
  expect(values(await fixture(undefined,undefined,undefined,"unit",false,"unit")).map(v=>v.value)).toEqual(["2+","2+"]);
 });
+
+// Corrupted identity indexes must not select a possibly different nearest bearer.
+it.each(["missing", "ambiguous"])("retains unresolved %s nearest-anchor identity",async kind=>{
+ const session=await fixture();
+ const owner=session.roster.forces[0]!.selections[0]!;
+ const plate=owner.selections.find(s=>s.id === selectionOccurrenceId("plate"))!;
+ const { indexEvaluationChoices, rosterSelectionLocations }=await import("../../../packages/evaluation/src/selection-context.js");
+ const { resolveAffectsAnchor }=await import("../../../packages/evaluation/src/affects-routing.js");
+ const original=indexEvaluationChoices(session.catalogue.context);
+ const byKey=new Map(original.byKey);
+ const bearer=byKey.get(owner.definition.key)![0]!;
+ if(bearer.kind!=="selectionEntry") throw Error("Expected bearer entry");
+ if(kind==="missing") byKey.delete(owner.definition.key);
+ else byKey.set(owner.definition.key,[bearer,{...bearer,type:"upgrade",occurrence:{...bearer.occurrence}}]);
+ expect(resolveAffectsAnchor(plate,"model",rosterSelectionLocations(session.roster),{byKey,partial:false})).toEqual({kind:"unresolved"});
+});
