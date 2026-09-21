@@ -244,14 +244,9 @@ function createPinnedSource(): PinnedGitHubRepository {
 describe("upstream repository freshness", () => {
   const source = { owner: "BSData", repository: "wh40k-11e" };
 
-  it("reports when the repository was last pushed to", async () => {
+  it("reports the default branch snapshot with one bounded metadata request", async () => {
     const fetcher = vi.fn(async () =>
-      jsonResponse({
-        pushed_at: "2026-08-23T09:47:50Z",
-        default_branch: "main",
-        // Real payloads carry far more; only these two are read.
-        stargazers_count: 412,
-      }),
+      jsonResponse([{ sha: "a".repeat(40), commit: {committer: {date: "2026-08-23T09:47:50Z"}} }]),
     ) as unknown as RepositoryFetch;
 
     const status = await inspectGitHubRepositoryUpdate(source, {
@@ -263,8 +258,8 @@ describe("upstream repository freshness", () => {
       value: {
         owner: "BSData",
         repository: "wh40k-11e",
-        lastUpdatedAt: "2026-08-23T09:47:50Z",
-        defaultBranch: "main",
+        committedAt: "2026-08-23T09:47:50Z",
+        revision: "a".repeat(40),
       },
       diagnostics: [],
     });

@@ -1,5 +1,7 @@
+import { useMemo } from "react";
+import { CatalogueSourceStatus } from "./catalogue-source-status.js";
 import {
-  useCatalogueDataFreshness,
+  catalogueSourceContext,
   type CatalogueDataFreshnessOptions,
 } from "./catalogue-data-freshness.js";
 import type {
@@ -7,7 +9,7 @@ import type {
   LocalCatalogueLibrary,
 } from "./catalogue-library.js";
 import { DiagnosticList } from "./diagnostic-list.js";
-import { formatCount, formatTimestamp } from "./ui-format.js";
+import { formatCount } from "./ui-format.js";
 
 /**
  * Keeps exceptional import state and the uncommon multi-catalogue chooser near
@@ -19,20 +21,17 @@ export function CatalogueSetupContext({
   selectedCatalogue,
   onSelect,
   freshnessOptions,
+  sources,
 }: {
   readonly library: LocalCatalogueLibrary;
   readonly diagnostics: Parameters<typeof DiagnosticList>[0]["diagnostics"];
   readonly selectedCatalogue: LocalCatalogueChoice | undefined;
   readonly onSelect: (key: string) => void;
-  readonly freshnessOptions?: CatalogueDataFreshnessOptions;
+  readonly sources?: Parameters<typeof catalogueSourceContext>[1];
+  readonly freshnessOptions?: CatalogueDataFreshnessOptions | undefined;
 }) {
-  const freshness = useCatalogueDataFreshness(
-    library.importReport.importedAt,
-    freshnessOptions ?? {},
-  );
-  const importedCount = library.importReport.files.filter(
-    ({ status }) => status === "imported",
-  ).length;
+  const sourceContext = useMemo(() => selectedCatalogue === undefined ? undefined : catalogueSourceContext(selectedCatalogue, sources), [selectedCatalogue, sources]);
+  const importedCount = library.importReport.files.filter(({ status }) => status === "imported").length;
   const rejectedCount = library.importReport.files.length - importedCount;
   const showCatalogueChooser = library.selectableCatalogues.length > 1;
   const selectedGameSystemMissing =
@@ -66,7 +65,7 @@ export function CatalogueSetupContext({
         </div>
       )}
 
-      <CatalogueDataFreshnessNote freshness={freshness} />
+      <CatalogueSourceStatus context={sourceContext} options={freshnessOptions} />
 
       {rejectedCount > 0 && (
         <div className="catalogue-import-warning" role="alert">
@@ -112,44 +111,6 @@ export function CatalogueSetupContext({
         </details>
       )}
     </section>
-  );
-}
-
-/**
- * Says how current the data is, or says that it cannot tell.
- *
- * Both branches matter. Community catalogues follow Games Workshop's points
- * changes at their own pace, and a silent stale catalogue is how a list comes
- * out twenty points wrong. When upstream cannot be reached the honest fallback
- * is to say so plainly rather than to imply the data is current.
- */
-function CatalogueDataFreshnessNote({
-  freshness,
-}: {
-  readonly freshness: ReturnType<typeof useCatalogueDataFreshness>;
-}) {
-  if (freshness === undefined || freshness.kind === "checking") return null;
-  if (freshness.kind === "unknown") {
-    return (
-      <p className="catalogue-data-freshness" data-freshness="unknown">
-        Imported {formatTimestamp(freshness.importedAt)}. This data comes from
-        the community BSData project and <strong>may be out of date</strong> —
-        ForceWright could not reach GitHub to check.
-      </p>
-    );
-  }
-  if (!freshness.upstreamIsNewer) return null;
-  return (
-    <p
-      className="catalogue-data-freshness"
-      data-freshness="stale"
-    >
-      Imported {formatTimestamp(freshness.importedAt)}.{" "}
-      {freshness.owner}/{freshness.repository} was last updated{" "}
-      {formatTimestamp(freshness.lastUpdatedAt)}
-      , so <strong>newer catalogue data is available</strong>. Points can
-      change between releases.
-    </p>
   );
 }
 

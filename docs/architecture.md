@@ -2676,3 +2676,20 @@ with explicit root/descendant selection filtering inside that force. Roster
 bounds retain once-per-roster collection. Unsupported definition scopes are
 reported rather than skipped. Newly admitted parent bounds are static: category-
 relative modifier semantics and child-force traversal remain withheld.
+
+### Source provenance and read-only observations (SC-08)
+
+`catalogueSourceContext` projects the selected catalogue's game-system/catalogue-link
+closure to small scalar provenance. It validates canonical retained GitHub descriptors
+with repository-owned URL/path rules, requires a coherent closure and configured
+repository identity, and keeps loaded versus configured revisions separate. Saved
+source metadata already supplies this contract; no persistence migration or byte-cache
+invalidation. Active army context, not unrelated Browse state, owns the disclosure.
+
+`inspectGitHubRepositoryUpdate` now reads one bounded default-branch commit response,
+not repository push time. The web hook compares full revision equality on explicit
+Check/Retry only, retains time-labelled prior observations, and prevents aborted or
+replaced operations from updating state/cache. A 64-entry per-adapter in-memory cache
+is keyed by repository and loaded revision. No roster, source, autosave, recovery,
+evaluation or print mutation. Unknown provenance has no guessed network target.
+See [SC-08 evidence](qa/source-aware-freshness.md) for states and limitations.

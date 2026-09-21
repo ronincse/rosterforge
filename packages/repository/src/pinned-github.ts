@@ -268,81 +268,77 @@ export async function ingestDownloadedPinnedGitHubFile(
   return ingested;
 }
 
-/**
- * When the upstream repository last changed, without downloading any of it.
- *
- * This answers a freshness question, not an identity one: it says when
- * `owner/repository` was last pushed to, which a caller can compare against
- * when the user imported. It deliberately does **not** claim the user's files
- * came from that push — locally chosen files may be older, newer, or from
- * somewhere else entirely.
- *
- * One request. Asking per file would be exact but costs a request each, and
- * GitHub allows 60 an hour unauthenticated — 46 catalogue files would exhaust
- * that in a single check.
- */
+/** Default-branch snapshot identity, not evidence of selected-file changes. */
 export interface GitHubRepositoryUpdateStatus {
   readonly owner: string;
   readonly repository: string;
-  /** ISO-8601, from the repository's most recent push. */
-  readonly lastUpdatedAt: string;
-  readonly defaultBranch?: string;
+  readonly revision: GitCommitSha;
+  /** Commit metadata only; never compared with an acquisition date. */
+  readonly committedAt: string;
 }
 
-export function githubRepositoryUrl(source: {
-  readonly owner: string;
-  readonly repository: string;
-}): string {
+/** Constructs only the fixed public GitHub API endpoint. */
+export function githubRepositoryUrl(source: { readonly owner: string; readonly repository: string }): string {
   return `https://api.github.com/repos/${encodeURIComponent(source.owner)}/${encodeURIComponent(source.repository)}`;
 }
 
+/** Reads one default-branch commit identity, never source files. GitHub's list
+ * endpoint defaults to that branch and omits file diffs. One bounded request,
+ * no retries, redirects, per-file history or roster payload. Equal SHA means
+ * snapshot identity only; different SHA does not prove ancestry or file impact.
+ */
 export async function inspectGitHubRepositoryUpdate(
   source: { readonly owner: string; readonly repository: string },
   options: { readonly fetch?: RepositoryFetch; readonly signal?: AbortSignal } = {},
 ): Promise<Result<GitHubRepositoryUpdateStatus>> {
-  const fetcher = options.fetch ?? globalThis.fetch;
-  const url = githubRepositoryUrl(source);
-  const response = await fetchResponse(fetcher, url, options.signal);
+  const valid = pinGitHubRepository({ ...source, revision: "0".repeat(40) });
+  if (!valid.ok) return valid;
+  const url = `${githubRepositoryUrl(source)}/commits?per_page=1`;
+  const commits = await updateJson(options.fetch ?? globalThis.fetch, url, options.signal);
+  if (!commits.ok) return commits;
+  const record = Array.isArray(commits.value) && commits.value.length === 1 ? asRecord(commits.value[0]) : undefined;
+  const sha = record?.["sha"];
+  const committedAt = asRecord(asRecord(record?.["commit"])?.["committer"])?.["date"];
+  if (typeof sha !== "string" || !commitShaPattern.test(sha) || !validUpdateDate(committedAt)) return invalidUpdate(url);
+  return success({ owner: source.owner, repository: source.repository, committedAt, revision: sha as GitCommitSha });
+}
+
+/** Recovers our canonical retained download descriptor without following origin.
+ * This validates recorded provenance, not a cryptographic assertion about edits
+ * to an imported draft. Callers still apply their configured repository allowlist.
+ */
+export function identifyPinnedGitHubProvenance(source: SourceFileProvenance): { readonly repository: PinnedGitHubRepository; readonly path: string } | undefined {
+  if (source.kind !== "download") return undefined;
+  const match = /^download:github:([^/]+)\/([^@]+)@([0-9a-f]{40}):(.+)$/u.exec(source.sourceId);
+  if (!match) return undefined;
+  const pinned = pinGitHubRepository({owner: match[1]!, repository: match[2]!, revision: match[3]!});
+  const path = match[4]!;
+  if (!pinned.ok || !supportedExtensions.has(extensionOf(path)) || diagnoseRepositoryPath(path, defaultPinnedGitHubAcquisitionLimits.maxPathLength) || source.filename !== path || source.origin !== githubRawFileUrl(pinned.value, path)) return undefined;
+  return { repository: pinned.value, path };
+}
+
+async function updateJson(fetcher: RepositoryFetch, url: string, signal?: AbortSignal): Promise<Result<unknown>> {
+  const response = await fetchResponse(fetcher, url, signal);
   if (!response.ok) return response;
-
-  let payload: unknown;
-  try {
-    payload = await response.value.json();
-  } catch (error: unknown) {
-    return failure([
-      repositoryDiagnostic(
-        "REPOSITORY_GITHUB_UPDATE_INVALID",
-        "The GitHub repository metadata could not be read.",
-        ["import"],
-        { cause: errorMessage(error), url },
-      ),
-    ]);
-  }
-
-  const record =
-    typeof payload === "object" && payload !== null
-      ? (payload as Record<string, unknown>)
-      : undefined;
-  // `pushed_at` is the last push to any branch, which is the closest thing to
-  // "when did this data last change" without walking commits.
-  const pushedAt = record?.["pushed_at"];
-  if (typeof pushedAt !== "string" || !Number.isFinite(Date.parse(pushedAt))) {
-    return failure([
-      repositoryDiagnostic(
-        "REPOSITORY_GITHUB_UPDATE_INVALID",
-        "The GitHub repository metadata did not carry a usable update time.",
-        ["import"],
-        { url },
-      ),
-    ]);
-  }
-  const defaultBranch = record?.["default_branch"];
-  return success({
-    owner: source.owner,
-    repository: source.repository,
-    lastUpdatedAt: pushedAt,
-    ...(typeof defaultBranch === "string" ? { defaultBranch } : {}),
-  });
+  const redirect = diagnoseResponse(response.value, url);
+  if (redirect) return failure([redirect]);
+  const bytes = await readBoundedResponse(response.value, 64 * 1024, "REPOSITORY_GITHUB_UPDATE_INVALID", "Repository metadata exceeded its size limit.");
+  if (!bytes.ok) return bytes;
+  try { return success(JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes.value)) as unknown); }
+  catch { return invalidUpdate(url); }
+}
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+}
+function validUpdateDate(value: unknown): value is string {
+  // Accept a seconds-resolution ISO timestamp with UTC or an explicit offset.
+  // Validate the written calendar independently so Date.parse cannot repair it.
+  if (typeof value !== "string") return false;
+  const parts = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(Z|[+-](\d{2}):(\d{2}))$/u.exec(value);
+  return parts !== null && Number(parts[3] ?? 0) <= 23 && Number(parts[4] ?? 0) <= 59 && Number.isFinite(Date.parse(value)) && Number.isFinite(Date.parse(`${parts[1]}Z`)) && new Date(`${parts[1]}Z`).toISOString() === `${parts[1]}.000Z`;
+}
+function invalidUpdate(url: string): Result<never> {
+  return failure([repositoryDiagnostic("REPOSITORY_GITHUB_UPDATE_INVALID", "Repository metadata did not carry a usable snapshot identity or timestamp.", ["import"], {url})]);
 }
 
 export function githubRawFileUrl(

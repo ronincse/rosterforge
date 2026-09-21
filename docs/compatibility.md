@@ -95,7 +95,8 @@ retained; the completed reinforcement command has no reconciliation diagnostic.
 Marauders2/170 Foam ->4/320 ->2/170 also passed browser smoke. This is support for
 the evidenced shape, not complete StarCraft legality or full New Recruit parity.
 Source pins, seven unverified zero/hidden budget activations, orphan cost types,
-reference/freshness gaps and nine40k category bounds remain unchanged. See
+remaining reference-formatting gaps and nine40k category bounds remain unchanged.
+Repository observation reporting is now covered separately by SC-08 below. See
 [SC-04 evidence and limitations](qa/starcraft-reinforcement.md).
 
 ### Authored requirements (SC-01)
@@ -2189,3 +2190,16 @@ initialization warnings without claiming campaign compatibility.
 
 See [World Eaters warning QA](qa/world-eaters-warnings.md) for measured source shapes,
 regressions, browser observations and remaining limits.
+
+## Source-aware repository observations (SC-08)
+
+Retained canonical provenance identifies the selected document closure and its loaded
+revision for configured GitHub repositories. Check/Retry compares that recorded SHA
+with a default-branch snapshot, as of its check time. Different SHAs do not establish
+selected-file changes or chronology; matching SHAs do not certify publisher rules,
+saved byte authenticity or evaluator support. Import time never proves source age.
+Local/legacy/mixed/unresolved provenance remains unestablished without guessed requests.
+Unavailable checks remain unavailable; prior observations keep their original time.
+Saved older revisions are not relabelled with the current Browse pin. No updater,
+source replacement, migration, persisted check or printed live freshness claim.
+See [SC-08 evidence](qa/source-aware-freshness.md).

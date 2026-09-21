@@ -1731,3 +1731,13 @@ suppressing that conservative initialization-stage diagnostic.
 containing context, including missing/conflicting definitions and unknown entry
 types in constraint resolution. It withholds exact observed counts and keeps
 completeness incomplete. A known absent matching ancestor does not emit it.
+
+## Repository snapshot observation (SC-08)
+
+`REPOSITORY_GITHUB_UPDATE_INVALID` rejects malformed/missing snapshot identity or
+commit timestamp, invalid UTF-8/JSON, and metadata above the 64 KiB bound. Existing
+GitHub response/redirect/transport diagnostics remain in the repository adapter.
+The UI reports check unavailable (specific HTTP status when reliable; 429 as rate
+limited), never satisfied/current. Missing or mixed source provenance is an explicit
+unestablished source state, not a roster violation or evaluator completeness change.
+No automatic retry; a previous successful check remains labelled with its old time.

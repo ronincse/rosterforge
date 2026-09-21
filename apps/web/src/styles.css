@@ -5128,27 +5128,19 @@ footer {
   gap: 0.5rem;
 }
 
-/* How current the loaded catalogue data is. Stale is worth noticing without
-   being alarming: points drift between releases and a note is enough. */
+/* Source reporting is informational and separate from army validation. */
 .catalogue-data-freshness {
   max-width: 690px;
+  min-width: 0;
   margin: 10px 0 4px;
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
-
-.catalogue-data-freshness[data-freshness="stale"],
-.catalogue-data-freshness[data-freshness="unknown"] {
-  padding: 8px 10px;
-  border-left: 3px solid var(--warning, #b8860b);
-  background: rgba(184, 134, 11, 0.08);
-  border-radius: 0 4px 4px 0;
-}
-
-.catalogue-data-freshness strong {
-  color: var(--text);
-}
+.catalogue-data-freshness p { margin-block: 0.35rem; }
+.catalogue-data-freshness strong { color: var(--text); }
+.catalogue-data-freshness code { white-space: normal; }
 
 /* Budget editors wrap within the existing roster configuration width. */
 .resource-budgets { margin-block: 0.75rem; min-width: 0; }

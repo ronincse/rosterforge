@@ -1,3 +1,4 @@
+import { catalogueSourceContext } from "./catalogue-data-freshness.js";
 import { describe, expect, it, vi } from "vitest";
 import { createBrowserRemoteCatalogueMetadataCache, type BrowserRemoteMetadataCacheMetadataRecord } from "./browser-remote-metadata-cache.js";
 
@@ -56,9 +57,18 @@ describe("remote catalogue source", () => {
       expect(acquired.ok).toBe(true);
       if (!acquired.ok) throw new Error("Expected source closure");
       expect(acquired.value.closure.source).toMatchObject(source.repository);
+      const selected = acquired.value.library.selectableCatalogues.find(c=>c.key===acquired.value.selectedCatalogueKey)!;
+      expect(catalogueSourceContext(selected)).toMatchObject({eligible:true,source:source.repository});
       expect(fetcher).toHaveBeenCalledTimes(3);
       const repeat = await indexRemoteCatalogueSource(source, { importedAt, fetch: fetcher, cache, metadataCache });
       expect(repeat.ok && repeat.value.metadataCacheStatus).toBe("hit");
+      expect(fetcher).toHaveBeenCalledTimes(4);
+      if (!repeat.ok) throw Error("Expected warm source index");
+      const warm = await acquireRemoteCatalogue(repeat.value,"minimal.cat",{importedAt,batchId:source.id,fetch:fetcher,cache});
+      if (!warm.ok) throw Error("Expected warm source closure");
+      const warmChoice=warm.value.library.selectableCatalogues.find(c=>c.key===warm.value.selectedCatalogueKey)!;
+      expect(catalogueSourceContext(warmChoice)).toEqual(catalogueSourceContext(selected));
+      expect(warm.value.library.importReport.files.map(f=>f.sourceBytes)).toEqual(acquired.value.library.importReport.files.map(f=>f.sourceBytes));
       expect(fetcher).toHaveBeenCalledTimes(4);
     }
   });

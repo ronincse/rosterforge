@@ -15,38 +15,38 @@ import type { LocalCatalogueLibrary } from "./catalogue-library.js";
 afterEach(cleanup);
 
 describe("catalogue data freshness", () => {
-  const source = { owner: "BSData", repository: "wh40k-11e" };
+  // SC-08 compares recorded revisions; acquisition time is contextual only.
 
-  it("says newer data is available when upstream moved after the import", async () => {
+  it("reports a different repository snapshot without claiming selected files changed", async () => {
     renderPanel({
       importedAt: "2026-08-01T00:00:00.000Z",
-      fetch: jsonFetch({ pushed_at: "2026-08-23T09:47:50Z" }),
+      fetch: jsonFetch([{sha:"b".repeat(40),commit:{committer:{date:"2026-08-23T09:47:50Z"}}}]),
     });
 
-    const note = await screen.findByText(/last updated/u);
-    expect(note.textContent).toContain("BSData/wh40k-11e");
-    expect(note.textContent).toContain("newer catalogue data is available");
-    expect(note.parentElement?.dataset.freshness ?? note.dataset.freshness).toBe(
-      "stale",
-    );
+    fireEvent.click(screen.getByRole("button", {name:"Check source"}));
+    const note = await screen.findByText(/snapshot differs/u);
+    expect(screen.getByText("Source: BSData/wh40k-11e")).toBeTruthy();
+    expect(note.textContent).toContain("selected-file impact and revision chronology are not established");
+    expect(note.closest("section")?.dataset.freshness).toBe("differs");
   });
 
-  it("keeps a current import out of the player-facing setup", async () => {
-    const fetch = jsonFetch({ pushed_at: "2026-08-23T09:47:50Z" });
+  it("shows an explicit snapshot match even when acquisition is recent", async () => {
+    const fetch = jsonFetch([{sha:"a".repeat(40),commit:{committer:{date:"2026-08-23T09:47:50Z"}}}]);
     renderPanel({
       importedAt: "2026-08-23T12:00:00.000Z",
       fetch,
     });
 
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", {name:"Check source"}));
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledOnce();
     });
-    expect(screen.queryByText(/last updated/u)).toBeNull();
+    expect(await screen.findByText(/matches the checked repository snapshot/)).toBeTruthy();
   });
 
-  it("says the data may be out of date when GitHub cannot be reached", async () => {
-    // The fallback Stone asked for. Offline, rate-limited and blocked are
-    // indistinguishable here, and the honest thing left to say is the same.
+  it("keeps a failed check unavailable without claiming a match", async () => {
+    // A network exception does not establish whether this is offline or blocked.
     renderPanel({
       importedAt: "2026-08-01T00:00:00.000Z",
       fetch: vi.fn(async () => {
@@ -54,13 +54,10 @@ describe("catalogue data freshness", () => {
       }),
     });
 
-    await waitFor(() => {
-      expect(screen.getByText(/may be out of date/u)).toBeTruthy();
-    });
-    // The phrase sits inside a <strong>, so assert on the whole sentence.
-    const note = screen.getByText(/may be out of date/u).closest("p");
-    expect(note?.textContent).toContain("could not reach GitHub");
-    expect(note?.dataset.freshness).toBe("unknown");
+    fireEvent.click(screen.getByRole("button", {name:"Check source"}));
+    const note = await screen.findByText(/Check unavailable/u);
+    expect(note.textContent).toContain("Could not check this source");
+    expect(note.closest("section")?.dataset.freshness).toBe("unavailable");
     // It must not imply the data is current.
     expect(note?.textContent).not.toContain("this import is current");
   });
@@ -76,10 +73,9 @@ describe("catalogue data freshness", () => {
       <CatalogueSetupContext
         library={libraryFixture(importedAt)}
         diagnostics={[]}
-        selectedCatalogue={undefined}
+        selectedCatalogue={catalogueChoice("freshness", "Fixture", importedAt)}
         onSelect={vi.fn()}
         freshnessOptions={{
-          source,
           fetch: fetch as never,
         }}
       />,
@@ -162,17 +158,34 @@ function libraryFixture(importedAt: string): LocalCatalogueLibrary {
   } as unknown as LocalCatalogueLibrary;
 }
 
-function catalogueChoice(key: string, name: string) {
+function catalogueChoice(key: string, name: string, importedAt = "2026-08-23T12:00:00Z") {
+  const revision = "a".repeat(40);
+  const source = {sourceId:`download:github:BSData/wh40k-11e@${revision}:fixture.cat`, filename:"fixture.cat", kind:"download", importedAt, origin:`https://raw.githubusercontent.com/BSData/wh40k-11e/${revision}/fixture.cat`};
+  const document = {source};
+  const graph = {reachableDocumentsByDocument:new Map([[document,new Set([document])]]),references:[]};
   return {
+    source, document, context:{document,graph},
     key,
     name,
     materializationTruncated: false,
-  } as LocalCatalogueLibrary["selectableCatalogues"][number];
+  } as unknown as LocalCatalogueLibrary["selectableCatalogues"][number];
 }
 
 function currentFreshnessOptions() {
   return {
-    source: { owner: "BSData", repository: "wh40k-11e" },
-    fetch: jsonFetch({ pushed_at: "2026-08-01T00:00:00.000Z" }),
+    fetch: jsonFetch([{sha:"a".repeat(40),commit:{committer:{date:"2026-08-01T00:00:00Z"}}}]),
   };
 }
+
+it("SC-08 does not query a guessed repository for an unproven local import", async () => {
+ const { prepareLocalCatalogueLibrary } = await import("./catalogue-library.js");
+ const result = await prepareLocalCatalogueLibrary([
+  {filename:"local.gst",bytes:new TextEncoder().encode('<gameSystem id="g" name="G" revision="1" battleScribeVersion="2.03"/>')},
+  {filename:"local.cat",bytes:new TextEncoder().encode('<catalogue id="c" name="Local" gameSystemId="g" revision="1" battleScribeVersion="2.03"/>')},
+ ],{import:{batchId:"local",importedAt:"2026-09-20T00:00:00Z"}});
+ if(!result.ok) throw Error("Fixture import failed");
+ const fetch = vi.fn(async()=>new Response("{}",{status:503}));
+ render(<CatalogueSetupContext library={result.value} diagnostics={[]} selectedCatalogue={result.value.selectableCatalogues[0]} onSelect={vi.fn()} freshnessOptions={{fetch}}/>);
+ expect(fetch).not.toHaveBeenCalled();
+ expect(screen.getByText(/Repository freshness cannot be established/)).toBeTruthy();
+});

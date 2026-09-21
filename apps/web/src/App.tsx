@@ -1,4 +1,6 @@
-import { useEffect, useId } from "react";
+import { CatalogueSourceStatus } from "./catalogue-source-status.js";
+import { catalogueSourceContext, type CatalogueDataFreshnessOptions } from "./catalogue-data-freshness.js";
+import { useEffect, useId, useMemo } from "react";
 
 import type { BattleScribeForceDefinition } from "@rosterforge/data-graph";
 import type { Diagnostic } from "@rosterforge/foundation";
@@ -32,6 +34,7 @@ import {
 
 export type AppProps = RosterForgeAppControllerOptions &
   RemoteCatalogueSourceControllerOptions & {
+    readonly freshnessOptions?: CatalogueDataFreshnessOptions | undefined;
     readonly printRoster?: (roster: RosterPrintViewModel) => boolean;
   };
 
@@ -95,6 +98,8 @@ export function App(props: AppProps) {
     rosterSession.catalogue.key === selectedCatalogue?.key
       ? rosterSession
       : undefined;
+  const activeCatalogue = activeRosterSession?.catalogue;
+  const sourceContext = useMemo(() => activeCatalogue === undefined ? undefined : catalogueSourceContext(activeCatalogue, props.remoteSources), [activeCatalogue, props.remoteSources]);
   useEffect(() => {
     // A browser tab represents the object the player is working on. Keep the
     // library and an open roster distinct here as well as in the visible shell.
@@ -116,6 +121,7 @@ export function App(props: AppProps) {
             <div className="roster-screen-content">
               <RosterOverview
                 session={activeRosterSession}
+                sourceStatus={<CatalogueSourceStatus context={sourceContext} options={props.freshnessOptions} />}
                 diagnostics={rosterDiagnostics}
                 onClear={clearRoster}
                 onAddRootSelection={addRootSelection}
@@ -251,6 +257,8 @@ export function App(props: AppProps) {
               )}
               {loadState.kind === "loaded" && (
                 <LibraryWorkspace
+                  freshnessOptions={props.freshnessOptions}
+                  sources={props.remoteSources}
                   library={loadState.library}
                   diagnostics={loadState.diagnostics}
                   selectedCatalogue={selectedCatalogue}
@@ -272,6 +280,8 @@ export function App(props: AppProps) {
   );
 }
 function LibraryWorkspace({
+  freshnessOptions,
+  sources,
   library,
   diagnostics,
   selectedCatalogue,
@@ -279,6 +289,8 @@ function LibraryWorkspace({
   onSelect,
   onCreateRoster,
 }: {
+  readonly sources?: Parameters<typeof catalogueSourceContext>[1];
+  readonly freshnessOptions?: CatalogueDataFreshnessOptions | undefined;
   readonly library: LocalCatalogueLibrary;
   readonly diagnostics: readonly Diagnostic[];
   readonly selectedCatalogue: LocalCatalogueChoice | undefined;
@@ -294,6 +306,8 @@ function LibraryWorkspace({
     <div className="library-layout">
       <section className="catalogue-inspector" aria-label="Roster setup">
         <CatalogueSetupContext
+          freshnessOptions={freshnessOptions}
+          sources={sources}
           library={library}
           diagnostics={diagnostics}
           selectedCatalogue={selectedCatalogue}

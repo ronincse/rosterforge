@@ -155,6 +155,7 @@ function rosterSelectionChoiceGroupTree(
 }
 
 export function RosterOverview({
+  sourceStatus,
   session,
   diagnostics,
   onClear,
@@ -178,6 +179,7 @@ export function RosterOverview({
   draftActionMessage,
   draftActionDiagnostics = [],
 }: {
+  readonly sourceStatus?: import("react").ReactNode;
   readonly session: LocalRosterSession;
   readonly diagnostics: readonly Diagnostic[];
   readonly onClear: () => void;
@@ -911,6 +913,7 @@ export function RosterOverview({
           )}
         </div>
       </nav>
+      {sourceStatus}
       {(draftActionMessage !== undefined || isSavingDraft) && (
         <p className="draft-action-status" role="status">
           {draftActionMessage ?? "Saving roster draft..."}

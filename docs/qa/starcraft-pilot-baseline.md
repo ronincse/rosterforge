@@ -227,6 +227,10 @@ crossed in the browser; the same absent default-limit execution path applies.
 | SC-08 / low | Inherited freshness is 40k-specific: `catalogue-data-freshness.ts:55` defaults to source0; `catalogue-library-panel.tsx:135` offline prose says BSData | Bind freshness to acquired provenance or honestly suppress unknown-source claims; no updater |
 | SC-D1 | Source limitation: system12 vs declared13; five absent cost types/ten zero references | Preserve provenance/diagnostics; obtain corrected upstream snapshot only in a separately authorized pin update |
 
+Follow-up 2026-09-20: SC-08 is complete for retained-provenance and bounded
+repository-snapshot observations; see [SC-08 report](source-aware-freshness.md).
+The table above preserves the original baseline observation, not current behavior.
+
 Additional bounded gap: GST Deployment Maps conditions query `limit::<MineralsID>`
 (around line365). `conditions.ts:1070–1083` has no limit query field. Pre-game
 selection visibility/default completion needs its own budget-dependent probe;
