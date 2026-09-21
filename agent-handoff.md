@@ -34,7 +34,38 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-19 (shared engine batch delivered; stop)
+## Current Status — 2026-09-20 (SC-08 delivered; stop)
+
+SC-08 implementation `d5b65ed63b29ca3e26f849728632a170d61cb5e9` follows clean,
+upstream-equal pilot baseline `63aedea60b4a17dddd8c08e9c7b942a10044e464`; this
+separate handoff follows. Publish only `codex/starcraft-pilot`; confirm exact-final
+CI in the completion response/Actions. No other writer or newer pilot commit found.
+The print/UI task was idle at baseline and before publication.
+
+Loaded catalogue/army provenance now chooses the configured repository identity;
+retained immutable revisions never inherit today's Browse pin or import date.
+Explicit bounded Check/Retry reports snapshot match/difference as of a check time,
+unknown provenance, or unavailable. No per-file/chronology/publisher-rule claim,
+updater, persisted check or army/source mutation. See `docs/qa/source-aware-freshness.md`.
+
+All gates pass: normal 1,072 passed / 34 optional skips (107 files,13.00s);
+configured 1,106 passed / zero skips (107 files,50.00s,maxWorkers4). Lint/typecheck/
+build/whitespace pass; existing large-bundle advisory only. Independent tools-disabled
+Claude Opus 5 design and final code reviews completed; lead integrated bounded
+findings and reran gates. Frozen StarCraft and 40k A/B pins remain unchanged.
+
+Marines 6/160 ->6/180 Shield ->9/240 ->6/180 and Captain2+/FNP5+, ImpulsorD3/6
+remain verified. Prior explicit-self/rule precedence, routing, formatting and other
+StarCraft qualifications remain. Final owner print-layout acceptance is pending.
+No print change or new PDF claim. Isolated preview5295 stays running with disposable
+armies and live metadata mode; frozen acquisition replay is labelled in its QA bar.
+Existing origins, servers, tabs, armies and other worktrees remain intact.
+
+**Next authorized boundary: none. Stop after SC-08.** No main, PR, deployment,
+source update/migration, budget expansion, formatting or additional print work.
+
+### Historical 2026-09-19 status (shared engine batch delivered)
+
 
 Implementation A `5ed0c17` (test follow-ups `0b4115a`, `02e369e`, `cbca162`),
 B `ebdbc4d`; this separate handoff follows. All gates pass: normal 1,023 pass /
@@ -1319,7 +1350,7 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-05 XML predefined/numeric entity display | Done on pilot — checkpoint B | 887b376 decodes once before projection with bounded XML-only adapter, preserved CDATA/bytes/security, metadata4 rebuild and legacy exact-path ID compatibility; old copied/player labels remain literal; qa/starcraft-xml-text.md |
 | Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Partial on pilot — roles/order/layout delivered | Exact defining-context roles, static type ordering, longText/annotation, legacy/neutral fallback and nested group fields supported; seven format rules and dynamic hints remain unexecuted. qa/starcraft-reference-metadata.md; further work requires owner authorization |
-| SC-08 source-aware freshness | Open | Inherited default-source0/BSData copy is 40k-specific; bind to provenance without an updater |
+| SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Stop; no next checkpoint authorized |
 | SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
 
 ### Open questions needing the owner
@@ -6964,6 +6995,10 @@ date" note when the app cannot reach GitHub. The owner also wants direct loading
 from that repository eventually; that is a larger feature and can wait.
 
 ## Completed Assignment — Catalogue Data Freshness, 2026-08-23
+
+> Historical implementation superseded by SC-08 (2026-09-20): import time and
+> repository push time do not establish loaded catalogue freshness. Retained
+> provenance and explicit SHA observations replace this behavior; original evidence below is preserved.
 
 Baseline `46f8115`; resulting implementation commit `7b6ea64`.
 
@@ -16247,3 +16282,80 @@ mismatch, orphan costs, association and dynamic/zero-default budget limitations
 remain. Publish only codex/starcraft-pilot and confirm exact-final CI. No main,
 PR, deployment, persistence migration, new data, print tuning or next StarCraft
 capability. Final owner print-layout acceptance remains pending. Stop here.
+
+
+## Completed Assignment — SC-08 Source-Aware Freshness, 2026-09-20
+
+**Baseline and result.** Owner-authorized bounded checkpoint on `codex/starcraft-pilot`.
+Fetched clean/upstream-equal `63aedea60b4a17dddd8c08e9c7b942a10044e464`, inspected
+worktrees and active tasks; Redesign list-builder UI remained idle. No resets or
+other-worktree edits. Implementation/tests/contracts/report commit
+`d5b65ed63b29ca3e26f849728632a170d61cb5e9`; this separately reviewable handoff follows.
+Publish both only to pilot and confirm exact-final CI; receipt in completion/Actions.
+
+**Reproduced root cause.** Production setup did not pass the source override that
+some tests supplied. It defaulted all loaded imports to source0/BSData, compared
+`pushed_at` with batch import time, and inferred newer catalogue data. Local fictional
+XML failed before (one unsolicited guessed request) and passes after (zero). Reopened
+army had no status component after setup unmounted; no claim it always queried40k.
+The 2026-08-23 freshness entry is explicitly marked superseded; baseline SC-08 table
+remains historical with a link to the focused follow-up.
+
+**Decision.** Use existing canonical retained download kind/ID/origin/path, document
+closure and configured repository identity. No names/IDs/Browse-state inference.
+Keep loaded SHA, configured pin, import date and check time separate. One bounded
+64KiB default-branch commit query supports equality/difference, not selected-file
+change or revision chronology. Explicit Check/Retry only. Unknown/local/mixed context
+makes no guessed request; malformed/error responses remain unavailable. Previous
+observations keep old timestamps. Abort plus operation guards precede both state
+and cache writes; repository/revision cache bounded64, memory only. No storage,
+source-byte, budget, history, recovery, autosave, evaluator or print mutation.
+Rejected timestamp freshness, per-file/history engine, mint-only provenance changes,
+updater and storage migration. Existing restored descriptors suffice; source metadata
+is coherent recorded provenance, not authentication of manually changed saved bytes.
+
+**Evidence and browser.** `docs/qa/source-aware-freshness.md` has exact claims,
+reproduction/callers, coverage and review dispositions. Isolated5295 uses normal
+controls with verified immutable acquisition replay, not claimed live downloads.
+Live checks: SC99261754 matched; 40kA04c62fc differed from checked
+07656840caa938d5d9d495488be9719c7f75dbd3. SC remained authoritative after browsing40k;
+both games save/reload/Open retain own source. Creating an army during a setup check
+cancelled old work. Controlled429 explicitly mocked; previous success stayed labelled.
+All changes saved/180 minerals/history controls stayed intact after checking.
+Fictional local GST/CAT import named Terran stayed unknown; older disposable retained
+reference copy stayed unknown, no guessed request. 14units/2,000, Captain2+/FNP5+ and
+ImpulsorD3/6 preserved. Marines6/160 ->6/180 ->9/240 ->6/180. Desktop1440x1000 and
+phone390x844 source/failed/difference/disclosure inspected, viewport reset. No PDF
+regeneration/layout change. Original draft SHA256 remains
+9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c.
+
+**Independent review.** Claude Opus5 tools-disabled design then implementation review
+of bounded source/diff and fictional fixtures. No secrets, personal armies or bulk
+datasets transferred. Lead owns implementation/integration. Accepted endpoint/bounds,
+canonical URL reuse, unknown/failure guards, source-list ownership, timestamp offsets,
+local clock and recorded-provenance wording. Reviewer claim of absent acquisition
+blob verification disproved by repository-cache.ts. Reference-identity cancellation
+is deliberate with stable production memoization; broader framework not justified.
+Its final textual simulated Write block is not an executed tool call (tools disabled).
+No review-related provider installation, billing change or approval bypass.
+
+**Gates.** Final lint/typecheck/test/build/diff-check pass. Normal 1,072 passed/34
+optional skipped,99pass8skip files of107,13.00s. Configured1,106pass/zeroSkip/107files,
+50.00s,maxWorkers4. Variables: ROSTERFORGE_BSDATA_JSON_DIR E:/GitHub/wh40k-11e;
+ROSTERFORGE_CORRECTNESS_SNAPSHOTS C:/CodexACLTest/rf-data-parity-evidence-20260910;
+ROSTERFORGE_STARCRAFT_PILOT_DIR C:/CodexACLTest/starcraft-pilot-evidence/data;
+ROSTERFORGE_PRINT_DARK_ANGELS C:/CodexACLTest/rf-cost-evidence-20260911/cost-reference-draft.json.
+No PRINT_OUTPUT set. Frozen40kA04c62fc/B5b261ec manifest8files each and SC99261754
+four files verified, pins untouched. Fresh/warm acquisition, synthetic XML, JSON
+corpus, saved-old-revision, cache eviction/races, prices/Supporting, initialization,
+budgets, recovery, reference grouping and renderer timing all execute. Existing
+bundle-size advisory only. Early LF stylesheet regression and test descriptor type
+were corrected before final gates. No weakened or removed tests.
+
+**Stop and limitations.** No next checkpoint authorized. Repository observations do
+not establish selected-file age, publisher-rule currency, saved byte authenticity
+or full support. Source revision mismatch/orphan costs, zero/hidden default budgets,
+dynamic limits, imported formatting, broad typed semantics, rule precedence/routing
+and nine broader40k category requirements remain qualified. Owner print-layout
+acceptance remains pending. No main/PR/deployment/source update/migration/print work.
+Server5295 remains available; prior servers/worktrees/storage/tabs preserved.
