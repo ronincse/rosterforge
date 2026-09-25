@@ -34,51 +34,60 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-25 (pilot acceptance delivered; repairs not authorized)
+## Current Status — 2026-09-25 (bounded pre-game A/B repairs delivered)
 
-Tested application remains `1df38cfc58a8b7a2a6d18c24702a09f67434ce15`, fetched
-clean/upstream-equal. Report/contracts commit `a4d006a18374f2dd43a4db5360c8f7e03b807d35`;
-this separate handoff follows. Application code and all source pins are unchanged.
+Baseline `53d3e5f36f1dc0e4471e77fa3a395cfbcfe92a87` was fetched clean and
+upstream-equal; print/UI task idle at start and publication. A implementation
+`d62897995671c2eddf8731fff8e0baed5e962cd4`; B implementation
+`d28e3b7299236f46b4c7b6929cd4c25f2643b58f`; this separate handoff follows.
 Publish only `codex/starcraft-pilot`, confirm exact-final CI in completion/Actions.
-Print/UI task confirmed idle at baseline and publication; owner print acceptance
-is still pending. No merge/main/PR/deployment/source refresh/migration.
+No merge/main/PR/deployment/source refresh/migration. Owner print acceptance pending.
 
-**Recommendation B: complete-army acceptance blocked.** Ordinary live pinned
-StarCraft Browse succeeded on a fresh isolated origin; later factions used the
-ordinary verified cache. Browser-built/saved Protoss Khalai1220M/130G (limit1500),
-Terran Raiders570M/60G (limit600), Zerg Swarm520M/30G (limit600) agree with independent
-source ledgers. Invalid-to-repaired faction/supply/budget transitions, Marines
-6/160 →6/180 →9/240 →6/180, independent second squad, save/reopen/revise/history and
-Terran unsaved recovery passed. Dark Angels14units/2000, Captain2+/FNP5+, ImpulsorD3/6
-and Lieutenant/Intercessor effect smoke passed using a disposable original-source copy.
+**A: fixed for the evidenced static shared roster group shape.** Configuration and
+aggregate checks share the authored count. Maps/missions at zero or one violate;
+two satisfy; API excess violates. Counts pool concrete member amounts across shared
+group instances, not per-parent quotas or wrapper amounts. Missing/ambiguous identity,
+nonshared/unsupported traversal, modified bounds and multi-force contexts remain
+incomplete. Creation retains supported defaults and never invents two choices.
 
-New material findings: pre-game map/mission shared roster-scoped min/max2 groups
-are dropped before diagnosis and appear optional/complete; selected mission
-visibility rejects modifier `id` although limit conditions resolve; embedded map
-image payloads remain huge literal text in Compact. Seven default-zero/hidden
-counter activations remain unresolved and prevent full army acceptance. Exact
-IDs, ledgers, classifications and priority order are in
-`docs/qa/starcraft-pilot-acceptance.md`. No fix was made.
+**B: fixed for the evidenced mission visibility shape.** Exact modifier `id` is
+retained metadata in profile visibility. Ordinary screen/print references omit
+complete hidden variants; unresolved profiles stay qualified and raw source records
+remain inspectable. At Minerals limits 999/1000, Skirmish Level; at 1001/1500,
+Standard Engagement. Existing condition, routing and precedence boundaries remain.
 
-Normal gates:1072pass/34optionalSkip,107files,16.31s. Configured:1106pass/zeroSkip,
-107files,58.45s,maxWorkers4. Lint/typecheck/build/diff-check pass; existing bundle
-advisory only. Independent isolated native source/API reviewer ran two probes;
-lead reviewed/reran both (2pass,2.00s) and reviewer checked final report. No external
-review or independent browser-execution claim.
+The historical complete-army acceptance remains **B — blocked** by seven
+zero/hidden-default counter activations and literal embedded map payloads. Source
+revision mismatch, orphan cost types, imported formatting and unestablished rule
+precedence remain qualified. No counter activation or image rendering implemented.
+See `docs/qa/starcraft-pregame-requirements.md`; historical acceptance report intact.
 
-Plain Vite **http://127.0.0.1:5297/** is left running with three named SC samples
-and **Acceptance - Dark Angels reference copy** on its ordinary saved shelf.
-Historical5295 was not running; its QA replay was not restarted. One5297 Windows
-watcher error during fixture copying was recovered by restarting only this server.
-Source hashes and saved revision identities remain intact. Actual primary Compact
-HTML is retained locally; offline file opening was blocked by browser policy, no
-bypass or PDF/pagination claim. Screen combat-reference phone/desktop checks passed
-within qualifications. See report for artifact path and all retained evidence.
+Browser: new live pinned Protoss acquisition/configuration, missing/partial/completed
+requirements, remove/undo/redo, save/reopen and desktop/phone passed. Disposable
+acceptance copies reopened unchanged: Protoss 1220M/130G limit1500, Terran 570M/60G
+limit600, Zerg 520M/30G limit600. Constructed incomplete legacy-format copy reports
+both missing requirements. Protoss limit transitions/reset/restored1500 persist;
+selected pairs remain intact. Terran Compact HTML has two active Skirmish profiles,
+all seven fields and source mapping. No PDF/pagination/paper-ready claim.
 
-**Next authorized boundary: none. Stop after acceptance.** At most three recommended
-follow-ups: pre-game group uncertainty safeguard; counter activation evidence;
-mission modifier-ID/profile visibility. Map image policy remains separately recorded
-paper-usability work, not authorization for a print redesign or arbitrary rendering.
+Final normal suite:1095 pass/35 optional skips,109 files,25.12s. Final configured:
+1130 pass/zero skips,109 files,44.69s. Lint/typecheck/build/whitespace pass; existing
+bundle advisory only. Isolated native review found two A false-complete cases,
+fixed before commit, then no remaining blockers in A/B; final docs corrections
+applied. Claude tool-disabled review attempt failed OAuth refresh before inference;
+no external review claim, retries, installs or permission bypass.
+
+Plain Vite **http://127.0.0.1:5299/** remains running with five saved verification
+armies, all prefixed **SC Pregame -**: **Khalai setup**, **Protoss Khalai**,
+**Terran Raiders**, **Zerg Swarm**, **Incomplete legacy copy**. Completed copies were
+adapter-seeded through decoder/store, then opened normally; the incomplete copy is
+an explicit constructed fixture, not a discovered owner draft. Original5297 server,
+acceptance samples/storage/tabs and other worktrees preserved. All pinned source
+manifests match; 40k JSON checkout remains A.
+
+**Next authorized boundary: none. Stop after this A/B batch.** Counter activation
+and embedded-map interpretation need separate bounded assignments. No broad audit,
+print polishing, source update, migration or integration into main is authorized.
 
 ### Historical 2026-09-20 status (SC-08 delivered)
 
@@ -1391,16 +1400,16 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-02 parent category requirements | Done on pilot | Static shared parent min/max; Protoss/Terran definitions and distinct Zerg force link pass; parent modifiers/nonshared/child forces withheld; code491d6c8 |
 | Category-owned force/cost bounds beyond SC-02 | Open, separate owner assignment | Nine previously omitted40k source bounds now unresolved in pinned Guardian context; seven base -1, activation not established; no category-owned cost/force execution |
 | SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; unresolved source activation remains explicit |
-| SC-03/07 source-default activation and dynamic limits | Open; recommended second acceptance follow-up, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
+| SC-03/07 source-default activation and dynamic limits | Open; separate owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
 | SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
 | Typed-constraint unresolved containing scope | Done — checkpoint A | fa8ea58 propagates unknown location/type into incomplete unresolved counts, preserves known empty and existing traversal; 36 fictional tests and configured corpus pass; qa/typed-constraint-uncertainty.md |
 | SC-05 XML predefined/numeric entity display | Done on pilot — checkpoint B | 887b376 decodes once before projection with bounded XML-only adapter, preserved CDATA/bytes/security, metadata4 rebuild and legacy exact-path ID compatibility; old copied/player labels remain literal; qa/starcraft-xml-text.md |
 | Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Partial on pilot — roles/order/layout delivered | Exact defining-context roles, static type ordering, longText/annotation, legacy/neutral fallback and nested group fields supported; seven format rules and dynamic hints remain unexecuted. qa/starcraft-reference-metadata.md; further work requires owner authorization |
 | SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Accepted; unchanged by later acceptance |
-| Complete-army player acceptance | Done; recommendation B | Browser-built Protoss/Terran/Zerg arithmetic, lifecycle and combat-reference checks pass within boundary; complete validation/play blocked. qa/starcraft-pilot-acceptance.md; no runtime change or next repair authorized |
-| Pre-game shared roster-scoped group bounds | Open; recommended first safeguard, owner assignment required | Exact-two map/mission groups dropped before unsupported diagnosis; child inspection complete0..Infinity/optional. Preserve uncertainty at owning boundary; do not assume broad roster-group semantics |
-| Mission profile visibility / modifier ID | Open; recommended third follow-up, owner assignment required | Selected Divide and Conquer/Frontlines both size variants unresolved because modifier id is rejected; limit predicates themselves complete. Verify inert-ID handling with bounded visibility tests |
+| Complete-army player acceptance | Historical report accepted; recommendation B remains | Arithmetic/lifecycle/combat reference passed within boundary. Pre-game A/B repairs now delivered separately; counter activation and literal map images still block complete acceptance. qa/starcraft-pilot-acceptance.md and qa/starcraft-pregame-requirements.md |
+| Pre-game shared roster-scoped group bounds | Fixed on pilot for evidenced static shape — A | d628979: shared roster min/max with child-selection inclusion, one unnested force, exact source identity; member amounts pooled across wrappers, configuration/aggregate results agree. Modified, nonshared, unsupported traversal/multi-force or uncertain context remains incomplete. qa/starcraft-pregame-requirements.md |
+| Mission profile visibility / modifier ID | Fixed on pilot for evidenced shape — B | d28e3b7: exact id retained as metadata, complete hidden variants omitted through shared screen/print predicate, raw records retained. Unknown behavior/conditions/carriers/precedence remain qualified. qa/starcraft-pregame-requirements.md |
 | Embedded map reference usability | Open; recorded paper blocker, separate owner assignment | Source Markdown/data-image fields render literal payloads (primary50013/49854characters). Safe source content retained; needs bounded rendering/policy evidence, no arbitrary imported images or print redesign |
 | SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
 
@@ -16414,6 +16423,11 @@ Server5295 remains available; prior servers/worktrees/storage/tabs preserved.
 
 ## Completed Assignment — StarCraft Complete-Army Pilot Acceptance, 2026-09-25
 
+**Historical status:** the later owner-authorized pre-game A/B batch repairs the
+dropped group requirements and evidenced modifier-ID visibility defect. Its entry
+below supersedes the no-repair authorization boundary; counter/map blockers and
+the original failed acceptance evidence remain valid.
+
 **Baseline/result.** Owner authorized acceptance only, no application repair.
 Fetched/inspected clean upstream-equal `1df38cfc58a8b7a2a6d18c24702a09f67434ce15`,
 worktrees/processes and idle print/UI task; rechecked idle before publication.
@@ -16504,3 +16518,95 @@ activation evidence, mission modifier-ID visibility. Map rendering remains separ
 recorded paper blocker, no promise those three alone complete paper readiness. No
 repairs, dependency/provider install, broader audit, source refresh, main/PR/deploy,
 print polishing or migration. Stop; further implementation needs owner instruction.
+
+## Completed Assignment — StarCraft pre-game requirements and mission visibility, 2026-09-25
+
+**Baseline and publication.** Began at fetched clean/upstream-equal
+`53d3e5f36f1dc0e4471e77fa3a395cfbcfe92a87`; no reset to historical app1df38cf.
+Actual worktrees/processes inspected, print/UI task idle at start and before
+publication. A `d62897995671c2eddf8731fff8e0baed5e962cd4`, B
+`d28e3b7299236f46b4c7b6929cd4c25f2643b58f`, then this separate handoff.
+Publish only pilot and verify CI for the exact final handoff commit in Actions;
+local results below are not a claim that remote CI has already completed.
+
+**A cause and decision.** `selectionBounds` discarded non-parent group bounds
+before diagnosis. Flattened groups have no durable occurrence for general
+validation to recover, so omitted requirements appeared complete/optional. Five
+fictional pre-fix assertions failed; frozen maps/missions reproduced the omission.
+Established static shared roster min/max with child inclusion uses the existing
+source-path frontier membership helper, counts concrete member amounts across
+shared instances, and excludes wrapper/parent amount multiplication and concrete
+member descendants. Configuration and structural findings consume shared results;
+retained-wrapper general reports are deduplicated by authored source identity.
+No hard-coded names/IDs/two-choice rules. No arbitrary initialization defaults.
+Unsupported requirements now qualify the owning group and aggregate completeness.
+
+Independent review caught context-varying own limits coalesced across wrappers and
+omitted distant selected-ancestor modifiers. The final boundary is static bounds
+with no targeting own/selected-ancestor modifiers, one unnested force, unambiguous
+source identity. Nonshared/traversal/mixed domains and unresolved group links remain
+incomplete. This was chosen over pretending roster scope is per-parent, choosing
+arbitrary defaults, or merely emitting warnings when exact supported counts exist.
+A focused16 tests pass; independent32 tests across2 files overlap primary coverage.
+40k Guardian Defenders now exposes nine previously dropped self-scope requirements
+as diagnostics while preserving33 initialized additions/41 occurrences and exact
+defaults. A final configured1122 pass, zero skips,108 files,41.41s; all gates pass.
+
+**B cause and decision.** Only exact visibility-modifier `id` is recognized as
+identity metadata; original projection/bytes stay intact. Source/editor evidence
+supports the inert identity interpretation; no broad attribute-suffix exception.
+Existing visibility evaluation handles the two missions' complete Minerals-limit
+predicates. A shared app predicate excludes only complete known-hidden profiles
+from ordinary unit/supplementary/print references. Raw inspection/technical details
+retain records; uncertain profiles stay visible. No mission-name filter, guessed
+budget, evaluator bypass or new rendering privilege. Seven fictional ingestion/API/
+UI/HTML tests include linked/grouped visibility; frozen integration checks60 profile
+observations across three factions and five limits. Existing target/carrier/routing,
+reference fields, safe text and uncertainty coverage retained.
+
+**Browser/lifecycle.** Lead used ordinary live pinned StarCraft acquisition on fresh
+5299 and created SC Pregame - Khalai setup. Empty/partial/complete requirements,
+actionable problem routing, disabled excess controls, remove/undo/redo and
+save/reopen passed. No arbitrary map/mission autofill. Accepted samples copied with
+separate IDs/names using production decoder/store on5299, then normal Open:
+Protoss1220M/130G/limit1500, Terran570M/60G/limit600, Zerg520M/30G/limit600.
+Pairs retained (ProtossAcropolis/Breach; Terran/ZergAbandonedCamp/AgriaValley;
+allDivideAndConquer/Frontlines). Protoss999/1000 Skirmish,1001 Standard, reset2000,
+restore1500/save/reopen Standard; spending stayed1220 and choices persisted.
+Terran/Zerg showed two Skirmish profiles. Constructed incomplete legacy-format
+Zerg copy (only map/mission children removed, fixture history cleared) reopened with
+two missing requirements and unchanged520M/30G. No claim of finding an existing
+owner incomplete draft. Phone390x844 and desktop1280x720 inspected. Terran actual
+Compact HTML contains active profiles/all seven fields/P3/P4-to-U2 mapping; map
+payload remains literal. No PDF or pagination claim. Full details in focused report.
+
+**Review and final gates.** Native reviewer isolated at
+C:/CodexACLTest/starcraft-pregame-review-20260925. Lead primary implementation;
+reviewer challenged source identity/shared scope, unknown-vs-empty, deduplication,
+modifier metadata and screen/print agreement. B final58 focused tests plus linked/
+grouped challenge and20 frozen comparisons passed (overlap; not additive totals).
+Final docs review corrected diagnostic name and overbroad attribute wording. One
+sanitized tool-disabled Claude CLI attempt failed expired OAuth refresh before
+inference; no repeated launcher retry, provider install/billing change or bypass.
+
+Final normal1095 pass/35 opt-in skips,109 files,25.12s; configured1130 pass/zero
+skips,109 files,44.69s. Lint/typecheck/build/diff-check passed; existing chunk-size
+advisory only. Configured inputs (all vars prefixed ROSTERFORGE_): BSDATA_JSON_DIR
+E:/GitHub/wh40k-11e; CORRECTNESS_SNAPSHOTS C:/CodexACLTest/rf-data-parity-evidence-20260910;
+STARCRAFT_PILOT_DIR C:/CodexACLTest/starcraft-pilot-evidence/data; PRINT_DARK_ANGELS
+C:/CodexACLTest/rf-cost-evidence-20260911/cost-reference-draft.json. No PRINT_OUTPUT.
+Original file lengths/SHA-256 match all manifests: SC99261754 four XML plus README,
+40k A04c62fcd eight files, B5b261ec eight files; JSON checkout HEAD remains A.
+Final test logs C:/CodexACLTest/pregame-A-final-tests.log,
+pregame-B-normal.log and pregame-B-final-configured.log. Configured coverage protects
+pricing, initialization, budgets, Captain/rule labels, Supporting/effects, Marines,
+faction/supply, history/recovery, XML safety/reference grouping and renderer timing.
+
+**Retained output and stop.** Plain Vite5299 PID63336 and the five SC Pregame drafts
+listed in Current Status remain for owner testing; original5297 PID56784 preserved.
+No owner armies/storage/tabs/source bytes changed. Complete-army acceptance remains
+B blocked: seven zero/hidden counter activations and map embedded-image policy need
+separate assignments. Dynamic limits, multi-force semantics, imported formatting,
+unestablished precedence, source revision mismatch and orphan cost types remain
+qualified. Owner print acceptance remains pending. Stop after this batch; no source
+update, migration, another audit, print work, main/PR/merge/deployment or next repair.
