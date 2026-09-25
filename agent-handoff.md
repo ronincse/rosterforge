@@ -34,60 +34,62 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-25 (bounded pre-game A/B repairs delivered)
+## Current Status — 2026-09-25 (source-default counter activation delivered)
 
-Baseline `53d3e5f36f1dc0e4471e77fa3a395cfbcfe92a87` was fetched clean and
-upstream-equal; print/UI task idle at start and publication. A implementation
-`d62897995671c2eddf8731fff8e0baed5e962cd4`; B implementation
-`d28e3b7299236f46b4c7b6929cd4c25f2643b58f`; this separate handoff follows.
-Publish only `codex/starcraft-pilot`, confirm exact-final CI in completion/Actions.
-No merge/main/PR/deployment/source refresh/migration. Owner print acceptance pending.
+Clean/upstream-equal baseline `87f04a84e5fd573246dab7e25bc11f0e76fca3fb`;
+evidence commit `d3b43fa8156145deb2c98f21dab7c1f41192bda9`; implementation
+`46de872b5c9c5d8d61161fca128e21d30e402d1c`; this separate handoff follows.
+Only `codex/starcraft-pilot` is authorized for publication. Exact-final CI is
+confirmed in completion/Actions. Print/UI task was idle; owner print acceptance
+remains pending. No source update, migration, main/PR/merge/deployment.
 
-**A: fixed for the evidenced static shared roster group shape.** Configuration and
-aggregate checks share the authored count. Maps/missions at zero or one violate;
-two satisfy; API excess violates. Counts pool concrete member amounts across shared
-group instances, not per-parent quotas or wrapper amounts. Missing/ambiguous identity,
-nonshared/unsupported traversal, modified bounds and multi-force contexts remain
-incomplete. Creation retains supported defaults and never invents two choices.
+**Resolved for the evidenced static source shape.** Known base-visible source
+zero is a real cap. Base-hidden defaults are inactive even when a supported
+unconditional operation reveals display. Authored values, source inclusion,
+display visibility, player overrides and effective maxima remain distinct.
+Completed-army absent/inactive queries return -1; explicit player0 is a cap,
+-1 unbounded. Reset derives the retained-source state. No saved-data migration or
+silent override insertion. Conditional/conflicting/unknown activation and dynamic
+limits stay qualified; exact unknown cost-type/modifier attributes and unknown
+behavioral elements cannot be bypassed by an override.
 
-**B: fixed for the evidenced mission visibility shape.** Exact modifier `id` is
-retained metadata in profile visibility. Ordinary screen/print references omit
-complete hidden variants; unresolved profiles stay qualified and raw source records
-remain inspectable. At Minerals limits 999/1000, Skirmish Level; at 1001/1500,
-Standard Engagement. Existing condition, routing and precedence boundaries remain.
+Primary evidence is hashed public New Recruit `nr@36.25` creation, validation,
+query and normal save/reselect methods, plus an independently executed12-row
+fictional matrix. A transient pre-save hidden query reads0; completed creation
+normalizes it to-1. This is explicitly not full New Recruit fictional XML/browser
+parity: directory upload remained unavailable. Normal live Gas30/cap10 violation
+and cap30 repair corroborated enforcement. See `docs/qa/starcraft-counter-activation.md`.
 
-The historical complete-army acceptance remains **B — blocked** by seven
-zero/hidden-default counter activations and literal embedded map payloads. Source
-revision mismatch, orphan cost types, imported formatting and unestablished rule
-precedence remain qualified. No counter activation or image rendering implemented.
-See `docs/qa/starcraft-pregame-requirements.md`; historical acceptance report intact.
+All seven frozen counters (Core/Elite/Support/Hero/CP/BM/EN) resolve inactive,
+query-1, retain exact signed totals and add no maximum violations. Unchanged
+copied armies: Protoss1220M/1500 and130G/200; Terran570M/600 and60G/200;
+Zerg520M/600 and30G/200. Shared validation61/36/55 satisfied, zero violated/
+unresolved respectively. Terran's separate orphan cost types still qualify costs
+and workspace/print coverage. Map/mission requirements, mission thresholds,
+faction/supply, reinforcement and independent squads remain protected.
 
-Browser: new live pinned Protoss acquisition/configuration, missing/partial/completed
-requirements, remove/undo/redo, save/reopen and desktop/phone passed. Disposable
-acceptance copies reopened unchanged: Protoss 1220M/130G limit1500, Terran 570M/60G
-limit600, Zerg 520M/30G limit600. Constructed incomplete legacy-format copy reports
-both missing requirements. Protoss limit transitions/reset/restored1500 persist;
-selected pairs remain intact. Terran Compact HTML has two active Skirmish profiles,
-all seven fields and source mapping. No PDF/pagination/paper-ready claim.
+All normal gates pass:1108 normal tests pass/35 optional skips,110 files,15.48s;
+configured1143 pass/zero skips,110 files,47.10s. Lint/typecheck/build/diff-check
+pass; existing bundle advisory only. All immutable manifests/pins unchanged.
+Independent isolated native review found two unknown-syntax override bypasses,
+both fixed; final30 focused tests passed independently, plus final UI/report
+review with no blocker. One Claude attempt failed OAuth refresh before inference;
+no external review claim, repeated retry, provider/billing change or bypass.
 
-Final normal suite:1095 pass/35 optional skips,109 files,25.12s. Final configured:
-1130 pass/zero skips,109 files,44.69s. Lint/typecheck/build/whitespace pass; existing
-bundle advisory only. Isolated native review found two A false-complete cases,
-fixed before commit, then no remaining blockers in A/B; final docs corrections
-applied. Claude tool-disabled review attempt failed OAuth refresh before inference;
-no external review claim, retries, installs or permission bypass.
+Browser output: **http://127.0.0.1:5301/** remains running (PID60624), five
+saved disposable armies prefixed **SC Counter -**: Protoss Khalai, Terran Raiders,
+Zerg Swarm, Incomplete legacy copy, Fresh Zerg. First four are adapter-seeded
+copies of exported test fixtures; Fresh Zerg was created normally from retained
+pinned context and intentionally retains three missing setup requirements and
+explicit BM0. Counter0/-1/reset/undo/redo, recovery and save/reopen passed.
+Original5297 PID56784 and5299 PID63336, their samples/tabs/storage and other
+worktrees were preserved. No new print layout or PDF matrix was required.
 
-Plain Vite **http://127.0.0.1:5299/** remains running with five saved verification
-armies, all prefixed **SC Pregame -**: **Khalai setup**, **Protoss Khalai**,
-**Terran Raiders**, **Zerg Swarm**, **Incomplete legacy copy**. Completed copies were
-adapter-seeded through decoder/store, then opened normally; the incomplete copy is
-an explicit constructed fixture, not a discovered owner draft. Original5297 server,
-acceptance samples/storage/tabs and other worktrees preserved. All pinned source
-manifests match; 40k JSON checkout remains A.
-
-**Next authorized boundary: none. Stop after this A/B batch.** Counter activation
-and embedded-map interpretation need separate bounded assignments. No broad audit,
-print polishing, source update, migration or integration into main is authorized.
+**Complete-army acceptance remains blocked by embedded map-image output.**
+Source revision mismatch, orphan cost types, unestablished rule precedence/routing
+and formatting remain qualified. Accepted pre-game A/B behavior is preserved.
+**Next authorized boundary: none. Stop after counter activation.** No map images,
+source update, broad audit, print work or integration into main is authorized.
 
 ### Historical 2026-09-20 status (SC-08 delivered)
 
@@ -1399,15 +1401,16 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-01 authored requirements | Done on pilot | Direct force add-error conditions and signed static queries; browser negative/repair/save reopen; unknown shapes incomplete; code39b2009 |
 | SC-02 parent category requirements | Done on pilot | Static shared parent min/max; Protoss/Terran definitions and distinct Zerg force link pass; parent modifiers/nonshared/child forces withheld; code491d6c8 |
 | Category-owned force/cost bounds beyond SC-02 | Open, separate owner assignment | Nine previously omitted40k source bounds now unresolved in pinned Guardian context; seven base -1, activation not established; no category-owned cost/force execution |
-| SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; unresolved source activation remains explicit |
-| SC-03/07 source-default activation and dynamic limits | Open; separate owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
+| SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; static activation completed in46de872, unsupported dynamic activation remains explicit |
+| SC-03/07 static source-default activation | Done for evidenced shape | Visible zero is a cap; base-hidden defaults inactive despite direct reveal; completed query-1. Seven counters resolved generically, explicit0/-1/reset/history/reopen preserved. Evidence d3b43fa; code46de872; qa/starcraft-counter-activation.md |
+| Dynamic/conditional resource activation and limits | Open; separate owner assignment required | Conditional/grouped/conflicting or unknown activation, dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics; no general visibility recursion |
 | SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
 | Typed-constraint unresolved containing scope | Done — checkpoint A | fa8ea58 propagates unknown location/type into incomplete unresolved counts, preserves known empty and existing traversal; 36 fictional tests and configured corpus pass; qa/typed-constraint-uncertainty.md |
 | SC-05 XML predefined/numeric entity display | Done on pilot — checkpoint B | 887b376 decodes once before projection with bounded XML-only adapter, preserved CDATA/bytes/security, metadata4 rebuild and legacy exact-path ID compatibility; old copied/player labels remain literal; qa/starcraft-xml-text.md |
 | Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Partial on pilot — roles/order/layout delivered | Exact defining-context roles, static type ordering, longText/annotation, legacy/neutral fallback and nested group fields supported; seven format rules and dynamic hints remain unexecuted. qa/starcraft-reference-metadata.md; further work requires owner authorization |
 | SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Accepted; unchanged by later acceptance |
-| Complete-army player acceptance | Historical report accepted; recommendation B remains | Arithmetic/lifecycle/combat reference passed within boundary. Pre-game A/B repairs now delivered separately; counter activation and literal map images still block complete acceptance. qa/starcraft-pilot-acceptance.md and qa/starcraft-pregame-requirements.md |
+| Complete-army player acceptance | Historical report accepted; recommendation B remains | Arithmetic/lifecycle/combat reference passed within boundary. Pre-game A/B repairs now delivered separately; counter activation now resolved for evidenced static shape; literal map images still block complete acceptance. qa/starcraft-pilot-acceptance.md, qa/starcraft-pregame-requirements.md and qa/starcraft-counter-activation.md |
 | Pre-game shared roster-scoped group bounds | Fixed on pilot for evidenced static shape — A | d628979: shared roster min/max with child-selection inclusion, one unnested force, exact source identity; member amounts pooled across wrappers, configuration/aggregate results agree. Modified, nonshared, unsupported traversal/multi-force or uncertain context remains incomplete. qa/starcraft-pregame-requirements.md |
 | Mission profile visibility / modifier ID | Fixed on pilot for evidenced shape — B | d28e3b7: exact id retained as metadata, complete hidden variants omitted through shared screen/print predicate, raw records retained. Unknown behavior/conditions/carriers/precedence remain qualified. qa/starcraft-pregame-requirements.md |
 | Embedded map reference usability | Open; recorded paper blocker, separate owner assignment | Source Markdown/data-image fields render literal payloads (primary50013/49854characters). Safe source content retained; needs bounded rendering/policy evidence, no arbitrary imported images or print redesign |
@@ -15654,6 +15657,9 @@ Next recommendation SC03/07 only after owner assignment. Stop here.
 
 ## Completed Assignment — 2026-09-14: SC-03/07 budgets, limit queries and durable controls
 
+> Historical activation uncertainty superseded for the evidenced static shape by
+> the 2026-09-25 counter-activation checkpoint below. Other boundaries remain.
+
 > Historical SC04 six-model/230 assertions below are superseded by the SC04
 > completion entry. Budget acceptance and its remaining boundaries are unchanged.
 
@@ -16521,6 +16527,9 @@ print polishing or migration. Stop; further implementation needs owner instructi
 
 ## Completed Assignment — StarCraft pre-game requirements and mission visibility, 2026-09-25
 
+> Historical remaining-work note: the later counter-activation checkpoint resolves
+> the seven static defaults. A/B acceptance and the map-image blocker remain.
+
 **Baseline and publication.** Began at fetched clean/upstream-equal
 `53d3e5f36f1dc0e4471e77fa3a395cfbcfe92a87`; no reset to historical app1df38cf.
 Actual worktrees/processes inspected, print/UI task idle at start and before
@@ -16610,3 +16619,97 @@ separate assignments. Dynamic limits, multi-force semantics, imported formatting
 unestablished precedence, source revision mismatch and orphan cost types remain
 qualified. Owner print acceptance remains pending. Stop after this batch; no source
 update, migration, another audit, print work, main/PR/merge/deployment or next repair.
+
+
+## Completed Assignment — Source-default counter activation, 2026-09-25
+
+**Baseline/publication.** Started clean/equal on87f04a84e5fd573246dab7e25bc11f0e76fca3fb;
+fetch/worktrees/writers inspected, print/UI idle, no newer work reset. Primary
+implementation stayed in C:/CodexACLTest/forcewright-starcraft-pilot. Independent
+native investigation/review isolated in starcraft-counter-review-20260925.
+Evidence/fictional bytes committed separately asd3b43fa8156145deb2c98f21dab7c1f41192bda9;
+shared implementation/tests/contracts as46de872b5c9c5d8d61161fca128e21d30e402d1c.
+This handoff follows. Publish only pilot and confirm exact-final CI; no other
+writer's commits included. No source, storage-format or lifecycle-schema change.
+
+**Decision and rejected alternatives.** The seven original definitions share
+zero/base-hidden/direct reveal exactly. Public NR nr@36.25 getCosts/loadBook
+filters base-hidden before default initialization. Zero survives visible default
+selection and creates a real maximum; reveal only changes display. Original
+ordinary queries read0 before initialization, then normal completed creation
+serializes/reselects all cost identities and setMaxCosts normalizes omitted values
+to-1. This subtle lifecycle distinction is recorded, not collapsed into a blanket
+"NR always returns -1" claim. Independent exact-method execution on12 fictional
+rows (absent/0/3/-1 × visible/hidden/reveal), positive5→2→5 controls, explicit0/-1,
+and three save/reopen rounds established the bounded completed-army contract.
+No guessed second evaluator, name/ID exceptions, max0 suppression, in-game spending
+semantics, or general conditional visibility/fixpoint engine. Folder chooser probe
+failed once per available IAB/Edge route; no hidden-state injection or repeated
+bypass. Live NR Gas30/cap10→30 control corroborates validation, not immutable
+catalogue parity. See focused report for hashes, exact call chain and limitations.
+
+**Implementation.** Shared resolver separates authored numeric limit, source
+inclusion, display visibility, explicit override and effective absent/inactive/
+unbounded/finite/invalid/unresolved state. A bounded direct static visibility
+adapter inspects saved ordered nodes only; no dependency on conditions/costs.
+Known absent/inactive completed query is-1; active zero remains0. Budgets, UI,
+configuration, supported validation and print model share that state. Known zero
+caps bypass the old Battle Size pending-label heuristic for the same currency;
+independent Battle Size/force/category bounds remain. Unknown cost-type/modifier
+attributes and unknown behavioral elements retain uncertainty even with overrides.
+Original bytes/pins, source IDs, player choices, history, recovery and associations
+are unchanged. Reset removes only the explicit override. No silent default writes,
+new persistence field, storage clearing or migration.
+
+**Evidence/tests.** Before repair, fictional shared matrix/lifecycle reproduction
+2failed/4passed; after repair all pass. Twelve matrix rows, unsupported conditional/
+conflicting/grouped activation, malformed metadata, ambiguous identity, unknown
+attributes/elements, real App history controls and source re-ingestion/restore are
+covered. Four pinned negative-supply channels each remain independent of explicit
+maximum0, including negative→zero transitions; positive supply plus maximum0 gives
+budget violation without supply error. Configured Marines6/160→shield6/180→9/240→
+removal6/180 and independent squads retained; mission999/1000 versus1001/1500,
+pre-game requirements, Captain/rule labels, Supporting/effects, 40k Battle Size,
+pricing, persistence/recovery, freshness, renderer safety and print content pass.
+
+Lead browser on fresh5301 opened three copied fixtures through normal shelf:
+Protoss1220M/130G limit1500; Terran570M/60G limit600; Zerg520M/30G limit600.
+All seven query-1/inactive with exact original signed ledgers (report table).
+Shared checks61/36/55 satisfied,0 violations/unresolved; Terran separate excluded
+cost types still produce limited workspace/print coverage. Protoss Core0 violated,
+-1 unbounded, reset inactive, undo/redo correct. Fresh normal Zerg BM0 recovered
+in a new page and saved/reopened; maps/missions/faction still3 violations.
+Terran569 Minerals cap violated and600 repaired; remove Barracks Core-1 error,
+undo→0 cleared, explicitly saved restored copy. Mission card at600 remains
+Skirmish with fields intact. Supplemental read-only test of copied source files
+recorded all hashes, limits, totals and shared print status,1pass/1.80s. No source
+bytes/army contents were printed to third-party review. No actual PDF pagination,
+phone/device re-audit or owner print-layout acceptance claimed.
+
+**Review/gates.** One tools-disabled sanitized Claude attempt failed OAuth refresh
+before inference; not code rejection, no retry/install/credential/billing work.
+Isolated native reviewer challenged activation vs display/lifecycle, unknown source
+behavior behind overrides, explicit0, query agreement and legacy context. Found
+unknown attribute then direct-child bypass; both reproduced/fixed and final30
+focused tests independently passed (2files,1.44s). Final sticky-zero consumer and
+report reviewed without blocker. Lead reviewed/reran relevant tests.
+Normal1108pass/35optional skips,110files,15.48s; configured1143pass/zero skips,
+110files,47.10s (populations overlap). The35 opt-ins cover pinned JSON/40k A+B,
+SC XML and saved print references; all executed in configured run. Lint/typecheck/
+build/whitespace pass,202modules, existing large-chunk advisory only.
+Configured env: ROSTERFORGE_BSDATA_JSON_DIR=E:/GitHub/wh40k-11e;
+ROSTERFORGE_CORRECTNESS_SNAPSHOTS=C:/CodexACLTest/rf-data-parity-evidence-20260910;
+ROSTERFORGE_STARCRAFT_PILOT_DIR=C:/CodexACLTest/starcraft-pilot-evidence/data;
+ROSTERFORGE_PRINT_DARK_ANGELS=C:/CodexACLTest/rf-cost-evidence-20260911/cost-reference-draft.json.
+No PRINT_OUTPUT. Manifests length/hash verified:SC99261754 fourXML+README,
+40kA04c62fcd eightfiles, B5b261ec eightfiles; JSONHEAD A. Final logs in
+C:/CodexACLTest/counter-activation-evidence/final-{normal,configured,lint,typecheck,build}.log.
+
+**Retained result/stop.**5301 PID60624 remains with five SC Counter drafts described
+in Current Status.5297 PID56784/5299 PID63336 and their samples/tabs/storage are
+preserved. Resolved for evidenced static shape; dynamic/conditional/conflicting/
+unknown activation and query scopes remain qualified. Complete-army acceptance
+still blocked by embedded map-image output. Source revision mismatch, orphan
+costs, precedence/routing and formatting remain. Owner print acceptance pending.
+No automatic next checkpoint, map image rendering, source refresh, migration,
+print redesign, main/PR/merge/deploy or full-game support claim.
