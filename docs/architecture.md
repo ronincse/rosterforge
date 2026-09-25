@@ -2701,3 +2701,25 @@ replaced operations from updating state/cache. A 64-entry per-adapter in-memory 
 is keyed by repository and loaded revision. No roster, source, autosave, recovery,
 evaluation or print mutation. Unknown provenance has no guessed network target.
 See [SC-08 evidence](qa/source-aware-freshness.md) for states and limitations.
+
+
+### Shared roster group requirements (pre-game follow-up A)
+
+Live child inspection uses the selection constraint inspector for static shared
+`selections` min/max group bounds with roster scope, child selections included,
+and a single unnested force. A temporary group occurrence supplies source context;
+it never enters durable state and its wrapper does not count. The existing
+transparent-group membership resolver counts concrete members and their own
+amounts using parent-frontier source paths. Concrete-member descendants and
+unrelated same-name/shared leaves do not acquire membership by label or ID alone.
+
+Configuration and structural validation share the resulting membership and limits.
+Configuration retains local selected occurrences for editing, separately from the
+army-wide count. Structural presentation coalesces the same authored shared
+requirement by source/path and suppresses its duplicate retained-wrapper general
+report. Static limits are required: own, transparent-carrier or selected-ancestor
+modifiers withhold this new domain rather than creating context-dependent limits
+that cannot be safely coalesced. Nonshared, mixed, unsupported and unresolved
+queries remain incomplete. Unresolved group links also qualify their owning child
+inspection. Creation retains supported parent-local defaults but never fills a
+global group by choosing arbitrary alternatives.

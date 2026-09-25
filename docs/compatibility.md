@@ -25,8 +25,10 @@ The bounded [player-workflow acceptance](qa/starcraft-pilot-acceptance.md) built
 saved and reopened representative Protoss, Terran and Zerg armies using unchanged
 pinned bytes. Supported arithmetic and persistence passed; complete-army acceptance
 is blocked. Roster-scoped shared min/max constraints on the pre-game map/mission
-groups are currently filtered out before unsupported-bound diagnosis and appear
-optional/complete. This is a confirmed reporting defect, not supported semantics.
+groups were filtered out before unsupported-bound diagnosis and appeared
+optional/complete. Follow-up A now evaluates the evidenced static shared roster
+shape in one unnested force, pooling concrete members across wrappers; unsupported
+domains remain incomplete. See [pre-game follow-up](qa/starcraft-pregame-requirements.md).
 Seven zero/hidden counter activations remain unresolved. Selected mission profile
 visibility rejects modifier `id` despite complete limit conditions; both variants
 remain visible with uncertainty. Embedded map Markdown/data-image fields remain

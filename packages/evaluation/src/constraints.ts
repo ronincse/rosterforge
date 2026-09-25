@@ -54,6 +54,7 @@ import {
   evaluateRosterModifierRepeats,
   type RosterRepeatReport,
 } from "./repeats.js";
+import { selectionGroupCountCandidate, selectionGroupCountTargetStatus } from "./selection-count-membership.js";
 import { effectiveRosterCategories } from "./effective-categories.js";
 import { rosterAssociationReach } from "./association-graph.js";
 import { inspectRosterAssociationChoices } from "./associations.js";
@@ -707,7 +708,27 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
     }
   }
 
+  // Transparent groups count their concrete members, not durable wrapper IDs.
+  // Only the evidenced shared roster query is added here; parent behavior and
+  // typed queries retain their existing boundary rather than inheriting numeric
+  // condition traversal by accident.
+  const rosterGroup = ownerResolution.choices[0]?.kind === "selectionEntryGroup" && constraint.scope !== "parent";
+  const groupCarriers = rosterGroup ? (ownerLocations[0]?.ancestors ?? []).map(ancestor =>
+    resolveEvaluationSelection(ancestor, choices, catalogueMatches)) : [];
+  const staticGroupCarriers = modifiers.length === 0 && modifierGroups.length === 0 &&
+    groupCarriers.every(carrier => carrier.status === "resolved" && carrier.choices.length === 1 &&
+      !carrier.choices[0]!.modifiers.some(m => constraintId !== undefined && m.field === constraintId) &&
+      !carrier.choices[0]!.modifierGroups.some(g => constraintId !== undefined && modifierGroupTargetsConstraint(g, constraintId)));
+  const groupResolved = !rosterGroup || (isSupportedRosterGroupConstraint(constraint) && staticGroupCarriers &&
+    roster.forces.length === 1 && roster.forces[0]!.forces.length === 0 &&
+    targetId !== undefined && selectionGroupCountTargetStatus(context, targetId) === "resolved");
+  if (!groupResolved) diagnostics.push(constraintDiagnostic(
+    constraint, "EVALUATION_CONSTRAINT_GROUP_QUERY_UNSUPPORTED",
+    "This group requirement has an unresolved identity or unsupported scope, sharing, modifiers, or force traversal.",
+    "scope", ["compatibility"], {scope: constraint.scope, shared: constraint.shared},
+  ));
   const canCollect =
+    groupResolved &&
     catalogueMatches &&
     ownerLocations.length === 1 &&
     ownerResolution.status === "resolved" &&
@@ -769,16 +790,19 @@ function inspectConstraint<Constraint extends RosterSelectionConstraintSource>(
       : [];
   const associationReach = associationCount && attributes.length === 0 && catalogueMatches && ownerLocations.length === 1 && ownerResolution.status === "resolved" && constraint.percentValue !== true && constraintType !== undefined && limit !== undefined && (limit >= 0 || isUnboundedConstraintValue(limit)) ? rosterAssociationReach(roster, context, owner) : undefined;
   const categories = associationReach ? effectiveRosterCategories(roster, context) : undefined;
-  const candidates = (associationReach?.selections ?? occurrences).map((occurrence) =>
-    evaluationSelectionIdentityCandidate(
+  const candidates = (associationReach?.selections ?? occurrences).map((occurrence) => {
+    const candidate = evaluationSelectionIdentityCandidate(
       occurrence,
       choices,
       catalogueMatches,
       targetId,
       constraint.shared === true,
       categories,
-    ),
-  );
+    );
+    return rosterGroup && targetId !== undefined
+      ? selectionGroupCountCandidate(candidate, roster, context, targetId, true)
+      : candidate;
+  });
   const matching = candidates.flatMap((candidate) =>
     candidate.status === "match" ? [candidate.occurrence] : [],
   );
@@ -1301,4 +1325,19 @@ function collectionDiagnostic(
     impacts: ["compatibility", "resolution"],
     details,
   };
+}
+
+/** The bounded transparent-group domain established by the pinned pre-game data.
+ * Attribute/operand/modifier validation still belongs to the constraint inspector. */
+export function isSupportedRosterGroupConstraint(constraint: RosterSelectionConstraintSource): boolean {
+  return (constraint.type === "min" || constraint.type === "max") &&
+    constraint.field === "selections" && constraint.scope === "roster" &&
+    constraint.shared === true && constraint.includeChildSelections === true &&
+    constraint.includeChildForces !== true;
+}
+
+/** Stable authored requirement identity, including its source and location.
+ * Used only to coalesce a shared roster requirement, never per-parent bounds. */
+export function rosterGroupConstraintKey(constraint: RosterSelectionConstraintSource): string {
+  return JSON.stringify([constraint.source.sourceId, constraint.path]);
 }

@@ -36,6 +36,8 @@ import { evaluateNumericModifierSequence } from "./modifiers.js";
 import {
   inspectRosterSelectionConstraintWithSelectionConditions,
   isUnboundedConstraintValue,
+  isSupportedRosterGroupConstraint,
+  type RosterSelectionConstraintReport,
 } from "./constraints.js";
 
 export interface RosterSelectionInitializationOptions {
@@ -263,6 +265,13 @@ export interface RosterSelectionChoiceGroupInspection {
    * twice.
    */
   readonly countedChoices: readonly EvaluationSelectionChoice[];
+  /** A live roster query is shared by configuration and structural validation.
+   * Selected occurrences may belong to another wrapper; never use them as local controls. */
+  readonly rosterConstraints?: readonly RosterSelectionConstraintReport[];
+  readonly membership?: {
+    readonly selected: readonly RosterSelection[];
+    readonly uncertain: readonly RosterSelection[];
+  };
   readonly minimum?: number;
   readonly maximum?: number;
   readonly completeness: ValidationCompleteness;
@@ -879,6 +888,17 @@ function collectChoiceGroups(
   options: RosterSelectionChildChoicesInspectionOptions = {},
   live?: LiveRosterSelectionChildInspectionContext,
 ): void {
+  // A group link that could contain requirements is not an empty optional group.
+  // Its candidates cannot safely supply limits, but its owning configuration
+  // must preserve the missing/ambiguous declaration in completeness.
+  for (const link of container.entryLinks) {
+    if (link.kind !== "unresolvedEntryLink" || link.link.type !== "selectionEntryGroup") continue;
+    markIncomplete(state);
+    state.diagnostics.push(initializationDiagnostic(link.link,
+      "EVALUATION_INITIALIZATION_GROUP_UNRESOLVED",
+      "A selection group could not be resolved, so its requirements are unknown.",
+      "targetId", {reason: link.reason}));
+  }
   for (const group of directChoices(container).filter(
     (choice): choice is MaterializedSelectionEntryGroup =>
       choice.kind === "selectionEntryGroup",
@@ -888,7 +908,10 @@ function collectChoiceGroups(
       continue;
     }
     const incompleteAtStart = state.incomplete;
-    const bounds = selectionBounds(
+    const global = live !== undefined && group.constraints.some(c => !isPotentialParentSelectionBound(c))
+      ? liveRosterGroupBounds(group, groupPath, live, state)
+      : undefined;
+    const bounds = global?.bounds ?? selectionBounds(
       group,
       groupPath,
       state,
@@ -904,6 +927,7 @@ function collectChoiceGroups(
       group,
       choices: directEntryChoices(group),
       countedChoices: nestedEntryChoices(group),
+      ...(global === undefined ? {} : {rosterConstraints: global.reports, membership: global.membership}),
       ...(bounds.supported
         ? {
             minimum: bounds.minimum,
@@ -1214,6 +1238,18 @@ function selectionBounds(
   let minimum = 0;
   let maximum = Number.POSITIVE_INFINITY;
   let supported = true;
+  // Local creation cannot choose a global requirement on the player's behalf.
+  // Preserve it as unresolved here; live group inspection evaluates the supported
+  // domain below, while unsupported scopes must never become optional 0..Infinity.
+  if (choice.kind === "selectionEntryGroup") {
+    for (const constraint of choice.constraints.filter(c => !isPotentialParentSelectionBound(c))) {
+      // Preserve independently supported local defaults during creation. Live
+      // inspection withholds the whole mixed count domain; the static planner
+      // records uncertainty without discarding unrelated parent-local defaults.
+      if (options.live !== undefined) supported = false;
+      diagnoseUnsupportedBound(constraint, ["scope"], state);
+    }
+  }
   const constraints = choice.constraints.filter(
     isPotentialParentSelectionBound,
   );
@@ -1343,6 +1379,56 @@ function selectionBounds(
     }
   }
   return { supported, minimum, maximum };
+}
+
+function liveRosterGroupBounds(
+  group: MaterializedSelectionEntryGroup,
+  carriers: readonly EvaluationSelectionChoice[],
+  live: LiveRosterSelectionChildInspectionContext,
+  state: InitializationState,
+): {bounds: SelectionBounds; reports: readonly RosterSelectionConstraintReport[];
+  membership: {selected: readonly RosterSelection[]; uncertain: readonly RosterSelection[]}} {
+  const unresolved = {bounds: {supported: false, minimum: 0, maximum: Infinity}, reports: [], membership: {selected: [], uncertain: []}};
+  // Mixing count domains needs separate presentation. Do not fold a local count
+  // into a roster-wide bound. Modified global bounds remain unsupported: their
+  // applicability can differ between wrapper contexts, invalidating coalescing
+  // by shared authored identity. The frozen supported requirements are static.
+  if (!group.constraints.every(isSupportedRosterGroupConstraint) ||
+      carriers.some(c => group.constraints.some(bound => bound.id !== undefined && carrierTargetsField(c, bound.id)))) {
+    for (const constraint of group.constraints) diagnoseUnsupportedBound(constraint, ["group query domain or carrier"], state);
+    return unresolved;
+  }
+  const probeId = unusedChildBoundProbeId(live.roster);
+  const probed = addRosterSelectionToSelection(live.roster, live.owner.id, {
+    id: probeId,
+    definition: {kind: group.kind, key: rosterDefinitionKeyForSource(group.occurrence.source.sourceId, group.occurrence.path)},
+  });
+  state.diagnostics.push(...probed.diagnostics);
+  const probe = probed.ok ? findSelectionById(probed.value.forces, probeId) : undefined;
+  if (!probed.ok || probe === undefined) { markIncomplete(state); return unresolved; }
+  const reports: RosterSelectionConstraintReport[] = [];
+  let minimum = 0, maximum = Infinity, supported = true;
+  for (const constraint of group.constraints) {
+    const result = inspectRosterSelectionConstraintWithSelectionConditions(probed.value, live.context, probe, constraint);
+    state.diagnostics.push(...result.diagnostics);
+    if (!result.ok) { supported = false; continue; }
+    const report = result.value;
+    reports.push(report);
+    if (report.completeness !== "complete" || report.observed === undefined || report.limit === undefined ||
+        !Number.isSafeInteger(report.limit) || (report.limit < 0 && !isUnboundedConstraintValue(report.limit))) {
+      supported = false; continue;
+    }
+    if (constraint.type === "min") minimum = Math.max(minimum, unboundedBoundIdentity(report.limit, "min"));
+    if (constraint.type === "max") maximum = Math.min(maximum, unboundedBoundIdentity(report.limit, "max"));
+  }
+  if (!supported) markIncomplete(state);
+  // Every admitted constraint has the same count domain. Reports retain the
+  // separate authored min/max evidence; the throwaway wrapper never counts.
+  const report = reports[0];
+  return {bounds: {minimum, maximum, supported}, reports, membership: {
+    selected: report?.matching ?? [],
+    uncertain: report?.candidates.filter(c => c.status === "unresolved").map(c => c.occurrence) ?? [],
+  }};
 }
 
 function effectiveSelectedChildBound(

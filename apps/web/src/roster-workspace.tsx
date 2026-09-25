@@ -5667,10 +5667,10 @@ function RosterSelectionChoiceGroup({
     group.maximum !== undefined && Number.isFinite(group.maximum)
       ? group.maximum
       : undefined;
-  const selectedAmount = rosterSelectionsAmount(group.selected);
+  const selectedAmount = (group.selectedCount ?? rosterSelectionsAmount(group.selected));
   const blocksAdditionalChoices =
     finiteMaximum !== undefined &&
-    finiteMaximum !== 1 &&
+    (finiteMaximum !== 1 || (group.countScope === "roster" && group.selected.length === 0)) &&
     selectedAmount >= finiteMaximum;
   const groupAllowsAnotherCopy =
     finiteMaximum === undefined || selectedAmount < finiteMaximum;
@@ -6211,7 +6211,7 @@ function childSelectionAmountBounds(
   );
   if (group === undefined || group.completeness !== "complete") return [];
 
-  const observed = rosterSelectionsAmount(group.selected);
+  const observed = (group.selectedCount ?? rosterSelectionsAmount(group.selected));
   const bounds: KnownSelectionAmountBound[] = [];
   if (group.minimum !== undefined && Number.isFinite(group.minimum)) {
     bounds.push({ type: "min", limit: group.minimum, observed });
@@ -7113,7 +7113,7 @@ function childSelectionChoiceLabel(
 }
 
 function selectionGroupStatus(group: LocalRosterChildChoiceGroup): string {
-  const selected = `${rosterSelectionsAmount(group.selected)} selected`;
+  const selected = `${(group.selectedCount ?? rosterSelectionsAmount(group.selected))} selected${group.countScope === "roster" ? " across army" : ""}`;
   if (group.completeness === "incomplete") {
     return `${selected}; supported bounds are incomplete`;
   }

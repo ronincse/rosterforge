@@ -132,6 +132,18 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   };
   const missingFaction = validation(protoss);
   protoss = addRoot(protoss, "Daelaam").session;
+  // The formerly dropped pre-game requirements now remain visible. Complete
+  // each through ordinary production commands before isolating faction/supply.
+  expect(validation(protoss)).toMatchObject({validity:"invalid",counts:{violated:2}});
+  for (const definitionId of ["d444-6767-cbfc-bf56", "64dc-91cd-0746-c7d3"]) {
+    const owner = protoss.roster.forces[0]!.selections.find(s => protoss.selectionChoices.get(s.id)?.definitionId === definitionId)!;
+    const group = ok(inspectLocalRosterChildChoices(protoss, owner.id)).groups[0]!;
+    expect(group).toMatchObject({minimum:2,maximum:2,remaining:2,completeness:"complete"});
+    for (const [index, choice] of group.choices.slice(0,2).entries()) {
+      protoss = ok(addLocalRosterChildSelection(protoss,owner.id,choice,{selectionId:next(),createSelectionId:next}));
+      expect(ok(inspectLocalRosterChildChoices(protoss,owner.id)).groups[0]!.remaining).toBe(1-index);
+    }
+  }
   expect(validation(protoss)).toMatchObject({ validity: "valid", counts: { violated: 0 } });
   const extraFaction = addRoot(protoss, "Khalai");
   expect(validation(extraFaction.session)).toMatchObject({ validity: "invalid", counts: { violated: 1 } });
@@ -142,7 +154,7 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   const second = addRoot(protoss, "Zealots"); protoss = second.session;
   const negative = ledger(protoss);
   const negativeValidation = validation(protoss);
-  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "incomplete", counts: { violated: 1 } });
+  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "incomplete", counts: { violated: 3 } });
   expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "incomplete" });
   expect(ok(inspectLocalRosterSupportedValidation(protoss)).status.findings.filter(f => f.kind === "authoredError").map(f => f.report.message)).toEqual(["Not enough Core Supply."]);
   expect(negative.totals.find(t => t.id === "472f-46af-8e02-bfbf")?.value).toBe(-1);

@@ -1,3 +1,4 @@
+import { rosterGroupConstraintKey } from "./constraints.js";
 import type { RosterResourceBudget, RosterResourceBudgetsReport } from "./resource-budgets.js";
 /**
  * Folds the validation reports into the one answer the UI shows.
@@ -147,10 +148,12 @@ export function composeSupportedRosterValidation(
     status: report.status,
     report,
   }));
+  const presentedGroupConstraints = new Set(structural.bounds.flatMap(b => b.kind === "group" ? b.rosterConstraints?.map(r => rosterGroupConstraintKey(r.constraint)) ?? [] : []));
   const selectionItems = selectionConstraints.selections.flatMap(
     ({ constraints }) =>
       constraints
         .filter(isActionableSupportedConstraintReport)
+        .filter(report => presentedGroupConstraints.size === 0 || !presentedGroupConstraints.has(rosterGroupConstraintKey(report.constraint)))
         .map((report) => ({
         kind: "selectionConstraint" as const,
         status: report.status,

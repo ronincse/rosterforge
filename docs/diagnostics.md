@@ -1752,3 +1752,15 @@ The UI reports check unavailable (specific HTTP status when reliable; 429 as rat
 limited), never satisfied/current. Missing or mixed source provenance is an explicit
 unestablished source state, not a roster violation or evaluator completeness change.
 No automatic retry; a previous successful check remains labelled with its old time.
+
+
+## Pre-game group requirement follow-up A
+
+`EVALUATION_CONSTRAINT_GROUP_QUERY_UNSUPPORTED` qualifies the new group count
+boundary when identity, sharing, traversal, force layout or targeting modifiers
+cannot support an exact shared roster count. No exact zero is published.
+`EVALUATION_INITIALIZATION_GROUP_UNRESOLVED` retains a missing/ambiguous group
+link at its owning configuration. Existing
+`EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED` now includes non-parent group
+requirements previously omitted by local planning; supported independent local
+defaults still initialize. Live unsupported bounds remain unresolved, not optional.

@@ -225,7 +225,10 @@ export interface LocalRosterChildChoiceGroup {
   readonly hiddenChoiceCount: number;
   readonly minimum?: number;
   readonly maximum?: number;
-  /** Every selected descendant counted by this group's bound. */
+  /** Exact count used by the requirement; may span other wrappers. */
+  readonly selectedCount?: number;
+  readonly countScope?: "roster";
+  /** Local selections only: controls must never remove another wrapper's choice. */
   readonly selected: readonly RosterSelection[];
   readonly remaining?: number;
   readonly completeness: ValidationCompleteness;
@@ -1948,7 +1951,11 @@ function localRosterChildChoiceGroup(
     const choice = localRosterSelectionChoice(session, selection.id);
     return choice !== undefined && inspection.countedChoices.includes(choice);
   });
+  const counted = inspection.membership?.selected ?? selected;
+  const selectedCount = rosterSelectionsAmount(counted);
   return {
+    selectedCount,
+    ...(inspection.rosterConstraints === undefined ? {} : {countScope: "roster" as const}),
     group: inspection.group,
     choices: visibleChoices,
     hiddenChoiceCount: inspection.choices.length - visibleChoices.length,
@@ -1958,7 +1965,7 @@ function localRosterChildChoiceGroup(
           minimum: inspection.minimum,
           remaining: Math.max(
             0,
-            inspection.minimum - rosterSelectionsAmount(selected),
+            inspection.minimum - selectedCount,
           ),
         }),
     ...(inspection.maximum === undefined

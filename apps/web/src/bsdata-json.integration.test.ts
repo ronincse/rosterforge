@@ -3970,7 +3970,11 @@ describe.skipIf(realDataDirectory === undefined)(
 
         expect(initialized.ok).toBe(true);
         if (!initialized.ok) return;
-        expect(initialized.diagnostics).toEqual([]);
+        // These self-scoped group requirements were previously dropped by the
+        // local planner. It preserves the same known parent defaults while now
+        // reporting the unrelated unsupported domain explicitly.
+        expect(initialized.diagnostics).toHaveLength(9);
+        expect(initialized.diagnostics.every(d => d.code === "EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED" && d.details?.scope === "self")).toBe(true);
         expect(nextId).toBe(33);
         expect(localRosterSelectionCount(initialized.value)).toBe(41);
         const unit =

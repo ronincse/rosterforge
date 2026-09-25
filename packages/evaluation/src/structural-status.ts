@@ -1,3 +1,4 @@
+import { rosterGroupConstraintKey, type RosterSelectionConstraintReport } from "./constraints.js";
 import type {
   BattleScribeCatalogueContext,
   MaterializedVisibleRoot,
@@ -77,6 +78,7 @@ export interface RosterStructuralGroupBoundReport
   readonly owner: RosterSelection;
   readonly group: RosterSelectionChoiceGroupInspection["group"];
   readonly choices: readonly EvaluationSelectionChoice[];
+  readonly rosterConstraints?: readonly RosterSelectionConstraintReport[];
 }
 
 export type RosterStructuralBoundReport =
@@ -315,6 +317,7 @@ function inspectSelectionTree(
     state.incomplete = true;
     return;
   }
+  if (childInspection.value.completeness === "incomplete") state.incomplete = true;
   const childCandidates = uniqueChoices([
     ...childInspection.value.direct.map(({ choice }) => choice),
     ...childInspection.value.groups.flatMap(({ choices }) => choices),
@@ -344,6 +347,9 @@ function inspectSelectionTree(
   }
   for (const group of childInspection.value.groups) {
     if (!isRelevantBound(group)) continue;
+    const keys = group.rosterConstraints?.map(r => rosterGroupConstraintKey(r.constraint));
+    // A shared requirement belongs to the army once, even with repeated wrappers.
+    if (keys?.length && keys.every(key => bounds.some(b => b.kind === "group" && b.rosterConstraints?.some(r => rosterGroupConstraintKey(r.constraint) === key)))) continue;
     bounds.push(groupBoundReport(owner, group, childResolutions));
   }
   for (const child of childResolutions) {
@@ -543,7 +549,7 @@ function groupBoundReport(
 ): RosterStructuralGroupBoundReport {
   // A group whose children are groups still bounds what is chosen beneath it,
   // so membership counts nested entries as well as its own.
-  const membership = childMembership(
+  const membership = inspection.membership ?? childMembership(
     children,
     (choice) => inspection.countedChoices.includes(choice),
   );
@@ -552,6 +558,7 @@ function groupBoundReport(
     owner,
     group: inspection.group,
     choices: inspection.choices,
+    ...(inspection.rosterConstraints === undefined ? {} : {rosterConstraints: inspection.rosterConstraints}),
     ...boundState(
       inspection.minimum,
       inspection.maximum,
