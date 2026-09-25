@@ -34,7 +34,54 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-20 (SC-08 delivered; stop)
+## Current Status — 2026-09-25 (pilot acceptance delivered; repairs not authorized)
+
+Tested application remains `1df38cfc58a8b7a2a6d18c24702a09f67434ce15`, fetched
+clean/upstream-equal. Report/contracts commit `a4d006a18374f2dd43a4db5360c8f7e03b807d35`;
+this separate handoff follows. Application code and all source pins are unchanged.
+Publish only `codex/starcraft-pilot`, confirm exact-final CI in completion/Actions.
+Print/UI task confirmed idle at baseline and publication; owner print acceptance
+is still pending. No merge/main/PR/deployment/source refresh/migration.
+
+**Recommendation B: complete-army acceptance blocked.** Ordinary live pinned
+StarCraft Browse succeeded on a fresh isolated origin; later factions used the
+ordinary verified cache. Browser-built/saved Protoss Khalai1220M/130G (limit1500),
+Terran Raiders570M/60G (limit600), Zerg Swarm520M/30G (limit600) agree with independent
+source ledgers. Invalid-to-repaired faction/supply/budget transitions, Marines
+6/160 →6/180 →9/240 →6/180, independent second squad, save/reopen/revise/history and
+Terran unsaved recovery passed. Dark Angels14units/2000, Captain2+/FNP5+, ImpulsorD3/6
+and Lieutenant/Intercessor effect smoke passed using a disposable original-source copy.
+
+New material findings: pre-game map/mission shared roster-scoped min/max2 groups
+are dropped before diagnosis and appear optional/complete; selected mission
+visibility rejects modifier `id` although limit conditions resolve; embedded map
+image payloads remain huge literal text in Compact. Seven default-zero/hidden
+counter activations remain unresolved and prevent full army acceptance. Exact
+IDs, ledgers, classifications and priority order are in
+`docs/qa/starcraft-pilot-acceptance.md`. No fix was made.
+
+Normal gates:1072pass/34optionalSkip,107files,16.31s. Configured:1106pass/zeroSkip,
+107files,58.45s,maxWorkers4. Lint/typecheck/build/diff-check pass; existing bundle
+advisory only. Independent isolated native source/API reviewer ran two probes;
+lead reviewed/reran both (2pass,2.00s) and reviewer checked final report. No external
+review or independent browser-execution claim.
+
+Plain Vite **http://127.0.0.1:5297/** is left running with three named SC samples
+and **Acceptance - Dark Angels reference copy** on its ordinary saved shelf.
+Historical5295 was not running; its QA replay was not restarted. One5297 Windows
+watcher error during fixture copying was recovered by restarting only this server.
+Source hashes and saved revision identities remain intact. Actual primary Compact
+HTML is retained locally; offline file opening was blocked by browser policy, no
+bypass or PDF/pagination claim. Screen combat-reference phone/desktop checks passed
+within qualifications. See report for artifact path and all retained evidence.
+
+**Next authorized boundary: none. Stop after acceptance.** At most three recommended
+follow-ups: pre-game group uncertainty safeguard; counter activation evidence;
+mission modifier-ID/profile visibility. Map image policy remains separately recorded
+paper-usability work, not authorization for a print redesign or arbitrary rendering.
+
+### Historical 2026-09-20 status (SC-08 delivered)
+
 
 SC-08 implementation `d5b65ed63b29ca3e26f849728632a170d61cb5e9` follows clean,
 upstream-equal pilot baseline `63aedea60b4a17dddd8c08e9c7b942a10044e464`; this
@@ -1344,13 +1391,17 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | SC-02 parent category requirements | Done on pilot | Static shared parent min/max; Protoss/Terran definitions and distinct Zerg force link pass; parent modifiers/nonshared/child forces withheld; code491d6c8 |
 | Category-owned force/cost bounds beyond SC-02 | Open, separate owner assignment | Nine previously omitted40k source bounds now unresolved in pinned Guardian context; seven base -1, activation not established; no category-owned cost/force execution |
 | SC-03/07 default budgets, limit queries and resource summary | Done for supported pilot subset | Positive visible defaults, exact-ID limit queries, independent evaluated-cost limits, explicit zero/-1 overrides, reset/history/save/recovery and controls; code8a38e99/ac112e9; unresolved source activation remains explicit |
-| SC-03/07 source-default activation and dynamic limits | Open; next budget evidence boundary, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
+| SC-03/07 source-default activation and dynamic limits | Open; recommended second acceptance follow-up, owner assignment required | Separate source-zero from creation-hidden positive activation in controlled reference data; seven StarCraft counters unresolved, no guessed max0. Dynamic/cyclic limits and unsupported query scopes/traversal/envelopes need independent semantics before expansion |
 | SC-04 typed-unit Reinforce conditions | Fixed on pilot for evidenced numeric selection shape | Local child counts with omitted/false direct and true descendants; source-driven amounted models6/9/6, Shield20/30/20, both orders, independent copies, history/save/recovery; code6372abd |
 | Typed-constraint unresolved containing scope | Done — checkpoint A | fa8ea58 propagates unknown location/type into incomplete unresolved counts, preserves known empty and existing traversal; 36 fictional tests and configured corpus pass; qa/typed-constraint-uncertainty.md |
 | SC-05 XML predefined/numeric entity display | Done on pilot — checkpoint B | 887b376 decodes once before projection with bounded XML-only adapter, preserved CDATA/bytes/security, metadata4 rebuild and legacy exact-path ID compatibility; old copied/player labels remain literal; qa/starcraft-xml-text.md |
 | Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Partial on pilot — roles/order/layout delivered | Exact defining-context roles, static type ordering, longText/annotation, legacy/neutral fallback and nested group fields supported; seven format rules and dynamic hints remain unexecuted. qa/starcraft-reference-metadata.md; further work requires owner authorization |
-| SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Stop; no next checkpoint authorized |
+| SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Accepted; unchanged by later acceptance |
+| Complete-army player acceptance | Done; recommendation B | Browser-built Protoss/Terran/Zerg arithmetic, lifecycle and combat-reference checks pass within boundary; complete validation/play blocked. qa/starcraft-pilot-acceptance.md; no runtime change or next repair authorized |
+| Pre-game shared roster-scoped group bounds | Open; recommended first safeguard, owner assignment required | Exact-two map/mission groups dropped before unsupported diagnosis; child inspection complete0..Infinity/optional. Preserve uncertainty at owning boundary; do not assume broad roster-group semantics |
+| Mission profile visibility / modifier ID | Open; recommended third follow-up, owner assignment required | Selected Divide and Conquer/Frontlines both size variants unresolved because modifier id is rejected; limit predicates themselves complete. Verify inert-ID handling with bounded visibility tests |
+| Embedded map reference usability | Open; recorded paper blocker, separate owner assignment | Source Markdown/data-image fields render literal payloads (primary50013/49854characters). Safe source content retained; needs bounded rendering/policy evidence, no arbitrary imported images or print redesign |
 | SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
 
 ### Open questions needing the owner
@@ -16359,3 +16410,97 @@ dynamic limits, imported formatting, broad typed semantics, rule precedence/rout
 and nine broader40k category requirements remain qualified. Owner print-layout
 acceptance remains pending. No main/PR/deployment/source update/migration/print work.
 Server5295 remains available; prior servers/worktrees/storage/tabs preserved.
+
+
+## Completed Assignment — StarCraft Complete-Army Pilot Acceptance, 2026-09-25
+
+**Baseline/result.** Owner authorized acceptance only, no application repair.
+Fetched/inspected clean upstream-equal `1df38cfc58a8b7a2a6d18c24702a09f67434ce15`,
+worktrees/processes and idle print/UI task; rechecked idle before publication.
+Report and truthful architecture/compatibility/diagnostic qualifications committed
+as `a4d006a18374f2dd43a4db5360c8f7e03b807d35`; this separate handoff records the result.
+Only documentation is published. Exact-final CI receipt belongs in Actions and
+completion response. No reset, other-writer adoption or unrelated edits.
+
+**Decision and alternatives.** Recommendation B: full BUILD→VALIDATE→PLAY acceptance
+is blocked, despite passing bounded construction/arithmetic/lifecycle and screen
+combat-reference checks. Rejected using the aggregate incomplete badge as evidence
+that all unsupported requirements are accounted for; two exact-two setup groups
+are silently dropped. Rejected max-zero guesses and treating the seven hidden/zero
+counter activations as cosmetic. Initial Daelaam+Guards target was source-incompatible
+(Guards require Khalai); retained as failed proposal, explicitly tested Khalai+
+Observer alternative. Original Terran without Barracks is570M/35G/Core−1; the explicit
+repair adds25Gas/+1Core/+1CP. No easier substitute was silently reported as a pass.
+
+**Browser and inputs.** Fresh plain Vite origin5297 first live pinned Browse/index/
+Protoss load/create succeeded. Terran/Zerg used normal verified warm cache, no replay.
+Historical5295 was dead and remained untouched. All three were constructed through
+ordinary controls, then exported read-only for evidence. Primary Khalai:1220/1500M,
+130/200G, Core2/Elite2/Support0/Hero1/EN5,6combat units plus4tacticals/faction/setup.
+Secondary Raiders:570/600M,60/200G, Marines9ShieldReinforced+6plain, Marauders2Foam,
+Academy/Barracks, Core0/Support3/Hero1/CP3. Zerg:520/600M,30/200G,12lingsAdrenalGlands,
+3Roach,Queen,EvolutionChamber, Core2/Elite1/BM2. Exact sparse per-unit vectors and
+model-versus-authored-upgrade distinction are in the report. Setup pairs explicitly
+chosen from source-based budget variants; requirements remain qualified.
+
+Missing/excess faction, negative→zero supply, purchase-budget exceeded→repaired,
+Marines6/160→6/180→9/240→6/180, independent squads, primary/Terran save/reopen/revise/
+undo/redo/save/reopen and one unsaved Terran recovery passed. Zerg save/reopen passed.
+All six retained SC source payloads hash-match frozen files and restored revision
+remains99261754. Saved histories/overrides remain. Fourteen selected rule reports
+have complete names/visibility; no exercised precedence ambiguity found. Broader
+precedence/routing remains qualified. All three aggregate valid/incomplete with
+seven resource-limit findings; Terran additionally has10missing-cost diagnostics
+(five per Marine occurrence); Protoss/Zerg defined-cost coverage complete.
+
+**Confirmed gap and references.** Minimal frozen import/create/Khalai probe confirms
+map group2ce1-a1c6-f9fd-44e7 and mission group0b67-92aa-2c8c-613f min/max2 disappear
+before unsupported diagnosis (`selectionBounds` parent-only candidate filter).
+Children publish complete0..Infinity and no diagnostic; structural report only
+contains the wrapper bounds. New roadmap entry records this material reporting
+defect. Four selected mission profile warnings perarmy reject modifier id even
+though configured-limit conditions resolve; not a generalized query failure.
+Maps have literal embedded-image Markdown in source fields; primary50013/49854chars
+retained in Compact, practical paper blocker. Seven inspected format rules are only
+empty-string→dash, presentation-only for these fields, not a general safe-format claim.
+
+Sentry and Marine actual lookup tasks passed on desktop1440×1000/phone390×844:
+characteristics, range/damage/modes, model ownership, selected-only upgrades, full
+ability effect and activation, shared reference links. Primary actual CompactHTML
+export is188498bytes, SHA2566587499126dd87e93621b8a7543678ea335dc1800ea91f7a4e8568da1ca79777.
+Source prose is retained, not truncated to fake usability. Offline file navigation
+was blocked by Browser Use URL policy; no bypass and no PDF generated/pagination
+claim. Owner visual print acceptance stays pending. The old PDF matrix is historical.
+
+**40k smoke.** Existing14-unit2000-point draft copied through decoder/store to separate
+ID on5297 (explicit adapter-seeded copy, not from-zero browser claim). Original eight
+A payloads byte-equal and original draft hash9f0f9b94152102db6fddb378f34eaea9855874dc0b12ceb9ebfa0441cdc4937c
+unchanged. Normal Open/Update/reopen preserves Captain2+base3+SetbyArmour/FNP5+,
+ImpulsorD3/6, LieutenantSupportingIntercessorsquad1 and LethalHitsAddedbyLieutenant.
+Source correctly unknown/local, no guessed repository. Broader corpus tests retained.
+
+**Independent review/gates.** Native isolated reviewer at detached1df38cf independently
+read selected frozen XML, corrected proposed configurations, computed source ledger,
+ran actual production import/group and saved-restore/validation/cost/reference probes.
+No app writes/commits/push, no external-provider or reviewer browser claim. Lead read
+probes/owning code and reran2tests/2files/2.00s, then reviewer found no report corrections.
+Normal1072pass/34optionalSkip (99pass8skipfiles of107),16.31s. Configured1106pass,
+107files,zeroSkip,58.45s,maxWorkers4; populations overlap. Lint/typecheck/build/diff pass;
+existing bundle advisory. Initial gitignored-helper globals lint failure corrected
+before full gates; no assertion or timeout weakened. Config vars: BSDATA_JSON_DIR
+E:/GitHub/wh40k-11e; CORRECTNESS_SNAPSHOTS C:/CodexACLTest/rf-data-parity-evidence-20260910;
+STARCRAFT_PILOT_DIR C:/CodexACLTest/starcraft-pilot-evidence/data; PRINT_DARK_ANGELS
+C:/CodexACLTest/rf-cost-evidence-20260911/cost-reference-draft.json (all prefixedROSTERFORGE_).
+No PRINT_OUTPUT. A04c62fcd/B5b261ec eight-file manifests and SC99261754 four XML hashes
+verified; no third-party data added to Git.
+
+**Handoff/stop.** Leave plain preview5297 and saved samples **SC Acceptance - Protoss
+Khalai**, **SC Acceptance - Terran Raiders**, **SC Acceptance - Zerg Swarm** and
+**Acceptance - Dark Angels reference copy** for owner. Local report artifacts/backups:
+C:/Users/stone/.codex/visualizations/2026/09/12/01a09368-161b-7c60-a3c6-b0afa598b7de/pilot-acceptance-20260925.
+One WindowswatcherEBUSY during fixture copy required restarting only5297; no lost drafts.
+Only next three recommendations: pre-game uncertainty safeguard, zero/hidden-counter
+activation evidence, mission modifier-ID visibility. Map rendering remains separately
+recorded paper blocker, no promise those three alone complete paper readiness. No
+repairs, dependency/provider install, broader audit, source refresh, main/PR/deploy,
+print polishing or migration. Stop; further implementation needs owner instruction.
