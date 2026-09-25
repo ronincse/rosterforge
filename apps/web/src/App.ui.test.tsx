@@ -414,7 +414,7 @@ const catalogueBytes = xmlBytes(`<?xml version="1.0" encoding="UTF-8"?>
               field="characteristic-move"
               value="1"
             />
-            <modifier type="set" field="hidden" value="true" />
+            <modifier type="set" field="hidden" value="false" />
           </modifiers>
         </profile>
       </profiles>
@@ -1295,10 +1295,9 @@ describe("App local catalogue flow", () => {
     expect(within(observer).getByText("9")).toBeTruthy();
     expect(within(observer).getByText("Base Scout 6")).toBeTruthy();
     expect(observer.dataset.completeness).toBe("incomplete");
-    // A hidden profile is labelled rather than removed.
-    expect(
-      within(unitCardView).getByText("Hidden by this catalogue."),
-    ).toBeTruthy();
+    // Effective-value uncertainty remains visible independently of visibility.
+    // Definite hidden omission is exercised by mission-visibility.ui.test.tsx.
+    expect(within(unitCardView).queryByText("Hidden by this catalogue.")).toBeNull();
     expect(
       within(unitCardView).getByText(
         "Some display behavior on this profile is unsupported, so these values are not a complete result.",

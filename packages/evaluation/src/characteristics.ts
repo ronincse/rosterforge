@@ -1168,6 +1168,9 @@ function evaluateSelectionTextField<
   );
 }
 
+/** Reports occurrence-scoped visibility through the existing direct/grouped execution.
+ * Exact modifier `id` is retained identity metadata; inspection never removes
+ * the source profile, independently of how ordinary references display it. */
 export function evaluateRosterProfileVisibility<
   Profile extends RosterCharacteristicProfileSource,
 >(
@@ -1194,7 +1197,9 @@ export function evaluateRosterProfileVisibility<
       value === undefined ||
       modifier.scope !== undefined ||
       modifier.repeats.length > 0 ||
-      unsupportedAttributes(modifier).length > 0
+      // The exact modifier `id` is retained identity metadata in this construct,
+      // not a visibility operation. No other unknown attribute is waived.
+      unsupportedAttributes(modifier).some(attribute => attribute !== "id")
     ) {
       known = false;
       diagnostics.push(

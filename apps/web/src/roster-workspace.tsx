@@ -52,7 +52,7 @@ import type { BattleScribeRosterSelectionChoice } from "@rosterforge/roster-buil
 import { Detail } from "./detail-row.js";
 import { AssociationOptions, type SetAssociation } from "./association-options.js";
 import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
-import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceMember } from "./unit-reference-model.js";
+import { createUnitReferenceModel, showReferenceProfile, referenceAttribution, type ReferenceProfileGroup, type ReferenceMember } from "./unit-reference-model.js";
 import { createReferenceKeywordLinks, isKeywordCharacteristic, type ReferenceKeywordToken } from "./reference-keywords.js";
 import { ReferenceRichText, ReferenceTextContext } from "./reference-rich-text.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, type ReferenceTextIndex } from "./reference-text-index.js";
@@ -6469,8 +6469,8 @@ function SelectionProfile({
           <span>{typeName ?? "Unspecified profile type"}</span>
         </div>
       </header>
-      {/* A hidden profile is labelled, never removed, so nothing the source
-          declares disappears from the occurrence. */}
+      {/* Technical source disclosures retain hidden records with their status;
+          ordinary references filter only complete hidden visibility upstream. */}
       {report?.visibility.status === "hidden" && (
         <p className="profile-visibility">Hidden by this catalogue.</p>
       )}
@@ -6862,7 +6862,7 @@ function SelectionInfoGroup({
           <h5>Profiles</h5>
           <div className="selection-profile-list">
             {presentations ? (["model", "weapon", "ability", "additional"] as const).map(section => {
-              const selected = profiles.map(profile => ({ profile, report: reports?.get(profile.value), members: [], presentation: presentations.get(referenceProfileSourceKey(profile)) })).filter(group => (group.presentation?.section ?? "additional") === section);
+              const selected = profiles.map(profile => ({ profile, report: reports?.get(profile.value), members: [], presentation: presentations.get(referenceProfileSourceKey(profile)) })).filter(group => showReferenceProfile(group.report) && (group.presentation?.section ?? "additional") === section);
               if (selected.length === 0) return null;
               return <section key={section}><h6>{{ model: "Model stats", weapon: "Weapons & equipment", ability: "Abilities & rules", additional: "Additional information" }[section]}</h6>
                 {orderReferenceProfiles(selected).map((group, index) => <SelectionProfile key={selectionProfileKey(group.profile, index)} profile={group.profile} report={group.report} presentation={group.presentation} />)}

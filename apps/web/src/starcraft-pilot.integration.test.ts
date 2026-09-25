@@ -1,3 +1,5 @@
+import { inspectLocalRosterSelectionCharacteristics } from "./roster-session.js";
+import { createArmyReferenceDocument } from "./army-reference-model.js";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
 import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
 import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
@@ -243,3 +245,36 @@ it.skipIf(!directory)("decodes the frozen SC-05 source values without changing s
   expect(sentries.profiles.find(p => p.id === "3bed-bc23-eac6-223a")?.characteristics[0]?.value).toBe('Set a Force Field token Within 8" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it\'s then removed.');
   expect(library.selectableCatalogues.find(c => c.name === "Zerg")).toBeDefined();
 }, 30000);
+
+it.skipIf(!directory)("uses original mission modifier IDs for exact active variants at the frozen budget boundary",async()=>{
+ if(!directory)throw new Error("Pilot data not configured");
+ const library=ok(await prepareLocalCatalogueLibrary(files.map(([filename,hash])=>{const bytes=new Uint8Array(readFileSync(join(directory,filename)));expect(createHash("sha256").update(bytes).digest("hex")).toBe(hash);return {filename,bytes};}),{import:{batchId:"mission-boundary",importedAt:"2026-09-25T00:00:00Z"}}));
+ for(const name of ["Protoss","Terran","Zerg"]){
+  const catalogue=library.selectableCatalogues.find(c=>c.name===name)!;let n=0;const next=()=>selectionOccurrenceId(`mission-${++n}`);
+  let session=ok(createLocalRosterSession(catalogue,catalogue.context.forces.definitions[0]!,{rosterId:rosterId(name),forceId:forceOccurrenceId(name),name,createSelectionId:next}));
+  const owner=session.roster.forces[0]!.selections.find(s=>session.selectionChoices.get(s.id)?.definitionId==="64dc-91cd-0746-c7d3")!;
+  const group=ok(inspectLocalRosterChildChoices(session,owner.id)).groups[0]!;
+  for(const id of ["867c-9d4b-143d-eca1","0bea-4ed7-720a-e4c3"]){session=ok(addLocalRosterChildSelection(session,owner.id,group.choices.find(c=>c.definitionId===id)!,{selectionId:next(),createSelectionId:next}));}
+  for(const limit of [999,1000,1001,1500,600]){
+   const budgeted=ok(setLocalRosterResourceBudget(session,objectId("5bcf-897a-a5c9-d0e8"),limit));
+   const selected=budgeted.roster.forces[0]!.selections.find(s=>s.id===owner.id)!;
+   const before=JSON.stringify(budgeted.roster);
+   for(const mission of selected.selections){
+    const reports=[...ok(inspectLocalRosterSelectionCharacteristics(budgeted,mission.id)).byProfile.values()];
+    expect(reports).toHaveLength(2);
+    for(const report of reports){
+     const standard=report.profile.characteristics.find(c=>c.name==="Format")?.value==="Standard Engagement";
+     expect(report.visibility).toMatchObject({status:standard===(limit>=1001)?"visible":"hidden",completeness:"complete"});
+     expect(report.profile.modifiers[0]!.node.attributes.id).toBeTruthy();
+    }
+   }
+   const model=createUnitReferenceModel(budgeted,selected);expect(model.profiles).toHaveLength(2);
+   expect(model.profiles.map(p=>p.profile.value.characteristics.find(c=>c.name==="Format")?.value)).toEqual(Array(2).fill(limit>=1001?"Standard Engagement":"Skirmish Level"));
+   const doc=createArmyReferenceDocument(budgeted,evaluateLocalRosterCosts(budgeted),inspectLocalRosterSupportedValidation(budgeted));
+   const printed = doc.units.flatMap(u=>u.profiles).filter(p=>p.type==="Mission Card");
+   expect(printed).toHaveLength(2);
+   expect(printed.map(p=>p.fields.find(f=>f.name==="Format")?.value)).toEqual(Array(2).fill(limit>=1001?"Standard Engagement":"Skirmish Level"));
+   expect(JSON.stringify(budgeted.roster)).toBe(before);
+  }
+ }
+},30000);

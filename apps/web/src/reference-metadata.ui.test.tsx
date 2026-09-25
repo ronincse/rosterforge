@@ -18,7 +18,8 @@ const xml = `<gameSystem id="metadata" name="Fictional" revision="1" battleScrib
 <profileType id="map" name="Deployment Map"><characteristicTypes><characteristicType id="setup" kind="longText"/></characteristicTypes></profileType>
 </profileTypes><sharedProfiles><profile id="linked" name="Dependency dispatch" typeId="ability" typeName="Transmission"><characteristics><characteristic typeId="a" name="Parameters">Linked payload.</characteristic></characteristics></profile><profile id="unselected" name="Unselected alternative" typeId="ability" typeName="Transmission"/></sharedProfiles></gameSystem>`;
 const cat = `<catalogue id="cat" name="Metadata Fleet" revision="1" battleScribeVersion="2.03" gameSystemId="metadata" library="false"><selectionEntries><selectionEntry id="unit" name="Signal team" type="unit"><profiles>
-<profile id="packet" hidden="true" name="Unfamiliar dispatch" typeId="ability" typeName="Unit"><characteristics>${chars}<characteristic typeId="cost" name="Cost">Active (1 token)</characteristic></characteristics><modifiers><modifier type="set" field="brief" value="Beta"/></modifiers></profile>
+<profile id="packet" hidden="false" name="Unfamiliar dispatch" typeId="ability" typeName="Unit"><characteristics>${chars}<characteristic typeId="cost" name="Cost">Active (1 token)</characteristic></characteristics><modifiers><modifier type="set" field="brief" value="Beta"/></modifiers></profile>
+<profile id="hidden-packet" name="Inactive dispatch" hidden="true" typeId="ability"/>
 <profile id="tool" name="Measured beam" typeId="weapon" typeName="Instrument"><characteristics><characteristic typeId="range" name="Span">12&quot;</characteristic><characteristic typeId="blank" name="Blank"></characteristic></characteristics></profile>
 <profile id="census" name="Carrier census" typeId="tag" typeName="Census"><characteristics><characteristic typeId="supply" name="Supply">0</characteristic></characteristics></profile>
 <profile id="map-profile" name="Quiet plateau" typeId="map" typeName="Deployment Map"><characteristics><characteristic typeId="setup">Full setup instruction.</characteristic></characteristics></profile>
@@ -48,7 +49,7 @@ it("routes declared abilities before legacy Unit guesses and retains every mixed
   expect(abilities.textContent).toContain('<script>harmless</script>');
   expect(abilities.querySelector('script')).toBeNull();
   expect(abilities.textContent).toContain('Active (1 token)');
-  expect(abilities.textContent).toContain('Hidden by this catalogue.');
+  expect(abilities.textContent).not.toContain('Inactive dispatch');
   expect(abilities.textContent).toContain('Beta');
   expect(abilities.textContent).toContain('Alpha');
   expect(abilities.querySelectorAll('[data-field-role="longText"]')).toHaveLength(4);

@@ -29,11 +29,13 @@ groups were filtered out before unsupported-bound diagnosis and appeared
 optional/complete. Follow-up A now evaluates the evidenced static shared roster
 shape in one unnested force, pooling concrete members across wrappers; unsupported
 domains remain incomplete. See [pre-game follow-up](qa/starcraft-pregame-requirements.md).
-Seven zero/hidden counter activations remain unresolved. Selected mission profile
-visibility rejects modifier `id` despite complete limit conditions; both variants
-remain visible with uncertainty. Embedded map Markdown/data-image fields remain
-literal text, making the primary paper sample impractical. No repair, source
-update, arbitrary-image rendering or full legality claim accompanies this report.
+Seven zero/hidden counter activations remain unresolved. Follow-up B recognizes
+exact modifier `id` as identity metadata in profile visibility. Complete hidden
+variants are omitted from ordinary screen/print references; unresolved profiles
+stay visible and raw source records remain retained. Unknown behavioral attributes
+still qualify evaluation. Embedded map Markdown/data-image fields remain literal
+text, making the primary paper sample impractical. No source update, arbitrary-image
+rendering or full legality claim accompanies these two repairs.
 
 ### Declarative reference metadata (SC-06 partial)
 
@@ -836,8 +838,10 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
 - Read-only profile visibility for direct and recursively grouped Boolean `set`
   `hidden` modifiers, using the projected profile flag as the base and the same
   owner-direct then group-source execution order as selection visibility
-- Hidden and visibility-unresolved profiles labelled in occurrence details
-  rather than removed, so nothing the source declares disappears
+- Exact profile-visibility modifier `id` retained as identity metadata; unknown
+  behavior attributes remain unsupported. Ordinary selected screen/print references
+  omit complete hidden profiles, retain unresolved profiles with uncertainty, and
+  keep all raw records in inspection/technical source details
 - Occurrence keywords in the browser: effective categories in order, an added
   marker for modifier-granted ones, removed categories struck through rather
   than hidden, and an explicit unresolved state

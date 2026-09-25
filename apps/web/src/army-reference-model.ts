@@ -8,7 +8,7 @@ import { rosterSelectionAmount, type RosterSelection } from "@rosterforge/roster
 import { createRosterWorkspaceViewModel, type RosterWorkspaceCost, type RosterWorkspaceSelection } from "./roster-workspace-model.js";
 import { createModelComposition, selectedUpgradeSummary, formatSelectedChoiceSummary } from "./selected-loadout-summary.js";
 import { inspectLocalRosterSelectionCategories, isLocalRosterSingletonDesignationChoice, type LocalRosterSession, type LocalRosterSupportedValidationInspection } from "./roster-session.js";
-import { createUnitReferenceModel, referenceAttribution, type ReferenceProfileGroup, type ReferenceRule } from "./unit-reference-model.js";
+import { createUnitReferenceModel, showReferenceProfile, referenceAttribution, type ReferenceProfileGroup, type ReferenceRule } from "./unit-reference-model.js";
 import { categoryRuleDetails } from "./category-rule-details.js";
 import { classifyReferenceProfile, orderReferenceProfiles } from "./reference-profile-presentation.js";
 import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
@@ -136,7 +136,7 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
       const groups: ReferenceProfileGroup[] = [
         ...group.profiles.map(value => ({ profile: { origin: "Direct" as const, value }, report: item.reports?.get(value), members: [item.member] })),
         ...group.materializedInfoLinks.flatMap(value => value.kind === "profileInfoLink" ? [{ profile: { origin: "Linked" as const, value }, report: item.reports?.get(value), members: [item.member] }] : []),
-      ].map(p => ({ ...p, presentation: classifyReferenceProfile(p.profile, resolver("definition" in p.profile.value ? p.profile.value.definition : p.profile.value)) }));
+      ].filter(p => showReferenceProfile(p.report)).map(p => ({ ...p, presentation: classifyReferenceProfile(p.profile, resolver("definition" in p.profile.value ? p.profile.value.definition : p.profile.value)) }));
       profiles.push(...orderReferenceProfiles(groups).map(p => profile(p, path.join(" / "))));
       const scope = `${referenceAttribution([item.member])} · ${path.join(" / ")}`;
       for (const value of group.rules) add({ origin: "Direct", value, report: inspectLocalRule(value, session, item.member.owner) }, item.member.owner.id + path.join("/"), false, scope);

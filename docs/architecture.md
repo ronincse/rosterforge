@@ -973,8 +973,10 @@ sequence leaves the value unresolved, the source value stays visible and is
 explicitly labelled unresolved rather than being replaced by a provisional
 result. A profile with incomplete display behavior carries a plain-language
 note and a `data-completeness` attribute on both the profile and the affected
-characteristic. A hidden or visibility-unresolved profile is labelled and stays
-rendered, so nothing the source declares disappears from the occurrence.
+characteristic. Ordinary selected references omit only profiles with complete, known-hidden
+visibility via the shared `showReferenceProfile` predicate. Unresolved profiles
+stay rendered with their uncertainty. Raw inspection and the technical source
+disclosure retain all records; screen and print use the same effective result.
 Profiles with no evaluated report fall back to the projected text unchanged.
 
 Recursive occurrence rendering places selected children in a disclosure.
@@ -1032,12 +1034,12 @@ partial materialization, catalogue mismatch, unresolved occurrences, or an
 unsupported force shape. Thus `valid` plus `incomplete` means no supported
 violation is known, not that the roster is legal.
 
-Known exception found by the 2026-09-25 StarCraft acceptance: `selectionBounds`
-filters explicit roster-scoped group bounds through `isPotentialParentSelectionBound`
-before diagnosis. The tested shared pre-game min/max2 groups therefore disappear
-from the report and publish complete default0..Infinity child bounds. This is a
-recorded uncertainty-propagation defect; unrelated aggregate incompleteness does
-not account for it. See [acceptance evidence](qa/starcraft-pilot-acceptance.md).
+Historical exception found by the 2026-09-25 StarCraft acceptance (repaired for
+the bounded shape documented under Shared roster group requirements below): `selectionBounds`
+filtered explicit roster-scoped group bounds through `isPotentialParentSelectionBound`
+before diagnosis. The tested shared pre-game min/max2 groups therefore disappeared
+from the report and published complete default0..Infinity child bounds. Unrelated
+aggregate incompleteness did not account for this omitted requirement. See [acceptance evidence](qa/starcraft-pilot-acceptance.md).
 No traversal or initialization semantics were changed during acceptance.
 
 `inspectLocalRosterStructuralStatus` passes the current immutable roster and
@@ -2283,9 +2285,10 @@ unresolved applicability leave the status `unresolved` and the report
 incomplete. A hidden profile is reported, never removed; presentation decides
 what to do with the status.
 
-Scoped modifiers, repeats, missing operations or values, unresolved
-applicability, and any generic attribute other than the inert `comment` keep
-their step unapplied and the report incomplete. The evaluator sets no validity
+Exact visibility-modifier `id` is retained as inert identity metadata alongside
+the existing attribute policy. Scoped modifiers, repeats, missing operations or
+values, unresolved applicability, and other unsupported attributes keep their
+step unapplied and the report incomplete. The evaluator sets no validity
 state, aggregates nothing across profiles, and does not claim BattleScribe
 display parity.
 

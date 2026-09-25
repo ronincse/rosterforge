@@ -1532,7 +1532,7 @@ validation dimensions, but only for supported visible-root, direct-entry, and
 transparent-group bounds. Its `valid` state means no bound in that narrow scope
 is known violated. It does not claim full BattleScribe legality or block edits.
 
-### Recorded pre-game diagnostic gap
+### Historical pre-game diagnostic gap
 
 The [2026-09-25 acceptance](qa/starcraft-pilot-acceptance.md) demonstrates that
 explicit roster-scoped shared group min/max2 constraints in the frozen StarCraft
@@ -1541,7 +1541,13 @@ returns complete0..Infinity and the UI says optional. Seven unrelated unresolved
 resource-limit findings do not cover this omitted requirement. No new diagnostic
 or repair is delivered by the acceptance report. Separately, four selected mission
 profile visibility warnings per tested army correctly remain incomplete because
-modifier `id` is unsupported, even though their limit conditions resolve.
+modifier `id` was unsupported, even though their limit conditions resolve.
+The bounded follow-ups now evaluate the evidenced static shared roster group
+shape and admit exact profile-visibility modifier `id` as provenance metadata.
+Its presence alone no longer emits `EVALUATION_PROFILE_VISIBILITY_MODIFIER_UNSUPPORTED`.
+Other unsupported attributes/operations still emit that code. Unresolved conditions
+retain their condition diagnostics and incomplete visibility. Complete hidden profiles remain in inspection, but ordinary screen/print
+references omit them. The historical acceptance report is unchanged.
 
 ## Rule Visibility Diagnostics
 

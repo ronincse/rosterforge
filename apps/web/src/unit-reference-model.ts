@@ -120,6 +120,7 @@ export function createUnitReferenceModel(session: LocalRosterSession, root: Rost
     ];
     for (const profile of profiles) {
       const report = reports?.get(profile.value);
+      if (!showReferenceProfile(report)) continue;
       const modified = dynamic(profile.value) || ("definition" in profile.value && (dynamic(profile.value.definition) || dynamic(profile.value.link))) || report === undefined || report.completeness !== "complete"
         || report.name.steps.length > 0 || report.annotation.steps.length > 0
         || report.visibility.modifierApplicability.length > 0 || report.visibility.modifierGroupApplicability.length > 0
@@ -173,4 +174,11 @@ export function referenceAttribution(members: readonly ReferenceMember[]): strin
   const labels = new Map<string, number>();
   for (const member of members) labels.set(member.label, (labels.get(member.label) ?? 0) + rosterSelectionAmount(member.owner));
   return [...labels].map(([label, quantity]) => `${quantity}× ${label}`).join("; ");
+}
+
+/** Ordinary screen/print references omit only definitely hidden profiles.
+ * Missing or incomplete visibility remains visible with its qualification;
+ * source inspection retains every original record independently of this view. */
+export function showReferenceProfile(report: LocalRosterProfileCharacteristics | undefined): boolean {
+  return report?.visibility.status !== "hidden" || report.visibility.completeness !== "complete";
 }
