@@ -27,7 +27,14 @@ Conditions consume supported limit scalars; costs consume conditions. Downstream
 isolation. Validation composition requires this sixth report and checks immutable
 roster/context identity. The web session reuses its memoized evaluated-cost report.
 Unknown dynamic limit behavior stays unresolved, so cyclic dependencies cannot
-recurse. Source-default zero/creation-hidden activation remains explicitly qualified.
+recurse. A bounded source-local static adapter keeps authored defaults, base-hidden
+creation inclusion, effective maxima and display visibility separate. Known visible
+zero is a real maximum; known base-hidden declarations are inactive even when a
+direct unconditional operation reveals their display. Completed-army absent/inactive
+limit queries yield -1. Conditional/conflicting/unknown activation stays qualified;
+unknown behavior cannot be erased by an override. No general visibility/cost call
+is introduced. See `qa/starcraft-counter-activation.md` for the captured primary
+runtime evidence and transient pre-save query-zero qualification.
 
 The web controller commits limits through ordinary bounded history and recovery.
 Budget changes deliberately do not reconcile/remove now-hidden selected options.

@@ -2543,7 +2543,9 @@ describe("App local catalogue flow", () => {
       within(configuration).getByRole("heading", { name: "Configuration" }),
     ).toBeTruthy();
     expect(
-      within(configuration).getByText("80 / 2,000 Points"),
+      // This fixture also authors a visible source maximum of zero. The
+      // tightest-limit summary must preserve it alongside Battle Size 2000.
+      within(configuration).getByText("80 / 0 Points"),
     ).toBeTruthy();
     expect(
       within(configuration).getByText("0 / 3 Detachment Points"),
@@ -2691,10 +2693,10 @@ describe("App local catalogue flow", () => {
     // actually authored on army choices even though it was declared second.
     expect(
       within(workspaceNavigation).getByRole("link", {
-        name: "Selection Initialization roster, Selection Initialization; 80 of 2,000 Points used",
+        name: "Selection Initialization roster, Selection Initialization; 80 of 0 Points used",
       }),
     ).toBeTruthy();
-    expect(within(workspaceNavigation).getByText("80 / 2,000")).toBeTruthy();
+    expect(within(workspaceNavigation).getByText("80 / 0")).toBeTruthy();
     const rosterReportDetails = screen.getByRole("region", {
       name: "Roster report details",
     });
@@ -2718,7 +2720,9 @@ describe("App local catalogue flow", () => {
     fireEvent.click(configurationSummary as HTMLElement);
     expect(configuration.hasAttribute("open")).toBe(false);
     expect(
-      within(configuration).getByText("80 / 2,000 Points"),
+      // This fixture also authors a visible source maximum of zero. The
+      // tightest-limit summary must preserve it alongside Battle Size 2000.
+      within(configuration).getByText("80 / 0 Points"),
     ).toBeTruthy();
     expect(
       within(configuration).getByText("3 / 3 Detachment Points"),

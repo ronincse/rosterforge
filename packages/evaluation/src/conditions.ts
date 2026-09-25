@@ -1,4 +1,4 @@
-import { resolveRosterResourceLimits } from "./resource-limits.js";
+import { resolveRosterResourceLimits, resourceLimitQueryValue } from "./resource-limits.js";
 import {
   objectId,
   success,
@@ -358,9 +358,9 @@ export function evaluateRosterCondition<
       diagnostics.push(shapeDiagnostic(condition, "EVALUATION_CONDITION_LIMIT_SHAPE_UNSUPPORTED",
         "Limit queries require an exact cost ID, roster scope, any target, shared=true, finite comparison, and no traversal or extensions.", "field"));
     }
-    const observed = state?.kind === "finite" || state?.kind === "unbounded" ? state.value : undefined;
+    const observed = state === undefined ? undefined : resourceLimitQueryValue(state);
     if (observed === undefined) diagnostics.push(shapeDiagnostic(condition, "EVALUATION_CONDITION_LIMIT_UNRESOLVED",
-      "The queried resource limit is absent, ambiguous, invalid, or unsupported.", "field"));
+      "The queried resource limit identity or behavior is ambiguous, invalid, or unsupported.", "field"));
     const complete = diagnostics.length === 0;
     return success({ roster, context, owner, condition,
       status: complete && observed !== undefined && comparison !== undefined && expected !== undefined

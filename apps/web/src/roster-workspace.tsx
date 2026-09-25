@@ -1535,6 +1535,12 @@ function pointsLimitPending(
   cost: RosterWorkspaceCost | undefined,
 ): boolean {
   if (cost?.limit !== 0) return false;
+  // A known resource maximum is independent of an unfinished Battle Size.
+  // Do not turn an explicit/source zero cap into a misleading pending label.
+  const validation = workspace.reports.validation;
+  if (validation.ok && validation.value.status.resourceBudgets.resources.some(
+    ({ resource }) => resource.typeId === cost.typeId && resource.effective.kind === "finite" && resource.effective.value === 0,
+  )) return false;
   const battleSize = workspace.selections.ordered.find(
     ({ occurrence }) => occurrence.name === "Battle Size",
   );

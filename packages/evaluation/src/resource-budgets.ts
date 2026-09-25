@@ -38,7 +38,7 @@ export function inspectRosterResourceBudgets(roster: Roster, context: BattleScri
     const total = report && matches && definition ? queryCostConstraint(report, occurrences, resource.typeId, definition) : undefined;
     const exact = total?.exact === true;
     const state = resource.effective;
-    const active = state.kind !== "absent" && state.kind !== "unbounded";
+    const active = state.kind !== "absent" && state.kind !== "unbounded" && state.kind !== "inactive";
     return { resource, value: total?.value ?? 0, exact, active,
       status: !active ? "satisfied" : state.kind !== "finite" || !exact ? "unresolved"
         : total!.value <= state.value ? "satisfied" : "violated" };

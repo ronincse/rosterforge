@@ -9,7 +9,7 @@ All three factions download/create; selected Terran and Protoss save/reopen
 passes. Force-owned direct `add` error modifiers now participate in validation;
 static shared parent-category selection bounds are also evaluated.
 Supported default purchase budgets and explicit player limits now participate
-in validation and limit queries. Zero/creation-hidden default activation remains
+in validation and limit queries. Conditional/unknown default activation remains
 unverified. Numeric unit-selection conditions now drive the evidenced Marines6/9/6 reinforcement
 and Shield20/30/20 transition through existing automatic reconciliation.
 XML source values decode once. Static profile roles/order and characteristic
@@ -29,7 +29,9 @@ groups were filtered out before unsupported-bound diagnosis and appeared
 optional/complete. Follow-up A now evaluates the evidenced static shared roster
 shape in one unnested force, pooling concrete members across wrappers; unsupported
 domains remain incomplete. See [pre-game follow-up](qa/starcraft-pregame-requirements.md).
-Seven zero/hidden counter activations remain unresolved. Follow-up B recognizes
+The seven zero/base-hidden counter activations are now resolved for the static
+source shape; see [counter follow-up](qa/starcraft-counter-activation.md).
+Follow-up B recognizes
 exact modifier `id` as identity metadata in profile visibility. Complete hidden
 variants are omitted from ordinary screen/print references; unresolved profiles
 stay visible and raw source records remain retained. Unknown behavioral attributes
@@ -112,7 +114,7 @@ save/open and recovery pass. Its conservative initialization-modifier warning is
 retained; the completed reinforcement command has no reconciliation diagnostic.
 Marauders2/170 Foam ->4/320 ->2/170 also passed browser smoke. This is support for
 the evidenced shape, not complete StarCraft legality or full New Recruit parity.
-Source pins, seven unverified zero/hidden budget activations, orphan cost types,
+Source pins, unsupported dynamic/conditional budget activation, orphan cost types,
 remaining reference-formatting gaps and nine40k category bounds remain unchanged.
 Repository observation reporting is now covered separately by SC-08 below. See
 [SC-04 evidence and limitations](qa/starcraft-reinforcement.md).
@@ -140,10 +142,13 @@ records that separate contract. See `qa/starcraft-validation-errors.md`.
 ### Resource budgets and limit queries (SC-03/07)
 
 `resolveRosterResourceLimits` supplies one exact-ID, saved-context configuration
-model. Supported source defaults are positive finite declarations with explicit
-or omitted false base hidden state; -1 means unbounded in budget metadata only.
-Missing/exact-empty defaults are absent. Source zero and creation-hidden positive
-default activation are unverified and remain unresolved. No name, leading space,
+model. Supported base-visible defaults are nonnegative finite declarations,
+including a real zero maximum, or -1 unbounded. Missing/exact-empty defaults are
+absent. Supported base-hidden declarations are inactive, including zero and
+positive defaults, regardless of a direct unconditional reveal operation.
+Authored default, source inclusion, display visibility and effective maximum
+remain separate. Conditional, grouped, conflicting, malformed and unknown
+activation metadata stays unresolved; dynamic limits remain unsupported. No name, leading space,
 or inferred game-size ratio classifies a resource. Hidden resources with explicit
 player limits are checked. Source declarations/bytes are never edited.
 
@@ -151,14 +156,16 @@ Player overrides are finite nonnegative values (including a real maximum zero)
 or -1 for no configured limit. Reset removes the override and restores the saved
 source state. Invalid/ambiguous identities and unknown dynamic limit behavior are
 qualified; a value cannot bypass an unresolved identity or dynamic dependency.
-Seven StarCraft source-zero counters now contribute explicit incompleteness,
-without false maximum-zero violations; accepted supply/faction findings remain
-independent. This is not a claim that those counters are purchase budgets.
+The seven StarCraft source-zero/base-hidden counters resolve inactive, without
+maximum-zero violations; accepted signed supply/faction findings remain independent.
+This is not in-game spending or ability activation support.
 
 Supported `limit::<exact-cost-id>` leaves use roster scope, childId=any,
 shared=true, finite numeric comparisons and false/absent descendant flags. They
 read the effective configuration value, never spent costs. Explicit/default -1
-is retained as the numeric sentinel for queries, never Infinity. Missing limits,
+is retained as the numeric sentinel for queries, never Infinity. Known absent or
+inactive defaults also query -1 in RF's completed-army model, matching normal NR
+save/reselect rather than its transient pre-save absent-query zero. Unknown limits,
 unknown IDs/scopes/grammar, percentages, traversal, and dynamic limit expressions
 remain unresolved. Dependencies are limits -> conditions -> evaluated costs ->
 budget validation; limits never execute conditions or costs. Cycles/unknown limit
@@ -179,7 +186,9 @@ for present/past/future snapshots. Enter/Apply commits text; reset removes it an
 returns focus to the input. Source-dependent hidden selections remain stored.
 A small resource summary exposes both independent purchase limits, neutral totals,
 provisional spending, and unknown/inactive limits; configuration shows default
-versus override and reset. See [focused evidence](qa/starcraft-resource-budgets.md).
+versus override and reset. Known zero caps remain visible even with unfinished
+Battle Size setup. See [original budget evidence](qa/starcraft-resource-budgets.md)
+and [counter activation evidence and lifecycle limits](qa/starcraft-counter-activation.md).
 
 ### Parent category requirements (SC-02)
 

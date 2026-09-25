@@ -32,7 +32,7 @@ export function ResourceBudgets({ report, onChange }: { readonly report: RosterR
 }
 function limitLabel(state: ResourceLimitState): string {
   return state.kind === "finite" ? `limit ${state.value.toLocaleString()}` : state.kind === "unbounded" ? "no configured limit"
-    : state.kind === "absent" ? "no source limit" : state.kind === "invalid" ? "invalid source limit" : "source limit unverified";
+    : state.kind === "inactive" ? "no active source limit" : state.kind === "absent" ? "no source limit" : state.kind === "invalid" ? "invalid source limit" : "source limit unverified";
 }
 function BudgetEditor({ typeId, name, sourceLabel, effectiveLabel, current, overridden, enabled, onChange }: {
   readonly typeId: ObjectId; readonly name: string; readonly sourceLabel: string; readonly effectiveLabel: string;

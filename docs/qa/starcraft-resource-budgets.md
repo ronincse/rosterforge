@@ -1,5 +1,10 @@
 # SC-03/07 resource budgets — supported behavior and evidence
 
+> Historical report: the source-zero/base-hidden activation uncertainty below was
+> resolved for the evidenced static shape on 2026-09-25. See
+> [counter activation](starcraft-counter-activation.md). Original observations and
+> their limitations are retained; dynamic/unknown activation remains unsupported.
+
 Baseline: 81a15e2cee6f7bc54544904d3492e5093fb98c50, pilot branch only.
 StarCraft pin remains 99261754e0449bbaaa04e6890e1625b144f9ece1.
 

@@ -47,14 +47,16 @@ describe("effective resource budgets", () => {
   expect(query(ok(restoreLocalRosterSession(changed.catalogue, JSON.parse(JSON.stringify(changed.roster))))).observed).toBe(20);
  });
  it.each([
-  ['',"absent"],['defaultCostLimit=""',"absent"],['defaultCostLimit="-1"',"unbounded"],
-  ['defaultCostLimit="0"',"unresolved"],['defaultCostLimit="100" hidden="true"',"unresolved"],
-  ['defaultCostLimit="bad"',"invalid"],['defaultCostLimit="-2"',"invalid"],
- ] as const)("preserves declared state %s",async (declaration,kind) => {
-  const base = await fixture({declaration}); expect(ore(base).resource.authored.kind).toBe(kind);
-  if (kind === "absent" || kind === "unresolved" || kind === "invalid") expect(query(base).status).toBe("unresolved");
+  ['',"absent","absent",-1],['defaultCostLimit=""',"absent","absent",-1],['defaultCostLimit="-1"',"unbounded","unbounded",-1],
+  ['defaultCostLimit="0"',"finite","finite",0],['defaultCostLimit="100" hidden="true"',"finite","inactive",-1],
+  ['defaultCostLimit="bad"',"invalid","invalid",undefined],['defaultCostLimit="-2"',"invalid","invalid",undefined],
+ ] as const)("preserves declared state %s",async (declaration,authored,effective,observed) => {
+  const base = await fixture({declaration}); expect(ore(base).resource.authored.kind).toBe(authored);
+  expect(ore(base).resource.effective.kind).toBe(effective);
+  if (observed === undefined) expect(query(base).status).toBe("unresolved");
+  else expect(query(base)).toMatchObject({observed,completeness:"complete"});
   expect(ore(set(base,0)).resource.effective).toEqual({kind:"finite",value:0});
-  expect(ore(set(set(base,0),undefined)).resource.effective.kind).toBe(kind);
+  expect(ore(set(set(base,0),undefined)).resource.effective.kind).toBe(effective);
  });
  it("does not exempt hidden resources with explicit overrides",async () => {
   const s=add(await fixture({declaration:'hidden="true" defaultCostLimit="0"'}));

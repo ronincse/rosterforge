@@ -127,6 +127,23 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   expect(reopened.roster).toEqual(terran.roster);expect(mineral(reopened)).toBe(600);expect(decoded.history!.past[0]).toEqual(reinforcedSession.roster);
   const idsBefore=JSON.stringify(reopened.roster);for(let i=0;i<5;i++){expect(mineral(reopened)).toBe(600);inspectLocalRosterSupportedValidation(reopened);}expect(JSON.stringify(reopened.roster)).toBe(idsBefore);
 
+  // The four signed supply errors are independent from maximum budgets.
+  for (const [unitName, supplyName, supplyId] of [
+    ["Zealots","Core","472f-46af-8e02-bfbf"], ["Stalker","Elite","f5f9-3591-0f2d-0a53"],
+    ["Sentries","Support","31a6-c1f1-3d47-fa76"], ["Artanis","Hero","7e61-585f-b715-85e0"],
+  ]) {
+    const added = addRoot(create("Protoss"),unitName!);
+    const s = ok(setLocalRosterResourceBudget(added.session,objectId(supplyId!),0));
+    const r = inspectRosterResourceBudgets(s.roster,s.catalogue.context).resources.find(x=>x.resource.typeId===supplyId)!;
+    expect(r.value).toBeLessThan(0);expect(r).toMatchObject({active:true,status:"satisfied",exact:true});
+    expect(ok(inspectLocalRosterSupportedValidation(s)).status.findings.filter(f=>f.kind==="authoredError").map(f=>f.report.message)).toContain(`Not enough ${supplyName} Supply.`);
+    const removedSupply = ok(removeLocalRosterSelection(s,added.id));
+    expect(inspectRosterResourceBudgets(removedSupply.roster,removedSupply.catalogue.context).resources.find(x=>x.resource.typeId===supplyId)!.value).toBe(0);
+    expect(ok(inspectLocalRosterSupportedValidation(removedSupply)).status.findings.filter(f=>f.kind==="authoredError").map(f=>f.report.message)).not.toContain(`Not enough ${supplyName} Supply.`);
+  }
+  const positiveSupply = ok(setLocalRosterResourceBudget(addRoot(create("Protoss"),"Daelaam").session,coreIdSC,0));
+  expect(inspectRosterResourceBudgets(positiveSupply.roster,positiveSupply.catalogue.context).resources.find(x=>x.resource.typeId===coreIdSC)).toMatchObject({status:"violated",value:3});
+  expect(ok(inspectLocalRosterSupportedValidation(positiveSupply)).status.findings.filter(f=>f.kind==="authoredError")).toHaveLength(0);
   let protoss = create("Protoss");
   const validation = (session: LocalRosterSession) => {
     const status = ok(inspectLocalRosterSupportedValidation(session)).status;
@@ -156,18 +173,18 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   const second = addRoot(protoss, "Zealots"); protoss = second.session;
   const negative = ledger(protoss);
   const negativeValidation = validation(protoss);
-  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "incomplete", counts: { violated: 3 } });
-  expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "incomplete" });
+  expect(missingFaction).toMatchObject({ validity: "invalid", completeness: "complete", counts: { violated: 3 } });
+  expect(negativeValidation).toMatchObject({ validity: "invalid", completeness: "complete" });
   expect(ok(inspectLocalRosterSupportedValidation(protoss)).status.findings.filter(f => f.kind === "authoredError").map(f => f.report.message)).toEqual(["Not enough Core Supply."]);
   expect(negative.totals.find(t => t.id === "472f-46af-8e02-bfbf")?.value).toBe(-1);
   protoss = ok(removeLocalRosterSelection(protoss, second.id));
   const repaired = ledger(protoss);
-  expect(validation(protoss)).toMatchObject({ validity: "valid", completeness: "incomplete" });
+  expect(validation(protoss)).toMatchObject({ validity: "valid", completeness: "complete" });
   for (let i = 0; i < 7; i++) protoss = addRoot(protoss, "Forge").session;
   const gasOverBudget = ledger(protoss);
   const gasValidation = validation(protoss);
   expect(gasOverBudget.totals.find(t => t.id === "1719-6214-392e-e53f")?.value).toBe(210);
-  expect(gasValidation).toMatchObject({ validity: "invalid", completeness: "incomplete" });
+  expect(gasValidation).toMatchObject({ validity: "invalid", completeness: "complete" });
   const gasId = objectId("1719-6214-392e-e53f");
   const mineralId = objectId("5bcf-897a-a5c9-d0e8");
   const resource = (s: LocalRosterSession, id = gasId) => inspectRosterResourceBudgets(s.roster, s.catalogue.context).resources.find(b => b.resource.typeId === id)!;
@@ -189,7 +206,7 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   expect(checkLeaf(small)).toMatchObject({observed:1000,status:"unsatisfied",completeness:"complete"});
   expect(resource(small).resource.effective).toEqual({kind:"finite",value:210});
   expect(checkLeaf(ok(setLocalRosterResourceBudget(small,mineralId,undefined))).observed).toBe(2000);
-  expect(inspectRosterResourceBudgets(protoss.roster,protoss.catalogue.context).resources.filter(b=>b.resource.effective.kind === "unresolved")).toHaveLength(7);
+  expect(inspectRosterResourceBudgets(protoss.roster,protoss.catalogue.context).resources.filter(b=>b.resource.effective.kind === "inactive")).toHaveLength(7);
   for (const name of ["Terran", "Zerg"]) {
     let s = create(name);
     const bounds = (session: LocalRosterSession) => ok(inspectLocalRosterSupportedValidation(session)).status.categoryConstraints.forces.flatMap(f => f.constraints).filter(c => c.categoryName === "Faction");
