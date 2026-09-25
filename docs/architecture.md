@@ -1032,6 +1032,14 @@ partial materialization, catalogue mismatch, unresolved occurrences, or an
 unsupported force shape. Thus `valid` plus `incomplete` means no supported
 violation is known, not that the roster is legal.
 
+Known exception found by the 2026-09-25 StarCraft acceptance: `selectionBounds`
+filters explicit roster-scoped group bounds through `isPotentialParentSelectionBound`
+before diagnosis. The tested shared pre-game min/max2 groups therefore disappear
+from the report and publish complete default0..Infinity child bounds. This is a
+recorded uncertainty-propagation defect; unrelated aggregate incompleteness does
+not account for it. See [acceptance evidence](qa/starcraft-pilot-acceptance.md).
+No traversal or initialization semantics were changed during acceptance.
+
 `inspectLocalRosterStructuralStatus` passes the current immutable roster and
 catalogue context to that evaluator. It also passes the materialization flag
 retained by the local catalogue choice, avoiding a full materialized-tree scan

@@ -19,6 +19,20 @@ remain incomplete for five genuinely absent source cost types. See
 manifest, actual versus intended ledgers, classifications, and coverage limits.
 
 
+### Complete-army acceptance boundary (2026-09-25)
+
+The bounded [player-workflow acceptance](qa/starcraft-pilot-acceptance.md) built,
+saved and reopened representative Protoss, Terran and Zerg armies using unchanged
+pinned bytes. Supported arithmetic and persistence passed; complete-army acceptance
+is blocked. Roster-scoped shared min/max constraints on the pre-game map/mission
+groups are currently filtered out before unsupported-bound diagnosis and appear
+optional/complete. This is a confirmed reporting defect, not supported semantics.
+Seven zero/hidden counter activations remain unresolved. Selected mission profile
+visibility rejects modifier `id` despite complete limit conditions; both variants
+remain visible with uncertainty. Embedded map Markdown/data-image fields remain
+literal text, making the primary paper sample impractical. No repair, source
+update, arbitrary-image rendering or full legality claim accompanies this report.
+
 ### Declarative reference metadata (SC-06 partial)
 
 Resolved static profile kinds model/weapon/ability/tag route to stats, weapons,
