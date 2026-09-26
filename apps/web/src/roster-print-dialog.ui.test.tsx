@@ -15,7 +15,7 @@ const model: RosterPrintViewModel = {
 it("prints the ready selected layout, reports blocking and cancels without editing its snapshot", () => {
   const before = JSON.stringify(model), print = vi.fn(() => false), close = vi.fn();
   render(<RosterPrintDialog model={model} onPrint={print} onClose={close} />);
-  const frame = screen.getByTitle("Printable army preview");
+  let frame = screen.getByTitle("Printable army preview");
   const button = screen.getByRole("button", { name: "Print / Save PDF" });
   expect((button as HTMLButtonElement).disabled).toBe(true);
   fireEvent.load(frame);
@@ -24,6 +24,7 @@ it("prints the ready selected layout, reports blocking and cancels without editi
   expect(screen.getByRole("alert").textContent).toContain("Allow popups");
   fireEvent.change(screen.getByRole("combobox"), { target: { value: "sheets" } });
   expect((button as HTMLButtonElement).disabled).toBe(true);
+  frame = screen.getByTitle("Printable army preview");
   expect(frame.getAttribute("srcdoc")).toContain('class="sheets"');
   fireEvent.load(frame);
   fireEvent.click(button);

@@ -1,7 +1,10 @@
 // Bounded display-only markup. Everything becomes React text/elements; imported
-// HTML, URLs, images, scripts, regex and expressions are never executed.
-import { createContext, useContext, type ReactNode } from "react";
+// HTML, scripts, regex and expressions are never executed. Explicit embedded
+// JPEG spans use the separate bounded admission and platform decoding boundary.
+import { createContext, Fragment, useContext, useMemo, type ReactNode } from "react";
 import { matchTextReference, type ReferenceTextIndex, type TextReference } from "./reference-text-index.js";
+import { referenceContent, type ReferenceContent } from "./reference-images.js";
+import { ReferenceImageView } from "./reference-image-view.js";
 
 export interface ReferenceTextEnvironment {
   readonly index: ReferenceTextIndex;
@@ -16,14 +19,16 @@ const MAX_TOKENS = 4_096;
 /** Parse independent emphasis flags so the observed crossing ^^**name^^** and
  * nested ***Example:** italic **bold** text* both retain their intended styles.
  * Unpaired markers remain literal. Work is bounded and never recurses on input. */
-export function referenceTextRuns(text: string): readonly Run[] {
+export function referenceTextRuns(text: string, sharedBudget = { tokens: 0 }): readonly Run[] {
   if (text.length > MAX_TEXT) return [{ text, style: 0 }];
   const tokens: Token[] = [];
   const pending = new Map<number, Token>();
   const pattern = /\\[\\*_^~]|\*{1,3}|_{1,2}|\^\^|~~|<ins>|<\/ins>|<br\s*\/?\s*>/g;
   let offset = 0;
   for (const match of text.matchAll(pattern)) {
-    if (tokens.length > MAX_TOKENS) return [{ text, style: 0 }];
+    // Image-separated prose shares the original formatting-work allowance.
+    sharedBudget.tokens++;
+    if (sharedBudget.tokens > MAX_TOKENS || tokens.length > MAX_TOKENS) return [{ text, style: 0 }];
     if (match.index > offset) tokens.push({ text: text.slice(offset, match.index) });
     const marker = match[0];
     if (marker.startsWith("\\")) tokens.push({ text: marker.slice(1) });
@@ -103,11 +108,19 @@ function inline(runs: readonly Run[], environment: ReferenceTextEnvironment | un
 
 /** Render safe reference prose with semantic paragraphs, headings and lists.
  * Oversized input stays visible as plain text instead of partial formatting. */
-export function ReferenceRichText({ text, inlineOnly = false, wholeReference = false }: { readonly text: string; readonly inlineOnly?: boolean; readonly wholeReference?: boolean }) {
+export function ReferenceRichText({ text, inlineOnly = false, wholeReference = false, content }: { readonly text: string; readonly inlineOnly?: boolean; readonly wholeReference?: boolean; readonly content?: readonly ReferenceContent[] }) {
   const environment = useContext(ReferenceTextContext);
+  const parts = useMemo(() => content ?? (wholeReference ? [{ kind: "text" as const, text }] : referenceContent(text)), [content, text, wholeReference]);
+  const prose = parts.filter(part => part.kind === "text");
+  const oversized = prose.reduce((sum, part) => sum + part.text.length, 0) > MAX_TEXT || prose.reduce((sum, part) => sum + part.text.split("\n").length, 0) > 512;
+  const budget = { links: 0, tokens: 0 };
+  if (parts.some(part => part.kind === "image")) return <div className="reference-content">{parts.map((part, index) => part.kind === "image" ? <ReferenceImageView key={index} part={part} /> : oversized ? <span className="reference-rich-text" key={index}>{part.text}</span> : <Fragment key={index}>{renderReferenceProse(part.text, inlineOnly, wholeReference, budget, environment)}</Fragment>)}</div>;
+  return renderReferenceProse(text, inlineOnly, wholeReference, budget, environment);
+}
+
+function renderReferenceProse(text: string, inlineOnly: boolean, wholeReference: boolean, budget: { links: number; tokens: number }, environment: ReferenceTextEnvironment | undefined) {
   if (text.length > MAX_TEXT || text.split("\n").length > 512) return <span className="reference-rich-text">{text}</span>;
-  const runs = referenceTextRuns(text);
-  const budget = { links: 0 };
+  const runs = referenceTextRuns(text, budget);
   if (inlineOnly) return <span className="reference-rich-text">{inline(runs, environment, budget, wholeReference)}</span>;
   const lines: Run[][] = [[]];
   for (const run of runs) run.text.split("\n").forEach((text, index) => {

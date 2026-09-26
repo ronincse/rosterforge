@@ -1255,8 +1255,11 @@ Reference descriptions and characteristic values now display bold, italics,
 small caps (`^^`), underline (`<ins>`), strikethrough, line breaks, simple headings,
 lists and pipe tables through a bounded React-only renderer. Nested and crossing
 emphasis observed in the corpus is supported; malformed delimiters remain text.
-This is not full CommonMark or arbitrary HTML. URLs, images, code execution and
-imported `formatRules` regular expressions are not enabled.
+This is not full CommonMark or arbitrary HTML. Explicit embedded JPEG image
+spans now have bounded admission, platform decoding and captioned failure states;
+see `docs/qa/starcraft-embedded-map-images.md` for limits and partial acceptance.
+Remote images, other formats, executable URLs and imported `formatRules` remain
+unsupported. Entity decoding is not repeated in presentation.
 
 Prose and unmatched stat-keyword tokens can open layered references using actual
 rule/profile names and authored aliases from the selected catalogue closure.

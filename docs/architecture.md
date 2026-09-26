@@ -2733,3 +2733,18 @@ that cannot be safely coalesced. Nonshared, mixed, unsupported and unresolved
 queries remain incomplete. Unresolved group links also qualify their owning child
 inspection. Creation retains supported parent-local defaults but never fills a
 global group by choosing arbitrary alternatives.
+
+
+### Bounded embedded reference images (2026-09-26)
+
+`reference-images.ts` separates explicit JPEG spans before prose fallback and
+phrase scanning, with shared admission/resource limits. `reference-image-view.tsx`
+owns cancellable mounted-reader decoding and enlargement, retaining scalar
+payload/caption identity only. `army-reference-images.ts` prepares selected scalar
+snapshot values once per print dialog; preset changes reuse decoded outcomes.
+The same `ReferenceRichText` representation renders trusted figures in screen and
+HTML. CSP admits only data images separately from default-src none. Actual iframe
+and print-document decoding is bounded; visible failure containment precedes
+readiness, which is keyed to the current HTML/document. Original sources and
+saved armies are never rewritten. Full PDF/download acceptance is pending;
+see `docs/qa/starcraft-embedded-map-images.md`.

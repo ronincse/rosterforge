@@ -1,6 +1,7 @@
 import { inspectLocalRosterSelectionCharacteristics } from "./roster-session.js";
 import { createArmyReferenceDocument } from "./army-reference-model.js";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
+import { referenceContent, referenceProse } from "./reference-images.js";
 import type { OrderedXmlElement } from "@rosterforge/battlescribe-data";
 import { evaluateRosterCondition, inspectRosterResourceBudgets } from "@rosterforge/evaluation";
 // Optional pinned validation regression plus explicit remaining pilot reproductions.
@@ -197,6 +198,19 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   // unsupported parent/default-selection behavior surrounding it.
   const gst = [...protoss.catalogue.context.graph.reachableDocumentsByDocument.get(protoss.catalogue.context.document)!].find(d => d.metadata.kind === "gameSystem")!;
   const maps = gst.projection.sharedSelectionEntries.find(e => e.id === "d444-6767-cbfc-bf56")!;
+  // Admission follows real ingestion/projection, never a hand-decoded source
+  // substitution. Platform image decoding is independently checked in browser.
+  const mapProfiles = maps.selectionEntryGroups.flatMap(group => group.selectionEntries.flatMap(entry => entry.profiles));
+  expect(mapProfiles).toHaveLength(10);
+  for (const profile of mapProfiles) {
+    expect(profile.characteristics[0]?.name).toBe("Setup");
+    const value = profile.characteristics[1]!.value;
+    const parts = referenceContent(value);
+    expect(parts).toHaveLength(1);
+    expect(parts[0]).toMatchObject({ kind: "image", caption: profile.name, image: { height: 540 } });
+    expect(referenceProse(value).trim()).toBe("");
+    expect(value).toContain("data:image/jpeg;base64,");
+  }
   const camp = maps.selectionEntryGroups[0]!.selectionEntries[0]!;
   const leaf = camp.modifiers.flatMap(m => m.conditions).find(c => c.field === `limit::${mineralId}`)!;
   expect(leaf).toBeDefined();

@@ -1772,3 +1772,13 @@ link at its owning configuration. Existing
 `EVALUATION_INITIALIZATION_CONSTRAINT_UNSUPPORTED` now includes non-parent group
 requirements previously omitted by local planning; supported independent local
 defaults still initialize. Live unsupported bounds remain unresolved, not optional.
+
+
+### Embedded reference image failures
+
+Unsupported or malformed image syntax/URI/JPEG metadata, resource limits and
+platform decode failures produce captioned reference-display placeholders.
+They are not army-cost violations or new evaluator diagnostics. Original source
+bytes remain recoverable; no rejected URL is fetched. Overflow is summarized
+without losing later prose separators. See `docs/qa/starcraft-embedded-map-images.md`
+for exact limits and the remaining download/PDF acceptance boundary.

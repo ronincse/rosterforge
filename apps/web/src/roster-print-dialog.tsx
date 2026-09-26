@@ -2,6 +2,7 @@
 // Preview and download use identical HTML; printing does not save or edit an army.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { renderRosterPrintDocument, type RosterPrintViewModel } from "./roster-print.js";
+import { prepareArmyReferenceImages, settleReferenceDocumentImages, type PreparedArmyImages } from "./army-reference-images.js";
 import type { ArmyReferenceLayout } from "./army-reference-html.js";
 
 /** Present a read-only snapshot with two page-flow choices. Native dialog owns
@@ -10,22 +11,37 @@ export function RosterPrintDialog({ model, onPrint, onClose }: { readonly model:
   const ref = useRef<HTMLDialogElement>(null);
   const [layout, setLayout] = useState<ArmyReferenceLayout>("compact");
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
-  const snapshot = useMemo(() => ({ ...model, layout }), [model, layout]);
+  const [readySource, setReadySource] = useState<string>();
+  const [prepared, setPrepared] = useState<{ model: RosterPrintViewModel; images: PreparedArmyImages }>();
+  const previewWork = useRef<AbortController | undefined>(undefined);
+  const settledHtml = useRef<{ source: string; text: string } | undefined>(undefined);
+  useEffect(() => {
+    const controller = new AbortController();
+    void prepareArmyReferenceImages(model.reference, controller.signal).then(images => {
+      if (!controller.signal.aborted) setPrepared({ model, images });
+    });
+    return () => { controller.abort(); previewWork.current?.abort(); };
+  }, [model]);
+  const needsImages = useMemo(() => [...model.reference.units.flatMap(unit => unit.profiles.flatMap(profile => profile.fields.map(field => field.value))), ...model.reference.glossary.map(rule => rule.text)].some(text => text.includes("![")), [model]);
+  const images = needsImages && prepared?.model === model ? prepared.images : undefined;
+  const snapshot = useMemo(() => ({ ...model, layout, ...(images ? { images } : {}) }), [model, layout, images]);
   const html = useMemo(() => {
+    if (needsImages && !images) return {};
     try { return { text: renderRosterPrintDocument(snapshot) }; }
     catch { return { error: "The reference could not be generated. Close this window and try again; your army has not changed." }; }
-  }, [snapshot]);
+  }, [snapshot, images, needsImages]);
   useEffect(() => {
     const dialog = ref.current;
     if (dialog?.showModal) dialog.showModal();
     else dialog?.setAttribute("open", "");
     return () => { if (dialog?.open && dialog.close) dialog.close(); };
   }, []);
+  const ready = !!html.text && readySource === html.text;
   const save = () => {
     if (!html.text) return;
     try {
-      const url = URL.createObjectURL(new Blob([html.text], { type: "text/html;charset=utf-8" }));
+      const download = settledHtml.current?.source === html.text ? settledHtml.current.text : html.text;
+      const url = URL.createObjectURL(new Blob([download], { type: "text/html;charset=utf-8" }));
       const anchor = document.createElement("a");
       anchor.href = url;
       // Player names never become paths or Windows reserved characters.
@@ -36,18 +52,20 @@ export function RosterPrintDialog({ model, onPrint, onClose }: { readonly model:
   };
   return <dialog ref={ref} className="army-print-dialog" aria-labelledby="army-print-title" onCancel={event => { event.preventDefault(); onClose(); }}>
     <header><div><p>Army reference</p><h2 id="army-print-title">Print & export</h2></div><button type="button" onClick={onClose}>Close</button></header>
-    <div className="army-print-controls"><label>Layout <select value={layout} onChange={e => { if (e.target.value !== layout) { setReady(false); setLayout(e.target.value as ArmyReferenceLayout); } }}><option value="compact">Compact reference</option><option value="sheets">Unit sheets</option></select></label>
+    <div className="army-print-controls"><label>Layout <select value={layout} onChange={e => { if (e.target.value !== layout) { previewWork.current?.abort(); setReadySource(undefined); setLayout(e.target.value as ArmyReferenceLayout); } }}><option value="compact">Compact reference</option><option value="sheets">Unit sheets</option></select></label>
       <button type="button" disabled={!ready || !html.text} onClick={() => setError(onPrint(snapshot) ? "" : "The browser blocked the printable roster window or could not open it. Allow popups for this local page and try again.")}>Print / Save PDF</button>
-      <button type="button" disabled={!html.text} onClick={save}>Save HTML</button></div>
+      <button type="button" disabled={(needsImages && !ready) || !html.text} onClick={save}>Save HTML</button></div>
     <p>Current army snapshot, including unsaved changes. Choose A4 or Letter, portrait, 100% scale in your browser. Turn off browser headers and footers to omit its URL and date.</p>
     <p>{layout === "compact" ? "Compact reference flows unit blocks together." : "Unit sheets starts each unit on a new page; long units continue without shrinking."} HTML works offline without ForceWright.</p>
+    {!html.text && !html.error && <p role="status">Preparing reference images…</p>}
     {(html.error || error) && <p role="alert">{html.error || error}</p>}
-    {html.text && <iframe title="Printable army preview" sandbox="allow-same-origin" srcDoc={html.text} onLoad={event => {
+    {html.text && <iframe key={html.text} title="Printable army preview" sandbox="allow-same-origin" srcDoc={html.text} onLoad={event => {
       // Scripts remain forbidden by sandbox and document CSP. Same-origin
       // access lets the parent keep fragment links inside this srcdoc instead
       // of navigating to the application's inherited base URL. The listener
       // belongs to this document and disappears when its snapshot is replaced.
-      const previewDocument = event.currentTarget.contentDocument;
+      const frame = event.currentTarget;
+      const previewDocument = frame.contentDocument;
       previewDocument?.addEventListener("click", click => {
         const target = click.target as Element | null;
         const href = target?.closest?.("a")?.getAttribute("href");
@@ -55,7 +73,18 @@ export function RosterPrintDialog({ model, onPrint, onClose }: { readonly model:
         click.preventDefault();
         previewDocument.getElementById(href.slice(1))?.scrollIntoView();
       });
-      setReady(true);
+      previewWork.current?.abort();
+      const controller = new AbortController();
+      previewWork.current = controller;
+      if (!needsImages) { setReadySource(html.text); return; }
+      if (previewDocument) void settleReferenceDocumentImages(previewDocument, controller.signal).then(() => {
+        if (!controller.signal.aborted && frame.isConnected && frame.contentDocument === previewDocument) {
+          // Capture any document-specific failure placeholders as well. A
+          // successful preflight does not excuse a failed preview decode.
+          settledHtml.current = { source: html.text!, text: "<!doctype html>" + previewDocument.documentElement.outerHTML };
+          setReadySource(html.text);
+        }
+      });
     }} />}
   </dialog>;
 }

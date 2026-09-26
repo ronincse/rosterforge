@@ -13,6 +13,7 @@ import { categoryRuleDetails } from "./category-rule-details.js";
 import { classifyReferenceProfile, orderReferenceProfiles } from "./reference-profile-presentation.js";
 import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
+import { referenceProse } from "./reference-images.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
 
 export interface ArmyReferenceField { readonly name: string; readonly value: string; readonly note: string; }
@@ -197,8 +198,9 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
     for (const raw of texts) {
       if (scanned.has(raw)) continue;
       scanned.add(raw);
-      if (raw.length > 32768) { notes.push("Automatic cross-references limited for oversized text; full source text retained."); continue; }
-      const text = referenceTextRuns(raw).map(r => r.text).join("");
+      const prose = referenceProse(raw);
+      if (prose.length > 32768) { notes.push("Automatic cross-references limited for oversized text; full source text retained."); continue; }
+      const text = referenceTextRuns(prose).map(r => r.text).join("");
       for (let i = 0; i < text.length && references < 256;) {
         const match = matchTextReference(index, text, i);
         if (!match) { i++; continue; }

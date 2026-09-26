@@ -5185,3 +5185,15 @@ footer {
 .army-print-dialog button:disabled { opacity: .5; }
 .army-print-dialog > p { font-size: .9rem; }
 .army-print-dialog iframe { display: block; width: 100%; height: 60dvh; border: 1px solid #80938a; border-radius: var(--corner-radius); background: white; }
+
+/* Selected reference rasters keep their full aspect ratio. The modal permits
+   native-resolution inspection without widening the surrounding phone page. */
+.reference-image { margin: 1rem 0; max-width: 100%; min-width: 0; }
+.reference-image > img { display: block; width: 100%; height: auto; object-fit: contain; }
+.reference-image figcaption { font-weight: 600; margin: .4rem 0; overflow-wrap: anywhere; }
+.reference-image-unavailable { padding: .75rem; border: 1px solid currentColor; }
+.reference-image-dialog { width: min(95vw, 1100px); max-width: 95vw; max-height: 90vh; padding: 1rem; }
+.reference-image-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.reference-image-dialog h3 { overflow-wrap: anywhere; min-width: 0; }
+.reference-image-scroll { max-height: 72vh; overflow: auto; }
+.reference-image-scroll img { display: block; max-width: none; height: auto; }

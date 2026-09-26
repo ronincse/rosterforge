@@ -1,3 +1,4 @@
+import { settleReferenceDocumentImages, type PreparedArmyImages } from "./army-reference-images.js";
 import { createArmyReferenceDocument, type ArmyReferenceDocument } from "./army-reference-model.js";
 import { renderArmyReferenceDocument, type ArmyReferenceLayout } from "./army-reference-html.js";
 import type { RosterSelectionConditionCostReport } from "@rosterforge/evaluation";
@@ -74,6 +75,7 @@ export type RosterPrintValidationStatus =
     };
 
 export interface RosterPrintViewModel {
+  readonly images?: PreparedArmyImages;
   readonly reference: ArmyReferenceDocument;
   readonly layout?: ArmyReferenceLayout;
   readonly rosterId: string;
@@ -122,11 +124,12 @@ export function createRosterPrintViewModel(
 
 /** Render the selected snapshot, never the technical identity tree. */
 export function renderRosterPrintDocument(roster: RosterPrintViewModel): string {
-  return renderArmyReferenceDocument(roster.reference, roster.layout);
+  return renderArmyReferenceDocument(roster.reference, roster.layout, roster.images);
 }
 
 export interface RosterPrintWindow {
   readonly document: {
+    querySelectorAll?: Document["querySelectorAll"];
     open(): void;
     write(content: string): void;
     close(): void;
@@ -140,7 +143,8 @@ export type RosterPrintWindowFactory = () => RosterPrintWindow | null;
 
 /** Open a user-initiated, script-free document. A successful return means the
  * browser accepted the print request, never that the user saved or printed it.
- * Inline styles and system fonts avoid asynchronous asset-loading races. */
+ * Image documents wait for bounded decoding and visible failure containment.
+ * The boolean reports window acceptance, not completion of the native dialog. */
 export function openRosterPrintView(
   roster: RosterPrintViewModel,
   openWindow: RosterPrintWindowFactory = openBrowserPrintWindow,
@@ -153,7 +157,9 @@ export function openRosterPrintView(
     target.document.write(renderRosterPrintDocument(roster));
     target.document.close();
     target.focus();
-    target.print();
+    if (target.document.querySelectorAll?.("figure.reference-image img").length) {
+      void settleReferenceDocumentImages(target.document as Document).then(() => { try { target.print(); } catch { /* A closed popup cancels printing. */ } });
+    } else target.print();
     return true;
   } catch {
     return false;
