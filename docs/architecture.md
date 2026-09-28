@@ -2750,3 +2750,5 @@ saved armies are never rewritten. The five-document PDF matrix and offline
 captured-HTML reopening pass; actual download/native-print acceptance remains
 tool-limited;
 see `docs/qa/starcraft-embedded-map-images.md`.
+
+Resource-budget reports now project scalar named contribution terms from the same included complete cost terms used by the shared query. UI does not execute modifiers or sum a second ledger. Display-visible zeros remain visible; source-omitted maxima are optional advanced controls.

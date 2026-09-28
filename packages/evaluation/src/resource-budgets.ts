@@ -13,6 +13,7 @@ export interface RosterResourceBudget {
   readonly exact: boolean;
   readonly status: "satisfied" | "violated" | "unresolved";
   readonly active: boolean;
+  readonly contributions: readonly { readonly selectionName: string; readonly value: number }[];
 }
 export interface RosterResourceBudgetsReport {
   readonly roster: Roster;
@@ -39,7 +40,12 @@ export function inspectRosterResourceBudgets(roster: Roster, context: BattleScri
     const exact = total?.exact === true;
     const state = resource.effective;
     const active = state.kind !== "absent" && state.kind !== "unbounded" && state.kind !== "inactive";
-    return { resource, value: total?.value ?? 0, exact, active,
+    // Project the same included terms as the shared query. Never recalculate
+    // modifiers in the UI or present excluded/uncertain terms as exact amounts.
+    const contributions = total?.selections.flatMap(selection => selection.costs.flatMap(cost =>
+      cost.status === "included" && cost.typeId === resource.typeId && cost.modifierSequence.completeness === "complete"
+        ? [{ selectionName: selection.occurrence.name ?? cost.choice.name ?? "Unnamed selection", value: cost.totalValue }] : [])) ?? [];
+    return { resource, value: total?.value ?? 0, exact, active, contributions,
       status: !active ? "satisfied" : state.kind !== "finite" || !exact ? "unresolved"
         : total!.value <= state.value ? "satisfied" : "violated" };
   });

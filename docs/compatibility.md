@@ -2238,3 +2238,5 @@ Unavailable checks remain unavailable; prior observations keep their original ti
 Saved older revisions are not relabelled with the current Browse pin. No updater,
 source replacement, migration, persisted check or printed live freshness claim.
 See [SC-08 evidence](qa/source-aware-freshness.md).
+
+Owner-feedback resource presentation retains visible zero balances and names evaluated contributing selections. Source-omitted maxima are optional advanced caps on the signed result, not faction allowances. Unknown arithmetic remains provisional; independent supply errors and explicit saved overrides remain effective.

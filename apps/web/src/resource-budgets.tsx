@@ -8,18 +8,26 @@ type ChangeBudget = (typeId: ObjectId, value: number | undefined) => void;
 /** Shows independent resource totals and commits explicit player choices through
  * normal roster history. In-progress text is local until Apply/Enter. */
 export function ResourceBudgets({ report, onChange }: { readonly report: RosterResourceBudgetsReport; readonly onChange?: ChangeBudget | undefined }) {
-  const visible = report.resources.filter(item => item.resource.effective.kind === "finite" || item.value !== 0 || item.resource.override !== undefined);
+  const visible = report.resources.filter(item => item.resource.displayVisibility === "visible" || item.resource.effective.kind === "finite" || item.value !== 0 || item.resource.override !== undefined);
+  // Activation metadata, not resource names or the sign of a current total,
+  // determines which optional maxima belong behind the advanced disclosure.
+  const ordinary = report.resources.filter(item => item.resource.sourceActivation !== "omitted");
+  const optional = report.resources.filter(item => item.resource.sourceActivation === "omitted");
   if (report.resources.length === 0) return null;
   return <section className="resource-budgets" aria-labelledby="resource-budgets-heading">
     <h3 id="resource-budgets-heading" tabIndex={-1}>Resources</h3>
-    <div className="resource-budget-totals">{visible.map(({ resource, value, exact, status }) => <p key={resource.typeId}>
+    <div className="resource-budget-totals">{visible.map(({ resource, value, exact, status, contributions }) => <div key={resource.typeId}><p>
       <strong>{resource.definitions[0]?.name?.trim() ?? resource.typeId}</strong>{" "}
-      {value.toLocaleString()} {exact ? "total" : "provisional total"}{" · "}{limitLabel(resource.effective)}
+      {value.toLocaleString()} {exact ? "total" : "provisional total"}{resource.sourceActivation === "omitted" ? " (automatic balance)" : ""}{" · "}{limitLabel(resource.effective)}
       {resource.effective.kind === "finite" && exact ? ` · ${Math.abs(resource.effective.value - value).toLocaleString()} ${status === "violated" ? "over budget" : "remaining"}` : ""}
-    </p>)}</div>
+    </p>{contributions.length > 0 && <details><summary>{resource.definitions[0]?.name?.trim() ?? "Resource"} contributions</summary>
+      <ul>{contributions.map((item, index) => <li key={index}>{item.selectionName}: {item.value > 0 ? "+" : ""}{item.value.toLocaleString()}</li>)}</ul>
+      {!exact && <p>Known contributions only; the balance is provisional.</p>}
+    </details>}</div>)}</div>
+    {optional.length > 0 && <p>Authored contributions from selected entries, including faction, tactical and unit entries, apply automatically. Balances include zero. A missing maximum does not waive the catalogue’s supply requirements.</p>}
     <details><summary>Configure resource budgets</summary>
       <p>Each limit is independent. Other catalogue requirements still apply. Use -1 for no limit.</p>
-      {report.resources.map(({ resource }) => <BudgetEditor key={`${report.roster.id}:${resource.typeId}`}
+      {ordinary.map(({ resource }) => <BudgetEditor key={`${report.roster.id}:${resource.typeId}`}
         typeId={resource.typeId} name={resource.definitions[0]?.name?.trim() ?? resource.typeId}
         sourceLabel={resource.authored.kind === "unresolved" && resource.definitions[0]?.defaultCostLimit !== undefined
           ? `declared ${resource.definitions[0].defaultCostLimit}; activation unverified` : limitLabel(resource.authored)}
@@ -28,6 +36,14 @@ export function ResourceBudgets({ report, onChange }: { readonly report: RosterR
         overridden={resource.override !== undefined} enabled={resource.definitions.length === 1 && onChange !== undefined}
         onChange={onChange} />)}
     </details>
+    {optional.length > 0 && <details><summary>Advanced: optional resource maxima</summary>
+      <p>These are optional caps on the resulting balance, not faction allowances. You do not need to enter faction or tactical contributions here. Existing player overrides are retained.</p>
+      {optional.map(({resource}) => <BudgetEditor key={`${report.roster.id}:${resource.typeId}`}
+        typeId={resource.typeId} name={resource.definitions[0]?.name?.trim() ?? resource.typeId}
+        sourceLabel={limitLabel(resource.authored)} effectiveLabel={limitLabel(resource.effective)}
+        current={resource.override} overridden={resource.override !== undefined}
+        enabled={resource.definitions.length === 1 && onChange !== undefined} onChange={onChange} />)}
+    </details>}
   </section>;
 }
 function limitLabel(state: ResourceLimitState): string {

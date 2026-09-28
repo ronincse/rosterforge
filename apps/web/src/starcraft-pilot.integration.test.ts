@@ -145,6 +145,21 @@ it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserv
   const positiveSupply = ok(setLocalRosterResourceBudget(addRoot(create("Protoss"),"Daelaam").session,coreIdSC,0));
   expect(inspectRosterResourceBudgets(positiveSupply.roster,positiveSupply.catalogue.context).resources.find(x=>x.resource.typeId===coreIdSC)).toMatchObject({status:"violated",value:3});
   expect(ok(inspectLocalRosterSupportedValidation(positiveSupply)).status.findings.filter(f=>f.kind==="authoredError")).toHaveLength(0);
+  // Owner's composition, freshly built without any manual counter maxima.
+  let automatic = addRoot(create("Protoss"), "Daelaam").session;
+  for (const name of ["Adepts", "Zealots", "Stalker"]) automatic = addRoot(automatic,name).session;
+  const automaticReport = inspectRosterResourceBudgets(automatic.roster,automatic.catalogue.context);
+  expect(automatic.roster.resourceBudgetOverrides).toBeUndefined();
+  expect(automaticReport.resources.find(r=>r.resource.typeId===coreIdSC)).toMatchObject({value:0,exact:true,active:false,
+    contributions:expect.arrayContaining([{selectionName:"Daelaam",value:3},{selectionName:"Adepts",value:-1},{selectionName:"Zealots",value:-2}])});
+  expect(automaticReport.resources.find(r=>r.resource.typeId==="f5f9-3591-0f2d-0a53")).toMatchObject({value:0,exact:true});
+  const extraConsumer = addRoot(automatic,"Zealots");
+  expect(ok(inspectLocalRosterSupportedValidation(extraConsumer.session)).status.findings.filter(f=>f.kind==="authoredError").map(f=>f.report.message)).toContain("Not enough Core Supply.");
+  const repairedAutomatic = ok(removeLocalRosterSelection(extraConsumer.session,extraConsumer.id));
+  expect(repairedAutomatic.roster).toEqual(automatic.roster);
+  const automaticHistory = commitBoundedHistory(createBoundedHistory(automatic),extraConsumer.session);
+  expect(undoBoundedHistory(automaticHistory).present.roster).toBe(automatic.roster);
+  expect(redoBoundedHistory(undoBoundedHistory(automaticHistory)).present.roster).toBe(extraConsumer.session.roster);
   let protoss = create("Protoss");
   const validation = (session: LocalRosterSession) => {
     const status = ok(inspectLocalRosterSupportedValidation(session)).status;
