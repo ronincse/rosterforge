@@ -1,4 +1,8 @@
-# Embedded map images — bounded implementation, partial acceptance
+# Embedded map images — bounded implementation and resumed acceptance
+
+> Current result: see the 2026-09-28 continuation below. The previous partial
+> acceptance record is historical; its then-pending PDF and second-army checks
+> are now completed. Actual download/native-print acceptance remains tool-limited.
 
 2026-09-26. Baseline `1445e3a6bb508e7a5ac6c239a8144126c0129bab`, clean and
 upstream-equal after fetch. Only `codex/starcraft-pilot` was changed. Print/UI
@@ -138,3 +142,89 @@ The tested Protoss maps are usable onscreen and in rendered offline preview HTML
 final download/PDF and second-army acceptance remain unverified. Stop here. Dynamic
 activation/limits, source freshness updates, format expressions, orphan cost types,
 revision mismatch and evaluator precedence/routing qualifications remain unchanged.
+
+
+## 2026-09-28 continuation — final samples, bounded tool limitation
+
+Clean fetched baseline and tested HEAD `b1b06459648f168783a90b3fb693c41655e5dfec`,
+upstream-equal. No newer pilot work or active print/UI writer found. Existing
+5303 process was absent; restarted the same saved server script against this
+checkout, PID59308, preserving origin/storage and four retained SC Maps copies.
+No application changes were necessary. Existing independent implementation
+review remains applicable; no repeated inventory or security audit.
+
+### Acceptance ledger
+
+| Check | Disposition |
+| --- | --- |
+| JPEG admission, source inventory, original images, hostile cases | Previously verified; implementation unchanged; current focused regressions pass |
+| Primary Protoss retained army | Newly reopened normally;1220/1500M,130/200G, signed counters unchanged; Acropolis/Breach and full Standard mission fields present |
+| Second army Terran | Newly reopened twice normally;570/600M,60/200G; independent Marines9/240 and6/160; Abandoned Camp/Agria Valley540x540 and all Setup fields retained; Skirmish missions at600; orphan-cost qualification retained |
+| Reader and enlargement | Desktop1280x900 DOM/decoded geometry and390x844 phone checked; full square/landscape aspect ratios, captions, no payload prose; Close/Escape restore the corresponding trigger; phone viewer scrolls internally |
+| Save/preview state | Preset switch briefly disables actions until new document is ready; afterwards enabled. Totals/choices/source/save status and old shelf timestamps unchanged; no edit, migration or forced save |
+| Actual HTML download | Unverified: IAB event5s timeout and no matching Downloads file. Native Windows Edge control stopped for URL-policy confidence; no retry/bypass. Not classified as an application defect |
+| Offline reopening | Three exact production preview equivalents reopened independently by file URL in fresh offline Edge contexts; zero external requests, two decoded images each, unchanged CSP. Not downloaded-file evidence |
+| Normal print entry | IAB control activated separately; native print dialog/new target not observable. Unverified; headless results are separate |
+| PDF matrix | Newly complete: Compact Protoss Letter13/A4 13; Unit sheets Letter15/A4 14; Terran Compact Letter9 =64 pages |
+| Every-page review | All64 raster pages read at1400px long edge; lead35 Compact/Terran pages, independent native reviewer29 sheets pages plus15 overlapping pages. No missing/split/clipped/stretched map, blank image, payload paragraph or overlap |
+
+Independent reading tasks compared all four complete Setup texts and all seven
+fields of each active mission against frozen source, each map byte hash/caption
+and owner, separate Marine blocks and qualified costs. Protoss has two Standard
+and zero Skirmish profiles; Terran the inverse. Six HTML image occurrences retain
+the original JPEG hashes. Printed images may be re-encoded by Edge; original
+source bytes and captured data URIs are unchanged. A suspected missing Breach
+center5 on a downscaled tool preview was disproved by original-resolution raster
+crops and PDF-extracted image inspection; no source or renderer repair justified.
+
+Some map setup text ends on the page preceding its intact diagram, whose image
+title and caption retain identity. Sparse sheet continuations/notes pages and
+small source-resolution labels remain existing density/legibility qualifications,
+not missing content. The browser screenshot tool crops desktop captures relative
+to the requested viewport; DOM geometry and phone images support the UI evidence.
+No physical-printer, PDF-tagging, universal-browser or final owner-layout claim.
+
+`Opponent&#x27;s` remains literal in mission text: frozen GST lines624/650 author
+`Opponent&amp;#x27;s`. This is preserved exactly-once XML decoding, not a new
+image defect or permission to repeatedly decode text.
+
+### Final artifacts and validation
+
+Owner folder: `C:/CodexACLTest/ForceWright-Map-Review-2026-09-28/`, containing only
+five PDFs, three `*-preview.html` equivalents and `REVIEW-NOTES.md`.
+Tested application commit is b1b0645 (implementation7cde04f); later commits are
+report/handoff only. Headless Edge155.0.4283.18, portrait,100% scale, production
+14mm margins/10.5pt body, browser headers/footers off, background graphics off;
+image color-adjust remains production exact. No PDF patching or substitute layout.
+Separate logs/raster pages/JSON live under
+`C:/CodexACLTest/embedded-map-evidence/final-20260928/`; reviewer evidence under
+`C:/CodexACLTest/starcraft-map-review-20260926/.cache/map-inventory/`.
+
+Fresh focused36 tests/10files pass2.79s; normal1139pass/35optional skips,
+118files15.52s; configured1174pass/zero skips118files66.49s. Populations overlap.
+Configured JSON40kA, frozen40kA/B, StarCraft XML and saved DA print fixture execute;
+pins remain99261754,04c62fcd,5b261ec. Lint/typecheck/build pass, existing bundle
+advisory only. Whitespace and exact-final CI are recorded in final handoff/Actions.
+Existing export/non-mutation lifecycle tests passed; UI never invoked save/edit,
+budgets/history changes or migration. No fresh full live-database byte audit claimed.
+
+| File | Bytes | Pages | SHA256 |
+| --- | ---: | ---: | --- |
+| protoss-compact-A4.pdf | 189894 | 13 | `e118b260164a6f104d40767cc19969196023cc6a6e7a8ce8170da08bb519d629` |
+| protoss-compact-Letter.pdf | 189679 | 13 | `08c09482ccc9198bc189bbca40f45baee100e20ad600a2125cafb97a54c12e7c` |
+| protoss-compact-preview.html | 183418 | — | `fc22559692fe4d8a8fe4fa6a30fd10d160de54c8691cc2f4dc5dc01d08caf204` |
+| protoss-sheets-A4.pdf | 190860 | 14 | `ac0c55b3a5915fdbf78e63ea8d9c2fa575c096835f425b3a0742ac8b9e5cb740` |
+| protoss-sheets-Letter.pdf | 191282 | 15 | `69ca3b3012575945346d75ca55808ee1d5867fc22a4aa6fb0a9ed1bccb912dbd` |
+| protoss-sheets-preview.html | 183417 | — | `cc1a98bca881cae9403ccae6e61168b10b39bd20d9291482f40358ff4cb53dac` |
+| terran-compact-Letter.pdf | 164707 | 9 | `d3f80cae19bb770111dde35be869b569317c64dbf33985ce741eb23c2a70f48f` |
+| terran-compact-preview.html | 118939 | — | `13ff44d809b2a1a1f41bc6cfaf0a26890f5617687074f17c094b867bd8acc8b3` |
+
+**Disposition:** the map-rendering/paper-content blocker can close for the tested
+bounded JPEG source shape. Full end-to-end acceptance remains qualified by actual
+download/offline-downloaded-file and native print-dialog tool limitations. Minimal
+owner action: save the three named HTML layouts through ordinary browser controls,
+reopen those downloads offline, and confirm normal print entry opens the dialog.
+Usable captured equivalents and PDFs are delivered now. No new application defect
+was demonstrated; no speculative changes, security bypass or weakened limits.
+Stop here; owner print-layout acceptance, source revision mismatch, orphan costs,
+format expressions and evaluator precedence/routing boundaries remain unchanged.

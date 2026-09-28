@@ -35,9 +35,11 @@ Follow-up B recognizes
 exact modifier `id` as identity metadata in profile visibility. Complete hidden
 variants are omitted from ordinary screen/print references; unresolved profiles
 stay visible and raw source records remain retained. Unknown behavioral attributes
-still qualify evaluation. Embedded map Markdown/data-image fields remain literal
-text, making the primary paper sample impractical. No source update, arbitrary-image
-rendering or full legality claim accompanies these two repairs.
+still qualify evaluation. The former literal embedded-map paper blocker is now
+resolved for bounded validated JPEG spans: four selected maps pass screen and the
+five-document PDF matrix. Actual download/native-print acceptance remains
+tool-limited; see [map evidence](qa/starcraft-embedded-map-images.md). No source
+update, arbitrary-image rendering or full legality claim accompanies these repairs.
 
 ### Declarative reference metadata (SC-06 partial)
 
@@ -1257,7 +1259,8 @@ lists and pipe tables through a bounded React-only renderer. Nested and crossing
 emphasis observed in the corpus is supported; malformed delimiters remain text.
 This is not full CommonMark or arbitrary HTML. Explicit embedded JPEG image
 spans now have bounded admission, platform decoding and captioned failure states;
-see `docs/qa/starcraft-embedded-map-images.md` for limits and partial acceptance.
+see `docs/qa/starcraft-embedded-map-images.md` for limits, verified PDF samples
+and remaining download/native-print limitations.
 Remote images, other formats, executable URLs and imported `formatRules` remain
 unsupported. Entity decoding is not repeated in presentation.
 

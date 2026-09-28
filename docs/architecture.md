@@ -2746,5 +2746,7 @@ The same `ReferenceRichText` representation renders trusted figures in screen an
 HTML. CSP admits only data images separately from default-src none. Actual iframe
 and print-document decoding is bounded; visible failure containment precedes
 readiness, which is keyed to the current HTML/document. Original sources and
-saved armies are never rewritten. Full PDF/download acceptance is pending;
+saved armies are never rewritten. The five-document PDF matrix and offline
+captured-HTML reopening pass; actual download/native-print acceptance remains
+tool-limited;
 see `docs/qa/starcraft-embedded-map-images.md`.
