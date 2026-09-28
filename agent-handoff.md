@@ -34,7 +34,38 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-28 (owner-feedback A-D complete)
+## Current Status — 2026-09-28 (distinct print templates complete)
+
+Clean fetched baseline c044f2fe; implementation/report
+6a04aefca167c730b4c1637b8b4dff337d939d5e, separate handoff follows.
+Only codex/starcraft-pilot publication. Compact now has dense bordered blocks,
+inline short ability fields and full-width tables; Sheets has title/cost bands,
+prominent stats and adjacent metadata/full effects. Same evaluated scalar facts,
+distinct internal composition. Units precede army references and verified setup.
+Current contract/evidence: `docs/qa/print-template-design.md`.
+
+Latest owner1000M/100G Nerazim case reconstructed from frozen445a bytes without
+invented owner save/provenance. All44 profile record/value mappings,11roots and
+both exact map URIs match the owner export. Five combat sheets include separate
+U7/U8 Stalkers. Actual new Compact/Sheets HTML downloads reopen offline with two
+maps, zero external requests/broken anchors. Final Compact→Sheets→Compact returns
+identical Compact content; All changes saved and disabled Undo/Redo remain.
+
+All92 finalPDFpages visually inspected: primaryCompactLetter11/A411,
+SheetsLetter17/A416; labelled40kfour-entryexcerpt11/13; unknown/longfiction6/7.
+Two isolated native reviewers challenged design, code and reading tasks; findings
+fixed. No repeat Claude OAuth attempt. Normal1165passed/37optional skips,
+configured1202passed/zero skips127files50.42s; lint/typecheck/build/diff pass.
+Existing bundle advisory. Exact-final Actions CI must be confirmed after push;
+completion response records that observation, not an assumed green result.
+
+Playable5303 and isolated5305/5307 remain running; 5303/5307 HTTP200 verified.
+Native OS print dialog, physical printing and final owner layout acceptance remain
+unverified. Source pins/bytes, armies, histories, recovery and evaluator unchanged.
+Known precedence/routing/formatting/source/orphan-cost qualifications remain.
+Stop after this checkpoint: no main/PR/deployment, source update or other roadmap.
+
+### Historical status — owner-feedback A-D complete
 
 Baseline a82c78c. A e7910b7 (+ecda707 test lint), B e41a716, C acb7232,
 D b742143; separate handoffs accompany each. Full evidence:
@@ -1452,7 +1483,7 @@ QA before classifying or implementing the discrepancy.
 | RF-GROK-04/05/06 presentation observations | Deferred — outside correctness batch | Filtered Add-unit count persists (also observed locally); Character2/min1 wording ambiguous; Configuration ordinal reported. UI-overhaul follow-ups, no changes here |
 | RF-GROK-07 preview backdrop | Open — needs bounded reproduction | Audit timed out clicking behind open modal; not renderer crash and not proof of backdrop persisting after close. Verify close/Escape/focus before classifying a defect; no repair authorized here |
 | RF-GROK-08/09/10/11/12 audit classification | Deferred / existing / environment | Whole-roster duplication and Lists overhaul remain existing work;13.6MB retained closure is design/product concern, shared in current shelf; print usability unverified and existing Open row; GitHub freshness403 is environment evidence, not engine defect. No duplicate implementation batch |
-| Print-output usability pass | Follow-up implemented on pilot, 35bcd47; owner acceptance pending | Foundation86f877d retained; one-page DA index, exact-body sharing47records/25bodies,131profiles/213members→104display rows, readable reflow, full attribution/uncertainty and verified page counters. All146 final pages/16PDFs visually reviewed plus independent reading tasks. Some short tails/notes-only pages remain. No full-accuracy, physical-printer/universal-browser or main-integration claim. See `docs/qa/printable-reference.md` |
+| Print-output usability pass | Distinct template redesign implemented on pilot, 6a04aef; owner acceptance pending | Pagination-only contract superseded: dense bordered Compact versus designed stat/ability Sheets, same frozen facts. Units before army/supporting sections; stable occurrence anchors, full text/maps/qualifications. New Nerazim1000/100 actual downloads offline verified; all92 targeted finalPDFpages inspected plus independent reading tasks. Short tails/whole-map whitespace remain. Native OS dialog/physical-printer/universal-browser acceptance unclaimed. Current contract `docs/qa/print-template-design.md`; historical sharing evidence retained in `docs/qa/printable-reference.md`. No automatic next work. |
 | Selected enhancement anchor consistency | Done — 2026-09-19 checkpoint A | Primary editor controls establish additive explicit self; shared Captain Sv 2+ now applies with Artificer Armour. Category/profile filters and implicit-self exclusions remain. Missing/ambiguous context stays unresolved; no typed-query expansion. See `docs/qa/reference-engine-correctness.md`; old print reproduction is historical. |
 | Effective parameterized rule names | Bounded support done — 2026-09-19 checkpoint B | Shared owned set/append with conditions/groups and provenance resolves Impulsor D3/6 and Armour 5+. Distinct labels/owners survive shared glossary bodies. Dynamic definition/link competition and modified-definition/static-link precedence remain qualified; routed name operations, unsupported repeats/groups, annotations and imported formatting are not newly supported. |
 | Per-file update times | Deferred | the repository-wide freshness signal is shipped. Exact per-file dates would cost one GitHub request for each of 46 files and can be reconsidered only if a demonstrated decision needs that precision |
@@ -16944,6 +16975,9 @@ costs, precedence/routing, formatting and dynamic limits remain. Stop here; leav
 
 ## Completed Assignment — 2026-09-28 owner-feedback A preset evidence
 
+> Narrow pagination-only design contract superseded by the owner's subsequent
+> distinct-template assignment below. Earlier observations remain historical.
+
 Baseline a82c78c; implementation/report e7910b7. Six focused tests in three
 files pass; paired owner outputs8/8pages and fictional1/4pages, all21pages
 visually reviewed. Continuous screen flow explained rather than inventing
@@ -16995,3 +17029,55 @@ Summary docs/qa/owner-feedback-batch.md records private artifact paths, review,
 exact-final CI is confirmed after pilot-only push in the completion response.
 No other writer changes published. Preview5303 and isolated5305 left running.
 Stop: no main integration, broader game support, dynamic limits or migration.
+
+## Completed Assignment — 2026-09-28 distinct Compact and Unit sheets designs
+
+Baseline c044f2fe2c60b73df389d9302e3a02f0aa572712, fetched/upstream equal and
+clean; print/UI task idle. Implementation/report
+6a04aefca167c730b4c1637b8b4dff337d939d5e; this separate documentation commit
+records the handoff. Only pilot push, no other writers' work included.
+
+Owner explicitly replaced pagination-only acceptance. Primary lead implemented
+two compositions over the same scalar evaluated snapshot, safe rich text/images
+and conservative sharing. Compact reduces Zeratul's same-width unit height from
+1135px to858px (734pxwide) with all facts; Sheets uses different stats/ability
+organization. Full tables/prose retained; no forced one-page shrink or filler.
+Unit/model descendants keep combat identity; unique resolved StarCraft setup
+category and complete membership permit supporting placement. Unknown non-units
+stay neutral. Rejected English-name/group-count classification and markup-equality
+acceptance. No source/evaluator/persistence change.
+
+Two isolated native reviewers engaged early and at final stage; Claude unavailable
+per prior OAuth evidence, not retried. Review fixed omitted profile type, Supply
+fit, paragraph treatment, named continuation footers, precise four-entry40k excerpt
+and dedup guard. Apparent stress footer overlap disproved by PDF bounds; not a
+claimed renderer defect. Every final page visually inspected: primary55,40k24,
+fictional13 (92total; lead35/reviewers57 plus overlap). Final targeted paragraph
+adjustment rechecked changed pages, other rasters hash-identical. Reading tasks
+cover5+defences,Dmg2,Reaction1PE,knownbearers,map/sharedscope; CaptainSv2+/FNP5+,
+distinct5/10Intercessors/attachedLethalHitsU6only andImpulsorD3/6 remain.
+
+Principal reconstruction from already-frozen445aProtoss/GST through production
+commands:11roots/30selections/5combat/44profile records,1000M/100Gexact limits,
+two upgradedStalkers,2maps/2missions. All44record/value mappings and mapURIs match
+owner baseline; private exports not committed or treated as saved roster history.
+Disposable5307 fixture installer uses productiondraftstore; normal Open/View/
+Print/SaveHTML verified. Actual final Downloads(2) copied unchanged, not preview
+captures; offline file reopening has2decodedmaps/0externalrequests/0brokenanchors.
+Preset roundtrip returns identicalCompact; five statpanels onlySheets, save/history
+state unchanged. Native printcontrol invoked, OSdialog unobserved. Four primary
+PDFs use actual downloads; auxiliary PDFs use production-renderer harnessHTML.
+
+Final gates: lint,typecheck,build208modules,diffcheck pass; bundlewarning existing.
+Normal1165passed/37optionalskips,117filespassed/10skipped25.36s;
+configured1202passed/0skips127files50.42s (overlap). Final byte-preservation
+assertion plus semantic fixture2passed/2files2.33s. Existing configured40kA/B,
+oldSC99261754, savedDarkAngels and separatelyfrozen445a all execute; exact paths,
+hashes, privateartifactroot and limitations in `docs/qa/print-template-design.md`.
+No diagnosticscodes changed. Exact-final CI confirmed after push in final response.
+
+Playable5303 preserved HTTP200; isolated5305/5307 left running. Owner files,
+armies/storage/tabs/worktrees retained. Final owner layout acceptance pending;
+short continuation/notes pages and whole-map whitespace remain. No main, PR,
+deployment, source refresh, profile/evaluator expansion or additional audit.
+Stop here; source/orphan-cost, precedence/routing and imported-format limits remain.
