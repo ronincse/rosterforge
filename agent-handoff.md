@@ -1139,8 +1139,8 @@ Three habits earned the hard way, all worth keeping:
 | Owner-feedback checkpoint | Status | Boundary |
 | --- | --- | --- |
 | A preset workflow | Done | Actual paired outputs differ; continuous preview clarified; batch gates pending |
-| B automatic resource presentation | Next | Evaluated contributions, zero balances, optional maxima |
-| C latest immutable acquisition | Open | Explicit new snapshots only; preserve old armies |
+| B automatic resource presentation | Done | Evaluated contributions, zero balances, optional maxima |
+| C latest immutable acquisition | Next | Explicit new snapshots only; preserve old armies |
 | D game-size presets | Open | Official OP Guide v1.0 values; explicit choice, Custom |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
@@ -16934,3 +16934,15 @@ pagination. Independent native review approved this boundary; its identified
 missing image-preset race regression was added and passes. No native dialog,
 physical printing or blanket layout acceptance claimed. B-D and normal/configured
 batch gates continue; no push yet.
+
+## Completed Assignment — 2026-09-28 owner-feedback B resource presentation
+
+Baseline bb815d9; implementation e41a716. Shared costs already account for
+faction/tactical grants and consumption. Expose their included scalar terms,
+keep visible zero balances, and separate source-omitted optional maxima.
+35 focused tests/four files pass including unchanged pinned StarCraft.
+Fresh normal5305 army verified Daelaam/units/Gateway add-remove, Core negative
+error and undo/redo, faction replacement and save without counter overrides.
+No new evaluator, guessed role or implicit override. Independent native B/C
+review no blocker. Report docs/qa/automatic-resource-presentation.md.
+C/D and final batch gates continue; no push yet.
