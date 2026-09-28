@@ -34,16 +34,33 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-28 (owner-feedback A-D batch active)
+## Current Status — 2026-09-28 (owner-feedback A-D complete)
 
-Owner feedback supersedes prior closeout. Baseline a82c78c. A verifies actual
-owner exports: equal eight-page counts but Compact unit starts4/5/6, Sheets5/6/7;
-fictional pair1/4pages. Continuous-preview clarification and six focused
-switch/export/race tests pass. See `docs/qa/owner-feedback-presets.md`.
-B automatic-resource presentation, C explicit latest immutable acquisition and
-D evidenced optional presets remain active. Final batch gates pending.
-Owner confirms downloaded HTML/PDF maps work at that scope; no full layout
-acceptance. Pilot-only publication; old sources/armies remain protected.
+Baseline a82c78c. A e7910b7 (+ecda707 test lint), B e41a716, C acb7232,
+D b742143; separate handoffs accompany each. Full evidence:
+`docs/qa/owner-feedback-batch.md`. Only codex/starcraft-pilot publication.
+Actual owner Compact/Sheets exports paginate differently despite equal8pages;
+all21paired owner/fictional PDF pages inspected. Continuous preview clarified.
+Automatic evaluated balances/contributors include zeros; optional maxima advanced.
+Explicit latest acquisition stages complete445a410f snapshot, persists selection,
+and keeps baseline99261754 and old armies separate. Nerazim/Zeratul ordinary
+Browse/load/create/reference/save/reopen passes. Explicit OP Guidev1.0
+Skirmish1000/100 and Standard2000/200 presets preserve Custom and atomic history.
+
+Normal1159pass/36optional skips; configured1195pass/zero skips124files (overlap).
+Lint/typecheck/build/diff-check pass. Independent isolated native reviews no
+remaining blocker; no repeated Claude OAuth attempt. Publication final reply
+must confirm exact-final Actions run. No owner files/third-party bytes committed.
+
+Playable5303 preserved; isolated5305 includes saved old/latest disposable armies.
+Both servers remain running. Phone390 inspected; desktop1280 DOM bounds checked,
+IAB screenshot crop limitation disclosed. New OS download/native print dialog
+not observed this run; owner's supplied actual downloads and all21PDF pages are
+verified evidence. No full owner-layout or publisher-rule certification.
+
+Stop after this batch. Source pins/tests unchanged; no main/PR/deployment,
+migration, further audit or unrelated roadmap work. Known evaluation precedence,
+routing, imported-format and source/orphan-cost qualifications remain.
 
 ### Historical status — map samples verified; download/native-print tool limits
 
@@ -1138,10 +1155,10 @@ Three habits earned the hard way, all worth keeping:
 
 | Owner-feedback checkpoint | Status | Boundary |
 | --- | --- | --- |
-| A preset workflow | Done | Actual paired outputs differ; continuous preview clarified; batch gates pending |
+| A preset workflow | Done | Actual paired outputs differ; continuous preview clarified; batch gates passed |
 | B automatic resource presentation | Done | Evaluated contributions, zero balances, optional maxima |
 | C latest immutable acquisition | Done | Explicit new snapshots only; preserve old armies |
-| D game-size presets | Next | Official OP Guide v1.0 values; explicit choice, Custom |
+| D game-size presets | Done | Official OP Guide v1.0 values; explicit choice, Custom |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
 the map, not the territory** — it groups that record into product milestones so
@@ -16959,3 +16976,22 @@ Full candidate normal1159pass/36optional skips, configured1195pass/0skips124file
 lint/typecheck/build/diff pass. D and final evidence/publication remain active.
 Independent native B/C review no blocker, two test/diagnostic suggestions fixed.
 See docs/qa/latest-source-acquisition.md. No migration, pin edit or main work.
+
+## Completed Assignment — 2026-09-28 owner-feedback D and batch completion
+
+D baseline e9646b2 (A test-signature follow-up ecda707), implementation b742143.
+Two named application presets from official Organised Play Guidev1.0p4; no
+inferred ratio or dynamic-limit engine. Exact loaded-system/currency identities,
+explicit Apply, one paired history transition, Custom retains independent values.
+Ten eligibility tests and controller regression plus ordinary phone/browser
+apply/custom/undo/redo/save/reopen verified. Independent native D review approved.
+
+All batch tests/gates pass: normal1159/36skips28.09s; configured1195/0skips63.92s,
+124files, populations overlap. Existing configured40kA/B, oldSC99261754 and
+new separately frozen445a410f plus savedDarkAngels fixture executed. Lint,
+typecheck, build207modules and whitespace pass; existing bundle advisory only.
+Summary docs/qa/owner-feedback-batch.md records private artifact paths, review,
+21PDFpages and browser limitations. Final handoff commit follows b742143;
+exact-final CI is confirmed after pilot-only push in the completion response.
+No other writer changes published. Preview5303 and isolated5305 left running.
+Stop: no main integration, broader game support, dynamic limits or migration.
