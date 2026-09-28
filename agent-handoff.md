@@ -34,7 +34,58 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-26 (embedded maps implemented; acceptance partial)
+## Current Status — 2026-09-28 (map samples verified; download/native-print tool limits)
+
+Resumed clean fetched baseline `b1b06459648f168783a90b3fb693c41655e5dfec`;
+tested application unchanged (admission9daf30c, integration7cde04f).
+Evidence/docs commit `63465df413a39a7be90bb5953bb18fb3e82af63c`; this separate
+handoff follows. Only `codex/starcraft-pilot` publication is authorized.
+Print/UI task remains idle; no application repair or source update was needed.
+
+**Tested map-rendering/paper-content blocker resolved for bounded JPEG shape.**
+Protoss Acropolis/Breach and Terran Abandoned Camp/Agria Valley open normally
+from retained disposable SC Maps drafts. Protoss1220M/1500 and130G/200,
+Terran570M/600 and60G/200; independent Marines9/240 and6/160. Signed counters,
+Standard/Skirmish mission fields, source identity, saved timestamps and costs
+qualifications remain. No edit/migration/forced save. Enlargement Close/Escape
+and focus return passed; phone viewer scrolls internally.
+
+Five PDFs /64 final pages visually inspected (lead35, independent reviewer29
+plus15 overlapping pages). Three exact production preview HTML equivalents
+independently reopen offline by file URL with zero external requests and intact
+maps/CSP. Owner samples: `C:/CodexACLTest/ForceWright-Map-Review-2026-09-28/`
+(only five PDFs, three preview-equivalent HTMLs and REVIEW-NOTES.md with hashes).
+Full report: `docs/qa/starcraft-embedded-map-images.md`.
+
+**Remaining tool-limited acceptance:** actual Save HTML/downloaded-file offline
+reopen and native print dialog. IAB download event timed out and Downloads had no
+matching file. Native Edge control stopped for URL-policy confidence; no retry
+or bypass. IAB print entry invoked but native dialog/target not observable.
+No application defect inferred. Minimal owner action: ordinary-browser Save HTML
+for Protoss Compact/Unit sheets and Terran Compact, reopen downloads offline, and
+confirm normal print dialog. Captured equivalents/PDFs are already usable.
+No physical printing, universal-browser, full legality or owner-layout approval.
+
+Fresh gates: focused36/10files2.79s; normal1139passed/35optional skips15.52s;
+configured1174passed/zero skips118files66.49s; overlapping populations.
+Lint/typecheck/build/diff-check pass; existing bundle advisory only. Exact-final
+CI must be confirmed from Actions; completion/owner notes record the verified run.
+Independent isolated native final content/PDF/docs review found no blocker;
+prior implementation review reused, no repeat Claude authentication attempt.
+
+**Playable preview http://127.0.0.1:5303/ remains running, PID59308.** Prior
+server was absent; same saved script/checkout/origin restarted without storage
+clearing. Existing armies, samples, tabs, other worktrees and source pins retained:
+SC99261754,40kA04c62fcd,40kB5b261ec. Raw logs/raster evidence separate under
+`C:/CodexACLTest/embedded-map-evidence/final-20260928/`.
+
+Stop after this acceptance continuation. No automatic feature, audit, source
+refresh, main integration or print redesign. Source mismatch/orphan-cost,
+precedence/routing and formatting qualifications remain. Final owner print-layout
+acceptance is pending.
+
+### Historical 2026-09-26 status (remaining PDF/second-army checks superseded above)
+
 
 Baseline `1445e3a6bb508e7a5ac6c239a8144126c0129bab`; JPEG admission commit
 `9daf30c`; screen/print integration and report
@@ -1449,10 +1500,10 @@ The pilot report supplies exact source/app identities, scenarios and severity.
 | Legacy XML saved-label/budget provenance | Documented compatibility limit; no automatic migration authorized | Saved labels lack source-vs-player ownership; old copied escapes retained. Old encoded cost-type override IDs lack source paths and stay unresolved. Frozen StarCraft IDs are unchanged; no heuristic decoder over persisted text |
 | SC-06 profile metadata and reference classification | Partial on pilot — roles/order/layout delivered | Exact defining-context roles, static type ordering, longText/annotation, legacy/neutral fallback and nested group fields supported; seven format rules and dynamic hints remain unexecuted. qa/starcraft-reference-metadata.md; further work requires owner authorization |
 | SC-08 source-aware freshness | Done, bounded | Loaded document closure/retained revision chooses configured repository; explicit time-bounded snapshot match/difference, unknown and unavailable states. No per-file impact, chronology, updater or migration; see source-aware-freshness report. Accepted; unchanged by later acceptance |
-| Complete-army player acceptance | Historical report accepted; recommendation B remains | Arithmetic/lifecycle/combat reference passed within boundary. Pre-game A/B repairs now delivered separately; counter activation now resolved for evidenced static shape; bounded map rendering implemented; downloaded HTML, second-army browser and five-PDF acceptance remain pending after owner ASAP stop. See qa/starcraft-embedded-map-images.md; historical acceptance reports preserved |
+| Complete-army player acceptance | Historical report accepted; recommendation B remains | Arithmetic/lifecycle/combat reference passed within boundary. Pre-game A/B repairs now delivered separately; counter activation now resolved for evidenced static shape; bounded map rendering now passes primary/second-army browser and all64 pages of five PDFs. Actual download/native-print acceptance remains tool-limited; supplied captured HTML equivalents reopen offline. See qa/starcraft-embedded-map-images.md; historical acceptance reports preserved |
 | Pre-game shared roster-scoped group bounds | Fixed on pilot for evidenced static shape — A | d628979: shared roster min/max with child-selection inclusion, one unnested force, exact source identity; member amounts pooled across wrappers, configuration/aggregate results agree. Modified, nonshared, unsupported traversal/multi-force or uncertain context remains incomplete. qa/starcraft-pregame-requirements.md |
 | Mission profile visibility / modifier ID | Fixed on pilot for evidenced shape — B | d28e3b7: exact id retained as metadata, complete hidden variants omitted through shared screen/print predicate, raw records retained. Unknown behavior/conditions/carriers/precedence remain qualified. qa/starcraft-pregame-requirements.md |
-| Embedded map reference usability | Open; recorded paper blocker, separate owner assignment | Source Markdown/data-image fields render literal payloads (primary50013/49854characters). Safe source content retained; needs bounded rendering/policy evidence, no arbitrary imported images or print redesign |
+| Embedded map reference usability | Done for tested bounded JPEG shape; export route qualified | Admission9daf30c/integration7cde04f; final evidence63465df. Four selected maps, complete setup/captions, phone enlargement and five PDFs/64pages pass. Actual downloaded-file reopen/native print dialog remain tool-limited; exact production equivalents delivered. No arbitrary images, redesign or full-game claim |
 | SC-D1 source qualifications | Measured limitation | GST12 vs catalogue declaration13; ten zero costs reference five absent types. Preserve diagnostics, no source edits/pin update in pilot |
 
 ### Open questions needing the owner
@@ -16800,3 +16851,58 @@ and screenshot are interim evidence only; no physical-printer or final owner
 print-layout acceptance. Disposition: partial support with tested Protoss maps
 usable, identified acceptance work remaining. Current5303 preview left running;
 prior origin data/tabs/worktrees preserved. Stop rather than start another phase.
+
+
+## Completed Assignment — 2026-09-28: resumed embedded-map samples and acceptance disposition
+
+Baseline b1b06459648f168783a90b3fb693c41655e5dfec clean/upstream-equal after
+fetch; print/UI task inactive. No app repair necessary. Evidence/compatibility/
+architecture report63465df413a39a7be90bb5953bb18fb3e82af63c, then this separate
+handoff. Only pilot push authorized; exact-final CI reported from Actions.
+
+Reused candidate and earlier inventory/security review instead of redesigning or
+manufacturing changes for automation limitations. Prior5303 server had stopped;
+restarted exact saved script against pilot asPID59308, preserving storage.
+Normal shelf reopened retained copied Protoss34/Terran18 selections. Both map
+pairs and complete source setup/captions, correct Standard/Skirmish fields and
+unchanged totals/counters pass. Terran9/240+6/160 squads remain independent and
+missing-cost-type qualification retained. No roster edits/save/migration; old
+shelf timestamps/all-changes-saved state remain. Source/image hashes unchanged.
+
+IAB actual Save HTML event5s timeout, no matching file in Downloads. Native Edge
+control stopped for URL-policy confidence, no retry/bypass. Ordinary print entry
+activated separately but native dialog/target not observable. These remain
+unverified, not declared broken or silently passed. Captured exact settled
+production Compact/Sheets HTML and rendered those unchanged with offline Edge155.
+Independent file-URL reopening of all3 equivalents gives zero external requests,
+two maps each and original CSP. Preset readiness disables actions until settled.
+
+Final samples in C:/CodexACLTest/ForceWright-Map-Review-2026-09-28: five PDFs,
+three explicitly named preview HTML equivalents and REVIEW-NOTES.md, with
+settings/bytes/SHA256. Protoss Compact Letter13/A4 13, Sheets Letter15/A4 14;
+Terran Compact Letter9:64pages. Production14mm margins,10.5pt,100%,portrait,
+headers/footers off, background off with exact image colors. All64pages rasterized
+at1400px and read individually: lead35 Compact/Terran, isolated native reviewer
+29 Sheets +15 overlapping pages. Full setup, mission fields, stats/equipment/
+rules/notes/page counters retained; no clipping/overlap/map split or payload prose.
+Sparse tails and small original labels remain qualified. Suspected Breach5 loss
+was disproved by actual pixel crops/extracted PDF image; no fix justified.
+
+Independent reviewer compared exact source Setup/mission fields and image hashes,
+then final docs; no remaining scoped blocker. Prior code review reused; no Claude
+retry/provider work. Gates newly run: focused36/10files2.79s; normal1139pass/
+35optional skips118files15.52s; configured1174pass/0skips118files66.49s. Populations
+overlap. Configured env retained ROSTERFORGE_BSDATA_JSON_DIR=E:/GitHub/wh40k-11e,
+ROSTERFORGE_CORRECTNESS_SNAPSHOTS=C:/CodexACLTest/rf-data-parity-evidence-20260910,
+ROSTERFORGE_STARCRAFT_PILOT_DIR=C:/CodexACLTest/starcraft-pilot-evidence/data,
+ROSTERFORGE_PRINT_DARK_ANGELS=C:/CodexACLTest/rf-cost-evidence-20260911/cost-reference-draft.json.
+No PRINT_OUTPUT. All optional pinned populations execute; unchanged SC99261754,
+40kA04c62fcd/B5b261ec. Lint/typecheck/build/diff-check pass, existing bundle advisory.
+Raw final logs/raster pages and JSON evidence stay separate from owner samples.
+
+Disposition: tested JPEG map rendering/paper-content blocker closes; full export
+route acceptance remains tool-limited. Minimal owner check: actual three Save HTML
+downloads/offline reopen and native print dialog. No physical-print, final owner
+layout, full-game or universal-browser approval. Known source mismatch/orphan
+costs, precedence/routing, formatting and dynamic limits remain. Stop here; leave
+5303 running, protect prior samples/armies/tabs/worktrees; no next feature or main.
