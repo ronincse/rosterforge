@@ -34,7 +34,18 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-28 (map samples verified; download/native-print tool limits)
+## Current Status — 2026-09-28 (owner-feedback A-D batch active)
+
+Owner feedback supersedes prior closeout. Baseline a82c78c. A verifies actual
+owner exports: equal eight-page counts but Compact unit starts4/5/6, Sheets5/6/7;
+fictional pair1/4pages. Continuous-preview clarification and six focused
+switch/export/race tests pass. See `docs/qa/owner-feedback-presets.md`.
+B automatic-resource presentation, C explicit latest immutable acquisition and
+D evidenced optional presets remain active. Final batch gates pending.
+Owner confirms downloaded HTML/PDF maps work at that scope; no full layout
+acceptance. Pilot-only publication; old sources/armies remain protected.
+
+### Historical status — map samples verified; download/native-print tool limits
 
 Resumed clean fetched baseline `b1b06459648f168783a90b3fb693c41655e5dfec`;
 tested application unchanged (admission9daf30c, integration7cde04f).
@@ -1124,6 +1135,13 @@ Three habits earned the hard way, all worth keeping:
    now written on the function.
 
 ## Remaining Work To Feature Complete
+
+| Owner-feedback checkpoint | Status | Boundary |
+| --- | --- | --- |
+| A preset workflow | Done | Actual paired outputs differ; continuous preview clarified; batch gates pending |
+| B automatic resource presentation | Next | Evaluated contributions, zero balances, optional maxima |
+| C latest immutable acquisition | Open | Explicit new snapshots only; preserve old armies |
+| D game-size presets | Open | Official OP Guide v1.0 values; explicit choice, Custom |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
 the map, not the territory** — it groups that record into product milestones so
@@ -16906,3 +16924,13 @@ downloads/offline reopen and native print dialog. No physical-print, final owner
 layout, full-game or universal-browser approval. Known source mismatch/orphan
 costs, precedence/routing, formatting and dynamic limits remain. Stop here; leave
 5303 running, protect prior samples/armies/tabs/worktrees; no next feature or main.
+
+## Completed Assignment — 2026-09-28 owner-feedback A preset evidence
+
+Baseline a82c78c; implementation/report e7910b7. Six focused tests in three
+files pass; paired owner outputs8/8pages and fictional1/4pages, all21pages
+visually reviewed. Continuous screen flow explained rather than inventing
+pagination. Independent native review approved this boundary; its identified
+missing image-preset race regression was added and passes. No native dialog,
+physical printing or blanket layout acceptance claimed. B-D and normal/configured
+batch gates continue; no push yet.
