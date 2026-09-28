@@ -1140,8 +1140,8 @@ Three habits earned the hard way, all worth keeping:
 | --- | --- | --- |
 | A preset workflow | Done | Actual paired outputs differ; continuous preview clarified; batch gates pending |
 | B automatic resource presentation | Done | Evaluated contributions, zero balances, optional maxima |
-| C latest immutable acquisition | Next | Explicit new snapshots only; preserve old armies |
-| D game-size presets | Open | Official OP Guide v1.0 values; explicit choice, Custom |
+| C latest immutable acquisition | Done | Explicit new snapshots only; preserve old armies |
+| D game-size presets | Next | Official OP Guide v1.0 values; explicit choice, Custom |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
 the map, not the territory** — it groups that record into product milestones so
@@ -16946,3 +16946,16 @@ error and undo/redo, faction replacement and save without counter overrides.
 No new evaluator, guessed role or implicit override. Independent native B/C
 review no blocker. Report docs/qa/automatic-resource-presentation.md.
 C/D and final batch gates continue; no push yet.
+
+## Completed Assignment — 2026-09-28 owner-feedback C immutable latest acquisition
+
+Baseline321187f; implementation commit immediately before this handoff.
+Latest445a410f staged through complete verified index and every closure; preference
+separate from baseline99261754 and retained army provenance. Cold/warm/reload
+ordinary5305 acquisition passed, Nerazim/Zeratul selectable/reference intact.
+Old saved army reopened with loaded99261754 and480M/0G unchanged; new army saves
+with445a410. Deterministic race/failure/storage/missing-closure tests pass.
+Full candidate normal1159pass/36optional skips, configured1195pass/0skips124files;
+lint/typecheck/build/diff pass. D and final evidence/publication remain active.
+Independent native B/C review no blocker, two test/diagnostic suggestions fixed.
+See docs/qa/latest-source-acquisition.md. No migration, pin edit or main work.
