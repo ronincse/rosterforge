@@ -7,6 +7,8 @@ export function RemoteCatalogueSourcePanel({
   state,
   sources,
   onBrowse,
+  onDownloadLatest,
+  baselineSources,
   onSelectPath,
   onOpen,
   onCancel,
@@ -14,6 +16,8 @@ export function RemoteCatalogueSourcePanel({
   readonly state: RemoteCatalogueSourceState;
   readonly sources: readonly RemoteCatalogueSourceDefinition[];
   readonly onBrowse: (source: RemoteCatalogueSourceDefinition) => void;
+  readonly onDownloadLatest?: (source: RemoteCatalogueSourceDefinition) => void;
+  readonly baselineSources?: readonly RemoteCatalogueSourceDefinition[];
   readonly onSelectPath: (path: string) => void;
   readonly onOpen: () => void;
   readonly onCancel: () => void;
@@ -46,7 +50,9 @@ export function RemoteCatalogueSourcePanel({
               <button type="button" onClick={() => onBrowse(source)}>
                 Browse catalogues
               </button>
-              {source.estimatedIndexBytes !== undefined && (
+              {onDownloadLatest && <button type="button" onClick={() => onDownloadLatest(source)}>Download latest data</button>}
+              <small>Configured baseline: {(baselineSources?.find(item => item.id === source.id) ?? source).repository.revision.slice(0,7)}. Downloading prepares new armies; saved armies keep their own sources.</small>
+              {source.estimatedIndexBytes !== undefined && (baselineSources?.find(item => item.id === source.id)?.repository.revision ?? source.repository.revision) === source.repository.revision && (
                 <p className="remote-source-note">
                   First browse verifies about{" "}
                   {formatBytes(source.estimatedIndexBytes)}. Verified files are
@@ -60,7 +66,7 @@ export function RemoteCatalogueSourcePanel({
 
       {state.kind === "indexing" && (
         <RemoteProgress
-          title={"Indexing " + state.source.title}
+          title={(state.latest ? "Downloading latest data: " : "Indexing ") + state.source.title}
           progress={state.progress}
           onCancel={onCancel}
         />
@@ -68,6 +74,7 @@ export function RemoteCatalogueSourcePanel({
 
       {(state.kind === "ready" || state.kind === "acquiring") && (
         <div className="remote-catalogue-picker">
+          <p>{state.index.definition.title} · acquired revision {state.index.definition.repository.revision.slice(0,7)}. Load a catalogue to create a new army; existing saved armies retain their sources.</p>
           <label htmlFor="remote-catalogue-path">Faction catalogue</label>
           <select
             id="remote-catalogue-path"
@@ -91,6 +98,8 @@ export function RemoteCatalogueSourcePanel({
 
           {state.kind === "ready" ? (
             <div className="remote-source-actions">
+              <button type="button" onClick={onCancel}>Browse repositories</button>
+              {onDownloadLatest && <button type="button" onClick={() => onDownloadLatest(state.index.definition)}>Download latest data</button>}
               <button
                 className="primary-action"
                 type="button"
@@ -142,6 +151,7 @@ export function RemoteCatalogueSourcePanel({
           <button type="button" onClick={() => onBrowse(state.source)}>
             Retry repository
           </button>
+          <button type="button" onClick={onCancel}>Browse repositories</button>
           <DiagnosticList diagnostics={state.diagnostics} />
         </div>
       )}

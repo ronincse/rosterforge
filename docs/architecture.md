@@ -2752,3 +2752,5 @@ tool-limited;
 see `docs/qa/starcraft-embedded-map-images.md`.
 
 Resource-budget reports now project scalar named contribution terms from the same included complete cost terms used by the shared query. UI does not execute modifiers or sum a second ledger. Display-visible zeros remain visible; source-omitted maxima are optional advanced controls.
+
+Explicit latest-source staging lives in apps/web/latest-catalogue-source.ts. One default-tip inspection precedes immutable indexing and complete closure validation; the controller activates only a current successful operation. The small rosterforge-source-selection-v1 preference stores baseline/revision per configured repository, separately from saved-army provenance and immutable byte caches.

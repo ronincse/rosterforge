@@ -1782,3 +1782,5 @@ They are not army-cost violations or new evaluator diagnostics. Original source
 bytes remain recoverable; no rejected URL is fetched. Overflow is summarized
 without losing later prose separators. See `docs/qa/starcraft-embedded-map-images.md`
 for exact limits and the remaining download/PDF acceptance boundary.
+
+`WEB_LATEST_SNAPSHOT_INCOMPLETE` rejects incomplete latest snapshot staging and retains the previous source selection. Existing repository/network/import diagnostics retain their original causes. Cancellation/late responses cannot activate candidates.

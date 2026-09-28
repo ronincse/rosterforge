@@ -227,6 +227,8 @@ export function App(props: AppProps) {
               state={remoteSource.state}
               sources={remoteSource.sources}
               onBrowse={(source) => void remoteSource.browseSource(source)}
+              onDownloadLatest={(source) => void remoteSource.downloadLatestSource(source)}
+              baselineSources={remoteSource.baselineSources}
               onSelectPath={remoteSource.selectCataloguePath}
               onOpen={() => void remoteSource.openSelectedCatalogue()}
               onCancel={remoteSource.cancelOperation}

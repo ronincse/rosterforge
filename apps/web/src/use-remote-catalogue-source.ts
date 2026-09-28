@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { retainCatalogueSource, selectedCatalogueSource, sourceSelectionStorage, stageLatestCatalogueSource } from "./latest-catalogue-source.js";
 
 import type { Diagnostic } from "@rosterforge/foundation";
 import type { PinnedRepositoryByteCache } from "@rosterforge/repository";
@@ -27,6 +28,8 @@ export interface RemoteCatalogueSourceControllerOptions {
   readonly acquireRemoteSource?: AcquireRemoteCatalogue;
   readonly createBatchId?: () => string;
   readonly now?: () => string;
+  readonly stageLatestSource?: typeof stageLatestCatalogueSource;
+  readonly sourceSelectionStore?: Storage | null;
 }
 
 export type RemoteCatalogueSourceState =
@@ -35,6 +38,7 @@ export type RemoteCatalogueSourceState =
       readonly kind: "indexing";
       readonly source: RemoteCatalogueSourceDefinition;
       readonly progress?: RemoteCatalogueSourceProgress;
+      readonly latest?: boolean;
     }
   | {
       readonly kind: "ready";
@@ -75,10 +79,13 @@ export function useRemoteCatalogueSourceController(
     acquireRemoteSource = acquireRemoteCatalogue,
     createBatchId = defaultBatchId,
     now = () => new Date().toISOString(),
+    stageLatestSource = stageLatestCatalogueSource,
+    sourceSelectionStore = sourceSelectionStorage(),
   }: RemoteCatalogueSourceControllerOptions,
 ) {
   const operationSequence = useRef(0);
   const abortController = useRef<AbortController | undefined>(undefined);
+  const [selectedSources, setSelectedSources] = useState(() => remoteSources.map(source => selectedCatalogueSource(source, sourceSelectionStore ?? undefined)));
   const [state, setState] = useState<RemoteCatalogueSourceState>({
     kind: "idle",
   });
@@ -159,6 +166,41 @@ export function useRemoteCatalogueSourceController(
         message: "An unexpected error stopped repository indexing.",
         diagnostics: [unexpectedRemoteDiagnostic(error)],
       });
+    }
+  }
+
+  async function downloadLatestSource(requested: RemoteCatalogueSourceDefinition) {
+    // Only registered cards choose repositories. A draft or imported URL cannot
+    // supply this target, and the immutable baseline stays separate from choice.
+    const baseline = remoteSources.find(source => source.id === requested.id && source.repository.owner === requested.repository.owner && source.repository.repository === requested.repository.repository);
+    if (!baseline) return;
+    const previous = selectedSources.find(source => source.id === baseline.id) ?? baseline;
+    const previousState = state;
+    const { sequence, controller } = beginOperation();
+    setState({kind:"indexing", source:previous, latest:true});
+    try {
+      const result = await stageLatestSource(baseline, {
+        importedAt:now(), signal:controller.signal,
+        ...(repositoryByteCache ? {cache:repositoryByteCache} : {}),
+        ...(repositoryMetadataCache ? {metadataCache:repositoryMetadataCache} : {}),
+        onProgress:progress => observeProgress(sequence,progress),
+      });
+      if (sequence !== operationSequence.current || controller.signal.aborted) return;
+      abortController.current = undefined;
+      if (!result.ok) {
+        setState({kind:"failed",source:previous,message:"Latest data could not be acquired. Previous data retained.",diagnostics:result.diagnostics});
+        return;
+      }
+      const selected = result.value.definition;
+      const retained = retainCatalogueSource(baseline, selected, sourceSelectionStore ?? undefined);
+      setSelectedSources(current => current.map(source => source.id === baseline.id ? selected : source));
+      setState({kind:"ready",index:result.value,selectedPath:result.value.catalogues[0]!.path,diagnostics:result.diagnostics,
+        message:`${selected.repository.revision === previous.repository.revision ? "Already at the checked snapshot" : "New snapshot ready for new armies"} (${selected.repository.revision.slice(0,7)}). Existing armies are unchanged.${retained ? "" : " This selection could not be retained across reload."}`});
+    } catch (error: unknown) {
+      if (sequence !== operationSequence.current) return;
+      abortController.current = undefined;
+      setState(previousState.kind === "ready" ? {...previousState,message:"Latest data failed. Previous data retained."}
+        : {kind:"failed",source:previous,message:"Latest data failed. Previous data retained.",diagnostics:[unexpectedRemoteDiagnostic(error)]});
     }
   }
 
@@ -247,7 +289,9 @@ export function useRemoteCatalogueSourceController(
             diagnostics: current.diagnostics,
             message: "Catalogue acquisition cancelled.",
           }
-        : { kind: "idle" },
+        : current.kind === "indexing" && current.latest
+          ? {kind:"failed",source:current.source,message:"Latest download cancelled. Previous data retained.",diagnostics:[]}
+          : { kind: "idle" },
     );
   }
 
@@ -260,7 +304,9 @@ export function useRemoteCatalogueSourceController(
 
   return {
     state,
-    sources: remoteSources,
+    sources: selectedSources,
+    baselineSources: remoteSources,
+    downloadLatestSource,
     browseSource,
     selectCataloguePath,
     openSelectedCatalogue,
