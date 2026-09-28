@@ -38,7 +38,7 @@ it('keeps image exports disabled across Compact / Sheets / Compact until the cur
  vi.spyOn(HTMLImageElement.prototype,'naturalHeight','get').mockReturnValue(24);
  const pending: (() => void)[] = [];
  vi.spyOn(preparation, 'settleReferenceDocumentImages').mockImplementation(() => new Promise(resolve => pending.push(resolve)));
- const onPrint = vi.fn((_snapshot: RosterPrintViewModel) => true);
+ const onPrint = vi.fn<(snapshot: RosterPrintViewModel) => boolean>(() => true);
  render(<RosterPrintDialog model={model('Maps')} onPrint={onPrint} onClose={()=>{}}/>);
  fireEvent.load(await screen.findByTitle('Printable army preview'));
  const compact = [...pending]; pending.length = 0;
