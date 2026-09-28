@@ -29,9 +29,40 @@ it("prints the ready selected layout, reports blocking and cancels without editi
   fireEvent.load(frame);
   fireEvent.click(button);
   expect(print).toHaveBeenLastCalledWith({ ...model, layout: "sheets" });
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "compact" } });
+  expect((button as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.load(screen.getByTitle("Printable army preview"));
+  fireEvent.click(button);
+  expect(print).toHaveBeenLastCalledWith({ ...model, layout: "compact" });
+  expect(screen.getByText("Continuous preview")).toBeTruthy();
   fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
   expect(close).toHaveBeenCalledOnce();
   expect(JSON.stringify(model)).toBe(before);
+});
+
+it("downloads the selected document contents in both preset switch directions", async () => {
+  const blobs: Blob[] = [];
+  const names: string[] = [];
+  vi.stubGlobal("URL", class extends URL {
+    static override createObjectURL = (blob: Blob) => { blobs.push(blob); return "blob:fiction"; };
+    static override revokeObjectURL = vi.fn();
+  });
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { names.push(this.download); });
+  render(<RosterPrintDialog model={model} onPrint={() => true} onClose={() => undefined} />);
+  for (const layout of ["compact", "sheets", "compact"]) {
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: layout } });
+    fireEvent.load(screen.getByTitle("Printable army preview"));
+    fireEvent.click(screen.getByRole("button", { name: "Save HTML" }));
+  }
+  const contents = await Promise.all(blobs.map(blob => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsText(blob);
+  })));
+  expect(contents).toHaveLength(3);
+  expect(contents[0]).toContain('body class="compact"');
+  expect(contents[1]).toContain('body class="sheets"');
+  expect(contents[2]).toBe(contents[0]);
+  expect(contents[1]?.replace('body class="sheets"', 'body class="compact"')).toBe(contents[0]);
+  expect(names.map(name => name.split("-").at(-1))).toEqual(["compact.html", "sheets.html", "compact.html"]);
 });
 
 it("downloads standalone HTML independently of a loaded/allowed print window", () => {

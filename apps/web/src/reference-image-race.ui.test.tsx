@@ -31,3 +31,28 @@ it('review: a replacement snapshot remains disabled until its own preview settle
  await act(async()=>{settlePreview()});
  expect((screen.getByRole('button',{name:'Save HTML'}) as HTMLButtonElement).disabled).toBe(false);
 });
+
+it('keeps image exports disabled across Compact / Sheets / Compact until the current frame settles', async () => {
+ Object.defineProperty(HTMLImageElement.prototype,'decode',{configurable:true,writable:true,value:()=>Promise.resolve()});
+ vi.spyOn(HTMLImageElement.prototype,'naturalWidth','get').mockReturnValue(32);
+ vi.spyOn(HTMLImageElement.prototype,'naturalHeight','get').mockReturnValue(24);
+ const pending: (() => void)[] = [];
+ vi.spyOn(preparation, 'settleReferenceDocumentImages').mockImplementation(() => new Promise(resolve => pending.push(resolve)));
+ const onPrint = vi.fn((_snapshot: RosterPrintViewModel) => true);
+ render(<RosterPrintDialog model={model('Maps')} onPrint={onPrint} onClose={()=>{}}/>);
+ fireEvent.load(await screen.findByTitle('Printable army preview'));
+ const compact = [...pending]; pending.length = 0;
+ fireEvent.change(screen.getByRole('combobox', {name:'Layout'}), {target:{value:'sheets'}});
+ fireEvent.load(screen.getByTitle('Printable army preview'));
+ const sheets = [...pending]; pending.length = 0;
+ await act(async () => { compact.forEach(resolve => resolve()); });
+ expect((screen.getByRole('button', {name:'Print / Save PDF'}) as HTMLButtonElement).disabled).toBe(true);
+ fireEvent.change(screen.getByRole('combobox', {name:'Layout'}), {target:{value:'compact'}});
+ fireEvent.load(screen.getByTitle('Printable army preview'));
+ await act(async () => { sheets.forEach(resolve => resolve()); });
+ expect((screen.getByRole('button', {name:'Save HTML'}) as HTMLButtonElement).disabled).toBe(true);
+ await act(async () => { pending.forEach(resolve => resolve()); });
+ expect((screen.getByRole('button', {name:'Save HTML'}) as HTMLButtonElement).disabled).toBe(false);
+ fireEvent.click(screen.getByRole('button', {name:'Print / Save PDF'}));
+ expect(onPrint.mock.calls[0]?.[0]).toMatchObject({layout:'compact'});
+});
