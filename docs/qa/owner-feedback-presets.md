@@ -1,5 +1,9 @@
 # Owner feedback A: Compact and Unit sheets
 
+> Historical pagination checkpoint. The owner explicitly superseded its narrow
+> design contract on 2026-09-28: see [the distinct-template checkpoint](print-template-design.md).
+> The observations below remain accurate for that earlier output, not the current templates.
+
 Baseline a82c78c716727506d6514d9a9508e9afd14ac643. Owner personally downloaded
 HTML/PDF and observed maps working; bounded owner evidence, not blanket layout,
 offline or publisher accuracy acceptance. Original Downloads HTMLs stay private.

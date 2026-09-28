@@ -5,7 +5,7 @@ import { renderRosterPrintDocument, type RosterPrintViewModel } from "./roster-p
 import { prepareArmyReferenceImages, settleReferenceDocumentImages, type PreparedArmyImages } from "./army-reference-images.js";
 import type { ArmyReferenceLayout } from "./army-reference-html.js";
 
-/** Present a read-only snapshot with two page-flow choices. Native dialog owns
+/** Present a read-only snapshot with two reference compositions. Native dialog owns
  * modal focus/inertness; closing returns to the roster action that opened it. */
 export function RosterPrintDialog({ model, onPrint, onClose }: { readonly model: RosterPrintViewModel; readonly onPrint: (model: RosterPrintViewModel) => boolean; readonly onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -56,8 +56,8 @@ export function RosterPrintDialog({ model, onPrint, onClose }: { readonly model:
       <button type="button" disabled={!ready || !html.text} onClick={() => setError(onPrint(snapshot) ? "" : "The browser blocked the printable roster window or could not open it. Allow popups for this local page and try again.")}>Print / Save PDF</button>
       <button type="button" disabled={(needsImages && !ready) || !html.text} onClick={save}>Save HTML</button></div>
     <p>Current army snapshot, including unsaved changes. Choose A4 or Letter, portrait, 100% scale in your browser. Turn off browser headers and footers to omit its URL and date.</p>
-    <p>{layout === "compact" ? "Compact reference flows unit blocks together." : "Unit sheets starts each unit on a new page; long units continue without shrinking."} HTML works offline without ForceWright.</p>
-    <p><strong>Continuous preview</strong> — page breaks appear when printing or saving a PDF. Opening the HTML normally also shows a continuous document. Use your browser’s print preview to compare the layouts on your chosen paper size.</p>
+    <p>{layout === "compact" ? "Compact reference combines bordered unit blocks, tight tables and full ability text." : "Unit sheets emphasizes model stats and separates activation details from effects. Each unit starts a new printed page; long units continue."} HTML works offline without ForceWright.</p>
+    <p><strong>Continuous preview</strong> — the composition shown here is exported. Page breaks depend on the paper size in your browser’s print preview.</p>
     {!html.text && !html.error && <p role="status">Preparing reference images…</p>}
     {(html.error || error) && <p role="alert">{html.error || error}</p>}
     {html.text && <iframe key={html.text} title="Printable army preview" sandbox="allow-same-origin" srcDoc={html.text} onLoad={event => {

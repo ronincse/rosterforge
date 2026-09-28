@@ -1,5 +1,9 @@
 # Printable army reference checkpoint
 
+> Historical foundation and sharing evidence. Current visual-template acceptance
+> is [print-template-design.md](print-template-design.md): internal composition must
+> differ, not merely spacing and page starts. Owner acceptance remains pending.
+
 Baseline: `4fb397cc8b287fc8896ab68057e7bdb3e285c37e` on
 `codex/starcraft-pilot`, clean and published; SC-06 writer idle.
 

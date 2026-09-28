@@ -9,7 +9,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.use
 const model: RosterPrintViewModel = {
   name: "Unsaved <army> / &amp;", rosterId: "private", catalogueName: "Fiction", catalogueKey: "private",
   costs: { available: false, totals: [], diagnosticCount: 0 }, validation: { available: false, diagnosticCount: 0 }, forces: [],
-  reference: { name: "Unsaved <army> / &amp;", catalogue: "Fiction", system: "Synthetic", resources: [], status: ["Incomplete"], units: [], glossary: [] },
+  reference: { name: "Unsaved <army> / &amp;", catalogue: "Fiction", system: "Synthetic", resources: [], status: ["Incomplete"], units: [{ anchor: "unit-1", name: "Fiction patrol", role: "Patrol", configuration: false, composition: "3 models", options: [], costs: [], profiles: [], rules: [], keywords: [], notes: [], relationships: [] }], glossary: [] },
 };
 
 it("prints the ready selected layout, reports blocking and cancels without editing its snapshot", () => {
@@ -61,7 +61,9 @@ it("downloads the selected document contents in both preset switch directions", 
   expect(contents[0]).toContain('body class="compact"');
   expect(contents[1]).toContain('body class="sheets"');
   expect(contents[2]).toBe(contents[0]);
-  expect(contents[1]?.replace('body class="sheets"', 'body class="compact"')).toBe(contents[0]);
+  expect(contents[1]).toContain('class="unit-heading sheet-heading"');
+  expect(contents[0]).toContain('class="unit-heading compact-heading"');
+  for (const html of contents) for (const fact of ["Fiction patrol", "3 models", "Incomplete"]) expect(html).toContain(fact);
   expect(names.map(name => name.split("-").at(-1))).toEqual(["compact.html", "sheets.html", "compact.html"]);
 });
 

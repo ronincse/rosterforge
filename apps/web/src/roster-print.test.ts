@@ -121,7 +121,7 @@ describe("roster print export", () => {
     expect(document).not.toContain("entry-alpha");
     expect(document).toContain("2.5× Veteran &lt;Alpha&gt;");
     expect(document).toContain("Army index");
-    expect(document).toContain("Composition:");
+    expect(document).toContain('class="composition">2.5× Veteran &lt;Alpha&gt;');
     expect(document).not.toContain("Roster occurrence ID");
     expect(document).not.toContain("Catalogue source ID");
     expect(document).toContain("not a BattleScribe .ros or .rosz interchange file");

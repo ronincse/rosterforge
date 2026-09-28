@@ -640,6 +640,12 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   availability guards as construction
 - Printable army reference on the StarCraft pilot branch: Compact (default)
   and Unit sheets share a scalar current-unsaved-army snapshot across all forces.
+  They now use visibly different internal compositions: bordered dense references
+  versus title/cost bands, prominent model stats and adjacent ability metadata/text.
+  Both put combat units before army references and identified supporting setup;
+  Sheets starts each combat occurrence on a new printed page. Unknown non-units
+  remain in army reference unless the uniquely resolved StarCraft setup-category
+  policy applies. This is presentation only, not new applicability support.
   Includes setup/options, composition/loadouts, separate occurrence costs,
   effective limits, explicit associations, selected stats/weapons/modes/full
   abilities, owner-scoped keywords and a conservative shared-rule glossary.
@@ -679,6 +685,10 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   dynamic metadata/budget and traversal limits stay qualified. Browser PDF
   pagination is evidence for tested documents/settings, not physical-print or
   universal browser acceptance. See `docs/qa/printable-reference.md`.
+  The newer `docs/qa/print-template-design.md` supersedes pagination-only template
+  acceptance. Actual new HTML downloads reopen offline with both maps; 55 primary
+  Letter/A4 pages plus 37 focused 40k/fictional pages were visually inspected.
+  Native OS print-dialog observation and final owner layout acceptance remain open.
 - Unresolved and resource-limited entry links remain unavailable to roster
   construction, while roster-model occurrence diagnostics pass through intact
 - Read-only roster compatibility reports retaining occurrence and context

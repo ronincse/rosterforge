@@ -15,6 +15,7 @@ import { inspectLocalRule, ruleNameQualification } from "./rule-inspection.js";
 import { catalogueReferenceTextIndex, selectedReferenceTextIndex, matchTextReference } from "./reference-text-index.js";
 import { referenceProse } from "./reference-images.js";
 import { referenceTextRuns } from "./reference-rich-text.js";
+import { isSupportingReferenceSelection } from "./print-reference-section.js";
 
 export interface ArmyReferenceField { readonly name: string; readonly value: string; readonly note: string; }
 export interface ArmyReferenceProfile {
@@ -34,6 +35,9 @@ export interface ArmyReferenceUnit {
   readonly keywords: readonly string[]; readonly notes: readonly string[]; readonly relationships: string[];
   readonly memberKeywords?: readonly string[];
   readonly sheetUnit?: boolean;
+  /** Selected unit/model owners stay with units; a verified source-owned setup
+   * category moves supporting references. Unknown non-units stay in army. */
+  readonly referenceSection?: "unit" | "army" | "supporting";
   readonly overview?: string;
   readonly highlights?: readonly string[];
 }
@@ -235,6 +239,11 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
     }
     if (index.limited || references >= 256) notes.push("Automatic reference lookup reached its display limit; attached rules remain included.");
     const rootChoice = session.selectionChoices.get(root.id);
+    const containsUnit = (node: RosterSelection): boolean => {
+      const choice = session.selectionChoices.get(node.id);
+      return (choice?.kind === "selectionEntry" && ["unit", "model"].includes(choice.type ?? "")) || node.selections.some(containsUnit);
+    };
+    const sheetUnit = containsUnit(root) || (!rootChoice && selected.section !== "configuration");
     const unit: ArmyReferenceUnit = { anchor, name: label, role: !selected.role ? "Unassigned" : selected.role.name === selected.role.key ? "Unresolved role" : selected.role.name, configuration: selected.section === "configuration", composition: model.composition ?? `${rosterSelectionAmount(root)}× ${name}`, options,
       overview: composition.total > 0 ? `${composition.total} model${composition.total === 1 ? "" : "s"}` : `${rosterSelectionAmount(root)} selected entr${rosterSelectionAmount(root) === 1 ? "y" : "ies"}`,
       // Highlight explicitly selected non-weapon choices with costs or rules,
@@ -249,7 +258,8 @@ export function createArmyReferenceDocument(session: LocalRosterSession, costs: 
       }).map(upgrade => upgrade.name))],
       // Page starts follow explicit entry kind, not system-specific role names.
       // Setup upgrades stay in the reference without consuming empty sheets.
-      sheetUnit: (rootChoice?.kind === "selectionEntry" && ["unit", "model"].includes(rootChoice.type ?? "")) || (!rootChoice && selected.section !== "configuration"),
+      sheetUnit,
+      referenceSection: sheetUnit ? "unit" : isSupportingReferenceSelection(session, root) ? "supporting" : "army",
       costs: selected.costs.totals.filter(c => c.value !== 0), profiles, rules, keywords, memberKeywords, notes: [...new Set(notes)], relationships: [] };
     units.push(unit); byOccurrence.set(root.id, unit);
   }

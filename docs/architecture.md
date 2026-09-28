@@ -254,7 +254,11 @@ aggregation/budgets, category rules and extracted selected-loadout summaries.
 It retains effective values, separate occurrences and owner-qualified variants;
 no source objects/bytes or graphs cross into the HTML renderer or durable draft.
 The legacy identity-tree fields remain internal compatibility data, not output.
-`army-reference-html.ts` renders one snapshot as Compact or Unit sheets using
+`army-reference-html.ts` composes distinct Compact and Unit sheets templates from
+one snapshot. Compact uses bordered blocks, inline short ability fields and tight
+full-width tables; Sheets uses title/cost bands, scalar stat panels and adjacent
+short-metadata/full-prose regions. Field length controls arrangement, not semantic
+interpretation. Multi-paragraph content retains block formatting. Both reuse
 the existing safe rich-text component, escaped plain labels, inline styles and
 system fonts. Glossary phrase lookup reuses the shared bounded dictionary but
 only imports unambiguous root shared definitions as source-only explanations;
@@ -290,6 +294,13 @@ window. The same-origin sandbox allowance is solely for parent-owned fragment
 navigation; scripts remain forbidden by sandbox and document CSP. No source
 markup execution, external asset loading, roster mutation or storage migration.
 See `docs/qa/printable-reference.md` for browser/paper evidence and limitations.
+The current two-template contract is `docs/qa/print-template-design.md`; pagination
+differences alone do not satisfy it. `print-reference-section.ts` recognizes only
+the uniquely resolved StarCraft system/setup-category identity and complete
+effective primary membership for supporting-section placement. Selected unit/model
+descendants keep a root in the combat sequence; other unfamiliar non-units retain
+the neutral army-reference fallback. Presentation order never changes roster order,
+occurrence anchors, evaluation, saved bytes or schema.
 Existing
 dependency injection for catalogue preparation, draft storage, clocks, and
 generated IDs is accepted by the hook through `AppProps`, preserving

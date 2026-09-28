@@ -108,4 +108,16 @@ it.skipIf(!darkAngels)("restores the disposable 14-unit Dark Angels copy without
   expect(d.glossary.some(r => ["Impulsor", "Incinerator", "Keywords"].includes(r.name))).toBe(false);
   expect(d.units.flatMap(u => u.keywords)).not.toContain("e21f-8e64-c5d-7df0");
   expect(readFileSync(darkAngels!).equals(bytes)).toBe(true);
+  const designOutput = process.env.ROSTERFORGE_PRINT_DESIGN_OUTPUT;
+  if (designOutput) {
+    // A labelled reading sample from the full verified document, not a newly
+    // evaluated partial army. Keep the two distinct loadouts and applied ward.
+    const units = d.units.filter(u => u === captain || u === impulsor || u.name.replace(/^\d+\.\s*/, "") === "Intercessor Squad");
+    expect(units).toHaveLength(4);
+    const glossary = d.glossary.filter(r => units.some(u => u.rules.includes(r.anchor))).map(r => ({ ...r, users: r.users.filter(user => units.some(u => user === u.name || user.startsWith(u.name + " · "))) }));
+    const reference = { ...d, name: "40k selected reference excerpt", units, glossary, status: ["Four selected reference entries from the complete 2000-point test army. Totals describe that full army.", ...d.status] };
+    const model = createRosterPrintViewModel(session, evaluateLocalRosterCosts(session), inspectLocalRosterSupportedValidation(session));
+    mkdirSync(designOutput, { recursive: true });
+    for (const layout of ["compact", "sheets"] as const) writeFileSync(join(designOutput, `40k-${layout}.html`), renderRosterPrintDocument({ ...model, reference, layout }));
+  }
 }, 180_000);

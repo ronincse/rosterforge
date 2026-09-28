@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { renderArmyReferenceDocument } from "./army-reference-html.js";
 import type { ArmyReferenceDocument } from "./army-reference-model.js";
 
-it("keeps three small units identical while selecting different print flow", () => {
+it("composes distinct small unit layouts with the same occurrences and facts", () => {
   const reference: ArmyReferenceDocument = {
     name: "Fictional page-flow probe", catalogue: "Fiction", system: "Fiction",
     resources: [], status: ["Fictional layout test"], glossary: [],
@@ -18,7 +18,14 @@ it("keeps three small units identical while selecting different print flow", () 
   };
   const compact = renderArmyReferenceDocument(reference, "compact");
   const sheets = renderArmyReferenceDocument(reference, "sheets");
-  expect(compact.replace('body class="compact"', 'body class="sheets"')).toBe(sheets);
+  expect(compact.replace('body class="compact"', 'body class="sheets"')).not.toBe(sheets);
+  expect(compact).toContain('class="unit-heading compact-heading"');
+  expect(sheets).toContain('class="unit-heading sheet-heading"');
+  for (const unit of reference.units) for (const html of [compact, sheets]) {
+    expect(html).toContain('id="' + unit.anchor + '"');
+    expect(html).toContain(unit.name);
+    expect(html).toContain(unit.composition);
+  }
   expect(sheets).toContain('.sheets .army-unit{break-before:page}');
   expect(sheets.match(/class="unit army-unit"/g)).toHaveLength(3);
   const directory = process.env.ROSTERFORGE_LAYOUT_PROBE_OUTPUT;

@@ -64,7 +64,8 @@ it("agrees with selected reader values/grouping, retains nested rules and export
   const text = JSON.stringify(d);
   expect(text).not.toMatch(/sourceBytes|selectionChoices|modifierApplicability|sourceId|definitionKey/);
   const compact = renderArmyReferenceDocument(d), sheets = renderArmyReferenceDocument(d, "sheets");
-  expect(compact.replace('class="compact"', 'class="sheets"')).toBe(sheets);
+  expect(sheets).not.toBe(compact.replace('class="compact"', 'class="sheets"'));
+  expect(profileMappings(sheets)).toEqual(profileMappings(compact));
   expect(compact).toContain("Literal &amp;amp; &lt;img");
   expect(compact).not.toContain("<img");
 });
@@ -109,7 +110,8 @@ it("shares only exact displayed rows with effect/qualification boundaries and ex
   const scopedHtml = renderArmyReferenceDocument({ ...document, units: [{ ...unit, profiles: nested }, { ...unit, anchor: "unit-2", name: "2. Setup", configuration: true, profiles: [], relationships: ["Supporting: 1. Guards (unverified)"] }] });
   expect(scopedHtml).toContain("Orders / First phase · 1× Guard [P10]");
   expect(scopedHtml).toContain("Orders / Second phase · 1× Guard [P11]");
-  expect(scopedHtml).toContain("U2: Supporting: 1. Guards (unverified)");
+  expect(scopedHtml).toContain('id="unit-2"');
+  expect(scopedHtml).toContain("Supporting: 1. Guards (unverified)");
   for (const value of ["Short descriptive value", "Long description ".repeat(100)]) {
     const fallbackHtml = renderArmyReferenceDocument({ ...document, units: [{ ...unit, profiles: [{ ...profile, table: false, fields: [{ name: "Effect", value, note: "" }] }] }] });
     expect(fallbackHtml).toContain("Evaluated effect [P1]: append Shield from U2");
@@ -137,8 +139,19 @@ it("keeps every rule mapping while sharing only complete rendered explanations",
   expect(html).toContain("Source reference only; applicability is not established.");
   expect(html).toContain("selected weapon");
   expect(html).toContain("Different condition");
-  expect(html.replace('class="compact"', 'class="sheets"')).toBe(renderArmyReferenceDocument(doc, "sheets"));
+  const sheets = renderArmyReferenceDocument(doc, "sheets");
+  for (const rule of rules) {
+    expect(sheets).toContain('id="' + rule.anchor + '"');
+    expect(sheets).toContain(rule.name);
+    if (rule.parameterNote) expect(sheets).toContain(rule.parameterNote);
+  }
+  expect(sheets.match(/class="explanation"/g)).toHaveLength(3);
 });
+
+// Compare preserved record/bearer/effect mappings, not layout serialization.
+function profileMappings(html: string): string[] {
+  return [...html.matchAll(/data-profile-records="([^"]+)"/g)].map(m => m[1]!).sort();
+}
 
 it("renders oversized unfamiliar schemas, rule variants, empty keywords and malicious source text without assets", () => {
   const prose = Array.from({ length: 42 }, (_, i) => `Paragraph ${i + 1}. **Hold formation.** *Keep the full explanation.* This fictional unit crosses rough ground, protects its allies, and resolves every selected effect in order. Do not multiply its profile values by its model count.`).join("\n\n");
