@@ -1,5 +1,6 @@
 import type { ObjectId } from "@rosterforge/foundation";
 import { setLocalRosterResourceBudget } from "./roster-session.js";
+import { starcraftGameSizePresets } from "./starcraft-game-size-presets.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { BattleScribeForceDefinition } from "@rosterforge/data-graph";
@@ -354,6 +355,20 @@ export function useRosterForgeAppController({
     const result = setLocalRosterResourceBudget(rosterSession, typeId, value);
     setRosterDiagnostics(result.diagnostics);
     if (result.ok) commitRosterSession(result.value);
+  }
+
+  function applyGameSizePreset(id: string) {
+    if (!rosterSession) return;
+    const preset = starcraftGameSizePresets(rosterSession.catalogue.context).find(item => item.id === id);
+    if (!preset) return;
+    // Both existing commands must succeed before one history/recovery commit.
+    // Separate React callbacks would each start from the old session and could
+    // lose the first currency, or expose a half-applied preset to autosave.
+    const minerals = setLocalRosterResourceBudget(rosterSession,preset.mineralsTypeId,preset.minerals);
+    if (!minerals.ok) { setRosterDiagnostics(minerals.diagnostics); return; }
+    const gas = setLocalRosterResourceBudget(minerals.value,preset.gasTypeId,preset.gas);
+    setRosterDiagnostics([...minerals.diagnostics,...gas.diagnostics]);
+    if (gas.ok) commitRosterSession(gas.value);
   }
 
   function undoRosterEdit() {
@@ -930,6 +945,7 @@ export function useRosterForgeAppController({
     renameSelection,
     setSelectionAmount,
     setResourceBudget,
+    applyGameSizePreset,
     setAssociation,
     undoRosterEdit,
     redoRosterEdit,

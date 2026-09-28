@@ -3,16 +3,18 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ObjectId } from "@rosterforge/foundation";
 import type { ResourceLimitState, RosterResourceBudgetsReport } from "@rosterforge/evaluation";
+import { starcraftGameSizePresets } from "./starcraft-game-size-presets.js";
 
 type ChangeBudget = (typeId: ObjectId, value: number | undefined) => void;
 /** Shows independent resource totals and commits explicit player choices through
  * normal roster history. In-progress text is local until Apply/Enter. */
-export function ResourceBudgets({ report, onChange }: { readonly report: RosterResourceBudgetsReport; readonly onChange?: ChangeBudget | undefined }) {
+export function ResourceBudgets({ report, onChange, onApplyPreset }: { readonly report: RosterResourceBudgetsReport; readonly onChange?: ChangeBudget | undefined; readonly onApplyPreset?: ((id: string) => void) | undefined }) {
   const visible = report.resources.filter(item => item.resource.displayVisibility === "visible" || item.resource.effective.kind === "finite" || item.value !== 0 || item.resource.override !== undefined);
   // Activation metadata, not resource names or the sign of a current total,
   // determines which optional maxima belong behind the advanced disclosure.
   const ordinary = report.resources.filter(item => item.resource.sourceActivation !== "omitted");
   const optional = report.resources.filter(item => item.resource.sourceActivation === "omitted");
+  const presets = starcraftGameSizePresets(report.context);
   if (report.resources.length === 0) return null;
   return <section className="resource-budgets" aria-labelledby="resource-budgets-heading">
     <h3 id="resource-budgets-heading" tabIndex={-1}>Resources</h3>
@@ -27,6 +29,7 @@ export function ResourceBudgets({ report, onChange }: { readonly report: RosterR
     {optional.length > 0 && <p>Authored contributions from selected entries, including faction, tactical and unit entries, apply automatically. Balances include zero. A missing maximum does not waive the catalogue’s supply requirements.</p>}
     <details><summary>Configure resource budgets</summary>
       <p>Each limit is independent. Other catalogue requirements still apply. Use -1 for no limit.</p>
+      {presets.length > 0 && <GameSizePresets key={report.roster.id} onApply={onApplyPreset} choices={presets} />}
       {ordinary.map(({ resource }) => <BudgetEditor key={`${report.roster.id}:${resource.typeId}`}
         typeId={resource.typeId} name={resource.definitions[0]?.name?.trim() ?? resource.typeId}
         sourceLabel={resource.authored.kind === "unresolved" && resource.definitions[0]?.defaultCostLimit !== undefined
@@ -45,6 +48,15 @@ export function ResourceBudgets({ report, onChange }: { readonly report: RosterR
         enabled={resource.definitions.length === 1 && onChange !== undefined} onChange={onChange} />)}
     </details>}
   </section>;
+}
+
+function GameSizePresets({choices,onApply}:{readonly choices:ReturnType<typeof starcraftGameSizePresets>;readonly onApply:((id:string)=>void)|undefined}) {
+  const [choice,setChoice] = useState("");
+  return <div className="game-size-presets"><label>Game-size preset<select value={choice} onChange={event=>setChoice(event.target.value)}>
+    <option value="">Custom — independent budgets</option>
+    {choices.map(preset=><option key={preset.id} value={preset.id}>{preset.label}: {preset.minerals} Minerals / {preset.gas} Gas</option>)}
+  </select></label><button type="button" disabled={!choice || !onApply} onClick={()=>{onApply?.(choice);setChoice("");}}>Apply game-size preset</button>
+  <small>Optional application presets from {choices[0]?.ruleVersion}. Apply sets both budgets once; Custom keeps your values. These are not imported source rules.</small></div>;
 }
 function limitLabel(state: ResourceLimitState): string {
   return state.kind === "finite" ? `limit ${state.value.toLocaleString()}` : state.kind === "unbounded" ? "no configured limit"

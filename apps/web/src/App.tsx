@@ -67,6 +67,7 @@ export function App(props: AppProps) {
     renameSelection,
     setSelectionAmount,
     setResourceBudget,
+    applyGameSizePreset,
     setAssociation,
     undoRosterEdit,
     redoRosterEdit,
@@ -131,6 +132,7 @@ export function App(props: AppProps) {
                 onRenameSelection={renameSelection}
                 onSetSelectionAmount={setSelectionAmount}
                 onSetResourceBudget={setResourceBudget}
+                onApplyGameSizePreset={applyGameSizePreset}
                 onSetAssociation={setAssociation}
                 canUndo={(rosterHistory?.past.length ?? 0) > 0}
                 canRedo={(rosterHistory?.future.length ?? 0) > 0}

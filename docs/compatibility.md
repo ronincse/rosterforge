@@ -2242,3 +2242,5 @@ See [SC-08 evidence](qa/source-aware-freshness.md).
 Owner-feedback resource presentation retains visible zero balances and names evaluated contributing selections. Source-omitted maxima are optional advanced caps on the signed result, not faction allowances. Unknown arithmetic remains provisional; independent supply errors and explicit saved overrides remain effective.
 
 User-initiated Download latest data stages a new complete immutable snapshot for new armies. It does not refresh existing armies or baseline fixtures. Stored selections may restore only validated revisions of configured repositories; local imports are never inferred to be refresh targets.
+
+Optional StarCraft application presets follow Organised Play Guide v1.0: Skirmish1000/100, Standard2000/200. Only explicit Apply changes both budgets. Custom and independent edits preserve existing values. Exact resolved system/currency identities gate eligibility; this is not imported limit behavior, arbitrary game-size calculation or a rules certification.

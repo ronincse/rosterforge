@@ -167,6 +167,7 @@ export function RosterOverview({
   onSetSelectionAmount,
   onSetAssociation,
   onSetResourceBudget,
+  onApplyGameSizePreset,
   canUndo,
   canRedo,
   onUndo,
@@ -192,6 +193,7 @@ export function RosterOverview({
   readonly onRemoveSelection: (id: SelectionOccurrenceId) => void;
   readonly onSetAssociation?: SetAssociation;
   readonly onSetResourceBudget?: (typeId: import("@rosterforge/foundation").ObjectId, value: number | undefined) => void;
+  readonly onApplyGameSizePreset?: (id: string) => void;
   readonly onAddChildSelection: (
     parentId: SelectionOccurrenceId,
     choice: BattleScribeRosterSelectionChoice,
@@ -927,7 +929,7 @@ export function RosterOverview({
       )}
       {printSnapshot && <RosterPrintDialog model={printSnapshot} onPrint={onPrintRoster} onClose={() => { setPrintSnapshot(undefined); actionsMenuTrigger.current?.focus(); }} />}
 
-      {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} />}
+      {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} onApplyPreset={onApplyGameSizePreset} />}
 
       {configurationGroup !== undefined && (
         <RosterConfigurationSection

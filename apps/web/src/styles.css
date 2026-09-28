@@ -5147,6 +5147,9 @@ footer {
 .resource-budget-totals { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; }
 .resource-budget-totals p { margin: 0; overflow-wrap: anywhere; }
 .resource-budget-editor { margin-block: 1rem; min-width: 0; }
+.game-size-presets { margin-block: 1rem; }
+.game-size-presets select { display: block; max-width: 100%; margin-block: 0.35rem; }
+.game-size-presets small { display: block; margin-top: 0.35rem; }
 .resource-budget-editor label, .resource-budget-editor small { display: block; overflow-wrap: anywhere; }
 .resource-budget-inputs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
 .resource-budget-inputs input { width: 8rem; min-width: 0; max-width: 100%; }
