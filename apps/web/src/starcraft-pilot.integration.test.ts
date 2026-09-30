@@ -1,4 +1,7 @@
 import { inspectLocalRosterSelectionCharacteristics } from "./roster-session.js";
+import { inspectLocalRosterRootChoices } from "./roster-session.js";
+import { createRosterWorkspaceViewModel } from "./roster-workspace-model.js";
+import { starcraftWorkspaceCounters, starcraftWorkspaceSections } from "./starcraft-workspace-presentation.js";
 import { createArmyReferenceDocument } from "./army-reference-model.js";
 import { createUnitReferenceModel } from "./unit-reference-model.js";
 import { referenceContent, referenceProse } from "./reference-images.js";
@@ -30,6 +33,35 @@ function ok<T>(result: Result<T>): T {
   if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
   return result.value;
 }
+
+it.skipIf(!directory)("separates all three frozen factions' setup and retains six evaluator counters without rewriting sources", async () => {
+  const library = ok(await prepareLocalCatalogueLibrary(files.map(([filename, hash]) => {
+    const bytes = new Uint8Array(readFileSync(join(directory!, filename)));
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(hash);
+    return { filename, bytes };
+  }), { import: { batchId: "setup-presentation", importedAt: "2026-09-30T00:00:00Z" } }));
+  for (const catalogue of library.selectableCatalogues) {
+    let n = 0; const next = () => selectionOccurrenceId(`setup-${++n}`);
+    let session = ok(createLocalRosterSession(catalogue, catalogue.context.forces.definitions[0]!, { rosterId: rosterId(catalogue.name), forceId: forceOccurrenceId(catalogue.name), name: catalogue.name, createSelectionId: next }));
+    const presentation = () => starcraftWorkspaceSections(session, createRosterWorkspaceViewModel(session, { costs: evaluateLocalRosterCosts(session), rootChoices: inspectLocalRosterRootChoices(session), validation: inspectLocalRosterSupportedValidation(session) }));
+    const initial = presentation();
+    expect(initial.enabled).toBe(true);
+    expect(initial.setupChoices.map(g => g.name)).toEqual(["Pre-Game", "Faction", "Tactical"]);
+    expect(initial.setupGroups.flatMap(g => g.selections)).toHaveLength(2);
+    expect(initial.armyGroups.flatMap(g => g.selections)).toHaveLength(0);
+    const special = catalogue.name === "Zerg" ? ["Kerrigan's Swarm", "Accelerating Creep", "Malignant Creep"] : catalogue.name === "Terran" ? ["Raynor's Raiders"] : ["Daelaam"];
+    for (const name of special) expect(initial.setupChoices.flatMap(g => g.choices.map(c => c.choice.materialized.name))).toContain(name);
+    const root = initial.setupChoices.flatMap(g => g.choices).find(c => c.choice.materialized.name === special[0])!.choice;
+    const id = next(); session = ok(addLocalRosterRootSelection(session, root, { selectionId: id, createSelectionId: next }));
+    const before = JSON.stringify(session.roster), costs = ok(evaluateLocalRosterCosts(session));
+    expect(presentation().setupGroups.flatMap(g => g.selections.map(s => s.occurrence.id))).toContain(id);
+    expect(presentation().armyGroups.flatMap(g => g.selections)).toHaveLength(0);
+    expect(starcraftWorkspaceCounters(ok(inspectLocalRosterSupportedValidation(session)).status.resourceBudgets).map(c => c.resource.definitions[0]?.name?.trim())).toEqual(["Minerals", "Gas", "Core", "Elite", "Hero", "Support"]);
+    const reopened = ok(restoreLocalRosterSession(catalogue, structuredClone(session.roster)));
+    expect(ok(evaluateLocalRosterCosts(reopened)).totals).toEqual(costs.totals);
+    expect(JSON.stringify(session.roster)).toBe(before);
+  }
+}, 30000);
 
 it.skipIf(!directory)("checks frozen StarCraft authored requirements and preserves unrelated pilot gaps", async () => {
   if (!directory) throw new Error("Pilot data not configured");

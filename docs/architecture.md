@@ -657,7 +657,19 @@ prefers a finite-limit cost type with non-zero authored costs on addable army
 roots, matched by exact cost-type ID. This keeps ordinary roster points primary
 when a game system declares a setup-only currency such as Detachment Points
 first; other evaluated currencies remain available in setup or secondary-limit
-details. While a roster is active, `App` mounts a dedicated full-viewport roster shell instead
+details. The bounded StarCraft web adapter instead renders six verified GST
+resource reports in the sticky navigator, including zero and provisional signed
+supply balances. It does not infer allowances or evaluate another cost ledger.
+Its taller navigator supplies a measured document scroll offset with cleanup.
+`starcraft-workspace-presentation.ts` partitions verified setup-category roots
+into Army setup and its own chooser; membership includes secondary Tactical
+categories and the unit-typed Kerrigan faction. Unique owning source identities,
+not names or entry types, gate that policy. Unknown/ambiguous membership keeps
+the ordinary visible fallback. Stored selections, shared workspace/print models
+and evaluator reports remain unchanged. Setup editors reuse existing commands;
+pending report jumps observe only the requested subtree until the exact mounted
+target is revealed, then scroll/focus and disconnect.
+While a roster is active, `App` mounts a dedicated full-viewport roster shell instead
 of the Lists shell: the site hero, import/repository controls, recovery prompt,
 draft shelf, catalogue setup, and footer are absent from that render rather
 than CSS-hidden. The controller and remote-source hooks remain mounted, so

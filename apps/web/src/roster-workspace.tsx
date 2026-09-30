@@ -1,5 +1,6 @@
 import { orderReferenceProfiles, referenceProfileSourceKey, type ReferenceProfilePresentation } from "./reference-profile-presentation.js";
 import { ResourceBudgets } from "./resource-budgets.js";
+import { starcraftWorkspaceCounters, starcraftWorkspaceSections } from "./starcraft-workspace-presentation.js";
 import { RosterPrintDialog } from "./roster-print-dialog.js";
 import { categoryRuleDetails } from "./category-rule-details.js";
 import { selectedUpgradeSummary, createModelComposition, formatSelectedChoiceSummary, selectionChoiceKey, selectionChoiceLabel, type UnitComposition } from "./selected-loadout-summary.js";
@@ -250,6 +251,7 @@ export function RosterOverview({
   const actionsMenu = useRef<HTMLDivElement | null>(null);
   const actionsMenuTrigger = useRef<HTMLButtonElement | null>(null);
   const rootFilterInput = useRef<HTMLInputElement | null>(null);
+  const workspaceNav = useRef<HTMLElement | null>(null);
   const [pendingSelectionAnchor, setPendingSelectionAnchor] =
     useState<string>();
   const [pendingConfigurationAnchor, setPendingConfigurationAnchor] =
@@ -271,6 +273,10 @@ export function RosterOverview({
   );
   const force = workspace.primaryForce;
   const rootChoiceInspection = workspace.reports.rootChoices;
+  const starcraftSections = useMemo(() => starcraftWorkspaceSections(session, workspace), [session, workspace]);
+  const [catalogueTask, setCatalogueTask] = useState<"units" | "setup">("units");
+  const [openSetupGroups, setOpenSetupGroups] = useState<ReadonlySet<string>>(new Set());
+  const [pendingSetupAnchor, setPendingSetupAnchor] = useState<string>();
   const configurationReferenceSelectionIds = useMemo(
     () => requiredConfigurationReferenceSelectionIds(rootChoiceInspection),
     [rootChoiceInspection],
@@ -307,7 +313,7 @@ export function RosterOverview({
           ),
         };
   const hasConfiguration = configurationGroup !== undefined;
-  const armyGroups = workspace.selections.groups.filter(
+  const armyGroups = starcraftSections.armyGroups.filter(
     ({ role }) => role.key !== "configuration",
   );
   const activeSelection = topLevelWorkspaceSelection(
@@ -330,7 +336,8 @@ export function RosterOverview({
     () => rootSelectionDuplicationCapacity(rootChoiceInspection),
     [rootChoiceInspection],
   );
-  const rootChoiceGroups = workspace.rootChoices.groups;
+  const rootChoiceGroups = catalogueTask === "setup" ? starcraftSections.setupChoices : starcraftSections.unitChoices;
+  const unitChoiceCount = starcraftSections.unitChoices.reduce((count, group) => count + group.choices.length, 0);
   const normalizedRootFilter = rootFilter.trim().toLowerCase();
   const filteredRootChoiceGroups =
     normalizedRootFilter === ""
@@ -351,6 +358,21 @@ export function RosterOverview({
   );
   const costResult = workspace.reports.costs;
   const supportedValidation = workspace.reports.validation;
+  const starcraftCounters = supportedValidation.ok ? starcraftWorkspaceCounters(supportedValidation.value.status.resourceBudgets) : [];
+  useEffect(() => {
+    const nav = workspaceNav.current;
+    if (!nav || starcraftCounters.length === 0) return;
+    const style = document.documentElement.style;
+    const previous = style.getPropertyValue("--roster-nav-offset");
+    // The StarCraft bar wraps into two counter rows on phones. Measure its
+    // actual height so normal fragment links cannot disappear underneath it.
+    const measure = () => style.setProperty("--roster-nav-offset", `${Math.max(84, Math.ceil(nav.getBoundingClientRect().height) + 12)}px`);
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure);
+    observer?.observe(nav);
+    window.addEventListener("resize", measure);
+    return () => { observer?.disconnect(); window.removeEventListener("resize", measure); if (previous) style.setProperty("--roster-nav-offset", previous); else style.removeProperty("--roster-nav-offset"); };
+  }, [starcraftCounters.length]);
   // A group's total bound cannot answer whether one concrete member may be
   // repeated: Aeldari Detachments is unbounded while Warhost itself is max
   // one. Reuse the same-snapshot effective constraint reports already paid for
@@ -468,9 +490,12 @@ export function RosterOverview({
     focus: "close" | "search" = compactAddUnitSearchPreferred()
       ? "search"
       : "close",
+    task: "units" | "setup" = "units",
   ) => {
     catalogueReturnFocus.current = trigger;
     setCatalogueInitialFocus(focus);
+    setCatalogueTask(task);
+    if (task !== catalogueTask) setRootFilter("");
     setCatalogueOpen(true);
     if (focus === "search") {
       queueMicrotask(() => rootFilterInput.current?.focus());
@@ -600,6 +625,8 @@ export function RosterOverview({
     const rosterChanged = previous.rosterId !== workspace.rosterId;
     if (rosterChanged) {
       setConfigurationOpen(false);
+      setOpenSetupGroups(new Set());
+      setPendingSetupAnchor(undefined);
     } else if (
       previous.hasConfiguration &&
       !previous.needsAttention &&
@@ -638,6 +665,28 @@ export function RosterOverview({
     target.focus({ preventScroll: true });
     setPendingArmyRuleAnchor(undefined);
   }, [armyRulesOpen, pendingArmyRuleAnchor, session]);
+  useEffect(() => {
+    if (pendingSetupAnchor === undefined) return;
+    const setup = document.getElementById("roster-setup-heading")?.closest("section");
+    if (!setup) return;
+    // The click suppressed fragment navigation to mount closed descendants.
+    // Child cards reveal themselves in their own effects, potentially after
+    // this parent effect. Observe only this pending setup subtree until the
+    // exact target exists and all its disclosures are open; no polling/retry.
+    const finish = () => {
+      const target = document.getElementById(pendingSetupAnchor);
+      if (!target || !setup.contains(target)) return false;
+      for (let parent = target.parentElement; parent && parent !== setup; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement && !parent.open) return false;
+      target.scrollIntoView?.({ block: "start" });
+      target.focus({ preventScroll: true });
+      setPendingSetupAnchor(undefined);
+      return true;
+    };
+    if (finish()) return;
+    const observer = new MutationObserver(() => { if (finish()) observer.disconnect(); });
+    observer.observe(setup, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
+    return () => observer.disconnect();
+  }, [openSetupGroups, pendingSetupAnchor, session]);
   const limitBearingCost = workspace.costs.available
     ? headlineRosterCost(workspace)
     : undefined;
@@ -667,6 +716,7 @@ export function RosterOverview({
     <ReferenceTextContext.Provider value={{ index: sourceTextIndex, open: (target, trigger) => openKeywordRules({ keyword: target.name, ...target, referenceIndex: sourceTextIndex }, trigger) }}>
     <div className="roster-overview">
       <nav
+        ref={workspaceNav}
         className="roster-workspace-nav"
         aria-label="Roster workspace navigation"
       >
@@ -700,7 +750,7 @@ export function RosterOverview({
               {workspace.catalogueName}
             </small>
           </span>
-          <span className="roster-nav-budget">
+          {starcraftCounters.length === 0 && <span className="roster-nav-budget">
             {limitBearingCost === undefined ? (
               <>
                 <strong>{armyTopLevelSelectionCount}</strong>
@@ -739,7 +789,7 @@ export function RosterOverview({
                 </small>
               </>
             )}
-          </span>
+          </span>}
         </a>
         <button
           className="add-unit-trigger"
@@ -748,13 +798,13 @@ export function RosterOverview({
           aria-expanded={catalogueOpen}
           aria-haspopup="dialog"
           aria-label={`Add unit, ${formatCount(
-            filteredRootChoiceCount,
+            unitChoiceCount,
             "available choice",
           )}`}
           onClick={(event) => openCatalogue(event.currentTarget)}
         >
           <span>Add unit</span>
-          <strong>{filteredRootChoiceCount}</strong>
+          <strong>{unitChoiceCount}</strong>
           <small>available choices</small>
         </button>
         <button
@@ -914,6 +964,13 @@ export function RosterOverview({
             </div>
           )}
         </div>
+        {starcraftCounters.length > 0 && <div className="roster-nav-resources" aria-label="Army resource counters">
+          {starcraftCounters.map(({ resource, value, exact, balance }) => <div key={resource.typeId} className="roster-nav-resource" data-provisional={!exact || undefined}>
+            <span>{resource.definitions[0]?.name?.trim() ?? resource.typeId}</span>
+            <strong>{formatNumber(value)}{resource.effective.kind === "finite" ? ` / ${formatNumber(resource.effective.value)}` : ""}</strong>
+            <small>{!exact ? "provisional " : ""}{balance ? "balance" : "spent"}{resource.effective.kind === "finite" ? (balance ? " · cap" : exact ? ` · ${formatNumber(Math.abs(resource.effective.value - value))} ${value > resource.effective.value ? "over" : "left"}` : "") : resource.effective.kind === "unresolved" || resource.effective.kind === "invalid" ? " · limit unverified" : balance ? "" : " · no limit"}</small>
+          </div>)}
+        </div>}
       </nav>
       {sourceStatus}
       {(draftActionMessage !== undefined || isSavingDraft) && (
@@ -930,6 +987,21 @@ export function RosterOverview({
       {printSnapshot && <RosterPrintDialog model={printSnapshot} onPrint={onPrintRoster} onClose={() => { setPrintSnapshot(undefined); actionsMenuTrigger.current?.focus(); }} />}
 
       {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} onApplyPreset={onApplyGameSizePreset} />}
+
+      {starcraftSections.enabled && <section className="roster-setup" aria-labelledby="roster-setup-heading">
+        <div className="builder-pane-heading">
+          <h3 id="roster-setup-heading">Army setup</h3>
+          <button type="button" aria-haspopup="dialog" onClick={event => openCatalogue(event.currentTarget, compactAddUnitSearchPreferred() ? "search" : "close", "setup")}>Choose setup options</button>
+        </div>
+        <p>Faction, deployment maps, mission cards and tactical cards.</p>
+        {starcraftSections.setupGroups.length === 0 && <p>No setup options selected yet.</p>}
+        {starcraftSections.setupGroups.map(group => <RosterConfigurationSection key={group.role.key}
+          group={group} anchorId={stableDomAnchor(armyGroups.some(army => army.role.key === group.role.key) ? "roster-setup-role" : "roster-role", group.role.key)} open={openSetupGroups.has(group.role.key)}
+          onToggle={() => setOpenSetupGroups(current => { const next = new Set(current); if (next.has(group.role.key)) next.delete(group.role.key); else next.add(group.role.key); return next; })} revealAnchor={pendingSetupAnchor} costLimits={[]} summarizeRoots
+          session={session} selectionCanAddAnother={selectionCanAddAnother} onAddChild={onAddChildSelection}
+          onRename={onRenameSelection} onSetAmount={onSetSelectionAmount} onRemove={onRemoveSelection}
+          nonRemovableSelectionIds={nonRemovableRootSelectionIds} onPreviewChoice={openChoicePreview} />)}
+      </section>}
 
       {configurationGroup !== undefined && (
         <RosterConfigurationSection
@@ -1071,6 +1143,7 @@ export function RosterOverview({
 
       {catalogueOpen && (
         <AddUnitDialog
+          task={catalogueTask}
           covered={previewedChoice !== undefined}
           filterId={rootFilterId}
           filterInput={rootFilterInput}
@@ -1086,6 +1159,10 @@ export function RosterOverview({
           onAdd={(choice, armyChoice) => {
             const selectionId = onAddRootSelection(choice);
             if (selectionId === undefined) return;
+            if (catalogueTask === "setup") {
+              const group = starcraftSections.setupChoices.find(group => group.choices.some(state => state.choice === choice));
+              if (group) setOpenSetupGroups(current => new Set([...current, group.key]));
+            }
             if (armyChoice) {
               setActiveSelectionId(selectionId);
               setPendingAddedSelectionFocus(selectionId);
@@ -1182,6 +1259,14 @@ export function RosterOverview({
                   [configurationRulesGroup],
                   decodedTargetId,
                 );
+          const setupOwner = decodedTargetId === undefined ? undefined : topLevelWorkspaceSelectionContainingAnchor(starcraftSections.setupGroups, decodedTargetId);
+          if (decodedTargetId !== undefined && (setupOwner !== undefined || target?.closest(".roster-setup"))) {
+            event.preventDefault();
+            const group = starcraftSections.setupGroups.find(group => group.selections.includes(setupOwner!));
+            if (group) setOpenSetupGroups(current => new Set([...current, group.role.key]));
+            setPendingSetupAnchor(decodedTargetId);
+            return;
+          }
           if (
             decodedTargetId !== undefined &&
             ((target !== null &&
@@ -1256,8 +1341,10 @@ export function RosterOverview({
   );
 }
 
-/** The focused catalogue task opened from the roster's primary Add unit action. */
+/** Reuses the bounded catalogue chooser for army units or verified setup roots;
+ * both tasks dispatch the same roster commands and preserve source identity. */
 function AddUnitDialog({
+  task,
   covered,
   filterId,
   filterInput,
@@ -1273,6 +1360,7 @@ function AddUnitDialog({
   onPreviewChoice,
   onClose,
 }: {
+  readonly task: "units" | "setup";
   readonly covered: boolean;
   readonly filterId: string;
   readonly filterInput: RefObject<HTMLInputElement | null>;
@@ -1314,8 +1402,8 @@ function AddUnitDialog({
       >
         <header className="choice-preview-heading add-unit-heading">
           <div>
-            <span className="eyebrow">Army catalogue</span>
-            <h3 id="add-unit-heading">Add unit</h3>
+            <span className="eyebrow">{task === "setup" ? "Army setup" : "Army catalogue"}</span>
+            <h3 id="add-unit-heading">{task === "setup" ? "Choose setup options" : "Add unit"}</h3>
           </div>
           <div className="add-unit-heading-actions">
             <span>{formatCount(filteredCount, "matching choice")}</span>
@@ -1331,14 +1419,14 @@ function AddUnitDialog({
 
         {groups.length > 0 && (
           <div className="root-choice-filter add-unit-search">
-            <label htmlFor={filterId}>Search units and options</label>
+            <label htmlFor={filterId}>{task === "setup" ? "Search setup options" : "Search units and options"}</label>
             <input
               ref={filterInput}
               id={filterId}
               type="search"
               value={filter}
               autoFocus={initialFocus === "search"}
-              placeholder="Unit name"
+              placeholder={task === "setup" ? "Setup option name" : "Unit name"}
               onChange={(event) =>
                 onFilterChange(event.currentTarget.value)
               }
@@ -1352,7 +1440,7 @@ function AddUnitDialog({
           </p>
         ) : filteredGroups.length === 0 ? (
           <p className="no-root-choices">
-            No available units or options match this search.
+            {task === "setup" ? "No setup options match this search." : "No available units or options match this search."}
           </p>
         ) : (
           <div className="root-choice-categories add-unit-results">
@@ -1424,12 +1512,12 @@ function AddUnitDialog({
                               aria-label={
                                 maximumReached
                                   ? `${rootChoiceLabel(choice)} maximum reached`
-                                  : `Add ${rootChoiceLabel(choice)}`
+                                  : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
                               }
                               title={
                                 maximumReached
                                   ? `${rootChoiceLabel(choice)} maximum reached`
-                                  : `Add ${rootChoiceLabel(choice)}`
+                                  : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
                               }
                               disabled={maximumReached}
                               onClick={() =>
@@ -2407,6 +2495,7 @@ function constraintObservation(item: ConstraintSummaryItem): string {
  * authority on which selections belong here.
  */
 function RosterConfigurationSection({
+  summarizeRoots = false,
   group,
   anchorId,
   open,
@@ -2422,6 +2511,8 @@ function RosterConfigurationSection({
   nonRemovableSelectionIds,
   onPreviewChoice,
 }: {
+  /** Setup roots carry the chosen faction/tactical label themselves. */
+  readonly summarizeRoots?: boolean;
   readonly group: RosterWorkspaceSelectionGroup;
   readonly anchorId: string;
   readonly open: boolean;
@@ -2459,7 +2550,11 @@ function RosterConfigurationSection({
   // Detachment. Their selected descendants are the concise values a player
   // needs when the full editor is collapsed; exact choice identity and source
   // order are preserved without interpreting display names.
-  const selectedValues = selectedUpgradeSummary(
+  const selectedValues = summarizeRoots ? group.selections.flatMap(selection => {
+    // Pre-game containers summarize their selected cards; faction and tactical
+    // roots summarize their own identity, even when authored as a unit.
+    return selection.selections.length ? selectedUpgradeSummary(session, selection.selections) : [{ key: selection.occurrence.id, name: selection.occurrence.name ?? "Unnamed setting", amount: rosterSelectionAmount(selection.occurrence) }];
+  }) : selectedUpgradeSummary(
     session,
     group.selections.flatMap(({ selections }) => selections),
   );

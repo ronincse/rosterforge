@@ -27,7 +27,9 @@ describe("phone-width layout contracts", () => {
   });
 
   it("leaves sticky-navigation space above fragment targets", () => {
-    expect(styles).toContain("html {\n  scroll-padding-top: 84px;\n}");
+    // The StarCraft counter bar can be taller than the ordinary workspace.
+    // Keep the fallback while allowing the measured height tested in the UI.
+    expect(styles).toContain("html {\n  scroll-padding-top: var(--roster-nav-offset, 84px);\n}");
   });
 
   it("keeps roster identity and the compact warning usable in the sticky bar", () => {

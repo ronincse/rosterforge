@@ -2251,6 +2251,16 @@ See [SC-08 evidence](qa/source-aware-freshness.md).
 
 Owner-feedback resource presentation retains visible zero balances and names evaluated contributing selections. Source-omitted maxima are optional advanced caps on the signed result, not faction allowances. Unknown arithmetic remains provisional; independent supply errors and explicit saved overrides remain effective.
 
+The StarCraft workspace additionally presents Minerals, Gas, Core, Elite, Hero
+and Support in its sticky bar. The four troop resources remain signed source
+balances; any explicit maximum is a separate cap, not an inferred allowance.
+Verified Faction, Pre-Game and Tactical category membership places those roots
+in Army setup and a separate chooser, including Zerg secondary Tactical Creep
+and the unit-typed Kerrigan faction. Unresolved/ambiguous identities retain the
+ordinary visible fallback. This changes UI placement/counts only, without
+changing stored selections, source bytes, prices, validation or print layout.
+See [StarCraft setup and counters QA](qa/starcraft-workspace-setup.md).
+
 User-initiated Download latest data stages a new complete immutable snapshot for new armies. It does not refresh existing armies or baseline fixtures. Stored selections may restore only validated revisions of configured repositories; local imports are never inferred to be refresh targets.
 
 Optional StarCraft application presets follow Organised Play Guide v1.0: Skirmish1000/100, Standard2000/200. Only explicit Apply changes both budgets. Custom and independent edits preserve existing values. Exact resolved system/currency identities gate eligibility; this is not imported limit behavior, arbitrary game-size calculation or a rules certification.

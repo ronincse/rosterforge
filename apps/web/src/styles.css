@@ -37,7 +37,7 @@
    Reserve its measured height plus breathing room for every fragment target;
    otherwise the requested heading lands underneath the nav at phone width. */
 html {
-  scroll-padding-top: 84px;
+  scroll-padding-top: var(--roster-nav-offset, 84px);
 }
 
 body {
@@ -1214,6 +1214,37 @@ h1 {
   font-size: 0.5rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Keep every resource label and its uncertainty visible in the sticky bar,
+   including zero supply balances. A second row leaves the existing controls
+   usable at phone widths without abbreviating different counters to numbers. */
+.roster-nav-resources {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.roster-nav-resource {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-nav-resource > span { color: #d4e0da; font-size: 0.64rem; font-weight: 750; }
+.roster-nav-resource strong { color: #f1d998; font-size: 0.9rem; }
+.roster-nav-resource small { color: #d4e0da; font-size: 0.57rem; overflow-wrap: anywhere; }
+.roster-setup { padding: 14px; border: 1px solid var(--line); border-radius: var(--corner-radius); }
+.roster-setup > p { color: var(--muted); font-size: 0.8rem; }
+.roster-setup .roster-configuration { margin-bottom: 8px; }
+
+@media (max-width: 560px) {
+  .roster-nav-resources { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .roster-nav-resource { padding: 3px 5px; }
 }
 
 .add-unit-trigger {
