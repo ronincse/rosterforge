@@ -34,7 +34,34 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-30 (StarCraft counters and setup UI complete)
+## Current Status — 2026-09-30 (inline Faction/Tactical panels complete)
+
+Clean fetched/upstream-equal baseline bddf4c9; implementation/report
+5619abb78b8fdf6940e6135bbb726335a8ecd079. This separate handoff completes the
+owner's presentation follow-up. Only codex/starcraft-pilot publication.
+Pre-game retains maps/missions; always-present Faction and Tactical cards
+collapsible panels follow it before Your roster. Picked root names remain in
+collapsed summaries, even with upgrades. Empty panels say no selection and
+contain direct Select/preview controls. Existing edit/remove/source max and
+incomplete-state semantics remain; no automatic faction replacement.
+
+Six fictional tests plus frozen three-faction assertions; configured1209passed,
+0skips128files59.12s. Lint/typecheck/build209modules/whitespace pass. One isolated
+native early/final review found no blocker; source/diff review only. No repeat
+Claude launcher attempt. Exact-final CI is checked after publication and reported
+in the completion response. See docs/qa/starcraft-workspace-setup.md follow-up.
+
+Disposable5307: Nerazim and three tactical picks show when collapsed; remove/
+inline reselect restores1000M/100G, Core0/Elite3/Hero0/Support1,5army selections,
+0known violations. All changes saved and Reload/Open preserve selected roots.
+Desktop1280/phone390 inspected; no horizontal document overflow in summaries/
+inline controls. Owner5303 armies/storage/tabs preserved; server stays running.
+No evaluator, storage, source, print or diagnostic-code changes. Pins99261754,
+04c62fcd,5b261ec4 unchanged. Owner print-layout acceptance remains pending and
+prior pilot/source/orphan-cost/precedence/routing/formatting limits remain.
+Stop here; no next checkpoint, main, PR, deployment, source refresh or broad audit.
+
+### Historical status — 2026-09-30 StarCraft counters and setup UI complete
 
 Clean fetched baseline cdf287f7; implementation/report e02d2ba. This separate
 handoff accompanies the checkpoint. Only codex/starcraft-pilot publication.
@@ -1220,7 +1247,7 @@ Three habits earned the hard way, all worth keeping:
 | B automatic resource presentation | Done | Evaluated contributions, zero balances, optional maxima |
 | C latest immutable acquisition | Done | Explicit new snapshots only; preserve old armies |
 | D game-size presets | Done | Official OP Guide v1.0 values; explicit choice, Custom |
-| StarCraft setup and sticky counters | Done, bounded | Six evaluated resources; verified faction/pre-game/tactical roots separate from Add unit/army count; unknown contexts remain visible. No engine/storage/print changes |
+| StarCraft setup and sticky counters | Done, bounded | Six evaluated resources; Pre-game then always-present inline Faction/Tactical panels with picked summaries; setup separate from Add unit/army count. Unknown contexts visible; no engine/storage/print changes |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
 the map, not the territory** — it groups that record into product milestones so
@@ -17173,3 +17200,63 @@ running as requested. Review artifacts C:/CodexACLTest/starcraft-ui-20260930.
 Push only codex/starcraft-pilot; exact-final CI observation follows publication
 in completion response. Stop here. No main/PR/deployment/source update, budget
 activation, formatting engine, print redesign, duplicate-army workflow or audit.
+
+## Completed Assignment — Inline Faction and Tactical panels, 2026-09-30
+
+Baseline clean/fetched/upstream-equal bddf4c9b101c09ea852bb4dbb18df8c52e964165;
+previous exact-final CI36746659852 green. Primary pilot checkout
+C:/CodexACLTest/forcewright-starcraft-pilot, not retired E:/GitHub/rosterforge.
+Implementation/report5619abb78b8fdf6940e6135bbb726335a8ecd079; this separate
+handoff is the resulting status commit. Only own pilot work published; other
+worktrees and servers preserved. Print/UI task idle at baseline.
+
+Owner liked Pre-game but wanted picked faction/tactical labels and independent
+collapsible selection sections between it and the army. Lead seeded panels from
+already verified source ownership, not selections/addable choices, so empty or
+hidden-choice panels do not vanish. A source-required empty setup role stays
+in its panel rather than also becoming an army role. Faction/Tactical summaries
+name roots even with descendants; Pre-game retains selected map/mission cards.
+Inline controls share existing root commands/max/base/incomplete semantics;
+selected editors retain full references. Description namespaces prevent modal/
+inline duplicates. Rejected hiding empty panels, requiring the modal for picks,
+automatic faction replacement/radio inference, and data/evaluator/storage or
+print redesign. Existing unknown/ambiguous fallback remains visible.
+
+One native delegate reviewed the bounded plan early and source/diff/tests after
+implementation, without a blocker. Dedicated fresh worktree at bddf4c9; read-only
+review, no independently executed browser/full gates. Previous archived review
+snapshot restore was unavailable (missing snapshot), not retried. Dirty
+historical worktree preserved; new managed review tree archived at completion.
+Prior Claude OAuth failure not retried. Lead owned implementation and gates.
+
+Six fictional tests pass: real XML ingestion/session/UI, empty panels/order,
+direct picks without chooser, nested faction upgrade root summary, removal to
+empty, no visible choices, seeded requirement ownership, unique IDs with modal
+mounted. Prior fallback/counter/map/problem-jump/nav regressions retained.
+Frozen99261754 corpus asserts all3factions' panels/order/emptyFactionTactical
+and four exact hashes. Configured1209tests pass,0skips128files59.12s; focused6
+passed4.58s. Existing five fixture directories from prior entry configured.
+Includes40kA/B and JSON, StarCraft reinforcement, pricing, Supporting,
+Captain/rule labels, budgets, initialization, restoration/recovery, reference
+grouping and renderer timing. Lint/typecheck/build209modules/diff pass; existing
+bundle advisory. Initial10CSS literal failures from writing CRLF fixed by
+retaining original LF; no assertion weakened. Test-query type errors fixed.
+No diagnostic code or source pin changes. Architecture/compatibility and report
+updated; historical first receipt retained.
+
+Browser isolated5307, existing disposable Nerazim draft: collapsed Nerazim and
+Forge/Gateway/TwilightCouncil, thenYourroster5army. RemoveNerazim/Forge leaves
+inline panel choices; SelectNerazim/Forge directly restores1000M/100G,
+Core0/Elite3/Hero0/Support1 and0known violations. Autosave All changes saved;
+Reload/Open preserves picks/totals, with Forge now last in selection order.
+Pre-game summary/map/mission identity and unit/reference content remain.
+Desktop1280/phone390 actual1265/375 measured no horizontal document overflow,
+including inline choice rows. Screenshots/log in
+C:/CodexACLTest/starcraft-ui-20260930 (desktop-inline-setup.png,
+phone-inline-setup.png, phone-inline-choices.png, inline-test.log). Owner5303
+storage/armies/tabs untouched; playable5303 and disposable5307 stay running.
+No native print/PDF matrix or owner layout acceptance claimed.
+
+Push only codex/starcraft-pilot and confirm exact-final CI in completion response.
+Stop here. Existing support limits remain; no main, PR, deploy, source update,
+new budget behavior, print work, evaluator expansion or broad audit authorized.

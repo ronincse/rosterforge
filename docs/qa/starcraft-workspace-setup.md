@@ -85,7 +85,7 @@ Stop after this UI checkpoint. Existing source/orphan-cost, evaluator precedence
 routing, imported-formatting and StarCraft support qualifications remain. Pins
 99261754,04c62fcd,5b261ec4 unchanged. No third-party files or owner exports committed.
 
-## Follow-up: inline Faction and Tactical panels — 2026-09-30
+## Follow-up: inline Faction and Tactical panels â€” 2026-09-30
 
 Baseline clean/fetched/upstream-equal `bddf4c9b101c09ea852bb4dbb18df8c52e964165`.
 The first receipt above records the previous selected-only panels/global chooser.
