@@ -46,6 +46,8 @@ it.skipIf(!directory)("separates all three frozen factions' setup and retains si
     const presentation = () => starcraftWorkspaceSections(session, createRosterWorkspaceViewModel(session, { costs: evaluateLocalRosterCosts(session), rootChoices: inspectLocalRosterRootChoices(session), validation: inspectLocalRosterSupportedValidation(session) }));
     const initial = presentation();
     expect(initial.enabled).toBe(true);
+    expect(initial.setupPanels.map(p => p.kind)).toEqual(["pregame", "faction", "tactical"]);
+    expect(initial.setupPanels.slice(1).map(p => p.group.amount)).toEqual([0, 0]);
     expect(initial.setupChoices.map(g => g.name)).toEqual(["Pre-Game", "Faction", "Tactical"]);
     expect(initial.setupGroups.flatMap(g => g.selections)).toHaveLength(2);
     expect(initial.armyGroups.flatMap(g => g.selections)).toHaveLength(0);

@@ -662,7 +662,11 @@ resource reports in the sticky navigator, including zero and provisional signed
 supply balances. It does not infer allowances or evaluate another cost ledger.
 Its taller navigator supplies a measured document scroll offset with cleanup.
 `starcraft-workspace-presentation.ts` partitions verified setup-category roots
-into Army setup and its own chooser; membership includes secondary Tactical
+into Army setup; verified Faction and Tactical panels remain visible when empty,
+show picked root identities when collapsed, and contain inline selection controls.
+Pre-game retains its selected-card summary and setup chooser. Inline and modal
+root controls share source bounds/commands with distinct description IDs.
+Membership includes secondary Tactical
 categories and the unit-typed Kerrigan faction. Unique owning source identities,
 not names or entry types, gate that policy. Unknown/ambiguous membership keeps
 the ordinary visible fallback. Stored selections, shared workspace/print models

@@ -22,7 +22,7 @@ async function fixture(options: { wrongSystem?: boolean; duplicate?: boolean; re
   const sys = options.wrongSystem ? "unrelated" : system;
   const game = `<gameSystem id="${sys}" name="Fictional system" revision="1" battleScribeVersion="2.03"><costTypes>${ids.map((id, i) => `<costType id="${id}" name="${names[i]}"${i < 2 ? ` defaultCostLimit="${i === 0 ? 1000 : 100}"` : ""}/>`).join("")}</costTypes><categoryEntries><categoryEntry id="${pregame}" name="${options.renamed ? "Renamed scenarios" : "Pre-Game Selections"}"/></categoryEntries><forceEntries><forceEntry id="army" name="Army"/></forceEntries></gameSystem>`;
   const catalogue = `<catalogue id="${catId}" gameSystemId="${sys}" name="Fictional faction" revision="1" battleScribeVersion="2.03"><categoryEntries><categoryEntry id="${faction}" name="${options.renamed ? "Renamed affiliation" : "Faction"}"/><categoryEntry id="${tactical}" name="Tactical Cards"/><categoryEntry id="creep" name="Creep"/><categoryEntry id="core-category" name="Core"/>${options.duplicate ? `<categoryEntry id="${faction}" name="Collision"/>` : ""}</categoryEntries><selectionEntries>
-  ${entry("faction", "Faction choice", category(faction), costs([0, 0, 2, 1, 0, 0]), "unit")}
+  ${entry("faction", "Faction choice", category(faction), costs([0, 0, 2, 1, 0, 0]) + `<selectionEntries>${entry("detail", "Faction upgrade", "")}</selectionEntries>`, "unit")}
   ${entry("map", "Deployment Maps", category(pregame), `<selectionEntries>${entry("survey", "Survey map", "", `<constraints><constraint id="map-max" type="max" field="selections" scope="parent" value="1" shared="true"/></constraints><profiles><profile id="map-reference" name="Survey map"><characteristics><characteristic name="Description">Keep the whole map text.</characteristic></characteristics></profile></profiles>`)}</selectionEntries>`)}
   ${entry("mission", "Mission Cards", category(pregame))}
   ${entry("tactical", "Tactical choice", category("creep") + category(tactical, false), costs([0, 0, 1]))}
@@ -41,6 +41,7 @@ function view(session: Awaited<ReturnType<typeof fixture>>["session"]) {
 it("classifies renamed setup, secondary tactical membership and a unit-typed faction by verified identities", async () => {
   const f = await fixture({ renamed: true });
   const choices = view(f.session);
+  expect(choices.setupPanels.map(p => [p.kind, p.group.amount])).toEqual([["pregame", 0], ["faction", 0], ["tactical", 0]]);
   expect(choices.unitChoices.flatMap(g => g.choices.map(c => c.choice.materialized.name))).toEqual(["Marine unit"]);
   expect(choices.setupChoices.flatMap(g => g.choices.map(c => c.choice.materialized.name))).toEqual(["Deployment Maps", "Mission Cards", "Faction choice", "Tactical choice"]);
   let session = f.session;
@@ -59,6 +60,16 @@ it("does not infer setup or counters from labels in another system, and leaves a
   const collision = await fixture({ duplicate: true });
   expect(view(collision.session).unitChoices.flatMap(g => g.choices.map(c => c.choice.materialized.name))).toContain("Faction choice");
 });
+it("keeps verified empty panels without visible choices and owns a seeded setup requirement once", async () => {
+  const f = await fixture();
+  const model = createRosterWorkspaceViewModel(f.session, { costs: evaluateLocalRosterCosts(f.session), rootChoices: inspectLocalRosterRootChoices(f.session), validation: inspectLocalRosterSupportedValidation(f.session) });
+  const emptyRole = { role: { key: faction, name: "Faction", order: 0, known: true }, selections: [], amount: 0, requirement: { selected: 0, minimum: 1, status: "violated" as const, completeness: "complete" as const } };
+  const panels = starcraftWorkspaceSections(f.session, { ...model, rootChoices: { ...model.rootChoices, groups: [] }, selections: { ...model.selections, groups: [emptyRole] } });
+  expect(panels.setupPanels.map(p => p.kind)).toEqual(["pregame", "faction", "tactical"]);
+  expect(panels.setupPanels.every(p => p.choices.choices.length === 0)).toBe(true);
+  expect(panels.armyGroups).toEqual([]);
+  expect(panels.setupPanels[1]!.group).toBe(emptyRole);
+});
 it("retains zero, negative and provisional balances and keeps an optional cap distinct from an allowance", async () => {
   const f = await fixture();
   const report = ok(inspectLocalRosterSupportedValidation(f.session)).status.resourceBudgets;
@@ -67,7 +78,7 @@ it("retains zero, negative and provisional balances and keeps an optional cap di
   const changed = { ...report, resources: report.resources.map(r => r.resource.typeId === ids[2] ? { ...r, value: -2, exact: false, resource: { ...r.resource, effective: { kind: "finite" as const, value: 0 } } } : r) };
   expect(starcraftWorkspaceCounters(changed)[2]).toMatchObject({ value: -2, exact: false, balance: true, resource: { effective: { kind: "finite", value: 0 } } });
 });
-it("offers setup separately from Add unit, edits a nested map and keeps setup costs in all six sticky counters", async () => {
+it("selects faction and tactical cards inline, retains picked summaries and edits pre-game separately", async () => {
   const f = await fixture(); let serial = 0;
   render(<App prepareLibrary={async () => f.prepared} createEntityId={kind => `${kind}-${++serial}`} />);
   fireEvent.change(screen.getByLabelText("Choose BattleScribe files"), { target: { files: f.files.map(file => ({ name: file.filename, arrayBuffer: async () => Uint8Array.from(file.bytes).buffer })) } });
@@ -75,15 +86,40 @@ it("offers setup separately from Add unit, edits a nested map and keeps setup co
   const counters = screen.getByLabelText("Army resource counters");
   expect(counters.closest("nav")).toBeTruthy();
   for (const name of names) expect(within(counters).getByText(name)).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Choose setup options" }));
+  const settings = screen.getByRole("region", { name: "Army setup" });
+  const panels = within(settings).getAllByRole("group");
+  expect(panels.map(panel => panel.getAttribute("aria-labelledby")).map(id => document.getElementById(id!)?.getAttribute("aria-label"))).toEqual(["Pre-Game Selections", "Faction", "Tactical cards"]);
+  const factionPanel = within(settings).getByRole("group", { name: "Faction" });
+  const tacticalPanel = within(settings).getByRole("group", { name: "Tactical cards" });
+  expect(factionPanel.querySelector(":scope > summary")!.textContent).toContain("No faction selected");
+  expect(tacticalPanel.querySelector(":scope > summary")!.textContent).toContain("No tactical cards selected");
+  fireEvent.click(factionPanel.querySelector(":scope > summary")!);
+  fireEvent.click(within(factionPanel).getByRole("button", { name: "Select Faction choice" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(within(factionPanel).getByText("Selected")).toBeTruthy();
+  // A faction with chosen upgrades still identifies the picked faction in its
+  // collapsed summary; the descendants do not replace the root's label.
+  const factionToggle = within(factionPanel).getByRole("button", { name: "Faction choice" });
+  if (factionToggle.getAttribute("aria-expanded") !== "true") fireEvent.click(factionToggle);
+  fireEvent.click(within(factionPanel).getByRole("button", { name: "Faction upgrade", pressed: false }));
+  fireEvent.click(factionPanel.querySelector(":scope > summary")!);
+  expect(factionPanel.querySelector(":scope > summary")!.textContent).toContain("Faction choice");
+  expect(factionPanel.querySelector(":scope > summary")!.textContent).not.toContain("Faction upgrade");
+  fireEvent.click(tacticalPanel.querySelector(":scope > summary")!);
+  fireEvent.click(within(tacticalPanel).getByRole("button", { name: "Select Tactical choice" }));
+  fireEvent.click(tacticalPanel.querySelector(":scope > summary")!);
+  expect(tacticalPanel.querySelector(":scope > summary")!.textContent).toContain("Tactical choice");
+  const pregameGroup = within(settings).getByRole("group", { name: "Pre-Game Selections" });
+  fireEvent.click(pregameGroup.querySelector(":scope > summary")!);
+  fireEvent.click(within(pregameGroup).getByRole("button", { name: "Choose setup options" }));
   const setup = screen.getByRole("dialog", { name: "Choose setup options" });
   expect(within(setup).queryByText("Marine unit")).toBeNull();
-  fireEvent.click(within(setup).getByRole("button", { name: "Select Faction choice" }));
   fireEvent.click(within(setup).getByRole("button", { name: "Select Deployment Maps" }));
-  fireEvent.click(within(setup).getByRole("button", { name: "Select Tactical choice" }));
+  // Modal and inline controls coexist without duplicate accessible descriptions.
+  const allIds = [...document.querySelectorAll<HTMLElement>("[id]")].map(e => e.id);
+  expect(new Set(allIds).size).toBe(allIds.length);
   fireEvent.click(within(setup).getByRole("button", { name: "Close" }));
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Choose setup options" })).toBeNull());
-  const settings = screen.getByRole("region", { name: "Army setup" });
   expect(settings.textContent).toContain("Faction choice");
   expect(screen.getByRole("heading", { name: "Your roster" }).parentElement!.textContent).toContain("0 army selections");
   fireEvent.click(within(settings).getByRole("button", { name: "Survey map", pressed: false }));
@@ -95,7 +131,6 @@ it("offers setup separately from Add unit, edits a nested map and keeps setup co
   const mapToggle = within(settings).getByRole("button", { name: "Deployment Maps" });
   if (mapToggle.getAttribute("aria-expanded") === "true") fireEvent.click(mapToggle);
   expect(document.getElementById(mapTargetId)).toBeNull();
-  const pregameGroup = within(settings).getByRole("group", { name: "Pre-Game Selections" });
   fireEvent.click(pregameGroup.querySelector("summary")!);
   const link = [...document.querySelectorAll<HTMLAnchorElement>('a[href^="#roster-selection-"]')].find(a => a.hash === `#${mapTargetId}`)!;
   expect(link).toBeTruthy();
@@ -111,7 +146,11 @@ it("offers setup separately from Add unit, edits a nested map and keeps setup co
   expect(within(counters).getByText("Minerals").parentElement!.textContent).toContain("160 / 1,000");
   expect(within(counters).getByText("Gas").parentElement!.textContent).toContain("10 / 100");
   expect(within(counters).getByText("Core").parentElement!.textContent).toContain("2balance");
-  fireEvent.click(within(settings).getByRole("button", { name: "Remove Tactical choice" }));
+  fireEvent.click(within(units).getByRole("button", { name: "Close" }));
+  fireEvent.click(tacticalPanel.querySelector(":scope > summary")!);
+  fireEvent.click(within(tacticalPanel).getByRole("button", { name: "Remove Tactical choice" }));
+  expect(tacticalPanel.querySelector(":scope > summary")!.textContent).toContain("No tactical cards selected");
+  expect(within(tacticalPanel).getByRole("button", { name: "Select Tactical choice" })).toBeTruthy();
   expect(within(counters).getByText("Core").parentElement!.textContent).toContain("1balance");
 });
 

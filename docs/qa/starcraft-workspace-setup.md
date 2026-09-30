@@ -84,3 +84,60 @@ Exact-final publication/CI observation is recorded in the completion response.
 Stop after this UI checkpoint. Existing source/orphan-cost, evaluator precedence/
 routing, imported-formatting and StarCraft support qualifications remain. Pins
 99261754,04c62fcd,5b261ec4 unchanged. No third-party files or owner exports committed.
+
+## Follow-up: inline Faction and Tactical panels — 2026-09-30
+
+Baseline clean/fetched/upstream-equal `bddf4c9b101c09ea852bb4dbb18df8c52e964165`.
+The first receipt above records the previous selected-only panels/global chooser.
+Owner feedback identified their empty-state omission and indirect picking flow.
+Verified panels now always appear in order Pre-game, Faction, Tactical cards,
+then Your roster. Faction and Tactical cards name selected roots, including a
+faction with selected descendants, or explicitly say no selection. Expanding
+either panel exposes direct source-aware Select/preview controls plus selected
+edit/remove cards. Pre-game keeps maps/missions and its existing setup chooser.
+A seeded empty setup role with an established minimum belongs to its setup
+panel once rather than also appearing under Your roster. Unknown source
+identities retain the existing ordinary fallback.
+
+The shared root-choice control uses unchanged commands and max/base/incomplete
+qualifications. Inline/modal description IDs have different surface namespaces.
+No automatic faction replacement, radio semantics, data/evaluation changes,
+storage migration, source-pin refresh or print change. All picked labels remain
+roster-owned occurrence names; no source label is rewritten.
+
+Six fictional UI/model tests now cover empty panels, direct picks without the
+modal, selected root identity despite upgrades, removal back to empty, empty
+visible-choice sets, seeded role ownership, and unique IDs with the modal also
+mounted. Frozen three-faction coverage verifies panel order and empty Faction/
+Tactical states as well as existing hashes/counters. Existing nested map edits,
+closed-card problem jumps, sticky-height cleanup and 40k paths still pass.
+
+Browser: isolated5307 opens the existing disposable Nerazim draft. Collapsed
+summaries show Nerazim and Forge/Gateway/Twilight Council. Remove Nerazim/Forge
+leaves Faction visible and direct choices available; select both inline restores
+1000M/100G, Core0/Elite3/Hero0/Support1 and five army selections, zero known
+violations. Autosave shows All changes saved; Reload/Open retains the picked
+roots and totals (Forge is now last in the selection order). Pre-game cards and
+unit composition/reference labels remain. Desktop1280 and phone390 inspected;
+actual layout1265/375; no horizontal document overflow in summaries or inline
+choices. Screenshots: desktop-inline-setup.png, phone-inline-setup.png and
+phone-inline-choices.png in C:/CodexACLTest/starcraft-ui-20260930. Owner5303 armies,
+storage and tabs untouched. Both preview servers remain running. No print/PDF
+acceptance claimed.
+
+An isolated native reviewer at bddf4c9 reviewed the source/diff and tests before
+final gates, with no blocker. Review was read-only, not its own browser/gate run;
+no repeat of the previously unavailable Claude launcher. The old managed review
+snapshot could not restore (missing snapshot); it was not retried. A fresh
+baseline review worktree was used instead; dirty historical worktrees preserved.
+
+Configured suite: **1209 passed, zero skips,128 files,59.12s** using the same
+five fixture environment paths above. Focused six tests passed,4.58s. Lint,
+typecheck, build209modules and whitespace pass; existing bundle advisory remains.
+An initial run had ten literal CSS-contract failures after a Windows file write
+changed styles.css to CRLF; restoring its established LF fixed them without any
+test change. Initial test-query type errors were also corrected before final
+typecheck. Exact-final CI is reported after branch publication.
+
+This completes only the requested presentation follow-up; all prior pilot
+support and pending owner print-acceptance qualifications remain.

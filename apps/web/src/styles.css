@@ -1241,6 +1241,9 @@ h1 {
 .roster-setup { padding: 14px; border: 1px solid var(--line); border-radius: var(--corner-radius); }
 .roster-setup > p { color: var(--muted); font-size: 0.8rem; }
 .roster-setup .roster-configuration { margin-bottom: 8px; }
+.inline-setup-choices { display: grid; gap: 10px; margin-top: 14px; }
+.inline-setup-choices > h4 { margin: 0; font-size: 0.85rem; }
+.setup-choice-selected { color: var(--forest); font-size: 0.7rem; }
 
 @media (max-width: 560px) {
   .roster-nav-resources { grid-template-columns: repeat(3, minmax(0, 1fr)); }

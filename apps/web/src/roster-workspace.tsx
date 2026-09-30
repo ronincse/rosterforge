@@ -667,7 +667,7 @@ export function RosterOverview({
   }, [armyRulesOpen, pendingArmyRuleAnchor, session]);
   useEffect(() => {
     if (pendingSetupAnchor === undefined) return;
-    const setup = document.getElementById("roster-setup-heading")?.closest("section");
+    const setup = document.getElementById("roster-setup");
     if (!setup) return;
     // The click suppressed fragment navigation to mount closed descendants.
     // Child cards reveal themselves in their own effects, potentially after
@@ -988,16 +988,15 @@ export function RosterOverview({
 
       {supportedValidation.ok && <ResourceBudgets report={supportedValidation.value.status.resourceBudgets} onChange={onSetResourceBudget} onApplyPreset={onApplyGameSizePreset} />}
 
-      {starcraftSections.enabled && <section className="roster-setup" aria-labelledby="roster-setup-heading">
-        <div className="builder-pane-heading">
-          <h3 id="roster-setup-heading">Army setup</h3>
-          <button type="button" aria-haspopup="dialog" onClick={event => openCatalogue(event.currentTarget, compactAddUnitSearchPreferred() ? "search" : "close", "setup")}>Choose setup options</button>
-        </div>
-        <p>Faction, deployment maps, mission cards and tactical cards.</p>
-        {starcraftSections.setupGroups.length === 0 && <p>No setup options selected yet.</p>}
-        {starcraftSections.setupGroups.map(group => <RosterConfigurationSection key={group.role.key}
-          group={group} anchorId={stableDomAnchor(armyGroups.some(army => army.role.key === group.role.key) ? "roster-setup-role" : "roster-role", group.role.key)} open={openSetupGroups.has(group.role.key)}
+      {starcraftSections.enabled && <section id="roster-setup" className="roster-setup" aria-label="Army setup">
+        {starcraftSections.setupPanels.map(({ group, choices, kind }) => <RosterConfigurationSection key={group.role.key}
+          group={kind === "pregame" ? group : { ...group, role: { ...group.role, name: kind === "faction" ? "Faction" : "Tactical cards" } }}
+          anchorId={stableDomAnchor(armyGroups.some(army => army.role.key === group.role.key) ? "roster-setup-role" : "roster-role", group.role.key)} open={openSetupGroups.has(group.role.key)}
           onToggle={() => setOpenSetupGroups(current => { const next = new Set(current); if (next.has(group.role.key)) next.delete(group.role.key); else next.add(group.role.key); return next; })} revealAnchor={pendingSetupAnchor} costLimits={[]} summarizeRoots
+          summarizeRootIdentity={kind !== "pregame"} emptySummary={kind === "faction" ? "No faction selected" : kind === "tactical" ? "No tactical cards selected" : "No pre-game options selected"}
+          setupChoices={kind === "pregame" ? undefined : choices}
+          onChooseSetup={choice => { onAddRootSelection(choice); }}
+          onBrowseSetup={kind === "pregame" ? trigger => openCatalogue(trigger, compactAddUnitSearchPreferred() ? "search" : "close", "setup") : undefined}
           session={session} selectionCanAddAnother={selectionCanAddAnother} onAddChild={onAddChildSelection}
           onRename={onRenameSelection} onSetAmount={onSetSelectionAmount} onRemove={onRemoveSelection}
           nonRemovableSelectionIds={nonRemovableRootSelectionIds} onPreviewChoice={openChoicePreview} />)}
@@ -1458,84 +1457,8 @@ function AddUnitDialog({
                   <strong>{group.name}</strong>
                   <span>{formatCount(group.choices.length, "choice")}</span>
                 </summary>
-                <div className="root-choice-list">
-                  {group.choices.map((state) => {
-                    const choice = state.choice;
-                    const status = rootChoiceStatus(state);
-                    const finiteMaximum =
-                      state.maximum !== undefined &&
-                      Number.isFinite(state.maximum)
-                        ? state.maximum
-                        : undefined;
-                    const maximumReached =
-                      finiteMaximum !== undefined &&
-                      rosterSelectionsAmount(state.selected) >= finiteMaximum;
-                    const costDescriptionId =
-                      catalogueChoiceCosts(choice.materialized).length === 0
-                        ? undefined
-                        : choiceCostDescriptionId(
-                            "root",
-                            choice.materialized,
-                          );
-                    return (
-                      <div
-                        className="root-choice"
-                        key={rootChoiceKey(choice)}
-                        data-completeness={state.completeness}
-                      >
-                        <span className="root-choice-copy">
-                          <span className="root-choice-heading">
-                            <strong>{rootChoiceLabel(choice)}</strong>
-                            <ChoiceCostBadges
-                              choice={choice.materialized}
-                              id={costDescriptionId}
-                            />
-                          </span>
-                          <small className="root-choice-status">
-                            <span>{status.value}</span>
-                            {status.sourceMaximum && (
-                              <span
-                                className="root-choice-status-qualifier"
-                                title="Source maximum; roster options can change this number."
-                              >
-                                base
-                              </span>
-                            )}
-                          </small>
-                        </span>
-                        <span className="root-choice-actions">
-                          <span className="choice-segmented-control">
-                            <button
-                              type="button"
-                              className="root-choice-add"
-                              aria-describedby={costDescriptionId}
-                              aria-label={
-                                maximumReached
-                                  ? `${rootChoiceLabel(choice)} maximum reached`
-                                  : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
-                              }
-                              title={
-                                maximumReached
-                                  ? `${rootChoiceLabel(choice)} maximum reached`
-                                  : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
-                              }
-                              disabled={maximumReached}
-                              onClick={() =>
-                                onAdd(choice, group.section === "army")
-                              }
-                            >
-                              <span aria-hidden="true">+</span>
-                            </button>
-                            <ChoicePreviewButton
-                              choice={choice.materialized}
-                              onPreview={onPreviewChoice}
-                            />
-                          </span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <RootChoiceList choices={group.choices} task={task} descriptionScope="root"
+                  onAdd={choice => onAdd(choice, group.section === "army")} onPreviewChoice={onPreviewChoice} />
               </details>
             ))}
           </div>
@@ -1544,6 +1467,100 @@ function AddUnitDialog({
           <DiagnosticList diagnostics={inspection.diagnostics} />
         )}
       </section>
+    </div>
+  );
+}
+
+/** Shared root-choice controls keep inline setup and the modal on the same
+ * source bounds/commands. Description IDs have an explicit surface namespace
+ * because both surfaces may be mounted while a preview or chooser is open. */
+function RootChoiceList({ choices, task, descriptionScope, onAdd, onPreviewChoice }: {
+  readonly choices: readonly LocalRosterRootChoiceState[];
+  readonly task: "units" | "setup";
+  readonly descriptionScope: string;
+  readonly onAdd: (choice: LocalRosterRootChoice) => void;
+  readonly onPreviewChoice: PreviewChoiceHandler;
+}) {
+  return (
+    <div className="root-choice-list">
+      {choices.map((state) => {
+        const choice = state.choice;
+        const status = rootChoiceStatus(state);
+        const finiteMaximum =
+          state.maximum !== undefined &&
+          Number.isFinite(state.maximum)
+            ? state.maximum
+            : undefined;
+        const maximumReached =
+          finiteMaximum !== undefined &&
+          rosterSelectionsAmount(state.selected) >= finiteMaximum;
+        const costDescriptionId =
+          catalogueChoiceCosts(choice.materialized).length === 0
+            ? undefined
+            : choiceCostDescriptionId(
+                descriptionScope,
+                choice.materialized,
+              );
+        return (
+          <div
+            data-selected={state.selected.length > 0 || undefined}
+            className="root-choice"
+            key={rootChoiceKey(choice)}
+            data-completeness={state.completeness}
+          >
+            <span className="root-choice-copy">
+              <span className="root-choice-heading">
+                <strong>{rootChoiceLabel(choice)}</strong>
+                <ChoiceCostBadges
+                  choice={choice.materialized}
+                  id={costDescriptionId}
+                />
+              </span>
+              <small className="root-choice-status">
+                <span>{status.value}</span>
+                {task === "setup" && state.selected.length > 0 && <span className="setup-choice-selected">Selected</span>}
+                {status.sourceMaximum && (
+                  <span
+                    className="root-choice-status-qualifier"
+                    title="Source maximum; roster options can change this number."
+                  >
+                    base
+                  </span>
+                )}
+              </small>
+            </span>
+            <span className="root-choice-actions">
+              <span className="choice-segmented-control">
+                <button
+                  type="button"
+                  className="root-choice-add"
+                  aria-describedby={costDescriptionId}
+                  aria-label={
+                    maximumReached
+                      ? `${rootChoiceLabel(choice)} maximum reached`
+                      : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
+                  }
+                  title={
+                    maximumReached
+                      ? `${rootChoiceLabel(choice)} maximum reached`
+                      : `${task === "setup" ? "Select" : "Add"} ${rootChoiceLabel(choice)}`
+                  }
+                  disabled={maximumReached}
+                  onClick={() =>
+                    onAdd(choice)
+                  }
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+                <ChoicePreviewButton
+                  choice={choice.materialized}
+                  onPreview={onPreviewChoice}
+                />
+              </span>
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -2496,6 +2513,11 @@ function constraintObservation(item: ConstraintSummaryItem): string {
  */
 function RosterConfigurationSection({
   summarizeRoots = false,
+  summarizeRootIdentity = false,
+  emptySummary,
+  setupChoices,
+  onChooseSetup,
+  onBrowseSetup,
   group,
   anchorId,
   open,
@@ -2511,8 +2533,13 @@ function RosterConfigurationSection({
   nonRemovableSelectionIds,
   onPreviewChoice,
 }: {
-  /** Setup roots carry the chosen faction/tactical label themselves. */
+  /** Pre-game containers summarize children; faction/tactical panels name roots. */
   readonly summarizeRoots?: boolean;
+  readonly summarizeRootIdentity?: boolean;
+  readonly emptySummary?: string;
+  readonly setupChoices?: RosterWorkspaceRootChoiceGroup | undefined;
+  readonly onChooseSetup?: ((choice: LocalRosterRootChoice) => void) | undefined;
+  readonly onBrowseSetup?: ((trigger: HTMLElement) => void) | undefined;
   readonly group: RosterWorkspaceSelectionGroup;
   readonly anchorId: string;
   readonly open: boolean;
@@ -2543,21 +2570,19 @@ function RosterConfigurationSection({
   readonly nonRemovableSelectionIds: ReadonlySet<SelectionOccurrenceId>;
   readonly onPreviewChoice: PreviewChoiceHandler;
 }) {
-  const containsAttention = group.selections.some(
+  const containsAttention = group.requirement?.status === "violated" || group.selections.some(
     (selection) => selection.containsAttention,
   );
   // Top-level configuration entries are labels such as Battle Size and
   // Detachment. Their selected descendants are the concise values a player
   // needs when the full editor is collapsed; exact choice identity and source
   // order are preserved without interpreting display names.
-  const selectedValues = summarizeRoots ? group.selections.flatMap(selection => {
-    // Pre-game containers summarize their selected cards; faction and tactical
-    // roots summarize their own identity, even when authored as a unit.
-    return selection.selections.length ? selectedUpgradeSummary(session, selection.selections) : [{ key: selection.occurrence.id, name: selection.occurrence.name ?? "Unnamed setting", amount: rosterSelectionAmount(selection.occurrence) }];
-  }) : selectedUpgradeSummary(
-    session,
-    group.selections.flatMap(({ selections }) => selections),
-  );
+  const rootValues = group.selections.map(({ occurrence }) => ({ key: occurrence.id, name: occurrence.name ?? "Unnamed setting", amount: rosterSelectionAmount(occurrence) }));
+  // Faction/tactical identity remains the selected root even when it owns
+  // upgrades. Pre-game retains its existing selected-card summary.
+  const selectedValues = summarizeRootIdentity ? rootValues : summarizeRoots
+    ? group.selections.flatMap((selection, index) => selection.selections.length ? selectedUpgradeSummary(session, selection.selections) : [rootValues[index]!])
+    : selectedUpgradeSummary(session, group.selections.flatMap(({ selections }) => selections));
   return (
     <details
       className="roster-configuration"
@@ -2584,7 +2609,7 @@ function RosterConfigurationSection({
             <span className="roster-configuration-subtitle">
               {selectedValues.length > 0
                 ? formatSelectedChoiceSummary(selectedValues)
-                : formatCount(group.amount, "setting")}
+                : emptySummary ?? formatCount(group.amount, "setting")}
             </span>
           </span>
           <span className="roster-configuration-meta">
@@ -2612,6 +2637,7 @@ function RosterConfigurationSection({
         </h3>
       </summary>
       <div className="roster-configuration-body">
+        {onBrowseSetup && <button type="button" onClick={event => onBrowseSetup(event.currentTarget)}>Choose setup options</button>}
         <RosterTopLevelSelectionList
           roleKnown={group.role.known}
           selections={group.selections}
@@ -2630,6 +2656,10 @@ function RosterConfigurationSection({
           }
           onPreviewChoice={onPreviewChoice}
         />
+        {setupChoices && onChooseSetup && <div className="inline-setup-choices">
+          <h4>Available choices</h4>
+          {setupChoices.choices.length > 0 ? <RootChoiceList choices={setupChoices.choices} task="setup" descriptionScope={`inline-setup:${group.role.key}`} onAdd={onChooseSetup} onPreviewChoice={onPreviewChoice} /> : <p>No available choices in this catalogue context.</p>}
+        </div>}
       </div>
     </details>
   );

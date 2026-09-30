@@ -8,13 +8,13 @@ import type { RosterWorkspaceRootChoiceGroup, RosterWorkspaceSelectionGroup, Ros
 
 const systemId = "sys-ce49-e853-2fea-6af1";
 const categories = [
-  ["9b82-d933-7075-8237", systemId],
-  ["5eca-d421-1fdc-a95f", "a993-a28e-5c72-5b0a"],
-  ["acb5-b55f-9492-5149", "a993-a28e-5c72-5b0a"],
-  ["e4d8-c158-a9fd-08ba", "d5ca-ef26-b879-bdc1"],
-  ["45a9-5def-355b-0560", "d5ca-ef26-b879-bdc1"],
-  ["7786-b4c1-7de3-915c", "9853-7f07-916b-d7d3"],
-  ["6042-132c-4895-cde4", "9853-7f07-916b-d7d3"],
+  ["9b82-d933-7075-8237", systemId, "pregame"],
+  ["5eca-d421-1fdc-a95f", "a993-a28e-5c72-5b0a", "faction"],
+  ["acb5-b55f-9492-5149", "a993-a28e-5c72-5b0a", "tactical"],
+  ["e4d8-c158-a9fd-08ba", "d5ca-ef26-b879-bdc1", "faction"],
+  ["45a9-5def-355b-0560", "d5ca-ef26-b879-bdc1", "tactical"],
+  ["7786-b4c1-7de3-915c", "9853-7f07-916b-d7d3", "faction"],
+  ["6042-132c-4895-cde4", "9853-7f07-916b-d7d3", "tactical"],
 ] as const;
 const counterIds = ["5bcf-897a-a5c9-d0e8", "1719-6214-392e-e53f", "472f-46af-8e02-bfbf", "f5f9-3591-0f2d-0a53", "7e61-585f-b715-85e0", "31a6-c1f1-3d47-fa76"];
 
@@ -34,14 +34,15 @@ function resolvedSystem(context: BattleScribeCatalogueContext) {
  * membership on Zerg Creep cards. Unknown/ambiguous categories stay visible in
  * the ordinary list. Names never confer setup identity. Each selected root is
  * inspected once; no retained bytes or stored selections are copied/rewritten.
+ * Verified panels exist before selection, including when no choices are visible.
  * The shared workspace model remains unchanged for print/export consumers. */
 export function starcraftWorkspaceSections(session: LocalRosterSession, workspace: RosterWorkspaceViewModel) {
   const system = resolvedSystem(session.catalogue.context);
-  const known = new Map<string, { name: string; order: number }>();
-  if (system) for (const [id, owner] of categories) {
+  const known = new Map<string, { name: string; order: number; kind: "pregame" | "faction" | "tactical" }>();
+  if (system) for (const [id, owner, kind] of categories) {
     const definitions = [...system.closure].flatMap(d => d.projection.categoryEntries.filter(c => c.id === id).map(c => ({ c, d })));
     const match = definitions[0];
-    if (definitions.length === 1 && match?.d.metadata.id === owner) known.set(id, { name: match.c.name ?? id, order: known.size });
+    if (definitions.length === 1 && match?.d.metadata.id === owner) known.set(id, { name: match.c.name ?? id, order: known.size, kind });
   }
   const categoryFor = (ids: readonly string[]) => {
     const matches = [...new Set(ids)].filter(id => known.has(id));
@@ -65,6 +66,12 @@ export function starcraftWorkspaceSections(session: LocalRosterSession, workspac
   const setupSelections = new Map<string, RosterWorkspaceSelectionGroup>();
   const armyGroups: RosterWorkspaceSelectionGroup[] = [];
   for (const group of workspace.selections.groups) {
+    if (group.selections.length === 0 && known.has(group.role.key)) {
+      // A positive source minimum can seed an empty role. Its controls belong
+      // to the same setup panel, never a second 'Add faction units' army role.
+      setupSelections.set(group.role.key, group);
+      continue;
+    }
     const selections = group.selections.filter(selection => {
       if (!system || !session.selectionChoices.has(selection.occurrence.id)) return true;
       const inspection = inspectLocalRosterSelectionCategories(session, selection.occurrence.id);
@@ -82,7 +89,14 @@ export function starcraftWorkspaceSections(session: LocalRosterSession, workspac
     if (selections.length || group.selections.length === 0) armyGroups.push(selections.length === group.selections.length ? group : { role: group.role, selections, amount: rosterSelectionsAmount(selections.map(s => s.occurrence)) });
   }
   const order = (id: string) => known.get(id)?.order ?? 0;
-  return { enabled: known.size > 0, unitChoices, setupChoices: [...setupChoices.values()].sort((a, b) => order(a.key) - order(b.key)), armyGroups, setupGroups: [...setupSelections.values()].sort((a, b) => a.role.order - b.role.order) };
+  // Seed verified panels before anything is selected. Otherwise Faction and
+  // Tactical disappear exactly when the player needs their selection controls.
+  const setupPanels = [...known].map(([id, category]) => ({
+    kind: category.kind,
+    group: setupSelections.get(id) ?? { role: { key: id, name: category.name, order: category.order, known: true }, selections: [], amount: 0 },
+    choices: setupChoices.get(id) ?? { key: id, name: category.name, section: "configuration" as const, choices: [] },
+  }));
+  return { enabled: known.size > 0, unitChoices, setupPanels, setupChoices: [...setupChoices.values()].sort((a, b) => order(a.key) - order(b.key)), armyGroups, setupGroups: [...setupSelections.values()].sort((a, b) => a.role.order - b.role.order) };
 }
 
 /** Returns the six verified GST resource reports in stable UI order, including

@@ -2255,10 +2255,14 @@ The StarCraft workspace additionally presents Minerals, Gas, Core, Elite, Hero
 and Support in its sticky bar. The four troop resources remain signed source
 balances; any explicit maximum is a separate cap, not an inferred allowance.
 Verified Faction, Pre-Game and Tactical category membership places those roots
-in Army setup and a separate chooser, including Zerg secondary Tactical Creep
+in Army setup, including Zerg secondary Tactical Creep
 and the unit-typed Kerrigan faction. Unresolved/ambiguous identities retain the
 ordinary visible fallback. This changes UI placement/counts only, without
 changing stored selections, source bytes, prices, validation or print layout.
+Faction and Tactical cards have always-present collapsible panels after Pre-game
+and before the army list, with picked root names and direct selection controls.
+Empty panels say no selection; no automatic faction replacement or new radio
+semantics are inferred. Pre-game keeps its maps/missions and setup chooser.
 See [StarCraft setup and counters QA](qa/starcraft-workspace-setup.md).
 
 User-initiated Download latest data stages a new complete immutable snapshot for new armies. It does not refresh existing armies or baseline fixtures. Stored selections may restore only validated revisions of configured repositories; local imports are never inferred to be refresh targets.
