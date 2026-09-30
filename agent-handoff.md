@@ -34,7 +34,37 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-28 (distinct print templates complete)
+## Current Status — 2026-09-30 (StarCraft counters and setup UI complete)
+
+Clean fetched baseline cdf287f7; implementation/report e02d2ba. This separate
+handoff accompanies the checkpoint. Only codex/starcraft-pilot publication.
+Six sticky StarCraft counters use existing evaluated resources, including zero
+and provisional signed supply balances. Verified faction, pre-game and tactical
+roots have Army setup and a separate chooser; ordinary Add unit and army count
+exclude those known setup choices. Stored occurrences and shared print model
+remain intact. Source identities cover all three factions, including secondary
+Zerg Tactical Creep and unit-typed Kerrigan. Unknown/ambiguous contexts retain
+the ordinary visible fallback. No evaluator, storage, source or print changes.
+
+Full focused evidence: `docs/qa/starcraft-workspace-setup.md`. Five fictional UI
+tests and extended pinned three-faction coverage. Configured1208passed/zero skips,
+128files51.28s; final focused16passed2files4.58s. Lint/typecheck/build/diff pass;
+existing bundle advisory remains. Isolated native investigation and final review
+accepted repairs to nested setup problem jumps and measured sticky-nav spacing.
+No repeat Claude OAuth attempt. Exact-final CI is checked after publication and
+reported in the completion response.
+
+Desktop1280/phone390 inspected on disposable5307. Existing Nerazim draft opens
+with1000M/100G, Core0/Elite3/Hero0/Support1,5army and6setup roots. Full maps/rules
+remain. RemoveForge→Gas70/Elite2;Undo→100/3; autosave/reopen retains original
+choices and totals. Owner armies/storage/tabs unchanged. Playable5303 remains
+running. Source pins99261754,04c62fcd,5b261ec4 unchanged. Final owner print-layout
+acceptance remains pending; existing source/orphan-cost, evaluator precedence/
+routing and imported-format qualifications remain. No next checkpoint authorized.
+Stop: no main/PR/deployment, source refresh, updater, duplicate-army workflow,
+new budget activation, print work or broader audit.
+
+### Historical status — 2026-09-28 distinct print templates complete
 
 Clean fetched baseline c044f2fe; implementation/report
 6a04aefca167c730b4c1637b8b4dff337d939d5e, separate handoff follows.
@@ -1190,6 +1220,7 @@ Three habits earned the hard way, all worth keeping:
 | B automatic resource presentation | Done | Evaluated contributions, zero balances, optional maxima |
 | C latest immutable acquisition | Done | Explicit new snapshots only; preserve old armies |
 | D game-size presets | Done | Official OP Guide v1.0 values; explicit choice, Custom |
+| StarCraft setup and sticky counters | Done, bounded | Six evaluated resources; verified faction/pre-game/tactical roots separate from Add unit/army count; unknown contexts remain visible. No engine/storage/print changes |
 
 `docs/compatibility.md` is the exhaustive, per-behavior record. **This table is
 the map, not the territory** — it groups that record into product milestones so
@@ -17081,3 +17112,64 @@ armies/storage/tabs/worktrees retained. Final owner layout acceptance pending;
 short continuation/notes pages and whole-map whitespace remain. No main, PR,
 deployment, source refresh, profile/evaluator expansion or additional audit.
 Stop here; source/orphan-cost, precedence/routing and imported-format limits remain.
+
+## Completed Assignment — StarCraft sticky counters and setup UI, 2026-09-30
+
+Baseline clean/fetched/upstream-equal cdf287f7cc4b43f6230ed82f3526863af8550f73;
+actual pilot checkout C:/CodexACLTest/forcewright-starcraft-pilot, not the retired
+E:/GitHub/rosterforge UI branch. Print/UI task idle. Implementation/report e02d2ba;
+this separate handoff records the checkpoint. Only own work published on pilot.
+Other worktrees, including dirty historical reference review, preserved. New
+managed review worktree at baseline used read-only and archived when finished.
+
+Owner requested six top-bar counters and separate faction/maps/missions/tactical
+setup. Lead implemented the web-only partition and chooser, keeping source
+identity, existing roster commands, shared workspace/print projection and cost/
+validation reports intact. Rejected English-label inference, primary-category-
+only splitting (misses two Zerg Creep tactical roots), unit-type-only detection
+(Kerrigan faction is unit-typed), and invented troop used/allowance arithmetic.
+All six verified resource reports retain zero/sign/exactness and real maxima.
+Setup root summaries, nested options, rules/maps and source previews remain.
+Unknown/ambiguous identity stays visible in the ordinary fallback; this is not
+generic setup interpretation or new game support.
+
+One useful isolated native delegate investigated early and reviewed final code/
+test assertions. Review caught missing post-reveal target focus and possible
+phone heading overlap. Lead reproduced both: delayed child mounts now finish
+through a pending-only subtree observer; actual phone nav167.92 vs heading84.04
+overlap fixed with measured offset (heading180.04). Observer/resize cleanup and
+closed-inner-card focus are regression-tested. Final review no blocker, source
+review only, no independently executed browser/gates. Prior Claude OAuth failure
+not retried. Existing source/engine qualifications and owner print acceptance
+remain, with no broad semantic/provider/security audit.
+
+Five synthetic ingestion/session/UI tests plus pinned three-faction integration
+cover rename/wrong-system/ambiguity, secondary Tactical/unit-typed faction,
+signed/provisional/zero counters, optional cap, separate choosers, nested map
+editing, remove/cost propagation, restored identity and exact problem jumps.
+The optional test verifies all four old99261754 source hashes. Existing 40kA/B
+and JSON, StarCraft reinforcement6/160→Shield6/180→9/240→6/180, pricing,
+Supporting, Captain/rule labels, budgets, initialization, restoration/recovery,
+reference grouping and renderer timing pass in configured coverage.
+
+Gates: lint/typecheck/build209modules/diff pass; existing bundle-size advisory.
+Configured1208passed/0skips128files51.28s, with existing BSDATA_JSON_DIR,
+CORRECTNESS_SNAPSHOTS, STARCRAFT_PILOT_DIR, STARCRAFT_LATEST_DIR and
+PRINT_DARK_ANGELS paths. An outdated literal84px CSS assertion initially failed;
+updated to measured-variable+84fallback with stronger live geometry/DOM evidence.
+Final small heading-ID collision guard rechecked focusedUI/style16passed2files
+4.58s and build/lint/typecheck. No diagnostic codes or source pins changed.
+Full report includes exact fixture directories/screenshots and limitations.
+
+Browser: disposable5307 ordinary Open of old Nerazim30-selection draft shows
+1000/100 budgets, Core0/Elite3/Hero0/Support1;5army+6setup roots. Full selected map
+text/images and faction/tactical profiles remain. Setup chooser excludes combat
+choices. RemoveForge changesGas100→70/Elite3→2; normalUndo restores100/3; autosave
+All changes saved and Reload/Open retain setup/counters. Desktop1280/phone390,
+actual document1265/375 widths, no horizontal overflow. Native-print/PDF matrix
+not replayed or claimed. Owner5303/storage/armies/tabs untouched; server stays
+running as requested. Review artifacts C:/CodexACLTest/starcraft-ui-20260930.
+
+Push only codex/starcraft-pilot; exact-final CI observation follows publication
+in completion response. Stop here. No main/PR/deployment/source update, budget
+activation, formatting engine, print redesign, duplicate-army workflow or audit.
