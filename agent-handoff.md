@@ -34,7 +34,63 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-11-16 (StarCraft pilot integrated into `main`)
+## Current Status — 2026-11-16 (whole-draft duplication)
+
+Owner authorized the recommended next boundary. Baseline clean/upstream-equal
+`dbcd308`; this is the second checkpoint of the day and the first product work
+since 2026-09-30. **`docs/product-vision.md` step 5 is now complete**: the
+saved-draft shelf offered Open and Delete only, and Duplicate was the missing
+verb. Unit-occurrence duplication inside an open roster already shipped and is
+a different feature; this is the whole saved army.
+
+A copy is an independent draft with a new draft id, a new roster id, a distinct
+`(copy)` / `(copy N)` name and no undo history, **sharing its source's import
+batch** so the catalogue closure is not stored twice. It copies what is
+*stored*, not what is open, and says so in its result message when the open
+draft has unsaved edits; `activeDraft`, `persistedRoster`, the open roster, the
+recovery slot and `autosaveBlockedRoster` are all left alone, so the next
+autosave still writes the draft the user is editing. A fresh roster id is
+required rather than cosmetic — the recovery slot decides ownership by
+comparing it. Occurrence ids stay verbatim because uniqueness is scoped to one
+decoded draft and `associations` endpoints are validated against that same
+scope.
+
+Gates pass: lint, typecheck, build (209 modules, 1,100.10 kB JS / 312.28 kB
+gzip) and `git diff --check`; **1189 pass, 38 skipped, 129 files (119 passed,
+10 skipped)**, against 1171/38 at the baseline — 18 new tests. The 38 skips
+remain the gitignored pinned-corpus suites, so **this is synthetic-fixture and
+seeded-record evidence, not reference-army evidence**.
+
+Browser evidence on a disposable 5173 profile, no owner armies or storage
+touched: seeded draft → Duplicate → `QA Patrol (copy)` with a fresh roster id,
+one shared batch record and no history record; reload persisted it; a second
+copy numbered `(copy 2)` with 3 distinct draft keys, 3 distinct roster ids and
+still **one** batch record; deleting one copy kept the shared bytes and
+deleting the last collected them. That refcounting lifecycle had no test before
+this checkpoint and now has both a unit test and browser evidence. No import
+journey and no reopen-of-a-copy were performed — the profile had no catalogue
+and the file input could not be driven from an isolated world.
+
+One read-only delegate in a dedicated worktree reviewed the persistence,
+store, controller and shelf surfaces before the contract was fixed. It
+independently reached the roster-id hazard, supplied the associations argument
+for keeping occurrence ids, enumerated the five ways reusing `saveRosterDraft`
+would have broken this, and found the legacy pre-split and batch-refcount
+boundaries now recorded below. Its findings were verified against the code, not
+taken on trust.
+
+Repository hygiene: the two `.codex-*` review worktrees that sat **inside** the
+repo root broke `pnpm lint` in this checkout. They hold a prior lead's
+untracked working files, so they were relocated to
+`E:/GitHub/.rosterforge-worktrees/` with `git worktree repair` rather than
+removed; every untracked file was verified present afterwards.
+
+**Stop after this checkpoint.** Print-layout acceptance (`6a04aef`) and
+list-builder UI reauthorization still wait on the owner, unchanged. See
+`docs/qa/draft-duplication.md` for the full evidence and the boundaries this
+work deliberately does not move.
+
+### Historical status — 2026-11-16 (StarCraft pilot integrated into `main`)
 
 **Integration checkpoint only. No application code was written or changed.**
 `main` fast-forwarded from bac89b7ed92b088d270e0287c4893ff47d53d04e to
@@ -1560,7 +1616,7 @@ QA before classifying or implementing the discrepancy.
 | Child-model statlines are still two expansions deep | Done | direct model occurrences are partitioned from the unit's configuration children and rendered once, immediately below the unit datasheet. The model row keeps its name, amount control, statline, edit disclosure and removal action; its own wargear/options subtree starts closed unless attention requires it. Non-model children remain in the parent configure disclosure, and nested/unit-typed sub-units are deliberately not flattened |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
-| Whole-roster duplicate is not reachable by a user | Open — recommended next boundary (2026-11-16), owner authorization not yet given | Exact configured **unit-occurrence** duplication is now Done in the active roster: the direct row/inspector command copies the entire selected subtree with fresh occurrence IDs and one Undo/Redo step. The separate saved-draft workflow still offers Open and Delete only, so `docs/product-vision.md` step 5 — "save, reopen, duplicate, and revise" — remains incomplete until whole-roster/draft duplication exposes `duplicateRosterForce` with exact persistence and identity behavior |
+| Whole-roster duplicate is not reachable by a user | Done — 2026-11-16 | Exact configured **unit-occurrence** duplication is now Done in the active roster: the direct row/inspector command copies the entire selected subtree with fresh occurrence IDs and one Undo/Redo step. The saved-draft shelf now also offers Duplicate, closing `docs/product-vision.md` step 5 — "save, reopen, duplicate, and revise". A copy is an independent draft (new draft id, new roster id, distinct name, no history) that shares its source's import batch, copies the stored draft rather than unsaved edits, and leaves the active draft and recovery slot untouched. Note the earlier wording here expected this to expose `duplicateRosterForce`; it does not, and did not need to — that command duplicates a force *within* one roster and is a separate concern. Legacy pre-split sources, decode-trusting batch collection and two-tab interleaving remain open boundaries; see `docs/qa/draft-duplication.md` |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
@@ -17408,3 +17464,137 @@ either direction, because the 2,000-point reference army never crossed a tier
 boundary. Neither is authorized; both are recommendations.
 
 **Stop here.** The integration is the whole checkpoint.
+## Completed Assignment — Whole-Draft Duplication, 2026-11-16
+
+Baseline clean/upstream-equal `dbcd308` on `main`; gates re-verified there
+before any edit. Owner authorized the boundary the preceding integration
+checkpoint recommended.
+
+**The gap.** `docs/product-vision.md` step 5 is "save, reopen, duplicate, and
+revise". Save, reopen and revise shipped long ago; the saved-draft shelf
+offered Open and Delete only. Unit-occurrence duplication inside an open roster
+already existed and is a different feature.
+
+**A correction to the roadmap's own wording.** The row predicted this work
+would "expose `duplicateRosterForce`". It does not. That command copies a force
+*within a single roster*, inserting the copy beside its source, and mints fresh
+occurrence ids precisely because collision inside one roster is real. Copying a
+whole saved draft is a persistence concern, not a roster-tree one, and needed
+the opposite decision about ids. The row has been corrected rather than
+silently satisfied.
+
+**The contract, and why each half of it.**
+- *New draft id, new roster id.* The roster id is load-bearing, not cosmetic:
+  `recoverySlot.clear(rosterId)` deletes the recovery slot only when the stored
+  roster's id matches, so two drafts sharing one would let saving either
+  discard the other's unsaved recovery offer.
+- *Occurrence ids kept verbatim.* `decodeLocalRosterDraft` builds its
+  `forceIds`/`selectionIds` sets per call, so uniqueness is scoped to one
+  draft; nothing compares them across records and the store's key is the draft
+  id. Re-minting would also break `roster.associations`, whose endpoints are
+  validated against that same per-draft set — fresh ids with un-remapped edges
+  are refused outright.
+- *Same import batch.* Batch bytes are one shared record; keeping the batch id
+  makes a copy one small record instead of a second 8.2 MB closure, and the
+  adapter already reclaims a batch only when no draft still references it.
+- *No history.* Undo steps live under `history:<draftId>`; inheriting them
+  would let a copy be undone back through edits never made to it.
+- *Copies the stored draft, not the open one.* The shelf lists saved drafts, so
+  a shelf action copies what is saved. That is defensible but invisible, so the
+  result message states the exclusion when the open draft has unsaved edits.
+- *Leaves the session alone.* `activeDraft`, `persistedRoster`, the open
+  roster, the recovery slot and `autosaveBlockedRoster` are untouched.
+
+**Rejected alternatives.**
+- *Reusing `saveRosterDraft`.* It prefers `activeDraft?.id` (with a draft open
+  that is an overwrite, not a copy), always attaches the live history, makes
+  the copy the active draft, sets `persistedRoster` to the open roster — which
+  would clear `unsavedChanges`, drop the `beforeunload` guard and stop the
+  recovery write, losing real edits on reload — and clears the recovery slot.
+  Duplication writes through the store directly instead.
+- *Writing the stored placeholder record straight back (zero byte copies).*
+  Rejected: a placeholder-bytes draft reaching `save` while its batch record is
+  absent writes an **empty** batch record, after which both the copy and its
+  source load zero-byte files with no diagnostic. Validation on every write is
+  the house rule.
+- *Minting fresh occurrence ids for symmetry with `duplicateRosterForce`.*
+  Rejected on the associations evidence above.
+- *Enforcing unique roster names.* Rejected as a false invariant: nothing in
+  the store or decoder enforces uniqueness. The generated name is a convenience
+  at copy time, and that is now written down.
+
+**Placement.** The record-level copy is `duplicateLocalRosterDraft` in
+`packages/persistence` — browser-independent, beside the format's one
+validator. The IndexedDB choreography stays in `apps/web/src/browser-drafts.ts`
+and the orchestration and naming rule in `use-app-controller.ts`, per
+`AGENTS.md`'s rule that browser storage adapters belong in `apps/web`. No
+package-direction change.
+
+**Delegation.** One read-only investigation lane in a dedicated worktree
+(`C:/CodexACLTest/rf-duplication-review-20261116`, detached at `dbcd308`),
+briefed with the repository rules named explicitly because a native subagent
+does not inherit them. It was launched before the contract was fixed and its
+findings changed the result: it independently reached the roster-id hazard,
+supplied the associations argument for verbatim occurrence ids, enumerated the
+five failure modes of reusing `saveRosterDraft`, and surfaced the legacy
+pre-split, decode-trusting-refcount and two-tab boundaries. Every claim acted
+on was verified against the code first — including two (`renameRoster` having
+no call site in `apps/web`; `load` re-attaching real bytes so placeholders
+never reach `save`) that were checked directly before being written down.
+
+**Gates.** Lint and typecheck pass. `pnpm build` passes: 209 modules,
+1,100.10 kB JS / 312.28 kB gzip (1,098.32 kB before this change).
+`git diff --check` passes. `pnpm test`: **1189 passed, 38 skipped, 1227 total;
+119 files passed, 10 skipped, 129 total**, against 1171/38 at `dbcd308`.
+18 new tests: 5 in `packages/persistence/src/local-roster-draft.test.ts`, 11 in
+the new `apps/web/src/draft-duplication.test.tsx`, 2 in
+`apps/web/src/saved-draft-shelf.test.tsx`. No existing test was weakened; the
+one existing shelf test gained the new required prop.
+
+**Browser evidence.** Disposable server on 5173 in an isolated profile; no
+owner armies, storage or tabs touched, and the server was stopped afterwards.
+The profile had no catalogue, so a valid draft record was seeded directly into
+IndexedDB and everything after that ran through the real shelf, controller and
+store: Duplicate produced `QA Patrol (copy)` with a fresh roster id, one shared
+`files:qa-batch` record and no history record; reload persisted it; a second
+copy numbered `(copy 2)` with 3 distinct draft keys, 3 distinct roster ids and
+still one batch record; deleting one copy **kept** the shared bytes and
+deleting the last **collected** them. No console errors at any step. That
+refcounting lifecycle had no test before this checkpoint.
+
+**Not verified, not claimed.** No pinned-corpus run — the 10 optional corpus
+files skipped, so this is synthetic-fixture and seeded-record evidence, not
+reference-army evidence. No import journey in the browser (the file input could
+not be driven from an isolated world; the controller tests cover that path with
+real XML fixtures). No reopen of a copy in the browser, because the seeded
+record had no source files. No quota, multi-tab or 390 px evidence.
+
+**Boundaries this checkpoint does not move**, all now in
+`docs/qa/draft-duplication.md`: duplicating a **pre-split legacy draft** stores
+its closure a second time, because such a record carries its own bytes and has
+no batch to join (no migration attempted); **batch collection trusts
+decoding**, so an undecodable sibling does not count as a referencer and
+deleting the other copy can collect bytes the survivor needs (pre-existing,
+and duplication raises the number of drafts per batch); **two tabs on one
+database are not serialised**, so a delete between a duplicate's batch probe
+and its record write could collect the batch the copy depends on; and **roster
+names are neither unique nor editable after creation**, since `renameRoster`
+has no call site in `apps/web`.
+
+**Documentation.** `docs/architecture.md` gains the duplication contract in the
+Local Draft Persistence Boundary, and a correction: that paragraph claimed
+there is no automatic saving, which debounced autosave had already made false.
+`docs/compatibility.md` records the shelf control and its qualifications.
+
+**Repository hygiene.** The `.codex-print-review` and
+`.codex-print-density-review` worktrees sat inside the repo root and broke
+`pnpm lint` here (eslint walked into them). Both hold a prior lead's untracked
+working files — a candidate patch and three investigation files — so they were
+**relocated, not removed**, to `E:/GitHub/.rosterforge-worktrees/` and repaired
+with `git worktree repair`; both commits were already reachable from `main`,
+and every untracked file was confirmed present after the move. A cross-drive
+`git worktree move` is unsupported, hence the move-and-repair.
+
+**Still with the owner, unchanged:** print-layout acceptance (`6a04aef`) and
+list-builder UI reauthorization. **Stop here.** No further implementation is
+authorized by this checkpoint.

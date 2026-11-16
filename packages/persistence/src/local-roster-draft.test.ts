@@ -12,10 +12,184 @@ import {
 import {
   createLocalRosterDraft,
   decodeLocalRosterDraft,
+  duplicateLocalRosterDraft,
   localRosterDraftFormat,
   localRosterDraftVersion,
   type LocalRosterDraft,
 } from "./local-roster-draft.js";
+
+describe("local roster draft duplication", () => {
+  it("keeps the batch and files so a copy costs one small record", () => {
+    // Batch bytes are stored once per batch and shared. A copy that minted a
+    // new batch id would store the whole catalogue closure a second time —
+    // 8.2 MB measured for one faction — and would stop the store's delete from
+    // ever reclaiming either copy's share.
+    const source = duplicationSource();
+
+    const copy = successful(
+      duplicateLocalRosterDraft(source, {
+        id: "draft-2",
+        rosterId: rosterId("roster-2"),
+        name: "Fixture roster (copy)",
+        createdAt: "2026-11-16T10:00:00.000Z",
+        updatedAt: "2026-11-16T10:00:00.000Z",
+      }),
+    );
+
+    expect(copy.import.batchId).toBe(source.import.batchId);
+    expect(copy.catalogueKey).toBe(source.catalogueKey);
+    expect(copy.import.files.map((file) => file.filename)).toEqual(
+      source.import.files.map((file) => file.filename),
+    );
+    expect(copy.import.files[0]?.bytes).toEqual(source.import.files[0]?.bytes);
+  });
+
+  it("takes a fresh draft and roster identity but keeps occurrence ids", () => {
+    // Occurrence uniqueness is scoped to one draft, so reusing the ids costs
+    // nothing and keeps the copy byte-comparable to its source. The roster id
+    // must differ: the recovery slot is cleared by roster id, so a shared one
+    // would let saving one draft discard the other's recovery offer.
+    const source = duplicationSource();
+
+    const copy = successful(
+      duplicateLocalRosterDraft(source, {
+        id: "draft-2",
+        rosterId: rosterId("roster-2"),
+        name: "Fixture roster (copy)",
+        createdAt: "2026-11-16T10:00:00.000Z",
+        updatedAt: "2026-11-16T10:00:00.000Z",
+      }),
+    );
+
+    expect(copy.id).toBe("draft-2");
+    expect(copy.roster.id).toBe("roster-2");
+    expect(copy.roster.id).not.toBe(source.roster.id);
+    expect(copy.roster.name).toBe("Fixture roster (copy)");
+    expect(copy.createdAt).toBe("2026-11-16T10:00:00.000Z");
+    expect(copy.updatedAt).toBe("2026-11-16T10:00:00.000Z");
+    expect(copy.roster.forces[0]?.id).toBe(source.roster.forces[0]?.id);
+    expect(
+      copy.roster.forces[0]?.selections.map(({ id }) => id),
+    ).toEqual(source.roster.forces[0]?.selections.map(({ id }) => id));
+  });
+
+  it("drops the source history so a copy cannot be undone into edits it never had", () => {
+    const withHistory = successful(
+      createLocalRosterDraft({
+        id: "draft-1",
+        createdAt: "2026-07-23T12:00:00.000Z",
+        updatedAt: "2026-07-23T12:05:00.000Z",
+        catalogueKey: "fixture:catalogue",
+        import: {
+          batchId: "batch-1",
+          importedAt: "2026-07-23T11:59:00.000Z",
+          files: [],
+        },
+        roster: rosterFixture(),
+        history: {
+          past: [{ ...rosterFixture(), name: "Earlier" }],
+          future: [],
+        },
+      }),
+    );
+    expect(withHistory.history?.past).toHaveLength(1);
+
+    const copy = successful(
+      duplicateLocalRosterDraft(withHistory, {
+        id: "draft-2",
+        rosterId: rosterId("roster-2"),
+        name: "Fixture roster (copy)",
+        createdAt: "2026-11-16T10:00:00.000Z",
+        updatedAt: "2026-11-16T10:00:00.000Z",
+      }),
+    );
+
+    expect(copy.history).toBeUndefined();
+  });
+
+  it("carries occurrence assignments over intact", () => {
+    // This is the hard reason occurrence ids are kept verbatim rather than
+    // re-minted: association endpoints are validated against the very same
+    // `selectionIds` set the tree populated, so a copy with fresh ids and
+    // un-remapped edges would be refused outright.
+    const edge = {
+      sourceId: selectionOccurrenceId("selection-1"),
+      targetId: selectionOccurrenceId("selection-2"),
+      definitionKey: rosterDefinitionKey("source-association"),
+    };
+    const source = successful(
+      createLocalRosterDraft({
+        id: "draft-1",
+        createdAt: "2026-07-23T12:00:00.000Z",
+        updatedAt: "2026-07-23T12:05:00.000Z",
+        catalogueKey: "fixture:catalogue",
+        import: {
+          batchId: "batch-1",
+          importedAt: "2026-07-23T11:59:00.000Z",
+          files: [],
+        },
+        roster: { ...rosterFixture(), associations: [edge] },
+      }),
+    );
+
+    const copy = successful(
+      duplicateLocalRosterDraft(source, {
+        id: "draft-2",
+        rosterId: rosterId("roster-2"),
+        name: "Fixture roster (copy)",
+        createdAt: "2026-11-16T10:00:00.000Z",
+        updatedAt: "2026-11-16T10:00:00.000Z",
+      }),
+    );
+
+    expect(copy.roster.associations).toEqual([edge]);
+    // And the copy still decodes, which is what proves the edges resolve.
+    expect(decodeLocalRosterDraft(copy).ok).toBe(true);
+  });
+
+  it("validates the copy rather than trusting its source", () => {
+    // Duplication goes through the same decoder as every other write, so a
+    // copy cannot be made valid by having come from a stored draft.
+    const source = duplicationSource();
+
+    const refused = duplicateLocalRosterDraft(source, {
+      id: "draft-2",
+      rosterId: rosterId("roster-2"),
+      name: "Fixture roster (copy)",
+      createdAt: "not a timestamp",
+      updatedAt: "2026-11-16T10:00:00.000Z",
+    });
+
+    expect(refused.ok).toBe(false);
+    expect(diagnosticCode(refused)).toBe("PERSISTENCE_DRAFT_INVALID");
+  });
+});
+
+function duplicationSource(): LocalRosterDraft {
+  return successful(
+    createLocalRosterDraft({
+      id: "draft-1",
+      createdAt: "2026-07-23T12:00:00.000Z",
+      updatedAt: "2026-07-23T12:05:00.000Z",
+      catalogueKey: "fixture:catalogue",
+      import: {
+        batchId: "batch-1",
+        importedAt: "2026-07-23T11:59:00.000Z",
+        files: [
+          {
+            filename: "fixture.cat",
+            bytes: Uint8Array.from([60, 99, 97, 116, 62]),
+            mediaType: "application/xml",
+            origin: "",
+            sourceId: sourceId("download:fixture"),
+            sourceKind: "download",
+          },
+        ],
+      },
+      roster: rosterFixture(),
+    }),
+  );
+}
 
 describe("local roster draft codec", () => {
   it("round-trips occurrence assignments and rejects dangling or duplicate edges", () => {

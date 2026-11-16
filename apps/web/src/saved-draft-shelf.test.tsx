@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import type { LocalRosterDraftSummary } from "./browser-drafts.js";
 import { SavedDraftShelf } from "./saved-draft-shelf.js";
+import type { DraftActionState } from "./use-app-controller.js";
 
 afterEach(cleanup);
 
@@ -58,16 +59,67 @@ describe("saved draft shelf storage reporting", () => {
   });
 });
 
-function renderShelf(drafts: readonly LocalRosterDraftSummary[]): void {
+describe("saved draft shelf duplicate action", () => {
+  it("offers Duplicate per card and reports the exact draft to copy", () => {
+    // The shelf is the only place a whole saved army can be copied, and the id
+    // matters: copying the wrong card is indistinguishable from copying the
+    // right one until the user opens it.
+    const { onDuplicate } = renderShelf([
+      summary({ id: "a", rosterName: "Patrol", batchId: "batch-1" }),
+      summary({ id: "b", rosterName: "Strike Force", batchId: "batch-1" }),
+    ]);
+
+    const shelf = screen.getByRole("region", { name: "Saved roster drafts" });
+    within(shelf).getByLabelText("Duplicate Strike Force").click();
+
+    expect(onDuplicate.mock.calls).toEqual([["b"]]);
+  });
+
+  it("marks only the card being copied and disables the shelf while it runs", () => {
+    // A second click during the copy would write a third draft, and every
+    // button on the shelf writes or navigates, so all of them wait.
+    const { onDuplicate, onLoad } = renderShelf(
+      [
+        summary({ id: "a", rosterName: "Patrol", batchId: "batch-1" }),
+        summary({ id: "b", rosterName: "Strike Force", batchId: "batch-1" }),
+      ],
+      { kind: "duplicating", targetId: "b", diagnostics: [] },
+    );
+
+    const shelf = screen.getByRole("region", { name: "Saved roster drafts" });
+    expect(
+      within(shelf).getByLabelText("Duplicate Strike Force").textContent,
+    ).toBe("Copying...");
+    expect(
+      within(shelf).getByLabelText("Duplicate Patrol").textContent,
+    ).toBe("Duplicate");
+    expect(
+      within(shelf).getByText("Copying saved roster draft..."),
+    ).toBeTruthy();
+
+    within(shelf).getByLabelText("Duplicate Patrol").click();
+    within(shelf).getAllByText("Open")[0]?.click();
+    expect(onDuplicate.mock.calls).toEqual([]);
+    expect(onLoad.mock.calls).toEqual([]);
+  });
+});
+
+function renderShelf(
+  drafts: readonly LocalRosterDraftSummary[],
+  action: DraftActionState = { kind: "idle", diagnostics: [] },
+): { readonly onDuplicate: Mock; readonly onLoad: Mock } {
+  const handlers = { onDuplicate: vi.fn(), onLoad: vi.fn() };
   render(
     <SavedDraftShelf
       state={{ kind: "ready", drafts, diagnostics: [] }}
-      action={{ kind: "idle", diagnostics: [] }}
+      action={action}
       activeDraftId={undefined}
-      onLoad={vi.fn()}
+      onLoad={handlers.onLoad}
       onDelete={vi.fn()}
+      onDuplicate={handlers.onDuplicate}
     />,
   );
+  return handlers;
 }
 
 function summary(

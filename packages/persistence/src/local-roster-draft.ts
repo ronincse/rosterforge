@@ -178,6 +178,69 @@ export function createLocalRosterDraft(
   );
 }
 
+/** What a copy must be given, because it must not inherit it. */
+export interface DuplicateLocalRosterDraftInput {
+  /** The copy's own draft key. Never the source's. */
+  readonly id: string;
+  /**
+   * The copy's roster identity.
+   *
+   * A fresh one is required rather than optional. The recovery slot is cleared
+   * by roster id — `clear(rosterId)` deletes the slot only when the stored
+   * roster's id matches — so two drafts sharing a roster id would let a save of
+   * one discard an unsaved recovery offer belonging to the other.
+   */
+  readonly rosterId: Roster["id"];
+  /** The copy's roster name, which is also its only label on the shelf. */
+  readonly name: string;
+  /** Both timestamps: a copy is new, however old its source is. */
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/**
+ * Copies a stored draft into an independent one.
+ *
+ * **The import is carried over by reference, batch id included, and that is the
+ * point.** Batch bytes are stored once under their own record and shared by
+ * every draft of that batch, so a copy that keeps the source's `batchId` costs
+ * one small record instead of a second catalogue closure — 8.2 MB for a single
+ * faction. The store's `delete` already reclaims a batch only when no draft
+ * still references it, so sharing stays correct when either copy goes.
+ *
+ * **Occurrence ids are kept verbatim.** `decodeLocalRosterDraft` builds its
+ * `forceIds`/`selectionIds` sets per call, so uniqueness is scoped to one
+ * draft and two drafts may legitimately use the same occurrence ids. Minting
+ * fresh ones would mean walking and rewriting the whole tree to buy nothing;
+ * `duplicateRosterForce` mints only because it inserts beside its source
+ * *within one roster*, where collision is real.
+ *
+ * **History is deliberately dropped.** Undo steps are stored per draft under
+ * `history:<draftId>`, and inheriting them would let a copy be undone back
+ * through edits that were never made to it.
+ *
+ * The result is validated like any other draft, so a source that has become
+ * invalid cannot be laundered into a valid copy. Inherits
+ * `decodeLocalRosterDraft`'s whole-closure byte copy.
+ */
+export function duplicateLocalRosterDraft(
+  source: LocalRosterDraft,
+  input: DuplicateLocalRosterDraftInput,
+  limits?: Partial<LocalRosterDraftLimits>,
+): Result<LocalRosterDraft> {
+  return createLocalRosterDraft(
+    {
+      id: input.id,
+      createdAt: input.createdAt,
+      updatedAt: input.updatedAt,
+      catalogueKey: source.catalogueKey,
+      import: source.import,
+      roster: { ...source.roster, id: input.rosterId, name: input.name },
+    },
+    limits,
+  );
+}
+
 /**
  * Validates an untrusted record and returns a draft.
  *

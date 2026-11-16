@@ -561,8 +561,25 @@ The native adapter in `apps/web` stores validated envelopes in IndexedDB
 database `rosterforge`, object store `local-roster-drafts`. The core
 `persistence` package has no DOM or IndexedDB dependency. Listing tolerates a
 malformed sibling record by returning valid summaries alongside its decoder
-diagnostic. Load, save, and confirmed delete are explicit operations; there is
-no automatic saving.
+diagnostic. Load, save, confirmed delete, and duplicate are the explicit
+operations. (An earlier revision of this paragraph said there is no automatic
+saving; debounced autosave into an already-active draft has since shipped, and
+the recovery slot covers a roster that has never been saved.)
+
+`duplicateLocalRosterDraft` copies a stored draft into an independent one. The
+copy takes a new draft ID, a new `Roster` ID, a distinct roster name, and fresh
+timestamps; it keeps the source's import batch ID, source files, catalogue key,
+and force and selection occurrence IDs verbatim, and it drops the source's undo
+history. Keeping the batch ID is what makes a copy cheap — batch bytes are one
+shared record, and the adapter reclaims them only when no draft still
+references them. A new `Roster` ID is required rather than optional: the
+recovery slot decides ownership by comparing it, so a shared one would let
+saving one draft discard another's recovery offer. Occurrence IDs stay verbatim
+because uniqueness is scoped to a single decoded draft and `associations`
+endpoints are validated against that same scope, so re-minting without
+remapping every edge would be refused. A pre-split record that still carries
+its own bytes has no shared batch to join, so copying one stores the closure a
+second time; no migration is attempted.
 
 Opening a draft reruns the ordinary secure repository import, graph
 resolution, and catalogue-context composition over the retained bytes. It then

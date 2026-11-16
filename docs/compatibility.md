@@ -364,8 +364,18 @@ Marines reinforcement6/230 are historical gaps superseded by SC03/07 and SC04.
   bytes, source IDs and kinds, import metadata, source-scoped catalogue
   identity, branded occurrence IDs, optional names, and immutable roster
   structure
-- Explicit IndexedDB save/update, reopen, and confirmed-delete controls, with
-  newest-first summaries and no upload or automatic saving
+- Explicit IndexedDB save/update, reopen, confirmed-delete, and duplicate
+  controls, with newest-first summaries and no upload
+- Whole-draft duplication from the shelf: the copy is an independent draft with
+  a new draft ID, a new roster ID, a distinct `(copy)` / `(copy N)` name and no
+  undo history, sharing its source's import batch rather than storing the
+  catalogue closure again. It copies the stored draft, so unsaved edits to an
+  open source are reported as excluded rather than silently included, and it
+  leaves the active draft, the open roster and the recovery slot untouched.
+  Duplicating a pre-split record that still carries its own bytes stores that
+  closure a second time. Roster names are not unique and cannot be edited after
+  creation, so the generated name is a convenience at copy time, not an
+  invariant
 - Draft restoration through the ordinary secure import, graph, and context
   pipeline, followed by exact force and materialized-selection matching from
   stable definition keys

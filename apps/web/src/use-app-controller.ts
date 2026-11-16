@@ -9,6 +9,7 @@ import { success, type Diagnostic, type Result } from "@rosterforge/foundation";
 import {
   createLocalRosterDraft,
   defaultLocalRosterDraftLimits,
+  duplicateLocalRosterDraft,
   type LocalRosterDraft,
   type LocalRosterDraftHistory,
 } from "@rosterforge/persistence";
@@ -132,7 +133,7 @@ export interface ActiveDraft {
 }
 
 export interface DraftActionState {
-  readonly kind: "idle" | "saving" | "loading" | "deleting";
+  readonly kind: "idle" | "saving" | "loading" | "deleting" | "duplicating";
   readonly targetId?: string;
   readonly message?: string;
   readonly diagnostics: readonly Diagnostic[];
@@ -141,6 +142,38 @@ export interface DraftActionState {
 }
 
 const defaultDraftStore = createIndexedDbLocalRosterDraftStore();
+
+/**
+ * Matches a name this function already produced, so copies of copies do not
+ * stack into "Army (copy) (copy) (copy)".
+ */
+const copiedNamePattern = /\s\(copy(?: \d+)?\)$/;
+
+/**
+ * Names a copy so the shelf can tell it from its source.
+ *
+ * The roster name is the *only* label a shelf card carries, so two drafts
+ * sharing one would be indistinguishable there. Nothing in the store or the
+ * decoder enforces unique names, which is why this is a convenience at the
+ * moment of copying and not an invariant: renaming either draft afterwards can
+ * collide again, and that stays allowed.
+ *
+ * Terminates because every iteration either returns or consumes one name from
+ * a finite set of existing ones.
+ */
+export function copiedDraftName(
+  sourceName: string,
+  existingNames: readonly string[],
+): string {
+  const base = sourceName.replace(copiedNamePattern, "");
+  const taken = new Set(existingNames);
+  const first = `${base} (copy)`;
+  if (!taken.has(first)) return first;
+  for (let attempt = 2; ; attempt += 1) {
+    const candidate = `${base} (copy ${attempt})`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
 
 export function useRosterForgeAppController({
   prepareLibrary = prepareLocalCatalogueLibrary,
@@ -810,6 +843,111 @@ export function useRosterForgeAppController({
     });
   }
 
+  /**
+   * Copies a saved draft into a second, independent saved draft.
+   *
+   * **It copies what is stored, not what is open.** The source is read back
+   * from the store, so copying the draft that is currently active reproduces
+   * its last saved state and not the unsaved edits in front of the user. That
+   * is the honest reading of a shelf action — the shelf lists saved drafts —
+   * but it is invisible, so the result message says so when the two differ.
+   *
+   * **It deliberately leaves the session alone**: `activeDraft`,
+   * `persistedRoster`, the open roster, the recovery slot and
+   * `autosaveBlockedRoster` are all untouched, so the copy does not become the
+   * active draft and the next autosave still writes the draft the user is
+   * actually editing. Making the copy active would silently redirect their
+   * edits into it. Reusing `saveRosterDraft` would do all of that by default —
+   * it prefers `activeDraft?.id`, attaches the live history, and clears
+   * recovery — so this writes through the store directly instead.
+   *
+   * **Cost: three full passes over the catalogue closure per click.** The
+   * store's `load` structured-clones the batch record out of IndexedDB,
+   * `duplicateLocalRosterDraft` decodes (one `Uint8Array.from` per file), and
+   * `save` decodes again — roughly 8.2 MB each for one faction. Writing the
+   * stored placeholder record straight back would cost none of it, but a
+   * placeholder-bytes draft reaching `save` while its batch record is absent
+   * writes an *empty* batch record, which makes both the copy and its source
+   * load zero-byte files with no diagnostic. The copies buy that safety, and
+   * this is a deliberate click rather than a hot path.
+   *
+   * **A pre-split legacy source is the one expensive case.** Such a draft
+   * carries its own bytes and has no batch record, so the copy's save creates
+   * one and the closure ends up stored twice. Both drafts stay openable; no
+   * migration is attempted.
+   */
+  async function duplicateRosterDraft(id: string) {
+    const sequence = importSequence.current;
+    setDraftAction({ kind: "duplicating", targetId: id, diagnostics: [] });
+    const loaded = await draftStore.load(id);
+    if (sequence !== importSequence.current) return;
+    if (!loaded.ok) {
+      setDraftAction({
+        kind: "idle",
+        message: "The saved roster draft could not be copied.",
+        diagnostics: loaded.diagnostics,
+      });
+      return;
+    }
+    if (loaded.value === undefined) {
+      const listDiagnostics = await refreshDraftShelf();
+      if (sequence !== importSequence.current) return;
+      setDraftAction({
+        kind: "idle",
+        message: "That saved roster draft is no longer in this browser.",
+        diagnostics: listDiagnostics,
+      });
+      return;
+    }
+
+    const timestamp = now();
+    const copy = duplicateLocalRosterDraft(loaded.value, {
+      id: createDraftId(),
+      rosterId: rosterId(createEntityId("roster")),
+      name: copiedDraftName(
+        loaded.value.roster.name,
+        draftShelf.drafts.map((draft) => draft.rosterName),
+      ),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+    if (!copy.ok) {
+      setDraftAction({
+        kind: "idle",
+        message: "The copy of this roster draft could not be prepared.",
+        diagnostics: copy.diagnostics,
+      });
+      return;
+    }
+
+    // The batch record already exists, so this writes one small draft record
+    // rather than a second copy of the catalogue closure.
+    const saved = await draftStore.save(copy.value);
+    if (sequence !== importSequence.current) return;
+    if (!saved.ok) {
+      setDraftAction({
+        kind: "idle",
+        message: "The roster draft was not copied.",
+        diagnostics: saved.diagnostics,
+      });
+      return;
+    }
+
+    const copiedFromOpenEdits =
+      activeDraft?.id === id &&
+      rosterSession !== undefined &&
+      rosterSession.roster !== persistedRoster;
+    const listDiagnostics = await refreshDraftShelf();
+    if (sequence !== importSequence.current) return;
+    setDraftAction({
+      kind: "idle",
+      message: copiedFromOpenEdits
+        ? `Copied the last saved version as ${copy.value.roster.name}. Unsaved changes are not in the copy.`
+        : `Copied this roster draft as ${copy.value.roster.name}.`,
+      diagnostics: [...saved.diagnostics, ...listDiagnostics],
+    });
+  }
+
   // Once a roster has an active draft the user has already asked for it to be
   // kept, so keeping it current needs no further prompting. This deliberately
   // does not create a draft for a roster that has never been saved: that would
@@ -952,6 +1090,7 @@ export function useRosterForgeAppController({
     saveRosterDraft,
     loadRosterDraft,
     deleteRosterDraft,
+    duplicateRosterDraft,
   };
 }
 

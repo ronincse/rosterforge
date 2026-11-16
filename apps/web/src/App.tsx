@@ -74,6 +74,7 @@ export function App(props: AppProps) {
     saveRosterDraft,
     loadRosterDraft,
     deleteRosterDraft,
+    duplicateRosterDraft,
   } = useRosterForgeAppController(props);
 
   const remoteSource = useRemoteCatalogueSourceController(
@@ -242,6 +243,7 @@ export function App(props: AppProps) {
               activeDraftId={activeDraft?.id}
               onLoad={(id) => void loadRosterDraft(id)}
               onDelete={(id) => void deleteRosterDraft(id)}
+              onDuplicate={(id) => void duplicateRosterDraft(id)}
             />
 
             <section

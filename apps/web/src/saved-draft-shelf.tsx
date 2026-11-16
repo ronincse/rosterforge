@@ -42,12 +42,14 @@ export function SavedDraftShelf({
   activeDraftId,
   onLoad,
   onDelete,
+  onDuplicate,
 }: {
   readonly state: DraftShelfState;
   readonly action: DraftActionState;
   readonly activeDraftId: string | undefined;
   readonly onLoad: (id: string) => void;
   readonly onDelete: (id: string) => void;
+  readonly onDuplicate: (id: string) => void;
 }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string>();
   const busy = action.kind !== "idle";
@@ -143,6 +145,16 @@ export function SavedDraftShelf({
                     <button
                       type="button"
                       disabled={busy}
+                      aria-label={`Duplicate ${draft.rosterName}`}
+                      onClick={() => onDuplicate(draft.id)}
+                    >
+                      {isTarget && action.kind === "duplicating"
+                        ? "Copying..."
+                        : "Duplicate"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
                       aria-label={`Delete ${draft.rosterName}`}
                       onClick={() => setConfirmDeleteId(draft.id)}
                     >
@@ -163,7 +175,9 @@ export function SavedDraftShelf({
               ? "Saving roster draft..."
               : action.kind === "loading"
                 ? "Opening saved roster draft..."
-                : "Deleting saved roster draft...")}
+                : action.kind === "duplicating"
+                  ? "Copying saved roster draft..."
+                  : "Deleting saved roster draft...")}
         </p>
       )}
       <DiagnosticList
