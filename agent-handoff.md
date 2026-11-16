@@ -34,7 +34,61 @@ top. Honour that marking; the conclusions in a superseded entry are wrong.
 Then read `git log`, `git status`, `docs/architecture.md`, and
 `docs/compatibility.md`.
 
-## Current Status — 2026-09-30 (inline Faction/Tactical panels complete)
+## Current Status — 2026-11-16 (StarCraft pilot integrated into `main`)
+
+**Integration checkpoint only. No application code was written or changed.**
+`main` fast-forwarded from bac89b7ed92b088d270e0287c4893ff47d53d04e to
+6b074598805e86e47db17d4baf7e5be0e5dd320a, publishing the 61 commits that
+`codex/starcraft-pilot` had carried alone since 2026-09-11: 153 files,
++13,677/-1,080. `git diff main codex/starcraft-pilot` is empty by construction,
+so every support claim in this document is exactly the claim its own checkpoint
+made. **Nothing is newly verified here**, and no boundary moved.
+
+Why now rather than later. The branch had been the de-facto trunk for seven
+weeks while `main` was what a fresh clone saw, and the divergence was never
+StarCraft-only: the `affects` explicit-self repair, occurrence-specific
+effective rule names, profile visibility modifier identity, shared roster group
+bounds, typed-constraint unresolved scope and XML entity decoding are all
+40k-relevant engine work, and the print-template redesign was unreachable from
+`main` entirely. `main` held no commit the pilot lacked, so this was a
+fast-forward: no conflict resolution, no integration judgment, nothing to
+review. Rejected alternatives: a merge commit (pointless without divergence),
+cherry-picking a 40k-only subset (would have split tested-together engine
+changes and left `main` in a state no entry describes), and leaving the branch
+alone (the cost of this integration only grows with the next checkpoint).
+
+Gates re-run at the published tip in the pilot worktree before pushing: lint,
+typecheck, build (209 modules) and `git diff --check` pass; **1171 tests pass,
+38 skipped, 128 files (118 passed / 10 skipped) in 23.94s**. Those 38 skips are
+the gitignored pinned-corpus integration tests, which this checkout has not
+downloaded — the 2026-09-30 configured run measured 1209 passing with zero
+skips, and **this run does not reproduce that corpus evidence**. Bundle advisory
+is now **1,098.32 kB JS / 311.95 kB gzip**, up from the 814.74 kB earlier
+entries recorded; still an advisory rather than a gate, and still without an
+agreed budget.
+
+Checkout reassignment. `E:/GitHub/rosterforge` was on the retired
+`codex/list-builder-ui-overhaul` and is now on `main`; it is the primary
+checkout again. `C:/CodexACLTest/forcewright-integration-20260911` was detached
+in place rather than removed, so its contents survive. Both
+`codex/starcraft-pilot` and `codex/list-builder-ui-overhaul` are left at their
+published tips; neither was deleted.
+
+Zero delegates, deliberately: a conflict-free fast-forward plus a handoff entry
+is the mechanical, documentation-only case `AGENTS.md` says to skip delegation
+for. There was no behavioral decision for an independent reviewer to check.
+
+Still pending the owner, unchanged by this checkpoint: **print-layout
+acceptance** (`6a04aef`, `docs/qa/print-template-design.md`) and **list-builder
+UI reauthorization**. Every support limit, source qualification and unsupported
+shape recorded below stands as written. **Recommended — not authorized — next
+boundary: whole-roster duplication**, the one remaining `docs/product-vision.md`
+step 5 gap, whose headless `duplicateRosterForce` already exists at
+`packages/roster-model/src/commands.ts:585`; see the roadmap row. **Stop after
+this integration.** No implementation, print, UI, evaluator, source-refresh or
+audit work is authorized by it.
+
+### Historical status — 2026-09-30 (inline Faction/Tactical panels complete)
 
 Clean fetched/upstream-equal baseline bddf4c9; implementation/report
 5619abb78b8fdf6940e6135bbb726335a8ecd079. This separate handoff completes the
@@ -1506,7 +1560,7 @@ QA before classifying or implementing the discrepancy.
 | Child-model statlines are still two expansions deep | Done | direct model occurrences are partitioned from the unit's configuration children and rendered once, immediately below the unit datasheet. The model row keeps its name, amount control, statline, edit disclosure and removal action; its own wargear/options subtree starts closed unless attention requires it. Non-model children remain in the parent configure disclosure, and nested/unit-typed sub-units are deliberately not flattened |
 | Quantity-tiered unit pricing is untested | Open | GW's Munitorum Field Manual v1.2 prices many units by how many copies the army takes — `YOUR 1ST TO 2ND UNITS COST` versus `YOUR 3RD + UNIT COSTS`, e.g. a third Ballistus Dreadnought or Bladeguard Veteran Squad costs more than the first two. BSData stores a flat base `pts` plus a few modifiers, so the escalation, if modelled at all, is modifier-driven — exactly the class of behavior the reference army exists to exercise. **The 2,000-point army built on 2026-08-24 never crossed a tier boundary**, so RosterForge's handling of it is unverified in either direction. Extend the reference scenario to include a third copy of a tiered unit, then classify |
 | Pinned BSData can lag GW's official points | Open | measured 2026-08-24: at corpus pin `04c62fc`, Intercessor Squad is `pts: 80` in `Imperium - Space Marines.json` while MFM v1.2 prices it at 75. RosterForge reported 80, which is **faithful to its source**. This is the same pattern the `Community-data mismatch diagnosis` row already recorded — the actionable gap is freshness, not cost evaluation. It is concrete evidence for the open question of whether v1 requires *current* BSData or merely *compatible* BSData; the freshness signal already shipped, and a player can import today's files themselves |
-| Whole-roster duplicate is not reachable by a user | Open | Exact configured **unit-occurrence** duplication is now Done in the active roster: the direct row/inspector command copies the entire selected subtree with fresh occurrence IDs and one Undo/Redo step. The separate saved-draft workflow still offers Open and Delete only, so `docs/product-vision.md` step 5 — "save, reopen, duplicate, and revise" — remains incomplete until whole-roster/draft duplication exposes `duplicateRosterForce` with exact persistence and identity behavior |
+| Whole-roster duplicate is not reachable by a user | Open — recommended next boundary (2026-11-16), owner authorization not yet given | Exact configured **unit-occurrence** duplication is now Done in the active roster: the direct row/inspector command copies the entire selected subtree with fresh occurrence IDs and one Undo/Redo step. The separate saved-draft workflow still offers Open and Delete only, so `docs/product-vision.md` step 5 — "save, reopen, duplicate, and revise" — remains incomplete until whole-roster/draft duplication exposes `duplicateRosterForce` with exact persistence and identity behavior |
 | A 2,000-point draft is 13.6 MB | Open | measured on the reference-army run: a 5-unit, 325-point Dark Angels draft stored 13.6 MB because drafts embed the source closure so they survive catalogue changes. Quota handling exists and this is by design, but it bounds how many armies a player can keep and has never been given an explicit product answer. Decide the intended number of saved armies before treating it as a defect or as fine |
 | Reference-army acceptance scenario | Open | **completed in full 2026-08-24** against pinned BSData `04c62fc`, Dark Angels revision 3: a legal **2,000-point** Unforgiven Task Force, 16 costed units, sum verified by hand, every genuine violation resolved. Costs were then verified against Games Workshop's official Munitorum Field Manual (v1.2): **11 of the 12 unit costs matched exactly**, and the single mismatch was traced to BSData lagging GW, not to RosterForge. That axis is now closed. Re-run it after each list-first checkpoint; that is what makes "v1 complete" measurable rather than asserted |
 | Battlefield-role grouping in the selected-roster tree | Done | group selected units the way an army list reads — Configuration, Epic Hero, Character, Battleline, Infantry, Vehicle and so on — instead of one flat army section. Group by **effective** categories, which `effectiveRosterCategories` already indexes per occurrence, not by the static primary category link the add browser uses: modifiers can add or remove a category at runtime, and the synthetic fixture does exactly that. Subsumes the Configuration/Army split, which becomes the first role group |
@@ -1608,6 +1662,13 @@ whole-roster incremental evaluation unless new evidence changes their priority.
 
 These findings are recorded, not authorization to implement the next phase.
 The pilot report supplies exact source/app identities, scenarios and severity.
+
+**"On pilot" is now a history note, not a branch location.** The 2026-11-16
+integration fast-forwarded every commit below into `main`, so these rows ship
+from `main` like everything else. The wording is left as each checkpoint wrote
+it because it still records *which* checkpoint delivered the row and how
+narrowly it was scoped — "Done on pilot" never meant more than the bounded
+shape its note describes, and integration did not widen any of them.
 
 | Item | Status | Note |
 | --- | --- | --- |
@@ -17260,3 +17321,90 @@ No native print/PDF matrix or owner layout acceptance claimed.
 Push only codex/starcraft-pilot and confirm exact-final CI in completion response.
 Stop here. Existing support limits remain; no main, PR, deploy, source update,
 new budget behavior, print work, evaluator expansion or broad audit authorized.
+## Completed Assignment — StarCraft Pilot Integration, 2026-11-16
+
+Baseline: `main` at bac89b7ed92b088d270e0287c4893ff47d53d04e (2026-09-11),
+`codex/starcraft-pilot` at 6b074598805e86e47db17d4baf7e5be0e5dd320a
+(2026-09-30), `codex/list-builder-ui-overhaul` at
+69b209518bd53d31b5adf948b35f02acfa8a734e. All three checkouts clean at session
+start and every local ref equal to its remote: there was no unpushed work and
+no interrupted checkpoint to finish. Result: `main` at the pilot tip plus this
+handoff commit.
+
+**What this was.** The owner returned after seven weeks away, asked where the
+project stood, and authorized the integration this document had not recorded as
+work. `codex/starcraft-pilot` was 61 commits ahead of `main` and `main` was
+zero commits ahead of it, so publishing it was a fast-forward. The content
+question — whether those 61 commits were good — was already answered by their own
+checkpoints and by green CI at every tip; this checkpoint added no answer to it.
+
+**Why it was worth a checkpoint of its own.** The pilot branch was the de-facto
+trunk while `main` was the published product. The gap was not experimental
+StarCraft work: `5ed0c17` (explicit self in `affects` entry traversal),
+`ebdbc4d` (occurrence-specific effective rule names), `d28e3b7` (profile
+visibility modifier identity), `d628979` (shared roster group requirements),
+`fa8ea58` (typed-constraint unresolved containing scope) and `887b376` (XML
+entity decoding) are shared-engine repairs that a 40k user of `main` could not
+reach, and `86f877d`/`6a04aef` (printable references, then the distinct Compact
+and Unit Sheet templates) were absent from `main` altogether. Every additional
+checkpoint on the branch would have widened the same gap.
+
+**Decisions and rejected alternatives.**
+- *Fast-forward rather than a merge commit.* `git merge-base --is-ancestor`
+  confirmed `main` was an ancestor; a merge commit would have recorded an
+  integration event that did not happen.
+- *All 61 commits rather than a 40k-only subset.* Cherry-picking would have
+  split engine changes that were tested together and landed `main` in a state
+  no entry in this file describes. The StarCraft work is already fenced by its
+  own experimental section and its own source pin.
+- *Detach the stale `main` worktree rather than remove it.*
+  `C:/CodexACLTest/forcewright-integration-20260911` only needed to stop
+  holding the branch. Deleting it would have destroyed a prior lead's working
+  directory for no gain; it is now detached at 6b07459 with its contents intact.
+- *Repoint `E:/GitHub/rosterforge` at `main`.* It sat on
+  `codex/list-builder-ui-overhaul`, two commits behind `main` and seven weeks
+  behind the real work, which is precisely how a returning session reads a
+  stale status as current. It is the primary checkout again.
+- *Branches kept.* Neither `codex/starcraft-pilot` nor
+  `codex/list-builder-ui-overhaul` was deleted or force-pushed.
+
+**Gates, at the published tip, in `C:/CodexACLTest/forcewright-starcraft-pilot`
+(clean at 6b07459).** `pnpm lint` and `pnpm typecheck` pass with no output.
+`pnpm build` passes: 209 modules, `dist/app/assets/index-*.js` 1,098.32 kB /
+311.95 kB gzip, CSS 86.74 kB / 15.51 kB gzip, built in 488 ms.
+`git diff --check` passes. `pnpm test`: **1171 passed, 38 skipped, 1209 total;
+118 files passed, 10 skipped, 128 total; 23.94s** on Node v24.19.0 / pnpm
+11.0.7 / vitest 4.1.8.
+
+**What was not verified, and is not claimed.** The 38 skipped tests are the
+optional pinned-corpus integration suites, which this checkout has never
+downloaded; the 2026-09-30 configured run measured 1209 passing with zero skips
+and **that corpus evidence was not reproduced here**. No browser run, no print
+or PDF inspection, no reference-army replay, and no New Recruit comparison was
+performed. The bundle advisory grew from 814.74 kB to 1,098.32 kB across the
+integrated commits and nobody has set it a budget; this checkpoint only
+measured it. No application file, test, fixture, source pin or diagnostic code
+was touched — the only change authored here is this document.
+
+**Delegation.** None, and deliberately. `AGENTS.md` targets zero delegates for
+tiny, mechanical or documentation-only work, and a conflict-free fast-forward
+has no behavioral decision for an independent reviewer to examine. Briefing and
+integrating a lane would have cost more than it could return.
+
+**Owner decisions this integration does not resolve.** Print-layout acceptance
+(`6a04aef`; native OS dialog, physical printer and universal-browser acceptance
+remain unclaimed) and list-builder UI reauthorization both still wait on the
+owner, exactly as the 2026-09-28 and 2026-09-30 entries left them.
+
+**Next recommended boundary — whole-roster duplication.** It is the last
+`docs/product-vision.md` step 5 gap ("save, reopen, duplicate, and revise"):
+unit-occurrence duplication ships, but the saved-draft shelf still offers only
+Open and Delete, while `duplicateRosterForce`
+(`packages/roster-model/src/commands.ts:585`) and its tests already exist, so
+the remaining work is the persistence and identity behavior at the UI seam
+rather than new evaluator semantics. A cheap companion measurement worth
+folding in: **quantity-tiered unit pricing** is still Open and unverified in
+either direction, because the 2,000-point reference army never crossed a tier
+boundary. Neither is authorized; both are recommendations.
+
+**Stop here.** The integration is the whole checkpoint.
